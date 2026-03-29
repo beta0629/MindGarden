@@ -20,5 +20,15 @@ module.exports = {
       }
       return webpackConfig;
     }
+  },
+  jest: {
+    configure: (jestConfig) => {
+      jestConfig.moduleNameMapper = {
+        ...jestConfig.moduleNameMapper,
+        '^react-router-dom$': '<rootDir>/node_modules/react-router-dom/dist/index.js',
+        '^react-router$': '<rootDir>/node_modules/react-router/dist/index.js'
+      };
+      return jestConfig;
+    }
   }
 };

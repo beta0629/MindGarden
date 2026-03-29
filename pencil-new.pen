@@ -1,5 +1,5 @@
 {
-  "version": "2.8",
+  "version": "2.9",
   "children": [
     {
       "type": "frame",
@@ -5305,6 +5305,1818 @@
                                   ]
                                 }
                               ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BGmiy",
+      "x": 0,
+      "y": 3000,
+      "name": "Onboarding Stepper",
+      "width": 1440,
+      "height": 1024,
+      "fill": "$--bg",
+      "children": [
+        {
+          "type": "frame",
+          "id": "FnvMP",
+          "name": "Sidebar",
+          "width": 260,
+          "height": "fill_container",
+          "fill": "#2C2C2C",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "dcvCH",
+              "name": "logo",
+              "fill": "#FAF9F7",
+              "content": "MindGarden",
+              "fontFamily": "$--font-display",
+              "fontSize": 18,
+              "fontWeight": "700"
+            },
+            {
+              "type": "rectangle",
+              "id": "Qv7wd",
+              "name": "Divider",
+              "fill": "#FFFFFF20",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "w2qHH",
+              "name": "nav1",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$--primary",
+              "cornerRadius": 10,
+              "gap": 12,
+              "padding": [
+                12,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "beukW",
+                  "name": "nav1Text",
+                  "fill": "#FAF9F7",
+                  "content": "온보딩 심사",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "aO5bB",
+          "name": "Main Area",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "ashuR",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 64,
+              "fill": "$--bg",
+              "padding": [
+                0,
+                32
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "r7CNr",
+                  "name": "topBarLeft",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "2axCE",
+                      "name": "breadcrumb",
+                      "fill": "$--text-muted",
+                      "content": "Admin > 테넌트 관리 > 온보딩 심사",
+                      "fontFamily": "$--font-body",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "GQCT0",
+              "name": "topBarDivider",
+              "fill": "$--border",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "RudbV",
+              "name": "Content Area",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "$--bg",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZuoJD",
+                  "name": "pageTitle",
+                  "fill": "$--text",
+                  "content": "온보딩 심사 (Stepper)",
+                  "fontFamily": "$--font-display",
+                  "fontSize": 24,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "0fFpO",
+                  "name": "Stepper Indicator",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "CA0Es",
+                      "name": "step1",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "sBPMg",
+                          "name": "step1Circle",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "oahZL",
+                              "name": "step1Num",
+                              "fill": "#FFFFFF",
+                              "content": "1",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "ODQ90",
+                          "name": "step1Text",
+                          "fill": "$--primary",
+                          "content": "기관/기본 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "fvhH4",
+                      "name": "line1",
+                      "fill": "$--primary",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Njptz",
+                      "name": "step2",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "nP4e4",
+                          "name": "step2Circle",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--surface",
+                          "cornerRadius": 16,
+                          "stroke": {
+                            "thickness": 2,
+                            "fill": "$--border"
+                          },
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rBjhT",
+                              "name": "step2Num",
+                              "fill": "$--text-muted",
+                              "content": "2",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "NZNsb",
+                          "name": "step2Text",
+                          "fill": "$--text-muted",
+                          "content": "관리자 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "XQcFA",
+                      "name": "line2",
+                      "fill": "$--border",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "P3vMo",
+                      "name": "step3",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "CKKtd",
+                          "name": "step3Circle",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--surface",
+                          "cornerRadius": 16,
+                          "stroke": {
+                            "thickness": 2,
+                            "fill": "$--border"
+                          },
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kpYgR",
+                              "name": "step3Num",
+                              "fill": "$--text-muted",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "10XsG",
+                          "name": "step3Text",
+                          "fill": "$--text-muted",
+                          "content": "최종 심사",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gRPiD",
+                  "name": "Step 1 Block",
+                  "width": "fill_container",
+                  "fill": "$--surface",
+                  "cornerRadius": 16,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "mtZ3N",
+                      "name": "blockTitleRow",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 2,
+                          "id": "O2j11",
+                          "name": "accentBar",
+                          "fill": "$--primary",
+                          "width": 4,
+                          "height": 16
+                        },
+                        {
+                          "type": "text",
+                          "id": "rjul3",
+                          "name": "blockTitle",
+                          "fill": "$--text",
+                          "content": "기관/기본 정보",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vUrYz",
+                      "name": "formGrid",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "wTysc",
+                          "name": "row1",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "6waUX",
+                              "name": "field1",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "FiFYj",
+                                  "name": "label1",
+                                  "fill": "$--text-muted",
+                                  "content": "테넌트명",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "EVlg1",
+                                  "name": "input1",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Rg6hJ",
+                                      "name": "inputText1",
+                                      "fill": "$--text",
+                                      "content": "마인드가든 심리상담센터",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "IJTft",
+                              "name": "field2",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "C97la",
+                                  "name": "label2",
+                                  "fill": "$--text-muted",
+                                  "content": "브랜드명",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "tPTXb",
+                                  "name": "input2",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "MHyZX",
+                                      "name": "inputText2",
+                                      "fill": "$--text",
+                                      "content": "MindGarden",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uE1Kl",
+                          "name": "row2",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "3bPTR",
+                              "name": "field3",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "xybET",
+                                  "name": "label3",
+                                  "fill": "$--text-muted",
+                                  "content": "지역",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "yHBM3",
+                                  "name": "input3",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "D53A6",
+                                      "name": "inputText3",
+                                      "fill": "$--text",
+                                      "content": "서울특별시 강남구",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "30FVL",
+                              "name": "field4",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "uuzyN",
+                                  "name": "label4",
+                                  "fill": "$--text-muted",
+                                  "content": "연락처",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "KFWO5",
+                                  "name": "input4",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "BjMpS",
+                                      "name": "inputText4",
+                                      "fill": "$--text",
+                                      "content": "02-1234-5678",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "eF8Nf",
+                  "name": "actions",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "end",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "PyDCq",
+                      "name": "nextBtn",
+                      "width": 100,
+                      "height": 40,
+                      "fill": "$--primary",
+                      "cornerRadius": 10,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uuwZm",
+                          "name": "nextBtnText",
+                          "fill": "#FFFFFF",
+                          "content": "다음",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "biBUs",
+      "x": 1500,
+      "y": 3000,
+      "name": "Onboarding Stepper - Step 2",
+      "width": 1440,
+      "height": 1024,
+      "fill": "$--bg",
+      "children": [
+        {
+          "type": "frame",
+          "id": "eREIi",
+          "name": "Sidebar",
+          "width": 260,
+          "height": "fill_container",
+          "fill": "#2C2C2C",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "buity",
+              "name": "logo2",
+              "fill": "#FAF9F7",
+              "content": "MindGarden",
+              "fontFamily": "Noto Sans KR",
+              "fontSize": 18,
+              "fontWeight": "700"
+            },
+            {
+              "type": "rectangle",
+              "id": "KT2TT",
+              "name": "Divider",
+              "fill": "#FFFFFF20",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "HcZwd",
+              "name": "nav1_2",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$--primary",
+              "cornerRadius": 10,
+              "gap": 12,
+              "padding": [
+                12,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "yQhz7",
+                  "name": "nav1Text_2",
+                  "fill": "#FAF9F7",
+                  "content": "온보딩 심사",
+                  "fontFamily": "Noto Sans KR",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "21GJv",
+          "name": "Main Area",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "I9KSR",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 64,
+              "fill": "$--bg",
+              "padding": [
+                0,
+                32
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "RdcfQ",
+                  "name": "topBarLeft2",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ukzCW",
+                      "name": "breadcrumb2",
+                      "fill": "$--text-muted",
+                      "content": "Admin > 테넌트 관리 > 온보딩 심사",
+                      "fontFamily": "Noto Sans KR",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "KO2Hh",
+              "name": "topBarDivider2",
+              "fill": "$--border",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "UXoaQ",
+              "name": "Content Area",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "$--bg",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CuGQw",
+                  "name": "pageTitle2",
+                  "fill": "$--text",
+                  "content": "온보딩 심사 (Stepper)",
+                  "fontFamily": "Noto Sans KR",
+                  "fontSize": 24,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "pwpBT",
+                  "name": "Stepper Indicator",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "fV34c",
+                      "name": "step1_2",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "cVnch",
+                          "name": "step1Circle_2",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "t0Zwb",
+                              "name": "step1Num_2",
+                              "fill": "#FFFFFF",
+                              "content": "✓",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "g5pMM",
+                          "name": "step1Text_2",
+                          "fill": "$--primary",
+                          "content": "기관/기본 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "tkOVC",
+                      "name": "line1_2",
+                      "fill": "$--primary",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "8Qrxf",
+                      "name": "step2_2",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "NTq9H",
+                          "name": "step2Circle_2",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "jzU4j",
+                              "name": "step2Num_2",
+                              "fill": "#FFFFFF",
+                              "content": "2",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "WI9WC",
+                          "name": "step2Text_2",
+                          "fill": "$--primary",
+                          "content": "관리자 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "m1PPY",
+                      "name": "line2_2",
+                      "fill": "$--border",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RbwrQ",
+                      "name": "step3_2",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "WDVAq",
+                          "name": "step3Circle_2",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--surface",
+                          "cornerRadius": 16,
+                          "stroke": {
+                            "thickness": 2,
+                            "fill": "$--border"
+                          },
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "C6Usl",
+                              "name": "step3Num_2",
+                              "fill": "$--text-muted",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "aSs6y",
+                          "name": "step3Text_2",
+                          "fill": "$--text-muted",
+                          "content": "최종 심사",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YuhS1",
+                  "name": "Step 2 Block",
+                  "width": "fill_container",
+                  "fill": "$--surface",
+                  "cornerRadius": 16,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "aDsv8",
+                      "name": "blockTitleRow2",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 2,
+                          "id": "O3hpW",
+                          "name": "accentBar2",
+                          "fill": "$--primary",
+                          "width": 4,
+                          "height": 16
+                        },
+                        {
+                          "type": "text",
+                          "id": "DjFVg",
+                          "name": "blockTitle2",
+                          "fill": "$--text",
+                          "content": "관리자 정보",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "9iyXR",
+                      "name": "formGrid2",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "YTkIw",
+                          "name": "row1_2",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "NP86L",
+                              "name": "field1_2",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "brtDB",
+                                  "name": "label1_2",
+                                  "fill": "$--text-muted",
+                                  "content": "관리자 이름",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "tItYp",
+                                  "name": "input1_2",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "gDURm",
+                                      "name": "inputText1_2",
+                                      "fill": "$--text",
+                                      "content": "홍길동",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "PNfu3",
+                              "name": "field2_2",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "MLzTG",
+                                  "name": "label2_2",
+                                  "fill": "$--text-muted",
+                                  "content": "관리자 이메일",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "krcFo",
+                                  "name": "input2_2",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "9eTmr",
+                                      "name": "inputText2_2",
+                                      "fill": "$--text",
+                                      "content": "admin@mindgarden.com",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "5xrgz",
+                          "name": "row2_2",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "gRExc",
+                              "name": "field3_2",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "UFqtO",
+                                  "name": "label3_2",
+                                  "fill": "$--text-muted",
+                                  "content": "권한 설정",
+                                  "fontFamily": "Noto Sans KR",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "rGH5r",
+                                  "name": "input3_2",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "fill": "#FFFFFF",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    16
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "jvYh1",
+                                      "name": "inputText3_2",
+                                      "fill": "$--text",
+                                      "content": "최고 관리자 (Super Admin)",
+                                      "fontFamily": "Noto Sans KR",
+                                      "fontSize": 14,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "ziOgL",
+                                      "name": "dropdownIcon",
+                                      "fill": "$--text-muted",
+                                      "content": "▼",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "t2J8l",
+                              "name": "field4_2",
+                              "width": "fill_container",
+                              "height": "fit_content(0)",
+                              "layout": "vertical",
+                              "gap": 8
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "5td4M",
+                  "name": "actions2",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "85TWa",
+                      "name": "prevBtn2",
+                      "width": 100,
+                      "height": 40,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "PgsWy",
+                          "name": "prevBtnText2",
+                          "fill": "$--text",
+                          "content": "이전",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "26KyP",
+                      "name": "nextBtn2",
+                      "width": 100,
+                      "height": 40,
+                      "fill": "$--primary",
+                      "cornerRadius": 10,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "p0795",
+                          "name": "nextBtnText2",
+                          "fill": "#FFFFFF",
+                          "content": "다음",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ecqQ7",
+      "x": 3000,
+      "y": 3000,
+      "name": "Onboarding Stepper - Step 3",
+      "width": 1440,
+      "height": 1024,
+      "fill": "$--bg",
+      "children": [
+        {
+          "type": "frame",
+          "id": "2cFxt",
+          "name": "Sidebar",
+          "width": 260,
+          "height": "fill_container",
+          "fill": "#2C2C2C",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "ZnEBt",
+              "name": "logo3",
+              "fill": "#FAF9F7",
+              "content": "MindGarden",
+              "fontFamily": "Noto Sans KR",
+              "fontSize": 18,
+              "fontWeight": "700"
+            },
+            {
+              "type": "rectangle",
+              "id": "DRZkJ",
+              "name": "Divider",
+              "fill": "#FFFFFF20",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "RyYdH",
+              "name": "nav1_3",
+              "width": "fill_container",
+              "height": 44,
+              "fill": "$--primary",
+              "cornerRadius": 10,
+              "gap": 12,
+              "padding": [
+                12,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "0Urax",
+                  "name": "nav1Text_3",
+                  "fill": "#FAF9F7",
+                  "content": "온보딩 심사",
+                  "fontFamily": "Noto Sans KR",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Dl0EB",
+          "name": "Main Area",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "XA6i6",
+              "name": "Top Bar",
+              "width": "fill_container",
+              "height": 64,
+              "fill": "$--bg",
+              "padding": [
+                0,
+                32
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "WQUjs",
+                  "name": "topBarLeft3",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nktHu",
+                      "name": "breadcrumb3",
+                      "fill": "$--text-muted",
+                      "content": "Admin > 테넌트 관리 > 온보딩 심사",
+                      "fontFamily": "Noto Sans KR",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "zJhWc",
+              "name": "topBarDivider3",
+              "fill": "$--border",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "wPtq2",
+              "name": "Content Area",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "$--bg",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZH0DD",
+                  "name": "pageTitle3",
+                  "fill": "$--text",
+                  "content": "온보딩 심사 (Stepper)",
+                  "fontFamily": "Noto Sans KR",
+                  "fontSize": 24,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "ADeio",
+                  "name": "Stepper Indicator",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "QCzGg",
+                      "name": "step1_3",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "bdh26",
+                          "name": "step1Circle_3",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "lIY8Y",
+                              "name": "step1Num_3",
+                              "fill": "#FFFFFF",
+                              "content": "✓",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "8C6ww",
+                          "name": "step1Text_3",
+                          "fill": "$--primary",
+                          "content": "기관/기본 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "6L9Jy",
+                      "name": "line1_3",
+                      "fill": "$--primary",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jmvvp",
+                      "name": "step2_3",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "VlDgk",
+                          "name": "step2Circle_3",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "0ip0A",
+                              "name": "step2Num_3",
+                              "fill": "#FFFFFF",
+                              "content": "✓",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "1l28C",
+                          "name": "step2Text_3",
+                          "fill": "$--primary",
+                          "content": "관리자 정보",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "id": "UWPz9",
+                      "name": "line2_3",
+                      "fill": "$--primary",
+                      "width": 100,
+                      "height": 2
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WcUzl",
+                      "name": "step3_3",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "vOurS",
+                          "name": "step3Circle_3",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$--primary",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ao7Ha",
+                              "name": "step3Num_3",
+                              "fill": "#FFFFFF",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "QR3Yt",
+                          "name": "step3Text_3",
+                          "fill": "$--primary",
+                          "content": "최종 심사",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MOTPa",
+                  "name": "Step 3 Block",
+                  "width": "fill_container",
+                  "fill": "$--surface",
+                  "cornerRadius": 16,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "eH3VY",
+                      "name": "blockTitleRow3",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 2,
+                          "id": "Y4Den",
+                          "name": "accentBar3",
+                          "fill": "$--primary",
+                          "width": 4,
+                          "height": 16
+                        },
+                        {
+                          "type": "text",
+                          "id": "09eHx",
+                          "name": "blockTitle3",
+                          "fill": "$--text",
+                          "content": "최종 심사 요약",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "9885s",
+                      "name": "summaryGrid",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ElCsD",
+                          "name": "sumRow1",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dmvmv",
+                              "name": "sumLabel1",
+                              "fill": "$--text-muted",
+                              "content": "테넌트명",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "QKnG1",
+                              "name": "sumValue1",
+                              "fill": "$--text",
+                              "content": "마인드가든 심리상담센터",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Sh8ok",
+                          "name": "sumRow2",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GKPbx",
+                              "name": "sumLabel2",
+                              "fill": "$--text-muted",
+                              "content": "브랜드명",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PayFN",
+                              "name": "sumValue2",
+                              "fill": "$--text",
+                              "content": "MindGarden",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lFDk4",
+                          "name": "sumRow3",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Lomfw",
+                              "name": "sumLabel3",
+                              "fill": "$--text-muted",
+                              "content": "관리자 이메일",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "5IcOS",
+                              "name": "sumValue3",
+                              "fill": "$--text",
+                              "content": "admin@mindgarden.com",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "2RtxC",
+                          "name": "sumRow4",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "8tal6",
+                              "name": "sumLabel4",
+                              "fill": "$--text-muted",
+                              "content": "권한",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "xPzC9",
+                              "name": "sumValue4",
+                              "fill": "$--text",
+                              "content": "최고 관리자 (Super Admin)",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NWGAu",
+                  "name": "actions3",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "UiHXT",
+                      "name": "prevBtn3",
+                      "width": 100,
+                      "height": 40,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "OOyAT",
+                          "name": "prevBtnText3",
+                          "fill": "$--text",
+                          "content": "이전",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "PyGIx",
+                      "name": "rightActions3",
+                      "gap": 12,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Uueni",
+                          "name": "rejectBtn",
+                          "width": 100,
+                          "height": 40,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "thickness": 1,
+                            "fill": "$--color-error"
+                          },
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "BgvMh",
+                              "name": "rejectBtnText",
+                              "fill": "$--color-error",
+                              "content": "거절",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uRgAH",
+                          "name": "approveBtn",
+                          "width": 100,
+                          "height": 40,
+                          "fill": "$--primary",
+                          "cornerRadius": 10,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "RPSbo",
+                              "name": "approveBtnText",
+                              "fill": "#FFFFFF",
+                              "content": "승인",
+                              "fontFamily": "Noto Sans KR",
+                              "fontSize": 14,
+                              "fontWeight": "600"
                             }
                           ]
                         }

@@ -368,7 +368,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Optional<Consultation> findByIdAndVersion(Long id, Long version) {
-        return consultationRepository.findByTenantIdAndIdAndVersion(getTenantId(), id, version);
+        return consultationRepository.findByTenantIdAndIdAndVersion(TenantContextHolder.getRequiredTenantId(), id, version);
     }
     
     @Override

@@ -204,7 +204,8 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public Optional<Alert> findByIdAndVersion(Long id, Long version) {
-        return alertRepository.findByIdAndVersion(id, version);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     @Override

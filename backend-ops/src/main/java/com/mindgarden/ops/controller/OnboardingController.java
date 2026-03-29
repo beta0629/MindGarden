@@ -49,18 +49,19 @@ public class OnboardingController {
     /**
      * 온보딩 요청 단건 조회.
      * <p>
-     * OPS 신뢰 경계: {@code tenantId} 쿼리를 생략하면 PK({@code id})만으로 조회한다(레거시 콘솔 호환).
-     * 테넌트 격리가 필요한 호출자는 반드시 주체 테넌트 {@code tenantId}를 넘겨 복합 조회한다.
-     * 스코프 불일치·미존재는 404로 동일하게 처리된다.
+     * <strong>브레이킹 변경:</strong> {@code tenantId} 쿼리 파라미터는 필수이며, 공백만 전달할 수 없다.
+     * 이전에 생략 가능했던 PK 단독 조회 경로는 제거되었다. 조회는 항상 {@code tenantId}+{@code id} 복합 키로 수행된다.
+     * 스코프 불일치·미존재는 404로 처리된다.
      * </p>
      *
      * @param id 요청 PK
-     * @param tenantId 선택. 있으면 {@code tenantId}+{@code id}로 조회
+     * @param tenantId 테넌트 스코프(필수, 공백 불가)
      */
     @GetMapping("/requests/{id}")
     public ResponseEntity<OnboardingRequest> getRequest(
         @PathVariable UUID id,
-        @RequestParam(required = false) String tenantId) {
+        @RequestParam(required = true) String tenantId) {
+        requireNonBlankTenantId(tenantId);
         return ResponseEntity.ok(onboardingService.getById(id, tenantId));
     }
 
@@ -72,20 +73,21 @@ public class OnboardingController {
     /**
      * 온보딩 승인/거부 등 결정 저장.
      * <p>
-     * OPS 신뢰 경계: {@code tenantId} 쿼리를 생략하면 PK만으로 대상을 조회한다(레거시).
-     * 테넌트 스코프가 있는 호출 경로에서는 동일한 {@code tenantId}를 쿼리로 넘겨 복합 조회한다.
+     * <strong>브레이킹 변경:</strong> {@code tenantId} 쿼리는 필수이며 공백만 올 수 없다.
+     * PK 단독 조회 경로는 제거되었고, GET 단건과 동일하게 {@code tenantId}+{@code id}로 대상을 조회한다.
      * </p>
      *
-     * @param tenantId 선택. GET 단건과 동일하게 쿼리 파라미터로 통일
+     * @param tenantId 테넌트 스코프(필수, 공백 불가). GET 단건과 동일한 쿼리 파라미터
      */
     @PostMapping("/requests/{id}/decision")
     public ResponseEntity<OnboardingDecisionResponse> decide(
         @PathVariable UUID id,
-        @RequestParam(required = false) String tenantId,
+        @RequestParam(required = true) String tenantId,
         @RequestBody @Valid OnboardingDecisionRequest payload
     ) {
-        log.info("[OnboardingController] 결정 저장 요청 - requestId={}, status={}, actorId={}, tenantScoped={}, note={}",
-            id, payload.status(), payload.actorId(), tenantId != null && !tenantId.isBlank(),
+        requireNonBlankTenantId(tenantId);
+        log.info("[OnboardingController] 결정 저장 요청 - requestId={}, status={}, actorId={}, tenantScoped=true, note={}",
+            id, payload.status(), payload.actorId(),
             payload.note() != null ? "있음" : "없음");
 
         try {
@@ -98,6 +100,12 @@ public class OnboardingController {
         } catch (Exception e) {
             log.error("[OnboardingController] 결정 저장 실패 - requestId={}, 오류={}", id, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    private static void requireNonBlankTenantId(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId는 필수이며 공백만 올 수 없습니다.");
         }
     }
 }

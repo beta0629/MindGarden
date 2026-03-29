@@ -232,7 +232,8 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     public java.util.Optional<Client> findByIdAndVersion(Long id, Long version) {
-        return clientRepository.findByIdAndVersion(id, version);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     @Override

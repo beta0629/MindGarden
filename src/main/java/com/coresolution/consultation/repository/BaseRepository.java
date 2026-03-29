@@ -373,6 +373,27 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 버전 관리 ====================
     
+    /**
+     * 테넌트·PK·버전으로 활성 엔티티 조회 (낙관적 잠금·버전 일치).
+     * {@link #findByTenantIdAndId}와 동일하게 삭제되지 않은 행만 반환합니다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param id 엔티티 PK
+     * @param version 엔티티 버전
+     * @return 엔티티 Optional
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.id = :id AND e.version = :version AND e.isDeleted = false")
+    Optional<T> findByTenantIdAndIdAndVersion(@Param("tenantId") String tenantId, @Param("id") ID id, @Param("version") Long version);
+    
+    /**
+     * 테넌트 스코프 없이 id·version만으로 조회합니다.
+     *
+     * @deprecated {@link #findByTenantIdAndIdAndVersion} 사용을 권장합니다.
+     * @param id 엔티티 PK
+     * @param version 엔티티 버전
+     * @return 엔티티 Optional
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.id = ?1 AND e.version = ?2")
     Optional<T> findByIdAndVersion(ID id, Long version);
     

@@ -262,7 +262,8 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public Optional<T> findByIdAndVersion(ID id, Long version) {
-        return getRepository().findByIdAndVersion(id, version);
+        String tenantId = ensureTenantId();
+        return getRepository().findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     // ==================== 생명주기 훅 메서드 ====================

@@ -34,17 +34,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByTenantIdAndIdIgnoringDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
-     * 테넌트·PK·버전으로 활성 사용자 조회 (낙관적 잠금·버전 일치)
-     *
-     * @param tenantId 테넌트 ID
-     * @param id 사용자 PK
-     * @param version 엔티티 버전
-     * @return 사용자 Optional
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id = :id AND u.version = :version AND u.isDeleted = false")
-    Optional<User> findByTenantIdAndIdAndVersion(@Param("tenantId") String tenantId, @Param("id") Long id, @Param("version") Long version);
-    
-    /**
      * 테넌트별 사용자 ID로 사용자 조회 (테넌트 필터링)
      * 표준화 2025-12-08: username -> userId
      */

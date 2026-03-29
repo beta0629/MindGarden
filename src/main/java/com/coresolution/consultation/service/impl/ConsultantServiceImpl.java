@@ -269,12 +269,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public Optional<Consultant> findByIdAndVersion(Long id, Long version) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
-        return consultantRepository.findByTenantIdAndId(tenantId, id)
-                .filter(c -> c.getVersion().equals(version));
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     @Override

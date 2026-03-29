@@ -1182,6 +1182,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     public Optional<Branch> findByIdAndVersion(Long id, Long version) {
-        return branchRepository.findByIdAndVersion(id, version);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
 }

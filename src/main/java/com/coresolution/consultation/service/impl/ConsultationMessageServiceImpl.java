@@ -439,8 +439,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     @Override
     public Optional<ConsultationMessage> findByIdAndVersion(Long id, Long version) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        return consultationMessageRepository.findByIdAndVersion(id, version)
-                .filter(m -> tenantId.equals(m.getTenantId()));
+        return consultationMessageRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     // ConsultationMessageService 전용 메서드

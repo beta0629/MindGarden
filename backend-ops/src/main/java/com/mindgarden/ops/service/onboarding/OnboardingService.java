@@ -53,27 +53,29 @@ public class OnboardingService {
         return repository.findAllByOrderByCreatedAtDesc();
     }
 
-    @Transactional(readOnly = true)
-    public OnboardingRequest getById(UUID id) {
-        return getById(id, null);
-    }
-
     /**
      * 온보딩 요청 단건 조회.
+     * <p>
+     * 항상 {@code tenantId}와 {@code id} 복합으로 조회한다(PK 단독 조회 없음).
+     * </p>
      *
      * @param id 요청 PK
-     * @param tenantId 주체 테넌트 스코프. null/공백이면 레거시 호환으로 PK만 조회, 값이 있으면 tenantId+id 복합 조회(불일치 시 없음과 동일)
+     * @param tenantId 테넌트 스코프(필수, 공백 불가). API 계층에서 검증하나, 서비스에서도 동일 규칙을 적용한다.
      * @return 엔티티
+     * @throws IllegalArgumentException {@code tenantId}가 null이거나 공백만인 경우
      * @throws EntityNotFoundException 없거나 스코프 불일치 시
      */
     @Transactional(readOnly = true)
     public OnboardingRequest getById(UUID id, String tenantId) {
-        if (tenantId == null || tenantId.isBlank()) {
-            return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", id));
-        }
+        requireTenantIdForScopedLookup(tenantId);
         return repository.findByTenantIdAndId(tenantId.trim(), id)
             .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", id));
+    }
+
+    private static void requireTenantIdForScopedLookup(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId는 필수이며 공백만 올 수 없습니다.");
+        }
     }
 
     @Transactional
@@ -318,18 +320,12 @@ public class OnboardingService {
     }
 
     /**
-     * 온보딩 결정 (관리자 계정 정보 포함 응답)
-     */
-    @Transactional
-    public com.mindgarden.ops.controller.dto.OnboardingDecisionResponse decideWithAdminInfo(
-            UUID requestId, OnboardingStatus status, String actorId, String note) {
-        return decideWithAdminInfo(requestId, status, actorId, note, null);
-    }
-
-    /**
-     * 온보딩 결정 (관리자 계정 정보 포함). tenantId가 있으면 해당 테넌트 스코프로만 조회·처리.
+     * 온보딩 결정 (관리자 계정 정보 포함).
+     * <p>
+     * {@code tenantId}는 필수이며, 대상 요청은 항상 {@code tenantId}+{@code requestId}로 조회한다.
+     * </p>
      *
-     * @param tenantId 주체 테넌트 스코프. null/공백이면 PK만으로 조회(레거시 OPS)
+     * @param tenantId 테넌트 스코프(필수, 공백 불가)
      */
     @Transactional
     public com.mindgarden.ops.controller.dto.OnboardingDecisionResponse decideWithAdminInfo(
@@ -350,30 +346,21 @@ public class OnboardingService {
         
         return new com.mindgarden.ops.controller.dto.OnboardingDecisionResponse(saved, adminInfo);
     }
-    
-    @Transactional
-    public OnboardingRequest decide(UUID requestId, OnboardingStatus status, String actorId, String note) {
-        return decide(requestId, status, actorId, note, null);
-    }
 
     /**
-     * 온보딩 결정. tenantId가 주어지면 반드시 복합 조회한다.
+     * 온보딩 결정. 대상 요청은 항상 {@code tenantId}+{@code requestId}로 조회한다.
      *
-     * @param tenantId 주체 테넌트 스코프. null/공백이면 PK만 조회(레거시)
+     * @param tenantId 테넌트 스코프(필수, 공백 불가)
+     * @throws IllegalArgumentException {@code tenantId}가 null이거나 공백만인 경우
      */
     @Transactional
     public OnboardingRequest decide(UUID requestId, OnboardingStatus status, String actorId, String note, String tenantId) {
-        log.info("[OnboardingService] decide 메서드 시작 - requestId={}, status={}, actorId={}, tenantScoped={}",
-            requestId, status, actorId, tenantId != null && !tenantId.isBlank());
+        requireTenantIdForScopedLookup(tenantId);
+        log.info("[OnboardingService] decide 메서드 시작 - requestId={}, status={}, actorId={}, tenantScoped=true",
+            requestId, status, actorId);
 
-        OnboardingRequest request;
-        if (tenantId == null || tenantId.isBlank()) {
-            request = repository.findById(requestId)
-                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", requestId));
-        } else {
-            request = repository.findByTenantIdAndId(tenantId.trim(), requestId)
-                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", requestId));
-        }
+        OnboardingRequest request = repository.findByTenantIdAndId(tenantId.trim(), requestId)
+            .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", requestId));
         
         log.info("[OnboardingService] 온보딩 요청 조회 완료 - requestId={}, 현재 상태={}, tenantId={}", 
             requestId, request.getStatus(), request.getTenantId());

@@ -8,12 +8,13 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
  * 클라이언트 엔티티
  * 상담을 받는 클라이언트 정보를 저장
- * BaseEntity를 상속하여 테넌트 시스템 지원
+ * PK는 {@code users.id}와 동일(할당형). {@link AuditableTenantBase}로 감사·테넌트 필드 공유.
  * 
  * @author CoreSolution
  * @version 2.0.0
@@ -22,12 +23,19 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "clients")
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(of = "id")
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Client extends BaseEntity {
-    
+public class Client extends AuditableTenantBase {
+
+    /**
+     * users.id와 동일한 PK (DB FK). Hibernate IDENTITY 미사용 — 저장 전 반드시 설정.
+     */
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
+    private Long id;
+
     @Column(name = "name", nullable = false, length = 500) // users와 동일: 암호화된 값 복사 정합
     private String name;
 

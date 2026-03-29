@@ -1,6 +1,6 @@
 package com.coresolution.core.service;
 
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,14 +11,14 @@ import java.util.Optional;
  * <p>기존 마인드가든 서비스와의 호환성을 위해 엔티티를 직접 다루는 버전입니다.</p>
  * <p>DTO 기반 BaseTenantService와 병행하여 사용할 수 있습니다.</p>
  * 
- * @param <T> 엔티티 타입 (BaseEntity 상속)
+ * @param <T> 엔티티 타입 ({@link AuditableTenantBase} 상속)
  * @param <ID> 엔티티 ID 타입
  * 
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-11-18
  */
-public interface BaseTenantEntityService<T extends BaseEntity, ID> {
+public interface BaseTenantEntityService<T extends AuditableTenantBase, ID> {
     
     // ==================== 공통 CRUD 메서드 (엔티티 직접 반환) ====================
     

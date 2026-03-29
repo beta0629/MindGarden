@@ -412,7 +412,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
 
         User savedUser = userRepository.save(clientUser);
-        
+        userRepository.flush();
+
         log.info("✅ 내담자 등록 완료 - 저장된 User 정보: id={}, userId={}, tenantId={}, isActive={}, role={}", 
                 savedUser.getId(), savedUser.getUserId(), savedUser.getTenantId(), savedUser.getIsActive(), savedUser.getRole());
         
@@ -2216,6 +2217,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         User savedUser = userRepository.save(clientUser);
+        userRepository.flush();
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedUser.getTenantId() != null) {

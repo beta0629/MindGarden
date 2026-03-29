@@ -3,7 +3,7 @@ package com.coresolution.consultation.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ import org.springframework.data.repository.query.Param;
  * @since 2024-12-19
  */
 @NoRepositoryBean
-public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<T, ID> {
+public interface BaseRepository<T extends AuditableTenantBase, ID> extends JpaRepository<T, ID> {
     
     // ==================== 활성 상태 엔티티 조회 ====================
     

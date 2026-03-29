@@ -2,7 +2,7 @@ package com.coresolution.consultation.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import com.coresolution.consultation.service.BaseService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @version 1.0.0
  * @since 2024-12-19
  */
-public interface BaseController<T extends BaseEntity, ID> {
+public interface BaseController<T extends AuditableTenantBase, ID> {
     
     BaseService<T, ID> getService();
     

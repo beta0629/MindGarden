@@ -3,7 +3,7 @@ import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.BaseTenantService;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * <p>모든 업종에서 공통으로 사용하는 CRUD 로직을 구현합니다.</p>
  * <p>하위 클래스는 추상 메서드를 구현하고, 필요시 훅 메서드를 오버라이드합니다.</p>
  * 
- * @param <T> 엔티티 타입 (BaseEntity 상속)
+ * @param <T> 엔티티 타입 ({@link AuditableTenantBase} 상속)
  * @param <ID> 엔티티 ID 타입
  * @param <REQ> 요청 DTO 타입
  * @param <RES> 응답 DTO 타입
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public abstract class BaseTenantServiceImpl<T extends BaseEntity, ID, REQ, RES> 
+public abstract class BaseTenantServiceImpl<T extends AuditableTenantBase, ID, REQ, RES> 
         implements BaseTenantService<T, ID, REQ, RES> {
     
     protected final JpaRepository<T, ID> repository;

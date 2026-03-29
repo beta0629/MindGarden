@@ -1,6 +1,6 @@
 package com.coresolution.core.service.impl;
 
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.BaseTenantEntityService;
@@ -19,7 +19,7 @@ import java.util.Optional;
  * <p>기존 마인드가든 서비스와의 호환성을 위해 엔티티를 직접 다루는 버전입니다.</p>
  * <p>BaseService와 BaseTenantEntityService를 모두 구현하여 기존 코드와의 호환성을 유지합니다.</p>
  * 
- * @param <T> 엔티티 타입 (BaseEntity 상속)
+ * @param <T> 엔티티 타입 ({@link AuditableTenantBase} 상속)
  * @param <ID> 엔티티 ID 타입
  * 
  * @author CoreSolution
@@ -30,7 +30,7 @@ import java.util.Optional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public abstract class BaseTenantEntityServiceImpl<T extends BaseEntity, ID> 
+public abstract class BaseTenantEntityServiceImpl<T extends AuditableTenantBase, ID> 
         implements BaseTenantEntityService<T, ID> {
     
     protected final BaseRepository<T, ID> repository;

@@ -3,7 +3,7 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import com.coresolution.consultation.repository.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +16,7 @@ import org.springframework.data.domain.Pageable;
  * @version 1.0.0
  * @since 2024-12-19
  */
-public interface BaseService<T extends BaseEntity, ID> {
+public interface BaseService<T extends AuditableTenantBase, ID> {
     
     BaseRepository<T, ID> getRepository();
     

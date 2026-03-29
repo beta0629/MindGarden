@@ -1,7 +1,7 @@
 package com.coresolution.core.listener;
 
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class TenantEntityListener {
      * @param entity 저장할 엔티티
      */
     @PrePersist
-    public void prePersist(BaseEntity entity) {
+    public void prePersist(AuditableTenantBase entity) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && !tenantId.isEmpty() && entity.getTenantId() == null) {
             entity.setTenantId(tenantId);
@@ -39,7 +39,7 @@ public class TenantEntityListener {
      * @param entity 수정할 엔티티
      */
     @PreUpdate
-    public void preUpdate(BaseEntity entity) {
+    public void preUpdate(AuditableTenantBase entity) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && !tenantId.isEmpty() && entity.getTenantId() == null) {
             entity.setTenantId(tenantId);

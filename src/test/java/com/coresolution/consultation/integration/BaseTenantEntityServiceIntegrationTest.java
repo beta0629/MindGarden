@@ -1,6 +1,7 @@
 package com.coresolution.consultation.integration;
 
 import com.coresolution.consultation.ConsultationManagementApplication;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.*;
 import com.coresolution.consultation.repository.*;
 import com.coresolution.consultation.service.*;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,6 +91,12 @@ class BaseTenantEntityServiceIntegrationTest {
     
     @Autowired
     private BranchRepository branchRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     private String tenantId1;
     private String tenantId2;
@@ -123,6 +131,36 @@ class BaseTenantEntityServiceIntegrationTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+    }
+
+    /**
+     * clients.id = users.id FK 정합: User(CLIENT) 저장 후 동일 PK로 Client 행 저장.
+     */
+    private User newPersistedClientUser(String tenantId, String name, String email, String phone) {
+        User u = new User();
+        u.setUserId("u-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+        u.setEmail(email);
+        u.setPassword(passwordEncoder.encode("password12ab"));
+        u.setName(name);
+        u.setPhone(phone);
+        u.setRole(UserRole.CLIENT);
+        u.setTenantId(tenantId);
+        u.setIsActive(true);
+        u.setIsPasswordChanged(true);
+        u = userRepository.save(u);
+        userRepository.flush();
+        return u;
+    }
+
+    private Client persistClientRowForUser(User user) {
+        Client c = new Client();
+        c.setId(user.getId());
+        c.setTenantId(user.getTenantId());
+        c.setName(user.getName());
+        c.setEmail(user.getEmail());
+        c.setPhone(user.getPhone());
+        c.setIsDeleted(false);
+        return clientRepository.save(c);
     }
     
     // ==================== ConsultationService 테스트 ====================
@@ -188,50 +226,36 @@ class BaseTenantEntityServiceIntegrationTest {
     // ==================== ClientService 테스트 ====================
     
     @Test
-    @DisplayName("ClientService - BaseTenantEntityService create 메서드 동작 검증")
+    @DisplayName("ClientService - users.id와 동일 PK로 Client 저장 후 조회 검증")
     void testClientServiceCreate() {
-        // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
-        Client client = new Client();
-        client.setName("테스트 클라이언트");
-        client.setEmail("client@test.com");
-        client.setPhone("010-1234-5678");
-        
-        // When
-        Client saved = clientService.save(client);
-        
-        // Then
+
+        User user = newPersistedClientUser(tenantId1, "테스트 클라이언트", "client@test.com", "010-1234-5678");
+        Client saved = persistClientRowForUser(user);
+
         assertThat(saved).isNotNull();
-        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getId()).isEqualTo(user.getId());
         assertThat(saved.getTenantId()).isEqualTo(tenantId1);
         assertThat(saved.getName()).isEqualTo("테스트 클라이언트");
+
+        Client loaded = clientService.findActiveById(user.getId()).orElseThrow();
+        assertThat(loaded.getName()).isEqualTo("테스트 클라이언트");
     }
     
     @Test
     @DisplayName("ClientService - BaseTenantEntityService findAllByTenant 메서드 동작 검증")
     void testClientServiceFindAllByTenant() {
-        // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
-        Client client1 = new Client();
-        client1.setName("클라이언트 1");
-        client1.setEmail("client1@test.com");
-        client1.setPhone("010-1111-1111");
-        clientService.save(client1);
-        
+        User u1 = newPersistedClientUser(tenantId1, "클라이언트 1", "client1@test.com", "010-1111-1111");
+        persistClientRowForUser(u1);
+
         TenantContextHolder.setTenantId(tenantId2);
-        Client client2 = new Client();
-        client2.setName("클라이언트 2");
-        client2.setEmail("client2@test.com");
-        client2.setPhone("010-2222-2222");
-        clientService.save(client2);
-        
-        // When
+        User u2 = newPersistedClientUser(tenantId2, "클라이언트 2", "client2@test.com", "010-2222-2222");
+        persistClientRowForUser(u2);
+
         TenantContextHolder.setTenantId(tenantId1);
         List<Client> clients = clientService.findAllActive();
-        
-        // Then
+
         assertThat(clients).hasSize(1);
         assertThat(clients.get(0).getTenantId()).isEqualTo(tenantId1);
         assertThat(clients.get(0).getName()).isEqualTo("클라이언트 1");
@@ -488,13 +512,10 @@ class BaseTenantEntityServiceIntegrationTest {
     void testMultipleServicesTenantFiltering() {
         // Given - Tenant 1에 데이터 생성
         TenantContextHolder.setTenantId(tenantId1);
-        
-        Client client1 = new Client();
-        client1.setName("클라이언트 1");
-        client1.setEmail("client1@test.com");
-        client1.setPhone("010-1111-1111");
-        client1 = clientService.save(client1);
-        
+
+        User cu1 = newPersistedClientUser(tenantId1, "클라이언트 1", "client1@test.com", "010-1111-1111");
+        Client client1 = persistClientRowForUser(cu1);
+
         Consultant consultant1 = new Consultant();
         consultant1.setName("상담사 1");
         consultant1.setEmail("consultant1@test.com");
@@ -503,13 +524,10 @@ class BaseTenantEntityServiceIntegrationTest {
         
         // Given - Tenant 2에 데이터 생성
         TenantContextHolder.setTenantId(tenantId2);
-        
-        Client client2 = new Client();
-        client2.setName("클라이언트 2");
-        client2.setEmail("client2@test.com");
-        client2.setPhone("010-3333-3333");
-        client2 = clientService.save(client2);
-        
+
+        User cu2 = newPersistedClientUser(tenantId2, "클라이언트 2", "client2@test.com", "010-3333-3333");
+        Client client2 = persistClientRowForUser(cu2);
+
         Consultant consultant2 = new Consultant();
         consultant2.setName("상담사 2");
         consultant2.setEmail("consultant2@test.com");
@@ -543,11 +561,8 @@ class BaseTenantEntityServiceIntegrationTest {
         
         // When - 여러 엔티티 생성
         for (int i = 0; i < 10; i++) {
-            Client client = new Client();
-            client.setName("클라이언트 " + i);
-            client.setEmail("client" + i + "@test.com");
-            client.setPhone("010-0000-000" + i);
-            clientService.save(client);
+            User u = newPersistedClientUser(tenantId1, "클라이언트 " + i, "client" + i + "@test.com", "010-0000-000" + i);
+            persistClientRowForUser(u);
         }
         
         long endTime = System.currentTimeMillis();

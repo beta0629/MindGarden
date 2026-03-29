@@ -3,7 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.BaseRepository;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @since 2024-12-19
  */
 @Transactional
-public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseService<T, ID> {
+public abstract class BaseServiceImpl<T extends AuditableTenantBase, ID> implements BaseService<T, ID> {
     
     @Override
     public abstract BaseRepository<T, ID> getRepository();

@@ -81,16 +81,23 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     }
 
     @Override
+    public Client create(String tenantId, Client entity) {
+        if (entity.getId() == null) {
+            throw new IllegalArgumentException(
+                "Client의 id는 users.id와 동일해야 합니다. AdminService.registerClient를 사용하거나, User 저장 후 setId(user.getId())를 설정하세요.");
+        }
+        return super.create(tenantId, entity);
+    }
+
+    @Override
     public Client save(Client client) {
         if (client.getId() == null) {
-            // 새 클라이언트 생성 시
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null) {
                 return create(tenantId, client);
-            } else {
-                // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-                return clientRepository.save(client);
             }
+            throw new IllegalArgumentException(
+                "Client 저장 시 id(users.id와 일치)가 필요합니다. 테넌트 컨텍스트가 없으면 저장할 수 없습니다.");
         } else {
             // 기존 클라이언트 수정 시
             String tenantId = TenantContextHolder.getTenantId();
@@ -122,10 +129,12 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     public List<Client> saveAll(List<Client> clients) {
         clients.forEach(client -> {
             if (client.getId() == null) {
-                String tenantId = TenantContextHolder.getTenantId();
-                if (tenantId != null && client.getTenantId() == null) {
-                    client.setTenantId(tenantId);
-                }
+                throw new IllegalArgumentException(
+                    "Client 일괄 저장 시 각 행의 id(users.id와 일치)가 필요합니다.");
+            }
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId != null && client.getTenantId() == null) {
+                client.setTenantId(tenantId);
             }
         });
         return clientRepository.saveAll(clients);

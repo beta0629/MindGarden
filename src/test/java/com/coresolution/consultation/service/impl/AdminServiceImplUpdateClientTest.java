@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.Collections;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
@@ -49,6 +50,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -308,5 +310,38 @@ class AdminServiceImplUpdateClientTest {
         assertThat(existing.getTenantId()).isEqualTo(tenantId);
         assertThat(existing.getName()).isEqualTo("enc-n");
         verify(clientRepository).save(existing);
+    }
+
+    @Test
+    @DisplayName("registerClient: 저장되는 Client의 id가 User와 동일(users FK 정합)")
+    void registerClient_savedClientIdMatchesUserId() {
+        String tenantId = "tenant-ut-1";
+        long assignedUserId = 94_001L;
+
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setEmail("NewClientReg@test.com");
+
+        when(userIdGenerator.generateUniqueUserId(anyString(), anyString())).thenReturn("uid-reg-1");
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed-pw");
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
+                .thenReturn(Collections.emptyMap());
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(assignedUserId);
+            return u;
+        });
+
+        Client result = adminService.registerClient(request);
+
+        ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
+        verify(clientRepository).save(captor.capture());
+        assertThat(captor.getValue().getId()).isEqualTo(assignedUserId);
+        assertThat(result.getId()).isEqualTo(assignedUserId);
+        verify(userRepository).flush();
     }
 }

@@ -1,6 +1,6 @@
 package com.coresolution.core.service;
 
-import com.coresolution.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.AuditableTenantBase;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * <p>모든 업종(학원, 상담소, 카페, 요식업 등)에서 공통으로 사용하는 CRUD 로직을 정의합니다.</p>
  * <p>업종별 특화 비즈니스 로직은 하위 클래스에서 오버라이드하여 구현합니다.</p>
  * 
- * @param <T> 엔티티 타입 (BaseEntity 상속)
+ * @param <T> 엔티티 타입 ({@link AuditableTenantBase} 상속)
  * @param <ID> 엔티티 ID 타입
  * @param <REQ> 요청 DTO 타입
  * @param <RES> 응답 DTO 타입
@@ -19,7 +19,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2025-11-18
  */
-public interface BaseTenantService<T extends BaseEntity, ID, REQ, RES> {
+public interface BaseTenantService<T extends AuditableTenantBase, ID, REQ, RES> {
     
     // ==================== 공통 CRUD 메서드 ====================
     

@@ -11,6 +11,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class ScheduleAutoCompleteService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final TenantService tenantService;
+    private final ConfigurableApplicationContext applicationContext;
     
     /**
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
@@ -43,6 +45,9 @@ public class ScheduleAutoCompleteService {
      */
     @Scheduled(cron = "0 */10 * * * *") // 10분마다 실행 (운영용)
     public void autoCompleteExpiredSchedules() {
+        if (!applicationContext.isActive()) {
+            return;
+        }
         try {
             // 스케줄러는 HTTP 요청 컨텍스트가 없으므로 모든 활성 테넌트에 대해 실행
             List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
@@ -186,6 +191,9 @@ public class ScheduleAutoCompleteService {
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void cleanupDailySchedules() {
+        if (!applicationContext.isActive()) {
+            return;
+        }
         try {
             log.info("🧹 일일 스케줄 정리 시작");
             List<String> activeTenantIds = tenantService.getAllActiveTenantIds();

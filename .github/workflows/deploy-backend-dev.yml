@@ -420,3 +420,50 @@ jobs:
           done 2>/dev/null
           exit 1
 
+    - name: 🔍 dev DB clients.phone 컬럼 폭 검증 (Flyway 미적용 조기 감지)
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          if [ ! -f /etc/mindgarden/dev.env ]; then
+            echo "❌ /etc/mindgarden/dev.env 없음 — 스키마 자동 검증 불가"
+            exit 1
+          fi
+          set -a
+          # shellcheck source=/dev/null
+          source /etc/mindgarden/dev.env
+          set +a
+          DB_PORT="${DB_PORT:-3306}"
+          if command -v mysql >/dev/null 2>&1; then
+            COL_TYPE=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -Nsr -e "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" 2>/dev/null || true)
+            if [ -z "$COL_TYPE" ]; then
+              echo "❌ clients.phone 컬럼 타입 조회 실패 (빈 결과). DB 연결·DB_NAME·권한을 확인하세요."
+              exit 1
+            fi
+            echo "📋 clients.phone COLUMN_TYPE=${COL_TYPE}"
+            if echo "$COL_TYPE" | grep -qi 'varchar(500)'; then
+              echo "✅ clients.phone varchar(500) 확인"
+              exit 0
+            fi
+            echo "❌ clients.phone이 varchar(500)이 아닙니다 (현재: ${COL_TYPE})."
+            echo "   조치: Flyway 실패 시 flyway repair 후 재배포, 또는 V20260330_001 마이그레이션 DDL 수동 적용."
+            exit 1
+          fi
+          echo "⚠️ mysql 클라이언트 없음 — journalctl로 Flyway·기동 로그 대체 검증"
+          LOG_SNIP=$(sudo journalctl -u mindgarden-dev.service --no-pager -n 800 2>/dev/null || true)
+          if echo "$LOG_SNIP" | grep -qiE 'flyway.*(error|failed|Failed|ERROR)'; then
+            echo "❌ 최근 서비스 로그에 Flyway 관련 오류가 있습니다."
+            exit 1
+          fi
+          if echo "$LOG_SNIP" | grep -qiE 'Successfully applied|schema.*up to date|is up to date|No migration needed'; then
+            echo "✅ 로그에 Flyway 정상·최신 스키마 문구 확인 (서버에 mysql-client 설치 시 COLUMN_TYPE까지 자동 검증됩니다)"
+            exit 0
+          fi
+          echo "❌ mysql CLI가 없고 Flyway 성공·최신 스키마 로그도 확인되지 않았습니다."
+          echo "   조치: mysql 클라이언트 설치 또는 수동으로 SHOW FULL COLUMNS FROM clients LIKE 'phone'; 실행."
+          exit 1
+

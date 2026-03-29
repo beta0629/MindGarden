@@ -10,6 +10,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.BankTransferService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public class BankTransferServiceImpl implements BankTransferService {
     
     private final PaymentRepository paymentRepository;
     private final FinancialTransactionService financialTransactionService;
+    private final ConfigurableApplicationContext applicationContext;
     
     @Override
     public BankTransferResponse createVirtualAccount(BankTransferRequest request) {
@@ -140,6 +142,9 @@ public class BankTransferServiceImpl implements BankTransferService {
     @Override
     @Scheduled(fixedRate = 300000) // 5분마다 실행
     public int processDepositConfirmations() {
+        if (!applicationContext.isActive()) {
+            return 0;
+        }
         log.info("입금 확인 배치 처리 시작");
         
         List<Payment> unconfirmedPayments = getUnconfirmedDeposits();

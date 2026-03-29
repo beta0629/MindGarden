@@ -31,7 +31,10 @@ public interface CommonCodeService {
     // 활성 코드를 Map 형태로 조회 (프론트엔드용)
     List<Map<String, Object>> getActiveCodesByGroup(String codeGroup);
     
-    // ID로 조회
+    /**
+     * 현재 테넌트 컨텍스트가 있으면 해당 테넌트 행을 우선 조회하고, 없으면 활성 코어(글로벌) 코드만 PK로 조회한다.
+     * 타 테넌트 전용 행은 PK만으로 노출하지 않는다.
+     */
     CommonCode getCommonCodeById(Long id);
     
     // 코드 그룹과 값으로 조회
@@ -67,8 +70,8 @@ public interface CommonCodeService {
     void delete(Long id, String deletedBy);
     
     /**
-     * 공통코드 상세 조회 (표준화)
-     * 
+     * 공통코드 상세 조회 (표준화). {@link #getCommonCodeById(Long)}와 동일한 테넌트·코어 조회 정책을 따른다.
+     *
      * @param id 공통코드 ID
      * @return 공통코드 응답
      */

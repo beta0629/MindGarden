@@ -4,6 +4,7 @@ import com.mindgarden.ops.constants.OpsConstants;
 import com.mindgarden.ops.controller.dto.OnboardingCreateRequest;
 import com.mindgarden.ops.domain.onboarding.OnboardingRequest;
 import com.mindgarden.ops.domain.onboarding.OnboardingStatus;
+import com.mindgarden.ops.exception.EntityNotFoundException;
 import com.mindgarden.ops.repository.onboarding.OnboardingRequestRepository;
 import com.mindgarden.ops.service.audit.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -54,8 +55,25 @@ public class OnboardingService {
 
     @Transactional(readOnly = true)
     public OnboardingRequest getById(UUID id) {
-        return repository.findById(id)
-            .orElseThrow(() -> new com.mindgarden.ops.exception.EntityNotFoundException("온보딩 요청", id));
+        return getById(id, null);
+    }
+
+    /**
+     * 온보딩 요청 단건 조회.
+     *
+     * @param id 요청 PK
+     * @param tenantId 주체 테넌트 스코프. null/공백이면 레거시 호환으로 PK만 조회, 값이 있으면 tenantId+id 복합 조회(불일치 시 없음과 동일)
+     * @return 엔티티
+     * @throws EntityNotFoundException 없거나 스코프 불일치 시
+     */
+    @Transactional(readOnly = true)
+    public OnboardingRequest getById(UUID id, String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", id));
+        }
+        return repository.findByTenantIdAndId(tenantId.trim(), id)
+            .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", id));
     }
 
     @Transactional
@@ -305,7 +323,18 @@ public class OnboardingService {
     @Transactional
     public com.mindgarden.ops.controller.dto.OnboardingDecisionResponse decideWithAdminInfo(
             UUID requestId, OnboardingStatus status, String actorId, String note) {
-        OnboardingRequest saved = decide(requestId, status, actorId, note);
+        return decideWithAdminInfo(requestId, status, actorId, note, null);
+    }
+
+    /**
+     * 온보딩 결정 (관리자 계정 정보 포함). tenantId가 있으면 해당 테넌트 스코프로만 조회·처리.
+     *
+     * @param tenantId 주체 테넌트 스코프. null/공백이면 PK만으로 조회(레거시 OPS)
+     */
+    @Transactional
+    public com.mindgarden.ops.controller.dto.OnboardingDecisionResponse decideWithAdminInfo(
+            UUID requestId, OnboardingStatus status, String actorId, String note, String tenantId) {
+        OnboardingRequest saved = decide(requestId, status, actorId, note, tenantId);
         
         // 승인 완료 시 생성된 관리자 계정 정보 반환
         com.mindgarden.ops.controller.dto.OnboardingDecisionResponse.AdminAccountInfo adminInfo = null;
@@ -324,10 +353,27 @@ public class OnboardingService {
     
     @Transactional
     public OnboardingRequest decide(UUID requestId, OnboardingStatus status, String actorId, String note) {
-        log.info("[OnboardingService] decide 메서드 시작 - requestId={}, status={}, actorId={}", requestId, status, actorId);
-        
-        OnboardingRequest request = repository.findById(requestId)
-            .orElseThrow(() -> new com.mindgarden.ops.exception.EntityNotFoundException("온보딩 요청", requestId));
+        return decide(requestId, status, actorId, note, null);
+    }
+
+    /**
+     * 온보딩 결정. tenantId가 주어지면 반드시 복합 조회한다.
+     *
+     * @param tenantId 주체 테넌트 스코프. null/공백이면 PK만 조회(레거시)
+     */
+    @Transactional
+    public OnboardingRequest decide(UUID requestId, OnboardingStatus status, String actorId, String note, String tenantId) {
+        log.info("[OnboardingService] decide 메서드 시작 - requestId={}, status={}, actorId={}, tenantScoped={}",
+            requestId, status, actorId, tenantId != null && !tenantId.isBlank());
+
+        OnboardingRequest request;
+        if (tenantId == null || tenantId.isBlank()) {
+            request = repository.findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", requestId));
+        } else {
+            request = repository.findByTenantIdAndId(tenantId.trim(), requestId)
+                .orElseThrow(() -> new EntityNotFoundException("온보딩 요청", requestId));
+        }
         
         log.info("[OnboardingService] 온보딩 요청 조회 완료 - requestId={}, 현재 상태={}, tenantId={}", 
             requestId, request.getStatus(), request.getTenantId());

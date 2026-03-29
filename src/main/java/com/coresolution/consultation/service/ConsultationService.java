@@ -195,7 +195,9 @@ public interface ConsultationService extends BaseService<Consultation, Long> {
     // === 기본 CRUD 메서드들 ===
     
     /**
-     * ID로 상담 조회
+     * 현재 테넌트 컨텍스트 기준으로 상담을 조회한다.
+     * {@code tenantId + id}로만 조회하므로 PK만으로는 타 테넌트 행을 반환하지 않는다.
+     * 테넌트 컨텍스트가 없으면 빈 {@link Optional}을 반환한다.
      */
     Optional<Consultation> findById(Long id);
     

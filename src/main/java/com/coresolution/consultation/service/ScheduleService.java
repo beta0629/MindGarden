@@ -38,7 +38,8 @@ public interface ScheduleService {
     void deleteSchedule(Long id);
     
     /**
-     * 스케줄 조회
+     * 현재 테넌트 컨텍스트({@link com.coresolution.core.context.TenantContextHolder#getRequiredTenantId()}) 기준으로 스케줄을 조회한다.
+     * {@code findByTenantIdAndId}를 사용하므로 PK만으로 타 테넌트 행을 반환하지 않는다.
      */
     Schedule findById(Long id);
     

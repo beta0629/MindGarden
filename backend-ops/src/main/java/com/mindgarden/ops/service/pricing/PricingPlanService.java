@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * OPS 글로벌 요금제·애드온 카탈로그 관리. 테넌트 격리 컬럼 없음.
+ */
 @Service
 public class PricingPlanService {
 
@@ -101,7 +104,7 @@ public class PricingPlanService {
 
     @Transactional
     public void attachAddon(UUID planId, PlanAddonAttachRequest request, String actorId, String actorRole) {
-        PricingPlan plan = planRepository.findById(planId)
+        PricingPlan plan = planRepository.findOneById(planId)
             .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
         PricingAddon addon = addonRepository.findByAddonCode(request.addonCode())
             .orElseThrow(() -> new EntityNotFoundException("애드온", request.addonCode()));
@@ -135,7 +138,7 @@ public class PricingPlanService {
 
     @Transactional
     public PricingPlan updatePlan(UUID planId, PricingPlanUpdateRequest request, String actorId, String actorRole) {
-        PricingPlan plan = planRepository.findById(planId)
+        PricingPlan plan = planRepository.findOneById(planId)
             .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
 
         plan.setDisplayName(request.displayName());
@@ -168,7 +171,7 @@ public class PricingPlanService {
 
     @Transactional
     public void deactivatePlan(UUID planId, String actorId, String actorRole) {
-        PricingPlan plan = planRepository.findById(planId)
+        PricingPlan plan = planRepository.findOneById(planId)
             .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
 
         if (!plan.isActive()) {
@@ -191,7 +194,7 @@ public class PricingPlanService {
 
     @Transactional
     public PricingAddon updateAddon(UUID addonId, PricingAddonUpdateRequest request, String actorId, String actorRole) {
-        PricingAddon addon = addonRepository.findById(addonId)
+        PricingAddon addon = addonRepository.findOneById(addonId)
             .orElseThrow(() -> new EntityNotFoundException("애드온", addonId));
 
         addon.setDisplayName(request.displayName());
@@ -225,7 +228,7 @@ public class PricingPlanService {
 
     @Transactional
     public void deactivateAddon(UUID addonId, String actorId, String actorRole) {
-        PricingAddon addon = addonRepository.findById(addonId)
+        PricingAddon addon = addonRepository.findOneById(addonId)
             .orElseThrow(() -> new EntityNotFoundException("애드온", addonId));
 
         if (!addon.isActive()) {

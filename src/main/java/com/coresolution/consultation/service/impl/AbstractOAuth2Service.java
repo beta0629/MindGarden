@@ -359,7 +359,43 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     }
 
     /**
-     * 소셜 로그인 시 사용자 엔티티 로드. 테넌트 컨텍스트가 있으면 스코프 조회, 없으면 소셜 계정으로 테넌트 추정 후 조회.
+     * 소셜 행·연결 User에서 테넌트 ID를 추론한다. 엔티티 {@code tenantId} 컬럼을 우선한다.
+     *
+     * @param social 소셜 계정 (null이면 null)
+     * @return 비어 있지 않은 테넌트 ID 또는 null
+     */
+    private String resolveTenantIdFromSocialAccount(UserSocialAccount social) {
+        if (social == null) {
+            return null;
+        }
+        if (social.getTenantId() != null && !social.getTenantId().isEmpty()) {
+            return social.getTenantId();
+        }
+        User linked = social.getUser();
+        if (linked != null && linked.getTenantId() != null && !linked.getTenantId().isEmpty()) {
+            return linked.getTenantId();
+        }
+        return null;
+    }
+
+    /**
+     * 테넌트를 전혀 확정할 수 없을 때만 PK 단독 조회. 요청 테넌트와 불일치할 수 있어 크로스 테넌트 노출 위험이 있다.
+     *
+     * @param userId 사용자 PK
+     * @return 사용자
+     */
+    private User loadUserByIdWhenTenantUnknown(Long userId) {
+        log.warn(
+            "소셜 로그인 사용자 로드: 테넌트 컨텍스트·소셜 계정으로 테넌트 확정 불가 — findById 폴백(크로스 테넌트 위험): userId={}",
+            userId);
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 소셜 로그인 시 사용자 엔티티 로드.
+     * 순서: {@link TenantContextHolder} → {@link UserSocialAccount}로 테넌트 추론 → {@code findByTenantIdAndId} →
+     * 테넌트 불가 시에만 PK 단독 {@code findById} (크로스 테넌트 위험, WARN).
      *
      * @param existingUserId 조회 대상 사용자 PK
      * @param socialUserInfo 소셜 정보(provider·providerUserId 폴백용)
@@ -374,20 +410,27 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         Optional<UserSocialAccount> socialOpt = userSocialAccountRepository
             .findByProviderAndProviderUserIdAndIsDeletedFalse(getProviderName(), socialUserInfo.getProviderUserId());
         if (socialOpt.isPresent()) {
-            User linkedUser = socialOpt.get().getUser();
-            String tenantFromSocial = linkedUser != null ? linkedUser.getTenantId() : null;
-            if (tenantFromSocial != null && !tenantFromSocial.isEmpty()) {
-                Optional<User> scoped = userRepository.findByTenantIdAndId(tenantFromSocial, existingUserId);
+            UserSocialAccount social = socialOpt.get();
+            String inferredTenant = resolveTenantIdFromSocialAccount(social);
+            if (inferredTenant != null && !inferredTenant.isEmpty()) {
+                Optional<User> scoped = userRepository.findByTenantIdAndId(inferredTenant, existingUserId);
                 if (scoped.isPresent()) {
                     return scoped.get();
                 }
+                User linkedUser = social.getUser();
+                if (linkedUser != null && linkedUser.getId() != null && linkedUser.getId().equals(existingUserId)) {
+                    String tenantFromUser = linkedUser.getTenantId();
+                    if (tenantFromUser != null && !tenantFromUser.isEmpty()
+                        && !tenantFromUser.equals(inferredTenant)) {
+                        Optional<User> alt = userRepository.findByTenantIdAndId(tenantFromUser, existingUserId);
+                        if (alt.isPresent()) {
+                            return alt.get();
+                        }
+                    }
+                }
             }
         }
-        // 최후 폴백: PK만으로 조회 — 테넌트 미설정·소셜 매핑으로 테넌트 확정 불가 시 크로스 테넌트 노출 위험
-        log.warn("소셜 로그인 사용자 로드: 테넌트 컨텍스트·소셜 계정으로 테넌트 확정 불가 — findById 폴백(크로스 테넌트 위험): userId={}",
-            existingUserId);
-        return userRepository.findById(existingUserId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        return loadUserByIdWhenTenantUnknown(existingUserId);
     }
 
     /**

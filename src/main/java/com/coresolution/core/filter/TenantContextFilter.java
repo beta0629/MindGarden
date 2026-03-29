@@ -296,6 +296,40 @@ public class TenantContextFilter implements Filter {
     }
 
     /**
+     * 세션·헤더·User에서 테넌트 힌트를 수집한다. DB {@code findByTenantIdAndId}에 쓰이며,
+     * 모두 없을 때만 {@code findById} 폴백을 허용한다.
+     * 순서: {@link SessionConstants#TENANT_ID} → {@code X-Tenant-Id} → 세션 User의 {@code tenantId}.
+     *
+     * @param session HTTP 세션
+     * @param request HTTP 요청
+     * @param user    세션에 올라온 User( tenantId 비어 있을 수 있음 )
+     * @return 비어 있지 않은 테넌트 ID 또는 null
+     */
+    private String resolveTenantHintForUserReload(HttpSession session, HttpServletRequest request, User user) {
+        if (session != null) {
+            Object scTenant = session.getAttribute(SessionConstants.TENANT_ID);
+            if (scTenant != null && !scTenant.toString().isEmpty()) {
+                return scTenant.toString();
+            }
+            Object sessionTenant = session.getAttribute(SESSION_TENANT_ID);
+            if (sessionTenant != null && !sessionTenant.toString().isEmpty()) {
+                return sessionTenant.toString();
+            }
+        }
+        String headerTenant = request.getHeader(TENANT_ID_HEADER);
+        if (headerTenant != null && !headerTenant.isEmpty()
+                && !headerTenant.contains("[object") && !headerTenant.contains("Promise")
+                && !"tenant-unknown".equals(headerTenant)
+                && !"tenant-default".equals(headerTenant)) {
+            return headerTenant;
+        }
+        if (user != null && user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+            return user.getTenantId();
+        }
+        return null;
+    }
+
+    /**
      * tenant_id 추출
      *
      * @param request HTTP 요청
@@ -322,29 +356,16 @@ public class TenantContextFilter implements Filter {
                 if (user.getId() != null && userRepository != null) {
                     log.debug("Tenant ID 복구(DB) 시도: userId={}, URI={}", user.getId(), request.getRequestURI());
                     try {
-                        String lookupTenantId = null;
-                        Object sessionTenant = session.getAttribute(SESSION_TENANT_ID);
-                        if (sessionTenant != null && !sessionTenant.toString().isEmpty()) {
-                            lookupTenantId = sessionTenant.toString();
+                        String lookupTenantId = resolveTenantHintForUserReload(session, request, user);
+                        java.util.Optional<User> dbUserOpt;
+                        if (lookupTenantId != null && !lookupTenantId.isEmpty()) {
+                            dbUserOpt = userRepository.findByTenantIdAndId(lookupTenantId, user.getId());
+                        } else {
+                            log.warn(
+                                "⚠️ 테넌트 힌트 없음 — findById 폴백(크로스 테넌트 위험): userId={}, URI={}",
+                                user.getId(), request.getRequestURI());
+                            dbUserOpt = userRepository.findById(user.getId());
                         }
-                        if (lookupTenantId == null || lookupTenantId.isEmpty()) {
-                            Object scTenant = session.getAttribute(SessionConstants.TENANT_ID);
-                            if (scTenant != null && !scTenant.toString().isEmpty()) {
-                                lookupTenantId = scTenant.toString();
-                            }
-                        }
-                        if (lookupTenantId == null || lookupTenantId.isEmpty()) {
-                            String headerTenant = request.getHeader(TENANT_ID_HEADER);
-                            if (headerTenant != null && !headerTenant.isEmpty()
-                                    && !headerTenant.contains("[object") && !headerTenant.contains("Promise")
-                                    && !"tenant-unknown".equals(headerTenant)
-                                    && !"tenant-default".equals(headerTenant)) {
-                                lookupTenantId = headerTenant;
-                            }
-                        }
-                        java.util.Optional<User> dbUserOpt = (lookupTenantId != null && !lookupTenantId.isEmpty())
-                                ? userRepository.findByTenantIdAndId(lookupTenantId, user.getId())
-                                : userRepository.findById(user.getId());
                         if (dbUserOpt.isPresent()) {
                             User dbUser = dbUserOpt.get();
                             if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {

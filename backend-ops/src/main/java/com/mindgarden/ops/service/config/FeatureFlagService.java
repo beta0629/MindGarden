@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * OPS 글로벌 Feature Flag 관리. 테넌트 격리 컬럼 없음.
+ */
 @Service
 public class FeatureFlagService {
 
@@ -58,7 +61,7 @@ public class FeatureFlagService {
 
     @Transactional
     public FeatureFlag toggle(UUID flagId, FeatureFlagState newState, String actorId, String actorRole) {
-        FeatureFlag flag = featureFlagRepository.findById(flagId)
+        FeatureFlag flag = featureFlagRepository.findOneById(flagId)
             .orElseThrow(() -> new EntityNotFoundException("Feature Flag", flagId));
 
         flag.setState(newState);

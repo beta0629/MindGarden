@@ -362,8 +362,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * 세션/DB에서 가져온 사용자 ID로 최신 User를 조회한다.
-     * 필터 순서상 {@code TenantContextFilter} 이후이므로 {@link TenantContextHolder}에 tenant가 있으면
-     * {@code findByTenantIdAndId}만 사용하고, 없으면 레거시 {@code findById}로 폴백한다.
+     * 순서: {@link TenantContextHolder} → {@code tenantHintUser.getTenantId()} → {@code findByTenantIdAndId}.
+     * 테넌트를 전혀 알 수 없을 때만 {@code findById}(크로스 테넌트 위험, WARN).
      *
      * @param userId 사용자 PK
      * @param tenantHintUser 세션·UserSession에 붙은 User( tenantId 힌트용 ), null 가능
@@ -381,6 +381,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         if (tenantId != null && !tenantId.isEmpty()) {
             return userRepository.findByTenantIdAndId(tenantId, userId).orElse(null);
         }
+        log.warn(
+            "⚠️ reloadUserFromRepository: 테넌트 힌트 없음 — findById 폴백(크로스 테넌트 위험): userId={}",
+            userId);
         return userRepository.findById(userId).orElse(null);
     }
     

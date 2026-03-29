@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -45,9 +46,22 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.findAll());
     }
 
+    /**
+     * 온보딩 요청 단건 조회.
+     * <p>
+     * OPS 신뢰 경계: {@code tenantId} 쿼리를 생략하면 PK({@code id})만으로 조회한다(레거시 콘솔 호환).
+     * 테넌트 격리가 필요한 호출자는 반드시 주체 테넌트 {@code tenantId}를 넘겨 복합 조회한다.
+     * 스코프 불일치·미존재는 404로 동일하게 처리된다.
+     * </p>
+     *
+     * @param id 요청 PK
+     * @param tenantId 선택. 있으면 {@code tenantId}+{@code id}로 조회
+     */
     @GetMapping("/requests/{id}")
-    public ResponseEntity<OnboardingRequest> getRequest(@PathVariable UUID id) {
-        return ResponseEntity.ok(onboardingService.getById(id));
+    public ResponseEntity<OnboardingRequest> getRequest(
+        @PathVariable UUID id,
+        @RequestParam(required = false) String tenantId) {
+        return ResponseEntity.ok(onboardingService.getById(id, tenantId));
     }
 
     @PostMapping("/requests")
@@ -55,17 +69,28 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.create(payload));
     }
 
+    /**
+     * 온보딩 승인/거부 등 결정 저장.
+     * <p>
+     * OPS 신뢰 경계: {@code tenantId} 쿼리를 생략하면 PK만으로 대상을 조회한다(레거시).
+     * 테넌트 스코프가 있는 호출 경로에서는 동일한 {@code tenantId}를 쿼리로 넘겨 복합 조회한다.
+     * </p>
+     *
+     * @param tenantId 선택. GET 단건과 동일하게 쿼리 파라미터로 통일
+     */
     @PostMapping("/requests/{id}/decision")
     public ResponseEntity<OnboardingDecisionResponse> decide(
         @PathVariable UUID id,
+        @RequestParam(required = false) String tenantId,
         @RequestBody @Valid OnboardingDecisionRequest payload
     ) {
-        log.info("[OnboardingController] 결정 저장 요청 - requestId={}, status={}, actorId={}, note={}", 
-            id, payload.status(), payload.actorId(), payload.note() != null ? "있음" : "없음");
-        
+        log.info("[OnboardingController] 결정 저장 요청 - requestId={}, status={}, actorId={}, tenantScoped={}, note={}",
+            id, payload.status(), payload.actorId(), tenantId != null && !tenantId.isBlank(),
+            payload.note() != null ? "있음" : "없음");
+
         try {
             OnboardingDecisionResponse response = onboardingService.decideWithAdminInfo(
-                id, payload.status(), payload.actorId(), payload.note());
+                id, payload.status(), payload.actorId(), payload.note(), tenantId);
             log.info("[OnboardingController] 결정 저장 완료 - requestId={}, 최종 상태={}, adminAccount={}", 
                 id, response.request().getStatus(), 
                 response.adminAccount() != null ? response.adminAccount().email() : "없음");

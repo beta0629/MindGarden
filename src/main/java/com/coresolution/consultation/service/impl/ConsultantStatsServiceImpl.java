@@ -311,7 +311,17 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         consultantMap.put("addressDetail", consultant.getAddressDetail());
         consultantMap.put("postalCode", consultant.getPostalCode());
         consultantMap.put("birthDate", consultant.getBirthDate());
-        consultantMap.put("gender", consultant.getGender());
+        consultantMap.put("age", consultant.getAge());
+
+        String gender = consultant.getGender();
+        if (gender != null && !gender.trim().isEmpty()) {
+            try {
+                gender = encryptionUtil.safeDecrypt(gender);
+            } catch (Exception e) {
+                log.warn("🔓 상담사 성별 복호화 실패: consultantId={}, error={}", consultant.getId(), e.getMessage());
+            }
+        }
+        consultantMap.put("gender", gender);
         consultantMap.put("certification", consultant.getCertification());
         consultantMap.put("workHistory", consultant.getWorkHistory());
 

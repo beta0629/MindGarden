@@ -37,6 +37,97 @@ export const CONSULTANT_GRADE_TO_LABEL = {
  * @param {Object} consultant - consultant 객체 (grade, yearsOfExperience 포함)
  * @returns {{ label: string, level: string }}
  */
+/**
+ * API gender 값(MALE/FEMALE 등) → 화면용 한글
+ * @param {string|null|undefined} gender
+ * @returns {string|null}
+ */
+export const formatConsultantGenderLabel = (gender) => {
+  if (gender == null || String(gender).trim() === '') {
+    return null;
+  }
+  const u = String(gender).trim().toUpperCase();
+  if (u === 'MALE' || u === 'M') {
+    return '남성';
+  }
+  if (u === 'FEMALE' || u === 'F') {
+    return '여성';
+  }
+  if (u === '남' || u === '남성') {
+    return '남성';
+  }
+  if (u === '여' || u === '여성') {
+    return '여성';
+  }
+  return String(gender).trim();
+};
+
+/**
+ * 상담사 만 나이: age 필드 우선, 없으면 birthDate 파싱
+ * @param {Object} consultant
+ * @returns {number|null}
+ */
+export const getConsultantAgeYears = (consultant) => {
+  if (!consultant) {
+    return null;
+  }
+  const direct = consultant.age;
+  if (direct != null && direct !== '' && !Number.isNaN(Number(direct))) {
+    const n = Number(direct);
+    return n >= 0 && n < 150 ? n : null;
+  }
+  const bd = consultant.birthDate ?? consultant.birth_date;
+  if (bd == null) {
+    return null;
+  }
+  let y;
+  let m;
+  let d;
+  if (typeof bd === 'string') {
+    const match = bd.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      y = Number(match[1]);
+      m = Number(match[2]) - 1;
+      d = Number(match[3]);
+    } else {
+      const parsed = new Date(bd);
+      if (Number.isNaN(parsed.getTime())) {
+        return null;
+      }
+      y = parsed.getFullYear();
+      m = parsed.getMonth();
+      d = parsed.getDate();
+    }
+  } else if (Array.isArray(bd) && bd.length >= 3) {
+    y = Number(bd[0]);
+    m = Number(bd[1]) - 1;
+    d = Number(bd[2]);
+  } else if (typeof bd === 'object') {
+    const mo = bd.monthValue != null ? bd.monthValue : bd.month;
+    const day = bd.dayOfMonth != null ? bd.dayOfMonth : bd.day;
+    if (bd.year != null && mo != null && day != null) {
+      y = Number(bd.year);
+      m = Number(mo) - 1;
+      d = Number(day);
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+  const birth = new Date(y, m, d);
+  if (Number.isNaN(birth.getTime())) {
+    return null;
+  }
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const md = today.getMonth() - birth.getMonth();
+  if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) {
+    age -= 1;
+  }
+  return age >= 0 && age < 150 ? age : null;
+};
+
 export const getConsultantBadgeDisplay = (consultant) => {
   const grade = consultant?.grade;
   if (grade && CONSULTANT_GRADE_TO_LEVEL[grade]) {

@@ -278,6 +278,7 @@ const ClientModal = ({
                         <button
                             type="button"
                             className="mg-v2-button mg-v2-button-secondary"
+                            disabled={type === 'view'}
                             onClick={() => {
                                 if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
                                     new window.daum.Postcode({
@@ -318,6 +319,7 @@ const ClientModal = ({
                         onChange={handleInputChange}
                         placeholder="동, 호수, 상세 주소를 입력하세요."
                         className="mg-v2-form-input"
+                        readOnly={type === 'view'}
                     />
                 </div>
                 <div className="mg-v2-form-group">
@@ -331,6 +333,7 @@ const ClientModal = ({
                         placeholder="00000"
                         maxLength={5}
                         className="mg-v2-form-input"
+                        readOnly={type === 'view'}
                     />
                 </div>
                 <div className="mg-v2-form-group">

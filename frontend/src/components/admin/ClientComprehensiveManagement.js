@@ -150,9 +150,9 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         isActive: clientEntity.isActive,
                         branchCode: clientEntity.branchCode,
                         profileImageUrl: clientEntity.profileImageUrl,
-                        address: clientEntity.address,
-                        addressDetail: clientEntity.addressDetail,
-                        postalCode: clientEntity.postalCode,
+                        address: clientEntity.address || '',
+                        addressDetail: clientEntity.addressDetail || clientEntity.address_detail || '',
+                        postalCode: clientEntity.postalCode || clientEntity.postal_code || '',
                         birthDate: clientEntity.birthDate,
                         gender: clientEntity.gender,
                         age: clientEntity.age,
@@ -270,6 +270,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             grade: client.grade || 'BRONZE',
             notes: client.notes || '',
             profileImageUrl: client.profileImageUrl || '',
+            rrnFirst6: '',
+            rrnLast1: '',
+            address: client.address || '',
+            addressDetail: client.addressDetail || '',
+            postalCode: client.postalCode || '',
             vehiclePlate: client.vehiclePlate || ''
         });
         setShowModal(true);

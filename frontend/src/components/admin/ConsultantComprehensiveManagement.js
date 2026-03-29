@@ -8,7 +8,12 @@ import { getStatusLabel } from '../../utils/colorUtils';
 
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
-import { getAllConsultantsWithStats, getConsultantBadgeDisplay } from '../../utils/consultantHelper';
+import {
+    getAllConsultantsWithStats,
+    getConsultantBadgeDisplay,
+    formatConsultantGenderLabel,
+    getConsultantAgeYears
+} from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -158,6 +163,10 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         totalConsultations: consultantEntity.totalConsultations,
                         createdAt: consultantEntity.createdAt,
                         updatedAt: consultantEntity.updatedAt,
+                        status: consultantEntity.status,
+                        gender: consultantEntity.gender,
+                        birthDate: consultantEntity.birthDate ?? consultantEntity.birth_date,
+                        age: consultantEntity.age,
                         currentClients: item.currentClients || 0,
                         totalClients: item.totalClients || 0,
                         statistics: item.statistics || {}
@@ -1505,6 +1514,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const renderModalBody = () => {
         if (modalType === 'view') {
+            const viewGenderLabel = selectedConsultant
+                ? formatConsultantGenderLabel(selectedConsultant.gender)
+                : null;
+            const viewAgeYears = selectedConsultant
+                ? getConsultantAgeYears(selectedConsultant)
+                : null;
             return (
                 <div className="mg-v2-modal-body">
                     {selectedConsultant && (
@@ -1531,8 +1546,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">성별:</span>
                                             <span className="mg-v2-detail-value">
+                                                <SafeText fallback="-">{viewGenderLabel ?? null}</SafeText>
+                                            </span>
+                                        </div>
+                                        <div className="mg-v2-detail-item">
+                                            <span className="mg-v2-detail-label">나이:</span>
+                                            <span className="mg-v2-detail-value">
                                                 <SafeText fallback="-">
-                                                  {selectedConsultant.gender === 'MALE' ? '남성' : selectedConsultant.gender === 'FEMALE' ? '여성' : selectedConsultant.gender}
+                                                    {viewAgeYears != null ? `${viewAgeYears}세` : null}
                                                 </SafeText>
                                             </span>
                                         </div>

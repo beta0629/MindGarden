@@ -146,7 +146,11 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     
     /**
      * 현재 테넌트 컨텍스트 기반 코드 조회 (값으로)
+     *
+     * @deprecated OR 조건으로 테넌트·코어 행이 동시에 매칭되면 2건이 반환되어 Optional 단건 조회가 실패한다.
+     *             {@link #findTenantCodeByGroupAndValue} 후 {@link #findCoreCodeByGroupAndValue} 순으로 호출할 것.
      */
+    @Deprecated
     @Query("SELECT c FROM CommonCode c WHERE " +
            "((c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue) OR " +
            "(c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue)) " +

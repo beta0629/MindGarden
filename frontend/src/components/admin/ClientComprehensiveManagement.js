@@ -645,9 +645,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         if (f.length !== 6 || !/^[0-9]{6}$/.test(f) || l.length !== 1 || !/^[1-4]$/.test(l)) {
                                             const rrnMsg = '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.';
                                             showError(rrnMsg);
-                                            if (typeof globalThis.window !== 'undefined') {
-                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: rrnMsg, type: 'error', duration: 5000 } }));
-                                            }
                                             return;
                                         }
                                     }
@@ -681,9 +678,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         }
                                         const msg = '내담자가 성공적으로 등록되었습니다.';
                                         showSuccess(msg);
-                                        if (typeof globalThis.window !== 'undefined') {
-                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
-                                        }
                                         await loadClients();
                                         globalThis.window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();
@@ -691,17 +685,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         if (editingClient?.id == null || editingClient?.id === '') {
                                             const idErr = '내담자 ID가 없어 수정할 수 없습니다. 목록에서 다시 선택해 주세요.';
                                             showError(idErr);
-                                            if (typeof globalThis.window !== 'undefined') {
-                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: idErr, type: 'error', duration: 5000 } }));
-                                            }
                                             return;
                                         }
                                         if (!(dataToUse.email && String(dataToUse.email).trim())) {
                                             const emailErr = '이메일은 필수입니다.';
                                             showError(emailErr);
-                                            if (typeof globalThis.window !== 'undefined') {
-                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: emailErr, type: 'error', duration: 5000 } }));
-                                            }
                                             return;
                                         }
                                         console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
@@ -713,18 +701,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         }
                                         const msg = '내담자 정보가 성공적으로 수정되었습니다.';
                                         showSuccess(msg);
-                                        if (typeof globalThis.window !== 'undefined') {
-                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
-                                        }
                                         await loadClients();
                                         handleCloseModal();
                                     } else if (modalType === 'delete') {
                                         await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
                                         const msg = '내담자가 성공적으로 삭제되었습니다.';
                                         showSuccess(msg);
-                                        if (typeof globalThis.window !== 'undefined') {
-                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
-                                        }
                                         await loadClients();
                                         handleCloseModal();
                                     }
@@ -732,9 +714,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     console.error('❌ 내담자 처리 실패:', error);
                                     const errMsg = '내담자 처리 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류');
                                     showError(errMsg);
-                                    if (typeof globalThis.window !== 'undefined') {
-                                        globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: errMsg, type: 'error', duration: 5000 } }));
-                                    }
                                 }
                             };
                             return handleSave();

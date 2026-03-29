@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Client;
@@ -8,8 +9,6 @@ import com.coresolution.consultation.service.ClientService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +28,6 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
         implements ClientService {
     
     private final ClientRepository clientRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
     
     public ClientServiceImpl(
             ClientRepository clientRepository,
@@ -49,6 +45,7 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
             log.warn("findEntityById: 테넌트 컨텍스트 없음, 클라이언트 id={} 조회 생략", id);
             return Optional.empty();
         }
+        // 활성 행만: 단건/목록 조회·findActiveById와 동일 정책(삭제된 내담자는 노출하지 않음)
         return clientRepository.findByTenantIdAndId(tenantId, id);
     }
     
@@ -65,6 +62,24 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
         return clientRepository;
     }
     
+    @Override
+    public Client update(String tenantId, Client entity) {
+        if (restoreSoftDeletedClientRowIfNeeded(tenantId, entity.getId())
+                && Boolean.TRUE.equals(entity.getIsDeleted())) {
+            entity.setIsDeleted(false);
+        }
+        return super.update(tenantId, entity);
+    }
+
+    @Override
+    public Client partialUpdate(String tenantId, Long id, Client updateData) {
+        if (restoreSoftDeletedClientRowIfNeeded(tenantId, id)
+                && Boolean.TRUE.equals(updateData.getIsDeleted())) {
+            updateData.setIsDeleted(false);
+        }
+        return super.partialUpdate(tenantId, id, updateData);
+    }
+
     @Override
     public Client save(Client client) {
         if (client.getId() == null) {
@@ -85,8 +100,16 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
                 String tenantForLoad = client.getTenantId() != null && !client.getTenantId().isEmpty()
                     ? client.getTenantId()
                     : TenantContextHolder.getRequiredTenantId();
-                Client existingClient = clientRepository.findByTenantIdAndId(tenantForLoad, client.getId())
+                Client existingClient = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantForLoad, client.getId())
                     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + client.getId()));
+                if (Boolean.TRUE.equals(existingClient.getIsDeleted())) {
+                    existingClient.restore();
+                    existingClient.setUpdatedAt(LocalDateTime.now());
+                    clientRepository.save(existingClient);
+                }
+                if (Boolean.TRUE.equals(client.getIsDeleted())) {
+                    client.setIsDeleted(false);
+                }
                 if (existingClient.getTenantId() != null) {
                     accessControlService.validateTenantAccess(existingClient.getTenantId());
                 }
@@ -117,8 +140,16 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
             String tenantForLoad = client.getTenantId() != null && !client.getTenantId().isEmpty()
                 ? client.getTenantId()
                 : TenantContextHolder.getRequiredTenantId();
-            Client existingClient = clientRepository.findByTenantIdAndId(tenantForLoad, client.getId())
+            Client existingClient = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantForLoad, client.getId())
                     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + client.getId()));
+            if (Boolean.TRUE.equals(existingClient.getIsDeleted())) {
+                existingClient.restore();
+                existingClient.setUpdatedAt(LocalDateTime.now());
+                clientRepository.save(existingClient);
+            }
+            if (Boolean.TRUE.equals(client.getIsDeleted())) {
+                client.setIsDeleted(false);
+            }
             if (existingClient.getTenantId() != null) {
                 accessControlService.validateTenantAccess(existingClient.getTenantId());
             }
@@ -141,7 +172,7 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     @Override
     public void restoreById(Long id) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        findByTenantIdAndIdIncludingDeleted(tenantId, id)
+        clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + id));
         accessControlService.validateTenantAccess(tenantId);
         clientRepository.restoreByIdAndTenantId(id, tenantId);
@@ -283,23 +314,28 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     // ==================== 보조 메서드 ====================
 
     /**
-     * 소프트 삭제된 행 포함, 테넌트·ID로 단건 조회 (복구 등)
+     * 소프트 삭제된 clients 행이면 복구 후 저장. 이후 {@link #findEntityById}·상위 {@code update}가 활성 행을 볼 수 있게 함.
      *
      * @param tenantId 테넌트 ID
-     * @param id       클라이언트 ID
-     * @return 엔티티 Optional
+     * @param clientId 클라이언트 ID
+     * @return 이번 호출에서 복구(save)를 수행했으면 true
      */
-    private Optional<Client> findByTenantIdAndIdIncludingDeleted(String tenantId, Long id) {
-        if (tenantId == null || tenantId.isEmpty() || id == null) {
-            return Optional.empty();
+    private boolean restoreSoftDeletedClientRowIfNeeded(String tenantId, Long clientId) {
+        if (tenantId == null || tenantId.isEmpty() || clientId == null) {
+            return false;
         }
-        List<Client> rows = entityManager
-                .createQuery("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.id = :id", Client.class)
-                .setParameter("tenantId", tenantId)
-                .setParameter("id", id)
-                .setMaxResults(1)
-                .getResultList();
-        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+        Optional<Client> opt = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        Client row = opt.get();
+        if (!Boolean.TRUE.equals(row.getIsDeleted())) {
+            return false;
+        }
+        row.restore();
+        row.setUpdatedAt(LocalDateTime.now());
+        clientRepository.save(row);
+        return true;
     }
     
     /**

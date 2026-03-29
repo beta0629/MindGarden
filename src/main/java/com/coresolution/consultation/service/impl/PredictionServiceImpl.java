@@ -43,7 +43,7 @@ public class PredictionServiceImpl implements PredictionService {
     public TreatmentPrediction predictTreatmentOutcome(Long clientId) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
+            Client client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
                 .orElseThrow(() -> new IllegalArgumentException("내담자를 찾을 수 없습니다: " + clientId));
 
             log.info("치료 경과 예측 시작: clientId={}", clientId);
@@ -97,7 +97,7 @@ public class PredictionServiceImpl implements PredictionService {
     public DropoutRiskAssessment assessDropoutRisk(Long clientId) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
+            Client client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
                 .orElseThrow(() -> new IllegalArgumentException("내담자를 찾을 수 없습니다: " + clientId));
 
             log.info("중도 탈락 위험 평가 시작: clientId={}", clientId);

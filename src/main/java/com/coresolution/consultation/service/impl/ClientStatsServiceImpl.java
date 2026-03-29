@@ -256,7 +256,8 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         if (userTenantId == null || userTenantId.isBlank()) {
             log.warn("내담자 User.tenantId가 없어 차량번호 복사 생략: userId={}", user.getId());
         } else {
-            clientRepository.findByTenantIdAndId(userTenantId, user.getId())
+            // 소프트 삭제된 clients 행에도 차량번호가 있으면 DTO에 반영
+            clientRepository.findByTenantIdAndIdIncludingDeleted(userTenantId, user.getId())
                     .ifPresent(row -> client.setVehiclePlate(row.getVehiclePlate()));
         }
 

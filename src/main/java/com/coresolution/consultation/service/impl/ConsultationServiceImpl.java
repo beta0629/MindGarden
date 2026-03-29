@@ -1132,7 +1132,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             try {
                 String tenantId = TenantContextHolder.getRequiredTenantId();
-                Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
+                // 긴급 요청: 소프트 삭제된 내담자도 동일 clientId로 행이 있으면 존재 검증만 통과(상담 생성 정책·복구는 변경 없음)
+                Client client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
                     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
                 consultation.setClientId(clientId);
                 log.info("긴급 상담 요청 - 클라이언트 정보 확인: clientId={}, name={}", clientId, client.getName());

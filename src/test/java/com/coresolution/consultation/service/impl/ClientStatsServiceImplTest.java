@@ -75,7 +75,7 @@ class ClientStatsServiceImplTest {
     }
 
     @Test
-    @DisplayName("getAllClientsWithStatsByTenant: user·clients 테넌트 일치 시 findByTenantIdAndId로 차량번호 복사")
+    @DisplayName("getAllClientsWithStatsByTenant: user·clients 테넌트 일치 시 IncludingDeleted로 차량번호 복사")
     void getAllClientsWithStatsByTenant_copiesVehiclePlateWhenTenantsAlign() {
         User user = User.builder()
             .userId("client-71")
@@ -94,7 +94,8 @@ class ClientStatsServiceImplTest {
 
         when(userRepository.findByRole(TENANT, UserRole.CLIENT))
             .thenReturn(Collections.singletonList(user));
-        when(clientRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(row));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.of(row));
         when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
             .thenReturn(Collections.emptyList());
         when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
@@ -124,7 +125,8 @@ class ClientStatsServiceImplTest {
 
         when(userRepository.findByRole(TENANT, UserRole.CLIENT))
             .thenReturn(Collections.singletonList(user));
-        when(clientRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
         when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
             .thenReturn(Collections.emptyList());
         when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
@@ -154,7 +156,8 @@ class ClientStatsServiceImplTest {
         user.setIsActive(true);
 
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(user));
-        when(clientRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
         when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
             .thenReturn(Collections.emptyList());
         when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);

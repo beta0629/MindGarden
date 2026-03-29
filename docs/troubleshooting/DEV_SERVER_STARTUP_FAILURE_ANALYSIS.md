@@ -12,6 +12,8 @@
 - **종료**: Process exited with status 1. 헬스체크 3~6회 실패 후 워크플로 exit 1.
 - **추정**: JWT 검증 직후 ~ Tomcat 기동 전 구간에서 미처리 예외 발생. 예외는 stderr에만 출력되어 제공된 로그에 없을 수 있음.
 
+**Flyway로 기동이 막히는 경우**(예: `flyway_schema_history.success = 0`): `docs/troubleshooting/FLYWAY_REPAIR_FAILED_MIGRATION.md` 에서 repair·재적용·검증 SQL 절차를 참고.
+
 ---
 
 ## 2. 기동 순서 (코드 기준)

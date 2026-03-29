@@ -1,5 +1,6 @@
 # 테스트 환경 설정 (MySQL 개발 DB 연동)
 # Flyway: 미적용 마이그레이션만 실행. clean은 비활성(공유 DB 보호). application-local.yml과 동일 패턴.
+# 공유 DB(운영/CI): V20260330_001 등 마이그레이션 미적용 시 clients.phone truncation 등 DDL 불일치로 실패할 수 있음.
 spring:
   datasource:
     url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
@@ -15,6 +16,9 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
+  task:
+    scheduling:
+      enabled: false  # 통합 테스트에서 스케줄·공유 DB 부하·종료 시 풀 경쟁 완화 (application-local.yml과 동일 패턴)
   flyway:
     enabled: true
     locations: classpath:db/migration

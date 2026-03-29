@@ -67,6 +67,13 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s  # 종료 시 최대 30초 대기 (연결 풀 정리 시간 확보)
 
+  # 스케줄러: graceful shutdown 시 작업 완료 후 풀 종료(HikariDataSource has been closed 완화)
+  task:
+    scheduling:
+      shutdown:
+        await-termination: true
+        await-termination-period: 25s  # lifecycle timeout-per-shutdown-phase(30s) 이하
+
   # Thymeleaf 설정
   thymeleaf:
     cache: false

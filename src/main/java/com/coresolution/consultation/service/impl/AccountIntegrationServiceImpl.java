@@ -243,10 +243,11 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     @Override
     public boolean linkSocialAccount(Long existingUserId, String provider, String providerUserId) {
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             log.info("SNS 계정 연결: userId={}, provider={}, providerUserId={}", 
                     existingUserId, provider, providerUserId);
             
-            User user = userRepository.findById(existingUserId)
+            User user = userRepository.findByTenantIdAndId(tenantId, existingUserId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + existingUserId));
             
             // 이미 연결된 SNS 계정이 있는지 확인

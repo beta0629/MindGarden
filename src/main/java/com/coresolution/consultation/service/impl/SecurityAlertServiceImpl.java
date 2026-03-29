@@ -85,7 +85,7 @@ public class SecurityAlertServiceImpl implements SecurityAlertService {
         
         // 사용자 정보 조회
         if (userId != null) {
-            userRepository.findById(userId).ifPresent(user -> {
+            userRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), userId).ifPresent(user -> {
                 details.put("userEmail", user.getEmail());
                 details.put("userName", user.getName());
             });
@@ -104,7 +104,7 @@ public class SecurityAlertServiceImpl implements SecurityAlertService {
         
         // 사용자 정보 조회
         if (userId != null) {
-            userRepository.findById(userId).ifPresent(user -> {
+            userRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), userId).ifPresent(user -> {
                 details.put("userEmail", user.getEmail());
                 details.put("userName", user.getName());
             });

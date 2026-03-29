@@ -294,8 +294,8 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                     continue;
                 }
                 
-                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
-                User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
+                User client = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                 
                 if (consultant == null || client == null) {
                     continue;
@@ -451,7 +451,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             List<Long> cancelledIds = (List<Long>) cancelledResult.get("scheduleIds");
             if (cancelledIds != null) {
                 for (Long scheduleId : cancelledIds) {
-                    Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+                    Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId).orElse(null);
                     if (schedule != null) {
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         schedule.setStatus(ScheduleStatus.CANCELLED);
@@ -466,7 +466,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             List<Long> noShowIds = (List<Long>) noShowResult.get("scheduleIds");
             if (noShowIds != null) {
                 for (Long scheduleId : noShowIds) {
-                    Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+                    Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId).orElse(null);
                     if (schedule != null) {
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         schedule.setStatus(ScheduleStatus.CANCELLED); // NO_SHOW 대신 CANCELLED 사용

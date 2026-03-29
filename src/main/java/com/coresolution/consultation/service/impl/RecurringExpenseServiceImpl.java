@@ -58,7 +58,8 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
     public RecurringExpense updateRecurringExpense(Long id, RecurringExpense recurringExpense) {
         log.info("반복 지출 수정: id={}", id);
         
-        RecurringExpense existingExpense = recurringExpenseRepository.findById(id)
+        RecurringExpense existingExpense = recurringExpenseRepository.findByTenantIdAndId(
+                TenantContextHolder.getRequiredTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("반복 지출을 찾을 수 없습니다: " + id));
         
         existingExpense.setExpenseName(recurringExpense.getExpenseName());
@@ -86,7 +87,8 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
     public boolean deleteRecurringExpense(Long id) {
         log.info("반복 지출 삭제: id={}", id);
         
-        RecurringExpense recurringExpense = recurringExpenseRepository.findById(id)
+        RecurringExpense recurringExpense = recurringExpenseRepository.findByTenantIdAndId(
+                TenantContextHolder.getRequiredTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("반복 지출을 찾을 수 없습니다: " + id));
         
         recurringExpense.setIsActive(false);
@@ -100,7 +102,8 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
     @Transactional(readOnly = true)
     public RecurringExpense getRecurringExpenseById(Long id) {
         log.info("반복 지출 조회: id={}", id);
-        return recurringExpenseRepository.findById(id)
+        return recurringExpenseRepository.findByTenantIdAndId(
+                TenantContextHolder.getRequiredTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("반복 지출을 찾을 수 없습니다: " + id));
     }
     

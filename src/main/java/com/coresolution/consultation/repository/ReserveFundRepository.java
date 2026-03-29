@@ -2,7 +2,6 @@ package com.coresolution.consultation.repository;
 
 import java.util.List;
 import com.coresolution.consultation.entity.ReserveFund;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Repository;
  * @since 2025-01-11
  */
 @Repository
-public interface ReserveFundRepository extends JpaRepository<ReserveFund, Long> {
+public interface ReserveFundRepository extends BaseRepository<ReserveFund, Long> {
     
     /**
      * 테넌트별 모든 적립금 조회 (테넌트 필터링)

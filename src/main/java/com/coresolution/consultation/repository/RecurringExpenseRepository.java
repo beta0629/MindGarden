@@ -2,7 +2,6 @@ package com.coresolution.consultation.repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,7 @@ import com.coresolution.consultation.entity.RecurringExpense;
  * @since 2025-01-11
  */
 @Repository
-public interface RecurringExpenseRepository extends JpaRepository<RecurringExpense, Long> {
+public interface RecurringExpenseRepository extends BaseRepository<RecurringExpense, Long> {
     
     /**
      * 테넌트별 활성화된 모든 반복 지출 조회 (테넌트 필터링)

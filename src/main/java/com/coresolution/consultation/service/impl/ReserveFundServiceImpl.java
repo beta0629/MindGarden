@@ -54,7 +54,8 @@ public class ReserveFundServiceImpl implements ReserveFundService {
     public ReserveFund updateReserveFund(Long id, ReserveFund reserveFund) {
         log.info("적립금 수정: id={}", id);
         
-        ReserveFund existingFund = reserveFundRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ReserveFund existingFund = reserveFundRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("적립금을 찾을 수 없습니다: " + id));
         
         existingFund.setFundName(reserveFund.getFundName());
@@ -76,7 +77,8 @@ public class ReserveFundServiceImpl implements ReserveFundService {
     public boolean deleteReserveFund(Long id) {
         log.info("적립금 삭제: id={}", id);
         
-        ReserveFund reserveFund = reserveFundRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ReserveFund reserveFund = reserveFundRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("적립금을 찾을 수 없습니다: " + id));
         
         reserveFund.setIsActive(false);
@@ -90,7 +92,8 @@ public class ReserveFundServiceImpl implements ReserveFundService {
     @Transactional(readOnly = true)
     public ReserveFund getReserveFundById(Long id) {
         log.info("적립금 조회: id={}", id);
-        return reserveFundRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return reserveFundRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("적립금을 찾을 수 없습니다: " + id));
     }
     

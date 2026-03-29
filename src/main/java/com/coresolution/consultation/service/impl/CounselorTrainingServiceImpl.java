@@ -137,7 +137,8 @@ public class CounselorTrainingServiceImpl implements CounselorTrainingService {
     @Override
     public Map<String, Object> sendMessageToVirtualClient(Long sessionId, String counselorMessage) {
         try {
-            VirtualClientSession session = sessionRepository.findById(sessionId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            VirtualClientSession session = sessionRepository.findByTenantIdAndId(tenantId, sessionId)
                     .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다"));
 
             // TODO: MCP counselor-training 서버 호출
@@ -175,7 +176,8 @@ public class CounselorTrainingServiceImpl implements CounselorTrainingService {
     @Override
     public Map<String, Object> completeSession(Long sessionId) {
         try {
-            VirtualClientSession session = sessionRepository.findById(sessionId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            VirtualClientSession session = sessionRepository.findByTenantIdAndId(tenantId, sessionId)
                     .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다"));
 
             log.info("시뮬레이션 세션 종료: sessionId={}", sessionId);

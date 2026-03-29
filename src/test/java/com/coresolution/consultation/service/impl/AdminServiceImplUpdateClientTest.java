@@ -175,4 +175,47 @@ class AdminServiceImplUpdateClientTest {
         assertThat(saved.getVehiclePlate()).isEqualTo(VehiclePlateText.normalizeOrNull(request.getVehiclePlate()));
         assertThat(result.getVehiclePlate()).isEqualTo(saved.getVehiclePlate());
     }
+
+    @Test
+    @DisplayName("Client 신규 저장 시 User와 동일한 긴 암호문(500자 근접)이 Client에 그대로 복사된다")
+    void updateClient_whenNoClientRow_copiesLongEncryptedPiiFromUser() {
+        Long id = 99L;
+        String tenantId = "tenant-ut-1";
+        String longVal = "c".repeat(480);
+
+        User clientUser = User.builder()
+                .userId("u-long")
+                .email(longVal)
+                .password("x")
+                .name(longVal)
+                .phone(longVal)
+                .role(UserRole.CLIENT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        clientUser.setId(id);
+        clientUser.setTenantId(tenantId);
+        clientUser.setGender(longVal);
+        clientUser.setAddress(longVal);
+
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+
+        when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+
+        adminService.updateClient(id, request);
+
+        ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
+        verify(clientRepository).save(captor.capture());
+        Client saved = captor.getValue();
+        assertThat(saved.getEmail()).isEqualTo(longVal);
+        assertThat(saved.getName()).isEqualTo(longVal);
+        assertThat(saved.getPhone()).isEqualTo(longVal);
+        assertThat(saved.getGender()).isEqualTo(longVal);
+        assertThat(saved.getAddress()).isEqualTo(longVal);
+    }
 }

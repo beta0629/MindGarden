@@ -28,22 +28,22 @@ import jakarta.persistence.Table;
 @AllArgsConstructor
 public class Client extends BaseEntity {
     
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 500) // users와 동일: 암호화된 값 복사 정합
     private String name;
-    
-    @Column(name = "email", nullable = false, unique = true)
+
+    @Column(name = "email", nullable = false, unique = true, length = 500) // users와 동일: 암호화된 값 복사 정합
     private String email;
-    
-    @Column(name = "phone")
+
+    @Column(name = "phone", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String phone;
     
     @Column(name = "birth_date")
     private LocalDate birthDate;
     
-    @Column(name = "gender")
+    @Column(name = "gender", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String gender; // MALE, FEMALE, OTHER
-    
-    @Column(name = "address")
+
+    @Column(name = "address", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String address;
 
     @Column(name = "address_detail", length = 500)
@@ -56,10 +56,10 @@ public class Client extends BaseEntity {
     @Column(name = "vehicle_plate", length = 32)
     private String vehiclePlate;
 
-    @Column(name = "emergency_contact")
+    @Column(name = "emergency_contact", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String emergencyContact;
-    
-    @Column(name = "emergency_phone")
+
+    @Column(name = "emergency_phone", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String emergencyPhone;
     
     @Column(name = "medical_history", columnDefinition = "TEXT")

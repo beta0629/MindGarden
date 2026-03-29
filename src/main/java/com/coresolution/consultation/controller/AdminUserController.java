@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.coresolution.consultation.dto.AdminManagedUserBasicUpdateRequest;
 import com.coresolution.consultation.dto.AdminPasswordResetRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -303,6 +305,37 @@ public class AdminUserController {
             errorResponse.put("success", false);
             errorResponse.put("message", "역할 변경 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * 관리자 통합 사용자 관리: 이름·이메일·전화번호 수정 (DB 저장 시 암호화)
+     */
+    @PutMapping("/{userId}/basic-profile")
+    public ResponseEntity<Map<String, Object>> updateManagedUserBasicProfile(
+            @PathVariable Long userId,
+            @Valid @RequestBody AdminManagedUserBasicUpdateRequest request) {
+        try {
+            userService.updateManagedUserBasicFields(
+                userId,
+                request.getName(),
+                request.getEmail(),
+                request.getPhone());
+            Map<String, Object> ok = new HashMap<>();
+            ok.put("success", true);
+            ok.put("message", "사용자 정보가 수정되었습니다.");
+            return ResponseEntity.ok(ok);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(err);
+        } catch (Exception e) {
+            log.error("관리자 기본 프로필 수정 실패: userId={}, error={}", userId, e.getMessage(), e);
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("message", "정보 수정 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(err);
         }
     }
     

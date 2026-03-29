@@ -57,6 +57,29 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
 };
 
 /**
+ * 재무 대시보드 최근 거래 행의 날짜 표시.
+ * 백엔드 getBranchFinancialData는 Map에 `date`(ISO 문자열)를 쓰고, DTO 응답은 `transactionDate`를 쓸 수 있음.
+ */
+const formatRecentTransactionDate = (tx) => {
+  if (!tx || typeof tx !== 'object') return '—';
+  const raw = tx.transactionDate ?? tx.date ?? tx.createdAt ?? tx.valueDate ?? tx.postedAt;
+  if (raw == null || raw === '') return '—';
+  if (Array.isArray(raw) && raw.length >= 3) {
+    const [y, m, d] = raw;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return s.slice(0, 10);
+  }
+  const parsed = new Date(s);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  }
+  return s.length > 10 ? s.slice(0, 10) : s;
+};
+
+/**
  * ERP 메인 대시보드 컴포넌트 - Core Solution 디자인 시스템 적용
  */
 const ErpDashboard = ({ user: propUser }) => {
@@ -584,16 +607,23 @@ const ErpDashboard = ({ user: propUser }) => {
                   </thead>
                   <tbody>
                     {recentTransactions.map((tx) => {
-                      const isIncome = tx.type === 'INCOME' || tx.type === 'income';
-                      const descText = tx.description ?? tx.memo;
+                      const isIncome =
+                        tx.type === 'INCOME' ||
+                        tx.type === 'income' ||
+                        tx.transactionType === 'INCOME' ||
+                        tx.transactionType === 'income';
+                      const descText = tx.description ?? tx.memo ?? tx.remarks;
                       let descDisplay = '—';
                       if (descText != null) {
                         descDisplay =
                           typeof descText === 'object' ? JSON.stringify(descText) : String(descText);
                       }
+                      const rowKey =
+                        tx.id ??
+                        `${formatRecentTransactionDate(tx)}-${tx.amount}-${tx.type ?? tx.transactionType ?? ''}`;
                       return (
-                        <tr key={tx.id || `${tx.transactionDate}-${tx.amount}-${tx.type}`}>
-                          <td>{tx.transactionDate ? String(tx.transactionDate).slice(0, 10) : '—'}</td>
+                        <tr key={rowKey}>
+                          <td>{formatRecentTransactionDate(tx)}</td>
                           <td>{isIncome ? '수입' : '지출'}</td>
                           <td className={isIncome ? 'erp-dashboard__amount--income' : 'erp-dashboard__amount--expense'}>
                             {formatCurrency(tx.amount ?? 0)}

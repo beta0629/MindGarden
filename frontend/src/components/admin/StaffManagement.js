@@ -1,6 +1,7 @@
 /**
- * 스태프 계정 관리 (목록 조회·역할 변경)
+ * 스태프 계정 관리 (목록 조회·상세·기본 정보 수정·역할 변경)
  * - GET user-management 후 role=STAFF 필터, B0KlA·ContentArea 구조
+ * - 기본 정보 수정: PUT /api/v1/admin/user-management/{id}/basic-profile (이름·이메일·전화, 서버 암호화)
  * - 역할 변경: UnifiedModal + GET roles, PUT .../role?newRole=...
  *
  * @author Core Solution
@@ -9,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { User, Users, Mail, Phone, RefreshCw, UserPlus } from 'lucide-react';
+import { User, Users, Mail, Phone, RefreshCw, UserPlus, Eye, Edit } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -17,7 +18,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
@@ -39,6 +40,7 @@ import './ProfileCard.css';
 const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
 const API_STAFF_REGISTER = '/api/v1/admin/staff';
+const basicProfileEndpoint = (userId) => `/api/v1/admin/user-management/${userId}/basic-profile`;
 const ROLE_STAFF = 'STAFF';
 
 /** 역할 표시명 (백엔드 UserRole displayName과 동일) */
@@ -148,6 +150,47 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffEmailCheckStatus, setStaffEmailCheckStatus] = useState(null);
   const [isCheckingStaffEmail, setIsCheckingStaffEmail] = useState(false);
   const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
+  const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
+  const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
+  const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });
+  const [staffEditSubmitting, setStaffEditSubmitting] = useState(false);
+
+  const normalizeStaffPhoneForEdit = useCallback((p) => {
+    if (p == null || String(p).trim() === '' || String(p).trim() === '전화번호 없음') return '';
+    return String(p).trim();
+  }, []);
+
+  const openStaffDetail = useCallback((staff) => {
+    setStaffDetailModal({ open: true, staff });
+  }, []);
+
+  const closeStaffDetail = useCallback(() => {
+    setStaffDetailModal({ open: false, staff: null });
+  }, []);
+
+  const openStaffEdit = useCallback(
+    (staff) => {
+      if (!staff?.id) return;
+      setStaffEditForm({
+        name: maskEncryptedDisplay(staff.name, '이름') || '',
+        email: maskEncryptedDisplay(staff.email, '이메일') || '',
+        phone: normalizeStaffPhoneForEdit(staff.phone)
+      });
+      setStaffEditModal({ open: true, staff });
+    },
+    [normalizeStaffPhoneForEdit]
+  );
+
+  const closeStaffEdit = useCallback(() => {
+    setStaffEditModal({ open: false, staff: null });
+    setStaffEditForm({ name: '', email: '', phone: '' });
+    setStaffEditSubmitting(false);
+  }, []);
+
+  const handleStaffEditFieldChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setStaffEditForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -377,6 +420,76 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, [roleChangeModal, selectedNewRole, handleCloseRoleChange, loadUsers]);
 
+  const handleStaffEditSubmit = useCallback(async () => {
+    const { staff } = staffEditModal;
+    if (!staff?.id) return;
+    const name = (staffEditForm.name || '').trim();
+    const email = (staffEditForm.email || '').trim();
+    if (!name) {
+      showError('이름을 입력해 주세요.');
+      return;
+    }
+    if (!email) {
+      showError('이메일을 입력해 주세요.');
+      return;
+    }
+    setStaffEditSubmitting(true);
+    try {
+      const response = await StandardizedApi.put(basicProfileEndpoint(staff.id), {
+        name,
+        email,
+        phone: (staffEditForm.phone || '').trim()
+      });
+      if (response && response.success !== false) {
+        showSuccess(response.message || '사용자 정보가 수정되었습니다.');
+        closeStaffEdit();
+        await loadUsers();
+      } else {
+        throw new Error(response?.message || '수정에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('스태프 기본 정보 수정 실패:', err);
+      showError(err.message || '정보 수정 중 오류가 발생했습니다.');
+    } finally {
+      setStaffEditSubmitting(false);
+    }
+  }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers]);
+
+  const renderStaffActionBar = useCallback(
+    (staff, { compact = false } = {}) => {
+      const stop = (e) => {
+        e.stopPropagation();
+      };
+      const wrapClass = [
+        'mg-v2-profile-card__actions',
+        'mg-v2-client-actions',
+        compact && 'mg-v2-client-actions--compact'
+      ]
+        .filter(Boolean)
+        .join(' ');
+      return (
+        <div
+          className={wrapClass}
+          onClick={stop}
+          onKeyDown={stop}
+          role="group"
+          aria-label="스태프 작업"
+        >
+          <Button variant="secondary" size="small" onClick={() => openStaffDetail(staff)} preventDoubleClick>
+            <Eye size={14} /> 상세
+          </Button>
+          <Button variant="primary" size="small" onClick={() => openStaffEdit(staff)} preventDoubleClick>
+            <Edit size={14} /> 수정
+          </Button>
+          <Button variant="secondary" size="small" onClick={() => handleOpenRoleChange(staff)} preventDoubleClick>
+            역할 변경
+          </Button>
+        </div>
+      );
+    },
+    [openStaffDetail, openStaffEdit, handleOpenRoleChange]
+  );
+
   const handleSearch = useCallback((term) => {
     setSearchTerm(term);
   }, []);
@@ -396,7 +509,7 @@ const StaffManagement = ({ embedded = false }) => {
     <>
       <ContentHeader
         title="스태프 관리"
-        subtitle="스태프(사무원) 목록 조회 및 역할 변경"
+        subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
       />
 
       <ContentSection noCard className="mg-v2-mapping-kpi-section">
@@ -511,16 +624,7 @@ const StaffManagement = ({ embedded = false }) => {
                     </div>
                   </div>
                   <div className="mg-v2-profile-card__footer">
-                    <div className="mg-v2-profile-card__actions">
-                      <Button
-                        variant="primary"
-                        size="small"
-                        onClick={() => handleOpenRoleChange(staff)}
-                        preventDoubleClick
-                      >
-                        역할 변경
-                      </Button>
-                    </div>
+                    {renderStaffActionBar(staff)}
                   </div>
                 </div>
               ))}
@@ -531,10 +635,10 @@ const StaffManagement = ({ embedded = false }) => {
                   <div
                     key={staff.id}
                     className="mg-v2-profile-card mg-v2-profile-card--compact"
-                    onClick={() => handleOpenRoleChange(staff)}
+                    onClick={() => openStaffDetail(staff)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoleChange(staff); } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStaffDetail(staff); } }}
                   >
                     <div className="mg-v2-profile-card__header">
                       <Avatar
@@ -559,6 +663,9 @@ const StaffManagement = ({ embedded = false }) => {
                         </StatusBadge>
                       </div>
                     </div>
+                    <div className="mg-v2-profile-card__inline-actions">
+                      {renderStaffActionBar(staff, { compact: true })}
+                    </div>
                   </div>
                 ))}
               </SmallCardGrid>
@@ -568,10 +675,12 @@ const StaffManagement = ({ embedded = false }) => {
                   { key: 'name', label: '이름' },
                   { key: 'email', label: '이메일' },
                   { key: 'role', label: '역할' },
-                  { key: 'isActive', label: '상태' }
+                  { key: 'isActive', label: '상태' },
+                  { key: '_actions', label: '작업' }
                 ]}
                 data={filteredStaff}
                 renderCell={(key, item) => {
+                  if (key === '_actions') return renderStaffActionBar(item, { table: true });
                   if (key === 'role') return ROLE_DISPLAY_NAMES[item.role] || item.role;
                   if (key === 'isActive') return item.isActive ? '활성' : '비활성';
                   if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
@@ -579,12 +688,137 @@ const StaffManagement = ({ embedded = false }) => {
                   const v = item[key];
                   return v != null ? String(v) : '-';
                 }}
-                onRowClick={handleOpenRoleChange}
+                onRowClick={openStaffDetail}
               />
             )}
           </ContentCard>
         </ContentSection>
       </div>
+
+      <UnifiedModal
+        isOpen={staffDetailModal.open}
+        onClose={closeStaffDetail}
+        title="스태프 상세"
+        subtitle={staffDetailModal.staff
+          ? `${toDisplayString(staffDetailModal.staff.name)} · ${toDisplayString(staffDetailModal.staff.email)}`
+          : ''}
+        size="medium"
+        variant="default"
+        actions={
+          <Button variant="secondary" onClick={closeStaffDetail}>
+            닫기
+          </Button>
+        }
+      >
+        {staffDetailModal.staff && (
+          <div className="mg-v2-modal-body mg-v2-form" style={{ display: 'grid', gap: '12px' }}>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>이름</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.name, '이름')}</SafeText>
+            </div>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>이메일</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.email, '이메일')}</SafeText>
+            </div>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>전화번호</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.phone, '전화번호 없음')}</SafeText>
+            </div>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>역할</div>
+              <div>{ROLE_DISPLAY_NAMES[staffDetailModal.staff.role] || staffDetailModal.staff.role}</div>
+            </div>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>상태</div>
+              <div>{staffDetailModal.staff.isActive ? '활성' : '비활성'}</div>
+            </div>
+            <div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>등록일</div>
+              <div>
+                {staffDetailModal.staff.createdAt
+                  ? new Date(staffDetailModal.staff.createdAt).toLocaleString('ko-KR')
+                  : '-'}
+              </div>
+            </div>
+            {(staffDetailModal.staff.address || staffDetailModal.staff.addressDetail || staffDetailModal.staff.postalCode) && (
+              <div>
+                <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>주소</div>
+                <SafeText tag="div">
+                  {[
+                    toDisplayString(staffDetailModal.staff.postalCode, ''),
+                    toDisplayString(staffDetailModal.staff.address, ''),
+                    toDisplayString(staffDetailModal.staff.addressDetail, '')
+                  ].filter(Boolean).join(' ') || '-'}
+                </SafeText>
+              </div>
+            )}
+          </div>
+        )}
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={staffEditModal.open}
+        onClose={closeStaffEdit}
+        title="스태프 정보 수정"
+        subtitle="이름·이메일·전화번호만 변경할 수 있습니다. 역할은 역할 변경에서 수정하세요."
+        size="medium"
+        variant="form"
+        loading={staffEditSubmitting}
+        actions={
+          <>
+            <Button variant="secondary" onClick={closeStaffEdit} disabled={staffEditSubmitting}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleStaffEditSubmit}
+              disabled={staffEditSubmitting}
+              preventDoubleClick
+            >
+              저장
+            </Button>
+          </>
+        }
+      >
+        <div className="mg-modal__form-group">
+          <label htmlFor="staff-edit-name" className="mg-modal__label">이름 *</label>
+          <input
+            id="staff-edit-name"
+            name="name"
+            className="mg-v2-form-input"
+            value={staffEditForm.name}
+            onChange={handleStaffEditFieldChange}
+            disabled={staffEditSubmitting}
+            autoComplete="name"
+          />
+        </div>
+        <div className="mg-modal__form-group">
+          <label htmlFor="staff-edit-email" className="mg-modal__label">이메일 *</label>
+          <input
+            id="staff-edit-email"
+            name="email"
+            type="email"
+            className="mg-v2-form-input"
+            value={staffEditForm.email}
+            onChange={handleStaffEditFieldChange}
+            disabled={staffEditSubmitting}
+            autoComplete="email"
+          />
+        </div>
+        <div className="mg-modal__form-group">
+          <label htmlFor="staff-edit-phone" className="mg-modal__label">전화번호</label>
+          <input
+            id="staff-edit-phone"
+            name="phone"
+            className="mg-v2-form-input"
+            value={staffEditForm.phone}
+            onChange={handleStaffEditFieldChange}
+            disabled={staffEditSubmitting}
+            placeholder="비우면 전화번호 없음으로 저장"
+            autoComplete="tel"
+          />
+        </div>
+      </UnifiedModal>
 
       <UnifiedModal
         isOpen={roleChangeModal.open}

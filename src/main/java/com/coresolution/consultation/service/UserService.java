@@ -223,6 +223,11 @@ public interface UserService extends BaseService<User, Long> {
      * 사용자 프로필 수정
      */
     User updateUserProfile(Long id, User updateData);
+
+    /**
+     * 관리자 화면용: 이름·이메일·전화번호만 암호화하여 갱신 (통합 사용자 관리·스태프 등).
+     */
+    void updateManagedUserBasicFields(Long userId, String name, String email, String phone);
     
     /**
      * 사용자 비밀번호 변경

@@ -98,6 +98,12 @@
   gap: 0.75rem;
 }
 
+/* 한 열 flex 안에서 프로필 카드가 뷰포트 폭을 밀어내지 않도록 */
+.mg-v2-mapping-list-block__grid > .mg-v2-profile-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .mg-v2-mapping-list-block__empty {
   display: flex;
   flex-direction: column;

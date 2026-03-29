@@ -176,6 +176,32 @@ public class UserServiceImpl implements UserService {
         
         return userRepository.save(existingUser);
     }
+
+    @Override
+    public void updateManagedUserBasicFields(Long userId, String name, String email, String phone) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        User user = userRepository.findByTenantIdAndId(tenantId, userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("이름은 필수입니다.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+        String trimmedName = name.trim();
+        String trimmedEmail = email.trim().toLowerCase();
+        user.setName(encryptionUtil.safeEncrypt(trimmedName));
+        user.setEmail(encryptionUtil.safeEncrypt(trimmedEmail));
+        if (phone == null || phone.isBlank() || "전화번호 없음".equals(phone.trim())) {
+            user.setPhone(null);
+        } else {
+            user.setPhone(encryptionUtil.safeEncrypt(phone.trim()));
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setVersion(user.getVersion() + 1);
+        userRepository.save(user);
+        log.info("관리자 기본 프로필 수정 완료: userId={}", userId);
+    }
     
     @Override
     public void softDeleteById(Long id) {

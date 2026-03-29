@@ -1203,7 +1203,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private Map<String, Object> convertTransactionToMap(FinancialTransaction transaction) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", transaction.getId());
-        map.put("date", transaction.getTransactionDate().toString());
+        String dateStr = transaction.getTransactionDate().toString();
+        map.put("date", dateStr);
+        map.put("transactionDate", dateStr);
         map.put("type", transaction.getTransactionType().name());
         map.put("category", transaction.getCategory());
         map.put("subcategory", transaction.getSubcategory());

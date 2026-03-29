@@ -14,6 +14,8 @@ ExecStart=/opt/mindgarden/start.sh
 Restart=always
 RestartSec=10
 TimeoutStartSec=120
+# Spring Boot graceful shutdown: application.yml lifecycle 30s + task.scheduling.shutdown await 25s 여유
+TimeoutStopSec=120
 SyslogIdentifier=mindgarden-dev
 # stdout/stderr 모두 journal + 파일에 남기기 (journalctl과 dev-error.log에서 예외 확인 가능)
 StandardOutput=append:/var/log/mindgarden/dev.log

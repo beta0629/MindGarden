@@ -1,6 +1,7 @@
 # 개발 서버(dev 프로파일) 전용 설정
 # 배포: mindgarden-dev.service, /var/www/mindgarden-dev
 # OAuth2 redirect 등 기본값으로 기동 보장 (환경 변수 미설정 시에도 기동)
+# 배포 후 Flyway V20260330_001 적용 및 clients.phone DDL(길이) 확인 권장 — 미적용 시 phone truncation 재발 가능
 
 # 서버 기준 URL (OAuth2 callback 등에 사용, 환경 변수로 오버라이드)
 server:

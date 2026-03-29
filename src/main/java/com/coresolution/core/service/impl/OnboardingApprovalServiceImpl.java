@@ -743,30 +743,30 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     StringBuilder fallbackMessage = new StringBuilder("프로시저 실패 후 Java 재시도: ");
 
                     // 1. 테넌트 생성/활성화 확인 및 필요시 생성
-                    updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS",
+                    updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "IN_PROGRESS",
                             "테넌트 생성/활성화 중 (Java 재시도)...");
                     try {
                         tenantCreated = ensureTenantExists(tenantId, tenantName, businessType,
                                 subdomain, approvedBy);
                         if (tenantCreated) {
                             fallbackMessage.append("테넌트=OK, ");
-                            updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS",
+                            updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "SUCCESS",
                                     "테넌트 생성/활성화 완료");
                         } else {
                             fallbackMessage.append("테넌트=실패, ");
-                            updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED",
+                            updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "FAILED",
                                     "테넌트 생성/활성화 실패");
                         }
                     } catch (Exception e) {
                         log.error("테넌트 생성/활성화 실패: tenantId={}, error={}", tenantId, e.getMessage());
                         fallbackMessage.append("테넌트=오류, ");
-                        updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED",
+                        updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "FAILED",
                                 "테넌트 생성/활성화 오류: " + e.getMessage());
                     }
 
                     // 2. 역할 템플릿 적용 확인 (테넌트가 존재하는 경우에만)
                     if (tenantCreated) {
-                        updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS",
+                        updateProcessingStatus(requestId, tenantId, "ROLE_APPLY", "IN_PROGRESS",
                                 "역할 템플릿 적용 중 (Java 재시도)...");
                         try {
                             // TransactionTemplate을 사용하여 별도 트랜잭션에서 실행
@@ -1410,8 +1410,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용) 별도 트랜잭션으로 분리하여 메인 트랜잭션의 version 충돌 방지
      */
-    private void updateProcessingStatus(java.util.UUID requestId, String step, String status,
-            String message) {
+    private void updateProcessingStatus(java.util.UUID requestId, String tenantId, String step,
+            String status, String message) {
         try {
             // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지
             org.springframework.transaction.support.TransactionTemplate transactionTemplate =
@@ -1425,9 +1425,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
             transactionTemplate.executeWithoutResult(transactionStatus -> {
                 try {
-                    // 엔티티를 다시 조회하여 최신 버전 사용
-                    OnboardingRequest request =
-                            onboardingRequestRepository.findById(requestId).orElse(null);
+                    // 엔티티를 다시 조회하여 최신 버전 사용 (테넌트 + PK)
+                    OnboardingRequest request;
+                    if (tenantId == null || tenantId.isBlank()) {
+                        request = onboardingRequestRepository.findActiveById(requestId).orElse(null);
+                    } else {
+                        request = onboardingRequestRepository
+                                .findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestId)
+                                .orElse(null);
+                    }
                     if (request == null) {
                         log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
                         return;

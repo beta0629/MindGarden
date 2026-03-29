@@ -43,5 +43,15 @@ public interface FeatureFlagRepository extends JpaRepository<FeatureFlag, UUID> 
      */
     @Query("SELECT f FROM FeatureFlag f WHERE (f.expiresAt IS NULL OR f.expiresAt > CURRENT_TIMESTAMP) AND f.isDeleted = false")
     List<FeatureFlag> findAllNotExpired();
+
+    /**
+     * 소프트 삭제 제외 PK 조회
+     */
+    Optional<FeatureFlag> findByIdAndIsDeletedFalse(UUID id);
+
+    /**
+     * 테넌트별 PK 조회 (테넌트 격리)
+     */
+    Optional<FeatureFlag> findByTenantIdAndId(String tenantId, UUID id);
 }
 

@@ -8,6 +8,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -42,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultationMessageController extends BaseApiController {
 
     private final ConsultationMessageService consultationMessageService;
-    private final com.coresolution.consultation.service.UserService userService;
+    private final UserRepository userRepository;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
 
     /**
@@ -62,10 +63,11 @@ public class ConsultationMessageController extends BaseApiController {
     /**
      * 사용자 이름 조회 헬퍼 메서드
      */
-    private String getUserName(Long userId, String userType) {
+    private String getUserName(String tenantId, Long userId, String userType) {
         try {
             if (userId == null) return "알 수 없음";
-            User user = userService.findById(userId).orElse(null);
+            if (tenantId == null || tenantId.isEmpty()) return "알 수 없음";
+            User user = userRepository.findByTenantIdAndId(tenantId.trim(), userId).orElse(null);
             if (user == null) return "알 수 없음";
             
             // 이름이 있으면 이름 반환, 없으면 닉네임 반환
@@ -109,9 +111,9 @@ public class ConsultationMessageController extends BaseApiController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("테넌트 정보가 없습니다."));
         }
-        tenantId = tenantId.trim();
+        final String scopedTenantId = tenantId.trim();
         try {
-            TenantContextHolder.setTenantId(tenantId);
+            TenantContextHolder.setTenantId(scopedTenantId);
             List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
         
         // 데이터 변환 (senderName, receiverName 추가)
@@ -123,13 +125,13 @@ public class ConsultationMessageController extends BaseApiController {
                 data.put("content", message.getContent());
                 data.put("senderType", message.getSenderType());
                 data.put("senderId", message.getSenderId());
-                data.put("senderName", getUserName(message.getSenderId(), message.getSenderType()));
+                data.put("senderName", getUserName(scopedTenantId, message.getSenderId(), message.getSenderType()));
                 data.put("receiverId", message.getReceiverId());
                 // 반대 역할 결정 - enum 활용
                 String receiverType = com.coresolution.consultation.constant.UserRole.CONSULTANT.name().equals(message.getSenderType()) 
                                     ? com.coresolution.consultation.constant.UserRole.CLIENT.name()
                                     : com.coresolution.consultation.constant.UserRole.CONSULTANT.name();
-                data.put("receiverName", getUserName(message.getReceiverId(), receiverType));
+                data.put("receiverName", getUserName(scopedTenantId, message.getReceiverId(), receiverType));
                 data.put("messageType", message.getMessageType());
                 data.put("status", message.getStatus());
                 data.put("isImportant", message.getIsImportant());
@@ -196,7 +198,7 @@ public class ConsultationMessageController extends BaseApiController {
                 data.put("senderId", message.getSenderId());
                 data.put("receiverId", message.getReceiverId());
                 data.put("clientId", message.getClientId());
-                data.put("clientName", getUserName(message.getClientId(), "CLIENT"));
+                data.put("clientName", getUserName(tenantId, message.getClientId(), "CLIENT"));
                 data.put("messageType", message.getMessageType());
                 data.put("status", message.getStatus());
                 data.put("isImportant", message.getIsImportant());
@@ -381,9 +383,9 @@ public class ConsultationMessageController extends BaseApiController {
             messageData.put("consultationId", message.getConsultationId());
             messageData.put("senderType", message.getSenderType());
             messageData.put("senderId", message.getSenderId());
-            messageData.put("senderName", getUserName(message.getSenderId(), message.getSenderType()));
+            messageData.put("senderName", getUserName(tenantId, message.getSenderId(), message.getSenderType()));
             messageData.put("receiverId", message.getReceiverId());
-            messageData.put("receiverName", getUserName(message.getReceiverId(), receiverType));
+            messageData.put("receiverName", getUserName(tenantId, message.getReceiverId(), receiverType));
             messageData.put("title", message.getTitle());
             messageData.put("content", message.getContent());
             messageData.put("messageType", message.getMessageType());

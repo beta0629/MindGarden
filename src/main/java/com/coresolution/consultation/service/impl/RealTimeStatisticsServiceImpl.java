@@ -3,7 +3,6 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.util.Optional;
 import com.coresolution.consultation.entity.ConsultantPerformance;
-import com.coresolution.consultation.entity.ConsultantPerformanceId;
 import com.coresolution.consultation.entity.DailyStatistics;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
@@ -50,15 +49,15 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
                  schedule.getId(), schedule.getConsultantId());
         
         try {
-            // 1. 상담사 정보 조회
-            Optional<User> consultantOpt = userRepository.findById(schedule.getConsultantId());
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+
+            // 1. 상담사 정보 조회 (테넌트 스코프)
+            Optional<User> consultantOpt = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId());
             if (consultantOpt.isEmpty()) {
-                log.warn("상담사 정보를 찾을 수 없습니다: consultantId={}", schedule.getConsultantId());
+                log.warn("상담사 정보를 찾을 수 없습니다: tenantId={}, consultantId={}", tenantId, schedule.getConsultantId());
                 return;
             }
-            
-            User consultant = consultantOpt.get();
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+
             LocalDate scheduleDate = schedule.getDate();
             
             // 2. 일별 통계 업데이트 (PL/SQL 우선 사용)
@@ -95,14 +94,12 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
         log.debug("📈 상담사별 성과 실시간 업데이트: consultantId={}, date={}", consultantId, date);
         
         try {
-            // 기존 성과 데이터 조회 (복합키 사용)
-            ConsultantPerformanceId performanceId = new ConsultantPerformanceId();
-            performanceId.setConsultantId(consultantId);
-            performanceId.setPerformanceDate(date);
-            
-            Optional<ConsultantPerformance> existingPerformance = 
-                consultantPerformanceRepository.findById(performanceId);
-            
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+
+            Optional<ConsultantPerformance> existingPerformance =
+                consultantPerformanceRepository.findByTenantIdAndConsultantIdAndPerformanceDate(
+                    tenantId, consultantId, date);
+
             if (existingPerformance.isPresent()) {
                 // 기존 데이터 업데이트
                 ConsultantPerformance performance = existingPerformance.get();
@@ -111,7 +108,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
                 log.debug("✅ 기존 상담사 성과 업데이트 완료: consultantId={}", consultantId);
             } else {
                 // 새로운 성과 데이터 생성
-                ConsultantPerformance newPerformance = createNewPerformance(consultantId, date);
+                ConsultantPerformance newPerformance = createNewPerformance(tenantId, consultantId, date);
                 consultantPerformanceRepository.save(newPerformance);
                 log.debug("✅ 새로운 상담사 성과 생성 완료: consultantId={}", consultantId);
             }
@@ -273,8 +270,9 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     /**
      * 새로운 성과 데이터 생성
      */
-    private ConsultantPerformance createNewPerformance(Long consultantId, LocalDate date) {
+    private ConsultantPerformance createNewPerformance(String tenantId, Long consultantId, LocalDate date) {
         ConsultantPerformance performance = new ConsultantPerformance();
+        performance.setTenantId(tenantId);
         performance.setConsultantId(consultantId);
         performance.setPerformanceDate(date);
         performance.setTotalSchedules(1);

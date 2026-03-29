@@ -104,16 +104,8 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         
         accessControlService.validateTenantAccess(tenantId);
         
-        RolePermission permission = permissionRepository.findById(permissionId)
+        RolePermission permission = permissionRepository.findByIdAndTenantId(permissionId, tenantId)
             .orElseThrow(() -> new RuntimeException("권한을 찾을 수 없습니다: " + permissionId));
-        
-        // 역할이 해당 테넌트에 속하는지 확인
-        TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(permission.getTenantRoleId())
-            .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + permission.getTenantRoleId()));
-        
-        if (!role.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
-        }
         
         // 권한 코드 변경 시 중복 확인
         if (request.getPermissionCode() != null && 
@@ -143,16 +135,8 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         
         accessControlService.validateTenantAccess(tenantId);
         
-        RolePermission permission = permissionRepository.findById(permissionId)
+        RolePermission permission = permissionRepository.findByIdAndTenantId(permissionId, tenantId)
             .orElseThrow(() -> new RuntimeException("권한을 찾을 수 없습니다: " + permissionId));
-        
-        // 역할이 해당 테넌트에 속하는지 확인
-        TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(permission.getTenantRoleId())
-            .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + permission.getTenantRoleId()));
-        
-        if (!role.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
-        }
         
         permissionRepository.delete(permission);
         

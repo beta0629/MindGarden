@@ -61,7 +61,7 @@ class OnboardingServiceTest {
         testRequest = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
                 .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
                 .checklistJson("{\"checklist\": []}").businessType(testBusinessType)
-                .status(OnboardingStatus.PENDING).build();
+                .status(OnboardingStatus.PENDING).isDeleted(false).build();
     }
 
     @Test
@@ -85,7 +85,7 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 ID로 조회 - 성공")
     void testGetById_Success() {
         // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
 
         // When
         OnboardingRequest result = onboardingService.getById(testId);
@@ -101,7 +101,7 @@ class OnboardingServiceTest {
     void testGetById_NotFound() {
         // Given
         UUID nonExistentId = UUID.randomUUID();
-        when(repository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(repository.findActiveById(nonExistentId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> onboardingService.getById(nonExistentId))
@@ -131,7 +131,9 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 결정 - 승인")
     void testDecide_Approved() {
         // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
         when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> {
             OnboardingRequest request = invocation.getArgument(0);
             return request;
@@ -164,7 +166,9 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 결정 - 거부")
     void testDecide_Rejected() {
         // Given
-        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
         when(repository.save(any(OnboardingRequest.class))).thenReturn(testRequest);
 
         // When

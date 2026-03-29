@@ -6,6 +6,7 @@ import java.util.Random;
 import com.coresolution.consultation.entity.WellnessTemplate;
 import com.coresolution.consultation.repository.WellnessTemplateRepository;
 import com.coresolution.consultation.service.OpenAIWellnessService.WellnessContent;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -104,7 +105,12 @@ public class WellnessTemplateService {
      */
     @Transactional
     public void deactivateTemplate(Long templateId) {
-        wellnessTemplateRepository.findById(templateId).ifPresent(template -> {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("deactivateTemplate: 테넌트 컨텍스트 없음, templateId={}", templateId);
+            return;
+        }
+        wellnessTemplateRepository.findByTenantIdAndId(tenantId, templateId).ifPresent(template -> {
             template.setIsActive(false);
             wellnessTemplateRepository.save(template);
             log.info("🔒 템플릿 비활성화: {}", template.getTitle());

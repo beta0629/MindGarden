@@ -3,6 +3,7 @@ package com.coresolution.core.repository;
 import com.coresolution.core.domain.RolePermission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -41,5 +42,13 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
      * tenant_role_id로 권한 삭제
      */
     void deleteByTenantRoleId(String tenantRoleId);
+
+    /**
+     * 테넌트 소속 역할의 권한만 PK로 조회 (테넌트 격리)
+     */
+    @Query("SELECT rp FROM TenantRolePermission rp JOIN rp.tenantRole tr "
+        + "WHERE rp.id = :permissionId AND tr.tenantId = :tenantId AND tr.isDeleted = false")
+    Optional<RolePermission> findByIdAndTenantId(@Param("permissionId") Long permissionId,
+        @Param("tenantId") String tenantId);
 }
 

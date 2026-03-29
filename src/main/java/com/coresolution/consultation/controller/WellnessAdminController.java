@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.OpenAIWellnessService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -307,6 +308,14 @@ public class WellnessAdminController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (!hasAdminPermission(currentUser)) {
             throw new RuntimeException("권한이 없습니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = currentUser != null ? currentUser.getTenantId() : null;
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            TenantContextHolder.setTenantId(tenantId);
         }
         
         wellnessTemplateService.deactivateTemplate(id);

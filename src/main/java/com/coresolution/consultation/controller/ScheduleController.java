@@ -87,20 +87,18 @@ public class ScheduleController extends BaseApiController {
             log.info("📌 테넌트 컨텍스트 보완(세션 사용자): userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
             return;
         }
-        // 세션 User에 tenantId가 없을 때 DB에서 조회 후 보완
-        if (currentUser != null && currentUser.getId() != null && userRepository != null) {
-            try {
-                Optional<User> dbUserOpt = userRepository.findById(currentUser.getId());
-                if (dbUserOpt.isPresent()) {
-                    User dbUser = dbUserOpt.get();
-                    if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {
-                        TenantContextHolder.setTenantId(dbUser.getTenantId());
-                        log.info("📌 테넌트 컨텍스트 보완(DB 조회): userId={}, tenantId={}", currentUser.getId(), dbUser.getTenantId());
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ 테넌트 컨텍스트 DB 보완 실패 (무시): userId={}, error={}", currentUser.getId(), e.getMessage());
+        // 세션 TENANT_ID 속성만 있고 User 객체에 tenantId가 없는 경우
+        if (session != null && currentUser != null) {
+            String tenantFromSession = SessionUtils.getTenantId(session);
+            if (tenantFromSession != null && !tenantFromSession.isEmpty()) {
+                TenantContextHolder.setTenantId(tenantFromSession);
+                log.info("📌 테넌트 컨텍스트 보완(세션 속성): userId={}, tenantId={}", currentUser.getId(), tenantFromSession);
+                return;
             }
+        }
+        // tenantId를 테넌트 스코프로 알 수 없음 — 전역 PK 조회 없이 생략
+        if (currentUser != null && currentUser.getId() != null) {
+            log.warn("⚠️ 테넌트 컨텍스트 보완 생략(세션/홀더에 tenantId 없음): userId={}", currentUser.getId());
         }
     }
 
@@ -1469,10 +1467,18 @@ public class ScheduleController extends BaseApiController {
     private ScheduleResponse convertToScheduleResponse(Schedule schedule) {
         String consultantName = "알 수 없음";
         String clientName = "알 수 없음";
-        
+        String tenantId = schedule.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if ((schedule.getConsultantId() != null || schedule.getClientId() != null)
+                && (tenantId == null || tenantId.isEmpty())) {
+            log.warn("⚠️ 스케줄 응답 변환: tenantId 없어 상담사/내담자 이름 조회 생략 scheduleId={}", schedule.getId());
+        }
+
         try {
-            if (schedule.getConsultantId() != null) {
-                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+            if (schedule.getConsultantId() != null && tenantId != null && !tenantId.isEmpty()) {
+                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                 if (consultant != null) {
                     // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
                     Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
@@ -1485,8 +1491,8 @@ public class ScheduleController extends BaseApiController {
                 }
             }
             
-            if (schedule.getClientId() != null) {
-                User client = userRepository.findById(schedule.getClientId()).orElse(null);
+            if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+                User client = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                 if (client != null) {
                     // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
                     Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);

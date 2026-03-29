@@ -1,5 +1,6 @@
 package com.coresolution.core.service.ops;
 
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.ops.FeatureFlag;
 import com.coresolution.core.domain.ops.FeatureFlagState;
 import com.coresolution.core.repository.ops.FeatureFlagRepository;
@@ -109,8 +110,12 @@ public class FeatureFlagService {
     public FeatureFlag toggle(UUID flagId, FeatureFlagState newState) {
         log.info("Feature Flag 상태 변경: flagId={}, newState={}", flagId, newState);
         
-        FeatureFlag featureFlag = featureFlagRepository.findById(flagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature Flag를 찾을 수 없습니다: " + flagId));
+        String ctxTenantId = TenantContextHolder.getTenantId();
+        FeatureFlag featureFlag = (ctxTenantId != null && !ctxTenantId.isEmpty())
+            ? featureFlagRepository.findByTenantIdAndId(ctxTenantId, flagId)
+                .orElseThrow(() -> new IllegalArgumentException("Feature Flag를 찾을 수 없습니다: " + flagId))
+            : featureFlagRepository.findByIdAndIsDeletedFalse(flagId)
+                .orElseThrow(() -> new IllegalArgumentException("Feature Flag를 찾을 수 없습니다: " + flagId));
         
         // 상태 변경
         FeatureFlagState oldState = featureFlag.getState();

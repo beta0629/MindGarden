@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
@@ -17,9 +18,10 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * OAuth2 서비스 추상 클래스
@@ -29,9 +31,10 @@ import lombok.extern.slf4j.Slf4j;
  * @version 1.0.0
  * @since 2024-12-19
  */
-@Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractOAuth2Service implements OAuth2Service {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractOAuth2Service.class);
 
     protected final UserRepository userRepository;
     protected final ClientRepository clientRepository;
@@ -92,14 +95,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             if (existingUserId != null) {
                 // 기존 사용자 로그인
                 log.info("기존 사용자 로그인: userId={}", existingUserId);
-                user = userRepository.findById(existingUserId)
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                
-                // 사용자 null 체크 추가
-                if (user == null) {
-                    log.error("사용자 조회 실패: userId={}", existingUserId);
-                    throw new RuntimeException("사용자를 찾을 수 없습니다.");
-                }
+                user = loadUserForSocialLogin(existingUserId, socialUserInfo);
                 
                 // 소셜 계정 정보 업데이트
                 updateSocialAccountInfo(user.getId(), socialUserInfo);
@@ -180,7 +176,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         log.info("DB에 저장된 모든 소셜 계정 수: {}", allSocialAccounts.size());
         allSocialAccounts.forEach(account -> {
             log.info("소셜 계정: id={}, provider={}, providerUserId={}, userId={}", 
-                    account.getId(), account.getProvider(), account.getProviderUserId(), account.getUser().getId());
+                    account.getId(), account.getProvider(), account.getProviderUserId(), account.getUserId());
         });
         
         // 1. providerUserId로 직접 조회 (tenantId 필터링)
@@ -190,12 +186,11 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         if (socialAccountOptional.isPresent()) {
             var socialAccount = socialAccountOptional.get();
             log.info("찾은 소셜 계정: id={}, provider={}, providerUserId={}, userId={}", 
-                    socialAccount.getId(), socialAccount.getProvider(), socialAccount.getProviderUserId(), socialAccount.getUser().getId());
+                    socialAccount.getId(), socialAccount.getProvider(), socialAccount.getProviderUserId(), socialAccount.getUserId());
         }
         
         var result = socialAccountOptional
-            .map(UserSocialAccount::getUser)
-            .map(User::getId)
+            .map(UserSocialAccount::getUserId)
             .orElse(null);
         
         log.info("providerUserId로 조회 결과: result={}", result);
@@ -364,6 +359,38 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     }
 
     /**
+     * 소셜 로그인 시 사용자 엔티티 로드. 테넌트 컨텍스트가 있으면 스코프 조회, 없으면 소셜 계정으로 테넌트 추정 후 조회.
+     *
+     * @param existingUserId 조회 대상 사용자 PK
+     * @param socialUserInfo 소셜 정보(provider·providerUserId 폴백용)
+     * @return 사용자
+     */
+    private User loadUserForSocialLogin(Long existingUserId, SocialUserInfo socialUserInfo) {
+        String ctxTenantId = TenantContextHolder.getTenantId();
+        if (ctxTenantId != null && !ctxTenantId.isEmpty()) {
+            return userRepository.findByTenantIdAndId(ctxTenantId, existingUserId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        }
+        Optional<UserSocialAccount> socialOpt = userSocialAccountRepository
+            .findByProviderAndProviderUserIdAndIsDeletedFalse(getProviderName(), socialUserInfo.getProviderUserId());
+        if (socialOpt.isPresent()) {
+            User linkedUser = socialOpt.get().getUser();
+            String tenantFromSocial = linkedUser != null ? linkedUser.getTenantId() : null;
+            if (tenantFromSocial != null && !tenantFromSocial.isEmpty()) {
+                Optional<User> scoped = userRepository.findByTenantIdAndId(tenantFromSocial, existingUserId);
+                if (scoped.isPresent()) {
+                    return scoped.get();
+                }
+            }
+        }
+        // 최후 폴백: PK만으로 조회 — 테넌트 미설정·소셜 매핑으로 테넌트 확정 불가 시 크로스 테넌트 노출 위험
+        log.warn("소셜 로그인 사용자 로드: 테넌트 컨텍스트·소셜 계정으로 테넌트 확정 불가 — findById 폴백(크로스 테넌트 위험): userId={}",
+            existingUserId);
+        return userRepository.findById(existingUserId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
+    /**
      * 소셜 계정 정보 업데이트
      */
     protected void updateSocialAccountInfo(Long userId, SocialUserInfo socialUserInfo) {
@@ -403,7 +430,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         } else {
             // 새로운 소셜 계정 생성
             log.info("새로운 소셜 계정 생성");
-            User user = userRepository.findById(userId)
+            User user = userRepository.findByTenantIdAndId(tenantId, userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 사용자의 프로필 이미지가 없거나 기본 이미지인 경우 소셜 계정 이미지로 업데이트

@@ -104,6 +104,12 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue AND c.isActive = true")
     Optional<CommonCode> findCoreCodeByGroupAndValue(@Param("codeGroup") String codeGroup, @Param("codeValue") String codeValue);
     
+    /**
+     * 코어(글로벌) 공통코드 PK 단건 조회 — tenant_id IS NULL, 소프트삭제 제외
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.id = :id AND c.tenantId IS NULL AND c.isDeleted = false")
+    Optional<CommonCode> findActiveCoreCodeById(@Param("id") Long id);
+    
     // ==================== 테넌트별 코드 조회 ====================
     
     /**

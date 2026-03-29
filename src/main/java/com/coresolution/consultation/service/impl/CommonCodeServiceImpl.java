@@ -90,7 +90,18 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional(readOnly = true)
     public CommonCode getCommonCodeById(Long id) {
         log.info("🔍 공통코드 ID로 조회: {}", id);
-        return commonCodeRepository.findById(id)
+        String tenantId = TenantContextHolder.getTenantId();
+        // 1) 테넌트 컨텍스트가 있으면 해당 테넌트 행 우선, 2) 없으면 코어(글로벌) PK 폴백 — getCommonCodeByGroupAndValue와 동일한 혼합 정책
+        if (tenantId != null && !tenantId.isEmpty()) {
+            Optional<CommonCode> tenantRow = commonCodeRepository.findByTenantIdAndId(tenantId, id);
+            if (tenantRow.isPresent()) {
+                return tenantRow.get();
+            }
+            return commonCodeRepository.findActiveCoreCodeById(id)
+                    .orElseThrow(() -> new RuntimeException("CommonCode not found with id: " + id));
+        }
+        // 테넌트 미설정: 테넌트 전용 행은 PK만으로 노출하지 않음(격리). 코어 코드만 허용.
+        return commonCodeRepository.findActiveCoreCodeById(id)
                 .orElseThrow(() -> new RuntimeException("CommonCode not found with id: " + id));
     }
 
@@ -557,19 +568,19 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     public CommonCodeResponse create(CommonCodeCreateRequest request, String createdBy) {
         log.info("🔧 공통코드 생성 (표준화): {} - {}", request.getCodeGroup(), request.getCodeValue());
         
-        // 사용자 조회 및 권한 검증
+        String tenantId = request.getTenantId() != null ? request.getTenantId() : TenantContextHolder.getTenantId();
+        
         User user = null;
         if (createdBy != null && !createdBy.trim().isEmpty()) {
             try {
                 Long userId = Long.parseLong(createdBy);
-                user = userRepository.findById(userId).orElse(null);
+                String codeScopeTenant = tenantId != null && !tenantId.isEmpty() ? tenantId : null;
+                user = findUserForCommonCodePermissionCheck(userId, codeScopeTenant).orElse(null);
             } catch (NumberFormatException e) {
                 log.warn("⚠️ createdBy가 유효한 숫자가 아닙니다: {}", createdBy);
             }
         }
         
-        // 권한 검증
-        String tenantId = request.getTenantId() != null ? request.getTenantId() : TenantContextHolder.getTenantId();
         if (!permissionService.canCreateCode(user, tenantId)) {
             String codeType = tenantId == null || tenantId.isEmpty() ? "코어" : "테넌트";
             String message = String.format("%s 코드 생성 권한이 없습니다.", codeType);
@@ -631,7 +642,10 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         if (updatedBy != null && !updatedBy.trim().isEmpty()) {
             try {
                 Long userId = Long.parseLong(updatedBy);
-                user = userRepository.findById(userId).orElse(null);
+                String codeScopeTenant = existingCode.getTenantId() != null && !existingCode.getTenantId().isEmpty()
+                    ? existingCode.getTenantId()
+                    : null;
+                user = findUserForCommonCodePermissionCheck(userId, codeScopeTenant).orElse(null);
             } catch (NumberFormatException e) {
                 log.warn("⚠️ updatedBy가 유효한 숫자가 아닙니다: {}", updatedBy);
             }
@@ -691,7 +705,10 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         if (deletedBy != null && !deletedBy.trim().isEmpty()) {
             try {
                 Long userId = Long.parseLong(deletedBy);
-                user = userRepository.findById(userId).orElse(null);
+                String codeScopeTenant = code.getTenantId() != null && !code.getTenantId().isEmpty()
+                    ? code.getTenantId()
+                    : null;
+                user = findUserForCommonCodePermissionCheck(userId, codeScopeTenant).orElse(null);
             } catch (NumberFormatException e) {
                 log.warn("⚠️ deletedBy가 유효한 숫자가 아닙니다: {}", deletedBy);
             }
@@ -744,5 +761,33 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .collect(Collectors.toList());
         
         return CommonCodeListResponse.of(responses);
+    }
+    
+    /**
+     * 공통코드 CUD 권한 검증용 사용자 조회. 테넌트 코드는 해당 {@code tenantId}로만 조회한다.
+     * 코어 코드({@code codeTenantId} 없음)는 {@link TenantContextHolder} 후, 둘 다 없으면 슈퍼관리 예외 경로로 활성 사용자만 조회한다.
+     *
+     * @param userId 사용자 PK
+     * @param codeTenantId 테넌트 전용 코드의 tenantId (코어는 null)
+     * @return 조회된 사용자
+     * @author CoreSolution
+     * @since 2026-03-29
+     */
+    private Optional<User> findUserForCommonCodePermissionCheck(Long userId, String codeTenantId) {
+        if (userId == null) {
+            return Optional.empty();
+        }
+        if (codeTenantId != null && !codeTenantId.isEmpty()) {
+            return userRepository.findByTenantIdAndId(codeTenantId, userId);
+        }
+        String contextTenant = TenantContextHolder.getTenantId();
+        if (contextTenant != null && !contextTenant.isEmpty()) {
+            return userRepository.findByTenantIdAndId(contextTenant, userId);
+        }
+        log.warn(
+            "코어/슈퍼관리 경로: 테넌트를 특정할 수 없어 사용자 PK 기준 활성 조회만 수행합니다. userId={}",
+            userId
+        );
+        return userRepository.findActiveById(userId);
     }
 }

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
-import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -32,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ClientSocialAccountController extends BaseApiController {
 
-    private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
 
     /**
@@ -47,8 +45,17 @@ public class ClientSocialAccountController extends BaseApiController {
         
         log.info("🔍 소셜 계정 조회: userId={}", currentUser.getId());
         
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = currentUser.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new org.springframework.security.access.AccessDeniedException("테넌트를 확인할 수 없습니다.");
+        }
+
         // 사용자의 소셜 계정 목록 조회
-        var socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(currentUser.getId());
+        var socialAccounts = userSocialAccountRepository.findByTenantIdAndUserIdAndIsDeletedFalse(
+            tenantId, currentUser.getId());
         
         log.info("✅ 소셜 계정 조회 완료: userId={}, count={}", currentUser.getId(), socialAccounts.size());
         
@@ -100,9 +107,14 @@ public class ClientSocialAccountController extends BaseApiController {
     private ResponseEntity<ApiResponse<Map<String, Object>>> handleUnlinkSocialAccount(User currentUser, String provider, Long accountId) {
         UserSocialAccount socialAccount = null;
 
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new org.springframework.security.access.AccessDeniedException("테넌트를 확인할 수 없습니다.");
+        }
+
         if (accountId != null) {
             // accountId로 직접 조회
-            var optional = userSocialAccountRepository.findById(accountId);
+            var optional = userSocialAccountRepository.findByTenantIdAndId(tenantId, accountId);
             if (optional.isPresent()) {
                 socialAccount = optional.get();
                 // 본인의 계정인지 확인
@@ -114,8 +126,8 @@ public class ClientSocialAccountController extends BaseApiController {
             }
         } else if (provider != null) {
             // provider로 조회 - 사용자 객체로 조회
-            var optional = userSocialAccountRepository.findByUserAndProviderAndIsDeletedFalse(
-                currentUser, provider);
+            var optional = userSocialAccountRepository.findByTenantIdAndUserAndProviderAndIsDeletedFalse(
+                tenantId, currentUser, provider);
             if (optional.isPresent()) {
                 socialAccount = optional.get();
             }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * AI 이상 탐지 Repository
@@ -46,5 +47,15 @@ public interface AiAnomalyDetectionRepository extends JpaRepository<AiAnomalyDet
      * 테넌트별 기간별 이상 탐지 조회
      */
     List<AiAnomalyDetection> findByTenantIdAndDetectedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * 테넌트별 PK 조회 (테넌트 격리)
+     */
+    Optional<AiAnomalyDetection> findByTenantIdAndId(String tenantId, Long id);
+
+    /**
+     * 플랫폼(테넌트 미지정) 이상 탐지 PK 조회
+     */
+    Optional<AiAnomalyDetection> findByIdAndTenantIdIsNull(Long id);
 }
 

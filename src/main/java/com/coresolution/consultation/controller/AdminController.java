@@ -496,7 +496,19 @@ public class AdminController extends BaseApiController {
 
         log.info("🔍 상담사별 매칭된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
 
-        User targetConsultant = userService.findById(consultantId)
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = SessionUtils.getTenantId(session);
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ [보안] tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(),
+                    currentUser.getRole());
+            throw new IllegalArgumentException(
+                    String.format("테넌트 정보가 없습니다. 사용자 ID: %d. 관리자에게 문의하세요.", currentUser.getId()));
+        }
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+
+        User targetConsultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
 
         List<ConsultantClientMapping> mappings =
@@ -3249,13 +3261,23 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "상담사 관리 권한이 없습니다."));
             }
 
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = SessionUtils.getTenantId(session);
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
+            }
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+
             String specialty = request.get("specialty");
             if (specialty == null || specialty.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("success", false, "message", "전문분야를 입력해주세요."));
             }
 
-            User consultant = userService.findById(consultantId).orElse(null);
+            User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId).orElse(null);
             if (consultant == null) {
                 return ResponseEntity.notFound().build();
             }

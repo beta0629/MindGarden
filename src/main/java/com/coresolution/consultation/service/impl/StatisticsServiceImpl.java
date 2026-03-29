@@ -268,9 +268,11 @@ public class StatisticsServiceImpl implements StatisticsService {
         log.info("📊 상담사 성과 업데이트 시작: consultantId={}, date={}", consultantId, date);
 
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             ConsultantPerformance performance = consultantPerformanceRepository
-                .findById(new com.coresolution.consultation.entity.ConsultantPerformanceId(consultantId, date))
+                .findByTenantIdAndConsultantIdAndPerformanceDate(tenantId, consultantId, date)
                 .orElse(ConsultantPerformance.builder()
+                    .tenantId(tenantId)
                     .consultantId(consultantId)
                     .performanceDate(date)
                     .build());
@@ -350,8 +352,9 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public ConsultantPerformance getConsultantPerformance(Long consultantId, LocalDate date) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return consultantPerformanceRepository
-            .findById(new com.coresolution.consultation.entity.ConsultantPerformanceId(consultantId, date))
+            .findByTenantIdAndConsultantIdAndPerformanceDate(tenantId, consultantId, date)
             .orElse(null);
     }
 
@@ -408,6 +411,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         log.info("🚨 성과 알림 생성: consultantId={}, level={}", consultantId, level);
 
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
             Long recentAlertCount = performanceAlertRepository.countRecentSimilarAlerts(
                 consultantId, level, oneHourAgo);
@@ -417,7 +421,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return null;
             }
 
-            Optional<User> consultantOpt = userRepository.findById(consultantId);
+            Optional<User> consultantOpt = userRepository.findByTenantIdAndId(tenantId, consultantId);
             String consultantName = consultantOpt.map(User::getName).orElse("알 수 없음");
 
             PerformanceAlert alert = PerformanceAlert.builder()
@@ -455,7 +459,12 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public void markAlertAsRead(Long alertId) {
-        performanceAlertRepository.findById(alertId).ifPresent(alert -> {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ tenantId가 설정되지 않아 알림 읽음 처리를 건너뜁니다: alertId={}", alertId);
+            return;
+        }
+        performanceAlertRepository.findByTenantIdAndId(tenantId, alertId).ifPresent(alert -> {
             alert.markAsRead();
             performanceAlertRepository.save(alert);
             log.info("📖 알림 읽음 처리: alertId={}", alertId);
@@ -1028,8 +1037,8 @@ public class StatisticsServiceImpl implements StatisticsService {
             Optional<ConsultantClientMapping> mappingOpt = mappingRepository
                 .findByTenantIdAndConsultantAndClient(
                     tenantId,
-                    userRepository.findById(schedule.getConsultantId()).orElse(null),
-                    userRepository.findById(schedule.getClientId()).orElse(null)
+                    userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null),
+                    userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null)
                 )
                 .stream()
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용

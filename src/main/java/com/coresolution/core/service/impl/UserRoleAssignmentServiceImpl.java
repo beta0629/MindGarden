@@ -144,8 +144,8 @@ public class UserRoleAssignmentServiceImpl implements UserRoleAssignmentService 
         
         // 브랜치 정보 조회
         final String[] branchName = {null};
-        if (assignment.getBranchId() != null) {
-            branchRepository.findById(assignment.getBranchId())
+        if (assignment.getBranchId() != null && assignment.getTenantId() != null) {
+            branchRepository.findByTenantIdAndId(assignment.getTenantId(), assignment.getBranchId())
                     .ifPresent(branch -> branchName[0] = branch.getBranchName());
         }
         

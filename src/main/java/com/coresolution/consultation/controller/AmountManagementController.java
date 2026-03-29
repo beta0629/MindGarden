@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AmountManagementService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,14 +74,26 @@ public class AmountManagementController extends BaseApiController {
     @PostMapping("/mappings/{mappingId}/validate-amount")
     public ResponseEntity<ApiResponse<Map<String, Object>>> validateAmount(
             @PathVariable Long mappingId,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         Long inputAmount = request.get("amount") != null ? 
             ((Number) request.get("amount")).longValue() : null;
         
         log.info("🔍 금액 검증: MappingID={}, InputAmount={}", mappingId, inputAmount);
         
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            var user = SessionUtils.getCurrentUser(session);
+            if (user != null) {
+                tenantId = user.getTenantId();
+            }
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
+        }
+
         // 매핑 조회
-        var mappingOpt = mappingRepository.findById(mappingId);
+        var mappingOpt = mappingRepository.findByTenantIdAndId(tenantId, mappingId);
         if (mappingOpt.isEmpty()) {
             throw new RuntimeException("매핑을 찾을 수 없습니다.");
         }

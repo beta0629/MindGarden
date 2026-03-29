@@ -226,4 +226,10 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      */
     @Query("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :branchId AND b.isDeleted = false")
     Page<Branch> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
+
+    /**
+     * 테넌트별 지점 PK 조회
+     */
+    @Query("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :id AND b.isDeleted = false")
+    Optional<Branch> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
 }

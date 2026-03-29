@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.PerformanceAlert;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,12 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface PerformanceAlertRepository extends JpaRepository<PerformanceAlert, Long> {
+
+    /**
+     * 테넌트·PK로 성과 알림 단건 조회 (활성 행만, 크로스 테넌트 방지)
+     */
+    @Query("SELECT pa FROM PerformanceAlert pa WHERE pa.tenantId = :tenantId AND pa.id = :id AND pa.isDeleted = false")
+    Optional<PerformanceAlert> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
 
     /**
      * 테넌트별 특정 상담사의 알림 조회 (테넌트 필터링)

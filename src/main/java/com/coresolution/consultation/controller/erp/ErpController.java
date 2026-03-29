@@ -1399,8 +1399,19 @@ public class ErpController extends BaseApiController {
                         "로그인이 필요합니다.", "redirectToLogin", true));
             }
 
-            // 세션의 사용자 정보가 불완전할 수 있으므로 데이터베이스에서 다시 조회
-            User fullUser = userRepository.findById(currentUser.getId())
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = currentUser.getTenantId();
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", currentUser.getEmail(),
+                        currentUser.getId());
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
+            }
+
+            // 세션의 사용자 정보가 불완전할 수 있으므로 테넌트 스코프로 DB에서 다시 조회
+            User fullUser = userRepository.findByTenantIdAndId(tenantId, currentUser.getId())
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             currentUser = fullUser;
 
@@ -1413,25 +1424,9 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "통합재무관리 접근 권한이 없습니다."));
             }
 
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-
-            // 테넌트 ID가 없으면 User 엔티티에서 직접 조회
-            if (tenantId == null || tenantId.isEmpty()) {
-                log.warn("⚠️ 세션에서 테넌트 ID를 찾을 수 없음, User 엔티티에서 조회 시도: 사용자={}",
-                        currentUser.getEmail());
-                tenantId = currentUser.getTenantId();
-
-                if (tenantId == null || tenantId.isEmpty()) {
-                    log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", currentUser.getEmail(),
-                            currentUser.getId());
-                    return ResponseEntity.status(400).body(
-                            Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
-                }
-
-                // 세션에 테넌트 ID 저장 (다음 요청에서 빠르게 조회)
+            if (session.getAttribute(SessionConstants.TENANT_ID) == null) {
                 session.setAttribute(SessionConstants.TENANT_ID, tenantId);
-                log.info("✅ User 엔티티에서 테넌트 ID 조회 완료: tenantId={}", tenantId);
+                log.info("✅ 세션에 테넌트 ID 저장: tenantId={}", tenantId);
             }
 
             log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", currentUser.getEmail(), tenantId);

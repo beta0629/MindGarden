@@ -89,7 +89,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             tenantId, request.getRoleId(), request.getMenuId());
 
         // 1. 메뉴 조회 및 존재 확인
-        Menu menu = menuRepository.findById(request.getMenuId())
+        Menu menu = menuRepository.findByIdAndIsActiveTrue(request.getMenuId())
             .orElseThrow(() -> new IllegalArgumentException("메뉴를 찾을 수 없습니다: " + request.getMenuId()));
 
         // 2. 권한 확인 (최소 요구 역할보다 낮은 역할에게는 부여 불가)

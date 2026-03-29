@@ -65,12 +65,12 @@ public class DashboardIntegrationServiceImpl implements DashboardIntegrationServ
         
         try {
             // 1. 스케줄 정보 조회
-            Schedule schedule = scheduleRepository.findById(scheduleId)
+            Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                     .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다: " + scheduleId));
             
             // 2. ERP 연동: 매핑이 있으면 상담 수수료 예약
             if (mappingId != null) {
-                ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                         .orElse(null);
                 
                 if (mapping != null) {

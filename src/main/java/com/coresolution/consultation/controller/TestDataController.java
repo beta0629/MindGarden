@@ -422,7 +422,14 @@ public class TestDataController {
                 ));
             }
 
-            User clientUser = userRepository.findById(clientEntity.getId()).orElse(null);
+            String tenantId = consultant.getTenantId() != null ? consultant.getTenantId() : clientEntity.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "테넌트 ID를 확인할 수 없습니다."
+                ));
+            }
+            User clientUser = userRepository.findByTenantIdAndId(tenantId, clientEntity.getId()).orElse(null);
             if (clientUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,

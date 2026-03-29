@@ -88,6 +88,40 @@ public class AuthController extends BaseApiController {
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
     private final Map<String, Long> verificationTimes = new ConcurrentHashMap<>();
+
+    /**
+     * 테넌트 스코프 사용자 조회용 tenantId를 홀더 → 인증 응답(userResponse, user DTO) 순으로 해석한다.
+     *
+     * @param authResponse 직전 성공 인증 응답(없으면 null)
+     * @return 테넌트 ID, 없으면 null
+     */
+    private String resolveTenantIdForScopedUserLookup(AuthResponse authResponse) {
+        String tid = TenantContextHolder.getTenantId();
+        if (tid != null && !tid.isEmpty()) {
+            return tid;
+        }
+        if (authResponse == null) {
+            return null;
+        }
+        if (authResponse.getUserResponse() != null
+                && authResponse.getUserResponse().getTenantId() != null
+                && !authResponse.getUserResponse().getTenantId().isEmpty()) {
+            return authResponse.getUserResponse().getTenantId();
+        }
+        if (authResponse.getUser() != null
+                && authResponse.getUser().getTenantId() != null
+                && !authResponse.getUser().getTenantId().isEmpty()) {
+            return authResponse.getUser().getTenantId();
+        }
+        if (authResponse.getAccessibleTenants() != null) {
+            for (AuthResponse.TenantInfo t : authResponse.getAccessibleTenants()) {
+                if (t != null && t.getTenantId() != null && !t.getTenantId().isEmpty()) {
+                    return t.getTenantId();
+                }
+            }
+        }
+        return null;
+    }
     
     @PostMapping("/clear-session")
     public ResponseEntity<ApiResponse<Void>> clearSession(HttpSession session) {
@@ -144,8 +178,17 @@ public class AuthController extends BaseApiController {
         }
         
         log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());
-        // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회
-        User user = userRepository.findById(currentUser.getId()).orElse(currentUser);
+        // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회 (테넌트 스코프)
+        String ctxTenantId = TenantContextHolder.getTenantId();
+        User user;
+        if (ctxTenantId != null && !ctxTenantId.isEmpty() && currentUser.getId() != null) {
+            user = userRepository.findByTenantIdAndId(ctxTenantId, currentUser.getId()).orElse(currentUser);
+        } else {
+            if (ctxTenantId == null || ctxTenantId.isEmpty()) {
+                log.warn("current-user: 테넌트 컨텍스트 없음 — DB 최신 조회 생략, 세션 사용자 사용 userId={}", currentUser.getId());
+            }
+            user = currentUser;
+        }
         log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}", 
                 user.getEmail(), user.getRole(), user.getBranchCode());
         
@@ -543,9 +586,14 @@ public class AuthController extends BaseApiController {
                 sessionUser.setTenantId(authResponse.getUser().getTenantId());
             }
             if (sessionUser.getTenantId() == null && sessionUser.getId() != null) {
-                userRepository.findById(sessionUser.getId())
-                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                    .ifPresent(u -> sessionUser.setTenantId(u.getTenantId()));
+                String tid = resolveTenantIdForScopedUserLookup(authResponse);
+                if (tid != null && !tid.isEmpty()) {
+                    userRepository.findByTenantIdAndId(tid, sessionUser.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> sessionUser.setTenantId(u.getTenantId()));
+                } else {
+                    log.warn("⚠️ 중복로그인 확인 후 세션 tenantId 보완 생략: 테넌트 식별 불가 userId={}", sessionUser.getId());
+                }
             }
             
             SessionUtils.setCurrentUser(session, sessionUser);
@@ -657,14 +705,18 @@ public class AuthController extends BaseApiController {
             if (sessionUser.getTenantId() == null || sessionUser.getTenantId().isEmpty()) {
                 log.error("❌ 로그인 사용자의 tenantId가 없습니다! userId={}, email={}", 
                         sessionUser.getId(), email);
-                // 데이터베이스에서 다시 조회 시도
-                Optional<User> dbUser = userRepository.findById(sessionUser.getId());
-                if (dbUser.isPresent() && dbUser.get().getTenantId() != null) {
-                    log.warn("⚠️ 데이터베이스에서 tenantId 복구: userId={}, tenantId={}", 
-                            sessionUser.getId(), dbUser.get().getTenantId());
-                    sessionUser.setTenantId(dbUser.get().getTenantId());
+                String tid = resolveTenantIdForScopedUserLookup(authResponse);
+                if (tid != null && !tid.isEmpty()) {
+                    Optional<User> dbUser = userRepository.findByTenantIdAndId(tid, sessionUser.getId());
+                    if (dbUser.isPresent() && dbUser.get().getTenantId() != null) {
+                        log.warn("⚠️ 데이터베이스에서 tenantId 복구: userId={}, tenantId={}", 
+                                sessionUser.getId(), dbUser.get().getTenantId());
+                        sessionUser.setTenantId(dbUser.get().getTenantId());
+                    } else {
+                        log.error("❌ 데이터베이스에서도 tenantId를 찾을 수 없습니다! userId={}", sessionUser.getId());
+                    }
                 } else {
-                    log.error("❌ 데이터베이스에서도 tenantId를 찾을 수 없습니다! userId={}", sessionUser.getId());
+                    log.warn("⚠️ 테넌트 식별 불가 — tenantId DB 보완 생략 userId={}", sessionUser.getId());
                 }
             }
             
@@ -1293,11 +1345,16 @@ public class AuthController extends BaseApiController {
                 }
             }
             
-            // 세션 저장 전 tenantId 보완 (DB 조회)
+            // 세션 저장 전 tenantId 보완 (테넌트 스코프 DB 조회)
             if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                userRepository.findById(user.getId())
-                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                String tid = resolveTenantIdForScopedUserLookup(authResponse);
+                if (tid != null && !tid.isEmpty()) {
+                    userRepository.findByTenantIdAndId(tid, user.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                } else {
+                    log.warn("⚠️ 지점 로그인 tenantId 보완 생략: 테넌트 식별 불가 userId={}", user.getId());
+                }
             }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
@@ -1489,9 +1546,14 @@ public class AuthController extends BaseApiController {
                 throw new IllegalArgumentException("해당 지점에 소속되지 않은 사용자입니다.");
             }
             if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                userRepository.findById(user.getId())
-                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                String tid = resolveTenantIdForScopedUserLookup(authResponse);
+                if (tid != null && !tid.isEmpty()) {
+                    userRepository.findByTenantIdAndId(tid, user.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                } else {
+                    log.warn("⚠️ 지점 로그인(URL) tenantId 보완 생략: 테넌트 식별 불가 userId={}", user.getId());
+                }
             }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
@@ -1603,9 +1665,14 @@ public class AuthController extends BaseApiController {
                 throw new IllegalArgumentException("관리자 로그인은 관리자만 가능합니다.");
             }
             if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                userRepository.findById(user.getId())
-                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                String tid = resolveTenantIdForScopedUserLookup(authResponse);
+                if (tid != null && !tid.isEmpty()) {
+                    userRepository.findByTenantIdAndId(tid, user.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                } else {
+                    log.warn("⚠️ 본사 로그인 tenantId 보완 생략: 테넌트 식별 불가 userId={}", user.getId());
+                }
             }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
@@ -1669,16 +1736,13 @@ public class AuthController extends BaseApiController {
         // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         log.warn("⚠️ Deprecated API 호출: mapUserToBranch - branchCode는 더 이상 사용되지 않음. branchCode={} (무시됨)", branchCode);
         
-        // 사용자를 다시 조회하여 동시성 문제 방지
-        User userToUpdate = userRepository.findById(currentUser.getId())
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        
-        // 표준화 2025-12-06: branchCode는 설정하지 않음 (더 이상 사용하지 않음)
-        // tenantId만 확인
+        // 사용자를 다시 조회하여 동시성 문제 방지 (테넌트 스코프)
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null || !tenantId.equals(userToUpdate.getTenantId())) {
+        if (tenantId == null || tenantId.isEmpty()) {
             throw new IllegalArgumentException("테넌트 정보가 일치하지 않습니다.");
         }
+        User userToUpdate = userRepository.findByTenantIdAndId(tenantId, currentUser.getId())
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         
         // 세션 업데이트
         SessionUtils.setCurrentUser(session, userToUpdate);
@@ -1783,7 +1847,7 @@ public class AuthController extends BaseApiController {
                        role.isAdmin();
         }
     }
-    
+
     /**
      * 로컬 또는 개발 프로파일 여부 확인
      * @return 로컬 또는 개발 프로파일이면 true

@@ -322,7 +322,29 @@ public class TenantContextFilter implements Filter {
                 if (user.getId() != null && userRepository != null) {
                     log.debug("Tenant ID 복구(DB) 시도: userId={}, URI={}", user.getId(), request.getRequestURI());
                     try {
-                        java.util.Optional<User> dbUserOpt = userRepository.findById(user.getId());
+                        String lookupTenantId = null;
+                        Object sessionTenant = session.getAttribute(SESSION_TENANT_ID);
+                        if (sessionTenant != null && !sessionTenant.toString().isEmpty()) {
+                            lookupTenantId = sessionTenant.toString();
+                        }
+                        if (lookupTenantId == null || lookupTenantId.isEmpty()) {
+                            Object scTenant = session.getAttribute(SessionConstants.TENANT_ID);
+                            if (scTenant != null && !scTenant.toString().isEmpty()) {
+                                lookupTenantId = scTenant.toString();
+                            }
+                        }
+                        if (lookupTenantId == null || lookupTenantId.isEmpty()) {
+                            String headerTenant = request.getHeader(TENANT_ID_HEADER);
+                            if (headerTenant != null && !headerTenant.isEmpty()
+                                    && !headerTenant.contains("[object") && !headerTenant.contains("Promise")
+                                    && !"tenant-unknown".equals(headerTenant)
+                                    && !"tenant-default".equals(headerTenant)) {
+                                lookupTenantId = headerTenant;
+                            }
+                        }
+                        java.util.Optional<User> dbUserOpt = (lookupTenantId != null && !lookupTenantId.isEmpty())
+                                ? userRepository.findByTenantIdAndId(lookupTenantId, user.getId())
+                                : userRepository.findById(user.getId());
                         if (dbUserOpt.isPresent()) {
                             User dbUser = dbUserOpt.get();
                             if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {

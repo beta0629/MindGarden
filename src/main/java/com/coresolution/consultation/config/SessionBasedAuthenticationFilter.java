@@ -169,8 +169,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                             
                             if (sessionUser != null && sessionUser.getId() != null) {
                                 // userRepository에서 다시 조회하여 최신 정보 가져오기
-                                User user = userRepository.findById(sessionUser.getId()).orElse(null);
-                                log.info("🍎 iOS - userRepository.findById() 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + user.getEmail() + ")" : "null");
+                                // TenantContextFilter가 먼저 실행되어 Holder에 tenant가 있으면 PK-only 조회를 피한다.
+                                User user = reloadUserFromRepository(sessionUser.getId(), sessionUser);
+                                log.info("🍎 iOS - userRepository(테넌트 스코프) 조회 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + user.getEmail() + ")" : "null");
                                 
                                 if (user != null) {
                                     log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", user.getId(), user.getEmail());
@@ -255,7 +256,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         try {
                             UserSession userSession = userSessionService.getActiveSession(jsessionIdFromCookie);
                             if (userSession != null && userRepository != null) {
-                                User dbUser = userRepository.findById(userSession.getUser().getId()).orElse(null);
+                                User dbUser = reloadUserFromRepository(
+                                        userSession.getUser().getId(), userSession.getUser());
                                 if (dbUser != null) {
                                     log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", dbUser.getId(), dbUser.getEmail());
                                     // SecurityContext에 직접 사용자 정보 설정
@@ -356,6 +358,30 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         // 다음 필터로 진행 (모바일 앱인 경우 래핑된 요청 사용, 웹은 원본 요청 사용)
         filterChain.doFilter(requestToUse, response);
+    }
+
+    /**
+     * 세션/DB에서 가져온 사용자 ID로 최신 User를 조회한다.
+     * 필터 순서상 {@code TenantContextFilter} 이후이므로 {@link TenantContextHolder}에 tenant가 있으면
+     * {@code findByTenantIdAndId}만 사용하고, 없으면 레거시 {@code findById}로 폴백한다.
+     *
+     * @param userId 사용자 PK
+     * @param tenantHintUser 세션·UserSession에 붙은 User( tenantId 힌트용 ), null 가능
+     * @return 조회된 User 또는 null
+     */
+    private User reloadUserFromRepository(Long userId, User tenantHintUser) {
+        if (userId == null || userRepository == null) {
+            return null;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if ((tenantId == null || tenantId.isEmpty()) && tenantHintUser != null
+                && tenantHintUser.getTenantId() != null && !tenantHintUser.getTenantId().isEmpty()) {
+            tenantId = tenantHintUser.getTenantId();
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return userRepository.findByTenantIdAndId(tenantId, userId).orElse(null);
+        }
+        return userRepository.findById(userId).orElse(null);
     }
     
     /**

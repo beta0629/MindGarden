@@ -4,6 +4,8 @@ import com.coresolution.consultation.ConsultationManagementApplication;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.entity.Branch;
+import com.coresolution.consultation.entity.Branch.BranchStatus;
+import com.coresolution.consultation.entity.Branch.BranchType;
 import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BranchRepository;
@@ -88,7 +90,7 @@ class UnifiedLoginIntegrationTest {
     @BeforeEach
     void setUp() {
         // 테스트용 테넌트 1 생성
-        tenantId1 = "tenant-" + UUID.randomUUID().toString();
+        tenantId1 = UUID.randomUUID().toString();
         testTenant1 = Tenant.builder()
                 .tenantId(tenantId1)
                 .name("테스트 테넌트 1")
@@ -99,7 +101,7 @@ class UnifiedLoginIntegrationTest {
         testTenant1 = tenantRepository.save(testTenant1);
         
         // 테스트용 테넌트 2 생성
-        tenantId2 = "tenant-" + UUID.randomUUID().toString();
+        tenantId2 = UUID.randomUUID().toString();
         testTenant2 = Tenant.builder()
                 .tenantId(tenantId2)
                 .name("테스트 테넌트 2")
@@ -111,15 +113,19 @@ class UnifiedLoginIntegrationTest {
         
         // 테스트용 지점 1 생성
         testBranch1 = new Branch();
-        testBranch1.setBranchCode("BRANCH-001");
+        testBranch1.setBranchCode("BR001");
         testBranch1.setBranchName("테스트 지점 1");
+        testBranch1.setBranchType(BranchType.MAIN);
+        testBranch1.setBranchStatus(BranchStatus.ACTIVE);
         testBranch1.setTenantId(tenantId1);
         testBranch1 = branchRepository.save(testBranch1);
         
         // 테스트용 지점 2 생성
         testBranch2 = new Branch();
-        testBranch2.setBranchCode("BRANCH-002");
+        testBranch2.setBranchCode("BR002");
         testBranch2.setBranchName("테스트 지점 2");
+        testBranch2.setBranchType(BranchType.FRANCHISE);
+        testBranch2.setBranchStatus(BranchStatus.ACTIVE);
         testBranch2.setTenantId(tenantId2);
         testBranch2 = branchRepository.save(testBranch2);
         
@@ -146,6 +152,9 @@ class UnifiedLoginIntegrationTest {
         testUser2.setBranch(testBranch2);
         testUser2.setIsActive(true);
         testUser2 = userRepository.save(testUser2);
+
+        // MultiTenantUserService 등은 세션/필터 없이 호출 시에도 테넌트 스코프 사용자 조회를 위해 컨텍스트 필요
+        TenantContextHolder.setTenantId(tenantId1);
     }
     
     @AfterEach

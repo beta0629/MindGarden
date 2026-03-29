@@ -5,9 +5,12 @@ import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -40,6 +43,24 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
      */
     List<OnboardingRequest> findByTenantIdAndStatusOrderByCreatedAtDesc(
         String tenantId, OnboardingStatus status);
+
+    /**
+     * 테넌트 ID와 PK로 조회 (삭제 제외). {@code tenantId}가 null이면 {@code tenant_id IS NULL} 행만 매칭.
+     *
+     * @param tenantId 테넌트 ID (온보딩 대기 중이면 null)
+     * @param id 요청 PK
+     * @return 매칭 엔티티
+     */
+    Optional<OnboardingRequest> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, UUID id);
+
+    /**
+     * PK만 알 때 사용 (온보딩/ops 전역 조회). {@link JpaRepository#findById(Object)} 대신 삭제 제외를 명시한다.
+     *
+     * @param id 요청 PK
+     * @return 삭제되지 않은 요청
+     */
+    @Query("SELECT o FROM OnboardingRequest o WHERE o.id = :id AND o.isDeleted = false")
+    Optional<OnboardingRequest> findActiveById(@Param("id") UUID id);
     
     /**
      * 상태별 온보딩 요청 페이지 조회

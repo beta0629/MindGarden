@@ -89,5 +89,10 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
      */
     @Query("SELECT m FROM Menu m WHERE m.menuLocation = :location AND m.requiredRole IN :roles AND m.isActive = true ORDER BY m.depth ASC, m.sortOrder ASC")
     List<Menu> findByMenuLocationAndRequiredRoleIn(@Param("location") String location, @Param("roles") Set<String> roles);
+
+    /**
+     * 활성 메뉴만 PK 조회 (전역 메뉴 카탈로그 — tenant_id 컬럼 없음)
+     */
+    Optional<Menu> findByIdAndIsActiveTrue(Long id);
 }
 

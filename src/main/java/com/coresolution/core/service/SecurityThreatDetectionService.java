@@ -120,7 +120,7 @@ public class SecurityThreatDetectionService {
             
             // 자동 차단
             if (attemptCount >= BRUTE_FORCE_THRESHOLD * 2) {
-                autoBlockIp(sourceIp, "BRUTE_FORCE", threat.getId());
+                autoBlockIp(sourceIp, "BRUTE_FORCE", threat.getId(), threat.getTenantId());
             }
         } catch (Exception e) {
             log.error("Brute Force 탐지 실패", e);
@@ -163,7 +163,7 @@ public class SecurityThreatDetectionService {
                     sourceIp, count, severity);
                 
                 // 자동 차단
-                autoBlockIp(sourceIp, "DDOS", threat.getId());
+                autoBlockIp(sourceIp, "DDOS", threat.getId(), threat.getTenantId());
             }
         } catch (Exception e) {
             log.error("DDoS 탐지 실패", e);
@@ -257,7 +257,7 @@ public class SecurityThreatDetectionService {
             log.warn("🚨 SQL Injection 탐지: ip={}, url={}, model={}", sourceIp, targetUrl, modelUsed);
             
             // 자동 차단
-            autoBlockIp(sourceIp, "SQL_INJECTION", threat.getId());
+            autoBlockIp(sourceIp, "SQL_INJECTION", threat.getId(), threat.getTenantId());
         } catch (Exception e) {
             log.error("SQL Injection 탐지 실패", e);
         }
@@ -266,13 +266,13 @@ public class SecurityThreatDetectionService {
     /**
      * IP 자동 차단
      */
-    private void autoBlockIp(String sourceIp, String threatType, Long threatId) {
+    private void autoBlockIp(String sourceIp, String threatType, Long threatId, String tenantId) {
         try {
             String key = "blocked:ip:" + sourceIp;
             redisTemplate.opsForValue().set(key, true, 30, TimeUnit.MINUTES);
             
             // 위협 탐지 레코드 업데이트
-            SecurityThreatDetection threat = threatDetectionRepository.findById(threatId).orElse(null);
+            SecurityThreatDetection threat = threatDetectionRepository.findByIdAndTenantId(threatId, tenantId).orElse(null);
             if (threat != null) {
                 threat.setBlocked(true);
                 threat.setAutoBlocked(true);

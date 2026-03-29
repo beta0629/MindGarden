@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.PackageDiscountService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountCalculationResult;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountOption;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountValidationResult;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,18 +36,34 @@ public class DiscountController {
     
     private final PackageDiscountService packageDiscountService;
     private final ConsultantClientMappingRepository mappingRepository;
+
+    private String resolveTenantId(HttpSession session) {
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            var user = SessionUtils.getCurrentUser(session);
+            if (user != null) {
+                tenantId = user.getTenantId();
+            }
+        }
+        return tenantId;
+    }
     
     /**
      * 적용 가능한 할인 옵션 조회
      */
     @GetMapping("/available")
     public ResponseEntity<Map<String, Object>> getAvailableDiscounts(
-            @RequestParam Long mappingId) {
+            @RequestParam Long mappingId,
+            HttpSession session) {
         
         log.info("💰 적용 가능한 할인 옵션 조회: mappingId={}", mappingId);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = resolveTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
+            }
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             List<DiscountOption> discounts = packageDiscountService.getAvailableDiscounts(mapping);
@@ -73,7 +91,8 @@ public class DiscountController {
      */
     @PostMapping("/apply")
     public ResponseEntity<Map<String, Object>> applyDiscount(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         
         Long mappingId = ((Number) request.get("mappingId")).longValue();
         String discountCode = (String) request.get("discountCode");
@@ -81,7 +100,11 @@ public class DiscountController {
         log.info("💰 할인 코드 적용: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = resolveTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
+            }
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             DiscountCalculationResult result = packageDiscountService.calculateDiscountWithCode(mapping, discountCode);
@@ -117,7 +140,8 @@ public class DiscountController {
      */
     @PostMapping("/validate")
     public ResponseEntity<Map<String, Object>> validateDiscount(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         
         Long mappingId = ((Number) request.get("mappingId")).longValue();
         String discountCode = (String) request.get("discountCode");
@@ -125,7 +149,11 @@ public class DiscountController {
         log.info("🔍 할인 유효성 검증: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = resolveTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
+            }
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             DiscountValidationResult result = packageDiscountService.validateDiscount(mapping, discountCode);
@@ -156,7 +184,8 @@ public class DiscountController {
      */
     @PostMapping("/preview")
     public ResponseEntity<Map<String, Object>> previewDiscount(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         
         Long mappingId = ((Number) request.get("mappingId")).longValue();
         String discountCode = (String) request.get("discountCode");
@@ -164,7 +193,11 @@ public class DiscountController {
         log.info("👁️ 할인 미리보기: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = resolveTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
+            }
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             DiscountCalculationResult result = packageDiscountService.calculateDiscountWithCode(mapping, discountCode);

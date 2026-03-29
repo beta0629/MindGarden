@@ -11,7 +11,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
-import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.data.domain.PageRequest;
@@ -42,7 +42,7 @@ public class ConsultantRecordsController {
     
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final ScheduleService scheduleService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     
@@ -68,6 +68,12 @@ public class ConsultantRecordsController {
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message", "본인의 상담일지만 조회할 수 있습니다."));
         }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
+        }
+        final String scopedTenantId = tenantId.trim();
         
         try {
             // 실제 상담일지 데이터 조회 (최근 20개)
@@ -81,7 +87,7 @@ public class ConsultantRecordsController {
                         recordMap.put("id", record.getId());
                         recordMap.put("title", "상담일지 #" + record.getSessionNumber());
                         // 실제 내담자 이름 조회
-                        String clientName = getClientName(record.getClientId());
+                        String clientName = getClientName(scopedTenantId, record.getClientId());
                         recordMap.put("clientName", clientName);
                         String sessionDateStr = record.getSessionDate().toString();
                         recordMap.put("sessionDate", sessionDateStr);
@@ -174,6 +180,17 @@ public class ConsultantRecordsController {
             if (permissionResponse != null) {
                 return (ResponseEntity<Map<String, Object>>) permissionResponse;
             }
+            User sessionUser = SessionUtils.getCurrentUser(session);
+            if (sessionUser == null) {
+                return ResponseEntity.status(401)
+                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            String tenantId = sessionUser.getTenantId();
+            if (tenantId == null || tenantId.trim().isEmpty()) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
+            }
+            tenantId = tenantId.trim();
             // 상담기록 조회
             var record = consultationRecordService.getConsultationRecordById(recordId);
             
@@ -197,7 +214,7 @@ public class ConsultantRecordsController {
             recordMap.put("id", record.getId());
             recordMap.put("title", "상담일지 #" + record.getSessionNumber());
             // 실제 내담자 이름 조회
-            String clientName = getClientName(record.getClientId());
+            String clientName = getClientName(tenantId, record.getClientId());
             recordMap.put("clientName", clientName);
             recordMap.put("clientId", record.getClientId());
             recordMap.put("consultantId", record.getConsultantId());
@@ -390,9 +407,12 @@ public class ConsultantRecordsController {
     /**
      * 내담자 이름 조회 헬퍼 메서드
      */
-    private String getClientName(Long clientId) {
+    private String getClientName(String tenantId, Long clientId) {
         try {
-            Optional<User> clientOpt = userService.findById(clientId);
+            if (tenantId == null || tenantId.isEmpty() || clientId == null) {
+                return clientId != null ? "내담자 ID: " + clientId : "알 수 없음";
+            }
+            Optional<User> clientOpt = userRepository.findByTenantIdAndId(tenantId.trim(), clientId);
             if (clientOpt.isPresent()) {
                 User client = clientOpt.get();
                 Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);

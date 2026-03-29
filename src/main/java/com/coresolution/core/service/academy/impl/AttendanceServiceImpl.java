@@ -1,5 +1,4 @@
 package com.coresolution.core.service.academy.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.domain.academy.Attendance;
 import com.coresolution.core.domain.academy.ClassEnrollment;
@@ -338,7 +337,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         // 수강생 정보 조회
         String consumerName = null;
         if (enrollment.getConsumerId() != null) {
-            Optional<User> consumer = userRepository.findById(enrollment.getConsumerId());
+            Optional<User> consumer = userRepository.findByTenantIdAndId(tenantId, enrollment.getConsumerId());
             if (consumer.isPresent()) {
                 consumerName = consumer.get().getName();
             }
@@ -388,7 +387,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 return false;
             }
             
-            User student = userRepository.findById(enrollment.getConsumerId())
+            User student = userRepository.findByTenantIdAndId(tenantId, enrollment.getConsumerId())
                 .orElseThrow(() -> new RuntimeException("수강생을 찾을 수 없습니다: " + enrollment.getConsumerId()));
             
             // TODO: 학부모 정보 조회 (현재는 수강생에게 직접 발송)

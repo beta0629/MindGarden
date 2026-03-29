@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.erp.financial.FinancialTransacti
 import com.coresolution.consultation.repository.ItemRepository;
 import com.coresolution.consultation.repository.PurchaseOrderRepository;
 import com.coresolution.consultation.repository.PurchaseRequestRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.UserService;
@@ -56,6 +57,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final BudgetRepository budgetRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
+    private final UserRepository userRepository;
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
     // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
@@ -1301,7 +1303,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             Long count = entry.getValue();
             BigDecimal amount = requesterAmounts.get(requesterId);
             
-            Optional<User> userOpt = userService.findById(requesterId);
+            Optional<User> userOpt = userRepository.findByTenantIdAndId(tenantId, requesterId);
             String requesterName = userOpt.map(User::getName).orElse("알 수 없음");
             
             Map<String, Object> requesterData = new HashMap<>();

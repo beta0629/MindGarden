@@ -132,12 +132,8 @@ public class AlertController extends BaseApiController {
             User currentUser = getCurrentUser(authentication);
             String tenantId = currentUser.getTenantId();
             
-            Alert alert = alertRepository.findById(id)
+            Alert alert = alertRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
-            
-            if (!tenantId.equals(alert.getTenantId())) {
-                throw new IllegalArgumentException("권한이 없습니다.");
-            }
             
             alert.markAsRead();
             alertRepository.save(alert);

@@ -25,6 +25,16 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
      */
     @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.tenantId = :tenantId AND usa.isDeleted = false")
     List<UserSocialAccount> findByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트·PK로 소셜 계정 조회 (소프트 삭제 제외)
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       소셜 계정 PK
+     * @return 소셜 계정 Optional
+     */
+    @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.tenantId = :tenantId AND usa.id = :id AND usa.isDeleted = false")
+    Optional<UserSocialAccount> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
      * 제공자와 제공자 사용자 ID로 소셜 계정 조회 (tenantId 필터링)

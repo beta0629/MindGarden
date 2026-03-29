@@ -5,6 +5,7 @@ import com.coresolution.core.dto.TenantDashboardRequest;
 import com.coresolution.core.dto.TenantDashboardResponse;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.UserRoleQueryService;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.entity.User;
@@ -55,7 +56,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -90,7 +91,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -128,7 +129,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -170,7 +171,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -210,7 +211,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -275,7 +276,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -315,7 +316,7 @@ public class TenantDashboardController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null) {
                 // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
-                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                User dbUser = loadUserForTenantBootstrap(session, currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
                     TenantContextHolder.setTenantId(tenantId);
@@ -337,6 +338,34 @@ public class TenantDashboardController extends BaseApiController {
         log.info("✅ 대시보드 삭제 완료: dashboardId={}", dashboardId);
         
         return deleted("대시보드가 삭제되었습니다.");
+    }
+
+    /**
+     * Holder, 세션 User, 세션 tenantId 속성으로 테넌트를 알 수 있으면 {@code findByTenantIdAndId}만 사용한다.
+     * 테넌트를 전혀 알 수 없으면 DB 조회 없이 세션 User를 그대로 반환한다.
+     *
+     * @param session HTTP 세션
+     * @param currentUser 세션의 현재 사용자
+     * @return 테넌트 스코프로 조회한 User, 또는 스코프 불가 시 {@code currentUser}
+     */
+    private User loadUserForTenantBootstrap(HttpSession session, User currentUser) {
+        if (currentUser == null || currentUser.getId() == null) {
+            return currentUser;
+        }
+        String tid = TenantContextHolder.getTenantId();
+        if (tid == null || tid.isEmpty()) {
+            tid = currentUser.getTenantId();
+        }
+        if ((tid == null || tid.isEmpty()) && session != null) {
+            Object sessionTenant = session.getAttribute(SessionConstants.TENANT_ID);
+            if (sessionTenant != null && !sessionTenant.toString().isEmpty()) {
+                tid = sessionTenant.toString();
+            }
+        }
+        if (tid != null && !tid.isEmpty()) {
+            return userRepository.findByTenantIdAndId(tid, currentUser.getId()).orElse(currentUser);
+        }
+        return currentUser;
     }
 }
 

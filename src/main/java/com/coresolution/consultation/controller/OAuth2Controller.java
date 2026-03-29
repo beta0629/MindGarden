@@ -359,6 +359,69 @@ public class OAuth2Controller extends BaseApiController {
         return null;
     }
 
+    /**
+     * OAuth 콜백·세션 복구 시 User PK 조회에 쓰는 tenantId.
+     * 우선순위는 {@link #resolveTenantIdForRedirect}와 동일(state·세션 oauth2_tenant_id·TenantContextHolder).
+     * AbstractOAuth2Service와 동일한 보안 원칙: tenant 미결정 시 PK 단독 조회로 타 테넌트 사용자 노출을 금지.
+     * 로컬 개발에서만 {@code local.default-tenant-id} 최소 폴백.
+     *
+     * @param session HTTP 세션(없으면 null)
+     * @param state OAuth state(없으면 null)
+     * @return 결정된 tenantId, 없으면 null
+     */
+    private String resolveTenantIdForUserLookup(HttpSession session, String state) {
+        String tenantId = resolveTenantIdForRedirect(session, state);
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return tenantId;
+        }
+        if (localDefaultTenantId != null && !localDefaultTenantId.trim().isEmpty()) {
+            log.warn(
+                    "⚠️ OAuth 사용자 조회: tenant 미결정 → local.default-tenant-id 폴백 (개발 전용, 운영에서는 state/세션/서브도메인 필수)");
+            return localDefaultTenantId.trim();
+        }
+        return null;
+    }
+
+    /**
+     * 테넌트 결합 PK로 사용자 조회. Holder에 tenant가 있으면 state/세션과 일치할 때만 허용.
+     *
+     * @param userId 사용자 PK
+     * @param session 세션
+     * @param state OAuth state(모바일 등 없으면 null)
+     * @return 격리된 사용자, 실패 시 empty
+     */
+    private Optional<User> loadUserByTenantScopedId(Long userId, HttpSession session,
+            String state) {
+        String resolvedTenant = resolveTenantIdForUserLookup(session, state);
+        if (resolvedTenant == null || resolvedTenant.isEmpty()) {
+            log.error(
+                    "❌ OAuth 사용자 조회 거부: tenantId 미결정 (PK 단독 조회 불가). userId={}",
+                    userId);
+            return Optional.empty();
+        }
+        String holderTenant = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (holderTenant != null && !holderTenant.isEmpty()
+                && !holderTenant.equals(resolvedTenant)) {
+            log.error(
+                    "❌ OAuth 사용자 조회 거부: TenantContextHolder({})와 state/세션 tenant({}) 불일치, userId={}",
+                    holderTenant, resolvedTenant, userId);
+            return Optional.empty();
+        }
+        Optional<User> userOpt =
+                userRepository.findByTenantIdAndIdIgnoringDeleted(resolvedTenant, userId);
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            if (u.getTenantId() != null && !u.getTenantId().isEmpty()
+                    && !resolvedTenant.equals(u.getTenantId())) {
+                log.error(
+                        "❌ OAuth 사용자 조회 거부: 엔티티 tenantId({})와 조회 tenant({}) 불일치, userId={}",
+                        u.getTenantId(), resolvedTenant, userId);
+                return Optional.empty();
+            }
+        }
+        return userOpt;
+    }
+
     @GetMapping("/oauth2/kakao/authorize")
     public ResponseEntity<?> kakaoAuthorize(@RequestParam(required = false) String mode,
             @RequestParam(required = false) String client, HttpServletRequest request,
@@ -1106,7 +1169,9 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     if (existingUserId != null) {
-                        User existingUser = userRepository.findById(existingUserId).orElse(null);
+                        User existingUser =
+                                loadUserByTenantScopedId(existingUserId, session, state)
+                                        .orElse(null);
                         if (existingUser != null) {
                             response = SocialLoginResponse.builder().success(true)
                                     .requiresSignup(false)
@@ -1172,7 +1237,8 @@ public class OAuth2Controller extends BaseApiController {
                         // 사용자 처리 로직
                         if (existingUserId != null) {
                             User existingUser =
-                                    userRepository.findById(existingUserId).orElse(null);
+                                    loadUserByTenantScopedId(existingUserId, session, state)
+                                            .orElse(null);
                             if (existingUser != null) {
                                 response = SocialLoginResponse.builder().success(true)
                                         .requiresSignup(false)
@@ -1187,7 +1253,7 @@ public class OAuth2Controller extends BaseApiController {
                                                 .profileImageUrl(existingUser.getProfileImageUrl())
                                                 .branch(existingUser.getBranch())
                                                 .branchCode(existingUser.getBranchCode()).build())
-                                        .build();
+                                                .build();
                             } else {
                                 response = SocialLoginResponse.builder().success(false)
                                         .message("사용자를 찾을 수 없습니다.").build();
@@ -1360,13 +1426,8 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
-                    User user = userRepository.findById(userInfo.getId())
+                    User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                    if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                        userRepository.findById(user.getId())
-                                .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                                .ifPresent(u -> user.setTenantId(u.getTenantId()));
-                    }
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -1890,7 +1951,7 @@ public class OAuth2Controller extends BaseApiController {
                             SocialLoginResponse.builder().success(false).message("간편 회원가입이 필요합니다.")
                                     .requiresSignup(true).socialUserInfo(socialUserInfo).build();
                 } else {
-                    User user = userRepository.findById(existingUserId)
+                    User user = loadUserByTenantScopedId(existingUserId, session, state)
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
                     // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
@@ -2020,13 +2081,8 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
-                    User user = userRepository.findById(userInfo.getId())
+                    User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                    if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                        userRepository.findById(user.getId())
-                                .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                                .ifPresent(u -> user.setTenantId(u.getTenantId()));
-                    }
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -2245,14 +2301,9 @@ public class OAuth2Controller extends BaseApiController {
                         .body(Map.of("success", false, "message", "잘못된 사용자 ID입니다."));
             }
 
-            // 사용자 정보 조회
-            User user = userRepository.findById(userId)
+            // 사용자 정보 조회 (테넌트 결합: 세션·Holder·로컬 폴백만 허용)
+            User user = loadUserByTenantScopedId(userId, session, null)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: userId=" + userId));
-            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                userRepository.findById(user.getId())
-                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
-            }
 
             // 세션 생성 또는 기존 세션 사용
             if (sessionId != null && !sessionId.isEmpty()) {
@@ -2431,13 +2482,8 @@ public class OAuth2Controller extends BaseApiController {
             }
 
             // 기존 사용자 로그인
-            User user = userRepository.findById(existingUserId)
+            User user = loadUserByTenantScopedId(existingUserId, session, null)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                userRepository.findById(user.getId())
-                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
-                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
-            }
             // 세션에 사용자 정보 저장 (다른 메서드와 동일한 방식 사용)
             SessionUtils.setCurrentUser(session, user);
 

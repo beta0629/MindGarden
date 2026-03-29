@@ -1,6 +1,7 @@
 package com.coresolution.core.service;
 
 import com.coresolution.core.config.AIMonitoringConfig;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.AiAnomalyDetection;
 import com.coresolution.core.domain.SystemMetric;
 import com.coresolution.core.repository.AiAnomalyDetectionRepository;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -362,7 +364,11 @@ public class AnomalyDetectionService {
      */
     public void resolveAnomaly(Long anomalyId) {
         try {
-            AiAnomalyDetection anomaly = anomalyDetectionRepository.findById(anomalyId)
+            String ctxTenantId = TenantContextHolder.getTenantId();
+            Optional<AiAnomalyDetection> found = (ctxTenantId != null && !ctxTenantId.isEmpty())
+                ? anomalyDetectionRepository.findByTenantIdAndId(ctxTenantId, anomalyId)
+                : anomalyDetectionRepository.findByIdAndTenantIdIsNull(anomalyId);
+            AiAnomalyDetection anomaly = found
                 .orElseThrow(() -> new IllegalArgumentException("이상 탐지 결과를 찾을 수 없습니다: " + anomalyId));
             
             anomaly.setResolvedAt(LocalDateTime.now());

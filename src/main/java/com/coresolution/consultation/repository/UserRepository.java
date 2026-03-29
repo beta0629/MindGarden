@@ -24,6 +24,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
      * 테넌트·PK로 사용자 조회 (삭제 여부 무관). 복구 등에 사용.
+     * 활성 사용자만 필요하면 상위 {@link BaseRepository}의 {@code findByTenantIdAndId}를 사용.
      *
      * @param tenantId 테넌트 ID
      * @param id 사용자 PK

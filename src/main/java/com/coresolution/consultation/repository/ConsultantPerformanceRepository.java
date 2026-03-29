@@ -35,6 +35,15 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
             @Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     /**
+     * 테넌트·상담사·일자 단건 성과 조회 (복합 PK 대체, 크로스 테넌트 방지)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp WHERE cp.tenantId = :tenantId AND cp.consultantId = :consultantId AND cp.performanceDate = :performanceDate")
+    Optional<ConsultantPerformance> findByTenantIdAndConsultantIdAndPerformanceDate(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("performanceDate") LocalDate performanceDate);
+
+    /**
      * 특정 날짜의 모든 상담사 성과 조회 (tenantId 필터링)
      */
     @Query("SELECT cp FROM ConsultantPerformance cp WHERE cp.tenantId = :tenantId AND cp.performanceDate = :performanceDate ORDER BY cp.performanceScore DESC")

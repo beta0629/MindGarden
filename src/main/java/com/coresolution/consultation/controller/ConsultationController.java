@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
-import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.annotation.RequireBusinessType;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +50,21 @@ public class ConsultationController extends BaseApiController {
     private ConsultationService consultationService;
     
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
+
+    /**
+     * 세션 기준 테넌트 컨텍스트 설정 (서비스 계층의 테넌트 스코프 조회용)
+     */
+    private void bindTenantContext(HttpSession session) {
+        String tenantId = SessionUtils.getTenantId(session);
+        User sessionUser = (User) session.getAttribute("user");
+        if ((tenantId == null || tenantId.isEmpty()) && sessionUser != null) {
+            tenantId = sessionUser.getTenantId();
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            TenantContextHolder.setTenantId(tenantId);
+        }
+    }
     
     // === 상담 조회 및 검색 ===
     
@@ -73,6 +90,8 @@ public class ConsultationController extends BaseApiController {
         log.info("상담 목록 조회 - clientId: {}, consultantId: {}, status: {}, priority: {}", 
                 clientId, consultantId, status, priority);
         
+        bindTenantContext(session);
+
         // 현재 로그인한 사용자의 지점코드 확인
         User currentUser = (User) session.getAttribute("user");
         String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
@@ -103,9 +122,11 @@ public class ConsultationController extends BaseApiController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Consultation>> getConsultationById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Consultation>> getConsultationById(@PathVariable Long id, HttpSession session) {
         log.info("상담 상세 정보 조회 - ID: {}", id);
         
+        bindTenantContext(session);
+
         Consultation consultation = consultationService.findById(id)
                 .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다."));
         return success(consultation);
@@ -557,6 +578,22 @@ public class ConsultationController extends BaseApiController {
      * @param currentUserBranchCode 현재 사용자의 지점코드
      * @return 필터링된 상담 목록
      */
+    private Optional<User> findUserForBranchFilter(Consultation consultation, Long userId) {
+        if (userId == null) {
+            return Optional.empty();
+        }
+        String tenantId = consultation.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("상담 지점 필터: tenantId 없음 — 사용자 조회 생략 consultationId={}, userId={}",
+                consultation.getId(), userId);
+            return Optional.empty();
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId);
+    }
+
     private List<Consultation> filterConsultationsByBranch(List<Consultation> consultations, String currentUserBranchCode) {
         // 수퍼어드민이나 본사 관리자는 모든 상담 조회 가능
         if (currentUserBranchCode == null || currentUserBranchCode.isEmpty()) {
@@ -567,8 +604,8 @@ public class ConsultationController extends BaseApiController {
                 .filter(consultation -> {
                     try {
                         // 상담사와 내담자 정보 조회
-                        User consultant = userService.findById(consultation.getConsultantId()).orElse(null);
-                        User client = userService.findById(consultation.getClientId()).orElse(null);
+                        User consultant = findUserForBranchFilter(consultation, consultation.getConsultantId()).orElse(null);
+                        User client = findUserForBranchFilter(consultation, consultation.getClientId()).orElse(null);
                         
                         // 상담사나 내담자 중 하나라도 현재 사용자와 같은 지점에 있으면 조회 가능
                         boolean consultantMatch = consultant != null && 

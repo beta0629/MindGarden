@@ -90,7 +90,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Transactional(readOnly = true)
     public OnboardingRequest getById(java.util.UUID id) {
         log.debug("온보딩 요청 조회: id={}", id);
-        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException(
+        return repository.findActiveById(id).orElseThrow(() -> new IllegalArgumentException(
                 OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, id)));
     }
 
@@ -196,7 +196,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 "온보딩 요청 수정: requestId={}, tenantName={}, subdomain={}, brandName={}, regionCode={}, businessType={}",
                 requestId, tenantName, subdomain, brandName, regionCode, businessType);
 
-        OnboardingRequest request = repository.findById(requestId)
+        OnboardingRequest request = repository.findActiveById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
@@ -345,7 +345,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         log.info("온보딩 요청 결정 (내부): requestId={}, status={}, actorId={}", requestId, status, actorId);
 
-        OnboardingRequest request = repository.findById(requestId)
+        OnboardingRequest request = repository.findActiveById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
@@ -794,7 +794,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 엔티티를 다시 조회하여 최신 버전 사용 (OptimisticLockException 방지)
         // initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션을 사용하면서
         // 엔티티가 detached 상태가 될 수 있으므로 다시 조회
-        OnboardingRequest requestToSave = repository.findById(requestId)
+        OnboardingRequest requestToSave = repository
+                .findByTenantIdAndIdAndIsDeletedFalse(request.getTenantId(), requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
@@ -923,7 +924,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     public OnboardingRequest retryApproval(java.util.UUID requestId, String actorId, String note) {
         log.info("온보딩 승인 프로세스 재시도: requestId={}, actorId={}", requestId, actorId);
 
-        OnboardingRequest request = repository.findById(requestId)
+        OnboardingRequest request = repository.findActiveById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
@@ -2208,7 +2209,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
 
         // 별도 트랜잭션에서 요청 조회
-        OnboardingRequest request = repository.findById(requestId).orElse(null);
+        OnboardingRequest request = repository.findActiveById(requestId).orElse(null);
         if (request == null) {
             String errorMsg = OnboardingConstants
                     .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId);
@@ -2262,7 +2263,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 상태 저장 후 현재 요청 반환 (예외 throw하지 않음)
             try {
                 String statusJson = objectMapper.writeValueAsString(statusMap);
-                self.saveInitializationStatusInNewTransaction(requestId, statusJson);
+                self.saveInitializationStatusInNewTransaction(requestId, tenantId, statusJson);
             } catch (Exception e) {
                 log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
             }
@@ -2275,7 +2276,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         statusMap.put(taskType, createInitializationStatus("RUNNING", null));
         try {
             String statusJson = objectMapper.writeValueAsString(statusMap);
-            self.saveInitializationStatusInNewTransaction(requestId, statusJson);
+            self.saveInitializationStatusInNewTransaction(requestId, tenantId, statusJson);
         } catch (Exception e) {
             log.warn("재실행 시작 상태 저장 실패 (계속 진행): requestId={}, error={}", requestId, e.getMessage());
         }
@@ -2349,7 +2350,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             String statusJson = objectMapper.writeValueAsString(statusMap);
             // 상태 저장을 별도 트랜잭션으로 처리하여 롤백 방지
-            self.saveInitializationStatusInNewTransaction(requestId, statusJson);
+            self.saveInitializationStatusInNewTransaction(requestId, tenantId, statusJson);
             log.info("✅ 초기화 작업 상태 업데이트 완료: requestId={}, taskType={}, success={}", requestId,
                     taskType, success);
         } catch (Exception e) {
@@ -2358,7 +2359,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         // 최신 상태로 다시 조회하여 반환
-        OnboardingRequest updatedRequest = repository.findById(requestId).orElse(request);
+        OnboardingRequest updatedRequest =
+                repository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestId).orElse(request);
 
         // 작업이 실패한 경우에도 성공 응답 반환 (상태는 이미 저장됨)
         // 프론트엔드에서 상태를 확인하여 실패 여부를 판단할 수 있음
@@ -2374,10 +2376,11 @@ public class OnboardingServiceImpl implements OnboardingService {
      * 별도 트랜잭션에서 초기화 작업 상태 저장 롤백 방지를 위해 별도 트랜잭션으로 처리
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId,
+    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId, String tenantId,
             String statusJson) {
         try {
-            OnboardingRequest request = repository.findById(requestId).orElse(null);
+            OnboardingRequest request =
+                    repository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestId).orElse(null);
             if (request != null) {
                 request.setInitializationStatusJson(statusJson);
                 repository.save(request);
@@ -2417,7 +2420,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             transactionTemplate.executeWithoutResult(transactionStatus -> {
                 try {
                     // 엔티티를 다시 조회하여 최신 버전 사용
-                    OnboardingRequest request = repository.findById(requestId).orElse(null);
+                    OnboardingRequest request = repository.findActiveById(requestId).orElse(null);
                     if (request == null) {
                         log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
                         return;

@@ -2224,11 +2224,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             );
         }
 
-        // Client upsert: 레거시 등 User만 있고 clients 행이 없으면 registerClient와 동일 전제로 신규 행 생성
-        Optional<Client> existingClientOpt = clientRepository.findByTenantIdAndId(tenantIdForClient, id);
+        // Client upsert: 소프트 삭제 행까지 조회 (삭제만 있으면 findByTenantIdAndId가 비어 INSERT→FK 실패 방지)
+        Optional<Client> existingClientOpt =
+                clientRepository.findByTenantIdAndIdIncludingDeleted(tenantIdForClient, id);
         Client persistedClient;
         if (existingClientOpt.isPresent()) {
             Client client = existingClientOpt.get();
+            if (Boolean.TRUE.equals(client.getIsDeleted())) {
+                client.restore();
+            }
+            client.setName(savedUser.getName());
+            client.setEmail(savedUser.getEmail());
+            client.setPhone(savedUser.getPhone());
             client.setAddress(savedUser.getAddress());
             client.setAddressDetail(savedUser.getAddressDetail());
             client.setPostalCode(savedUser.getPostalCode());

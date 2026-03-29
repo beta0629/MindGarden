@@ -28,6 +28,13 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
     
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false")
     List<Client> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
+
+    /**
+     * 소프트 삭제된 행 포함. 내담자 수정 시 clients 행이 is_deleted=true만 있어도 조회해 UPDATE 경로로 보냄
+     * (미조회 시 신규 INSERT가 IDENTITY로 id 누락되어 users FK 실패할 수 있음).
+     */
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.id = :id")
+    Optional<Client> findByTenantIdAndIdIncludingDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isEmergencyContact = :isEmergencyContact AND c.isDeleted = false")
     List<Client> findByTenantIdAndIsEmergencyContactAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("isEmergencyContact") Boolean isEmergencyContact);

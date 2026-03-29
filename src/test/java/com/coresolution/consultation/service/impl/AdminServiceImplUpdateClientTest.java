@@ -160,7 +160,7 @@ class AdminServiceImplUpdateClientTest {
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(clientRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
         doNothing().when(clientStatsService).evictAllClientStatsCache();
@@ -202,7 +202,7 @@ class AdminServiceImplUpdateClientTest {
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(clientRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
         doNothing().when(clientStatsService).evictAllClientStatsCache();
@@ -217,5 +217,50 @@ class AdminServiceImplUpdateClientTest {
         assertThat(saved.getPhone()).isEqualTo(longVal);
         assertThat(saved.getGender()).isEqualTo(longVal);
         assertThat(saved.getAddress()).isEqualTo(longVal);
+    }
+
+    @Test
+    @DisplayName("Client 행이 소프트 삭제만 되어 있으면 restore 후 UPDATE 경로로 저장된다 (신규 INSERT FK 실패 방지)")
+    void updateClient_whenClientRowSoftDeleted_restoresAndUpdates() {
+        Long id = 715L;
+        String tenantId = "tenant-ut-1";
+
+        User clientUser = User.builder()
+                .userId("u715")
+                .email("enc-e")
+                .password("x")
+                .name("enc-n")
+                .phone("enc-p")
+                .role(UserRole.CLIENT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        clientUser.setId(id);
+        clientUser.setTenantId(tenantId);
+
+        Client existing = new Client();
+        existing.setId(id);
+        existing.setTenantId(tenantId);
+        existing.setIsDeleted(true);
+        existing.setEmail("old");
+        existing.setName("old");
+        existing.setPhone("old");
+
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+
+        when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.of(existing));
+        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+
+        adminService.updateClient(id, request);
+
+        assertThat(existing.getIsDeleted()).isFalse();
+        assertThat(existing.getDeletedAt()).isNull();
+        assertThat(existing.getName()).isEqualTo("enc-n");
+        assertThat(existing.getEmail()).isEqualTo("enc-e");
+        assertThat(existing.getPhone()).isEqualTo("enc-p");
     }
 }

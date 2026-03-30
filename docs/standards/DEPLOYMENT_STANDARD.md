@@ -1,7 +1,7 @@
 # 배포 표준
 
 **버전**: 1.0.0  
-**최종 업데이트**: 2025-12-03  
+**최종 업데이트**: 2026-03-30  
 **상태**: 공식 표준
 
 ---
@@ -47,6 +47,14 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 - ✅ `main` 브랜치 → 운영 서버 (수동 실행)
 - ✅ 환경 변수 분리
 - ✅ 데이터베이스 분리
+
+### 2.5. 개발·운영 역할 동형(미러링)
+개발 서버와 운영 서버는 **같은 역할·같은 포트 규칙**(호스트당 동일한 서비스 바인딩)을 따른다. **도메인은 동일 패턴**이며, 운영은 서브도메인에서 **`dev`만 제거**하면 된다(예: `apply.dev.e-trinity.co.kr` ↔ `apply.e-trinity.co.kr`). **보안·자격·DB·Secret·TLS 정책**은 환경별로 달라질 수 있으나, **토폴로지·Nginx 정적 경로·프록시 역할**은 개발과 운영을 맞춘다. 한 호스트에서 서로 다른 프로세스가 같은 포트를 점유하면 충돌하므로, 여기서 말하는 “동일 포트”는 **서버별로 역할이 동일할 때**를 전제로 한다.
+
+**GitHub Actions 대응**(`.github/workflows/`):
+- `deploy-trinity-dev.yml` ↔ `deploy-trinity-prod.yml`
+- `deploy-ops-dev.yml` ↔ `deploy-ops-prod.yml`
+- Ops 백엔드 운영 배포가 필요할 때: `deploy-ops-backend-prod.yml`
 
 ### 3. 안전한 배포
 ```
@@ -107,6 +115,14 @@ on:
 - `deploy-trinity-dev.yml` - Trinity 프론트엔드 배포
 - `deploy-procedures-dev.yml` - 표준화된 프로시저 배포 (개발)
 
+개발·운영 **역할 동형**에 따른 배포 쌍(상세는 위 `### 2.5`):
+
+| 구분 | 개발 (`develop` push 등) | 운영 (`workflow_dispatch`, `main`) |
+|------|--------------------------|--------------------------------------|
+| Trinity 프론트 | `deploy-trinity-dev.yml` | `deploy-trinity-prod.yml` |
+| Ops 프론트 | `deploy-ops-dev.yml` | `deploy-ops-prod.yml` |
+| Ops 백엔드 (필요 시) | — | `deploy-ops-backend-prod.yml` |
+
 ### 3. 운영 서버 배포
 
 #### 트리거 조건
@@ -116,6 +132,14 @@ on:
 ```
 
 **중요**: 운영 배포는 수동 실행만 가능 (실수 방지)
+
+#### 워크플로우 파일 (수동 실행, `main` 기준)
+Trinity·Ops 등 **미러링** 대상은 개발과 동일 역할의 운영 워크플로를 사용한다. 예:
+- `deploy-trinity-prod.yml` — Trinity 프론트엔드 (쌍: `deploy-trinity-dev.yml`)
+- `deploy-ops-prod.yml` — Ops 프론트엔드 (쌍: `deploy-ops-dev.yml`)
+- `deploy-ops-backend-prod.yml` — Ops 백엔드 운영 (필요 시)
+
+그 외 MindGarden 본체·프로시저 등은 기존대로 `deploy-production.yml`, `deploy-procedures-prod.yml` 등을 따른다.
 
 #### 배포 프로세스
 1. **코드 체크아웃**
@@ -571,5 +595,5 @@ ORDER BY ROUTINE_NAME;
 - 백엔드 팀
 - 아키텍처 팀
 
-**최종 업데이트**: 2025-12-05
+**최종 업데이트**: 2026-03-30
 

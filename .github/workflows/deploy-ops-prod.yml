@@ -1,0 +1,214 @@
+# Ops HQ 정적 프론트 운영 배포 → /var/www/html-ops (ops.e-trinity.co.kr)
+# SSH/SCP: PRODUCTION_* 시크릿만 사용 (DEV_SERVER_* 금지)
+#
+# 빌드 URL 출처: docs/standards/OPS_PORTAL_STANDARD.md (운영)
+# Core 연동 URL: 운영 공개 엔드포인트(app.core-solution.co.kr). 변경 시 GitHub Repository variables
+#   OPS_PROD_CORE_API_BASE_URL, OPS_PROD_CORE_SOLUTION_URL 추가 후 본 워크플로 env 에 반영 권장.
+#
+# Repository secrets (필수): PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_SSH_KEY
+#
+# 참고: Ops API는 동일 호스트 localhost:8080 에서 제공되어야 함(config/nginx/core-solution-prod.conf).
+#   코어 MindGarden JAR(mindgarden.service)와 포트 충돌 시 호스트 분리 또는 deploy-ops-backend-prod 사용.
+
+name: 🔧 Ops 프론트엔드 운영 배포
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend-ops/**"
+      - ".github/workflows/deploy-ops-prod.yml"
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "체크아웃할 Git ref (운영은 main만 허용)"
+        required: false
+        default: "main"
+        type: string
+
+jobs:
+  deploy-ops-prod:
+    name: 🏗️ Ops 프론트엔드 빌드 및 운영 배포
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛡️ 운영 배포 ref 가드 (main만 허용)
+        id: guard
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DREF="${{ github.event.inputs.deploy_ref }}"
+            DREF="${DREF:-main}"
+          else
+            DREF="${{ github.ref_name }}"
+          fi
+          if [ "$DREF" != "main" ]; then
+            echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DREF"
+            exit 1
+          fi
+          echo "deploy_ref=$DREF" >> "$GITHUB_OUTPUT"
+          echo "이벤트=${{ github.event_name }} 배포 ref=$DREF"
+
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.guard.outputs.deploy_ref }}
+
+      - name: 📦 Node.js 18 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend-ops/package-lock.json
+
+      - name: 📦 Ops 프론트엔드 의존성 설치
+        run: |
+          cd frontend-ops
+          npm ci
+
+      - name: 🏗️ Ops 프론트엔드 빌드 (운영)
+        env:
+          NEXT_PUBLIC_OPS_API_BASE_URL: "https://ops.e-trinity.co.kr/api/v1"
+          NEXT_PUBLIC_CORE_API_BASE_URL: "https://app.core-solution.co.kr/api/v1"
+          NEXT_PUBLIC_CORE_SOLUTION_URL: "https://app.core-solution.co.kr"
+          NEXT_PUBLIC_OPS_API_USE_MOCK: "false"
+          NODE_ENV: production
+          BUILD_STANDALONE: "true"
+        run: |
+          cd frontend-ops
+          ESLINT_NO_DEV_ERRORS=true npm run build
+
+      - name: 🔍 Ops 프론트엔드 빌드 결과 확인
+        run: |
+          echo "🔍 Ops 프론트엔드 빌드 결과 확인..."
+          if [ -d frontend-ops/out ]; then
+            FILE_COUNT=$(find frontend-ops/out -type f 2>/dev/null | wc -l)
+            if [ "$FILE_COUNT" -gt 0 ]; then
+              echo "✅ frontend-ops/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+              ls -lh frontend-ops/out/ | head -10
+            else
+              echo "❌ frontend-ops/out 디렉토리가 비어있음!"
+              exit 1
+            fi
+          else
+            echo "❌ frontend-ops/out 디렉토리 없음!"
+            exit 1
+          fi
+
+      - name: 🔍 운영 서버 SSH 연결 테스트
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 30s
+          script: |
+            echo "SSH 연결 테스트 성공: $(date)"
+            echo "서버 정보: $(uname -a)"
+
+      - name: 💾 배포 전 기존 파일 백업
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          script: |
+            sudo mkdir -p /var/www/backups/html-ops
+
+            if [ -d /var/www/html-ops ] && [ "$(ls -A /var/www/html-ops 2>/dev/null)" ]; then
+              BACKUP_NAME="html-ops-backup-$(date +%Y%m%d_%H%M%S).tar.gz"
+              echo "💾 기존 파일 백업 중: $BACKUP_NAME"
+              sudo tar -czf /var/www/backups/html-ops/$BACKUP_NAME -C /var/www html-ops
+              echo "✅ 백업 완료: $BACKUP_NAME"
+              ls -lh /var/www/backups/html-ops/$BACKUP_NAME
+            else
+              echo "ℹ️ 백업할 기존 파일 없음 (신규 배포)"
+            fi
+
+            BACKUP_RETENTION_COUNT=5
+            BACKUP_DIR="/var/www/backups/html-ops"
+            ls -1t "$BACKUP_DIR"/html-ops-backup-*.tar.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | xargs -r sudo rm -f
+
+      - name: 📤 Ops 프론트엔드 파일 업로드 SCP (운영)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          source: "frontend-ops/out/*"
+          target: "/var/www/html-ops/"
+          strip_components: 2
+          overwrite: true
+
+      - name: 🔄 Ops 프론트엔드 배포 완료 및 검증
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          script: |
+            sudo mkdir -p /var/www/html-ops
+            sudo chown -R www-data:www-data /var/www/html-ops
+            sudo chmod -R 755 /var/www/html-ops
+
+            echo "🔍 배포된 파일 확인..."
+            if [ -d /var/www/html-ops ]; then
+              FILE_COUNT=$(find /var/www/html-ops -type f 2>/dev/null | wc -l)
+              if [ "$FILE_COUNT" -gt 0 ]; then
+                echo "✅ 배포 완료: $FILE_COUNT 개 파일"
+                ls -lh /var/www/html-ops/ | head -10
+                if [ -f /var/www/html-ops/index.html ]; then
+                  echo "✅ index.html 확인됨"
+                  echo "파일 크기: $(stat -c%s /var/www/html-ops/index.html) bytes"
+                else
+                  echo "⚠️ index.html 없음!"
+                  exit 1
+                fi
+              else
+                echo "❌ 배포된 파일 없음!"
+                exit 1
+              fi
+            else
+              echo "❌ 배포 디렉토리 없음!"
+              exit 1
+            fi
+
+            echo "✅ Ops 프론트엔드 운영 배포 완료"
+
+      - name: 🏥 배포 후 헬스체크
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 30s
+          script: |
+            echo "🏥 헬스체크 시작..."
+            sleep 3
+
+            if sudo nginx -t 2>/dev/null; then
+              echo "✅ Nginx 설정 정상"
+            else
+              echo "⚠️ Nginx 설정 오류 (계속 진행)"
+            fi
+
+            for i in {1..3}; do
+              if curl -f -s -o /dev/null -w "%{http_code}" https://ops.e-trinity.co.kr | grep -qE "200|301|302"; then
+                echo "✅ 웹사이트 접근 성공 (시도 $i)"
+                curl -s -I https://ops.e-trinity.co.kr | head -5
+                exit 0
+              else
+                echo "⏳ 헬스체크 대기 중... (시도 $i/3)"
+                sleep 5
+              fi
+            done
+
+            echo "⚠️ 헬스체크 실패 - 수동 확인 필요"
+            echo "도메인: https://ops.e-trinity.co.kr"

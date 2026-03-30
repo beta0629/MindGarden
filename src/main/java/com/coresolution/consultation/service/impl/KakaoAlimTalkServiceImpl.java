@@ -355,26 +355,31 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 // 상담 예약 확정 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_CONFIRMED", 
                     "상담 확정 알림", 
+                    null,
                     "{\"category\":\"consultation\",\"priority\":\"high\",\"template\":\"[마인드가든] 상담이 확정되었습니다.\\n\\n📅 상담일: #{consultationDate}\\n⏰ 시간: #{consultationTime}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n상담 10분 전에 다시 알려드리겠습니다.\\n감사합니다.\"}", 1);
                 
                 // 상담 리마인더 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_REMINDER", 
                     "상담 리마인더", 
+                    null,
                     "{\"category\":\"consultation\",\"priority\":\"high\",\"template\":\"[마인드가든] 1시간 후 상담이 예정되어 있습니다.\\n\\n⏰ 상담시간: #{consultationTime}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n준비해주시고 시간에 맞춰 참석해주세요.\\n감사합니다.\"}", 2);
                 
                 // 환불 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "REFUND_COMPLETED", 
                     "환불 완료 알림", 
+                    null,
                     "{\"category\":\"payment\",\"priority\":\"medium\",\"template\":\"[마인드가든] 환불이 완료되었습니다.\\n\\n💰 환불 회기: #{refundSessions}회\\n💳 환불 금액: #{refundAmount}원\\n\\n환불 금액은 결제하신 계좌로 2-3일 내에 입금됩니다.\\n감사합니다.\"}", 3);
                 
                 // 일정 변경 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "SCHEDULE_CHANGED", 
                     "일정 변경 알림", 
+                    null,
                     "{\"category\":\"consultation\",\"priority\":\"medium\",\"template\":\"[마인드가든] 상담 일정이 변경되었습니다.\\n\\n👩‍⚕️ 상담사: #{consultantName}\\n📅 변경 전: #{oldDateTime}\\n📅 변경 후: #{newDateTime}\\n\\n변경된 일정에 맞춰 참석해주세요.\\n감사합니다.\"}", 4);
                 
                 // 결제 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "PAYMENT_COMPLETED", 
                     "결제 완료 알림", 
+                    null,
                     "{\"category\":\"payment\",\"priority\":\"medium\",\"template\":\"[마인드가든] 결제가 완료되었습니다.\\n\\n💳 결제 금액: #{paymentAmount}원\\n📦 패키지: #{packageName}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n상담 예약을 진행해주세요.\\n감사합니다.\"}", 5);
                 
                 log.info("✅ ALIMTALK_TEMPLATE 공통 코드 생성 완료");

@@ -1,6 +1,43 @@
 -- V10: 테넌트별 공통 코드 분리
 -- CoreSolution 플랫폼: 테넌트별 공통 코드와 코어솔루션 공통 코드 분리
 
+-- 0. Greenfield: 이전 버전 마이그레이션에 DDL이 없어 테이블이 없을 수 있음 (IF NOT EXISTS)
+CREATE TABLE IF NOT EXISTS code_group_metadata (
+    group_name VARCHAR(50) NOT NULL PRIMARY KEY,
+    korean_name VARCHAR(100) NOT NULL,
+    description VARCHAR(500) NULL,
+    icon VARCHAR(10) NULL,
+    color_code VARCHAR(7) NULL,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='코드 그룹 메타데이터';
+
+CREATE TABLE IF NOT EXISTS common_codes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code_group VARCHAR(50) NOT NULL,
+    code_value VARCHAR(50) NOT NULL,
+    code_label VARCHAR(100) NOT NULL,
+    code_description VARCHAR(500) NULL,
+    sort_order INT DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    parent_code_group VARCHAR(50) NULL,
+    parent_code_value VARCHAR(50) NULL,
+    extra_data VARCHAR(1000) NULL,
+    icon VARCHAR(10) NULL,
+    color_code VARCHAR(7) NULL,
+    korean_name VARCHAR(100) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    version BIGINT NOT NULL DEFAULT 0,
+    INDEX idx_common_code_group (code_group),
+    INDEX idx_common_code_value (code_value),
+    INDEX idx_common_code_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='공통 코드';
+
 -- 1. common_codes 테이블에 tenant_id 컬럼 추가 (NULL 허용)
 ALTER TABLE common_codes 
 ADD COLUMN tenant_id VARCHAR(36) NULL 

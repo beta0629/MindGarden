@@ -29,6 +29,8 @@ fi
 
 if [ -z "$DB_PASS" ]; then
     echo "❌ 오류: DB 비밀번호가 설정되지 않았습니다."
+    echo "   CI: GitHub Actions Secrets 에 PRODUCTION_DB_PASSWORD 를 설정하세요."
+    echo "   로컬: 환경 변수 PROD_DB_PASSWORD 를 export 한 뒤 다시 실행하세요."
     exit 1
 fi
 

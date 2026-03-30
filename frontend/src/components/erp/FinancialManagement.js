@@ -694,9 +694,7 @@ const FinancialManagement = () => {
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
                                 transaction.description?.includes('상담료 입금 확인') ||
                                 transaction.description?.includes('상담료 환불')) && (
-                                <Badge variant="status" statusVariant="info" size="sm">
-                                  <Link2 size={12} aria-hidden /> 매핑
-                                </Badge>
+                                <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
                               )}
                             </div>
                             <div className="mg-financial-transaction-card__date">

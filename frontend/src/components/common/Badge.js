@@ -18,6 +18,44 @@ const SIZES = new Set(['sm', 'default', 'lg']);
 
 const DEFAULT_MAX_COUNT = 99;
 
+function resolveRenderableNode(raw, fallback = '') {
+  if (raw == null || typeof raw === 'boolean') {
+    return fallback;
+  }
+
+  if (React.isValidElement(raw)) {
+    return raw;
+  }
+
+  if (Array.isArray(raw)) {
+    const normalized = raw
+      .flatMap((item) => {
+        if (item == null || typeof item === 'boolean') {
+          return [];
+        }
+        if (React.isValidElement(item)) {
+          return [item];
+        }
+        if (Array.isArray(item)) {
+          return [resolveRenderableNode(item, '')];
+        }
+        if (typeof item === 'string' || typeof item === 'number') {
+          return [item];
+        }
+        return [];
+      })
+      .filter((item) => item !== '');
+
+    return normalized.length > 0 ? normalized : fallback;
+  }
+
+  if (typeof raw === 'object') {
+    return fallback;
+  }
+
+  return toDisplayString(raw, fallback);
+}
+
 function Badge({
   variant = 'status',
   size = 'default',
@@ -46,14 +84,25 @@ function Badge({
     displayContent = n > maxCount ? `${maxCount}+` : n;
   } else if (variant === 'kpi') {
     const val = value != null ? toDisplayString(value, '') : '';
-    const lbl =
-      label != null
-        ? toDisplayString(label, '')
-        : (children != null ? toDisplayString(children, '') : '');
-    displayContent = val ? (lbl ? `${val} ${lbl}` : val) : lbl;
+    const rawLabel = label != null ? label : children;
+    const resolvedLabel = resolveRenderableNode(rawLabel, '');
+    if (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number') {
+      const lbl = toDisplayString(resolvedLabel, '');
+      displayContent = val ? (lbl ? `${val} ${lbl}` : val) : lbl;
+    } else {
+      displayContent = val
+        ? (
+          <>
+            {val}
+            {resolvedLabel ? ' ' : ''}
+            {resolvedLabel}
+          </>
+        )
+        : resolvedLabel;
+    }
   } else {
     const raw = label != null ? label : (children != null ? children : value);
-    displayContent = React.isValidElement(raw) ? raw : toDisplayString(raw, '');
+    displayContent = resolveRenderableNode(raw, '');
   }
 
   const baseClass = 'mg-common-badge';

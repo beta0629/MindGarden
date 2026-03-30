@@ -9,12 +9,14 @@ ENV="${1:-dev}"
 PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
 # 환경별 설정
+# 운영(prod) DB 기본값은 개발(dev) 분기와 동일 — DEPLOYMENT_STANDARD 개발 서버 DB 절과 정합.
+# SSH 대상(SERVER)은 운영 호스트(PROD_SERVER_*) 기본 유지; DB 접속 정보만 개발과 같은 기본값.
 if [ "$ENV" = "prod" ]; then
     SERVER="${PROD_SERVER_HOST:-beta74.cafe24.com}"
-    SERVER_USER="${PROD_SERVER_USER:-beta74}"
-    DB_HOST="${PROD_DB_HOST:-beta74.cafe24.com}"
-    DB_USER="${PROD_DB_USER:-mindgarden_prod}"
-    DB_PASS="${PROD_DB_PASSWORD}"
+    SERVER_USER="${PROD_SERVER_USER:-root}"
+    DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
+    DB_USER="${PROD_DB_USER:-mindgarden_dev}"
+    DB_PASS="${PROD_DB_PASSWORD:-MindGardenDev2025!@#}"
     DB_NAME="${PROD_DB_NAME:-core_solution}"
     echo "🚀 운영 환경 프로시저 배포 시작..."
 else
@@ -29,8 +31,7 @@ fi
 
 if [ -z "$DB_PASS" ]; then
     echo "❌ 오류: DB 비밀번호가 설정되지 않았습니다."
-    echo "   CI: GitHub Actions Secrets 에 PRODUCTION_DB_PASSWORD 를 설정하세요."
-    echo "   로컬: 환경 변수 PROD_DB_PASSWORD 를 export 한 뒤 다시 실행하세요."
+    echo "   prod: PROD_DB_PASSWORD 또는 개발과 동일한 기본값을 사용하려면 환경 변수를 비워 두세요."
     exit 1
 fi
 

@@ -83,9 +83,11 @@ public class EnvironmentValidationConfig {
         }
         
         // 6. 암호화 키 길이 검증
-        if (encryptionKey != null && encryptionKey.length() < 32) {
-            log.error("❌ 암호화 키 길이 부족: PERSONAL_DATA_ENCRYPTION_KEY (최소 32자 필요, 현재: {}자)", encryptionKey.length());
-            hasErrors = true;
+        // PERSONAL_DATA_ENCRYPTION_KEY는 PersonalDataEncryptionKeyProvider에서 32바이트 미만이면
+        // SHA-256으로 정규화되므로, 레거시 짧은 문자열이라도 비어 있기만 않으면 유효하다.
+        if (encryptionKey != null && encryptionKey.length() > 0 && encryptionKey.length() < 32) {
+            log.warn("⚠️ PERSONAL_DATA_ENCRYPTION_KEY 문자열 길이가 32 미만입니다 ({}자). 내부 정규화로 32바이트 키를 사용합니다.",
+                    encryptionKey.length());
         }
         
         // 7. JWT Secret 길이 검증

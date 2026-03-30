@@ -1,11 +1,11 @@
 /* ===== 모바일 테마 (터치 친화적) ===== */
 [data-theme="mobile"] {
   /* 터치 친화적 색상 조정 */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
-  --color-primary-active: #1d4ed8;
-  --color-primary-light: #dbeafe;
-  --color-primary-dark: #1e40af;
+  --color-primary: var(--mg-primary-500);
+  --color-primary-hover: var(--cs-primary-600);
+  --color-primary-active: var(--cs-primary-700);
+  --color-primary-light: var(--cs-primary-100);
+  --color-primary-dark: var(--cs-primary-800);
 
   /* 터치 타겟 크기 증가 */
   --touch-target-min: 44px;
@@ -19,10 +19,10 @@
   --border-radius-touch: 12px;
 
   /* 그림자 조정 (모바일에서 성능 최적화) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 2px 0 var(--mg-shadow-light);
+  --shadow-md: 0 2px 4px 0 var(--mg-shadow-light);
+  --shadow-lg: 0 4px 8px 0 var(--mg-shadow-medium);
+  --shadow-xl: 0 8px 16px 0 var(--cs-shadow-dark);
 
   /* 모바일 전용 색상 */
   --mobile-bg-primary: rgba(255, 255, 255, 0.95);

@@ -1,92 +1,129 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Button Component
- * 
- * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
- * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Button 섹션)
- * @reference /design-system (ButtonShowcase)
- * @reference /frontend/src/components/mindgarden/ButtonShowcase.js
- */
-
-import React from 'react';
-
+ * Buttons Component
 /**
- * 재사용 가능한 버튼 컴포넌트
  * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - 버튼 텍스트 또는 아이콘
- * @param {string} [props.variant='primary'] - 버튼 스타일 ('primary'|'secondary'|'danger'|'outline'|'ghost')
- * @param {string} [props.size='medium'] - 버튼 크기 ('small'|'medium'|'large')
- * @param {boolean} [props.disabled=false] - 비활성화 여부
- * @param {boolean} [props.loading=false] - 로딩 상태
- * @param {Function} [props.onClick] - 클릭 핸들러
- * @param {string} [props.type='button'] - 버튼 타입
- * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
+ * Core Solution 디자인 시스템 표준 컴포넌트
+/**
  * 
- * @example
- * // Primary 버튼
- * <Button variant="primary" onClick={handleClick}>
- *   저장
- * </Button>
- * 
- * @example
- * // 아이콘 버튼
- * <Button variant="outline">
- *   <Download size={20} />
- *   다운로드
- * </Button>
- * 
- * @example
- * // 크기 변형
- * <Button size="small">Small</Button>
- * <Button size="large">Large</Button>
+/**
+ * @author Core Solution Team
+/**
+ * @version 2.0.0
+/**
+ * @since 2025-11-28
  */
+
+import React, { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
+
 const Button = ({
-  children,
   variant = 'primary',
   size = 'medium',
   disabled = false,
   loading = false,
+  loadingText = '처리 중...',
+  preventDoubleClick = true,
+  clickDelay = 1000, // 1초 대기
   onClick,
-  type = 'button',
   className = '',
+  type = 'button',
+  children,
+  style = {},
+  title = '',
+  fullWidth = false,
   ...props
 }) => {
-  // 기본 클래스 (mg- 접두사 사용)
-  const baseClass = 'mg-button';
-  
-  // variant 클래스
-  const variantClass = variant ? `mg-button-${variant}` : '';
-  
-  // size 클래스
-  const sizeClass = size && size !== 'medium' ? `mg-button-${size}` : '';
-  
-  // 모든 클래스 조합
-  const allClasses = [
-    baseClass,
-    variantClass,
-    sizeClass,
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleClick = useCallback(async (e) => {
+    // 이미 처리 중이거나 비활성화된 경우 무시
+    if (isProcessing || disabled || loading) {
+      e.preventDefault();
+      return;
+    }
+
+    // 중복 클릭 방지 활성화
+    if (preventDoubleClick) {
+      setIsProcessing(true);
+    }
+
+    try {
+      // onClick 핸들러 실행
+      if (onClick) {
+        await onClick(e);
+      }
+    } catch (error) {
+      console.error('Button click handler error:', error);
+    } finally {
+      // 클릭 후 대기 시간 적용
+      if (preventDoubleClick) {
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, clickDelay);
+      }
+    }
+  }, [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]);
+
+  // 버튼 클래스 구성
+  const buttonClasses = [
+    'mg-button',
+    `mg-button--${variant}`,
+    `mg-button--${size}`,
+    disabled || loading || isProcessing ? 'mg-button--disabled' : '',
+    fullWidth ? 'mg-button--full-width' : '',
     className
   ].filter(Boolean).join(' ');
-  
+
+  // 버튼 상태 확인
+  const isDisabled = disabled || loading || isProcessing;
+
   return (
     <button
       type={type}
-      className={allClasses}
-      disabled={disabled || loading}
-      onClick={onClick}
+      className={buttonClasses}
+      disabled={isDisabled}
+      onClick={handleClick}
+      style={style}
+      title={title || (isProcessing ? '처리 중입니다...' : '')}
+      aria-disabled={isDisabled}
       {...props}
     >
-      {loading ? (
-        <>
-          <span className="mg-spinner"></span>
-          {children}
-        </>
-      ) : (
-        children
+      <span className="mg-button__content">
+        {/* 로딩 상태 표시 */}
+        {loading && (
+          <span className="mg-button__loading">
+            <span className="mg-button__spinner">⏳</span>
+          </span>
+        )}
+        
+        {/* 버튼 텍스트/내용 */}
+        <span className={`mg-button__text ${loading ? 'mg-button__text--loading' : ''}`}>
+          {loading ? loadingText : children}
+        </span>
+      </span>
+      
+      {/* 처리 중 오버레이 */}
+      {isProcessing && !loading && (
+        <span className="mg-button__processing-overlay">
+          <span className="mg-button__spinner">⏳</span>
+        </span>
       )}
     </button>
   );
 };
 
-export default Button;
+Button.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'success', 'warning', 'info', 'ghost']),
+  size: PropTypes.oneOf(['small', 'medium', 'large']),
+  disabled: PropTypes.bool,
+  loading: PropTypes.bool,
+  onClick: PropTypes.func,
+  type: PropTypes.string
+};
 
+// defaultProps 제거 - 함수 매개변수에서 기본값 사용 (React 18+ 권장)
+
+export default Button;

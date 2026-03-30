@@ -1,27 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     getMappingStatusKoreanName,
     getStatusColor,
     getStatusIcon
 } from '../../../utils/codeHelper';
+import { getLucideIcon } from '../../../utils/iconUtils';
+import SafeText from '../../common/SafeText';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 
 /**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
+/**
  * - 매칭 상태별 통계 표시
+/**
  * - 시각적 통계 카드
+/**
  * - 동적 색상/아이콘 조회
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2024-12-19
+/**
  * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingStats = ({ mappings = [], onStatCardClick }) => {
     const [statCards, setStatCards] = useState([]);
     const [loading, setLoading] = useState(true);
-    // 통계 계산
     const stats = {
         pending: mappings.filter(m => m.status === 'PENDING_PAYMENT').length,
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         active: mappings.filter(m => m.status === 'ACTIVE').length,
         total: mappings.length,
         paymentConfirmed: mappings.filter(m => m.status === 'PAYMENT_CONFIRMED').length,
@@ -29,13 +40,11 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         sessionsExhausted: mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED').length
     };
 
-    // 동적 통계 카드 데이터 로드
     useEffect(() => {
         const loadStatCards = async () => {
             try {
                 setLoading(true);
                 
-                // 동적으로 색상, 아이콘, 라벨 조회 (async 함수들을 await로 처리)
                 const [
                     pendingData,
                     activeData,
@@ -44,7 +53,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     terminatedData,
                     sessionsExhaustedData
                 ] = await Promise.all([
-                    // PENDING_PAYMENT
                     Promise.all([
                         getMappingStatusKoreanName('PENDING_PAYMENT'),
                         getStatusColor('PENDING_PAYMENT', 'MAPPING_STATUS'),
@@ -60,12 +68,15 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'PENDING_PAYMENT'
                     })),
                     
-                    // ACTIVE
                     Promise.all([
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getMappingStatusKoreanName('ACTIVE'),
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getStatusColor('ACTIVE', 'MAPPING_STATUS'),
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getStatusIcon('ACTIVE', 'MAPPING_STATUS')
                     ]).then(([label, color, icon]) => ({
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         id: 'ACTIVE',
                         icon: icon,
                         label: label,
@@ -73,10 +84,10 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         color: color,
                         bgColor: color + '20',
                         action: 'view',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         status: 'ACTIVE'
                     })),
                     
-                    // PAYMENT_CONFIRMED
                     Promise.all([
                         getMappingStatusKoreanName('PAYMENT_CONFIRMED'),
                         getStatusColor('PAYMENT_CONFIRMED', 'MAPPING_STATUS'),
@@ -92,10 +103,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'PAYMENT_CONFIRMED'
                     })),
                     
-                    // TOTAL (특별 처리)
                     Promise.resolve({
                         id: 'TOTAL',
-                        icon: '📊',
+                        icon: 'BarChart3',
                         label: '전체 매칭',
                         value: stats.total,
                         color: 'var(--color-primary)',
@@ -104,7 +114,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'TOTAL'
                     }),
                     
-                    // TERMINATED
                     Promise.all([
                         getMappingStatusKoreanName('TERMINATED'),
                         getStatusColor('TERMINATED', 'MAPPING_STATUS'),
@@ -120,7 +129,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'TERMINATED'
                     })),
                     
-                    // SESSIONS_EXHAUSTED
                     Promise.all([
                         getMappingStatusKoreanName('SESSIONS_EXHAUSTED'),
                         getStatusColor('SESSIONS_EXHAUSTED', 'MAPPING_STATUS'),
@@ -150,62 +158,13 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 console.log('✅ 매칭 통계 카드 동적 로드 완료:', cardData);
             } catch (error) {
                 console.error('매칭 통계 카드 로드 실패:', error);
-                // 오류 시 기본값 설정
                 setStatCards([
-                    {
-                        id: 'PENDING_PAYMENT',
-                        icon: '⏳',
-                        label: '결제 대기',
-                        value: stats.pending,
-                        color: 'var(--color-warning, #FFC107)',
-                        bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
-                        action: 'payment'
-                    },
-                    {
-                        id: 'ACTIVE',
-                        icon: '✅',
-                        label: '활성 매칭',
-                        value: stats.active,
-                        color: 'var(--color-success, #28A745)',
-                        bgColor: 'var(--color-success-light, rgba(40, 167, 69, 0.1))',
-                        action: 'view'
-                    },
-                    {
-                        id: 'PAYMENT_CONFIRMED',
-                        icon: '💰',
-                        label: '결제 확인',
-                        value: stats.paymentConfirmed,
-                        color: 'var(--color-info, #17A2B8)',
-                        bgColor: 'var(--color-info-light, rgba(23, 162, 184, 0.1))',
-                        action: 'view'
-                    },
-                    {
-                        id: 'TOTAL',
-                        icon: '📊',
-                        label: '전체 매칭',
-                        value: stats.total,
-                        color: 'var(--color-primary, #007AFF)',
-                        bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
-                        action: 'view_all'
-                    },
-                    {
-                        id: 'TERMINATED',
-                        icon: '❌',
-                        label: '종료됨',
-                        value: stats.terminated,
-                        color: 'var(--color-danger, #DC3545)',
-                        bgColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.1))',
-                        action: 'view'
-                    },
-                    {
-                        id: 'SESSIONS_EXHAUSTED',
-                        icon: '🔚',
-                        label: '회기 소진',
-                        value: stats.sessionsExhausted,
-                        color: 'var(--color-warning, #FFC107)',
-                        bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
-                        action: 'view'
-                    }
+                    { id: 'PENDING_PAYMENT', icon: 'Loader2', label: '결제 대기', value: stats.pending, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'payment' },
+                    { id: 'ACTIVE', icon: 'Check', label: '활성 매칭', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
+                    { id: 'PAYMENT_CONFIRMED', icon: 'DollarSign', label: '결제 확인', value: stats.paymentConfirmed, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view' },
+                    { id: 'TOTAL', icon: 'BarChart3', label: '전체 매칭', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
+                    { id: 'TERMINATED', icon: 'X', label: '종료됨', value: stats.terminated, color: 'var(--mg-error-500)', bgColor: 'var(--mg-error-50)', action: 'view' },
+                    { id: 'SESSIONS_EXHAUSTED', icon: 'CircleDot', label: '회기 소진', value: stats.sessionsExhausted, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'view' }
                 ]);
             } finally {
                 setLoading(false);
@@ -215,72 +174,67 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         loadStatCards();
     }, [mappings]); // mappings가 변경될 때마다 재로드
 
+    const ICON_VARIANT_MAP = {
+        PENDING_PAYMENT: 'orange',
+        ACTIVE: 'green',
+        PAYMENT_CONFIRMED: 'blue',
+        TOTAL: 'blue',
+        TERMINATED: 'gray',
+        SESSIONS_EXHAUSTED: 'orange'
+    };
+
     if (loading) {
         return (
-            <div className="mapping-stats-container">
-                <div className="mg-v2-loading-container">
-                    <div className="mg-v2-spinner"></div>
-                    <p>매칭 통계를 불러오는 중...</p>
-                </div>
+            <div className="mg-v2-content-kpi-row mg-v2-mapping-stats-loading">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="mg-v2-content-kpi-card mg-v2-content-kpi-card--skeleton">
+                        <div className="mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--gray" />
+                        <div className="mg-v2-content-kpi-card__info">
+                            <span className="mg-v2-content-kpi-card__label">로딩 중...</span>
+                            <span className="mg-v2-content-kpi-card__value">-</span>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
 
     return (
-        <div className="mg-v2-mapping-stats-container">
-            <div className="mg-v2-mapping-stats-header">
-                <h3 className="mg-v2-mapping-stats-title">📊 매칭 통계</h3>
-                <p className="mg-v2-mapping-stats-subtitle">현재 매칭 상태별 통계입니다.</p>
-            </div>
-            
-            <div className="mg-v2-mapping-stats-grid">
-                {statCards.map((stat, index) => (
-                    <div 
-                        key={index} 
-                        className={`mg-v2-mapping-stat-card ${stat.status.toLowerCase()}-stat`}
+        <div className="mg-v2-content-kpi-row">
+            {statCards.map((stat, index) => {
+                const iconVariant = ICON_VARIANT_MAP[stat.id] || (['green', 'orange', 'blue', 'gray'][index % 4]);
+                const numericValue = toSafeNumber(stat.value);
+                const percentage = stats.total > 0 ? Math.round((numericValue / stats.total) * 100) : 0;
+                const titleHint = `${toDisplayString(stat.label)} 클릭하여 ${
+                    stat.action === 'payment' ? '결제 확인' : '상세 조회'
+                }`;
+                const valueLine =
+                    `${numericValue}건${percentage > 0 ? ` (${percentage}%)` : ''}`;
+                return (
+                    <button
+                        key={stat.id || index}
+                        type="button"
+                        className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
-                        title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
-                        data-color={stat.color}
+                        title={titleHint}
                     >
-                        <div className="mg-v2-mapping-stat-icon">
-                            {stat.icon}
+                        <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
+                            <span className="mg-v2-content-kpi-card__icon-emoji">{getLucideIcon(stat.icon, { size: 24 })}</span>
                         </div>
-                        <div className="mg-v2-mapping-stat-content">
-                            <div className="mg-v2-mapping-stat-label">{stat.label}</div>
-                            <div className="mg-v2-mapping-stat-count">
-                                {stat.value}건
+                        <div className="mg-v2-content-kpi-card__info">
+                            <div className="mg-v2-content-kpi-card__top">
+                                <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
+                                {stat.action === 'payment' && numericValue > 0 && (
+                                    <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
+                                        결제 확인
+                                    </span>
+                                )}
                             </div>
+                            <SafeText className="mg-v2-content-kpi-card__value">{valueLine}</SafeText>
                         </div>
-                        <div className="mg-v2-mapping-stat-percentage">
-                            {stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0}%
-                        </div>
-                        {stat.action === 'payment' && stat.value > 0 && (
-                            <div className="mg-v2-mapping-stat-payment-badge">
-                                💳 결제 확인
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-            
-            <div className="mg-v2-mapping-stats-summary">
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">총 매칭 수:</span>
-                    <span className="mg-v2-mapping-summary-value">{stats.total}건</span>
-                </div>
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">활성 비율:</span>
-                    <span className="mg-v2-mapping-summary-value">
-                        {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
-                    </span>
-                </div>
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">승인 대기 비율:</span>
-                    <span className="mg-v2-mapping-summary-value">
-                        {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
-                    </span>
-                </div>
-            </div>
+                    </button>
+                );
+            })}
         </div>
     );
 };

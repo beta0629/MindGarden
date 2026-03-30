@@ -1,0 +1,1448 @@
+/**
+ * 스케줄 페이지 B0KlA 디자인 시스템 적용
+ * FullCalendar, ScheduleHeader, ScheduleLegend, 모달 스타일 오버라이드
+ *
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+/* ===== Schedule Calendar 컨테이너 (메인 영역 꽉 채움) ===== */
+.mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: calc(100vh - 220px); /* GNB, LNB, 패딩, 헤더·범례 여유 */
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ===== Schedule Header B0KlA (매핑 리스트 헤더와 동일 패턴) ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__icon {
+  color: var(--ad-b0kla-green);
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__select {
+  min-width: 120px;
+  max-width: 200px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+  cursor: pointer;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__select:focus {
+  outline: none;
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__refresh:hover {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+/* 기존 클래스 호환 */
+.mg-v2-ad-b0kla .mg-v2-consultant-filter,
+.mg-v2-ad-b0kla .mg-v2-select {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+}
+
+/* ===== ConsultantCard schedule-select B0KlA ===== */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select.mg-consultant-card--selected {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__name--schedule-select {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__specialty-inline,
+.mg-v2-ad-b0kla .mg-consultant-card__meta-brief,
+.mg-v2-ad-b0kla .mg-consultant-card__experience-brief {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__avatar--schedule-select {
+  background: linear-gradient(135deg, var(--ad-b0kla-green), var(--mg-primary-600));
+  color: var(--ad-b0kla-card-bg);
+}
+
+/* schedule-select 카드 버튼 B0KlA (Button 컴포넌트 mg-button--primary / mg-button--outline 호환) */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--outline {
+  background: transparent;
+  color: var(--ad-b0kla-green);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--outline:hover:not(.mg-button--disabled) {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+}
+
+/* schedule-select 카드 배지 B0KlA (상담 가능/바쁨/휴무) */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-consultant-card__status-badge {
+  border-radius: var(--ad-b0kla-radius-sm);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="available"] .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="busy"] .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="unavailable"] .mg-consultant-card__status-badge,
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select.mg-consultant-card--unavailable .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-btn--secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== Client Selection Step (내담자 선택) B0KlA ===== */
+.mg-v2-ad-b0kla .mg-v2-ad-client-step {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-client-step .client-selector {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-client-step .mg-client-cards-grid--schedule-client {
+  flex: 1;
+  min-height: 200px;
+  align-content: start;
+  overflow-y: auto;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--ad-b0kla-radius-sm, 12px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-client-step__empty .mg-v2-btn--primary,
+.mg-v2-ad-b0kla .mg-v2-ad-client-step__cta {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-client-step__cta:hover {
+  opacity: 0.9;
+}
+
+/* ===== ClientCard in schedule modal B0KlA ===== */
+.mg-v2-ad-b0kla .mg-client-card {
+  position: relative;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  border-left: 4px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-client-card:hover {
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-client-card.mg-client-card--selected {
+  border-color: var(--ad-b0kla-green);
+  border-left-color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.08));
+}
+
+/* ClientCard 아바타 B0KlA (CLIENT_SELECTION_CARD_AVATAR_SPEC) */
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 50%;
+  position: relative;
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-title-color);
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 auto var(--spacing-md, var(--ad-b0kla-radius-sm, 12px));
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: var(--ad-b0kla-title-color);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-client-card__name--large,
+.mg-v2-ad-b0kla .mg-client-card__name--mobile-simple {
+  color: var(--ad-b0kla-title-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-client-card__detail-item,
+.mg-v2-ad-b0kla .mg-client-card__consultant-label,
+.mg-v2-ad-b0kla .mg-client-card__consultant-name {
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.mg-v2-ad-b0kla .mg-client-card__progress-value {
+  color: var(--ad-b0kla-title-color);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-client-card__status-badge--active {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mg-v2-ad-b0kla .mg-client-card__status-badge--default {
+  background: var(--ad-b0kla-blue-bg, var(--mg-gray-100));
+  color: var(--ad-b0kla-blue, var(--ad-b0kla-text-secondary));
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mg-v2-ad-b0kla .mg-client-card__status-badge--scheduled {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mg-v2-ad-b0kla .mg-client-card .mg-button-primary,
+.mg-v2-ad-b0kla .mg-client-card .mg-button.mg-button-primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-client-card .mg-button-primary:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-client-card .mg-button.mg-button-primary:hover {
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-client-card--unavailable {
+  opacity: 0.6;
+}
+
+.mg-v2-ad-b0kla .mg-client-card--unavailable:hover {
+  border-color: var(--ad-b0kla-border);
+}
+
+/* ===== Schedule Legend B0KlA ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-legend {
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-self: flex-start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-section-right {
+  margin-left: auto;
+}
+
+
+.mg-v2-ad-b0kla .mg-v2-legend-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-item {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-text {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-more {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== FullCalendar B0KlA 오버라이드 ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view,
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  overflow: hidden;
+  min-width: 0;
+  min-height: 480px; /* flex 자식 0 높이 방지, 꽉 채움 유지 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-b0kla .fc {
+  height: 100%;
+  flex: 1;
+  --fc-border-color: var(--ad-b0kla-border);
+  --fc-button-bg-color: var(--ad-b0kla-bg);
+  --fc-button-border-color: var(--ad-b0kla-border);
+  --fc-button-hover-bg-color: var(--ad-b0kla-card-bg);
+  --fc-button-hover-border-color: var(--ad-b0kla-border);
+  --fc-button-active-bg-color: var(--ad-b0kla-green);
+  --fc-today-bg-color: var(--ad-b0kla-green-bg);
+  --fc-page-bg-color: var(--ad-b0kla-card-bg);
+  --fc-neutral-bg-color: var(--ad-b0kla-bg);
+}
+
+.mg-v2-ad-b0kla .fc-toolbar-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .fc-button {
+  background: var(--ad-b0kla-bg);
+  border-color: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .fc-button:hover {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .fc-button-primary:not(:disabled).fc-button-active,
+.mg-v2-ad-b0kla .fc-button-primary:not(:disabled):active {
+  background: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla .fc-col-header-cell {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-title-color);
+  border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day-number {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .fc-day-today .fc-daygrid-day-number {
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day {
+  background: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day:hover {
+  background: var(--ad-b0kla-bg);
+}
+
+/* 월간 뷰(dayGrid) 비영업 영역(.fc-non-business) 분할 버그 방지: 셀과 동일 배경으로 한 덩어리로 표시 */
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper .fc-daygrid-day-bg .fc-non-business,
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper .fc-daygrid-bg-harness .fc-non-business {
+  background: var(--ad-b0kla-card-bg) !important;
+}
+
+/* 일 8개 이벤트 표시용 셀 높이·스크롤 */
+.mg-v2-ad-b0kla .fc-daygrid-day-frame {
+  min-height: calc(var(--spacing-xl, 2rem) * 4);
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events {
+  max-height: calc(var(--spacing-xl, 2rem) * 6);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar {
+  width: 4px;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar-track {
+  background: var(--ad-b0kla-bg);
+  border-radius: 2px;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar-thumb {
+  background: var(--ad-b0kla-border);
+  border-radius: 2px;
+}
+
+/* 통합 스케줄 컨텍스트: viewport 기반 min-height/hidden clipping 해제 */
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+.integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar-view,
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla-fc-wrapper {
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+.mg-v2-ad-b0kla .fc-timegrid-slot-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* 캘린더 내부 fc-event만 적용 (사이드바 .integrated-schedule__card.fc-event는 제외) */
+.mg-v2-ad-b0kla .fc .fc-event {
+  border-radius: var(--ad-b0kla-radius-sm);
+  border-color: transparent;
+}
+
+.mg-v2-ad-b0kla .fc .fc-event:hover {
+  opacity: 0.9;
+}
+
+/* ===== TodayStats B0KlA (사이드바 위젯) ===== */
+.mg-v2-ad-b0kla .today-stats-container .stats-header {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .refresh-btn:hover {
+  background: var(--ad-b0kla-bg);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-item {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-value {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== ConsultantStatus B0KlA (사이드바 위젯) ===== */
+.mg-v2-ad-b0kla .consultant-status-card {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-ad-b0kla .consultant-status-card:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .consultant-status-name {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .consultant-status-email,
+.mg-v2-ad-b0kla .consultant-status-phone,
+.mg-v2-ad-b0kla .consultant-status-specialty {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="available"] {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="busy"] {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="unavailable"] {
+  background: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== Auto-sizing B0KlA Modal Styles ===== */
+/* backdrop: 디자인 토큰 사용 */
+.mg-v2-ad-modal-backdrop {
+  --ad-b0kla-card-bg: var(--mg-white);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--ad-b0kla-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+/* 모달 본체: 모든 변형(full/medium/small) 불투명 배경 보장 */
+.mg-v2-ad-modal.mg-v2-ad-b0kla,
+.mg-v2-ad-modal,
+.mg-v2-ad-modal--full,
+.mg-v2-ad-modal--medium,
+.mg-v2-ad-modal--small {
+  background: var(--ad-b0kla-card-bg);
+  border-radius: 16px;
+  box-shadow: var(--cs-shadow-soft);
+  width: 100%;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+.mg-v2-ad-modal__header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--mg-gray-200);
+  background: var(--ad-b0kla-card-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-modal__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mg-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.mg-v2-ad-modal__close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--mg-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.mg-v2-ad-modal__close-btn:hover {
+  background: var(--mg-gray-100);
+  color: var(--mg-text-primary);
+}
+
+.mg-v2-ad-modal__body {
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  background-color: #ffffff;
+  border: 1px solid var(--mg-gray-200, #e5e7eb);
+}
+
+/* ===== UnifiedModal (mg-modal) B0KlA 호환 ===== */
+.mg-modal-overlay.mg-v2-ad-b0kla {
+  --ad-b0kla-card-bg: var(--mg-white, #ffffff);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark, rgba(0,0,0,0.5));
+  background: var(--ad-b0kla-overlay-bg);
+  /* 스크롤 시에도 오버레이 불투명 유지 */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* 스크롤 시 배경 블러로 겹쳐 보이는 현상 방지 */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mg-modal.mg-v2-ad-b0kla {
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: var(--cs-shadow-soft);
+}
+
+/* 상담일지 모달: MgModal(full) 사용 — 포탈 렌더로 스크롤/투명 이슈 해결 */
+.mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal,
+.mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal .mg-v2-modal-body,
+.mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal .mg-v2-consultation-log-sticky {
+  background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+  background-color: #FAF9F7;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--mg-gray-200);
+  background: var(--ad-b0kla-card-bg, #ffffff);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__title {
+  color: var(--mg-text-primary);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__close {
+  color: var(--mg-text-secondary);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__close:hover {
+  background: var(--mg-gray-100);
+  color: var(--mg-text-primary);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body {
+  padding: 24px;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+}
+
+/* 상담일지 fullscreen 모달: 전체 화면 사용 (B0KlA body max-height 오버라이드) */
+.mg-modal.mg-modal--fullscreen.mg-v2-ad-b0kla .mg-modal__body {
+  max-height: none !important;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 16px 24px;
+  border-top: 1px solid var(--mg-gray-200);
+  background: var(--ad-b0kla-card-bg, #ffffff);
+}
+
+/* mg-modal__body 내부 폼·입력 B0KlA */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-input,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body select,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body input[type="text"],
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--mg-gray-300);
+  border-radius: 8px;
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-input:focus,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body select:focus,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body input[type="text"]:focus,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body textarea:focus {
+  outline: none;
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 2px var(--mg-primary-100);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mg-text-secondary);
+}
+
+.mg-v2-ad-modal__footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--mg-gray-200);
+  background: var(--ad-b0kla-card-bg);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ===== Horizontal Stepper ===== */
+.mg-v2-ad-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--mg-gray-100);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-stepper__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.mg-v2-ad-stepper__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-white);
+  border: 2px solid var(--mg-gray-300);
+  color: var(--mg-gray-500);
+  transition: all 0.3s ease;
+}
+
+.mg-v2-ad-stepper__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mg-gray-500);
+  transition: all 0.3s ease;
+}
+
+.mg-v2-ad-stepper__item.current .mg-v2-ad-stepper__icon {
+  border-color: var(--mg-primary-500);
+  color: var(--mg-primary-500);
+  background: var(--mg-primary-50);
+}
+
+.mg-v2-ad-stepper__item.current .mg-v2-ad-stepper__title {
+  color: var(--mg-primary-600);
+}
+
+.mg-v2-ad-stepper__item.completed .mg-v2-ad-stepper__icon {
+  background: var(--mg-primary-500);
+  border-color: var(--mg-primary-500);
+  color: var(--mg-white);
+}
+
+.mg-v2-ad-stepper__item.completed .mg-v2-ad-stepper__title {
+  color: var(--mg-primary-600);
+}
+
+.mg-v2-ad-stepper__line {
+  flex: 1;
+  height: 2px;
+  background: var(--mg-gray-300);
+  margin: 0 12px;
+  position: relative;
+  top: -12px;
+  transition: background 0.3s ease;
+}
+
+.mg-v2-ad-stepper__line.completed {
+  background: var(--mg-primary-500);
+}
+
+/* ===== Section Block ===== */
+.mg-v2-ad-section-block {
+  background: var(--mg-gray-100);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid var(--mg-gray-200);
+}
+
+.mg-v2-ad-section-block__header {
+  border-left: 4px solid var(--mg-primary-500);
+  padding-left: 12px;
+  margin-bottom: 4px;
+}
+
+.mg-v2-ad-section-block__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--mg-text-primary);
+  margin: 0;
+}
+
+.mg-v2-ad-section-block__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form Elements adjustments for B0KlA inside modal */
+.mg-v2-ad-modal__body .mg-v2-input,
+.mg-v2-ad-modal__body select,
+.mg-v2-ad-modal__body input[type="text"],
+.mg-v2-ad-modal__body textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--mg-gray-300);
+  border-radius: 8px;
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-modal__body .mg-v2-input:focus,
+.mg-v2-ad-modal__body select:focus,
+.mg-v2-ad-modal__body input[type="text"]:focus,
+.mg-v2-ad-modal__body textarea:focus {
+  outline: none;
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 2px var(--mg-primary-100);
+}
+
+.mg-v2-ad-modal__body .mg-v2-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mg-text-secondary);
+}
+
+/* Updated Button Styles */
+.mg-v2-btn--primary {
+  background: var(--mg-primary-500);
+  color: var(--mg-white);
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.mg-v2-btn--primary:hover:not(:disabled) {
+  background: var(--mg-primary-600);
+}
+
+.mg-v2-btn--primary:disabled {
+  background: var(--mg-gray-300);
+  color: var(--mg-gray-500);
+  cursor: not-allowed;
+}
+
+.mg-v2-btn--outline {
+  background: transparent;
+  color: var(--mg-text-primary);
+  border: 1px solid var(--mg-gray-300);
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.mg-v2-btn--outline:hover:not(:disabled) {
+  background: var(--mg-gray-50);
+  border-color: var(--mg-gray-400);
+}
+
+.mg-v2-btn--outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Calendar Event Block (B0KlA) ===== */
+.mg-v2-ad-calendar-event {
+  background-color: var(--mg-gray-50);
+  border: 1px solid var(--mg-gray-300);
+  border-radius: 6px;
+  border-left: 4px solid var(--mg-primary-500);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--cs-shadow-xs);
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-calendar-event__time {
+  font-size: 11px;
+  color: var(--mg-text-secondary);
+}
+
+.mg-v2-ad-calendar-event__title {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-v2-ad-calendar-event__title .client-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mg-text-primary);
+}
+
+.mg-v2-ad-calendar-event__title .counselor-name {
+  font-size: 11px;
+  color: var(--mg-secondary-600);
+  margin-left: 4px;
+}
+
+.mg-v2-ad-calendar-event__status {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--cs-brown-600);
+}
+
+/* ===== Form and Details Cards (B0KlA) ===== */
+.mg-v2-form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.mg-v2-form-row .mg-v2-form-group {
+  flex: 1;
+}
+
+.mg-v2-schedule-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--mg-white);
+  border-radius: 8px;
+  border: 1px solid var(--mg-gray-200);
+}
+
+.mg-v2-schedule-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mg-v2-schedule-details-row--highlight {
+  padding-top: 8px;
+  border-top: 1px solid var(--mg-gray-200);
+  margin-top: 4px;
+}
+
+.mg-v2-schedule-details-label {
+  color: var(--mg-text-secondary);
+  font-size: 13px;
+}
+
+.mg-v2-schedule-details-value {
+  font-weight: 600;
+  color: var(--mg-text-primary);
+  font-size: 14px;
+}
+
+.mg-v2-schedule-details-row--highlight .mg-v2-schedule-details-label,
+.mg-v2-schedule-details-row--highlight .mg-v2-schedule-details-value {
+  color: var(--mg-primary-600);
+  font-weight: 600;
+}
+
+textarea.mg-v2-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ===== Step 3: 시간 선택 (Time Step) B0KlA 아토믹 ===== */
+.mg-v2-ad-b0kla .mg-v2-ad-time-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 16px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__intro {
+  margin-bottom: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__subtitle {
+  margin: 0 0 var(--mg-spacing-xs, 4px) 0;
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__note {
+  margin: 0;
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.4;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__form-row {
+  display: flex;
+  gap: var(--mg-spacing-md, 16px);
+  flex-wrap: wrap;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__form-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__label {
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__select {
+  padding: 10px 14px;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-time-step__select:focus {
+  outline: none;
+  border-color: var(--ad-b0kla-green);
+  box-shadow: 0 0 0 2px var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.2));
+}
+
+/* ===== TimeSlotGrid B0KlA (mg-v2-ad-ts) ===== */
+.mg-v2-ad-b0kla .mg-v2-ad-ts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 16px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts--loading {
+  min-height: 200px;
+  justify-content: center;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--mg-spacing-sm, 8px);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__title {
+  margin: 0;
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__duration-badge {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary);
+  background: var(--ad-b0kla-bg);
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 8px);
+  align-items: center;
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 4px);
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--available {
+  background: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--vacation {
+  background: var(--ad-b0kla-orange);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--past,
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--unavailable {
+  background: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--conflict {
+  background: var(--ad-b0kla-danger, var(--mg-error-500));
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__legend-dot--selected {
+  background: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__container {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 16px);
+  margin-bottom: var(--mg-spacing-sm, 8px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__hour {
+  flex-shrink: 0;
+  width: 40px;
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: var(--mg-spacing-sm, 8px);
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-xs, 4px);
+  padding: var(--mg-spacing-md, 12px) var(--mg-spacing-sm, 8px);
+  min-width: 80px;
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  border: 2px solid var(--ad-b0kla-border);
+  background: var(--ad-b0kla-card-bg);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  text-align: center;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--available:hover {
+  border-color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.08));
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--selected {
+  border-color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.12));
+  color: var(--ad-b0kla-green);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--vacation {
+  border-color: var(--ad-b0kla-orange);
+  background: var(--ad-b0kla-orange-bg, rgba(245, 158, 11, 0.08));
+  cursor: not-allowed;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--conflict {
+  border-color: var(--ad-b0kla-danger, var(--mg-error-500));
+  background: var(--mg-error-50, rgba(239, 68, 68, 0.08));
+  cursor: not-allowed;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--past,
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--unavailable {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-text-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item__icon {
+  font-size: 10px;
+  color: inherit;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item__time {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item__duration {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item--selected .mg-v2-ad-ts-item__duration {
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__empty {
+  padding: var(--mg-spacing-xl, 24px) var(--mg-spacing-lg, 20px);
+  text-align: center;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__empty-text {
+  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-base, 1rem);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__empty-subtext {
+  margin: 0;
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing {
+  margin-top: var(--mg-spacing-md, 16px);
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing-title {
+  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 8px);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing-time {
+  color: var(--ad-b0kla-title-color);
+  font-weight: 500;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-ts__existing-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== Step 4: 스케줄 세부사항 (Details Step) B0KlA 아토믹 ===== */
+.mg-v2-ad-b0kla .mg-v2-ad-details-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 16px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  box-shadow: var(--ad-b0kla-shadow, 0 1px 3px rgba(0, 0, 0, 0.06));
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__row--highlight {
+  padding-top: var(--mg-spacing-sm, 8px);
+  margin-top: var(--mg-spacing-xs, 4px);
+  border-top: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__row--highlight .mg-v2-ad-details-summary__label,
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__row--highlight .mg-v2-ad-details-summary__value {
+  color: var(--ad-b0kla-green);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__label {
+  color: var(--ad-b0kla-text-secondary);
+  font-size: 13px;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-summary__value {
+  color: var(--ad-b0kla-title-color);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__label {
+  color: var(--ad-b0kla-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__input,
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__textarea {
+  padding: 10px 14px;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__input::placeholder,
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__textarea::placeholder {
+  color: var(--ad-b0kla-placeholder, var(--ad-b0kla-text-secondary));
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__input:focus,
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__textarea:focus {
+  outline: none;
+  border-color: var(--ad-b0kla-green);
+  box-shadow: 0 0 0 2px var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.2));
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+

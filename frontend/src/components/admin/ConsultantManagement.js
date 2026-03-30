@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import SafeText from '../common/SafeText';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [consultants, setConsultants] = useState([]);
@@ -13,7 +16,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
-        username: '', email: '', password: '', name: '', phone: '', specialization: ''
+        userId: '', email: '', password: '', name: '', phone: '', specialization: ''
     });
 
     const loadConsultants = useCallback(async () => {
@@ -37,6 +40,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode,
                         specialty: consultantEntity.specialty,
                         specialtyDetails: consultantEntity.specialtyDetails,
@@ -70,7 +74,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/api/admin/consultants', {
+            const response = await fetch('/api/v1/admin/consultants', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
@@ -79,7 +83,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             if (response.ok) {
                 showToast('상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
-                setForm({ username: '', email: '', password: '', name: '', phone: '', specialization: '' });
+                setForm({ userId: '', email: '', password: '', name: '', phone: '', specialization: '' });
                 loadConsultants();
                 onUpdate();
             } else {
@@ -120,24 +124,21 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <div className="consultant-management">
-            <div className="panel-header">
-                <h3 className="panel-title">
-                    <i className="bi bi-person-badge"></i>
-                    상담사 관리
-                </h3>
-                <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
-                    <FaPlus /> 등록
-                </Button>
-            </div>
-            <div className="panel-content">
-                {loading ? (
-                    <div className="text-center py-4">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">로딩 중...</span>
-                        </div>
-                    </div>
-                ) : consultants.length === 0 ? (
+        <AdminCommonLayout title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
+            <div className="consultant-management">
+                <div className="panel-header">
+                    <h3 className="panel-title">
+                        <i className="bi bi-person-badge"></i>
+                        상담사 관리
+                    </h3>
+                    <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
+                        <FaPlus /> 등록
+                    </Button>
+                </div>
+                <div className="panel-content">
+                    {loading ? (
+                        <UnifiedLoading type="inline" text="로딩 중..." />
+                    ) : consultants.length === 0 ? (
                     <div className="text-center py-4 text-muted">
                         <FaUserTie className="mb-3 consultant-management-empty-icon" />
                         <p>등록된 상담사가 없습니다.</p>
@@ -150,8 +151,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                     <FaUserTie />
                                 </div>
                                 <div className="summary-info">
-                                    <div className="summary-label">{consultant.name}</div>
-                                    <div className="summary-value">{consultant.email}</div>
+                                    <SafeText className="summary-label" tag="div">{consultant.name}</SafeText>
+                                    <div className="summary-value"><SafeText>{consultant.email}</SafeText></div>
                                 </div>
                                 <div className="d-flex gap-1">
                                     <Button 
@@ -193,11 +194,11 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 <Modal.Body>
                     <Form onSubmit={handleSubmit}>
                         <Form.Group className="mb-3">
-                            <Form.Label>사용자명</Form.Label>
+                            <Form.Label>사용자 ID</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={form.username}
-                                onChange={(e) => setForm({...form, username: e.target.value})}
+                                value={form.userId}
+                                onChange={(e) => setForm({...form, userId: e.target.value})}
                                 required
                             />
                         </Form.Group>
@@ -265,10 +266,10 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 <Modal.Body>
                     {selectedConsultant && (
                         <div>
-                            <p><strong>이름:</strong> {selectedConsultant.name}</p>
-                            <p><strong>이메일:</strong> {selectedConsultant.email}</p>
-                            <p><strong>전화번호:</strong> {selectedConsultant.phone}</p>
-                            <p><strong>전문분야:</strong> {selectedConsultant.specialty || selectedConsultant.specialization || '미설정'}</p>
+                            <p><strong>이름:</strong> <SafeText tag="span">{selectedConsultant.name}</SafeText></p>
+                            <p><strong>이메일:</strong> <SafeText>{selectedConsultant.email}</SafeText></p>
+                            <p><strong>전화번호:</strong> <SafeText>{selectedConsultant.phone}</SafeText></p>
+                            <p><strong>전문분야:</strong> <SafeText fallback="미설정">{selectedConsultant.specialty ?? selectedConsultant.specialization}</SafeText></p>
                             <p><strong>상태:</strong> 
                                 <Badge bg={selectedConsultant.isActive ? 'success' : 'secondary'} className="ms-2">
                                     {selectedConsultant.isActive ? '활성' : '비활성'}
@@ -278,7 +279,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     )}
                 </Modal.Body>
             </Modal>
-        </div>
+            </div>
+        </AdminCommonLayout>
     );
 };
 

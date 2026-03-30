@@ -6,12 +6,20 @@ After=network.target mysql.service
 Type=simple
 User=root
 WorkingDirectory=/var/www/mindgarden-dev
-EnvironmentFile=/etc/mindgarden/dev.env
-ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
-Restart=on-failure
+# 세션 쿠키 도메인 등 OAuth/세션 env 로드 (파일 없으면 무시: -)
+EnvironmentFile=-/etc/mindgarden/dev.env
+# JVM 힙 설정 (AnomalyDetectionService 메모리 경고 방지)
+Environment=JAVA_OPTS="-Xms1g -Xmx4g -XX:+UseG1GC"
+ExecStart=/opt/mindgarden/start.sh
+Restart=always
 RestartSec=10
-StandardOutput=journal
-StandardError=journal
+TimeoutStartSec=120
+# Spring Boot graceful shutdown: application.yml lifecycle 30s + task.scheduling.shutdown await 25s 여유
+TimeoutStopSec=120
+SyslogIdentifier=mindgarden-dev
+# stdout/stderr 모두 journal + 파일에 남기기 (journalctl과 dev-error.log에서 예외 확인 가능)
+StandardOutput=append:/var/log/mindgarden/dev.log
+StandardError=append:/var/log/mindgarden/dev-error.log
 
 [Install]
 WantedBy=multi-user.target

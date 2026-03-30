@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import ReactDOM from 'react-dom';
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
+import ErpModal from './common/ErpModal';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
 
@@ -42,32 +42,28 @@ const ConsultantProfileModal = ({
     const loadSalaryProfile = async () => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/profiles/${consultant.id}`);
-            console.log('급여 프로필 조회 응답:', response);
-            if (response.success && response.data) {
-                // 급여 프로필에 등급 정보 추가
-                const grade = response.consultant?.grade || '';
-                const profileWithGrade = {
-                    ...response.data,
-                    grade: grade
-                };
+            const response = await StandardizedApi.get(
+              `${SALARY_API_ENDPOINTS.PROFILES}/${consultant.id}`
+            );
+            const profile = response && typeof response === 'object' && (response.data ?? response) && !Array.isArray(response)
+                ? (response.data ?? response)
+                : null;
+            const grade = (response && response.consultant?.grade) || profile?.grade || '';
+            if (profile && (profile.salaryType != null || profile.baseSalary != null || profile.consultantId != null)) {
+                const profileWithGrade = { ...profile, grade };
                 setSalaryProfile(profileWithGrade);
-                
-                // 폼 데이터 초기화
-                console.log('설정할 등급:', grade);
                 setSalaryFormData({
-                    salaryType: response.data.salaryType || 'FREELANCE',
-                    contractTerms: response.data.contractTerms || '',
-                    grade: grade,
-                    baseSalary: response.data.baseSalary || '',
-                    optionTypes: response.data.optionTypes || [],
-                    isBusinessRegistered: response.data.isBusinessRegistered || false,
-                    businessRegistrationNumber: response.data.businessRegistrationNumber || '',
-                    businessName: response.data.businessName || ''
+                    salaryType: profile.salaryType || 'FREELANCE',
+                    contractTerms: profile.contractTerms || '',
+                    grade,
+                    baseSalary: profile.baseSalary || '',
+                    optionTypes: profile.optionTypes || [],
+                    isBusinessRegistered: profile.isBusinessRegistered || false,
+                    businessRegistrationNumber: profile.businessRegistrationNumber || '',
+                    businessName: profile.businessName || ''
                 });
             } else {
                 setSalaryProfile(null);
-                // 기본값으로 초기화
                 setSalaryFormData({
                     salaryType: 'FREELANCE',
                     contractTerms: '',
@@ -98,9 +94,8 @@ const ConsultantProfileModal = ({
     // 옵션 유형 조회
     const loadOptionTypes = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/option-types');
-            console.log('옵션 유형 조회 응답:', response);
-            // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.OPTION_TYPES);
+            // apiGet이 unwrap하여 배열 또는 객체 반환
             if (Array.isArray(response)) {
                 setOptionTypes(response);
             } else if (response && response.data) {
@@ -118,17 +113,12 @@ const ConsultantProfileModal = ({
     // 등급 조회
     const loadGrades = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/grades');
-            console.log('등급 조회 응답:', response);
-            // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.GRADES);
             if (Array.isArray(response)) {
                 setGrades(response);
-                console.log('등급 목록 설정 완료:', response.length, '개');
-            } else if (response && response.data) {
-                setGrades(response.data);
-                console.log('등급 목록 설정 완료:', response.data.length, '개');
+            } else if (response?.data) {
+                setGrades(Array.isArray(response.data) ? response.data : []);
             } else {
-                console.warn('등급 데이터 형식이 예상과 다릅니다:', response);
                 setGrades([]);
             }
         } catch (error) {
@@ -153,12 +143,11 @@ const ConsultantProfileModal = ({
     // 급여 유형 조회
     const loadSalaryTypes = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/codes');
-            console.log('급여 유형 조회 응답:', response);
-            if (response && response.data && response.data.salaryTypes) {
-                setSalaryTypes(response.data.salaryTypes);
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.CODES);
+            const salaryTypesList = response?.salaryTypes ?? response?.data?.salaryTypes;
+            if (Array.isArray(salaryTypesList)) {
+                setSalaryTypes(salaryTypesList);
             } else {
-                console.warn('급여 유형 데이터를 찾을 수 없습니다:', response);
                 setSalaryTypes([]);
             }
         } catch (error) {
@@ -216,14 +205,13 @@ const ConsultantProfileModal = ({
                 businessName: salaryFormData.businessName
             };
 
-            const response = await apiPost('/api/admin/salary/profiles', profileData);
-            
-            if (response.success) {
+            const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
+            if (response != null && typeof response === 'object' && response.success === false) {
+                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + (response.message || ''), 'error');
+            } else {
                 notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');
                 setShowSalaryForm(false);
-                loadSalaryProfile(); // 프로필 다시 조회
-            } else {
-                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + response.message, 'error');
+                loadSalaryProfile();
             }
         } catch (error) {
             console.error('급여 프로필 저장 실패:', error);
@@ -235,37 +223,28 @@ const ConsultantProfileModal = ({
 
     if (!isOpen || !consultant) return null;
 
-    return ReactDOM.createPortal(
-        <div className="consultant-profile-modal-overlay" onClick={onClose}>
-            <div className="consultant-profile-modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="consultant-profile-modal-header">
-                    <h3 className="consultant-profile-modal-title">
-                        급여 프로필 생성 - {consultant.name}
-                    </h3>
-                    <button className="consultant-profile-modal-close" onClick={onClose}>
-                        ×
-                    </button>
-                </div>
-                
-                <div className="consultant-profile-modal-body">
-                    <div className="consultant-profile-info-section">
-                        <div className="consultant-profile-info-header">
-                            <h4 className="consultant-profile-info-title">급여 프로필</h4>
-                            {(() => {
-                                console.log('수정 버튼 표시 조건 확인:');
-                                console.log('- salaryProfile:', !!salaryProfile);
-                                console.log('- showSalaryForm:', showSalaryForm);
-                                console.log('- 수정 버튼 표시 여부:', !showSalaryForm);
-                                return !showSalaryForm;
-                            })() && (
-                                <button 
-                                    className="mg-btn mg-btn--primary mg-btn--sm consultant-profile-edit-btn"
-                                    onClick={() => setShowSalaryForm(true)}
-                                >
-                                    {salaryProfile ? '수정' : '생성'}
-                                </button>
-                            )}
-                        </div>
+    return (
+        <ErpModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`급여 프로필 - ${consultant.name}`}
+            size="large"
+            className="mg-v2-ad-b0kla consultant-profile-modal-content"
+        >
+            <div className="consultant-profile-modal-body">
+                <div className="consultant-profile-info-section salary-management__profile-view">
+                    <div className="consultant-profile-info-header">
+                        <h4 className="consultant-profile-info-title">급여 프로필</h4>
+                        {!showSalaryForm && (
+                            <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button--primary consultant-profile-edit-btn"
+                                onClick={() => setShowSalaryForm(true)}
+                            >
+                                {salaryProfile ? '수정' : '생성'}
+                            </button>
+                        )}
+                    </div>
                         
                         {loading ? (
                             <div className="consultant-profile-loading">로딩 중...</div>
@@ -281,14 +260,7 @@ const ConsultantProfileModal = ({
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">상담사 등급</label>
                                     <span className="consultant-profile-info-value">
-                                        {(() => {
-                                            console.log('salaryProfile:', salaryProfile);
-                                            console.log('salaryProfile.grade:', salaryProfile.grade);
-                                            console.log('grades:', grades);
-                                            const foundGrade = grades.find(g => g.codeValue === salaryProfile.grade);
-                                            console.log('foundGrade:', foundGrade);
-                                            return foundGrade?.codeLabel || salaryProfile.grade || '미설정';
-                                        })()}
+                                        {grades.find(g => g.codeValue === salaryProfile.grade)?.codeLabel || salaryProfile.grade || '미설정'}
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
@@ -325,7 +297,7 @@ const ConsultantProfileModal = ({
 
                         {/* 급여 프로필 폼 */}
                         {showSalaryForm && (
-                            <form onSubmit={handleSalaryProfileSubmit} className="consultant-profile-form">
+                            <form onSubmit={handleSalaryProfileSubmit} className="salary-profile-form consultant-profile-form">
                                 <div className="consultant-profile-form-notice">
                                     <h5 className="consultant-profile-form-notice-title">💡 안내사항</h5>
                                     <ul className="consultant-profile-form-notice-list">
@@ -468,17 +440,17 @@ const ConsultantProfileModal = ({
                                         />
                                     </div>
                                 </div>
-                                <div className="consultant-profile-form-actions">
+                                <div className="salary-profile-form__actions consultant-profile-form-actions">
                                     <button
                                         type="button"
-                                        className="mg-btn mg-btn--secondary"
+                                        className="mg-v2-button mg-v2-button--outline"
                                         onClick={() => setShowSalaryForm(false)}
                                     >
                                         취소
                                     </button>
                                     <button
                                         type="submit"
-                                        className="mg-btn mg-btn--primary"
+                                        className="mg-v2-button mg-v2-button--primary"
                                         disabled={loading}
                                     >
                                         {loading ? '저장 중...' : '저장'}
@@ -486,20 +458,19 @@ const ConsultantProfileModal = ({
                                 </div>
                             </form>
                         )}
-                    </div>
-                </div>
-
-                <div className="consultant-profile-modal-footer">
-                    <button 
-                        className="mg-btn mg-btn--secondary"
-                        onClick={onClose}
-                    >
-                        닫기
-                    </button>
                 </div>
             </div>
-        </div>,
-        document.body
+
+            <div className="consultant-profile-modal-footer">
+                <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--outline"
+                    onClick={onClose}
+                >
+                    닫기
+                </button>
+            </div>
+        </ErpModal>
     );
 };
 

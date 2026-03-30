@@ -32,6 +32,28 @@
     font-size: var(--font-size-base);
 }
 
+/* 필터 상태 표시 */
+.mg-filter-status {
+    font-size: var(--font-size-sm);
+    color: var(--mg-secondary-500);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 폼 입력 필드 기본 스타일 */
+.mg-form-input {
+    color: var(--mg-gray-900);
+    background-color: var(--mg-white);
+    border: 2px solid var(--mg-gray-200);
+}
+
+.mg-form-input--legacy {
+    color: #000;
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .common-code-management {

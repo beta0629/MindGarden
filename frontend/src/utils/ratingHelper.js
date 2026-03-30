@@ -1,17 +1,26 @@
 /**
  * 평점 관련 유틸리티 함수들
+/**
  * - 상담사 평점 계산 및 포맷팅
+/**
  * - 리뷰 수 처리
+/**
  * - 평점 표시 관련 공통 로직
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-15
  */
 
 /**
  * 상담사 평점 정보를 가져오는 공통 함수
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {Object} 평점 정보 객체
  */
 export const getConsultantRatingInfo = (consultant) => {
@@ -58,8 +67,11 @@ export const getConsultantRatingInfo = (consultant) => {
 
 /**
  * 평점을 별표로 표시하는 함수
+/**
  * @param {number} rating - 평점 (0-5)
+/**
  * @param {number} maxStars - 최대 별 개수 (기본값: 5)
+/**
  * @returns {string} 별표 문자열
  */
 export const getRatingStars = (rating, maxStars = 5) => {
@@ -75,31 +87,36 @@ export const getRatingStars = (rating, maxStars = 5) => {
 
 /**
  * 평점 등급을 반환하는 함수
+/**
  * @param {number} rating - 평점
+/**
  * @returns {Object} 등급 정보
  */
 export const getRatingGrade = (rating) => {
     const numRating = parseFloat(rating) || 0;
     
     if (numRating >= 4.5) {
-        return { grade: 'S', color: '#ffd700', label: '최고' };
+        return { grade: 'S', color: 'var(--mg-warning-400)', label: '최고' };
     } else if (numRating >= 4.0) {
-        return { grade: 'A', color: '#ff6b6b', label: '우수' };
+        return { grade: 'A', color: 'var(--mg-success-500)', label: '우수' };
     } else if (numRating >= 3.5) {
-        return { grade: 'B', color: '#4ecdc4', label: '양호' };
+        return { grade: 'B', color: 'var(--mg-info-400)', label: '양호' };
     } else if (numRating >= 3.0) {
-        return { grade: 'C', color: '#45b7d1', label: '보통' };
+        return { grade: 'C', color: 'var(--mg-info-500)', label: '보통' };
     } else if (numRating >= 2.0) {
-        return { grade: 'D', color: '#f9ca24', label: '미흡' };
+        return { grade: 'D', color: 'var(--mg-warning-500)', label: '미흡' };
     } else {
-        return { grade: 'F', color: '#6c757d', label: '부족' };
+        return { grade: 'F', color: 'var(--mg-error-500)', label: '부족' };
     }
 };
 
 /**
  * 평점 히스토리를 계산하는 함수 (최근 N개월)
+/**
  * @param {Array} ratings - 평점 배열
+/**
  * @param {number} months - 기간 (개월)
+/**
  * @returns {Object} 히스토리 정보
  */
 export const getRatingHistory = (ratings, months = 6) => {
@@ -164,7 +181,9 @@ export const getRatingHistory = (ratings, months = 6) => {
 
 /**
  * 평점 통계를 계산하는 함수
+/**
  * @param {Array} ratings - 평점 배열
+/**
  * @returns {Object} 통계 정보
  */
 export const getRatingStatistics = (ratings) => {
@@ -228,7 +247,9 @@ export const getRatingStatistics = (ratings) => {
 
 /**
  * 평점을 한국어로 설명하는 함수
+/**
  * @param {number} rating - 평점
+/**
  * @returns {string} 설명 텍스트
  */
 export const getRatingDescription = (rating) => {

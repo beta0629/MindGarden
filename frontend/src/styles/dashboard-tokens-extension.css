@@ -1,0 +1,524 @@
+/**
+ * 대시보드 디자인 토큰 확장
+ * 
+ * Phase 6: 대시보드 디자인 개선을 위한 추가 변수
+ * 기존 unified-design-tokens.css를 확장하여 대시보드 특화 변수 추가
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
+
+:root {
+  /* ===== 역할별 Primary 색상 ===== */
+  /* 기존 변수를 활용하여 역할별 별칭 제공 */
+  --mg-admin-primary: var(--mg-primary-500);
+  --mg-admin-primary-light: var(--mg-primary-400);
+  --mg-admin-primary-dark: var(--mg-primary-600);
+  --mg-admin-gradient: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+  
+  --mg-consultant-primary: var(--mg-success-500);
+  --mg-consultant-primary-light: var(--mg-success-400);
+  --mg-consultant-primary-dark: var(--mg-success-600);
+  --mg-consultant-gradient: linear-gradient(135deg, var(--mg-success-500) 0%, var(--mg-success-700) 100%);
+  
+  --mg-client-primary: var(--mg-primary-400);
+  --mg-client-primary-light: var(--mg-primary-300);
+  --mg-client-primary-dark: var(--mg-primary-500);
+  --mg-client-gradient: linear-gradient(135deg, var(--mg-primary-400) 0%, var(--mg-primary-600) 100%);
+  
+  --mg-staff-primary: var(--mg-secondary-500);
+  --mg-staff-primary-light: var(--mg-secondary-400);
+  --mg-staff-primary-dark: var(--mg-secondary-600);
+  --mg-staff-gradient: linear-gradient(135deg, var(--mg-secondary-500) 0%, var(--mg-secondary-700) 100%);
+  
+  /* ===== 등급별 색상 (배지 및 혜택 표시용) ===== */
+  
+  /* 내담자 등급 */
+  --mg-grade-client-bronze: #cd7f32;
+  --mg-grade-client-bronze-light: #daa66a;
+  --mg-grade-client-bronze-dark: #a06218;
+  
+  --mg-grade-client-silver: #c0c0c0;
+  --mg-grade-client-silver-light: #e5e5e5;
+  --mg-grade-client-silver-dark: #a8a8a8;
+  
+  --mg-grade-client-gold: #ffd700;
+  --mg-grade-client-gold-light: #ffed4e;
+  --mg-grade-client-gold-dark: #ccaa00;
+  
+  --mg-grade-client-platinum: #e5e4e2;
+  --mg-grade-client-platinum-light: #f5f4f2;
+  --mg-grade-client-platinum-dark: #c4c2c0;
+  
+  /* 상담사 등급 */
+  --mg-grade-consultant-junior: var(--mg-primary-400);
+  --mg-grade-consultant-junior-light: var(--mg-primary-300);
+  --mg-grade-consultant-junior-dark: var(--mg-primary-500);
+  
+  --mg-grade-consultant-senior: var(--mg-success-500);
+  --mg-grade-consultant-senior-light: var(--mg-success-400);
+  --mg-grade-consultant-senior-dark: var(--mg-success-600);
+  
+  --mg-grade-consultant-expert: var(--mg-warning-500);
+  --mg-grade-consultant-expert-light: var(--mg-warning-400);
+  --mg-grade-consultant-expert-dark: var(--mg-warning-600);
+  
+  --mg-grade-consultant-master: var(--mg-primary-600);
+  --mg-grade-consultant-master-light: var(--mg-primary-500);
+  --mg-grade-consultant-master-dark: var(--mg-primary-700);
+  
+  /* 관리자 등급 */
+  --mg-grade-admin-manager: var(--mg-gray-500);
+  --mg-grade-admin-manager-light: var(--mg-gray-400);
+  --mg-grade-admin-manager-dark: var(--mg-gray-600);
+  
+  --mg-grade-admin-director: var(--mg-primary-500);
+  --mg-grade-admin-director-light: var(--mg-primary-400);
+  --mg-grade-admin-director-dark: var(--mg-primary-600);
+  
+  --mg-grade-admin-executive: var(--mg-primary-700);
+  --mg-grade-admin-executive-light: var(--mg-primary-600);
+  --mg-grade-admin-executive-dark: var(--mg-primary-800);
+  
+  --mg-grade-admin-super: var(--mg-primary-900);
+  --mg-grade-admin-super-light: var(--mg-primary-800);
+  --mg-grade-admin-super-dark: #0f1b3a;
+  
+  /* ===== 대시보드 특화 변수 ===== */
+  
+  /* 배경 */
+  --mg-bg-dashboard: var(--mg-gray-50);
+  --mg-bg-card: var(--mg-white);
+  --mg-bg-card-hover: var(--mg-gray-50);
+  
+  /* 텍스트 */
+  --mg-text-primary: var(--mg-gray-900);
+  --mg-text-secondary: var(--mg-gray-600);
+  --mg-text-tertiary: var(--mg-gray-400);
+  
+  /* 테두리 */
+  --mg-border: var(--mg-gray-200);
+  --mg-border-light: var(--mg-gray-100);
+  --mg-border-dark: var(--mg-gray-300);
+  
+  /* 반경 */
+  --mg-radius-lg: var(--mg-border-radius-lg);
+  --mg-radius-md: var(--mg-border-radius-md);
+  --mg-radius-sm: var(--mg-border-radius-sm);
+  
+  /* 그림자 */
+  --mg-shadow-md: var(--mg-shadow-md);
+  --mg-shadow-lg: var(--mg-shadow-lg);
+  --mg-shadow-xl: var(--mg-shadow-xl);
+  
+  /* 전환 */
+  --mg-transition-normal: var(--mg-animation-normal);
+  --mg-easing: var(--mg-animation-easing);
+  
+  /* 타이포그래피 (간단한 별칭) */
+  --mg-font-xs: var(--mg-font-size-xs);
+  --mg-font-sm: var(--mg-font-size-sm);
+  --mg-font-md: var(--mg-font-size-base);
+  --mg-font-lg: var(--mg-font-size-lg);
+  --mg-font-xl: var(--mg-font-size-xl);
+  --mg-font-xxl: var(--mg-font-size-2xl);
+  --mg-font-xxxl: var(--mg-font-size-3xl);
+  
+  --mg-font-bold: var(--mg-font-weight-bold);
+  --mg-font-semibold: var(--mg-font-weight-semibold);
+  --mg-font-medium: var(--mg-font-weight-medium);
+  --mg-font-normal: var(--mg-font-weight-normal);
+  
+  /* 간격 (간단한 별칭) - 기존 변수 매핑 */
+  --mg-spacing-xs: var(--cs-spacing-xs, 0.25rem);
+  --mg-spacing-sm: var(--cs-spacing-sm, 0.5rem);
+  --mg-spacing-md: var(--cs-spacing-md, 1rem);
+  --mg-spacing-lg: var(--cs-spacing-lg, 1.5rem);
+  --mg-spacing-xl: var(--cs-spacing-xl, 2rem);
+  
+  /* 추가 변수 */
+  --mg-line-height-normal: 1.5;
+  --mg-border-width-normal: 2px;
+  --mg-radius-full: 9999px;
+  
+  /* 기존 변수와의 호환성 (순환 참조 방지: unified-design-tokens의 --mg-white↔--cs-white 순환) */
+  --mg-white: #ffffff;
+  --mg-black: #000000;
+
+  /* ===== B0KlA Admin Dashboard 토큰 (mindgarden-design-system.pen) ===== */
+  /* 기존 mg-*, cs-* 토큰 매핑으로 하드코딩 제거 */
+  --ad-b0kla-bg: var(--mg-gray-50);
+  --ad-b0kla-card-bg: var(--mg-white);
+  --ad-b0kla-border: var(--cs-slate-200);
+  --ad-b0kla-radius: 24px;
+  --ad-b0kla-radius-sm: 12px;
+  --ad-b0kla-shadow: var(--cs-shadow-xs);
+  --ad-b0kla-shadow-hover: var(--cs-shadow-soft);
+  --ad-b0kla-title-color: var(--mg-gray-800);
+  --ad-b0kla-subtitle-color: var(--mg-gray-700);
+  --ad-b0kla-text-secondary: var(--mg-gray-700);
+  --ad-b0kla-placeholder: var(--mg-gray-400);
+  --ad-b0kla-green: var(--mg-success-600);
+  --ad-b0kla-green-bg: var(--mg-success-50);
+  --ad-b0kla-orange: var(--cs-orange-400);
+  --ad-b0kla-orange-bg: var(--cs-orange-50);
+  --ad-b0kla-blue: var(--mg-primary-400);
+  --ad-b0kla-blue-bg: var(--mg-primary-50);
+  --ad-b0kla-icon-color: var(--mg-gray-600);
+  --ad-b0kla-danger: var(--mg-error-500);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
+
+  /* ===== 배지 밝은 배경 대비 (BADGE_LIGHT_BG_CONTRAST_SPEC) ===== */
+  /* StatusBadge, RemainingSessionsBadge — success/warning 시인성 강화: *-300 bg + *-900 text */
+
+  /* StatusBadge - 밝은 배경 대비용 (success/warning 시인성 강화) */
+  --mg-badge-status-success-bg: var(--mg-success-300);
+  --mg-badge-status-success-text: var(--mg-success-900);
+  --mg-badge-status-warning-bg: var(--mg-warning-300);
+  --mg-badge-status-warning-text: var(--mg-warning-900);
+  --mg-badge-status-neutral-bg: var(--mg-gray-200);
+  --mg-badge-status-neutral-text: var(--mg-gray-800);
+  --mg-badge-status-danger-bg: var(--mg-error-200);
+  --mg-badge-status-danger-text: var(--mg-error-800);
+  --mg-badge-status-info-bg: var(--mg-info-200);
+  --mg-badge-status-info-text: var(--mg-info-800);
+
+  /* RemainingSessionsBadge - 밝은 배경 대비용 */
+  --mg-badge-count-bg: var(--mg-primary-200);
+  --mg-badge-count-text: var(--mg-primary-800);
+}
+
+
+
+/* ===== Merged from dashboard-common-v3.css (standalone file removed) ===== */
+/**
+ * 대시보드 공통 스타일 v3
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 공통 컴포넌트 스타일
+ * 모든 대시보드에서 공통으로 사용되는 스타일 정의
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ * 네이밍: BEM 규칙 (mg-{component}-{element}--{modifier})
+ */
+
+/* ===== 공통 대시보드 레이아웃 (RESPONSIVE_LAYOUT_SPEC) ===== */
+.mg-dashboard-layout {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
+    padding: var(--mg-layout-section-padding);
+    max-width: var(--mg-container-max);
+    margin: 0 auto;
+}
+
+/* ===== 대시보드 헤더 ===== */
+.mg-dashboard-header {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+}
+
+.mg-dashboard-title {
+    font-size: var(--mg-font-xxl);
+    font-weight: var(--mg-font-bold);
+    color: var(--mg-text-primary);
+    margin: 0;
+}
+
+.mg-dashboard-subtitle {
+    font-size: var(--mg-font-md);
+    color: var(--mg-text-secondary);
+    margin: var(--mg-spacing-xs) 0 0 0;
+}
+
+/* ===== 통계 카드 그리드 (4K 반응형) ===== */
+.mg-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width, 17.5rem), 1fr));
+    gap: var(--mg-layout-grid-gap);
+    margin-bottom: var(--mg-layout-gap);
+}
+
+/* mg-stats-grid: StatCard 그리드 (ContentSection 내부용) */
+.mg-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mg-layout-grid-gap, var(--mg-spacing-lg, 1.5rem));
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.mg-stats-grid .mg-dashboard-stat-card {
+    min-width: 0;
+}
+
+/* ===== 통계 카드 ===== */
+.mg-dashboard-stat-card {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+    cursor: pointer;
+    border: var(--border-width) solid var(--mg-border-light);
+}
+
+.mg-dashboard-stat-card:hover,
+.mg-stat-card:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-xl);
+    border-color: var(--mg-border);
+}
+
+/* 표준화 원칙: 클릭 가능한 통계 카드 스타일 */
+.mg-dashboard-stat-card--clickable {
+    cursor: pointer;
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-dashboard-stat-card--clickable:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-xl);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-dashboard-stat-card--clickable:active {
+    transform: translateY(0);
+    box-shadow: var(--mg-shadow-md);
+}
+
+.mg-stat-card-gradient {
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+    color: var(--mg-white);
+}
+
+.mg-stat-card-icon {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+    border-radius: var(--mg-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--mg-spacing-md);
+    font-size: var(--mg-font-xl);
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-600);
+}
+
+.mg-stat-card-gradient .mg-stat-card-icon {
+    background: var(--cs-glass-light);
+    color: var(--mg-white);
+}
+
+.mg-stat-card-value {
+    font-size: var(--mg-font-xxxl);
+    font-weight: var(--mg-font-bold);
+    margin-bottom: var(--mg-spacing-xs);
+    color: var(--mg-text-primary);
+}
+
+.mg-stat-card-gradient .mg-stat-card-value {
+    color: var(--mg-white);
+}
+
+.mg-stat-card-label {
+    font-size: var(--mg-font-md);
+    color: var(--mg-text-secondary);
+    opacity: var(--opacity-hover, 0.9);
+}
+
+.mg-stat-card-gradient .mg-stat-card-label {
+    color: var(--mg-white);
+}
+
+/* ===== 섹션 ===== */
+.mg-dashboard-section {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+    border: var(--border-width) solid var(--mg-border-light);
+}
+
+.mg-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-md);
+    margin-bottom: var(--mg-spacing-lg);
+    padding-bottom: var(--mg-spacing-md);
+    border-bottom: var(--border-width-normal) solid var(--mg-border);
+}
+
+.mg-section-title {
+    font-size: var(--mg-font-xl);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin: 0;
+}
+
+.mg-section-subtitle {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    margin: var(--mg-spacing-xs) 0 0 0;
+}
+
+/* ===== 관리 기능 그리드 (4K 반응형) ===== */
+.mg-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--management-card-min-width, 17.5rem), 1fr));
+    gap: var(--mg-layout-grid-gap);
+}
+
+.mg-management-card {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    border: var(--border-width) solid var(--mg-border);
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+    cursor: pointer;
+}
+
+.mg-management-card:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-lg);
+    border-color: var(--mg-primary-500);
+}
+
+.mg-management-icon {
+    width: var(--icon-size-xl);
+    height: var(--icon-size-xl);
+    border-radius: var(--mg-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--mg-spacing-md);
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-600);
+    font-size: var(--mg-font-xxl);
+}
+
+.mg-management-title {
+    font-size: var(--mg-font-lg);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin-bottom: var(--mg-spacing-sm);
+}
+
+.mg-management-description {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    line-height: 1.5;
+}
+
+/* ===== 등급 배지 ===== */
+.mg-grade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mg-spacing-xs);
+    padding: var(--mg-spacing-xs) var(--mg-spacing-md);
+    border-radius: var(--mg-radius-full);
+    font-size: var(--mg-font-xs);
+    font-weight: var(--mg-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 내담자 등급 배지 */
+.mg-grade-badge--client-bronze {
+    background: var(--mg-grade-client-bronze-light);
+    color: var(--mg-grade-client-bronze-dark);
+}
+
+.mg-grade-badge--client-silver {
+    background: var(--mg-grade-client-silver-light);
+    color: var(--mg-grade-client-silver-dark);
+}
+
+.mg-grade-badge--client-gold {
+    background: var(--mg-grade-client-gold-light);
+    color: var(--mg-grade-client-gold-dark);
+}
+
+.mg-grade-badge--client-platinum {
+    background: var(--mg-grade-client-platinum-light);
+    color: var(--mg-grade-client-platinum-dark);
+}
+
+/* 상담사 등급 배지 */
+.mg-grade-badge--consultant-junior {
+    background: var(--mg-grade-consultant-junior-light);
+    color: var(--mg-grade-consultant-junior-dark);
+}
+
+.mg-grade-badge--consultant-senior {
+    background: var(--mg-grade-consultant-senior-light);
+    color: var(--mg-grade-consultant-senior-dark);
+}
+
+.mg-grade-badge--consultant-expert {
+    background: var(--mg-grade-consultant-expert-light);
+    color: var(--mg-grade-consultant-expert-dark);
+}
+
+.mg-grade-badge--consultant-master {
+    background: var(--mg-grade-consultant-master-light);
+    color: var(--mg-grade-consultant-master-dark);
+}
+
+/* 관리자 등급 배지 */
+.mg-grade-badge--admin-manager {
+    background: var(--mg-grade-admin-manager-light);
+    color: var(--mg-grade-admin-manager-dark);
+}
+
+.mg-grade-badge--admin-director {
+    background: var(--mg-grade-admin-director-light);
+    color: var(--mg-grade-admin-director-dark);
+}
+
+.mg-grade-badge--admin-executive {
+    background: var(--mg-grade-admin-executive-light);
+    color: var(--mg-grade-admin-executive-dark);
+}
+
+.mg-grade-badge--admin-super {
+    background: var(--mg-grade-admin-super-light);
+    color: var(--mg-white);
+}
+
+/* ===== 반응형 (RESPONSIVE_LAYOUT_SPEC) ===== */
+/* 태블릿: mg-stats-grid 2열 */
+@media (max-width: calc(var(--mg-breakpoint-desktop, 1280px) - 1px)) {
+    .mg-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 모바일: mg-stats-grid 1열 */
+@media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
+    .mg-dashboard-layout {
+        padding: var(--mg-layout-section-padding-mobile, 16px);
+    }
+
+    .mg-dashboard-stats,
+    .mg-management-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-dashboard-title {
+        font-size: var(--mg-font-xl);
+    }
+
+    .mg-stat-card-value {
+        font-size: var(--mg-font-xxl);
+    }
+}
+

@@ -11,7 +11,7 @@
 }
 
 .refund-stats-value--danger {
-    color: #dc3545;
+    color: var(--mg-error-500);
 }
 
 .refund-stats-value--purple {

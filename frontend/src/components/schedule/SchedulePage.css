@@ -1,10 +1,16 @@
-/* SchedulePage.css */
+/* SchedulePage.css - B0KlA 디자인 토큰 적용 */
+
+.schedule-page.mg-v2-ad-b0kla {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--ad-b0kla-bg);
+  padding: var(--mg-spacing-xl, 1.5rem);
+}
 
 .schedule-page {
-    width: 100%;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 20px;
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 /* 페이지 헤더 */
@@ -14,9 +20,9 @@
     align-items: center;
     margin-bottom: 24px;
     padding: 20px 24px;
-    background: #fff;
+    background: var(--mg-white);
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
 
 .header-content h1 {
@@ -39,8 +45,8 @@
 }
 
 .user-role {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+    color: var(--mg-white);
     padding: 4px 12px;
     border-radius: 12px;
     font-size: var(--font-size-xs);
@@ -80,35 +86,35 @@
 
 .schedule-page-btn-primary {
     background-color: var(--color-primary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .schedule-page-btn-primary:hover {
     background-color: var(--color-primary-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-secondary {
     background-color: var(--color-secondary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .schedule-page-btn-secondary:hover {
-    background-color: #545b62;
+    background-color: var(--mg-gray-600);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-warning {
     background-color: var(--status-warning);
-    color: #212529;
+    color: var(--mg-gray-900);
 }
 
 .schedule-page-btn-warning:hover {
-    background-color: #e0a800;
+    background-color: var(--mg-warning-500);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-warning:disabled {
@@ -127,123 +133,232 @@
 
 .schedule-page-btn-outline:hover {
     background-color: var(--color-primary);
-    color: white;
+    color: var(--mg-white);
     transform: translateY(-1px);
 }
 
-/* 스케줄 콘텐츠 */
+/* 스케줄 콘텐츠 - B0KlA 토큰 */
+.schedule-page.mg-v2-ad-b0kla .schedule-content {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.schedule-page.mg-v2-ad-b0kla .schedule-main {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  overflow: hidden;
+}
+
+/* 사이드바 - B0KlA 토큰 */
+.schedule-page.mg-v2-ad-b0kla .schedule-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-page.mg-v2-ad-b0kla .sidebar-section {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  padding: 20px;
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.schedule-page.mg-v2-ad-b0kla .sidebar-section h3 {
+  margin: 0 0 16px 0;
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+/* 기본 스타일 (호환성) */
 .schedule-content {
-    display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 24px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
 }
 
 .schedule-main {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+  background: var(--mg-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px var(--mg-shadow-light);
+  overflow: hidden;
 }
 
-/* 사이드바 */
 .schedule-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .sidebar-section {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: var(--mg-white);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
 
 .sidebar-section h3 {
-    margin: 0 0 16px 0;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-base);
-    font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
 }
 
-/* 통계 그리드 */
+/* 통계 그리드 - B0KlA 토큰 */
+.schedule-page.mg-v2-ad-b0kla .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.schedule-page.mg-v2-ad-b0kla .stat-item {
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--ad-b0kla-bg);
+  border-radius: var(--ad-b0kla-radius-sm);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.schedule-page.mg-v2-ad-b0kla .stat-value {
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin-bottom: 4px;
+}
+
+.schedule-page.mg-v2-ad-b0kla .stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--ad-b0kla-text-secondary);
+  font-weight: 500;
+}
+
+/* 기본 스타일 (호환성) */
 .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .stat-item {
-    text-align: center;
-    padding: 16px 12px;
-    background: var(--color-bg-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--color-bg-secondary);
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-bg-secondary);
 }
 
 .stat-value {
-    font-size: var(--font-size-xxl);
-    font-weight: 700;
-    color: var(--color-primary);
-    margin-bottom: 4px;
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 4px;
 }
 
 .stat-label {
-    font-size: var(--font-size-xs);
-    color: var(--color-secondary);
-    font-weight: 500;
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary);
+  font-weight: 500;
 }
 
-/* 상담사 현황 */
+/* 상담사 현황 - B0KlA 토큰 */
+.schedule-page.mg-v2-ad-b0kla .consultant-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-page.mg-v2-ad-b0kla .sidebar-section .status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--ad-b0kla-bg);
+  border-radius: var(--ad-b0kla-radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.schedule-page.mg-v2-ad-b0kla .status-dot.available {
+  background-color: var(--ad-b0kla-green);
+}
+
+.schedule-page.mg-v2-ad-b0kla .status-dot.busy {
+  background-color: var(--ad-b0kla-orange);
+}
+
+.schedule-page.mg-v2-ad-b0kla .status-dot.unavailable {
+  background-color: var(--ad-b0kla-danger);
+}
+
+/* 기본 스타일 (호환성) */
 .consultant-status {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--color-bg-secondary);
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-dot.available {
-    background-color: var(--status-success);
+  background-color: var(--status-success);
 }
 
 .status-dot.busy {
-    background-color: var(--status-warning);
+  background-color: var(--status-warning);
 }
 
 .status-dot.unavailable {
-    background-color: var(--status-error);
+  background-color: var(--status-error);
 }
 
-/* 접근 거부 */
+/* 접근 거부 - B0KlA 토큰 */
+.schedule-page.mg-v2-ad-b0kla .access-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  padding: 40px;
+}
+
 .access-denied {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    text-align: center;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  background: var(--mg-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px var(--mg-shadow-light);
+  padding: 40px;
 }
 
 .access-denied-icon {
@@ -396,7 +511,49 @@
 
 /* 포커스 스타일 (접근성) */
 .btn:focus {
-    outline: 2px solid #007bff;
+    outline: 2px solid var(--mg-primary-500);
     outline-offset: 2px;
+}
+
+/* mg-v2-schedule-grid styles */
+.mg-v2-schedule-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xl, 24px);
+  margin-top: var(--mg-spacing-xl, 24px);
+}
+
+@media (min-width: 1024px) {
+  .mg-v2-schedule-grid {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .mg-v2-schedule-grid__main {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mg-v2-schedule-grid__sidebar {
+    width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+.mg-v2-mt-4 {
+  margin-top: 1rem;
+}
+
+/* 캘린더가 전체를 꽉 채우도록 flex 속성 상속 */
+.mg-v2-schedule-content-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-schedule-content-section .mg-v2-content-section__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 

@@ -1,8 +1,11 @@
 import React from 'react';
 import { Mail, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import SafeText from './SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 메시지 카드 공통 컴포넌트
+/**
  * 메시지 목록에서 재사용 가능한 카드 컴포넌트
  */
 const MessageCard = ({ 
@@ -57,9 +60,12 @@ const MessageCard = ({
         </div>
         <div className="mg-flex-1">
           <div className="mg-flex mg-align-center mg-gap-sm mg-mb-xs mg-flex-wrap">
-            <h5 className={`${compact ? 'mg-h6' : 'mg-h5'} mg-mb-0`}>
+            <SafeText
+              className={`${compact ? 'mg-h6' : 'mg-h5'} mg-mb-0`}
+              tag="h5"
+            >
               {message.title}
-            </h5>
+            </SafeText>
             {message.isImportant && (
               <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
             )}
@@ -68,11 +74,11 @@ const MessageCard = ({
             )}
           </div>
           <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-xs">
-            {message.content?.substring(0, compact ? 40 : 50)}
-            {message.content?.length > (compact ? 40 : 50) && '...'}
+            {toDisplayString(message.content, '').substring(0, compact ? 40 : 50)}
+            {toDisplayString(message.content, '').length > (compact ? 40 : 50) && '...'}
           </p>
           <div className="mg-flex mg-align-center mg-gap-sm mg-v2-text-xs mg-v2-color-text-secondary mg-flex-wrap">
-            <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{typeInfo.label}</span>
+            <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{toDisplayString(typeInfo.label)}</span>
             <span>{formatDate(message.sentAt || message.createdAt)}</span>
           </div>
         </div>

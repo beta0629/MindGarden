@@ -1,13 +1,17 @@
 /**
  * 모달 관련 상수
+/**
  * CSS 클래스, JavaScript 변수, 메시지 등을 중앙에서 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 
-// 모달 크기 옵션
 export const MODAL_SIZES = {
   SMALL: 'small',
   MEDIUM: 'medium',
@@ -15,7 +19,6 @@ export const MODAL_SIZES = {
   FULLSCREEN: 'fullscreen'
 };
 
-// 모달 CSS 클래스
 export const MODAL_CSS_CLASSES = {
   OVERLAY: 'modal-overlay',
   CONTAINER: 'modal-container',
@@ -35,7 +38,6 @@ export const MODAL_CSS_CLASSES = {
   FULLSCREEN: 'modal-fullscreen'
 };
 
-// 모달 버튼 텍스트
 export const MODAL_BUTTON_TEXT = {
   CLOSE: '닫기',
   CANCEL: '취소',
@@ -46,7 +48,6 @@ export const MODAL_BUTTON_TEXT = {
   NO: '아니오'
 };
 
-// 모달 메시지
 export const MODAL_MESSAGES = {
   CONFIRM_DELETE: '정말로 삭제하시겠습니까?',
   CONFIRM_SAVE: '변경사항을 저장하시겠습니까?',
@@ -57,7 +58,6 @@ export const MODAL_MESSAGES = {
   ERROR_DELETE: '삭제 중 오류가 발생했습니다.'
 };
 
-// 모달 기본 설정
 export const MODAL_DEFAULTS = {
   SIZE: MODAL_SIZES.MEDIUM,
   SHOW_CLOSE_BUTTON: true,
@@ -65,7 +65,6 @@ export const MODAL_DEFAULTS = {
   CLOSE_ON_ESCAPE: true
 };
 
-// 모달 애니메이션
 export const MODAL_ANIMATIONS = {
   FADE_IN: 'fade-in',
   SLIDE_DOWN: 'slide-down',
@@ -73,8 +72,8 @@ export const MODAL_ANIMATIONS = {
   NONE: 'none'
 };
 
-// 모달 이벤트 타입
 export const MODAL_EVENTS = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   OPEN: 'modal-open',
   CLOSE: 'modal-close',
   CONFIRM: 'modal-confirm',

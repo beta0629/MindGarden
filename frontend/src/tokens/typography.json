@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "MindGarden 타이포그래피 토큰",
+  "description": "Core Solution 타이포그래피 토큰",
   "tokens": {
     "fontFamily": {
       "base": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",

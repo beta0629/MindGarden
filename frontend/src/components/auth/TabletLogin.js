@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -12,8 +12,13 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
-import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
+import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
+import {
+  shouldRedirectWrongPath,
+  WRONG_PATH_MESSAGE,
+  WRONG_PATH_REDIRECT_DELAY_MS
+} from '../../utils/subdomainUtils';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
@@ -74,6 +79,16 @@ const TabletLogin = () => {
     getOAuth2Config();
     checkOAuthCallback();
   }, [location]); // location 변경 시 OAuth 콜백 체크
+
+  /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
+  useEffect(() => {
+    if (!shouldRedirectWrongPath()) return;
+    notificationManager.show(WRONG_PATH_MESSAGE, 'warning');
+    const timer = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, WRONG_PATH_REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
   
   // 카운트다운 타이머 (별도 useEffect)
   useEffect(() => {
@@ -100,7 +115,7 @@ const TabletLogin = () => {
     const checkExistingSession = async () => {
       try {
         // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
-        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });
@@ -115,9 +130,15 @@ const TabletLogin = () => {
               accessToken: result.accessToken || 'existing_session_token',
               refreshToken: result.refreshToken || 'existing_session_refresh_token'
             });
-            
-            const dashboardPath = getDashboardPath(result.user.role);
-            navigate(dashboardPath, { replace: true });
+            // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+            await checkSession(true);
+
+            // 동적 대시보드 라우팅
+            const authResponse = {
+              user: result.user,
+              currentTenantRole: result.currentTenantRole || null
+            };
+            await redirectToDynamicDashboard(authResponse, navigate);
           }
         }
         // 401 등은 조용히 처리 (로그인 페이지 유지)
@@ -178,7 +199,9 @@ const TabletLogin = () => {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken
         });
-        
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+        await checkSession(true);
+
         // 로그인 성공 알림
         showTooltip('로그인에 성공했습니다.', 'success');
         
@@ -186,7 +209,12 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // 공통 리다이렉션 함수 사용
-        redirectToDashboardWithFallback(result.user.role, navigate);
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: result.user,
+          currentTenantRole: result.currentTenantRole || null
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청
         setIsLoading(false);
@@ -322,7 +350,7 @@ const TabletLogin = () => {
         loginType: 'SMS_AUTH'
       };
       
-      const response = await csrfTokenManager.post('/api/auth/sms-login', loginData);
+      const response = await csrfTokenManager.post('/api/v1/auth/sms-login', loginData);
       
       const data = await response.json();
       
@@ -338,8 +366,19 @@ const TabletLogin = () => {
           
           // 역할에 따른 리다이렉트
           const userRole = data.user.role;
-          const dashboardPath = getDashboardPath(userRole);
-          window.location.href = dashboardPath;
+          // 동적 대시보드 라우팅 (window.location 사용)
+          try {
+            const authResponse = {
+              user: { role: userRole },
+              currentTenantRole: null
+            };
+            // navigate가 없으므로 직접 경로 계산
+            const legacyPath = getLegacyDashboardPath(userRole);
+            window.location.href = legacyPath;
+          } catch (error) {
+            console.error('대시보드 리다이렉트 실패:', error);
+            window.location.href = '/dashboard';
+          }
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);
@@ -537,9 +576,13 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = getDashboardPath(response.userInfo.role);
-        console.log('✅ 간편 회원가입 성공, 대시보드로 이동:', dashboardPath);
-        navigate(dashboardPath, { replace: true });
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: response.userInfo,
+          currentTenantRole: response.currentTenantRole || null
+        };
+        console.log('✅ 간편 회원가입 성공, 동적 대시보드로 이동');
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         console.log('❌ 간편 회원가입 - 세션 설정 실패');
         notificationManager.show('세션 설정에 실패했습니다.', 'info');
@@ -630,8 +673,8 @@ const TabletLogin = () => {
     <div className={TABLET_LOGIN_CSS.CONTAINER}>
       <div className={TABLET_LOGIN_CSS.CONTENT}>
           <div className={TABLET_LOGIN_CSS.HEADER}>
-            <h1 className={TABLET_LOGIN_CSS.TITLE}>마인드가든 로그인</h1>
-            <p className={TABLET_LOGIN_CSS.SUBTITLE}>마인드가든에 오신 것을 환영합니다</p>
+            <h1 className={TABLET_LOGIN_CSS.TITLE}>Core Solution 로그인</h1>
+            <p className={TABLET_LOGIN_CSS.SUBTITLE}>Core Solution에 오신 것을 환영합니다</p>
           </div>
 
           <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>
@@ -717,10 +760,11 @@ const TabletLogin = () => {
                   onClick={() => navigate('/forgot-password')}
                   className="tablet-login-forgot-password-btn"
                   onMouseEnter={(e) => {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a67d8 -> var(--mg-custom-5a67d8)
                     e.target.style.color = '#5a67d8';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.color = '#667eea';
+                    e.target.style.color = 'var(--mg-primary-500)';
                   }}
                 >
                   비밀번호를 잊으셨나요?
@@ -874,10 +918,11 @@ const TabletLogin = () => {
               top: '20%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#ffffff',
-              color: '#333333',
+              backgroundColor: 'var(--mg-white)',
+              color: 'var(--mg-gray-800)',
               padding: '28px 56px',
               borderRadius: '12px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               zIndex: 10001,
               fontSize: 'var(--font-size-md)',
@@ -887,6 +932,7 @@ const TabletLogin = () => {
               maxWidth: '85vw',
               textAlign: 'center',
               cursor: 'pointer',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
               border: '1px solid #e9ecef',
               animation: 'loginNotificationSlideIn 0.4s ease-out'
             }}
@@ -899,6 +945,7 @@ const TabletLogin = () => {
               fontSize: 'var(--font-size-base)',
               fontWeight: '500',
               marginBottom: '8px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
               color: '#495057',
               lineHeight: '1.5',
               letterSpacing: '0.2px'
@@ -909,7 +956,7 @@ const TabletLogin = () => {
             {/* 닫기 안내 */}
             <div style={{ 
               fontSize: 'var(--font-size-sm)',
-              color: '#6c757d',
+              color: 'var(--mg-secondary-500)',
               fontWeight: '400',
               opacity: 0.8,
               marginTop: '12px'
@@ -926,7 +973,7 @@ const TabletLogin = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              backgroundColor: 'var(--mg-shadow-light)',
               zIndex: 10000,
               backdropFilter: 'blur(0.5px)'
             }}

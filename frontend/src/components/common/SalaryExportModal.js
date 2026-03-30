@@ -1,26 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import notificationManager from '../../utils/notification';
-import { 
-  SALARY_CSS_CLASSES, 
-  SALARY_MESSAGES, 
-  EXPORT_FORMAT, 
-  EXPORT_FORMAT_LABELS 
+import {
+  SALARY_CSS_CLASSES,
+  SALARY_MESSAGES,
+  EXPORT_FORMAT,
+  EXPORT_FORMAT_LABELS,
+  SALARY_API_ENDPOINTS
 } from '../../constants/salaryConstants';
-import { apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
 
 /**
  * 급여 출력 모달 컴포넌트
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {Function} props.onClose - 모달 닫기 함수
+/**
  * @param {Object} props.salaryData - 급여 데이터
+/**
  * @param {string} props.consultantName - 상담사 이름
+/**
  * @param {string} props.period - 계산 기간
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const SalaryExportModal = ({ 
@@ -71,29 +81,34 @@ const SalaryExportModal = ({
         emailAddress: sendEmail ? emailAddress : null
       };
 
-      const response = await apiPost(`/api/admin/salary/export/${selectedFormat.toLowerCase()}`, exportData);
-      
-      if (response.success) {
-        // 파일 다운로드
-        if (response.data.downloadUrl) {
+      const exportEndpoint =
+        selectedFormat === EXPORT_FORMAT.PDF
+          ? SALARY_API_ENDPOINTS.EXPORT_PDF
+          : selectedFormat === EXPORT_FORMAT.EXCEL
+            ? SALARY_API_ENDPOINTS.EXPORT_EXCEL
+            : SALARY_API_ENDPOINTS.EXPORT_CSV;
+      const response = await StandardizedApi.post(exportEndpoint, exportData);
+
+      if (response && (response.success !== false)) {
+        const data = response.data ?? response;
+        if (data && data.downloadUrl) {
           const link = document.createElement('a');
-          link.href = response.data.downloadUrl;
-          link.download = response.data.filename || `급여계산서_${consultantName}_${period}.${selectedFormat.toLowerCase()}`;
+          link.href = data.downloadUrl;
+          link.download = data.filename || `급여계산서_${consultantName}_${period}.${selectedFormat.toLowerCase()}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         }
-        
-        // 이메일 발송 성공 메시지
+
         if (sendEmail && emailAddress) {
           notificationManager.show(`${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`, 'info');
         } else {
           notificationManager.show(SALARY_MESSAGES.EXPORT_SUCCESS, 'success');
         }
-        
+
         onClose();
       } else {
-        setError(response.message || SALARY_MESSAGES.EXPORT_ERROR);
+        setError((response && response.message) || SALARY_MESSAGES.EXPORT_ERROR);
       }
     } catch (err) {
       console.error('출력 실패:', err);
@@ -141,12 +156,14 @@ const SalaryExportModal = ({
                 <div>
                   <div style={{
                     fontSize: 'var(--font-size-xs)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>상담사</div>
                   <div style={{
                     fontSize: 'var(--font-size-sm)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                     color: '#1f2937',
                     fontWeight: '600'
                   }}>{consultantName || '정보 없음'}</div>
@@ -157,12 +174,14 @@ const SalaryExportModal = ({
                 <div>
                   <div style={{
                     fontSize: 'var(--font-size-xs)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>기간</div>
                   <div style={{
                     fontSize: 'var(--font-size-sm)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                     color: '#1f2937',
                     fontWeight: '600'
                   }}>{period || '정보 없음'}</div>
@@ -173,12 +192,14 @@ const SalaryExportModal = ({
                 <div>
                   <div style={{
                     fontSize: 'var(--font-size-xs)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>총 급여</div>
                   <div style={{
                     fontSize: 'var(--font-size-base)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
                     color: '#059669',
                     fontWeight: '700'
                   }}>
@@ -260,6 +281,7 @@ const SalaryExportModal = ({
                     style={{
                       width: '100%',
                       padding: '8px 12px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1d5db -> var(--mg-custom-d1d5db)
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
                       fontSize: 'var(--font-size-sm)'
@@ -267,6 +289,7 @@ const SalaryExportModal = ({
                   />
                   {emailAddress && !isEmailValid(emailAddress) && (
                     <p style={{
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
                       color: '#dc2626',
                       fontSize: 'var(--font-size-xs)',
                       marginTop: '4px'
@@ -282,7 +305,9 @@ const SalaryExportModal = ({
           {/* 오류 메시지 */}
           {error && (
             <div style={{
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
               color: '#dc2626',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
               backgroundColor: '#fef2f2',
               padding: '10px',
               borderRadius: '4px',
@@ -296,10 +321,12 @@ const SalaryExportModal = ({
         {/* 푸터 */}
         <div style={{
           padding: '15px 20px',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
           borderTop: '1px solid #e5e7eb',
           display: 'flex',
           justifyContent: 'flex-end',
           gap: '10px',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
           backgroundColor: '#f8fafc'
         }}>
           <button 
@@ -308,8 +335,10 @@ const SalaryExportModal = ({
             style={{
               padding: '8px 16px',
               borderRadius: '4px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1d5db -> var(--mg-custom-d1d5db)
               border: '1px solid #d1d5db',
               backgroundColor: 'white',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
               color: '#374151',
               cursor: 'pointer',
               fontSize: 'var(--font-size-sm)'
@@ -323,8 +352,8 @@ const SalaryExportModal = ({
             style={{
               padding: '8px 16px',
               borderRadius: '4px',
-              border: '1px solid #3b82f6',
-              backgroundColor: '#3b82f6',
+              border: '1px solid var(--mg-primary-500)',
+              backgroundColor: 'var(--mg-primary-500)',
               color: 'white',
               cursor: 'pointer',
               fontSize: 'var(--font-size-sm)'
@@ -345,7 +374,7 @@ const modalOverlayStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  backgroundColor: 'var(--mg-overlay)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -356,18 +385,20 @@ const modalContentStyle = {
   backgroundColor: 'white',
   borderRadius: '8px',
   width: '90%',
-  maxWidth: '600px',
+  maxWidth: 'min(90vw, 800px)',
   maxHeight: '90vh',
   overflow: 'hidden',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+  boxShadow: '0 4px 20px var(--mg-shadow-medium)'
 };
 
 const modalHeaderStyle = {
   padding: '20px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
   borderBottom: '1px solid #e5e7eb',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
   backgroundColor: '#f8fafc'
 };
 
@@ -375,6 +406,7 @@ const modalTitleStyle = {
   margin: 0,
   fontSize: 'var(--font-size-lg)',
   fontWeight: '600',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
   color: '#1f2937'
 };
 
@@ -383,6 +415,7 @@ const closeButtonStyle = {
   border: 'none',
   fontSize: 'var(--font-size-xxl)',
   cursor: 'pointer',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
   color: '#6b7280',
   padding: '0',
   width: '30px',
@@ -401,8 +434,10 @@ const modalBodyStyle = {
 const summaryStyle = {
   marginBottom: '20px',
   padding: '15px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
   backgroundColor: '#f8fafc',
   borderRadius: '6px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
   border: '1px solid #e5e7eb'
 };
 
@@ -463,19 +498,23 @@ const emailInputContainerStyle = {
 const emailInputStyle = {
   width: '100%',
   padding: '8px 12px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1d5db -> var(--mg-custom-d1d5db)
   border: '1px solid #d1d5db',
   borderRadius: '4px',
   fontSize: 'var(--font-size-sm)'
 };
 
 const emailErrorStyle = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
   color: '#dc2626',
                       fontSize: 'var(--font-size-xs)',
   marginTop: '4px'
 };
 
 const errorStyle = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
   color: '#dc2626',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
   backgroundColor: '#fef2f2',
   padding: '10px',
   borderRadius: '4px',
@@ -484,18 +523,22 @@ const errorStyle = {
 
 const modalFooterStyle = {
   padding: '15px 20px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
   borderTop: '1px solid #e5e7eb',
   display: 'flex',
   justifyContent: 'flex-end',
   gap: '10px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
   backgroundColor: '#f8fafc'
 };
 
 const footerButtonStyle = {
   padding: '8px 16px',
   borderRadius: '4px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1d5db -> var(--mg-custom-d1d5db)
   border: '1px solid #d1d5db',
   backgroundColor: 'white',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
   color: '#374151',
   cursor: 'pointer',
   fontSize: 'var(--font-size-sm)'
@@ -515,6 +558,7 @@ const headerIconStyle = {
 const modalSubtitleStyle = {
   margin: '4px 0 0 0',
   fontSize: 'var(--font-size-sm)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
   color: '#6b7280'
 };
 
@@ -533,6 +577,7 @@ const summaryTitleStyle = {
   margin: 0,
                     fontSize: 'var(--font-size-base)',
   fontWeight: '600',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
   color: '#1f2937'
 };
 
@@ -543,6 +588,7 @@ const summaryItemStyle = {
   padding: '12px',
   backgroundColor: 'white',
   borderRadius: '8px',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
   border: '1px solid #e5e7eb'
 };
 
@@ -553,6 +599,7 @@ const summaryItemIconStyle = {
 const summaryLabelStyle = {
   display: 'block',
                       fontSize: 'var(--font-size-xs)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
   color: '#6b7280',
   fontWeight: '500',
   marginBottom: '2px'
@@ -561,6 +608,7 @@ const summaryLabelStyle = {
 const summaryValueStyle = {
   display: 'block',
   fontSize: 'var(--font-size-sm)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
   color: '#1f2937',
   fontWeight: '600'
 };
@@ -568,6 +616,7 @@ const summaryValueStyle = {
 const summaryAmountStyle = {
   display: 'block',
                     fontSize: 'var(--font-size-base)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
   color: '#059669',
   fontWeight: '700'
 };

@@ -1,97 +1,92 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Calendar, XCircle, FileText, Umbrella, CheckCircle } from 'lucide-react';
+import { XCircle, FileText, Umbrella } from 'lucide-react';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button/Button';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
  * 날짜 액션 선택 모달 컴포넌트
  * - 스케줄 등록
  * - 휴가 등록
- * 
- * @author MindGarden
+ *
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-02
  */
-const DateActionModal = ({ 
-    isOpen, 
-    onClose, 
-    selectedDate, 
-    userRole, 
-    onScheduleClick, 
-    onVacationClick 
+const DateActionModal = ({
+  isOpen,
+  onClose,
+  selectedDate,
+  userRole,
+  onScheduleClick,
+  onVacationClick
 }) => {
-    const formatDate = (date) => {
-        if (!date) return '';
-        const dateObj = date instanceof Date ? date : new Date(date);
-        return dateObj.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            weekday: 'long'
-        });
-    };
+  const formatDate = (date) => {
+    if (!date) return '';
+    const dateObj = date instanceof Date ? date : new Date(date);
+    return dateObj.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+  };
 
-    if (!isOpen) {
-        return null;
-    }
+  const canManageSchedule = userRole === 'ADMIN';
 
-    const portalTarget = document.body || document.createElement('div');
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={formatDate(selectedDate)}
+      size="auto"
+      backdropClick={true}
+      showCloseButton={true}
+      className="mg-v2-ad-b0kla"
+      actions={
+        <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <XCircle size={20} className="mg-v2-icon-inline" />
+          취소
+        </Button>
+      }
+    >
+      <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>
 
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Calendar size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">{formatDate(selectedDate)}</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
-                <div className="mg-v2-modal-body">
-                    <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>
-                    
-                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') && (
-                        <div className="mg-v2-form-section">
-                            <button 
-                                onClick={onScheduleClick}
-                                className="mg-v2-button mg-v2-button--primary mg-v2-button--large mg-v2-w-full"
-                            >
-                                <FileText size={24} className="mg-v2-icon-inline--lg" />
-                                <div className="mg-v2-text-left mg-v2-flex-1">
-                                    <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
-                                    <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
-                                </div>
-                            </button>
-                            
-                            <button 
-                                onClick={onVacationClick}
-                                className="mg-v2-button mg-v2-button--secondary mg-v2-button--large mg-v2-w-full mg-v2-mt-md"
-                            >
-                                <Umbrella size={24} className="mg-v2-icon-inline--lg" />
-                                <div className="mg-v2-text-left mg-v2-flex-1">
-                                    <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
-                                    <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
-                                </div>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        onClick={onClose}
-                        className="mg-v2-button mg-v2-button--ghost mg-v2-w-full"
-                    >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
-                        취소
-                    </button>
-                </div>
+      {canManageSchedule && (
+        <div className="mg-v2-form-section">
+          <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={onScheduleClick}
+            preventDoubleClick={false}
+            className="mg-v2-w-full"
+          >
+            <FileText size={24} className="mg-v2-icon-inline--lg" />
+            <div className="mg-v2-text-left mg-v2-flex-1">
+              <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
+              <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
             </div>
-        </div>,
-        portalTarget
-    );
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="medium"
+            onClick={onVacationClick}
+            preventDoubleClick={false}
+            className="mg-v2-w-full mg-v2-mt-md"
+          >
+            <Umbrella size={24} className="mg-v2-icon-inline--lg" />
+            <div className="mg-v2-text-left mg-v2-flex-1">
+              <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
+              <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
+            </div>
+          </Button>
+        </div>
+      )}
+    </UnifiedModal>
+  );
 };
 
 export default DateActionModal;

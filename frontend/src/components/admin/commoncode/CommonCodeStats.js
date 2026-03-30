@@ -3,10 +3,15 @@ import './CommonCodeStats.css';
 
 /**
  * 공통코드 통계 컴포넌트
+/**
  * - 전체 공통코드 수, 활성 코드 수, 코드 그룹 수 표시
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeStats = ({ totalCodes, activeCodes, codeGroups }) => {

@@ -1,0 +1,160 @@
+/**
+ * 단계 전환 애니메이션 스타일
+ * iOS/Android 설정 화면 스타일의 부드러운 전환
+ * 
+ * @author Trinity Team
+ * @version 1.0.0
+ * @since 2025-12-09
+ */
+
+.trinity-step-transition {
+  width: 100%;
+  animation-fill-mode: both;
+}
+
+/* Forward 전환 (다음 단계로) */
+.trinity-step-transition--slide-forward.trinity-step-transition--animating {
+  animation: slideInFromRight var(--animation-duration-slower) var(--animation-ease-out);
+}
+
+.trinity-step-transition--slide-forward:not(.trinity-step-transition--animating)[data-step][data-current-step] {
+  animation: slideOutToLeft var(--animation-duration-normal) var(--animation-ease-out);
+}
+
+/* Backward 전환 (이전 단계로) */
+.trinity-step-transition--slide-backward.trinity-step-transition--animating {
+  animation: slideInFromLeft var(--animation-duration-slower) var(--animation-ease-out);
+}
+
+.trinity-step-transition--slide-backward:not(.trinity-step-transition--animating)[data-step][data-current-step] {
+  animation: slideOutToRight var(--animation-duration-normal) var(--animation-ease-out);
+}
+
+/* 오른쪽에서 슬라이드 인 (다음 단계) */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(var(--animation-slide-distance-desktop));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 왼쪽으로 슬라이드 아웃 (이전 단계) */
+@keyframes slideOutToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--animation-slide-distance-desktop) * -1));
+  }
+}
+
+/* 왼쪽에서 슬라이드 인 (이전 단계로 돌아가기) */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--animation-slide-distance-desktop) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 오른쪽으로 슬라이드 아웃 (다음 단계) */
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(var(--animation-slide-distance-desktop));
+  }
+}
+
+/* 페이드 효과 (부드러운 전환) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* 모바일 최적화: 터치 제스처 지원 */
+@media (max-width: 768px) {
+  .trinity-step-transition {
+    /* 모바일에서 더 빠른 애니메이션 */
+    animation-duration: var(--animation-duration-normal);
+  }
+  
+  @keyframes slideInFromRight {
+    from {
+      opacity: 0;
+      transform: translateX(var(--animation-slide-distance-mobile));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideOutToLeft {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(calc(var(--animation-slide-distance-mobile) * -1));
+    }
+  }
+  
+  @keyframes slideInFromLeft {
+    from {
+      opacity: 0;
+      transform: translateX(calc(var(--animation-slide-distance-mobile) * -1));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideOutToRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(var(--animation-slide-distance-mobile));
+    }
+  }
+}
+
+/* 접근성: 애니메이션 선호도 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .trinity-step-transition,
+  .trinity-step-transition--slide-forward,
+  .trinity-step-transition--slide-backward {
+    animation: fadeIn var(--animation-duration-fast) ease;
+  }
+}
+

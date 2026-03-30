@@ -1,9 +1,11 @@
 /**
  * 세션 관리 유틸리티
+/**
  * 로그인 상태, 사용자 정보, 토큰 관리
  */
 
 import { storage } from './common';
+import { getLegacyDashboardPath } from './dashboardUtils';
 
 // 세션 키 상수
 const SESSION_KEYS = {
@@ -237,27 +239,53 @@ export const forceClearSession = () => {
 
 /**
  * 역할별 대시보드 경로 매핑 (중앙 관리)
+/**
+ * 
+/**
+ * @deprecated 이 상수는 완전히 제거 예정입니다. 더 이상 사용하지 마세요.
+/**
+ * 대신 `dashboardUtils.js`의 `getLegacyDashboardPath()` 또는 `redirectToDynamicDashboard()`를 사용하세요.
+/**
+ * 
+/**
+ * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
+/**
+ * 
+/**
+ * @private 이 상수는 내부적으로만 사용되며, 외부에서는 접근하지 마세요.
  */
 const ROLE_DASHBOARD_MAP = {
   'CLIENT': '/client/dashboard',
   'CONSULTANT': '/consultant/dashboard',
   'ADMIN': '/admin/dashboard',
-  'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',  // 지점 수퍼 관리자는 수퍼 어드민 대시보드로
-  'BRANCH_MANAGER': '/admin/dashboard',  // 지점장은 관리자 대시보드로
-  'HQ_ADMIN': '/hq/dashboard',  // 본사 관리자는 HQ 대시보드로
-  'SUPER_HQ_ADMIN': '/hq/dashboard',  // 본사 고급 관리자는 HQ 대시보드로
-  'HQ_MASTER': '/hq_master/dashboard',  // 본사 총관리자는 HQ 마스터 대시보드로
-  'HQ_SUPER_ADMIN': '/hq/dashboard'  // 본사 최고관리자는 HQ 대시보드로
+  'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
+  'BRANCH_MANAGER': '/admin/dashboard',
+  'HQ_ADMIN': '/admin/dashboard',
+  'SUPER_HQ_ADMIN': '/admin/dashboard',
+  'HQ_MASTER': '/admin/dashboard',
+  'HQ_SUPER_ADMIN': '/admin/dashboard'
 };
 
 /**
  * 역할별 대시보드 경로 가져오기 (공통 함수)
+/**
+ * 
+/**
+ * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
+ * 대신 `dashboardUtils.js`의 `getLegacyDashboardPath()` 또는 `redirectToDynamicDashboard()`를 사용하세요.
+/**
+ * 
+/**
+ * @param {string} role 역할
+/**
+ * @returns {string} 대시보드 경로
+/**
+ * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const getDashboardPath = (role) => {
-  if (!role) return '/client/dashboard';
-  
-  const normalizedRole = role.toUpperCase();
-  return ROLE_DASHBOARD_MAP[normalizedRole] || '/client/dashboard';
+  // 내부적으로 dashboardUtils의 함수를 사용 (중복 제거)
+  return getLegacyDashboardPath(role);
 };
 
 /**
@@ -270,10 +298,25 @@ export const getCurrentUserDashboardPath = () => {
 
 /**
  * 공통 리다이렉션 함수 - React Router와 window.location 모두 지원
+/**
+ * 
+/**
+ * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
+ * 대신 `dashboardUtils.js`의 `redirectToDynamicDashboard()`를 사용하세요.
+/**
+ * 
+/**
+ * @param {string} userRole 사용자 역할
+/**
+ * @param {Function|null} navigate React Router navigate 함수 (선택)
+/**
+ * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
   try {
     const dashboardPath = getDashboardPath(userRole);
+    console.warn('⚠️ redirectToDashboardWithFallback()는 deprecated입니다. redirectToDynamicDashboard()를 사용하세요.');
     console.log('🎯 공통 리다이렉션 시작:', {
       role: userRole,
       path: dashboardPath
@@ -314,8 +357,21 @@ export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
 
 /**
  * 로그인 후 대시보드로 리다이렉트 (기존 호환성 유지)
+/**
+ * 
+/**
+ * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
+ * 대신 `dashboardUtils.js`의 `redirectToDynamicDashboard()`를 사용하세요.
+/**
+ * 
+/**
+ * @param {Object} userInfo 사용자 정보
+/**
+ * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const redirectToDashboard = (userInfo) => {
+  console.warn('⚠️ redirectToDashboard()는 deprecated입니다. redirectToDynamicDashboard()를 사용하세요.');
   redirectToDashboardWithFallback(userInfo?.role);
 };
 

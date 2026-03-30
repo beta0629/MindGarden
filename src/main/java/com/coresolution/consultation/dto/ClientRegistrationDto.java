@@ -1,0 +1,43 @@
+package com.coresolution.consultation.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 내담자 등록 DTO
+ * 
+ * @deprecated Use ClientRegistrationRequest instead.
+ * This class will be removed in version 2.0.0
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2024-12-19
+ */
+@Deprecated
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClientRegistrationDto {
+    private String userId;
+    private String email;
+    private String password;
+    private String name;
+    private String phone;
+    private Integer age;
+    private String address;
+    private String addressDetail;
+    private String postalCode;
+    private String consultationPurpose;
+    private String consultationHistory;
+    private String emergencyContact;
+    private String emergencyPhone;
+    private String notes;
+    private String registeredBy;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
+}

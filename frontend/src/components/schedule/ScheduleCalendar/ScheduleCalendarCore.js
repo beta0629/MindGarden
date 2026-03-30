@@ -6,9 +6,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 /**
  * FullCalendar 래퍼 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarCore = ({
@@ -37,7 +41,7 @@ const ScheduleCalendarCore = ({
             droppable: !readOnly,
             selectable: !readOnly,
             selectMirror: !readOnly,
-            dayMaxEvents: true,
+            dayMaxEvents: isMobile ? 4 : 8,
             weekends: true,
             locale: 'ko',
             height: 'auto',
@@ -78,7 +82,7 @@ const ScheduleCalendarCore = ({
 
         // 모바일 환경에서 추가 설정
         if (isMobile) {
-            baseConfig.dayMaxEvents = 3;
+            baseConfig.dayMaxEvents = 4;
             baseConfig.moreLinkClick = 'popover';
             baseConfig.eventDisplay = 'block';
         }

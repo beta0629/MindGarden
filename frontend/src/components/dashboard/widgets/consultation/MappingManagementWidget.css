@@ -1,0 +1,373 @@
+/**
+ * Mapping Management Widget Styles
+ * 매칭 관리 위젯 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-11-29
+ */
+
+/* 위젯 컨테이너 */
+.mapping-management-widget {
+  --widget-bg: var(--cs-surface-primary);
+  --widget-border: var(--cs-border-primary);
+  
+  background: var(--widget-bg);
+  border-radius: var(--cs-radius-md);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+/* Empty State */
+.mapping-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--cs-glass-primary-20);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--cs-primary-500);
+}
+
+.empty-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.empty-description {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-sm);
+  line-height: 1.5;
+  margin-bottom: var(--cs-spacing-lg);
+  max-width: 300px;
+}
+
+/* 매핑 콘텐츠 */
+.mapping-content {
+  padding: var(--cs-spacing-lg);
+}
+
+/* 통계 섹션 */
+.mapping-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--cs-spacing-md);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-secondary);
+  border-radius: var(--cs-radius-sm);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--cs-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cs-white);
+}
+
+.stat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.stat-icon.total {
+  background: var(--cs-primary-500);
+}
+
+.stat-icon.active {
+  background: var(--cs-success-500);
+}
+
+.stat-icon.pending {
+  background: var(--cs-warning-500);
+}
+
+.stat-icon.terminated {
+  background: var(--cs-gray-500);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+  line-height: 1;
+}
+
+.stat-label {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-xs);
+  margin-top: 2px;
+}
+
+/* 매핑 목록 */
+.mapping-list {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.list-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  margin: 0;
+}
+
+/* 매핑 아이템 */
+.mapping-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+}
+
+.mapping-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-secondary);
+  border: 1px solid var(--cs-border-secondary);
+  border-radius: var(--cs-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.mapping-item:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-200);
+}
+
+.mapping-info {
+  flex: 1;
+}
+
+.mapping-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.mapping-participants {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+}
+
+.participant {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: 4px 8px;
+  border-radius: var(--cs-radius-xs);
+}
+
+.participant.consultant {
+  background: var(--cs-glass-blue-light);
+  color: var(--cs-blue-600);
+}
+
+.participant.client {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-600);
+}
+
+.mapping-connector {
+  width: 16px;
+  height: 16px;
+  color: var(--cs-text-tertiary);
+}
+
+/* 매핑 상태 */
+.mapping-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--cs-radius-xs);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.status-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.status-active {
+  background: var(--cs-glass-success-light);
+  color: var(--cs-success-600);
+}
+
+.status-pending {
+  background: var(--cs-glass-warning-light);
+  color: var(--cs-warning-600);
+}
+
+.status-terminated,
+.status-cancelled {
+  background: var(--cs-glass-gray-light);
+  color: var(--cs-gray-600);
+}
+
+.status-completed {
+  background: var(--cs-glass-success-light);
+  color: var(--cs-success-600);
+}
+
+.status-unknown {
+  background: var(--cs-glass-gray-light);
+  color: var(--cs-gray-500);
+}
+
+/* 매핑 상세 정보 */
+.mapping-details {
+  display: flex;
+  gap: var(--cs-spacing-lg);
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-xs);
+}
+
+.detail-label {
+  color: var(--cs-text-secondary);
+}
+
+.detail-value {
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-medium);
+}
+
+/* 매핑 액션 */
+.mapping-actions {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--cs-radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-500);
+}
+
+.view-btn:hover {
+  background: var(--cs-primary-500);
+  color: var(--cs-white);
+}
+
+.action-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 빠른 액션 */
+.mapping-quick-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--cs-spacing-md);
+  border-top: 1px solid var(--cs-border-secondary);
+}
+
+/* 버튼 아이콘 */
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mapping-content {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .mapping-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .mapping-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .mapping-participants {
+    flex-wrap: wrap;
+  }
+  
+  .mapping-details {
+    flex-direction: column;
+    gap: var(--cs-spacing-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .mapping-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    justify-content: center;
+  }
+  
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .mapping-management-widget {
+    --widget-bg: var(--cs-surface-primary-dark);
+    --widget-border: var(--cs-border-primary-dark);
+  }
+}

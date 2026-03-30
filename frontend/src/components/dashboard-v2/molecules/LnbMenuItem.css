@@ -1,0 +1,13 @@
+/**
+ * LnbMenuItem - LNB 메뉴 아이템
+ * RESPONSIVE_LAYOUT_SPEC: 사이드바 260px, 메뉴 높이 44px
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-lnb-menu-item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

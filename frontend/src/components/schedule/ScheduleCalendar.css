@@ -3,7 +3,7 @@
 /* 메인 컨테이너 */
 .mg-v2-schedule-calendar {
     padding: 20px;
-    background-color: #ffffff;
+    background-color: var(--mg-white);
     min-height: 100vh;
 }
 
@@ -220,7 +220,7 @@
 }
 
 .mg-v2-calendar-day-header {
-    background-color: #ffffff;
+    background-color: var(--mg-white);
     color: var(--mg-color-text-primary);
     font-weight: 600;
 }
@@ -236,7 +236,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--mg-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -296,7 +296,7 @@
 
 .mg-v2-mobile-zoom-schedule-item {
     padding: 15px;
-    background: #ffffff;
+    background: var(--mg-white);
     border-radius: var(--mg-border-radius-md);
     border: 1px solid var(--mg-color-border);
     cursor: pointer;
@@ -390,7 +390,7 @@
 /* FullCalendar 커스터마이징 */
 .fc-toolbar {
     padding: 15px;
-    background: #ffffff;
+    background: var(--mg-white);
     border-bottom: 1px solid var(--mg-color-border);
 }
 
@@ -436,7 +436,7 @@
 }
 
 .fc-col-header-cell {
-    background: #ffffff;
+    background: var(--mg-white);
     color: var(--mg-color-text-primary);
     font-weight: 600;
     padding: 10px;
@@ -457,6 +457,27 @@
 .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
     color: var(--mg-color-primary);
     font-weight: 700;
+}
+
+/* 일 8개 이벤트 표시용 셀 높이·스크롤 */
+.fc-daygrid-day-frame {
+    min-height: calc(var(--spacing-xl, 2rem) * 4);
+}
+.fc-daygrid-day-events {
+    max-height: calc(var(--spacing-xl, 2rem) * 6);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+.fc-daygrid-day-events::-webkit-scrollbar {
+    width: 4px;
+}
+.fc-daygrid-day-events::-webkit-scrollbar-track {
+    background: var(--mg-color-surface);
+    border-radius: 2px;
+}
+.fc-daygrid-day-events::-webkit-scrollbar-thumb {
+    background: var(--mg-color-border);
+    border-radius: 2px;
 }
 
 .fc-event {

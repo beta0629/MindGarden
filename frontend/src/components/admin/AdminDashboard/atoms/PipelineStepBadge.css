@@ -1,0 +1,50 @@
+/**
+ * PipelineStepBadge - 파이프라인 단계 배지 스타일
+ * StatusBadge variant 토큰(--mg-badge-status-*) 사용으로 시각적 일관성
+ */
+.pipeline-step-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--mg-spacing-2, 4px) var(--mg-spacing-8, 8px);
+  border-radius: var(--mg-radius-full, 8px);
+  font-size: var(--mg-font-xs, 0.75rem);
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.pipeline-step-badge__value {
+  font-weight: 600;
+  color: inherit;
+}
+
+.pipeline-step-badge__label {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.pipeline-step-badge--neutral {
+  background: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}
+
+.pipeline-step-badge--warning {
+  background: var(--mg-badge-status-warning-bg);
+  color: var(--mg-badge-status-warning-text);
+}
+
+.pipeline-step-badge--success {
+  background: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+}
+
+.pipeline-step-badge--info {
+  background: var(--mg-badge-status-info-bg);
+  color: var(--mg-badge-status-info-text);
+}
+
+.pipeline-step-badge--auto {
+  background: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}

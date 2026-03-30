@@ -1,12 +1,20 @@
-name: 🧪 MindGarden 개발 서버 배포
+name: 🧪 MindGarden 개발 서버 배포 (통합 - 모든 프로젝트)
+
+# ⚠️ DEPRECATED: 이 워크플로우는 더 이상 사용되지 않습니다.
+# 개별 워크플로우를 사용하세요:
+# - deploy-backend-dev.yml: 백엔드만 배포 (src/** 또는 pom.xml 변경 시)
+# - deploy-frontend-dev.yml: CoreSolution 프론트엔드만 배포 (frontend/** 변경 시)
+# - deploy-trinity-dev.yml: Trinity 프론트엔드만 배포 (frontend-trinity/** 변경 시)
+# - deploy-ops-dev.yml: Ops 프론트엔드만 배포 (frontend-ops/** 변경 시)
+#
+# 이 워크플로우는 비활성화되었습니다. 수동 실행만 가능합니다.
 
 on:
-  push:
-    branches: [ develop ]
-    # develop 브랜치에 push하면 자동으로 개발 서버에 배포
-    # main 브랜치는 운영 배포용이므로 개발 배포에서 제외
+  # push 트리거 제거 (개별 워크플로우 사용)
+  # push:
+  #   branches: [ develop ]
   workflow_dispatch:
-    # 수동 실행 가능
+    # 수동 실행만 가능 (모든 프로젝트를 한 번에 배포하고 싶을 때만 사용)
 
 jobs:
   deploy:
@@ -81,8 +89,60 @@ jobs:
           exit 1
         fi
         
+    - name: 📦 Trinity 프론트엔드 의존성 설치
+      run: |
+        cd frontend-trinity
+        npm ci
+        
+    - name: 🏗️ Trinity 프론트엔드 빌드
+      run: |
+        cd frontend-trinity
+        ESLINT_NO_DEV_ERRORS=true npm run build
+        
+    - name: 🔍 Trinity 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Trinity 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-trinity/out ]; then
+          FILE_COUNT=$(find frontend-trinity/out -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-trinity/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-trinity/out 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-trinity/out 디렉토리 없음!"
+          exit 1
+        fi
+        
+    - name: 📦 Ops 프론트엔드 의존성 설치
+      run: |
+        cd frontend-ops
+        npm ci
+        
+    - name: 🏗️ Ops 프론트엔드 빌드
+      run: |
+        cd frontend-ops
+        ESLINT_NO_DEV_ERRORS=true npm run build
+        
+    - name: 🔍 Ops 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Ops 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-ops/out ]; then
+          FILE_COUNT=$(find frontend-ops/out -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-ops/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-ops/out 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-ops/out 디렉토리 없음!"
+          exit 1
+        fi
+        
     - name: 🔍 개발 서버 SSH 연결 테스트
-      uses: appleboy/ssh-action@v1.1.0
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -94,7 +154,7 @@ jobs:
           echo "서버 정보: $(uname -a)"
           
     - name: 🚀 개발 서버 배포 준비
-      uses: appleboy/ssh-action@v1.1.0
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -111,12 +171,28 @@ jobs:
           
           # 백업 생성
           if [ -f app.jar ]; then
-            cp app.jar app.jar.backup.$(date +%Y%m%d_%H%M%S)
+            BACKUP_DIR="/var/www/mindgarden-dev/backups"
+            mkdir -p $BACKUP_DIR
+            BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S)"
+            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
+            while [ -f "$BACKUP_FILE" ]; do
+              BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19)"
+            done
+            cp app.jar "$BACKUP_FILE"
+            echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
           # 프론트엔드 백업
           if [ -d frontend ]; then
-            tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
+            BACKUP_DIR="/var/www/mindgarden-dev/backups"
+            mkdir -p $BACKUP_DIR
+            FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz"
+            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
+            while [ -f "$FRONTEND_BACKUP_FILE" ]; do
+              FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19).tar.gz"
+            done
+            tar -czf "$FRONTEND_BACKUP_FILE" frontend/
+            echo "✅ 프론트엔드 백업 완료: $FRONTEND_BACKUP_FILE"
           fi
           
     - name: 📤 백엔드 파일 업로드 (개발 서버)
@@ -162,6 +238,50 @@ jobs:
         strip_components: 2
         overwrite: true
         
+    - name: 📤 Trinity 프론트엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 Trinity 프론트엔드 파일 업로드 시작"
+        echo "디렉토리 확인:"
+        ls -ld frontend-trinity/out || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend-trinity/out -type f 2>/dev/null | wc -l)"
+        echo "=========================================="
+        
+    - name: 📤 Trinity 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-trinity/out/*"
+        target: "/var/www/html-trinity/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 📤 Ops 프론트엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 Ops 프론트엔드 파일 업로드 시작"
+        echo "디렉토리 확인:"
+        ls -ld frontend-ops/out || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend-ops/out -type f 2>/dev/null | wc -l)"
+        echo "=========================================="
+        
+    - name: 📤 Ops 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-ops/out/*"
+        target: "/var/www/html-ops/"
+        strip_components: 2
+        overwrite: true
+        
     - name: 📤 개발 서버 환경 변수 파일 업로드
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -174,7 +294,19 @@ jobs:
         target: "/tmp/dev.env"
         overwrite: true
         
-    - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 통합 설정)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/core-solution-dev.conf"
+        target: "/tmp/"
+        overwrite: true
+        
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -183,7 +315,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/nginx/dev.m-garden.co.kr.conf"
-        target: "/tmp/dev.m-garden.co.kr.conf"
+        target: "/tmp/"
         overwrite: true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
@@ -199,7 +331,7 @@ jobs:
         overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작
-      uses: appleboy/ssh-action@v1.1.0
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -218,22 +350,68 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # systemd 서비스 파일 설정 (없으면)
-          if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
-            echo "📝 systemd 서비스 파일 설정 중..."
-            if [ -f /tmp/mindgarden-dev.service ]; then
-              sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
-              sudo systemctl daemon-reload
-              sudo systemctl enable mindgarden-dev.service
-              echo "✅ systemd 서비스 파일 설정 완료"
-            elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
-              sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
-              sudo systemctl daemon-reload
-              sudo systemctl enable mindgarden-dev.service
-              echo "✅ systemd 서비스 파일 설정 완료"
-            else
-              echo "⚠️ systemd 서비스 파일이 업로드되지 않음"
-            fi
+          # 시작 스크립트 생성 (항상 업데이트)
+          echo "📝 시작 스크립트 생성 중..."
+          sudo mkdir -p /opt/mindgarden
+          sudo bash -c 'echo "#!/bin/bash" > /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "set -e" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "source /etc/mindgarden/dev.env" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_HOST" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_NAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PORT" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export JWT_SECRET" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_KEY" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_IV" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_ROLE" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_HOST" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_PORT" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export SESSION_COOKIE_DOMAIN" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "exec /usr/bin/java -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'
+          sudo chmod +x /opt/mindgarden/start.sh
+          echo "✅ 시작 스크립트 생성 완료"
+          
+          # systemd 서비스 파일 설정 (항상 업데이트)
+          echo "📝 systemd 서비스 파일 설정 중..."
+          if [ -f /tmp/mindgarden-dev.service ]; then
+            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 설정 완료"
+          elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
+            sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 설정 완료"
+          else
+            echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
+            # 기본 서비스 파일 생성
+            sudo bash -c 'echo "[Unit]" > /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Description=MindGarden Development Server" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "After=network.target mysql.service" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Service]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Type=simple" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "User=root" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WorkingDirectory=/var/www/mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "ExecStart=/opt/mindgarden/start.sh" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Restart=always" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "RestartSec=10" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardOutput=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardError=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "SyslogIdentifier=mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Install]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WantedBy=multi-user.target" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ 기본 systemd 서비스 파일 생성 완료"
           fi
           
           # 환경 변수 파일 업데이트 (업로드된 경우)
@@ -253,46 +431,121 @@ jobs:
           # 서비스 재시작
           echo "🔄 개발 서버 서비스 재시작..."
           sudo systemctl daemon-reload
-          sudo systemctl stop mindgarden-dev.service || true
-          sleep 5
+          
+          # 서비스 중지 (완전히 종료될 때까지 대기)
+          echo "🛑 서비스 중지 중..."
+          if sudo systemctl is-active --quiet mindgarden-dev.service; then
+            sudo systemctl stop mindgarden-dev.service || true
+            # 서비스가 완전히 중지될 때까지 대기 (최대 30초)
+            for i in {1..30}; do
+              if ! sudo systemctl is-active --quiet mindgarden-dev.service; then
+                echo "✅ 서비스 중지 완료"
+                break
+              fi
+              sleep 1
+            done
+            # 추가 안정화 대기
+            sleep 3
+          else
+            echo "ℹ️ 서비스가 이미 중지되어 있음"
+          fi
+          
+          # 서비스 시작
+          echo "🚀 서비스 시작 중..."
           sudo systemctl start mindgarden-dev.service
-          sleep 15
+          
+          # 서비스가 완전히 시작될 때까지 대기 (최대 60초)
+          echo "⏳ 서비스 시작 대기 중..."
+          SERVICE_STARTED=false
+          for i in {1..60}; do
+            if sudo systemctl is-active --quiet mindgarden-dev.service; then
+              # 서비스가 활성화되었지만, 애플리케이션이 완전히 시작되었는지 확인
+              if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "✅ 서비스 및 애플리케이션 시작 완료 (${i}초 소요)"
+                SERVICE_STARTED=true
+                break
+              fi
+            fi
+            sleep 1
+          done
+          
+          if [ "$SERVICE_STARTED" = false ]; then
+            echo "⚠️ 서비스 시작 대기 시간 초과 - 상태 확인 중..."
+          fi
           
           # 서비스 상태 확인
           echo "🔍 서비스 상태 확인..."
-          sudo systemctl status mindgarden-dev.service --no-pager | head -15
+          sudo systemctl status mindgarden-dev.service --no-pager | head -20
           
           # 서비스 활성화 상태 확인
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨"
           else
+            echo "❌ 서비스 시작 실패 - 로그 확인..."
+            echo "=========================================="
+            echo "📋 최근 서비스 로그 (최근 100줄):"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 100 || true
+            echo "=========================================="
+            echo "📋 애플리케이션 에러 로그:"
+            echo "=========================================="
+            sudo tail -100 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "에러 로그 파일 없음"
+            echo "=========================================="
+            echo "📋 JAR 파일 확인:"
+            echo "=========================================="
+            ls -lh /var/www/mindgarden-dev/app.jar || echo "JAR 파일 없음!"
+            echo "=========================================="
+            echo "📋 환경 변수 파일 확인:"
+            echo "=========================================="
+            sudo test -f /etc/mindgarden/dev.env && echo "환경 변수 파일 존재" || echo "환경 변수 파일 없음!"
+            echo "=========================================="
             echo "❌ 서비스 시작 실패 - 재시도..."
             sudo systemctl restart mindgarden-dev.service
             sleep 15
-            sudo systemctl status mindgarden-dev.service --no-pager | head -15
+            sudo systemctl status mindgarden-dev.service --no-pager | head -20
+            echo "=========================================="
+            echo "📋 재시작 후 로그:"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 50 || true
+            exit 1
           fi
           
-          # Nginx 설정 업데이트 (설정 파일이 업로드된 경우)
+          # Nginx 설정 업데이트 (통합 설정 파일 우선)
+          if [ -f /tmp/core-solution-dev.conf ]; then
+            echo "🌐 Nginx 통합 설정 업데이트 중..."
+            sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
+            sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
+            echo "✅ 통합 설정 파일 적용 완료"
+          fi
+          
+          # 기존 도메인 설정 업데이트 (하위 호환성)
           if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
-            echo "🌐 Nginx 설정 업데이트 중..."
+            echo "🌐 Nginx 기존 도메인 설정 업데이트 중..."
             sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
-            sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/
-            
-            # 프론트엔드 디렉토리 권한 설정
-            sudo chown -R www-data:www-data /var/www/html-dev
-            sudo chmod -R 755 /var/www/html-dev
-            
-            # Nginx 설정 테스트
-            if sudo nginx -t; then
-              sudo systemctl reload nginx
-              echo "✅ Nginx 설정 업데이트 완료"
-            else
-              echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
-            fi
+            sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/dev.m-garden.co.kr.conf
+            echo "✅ 기존 도메인 설정 파일 적용 완료"
+          fi
+          
+          # 프론트엔드 디렉토리 권한 설정
+          sudo chown -R www-data:www-data /var/www/html-dev
+          sudo chmod -R 755 /var/www/html-dev
+          
+          # Trinity 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-trinity
+          sudo chown -R www-data:www-data /var/www/html-trinity
+          sudo chmod -R 755 /var/www/html-trinity
+          
+          # Nginx 설정 테스트
+          if sudo nginx -t; then
+            sudo systemctl reload nginx
+            echo "✅ Nginx 설정 업데이트 완료"
+          else
+            echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
+            sudo nginx -t
           fi
           
     - name: 🏥 개발 서버 헬스체크
-      uses: appleboy/ssh-action@v1.1.0
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

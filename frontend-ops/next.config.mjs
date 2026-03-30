@@ -19,14 +19,36 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // 빌드 환경(CI/CD)에서는 정적 export, 로컬 개발에서는 middleware 사용
+  output: process.env.BUILD_STANDALONE === "true" ? "export" : undefined,
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   reactStrictMode: true,
-  headers: async () => [
-    {
-      source: "/(.*)",
-      headers: securityHeaders
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders
+      }
+    ];
+  },
+  async rewrites() {
+    // 로컬 개발 환경에서만 rewrites 사용 (정적 export에서는 지원 안 됨)
+    if (process.env.BUILD_STANDALONE === "true") {
+      return [];
     }
-  ]
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'http://localhost:8081/api/v1/:path*'
+      }
+    ];
+  }
 };
 
 export default nextConfig;

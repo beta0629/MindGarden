@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import Avatar from '../common/Avatar';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantStatus.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 현황 컴포넌트
+/**
  * - 실제 상담사 데이터를 기반으로 현황 표시
+/**
  * - 상담사별 상태 (여유, 바쁨, 휴무) 표시
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ConsultantStatus = () => {
@@ -17,7 +26,7 @@ const ConsultantStatus = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
+/**
      * 상담사 목록 로드 (휴가 정보 포함)
      */
     const loadConsultants = async () => {
@@ -27,7 +36,7 @@ const ConsultantStatus = () => {
             
             // 오늘 날짜로 휴가 정보를 포함한 상담사 목록 조회
             const today = new Date().toISOString().split('T')[0];
-            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
+            const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${today}`);
             
             if (response.success) {
                 const consultantData = response.data || [];
@@ -54,7 +63,7 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
+/**
      * 간단한 상담사 상태 계산 (임시 로직)
      */
     const calculateSimpleStatus = (consultant, index) => {
@@ -68,7 +77,7 @@ const ConsultantStatus = () => {
         return statusTypes[index % statusTypes.length];
     };
 
-    /**
+/**
      * 상담사 상태 계산 (실제 스케줄 데이터 기반)
      */
     const calculateConsultantStatus = async (consultant) => {
@@ -76,7 +85,7 @@ const ConsultantStatus = () => {
             const today = new Date().toISOString().split('T')[0];
             console.log(`🔍 상담사 ${consultant.name} (ID: ${consultant.id}) 상태 계산 시작`);
             
-            const response = await apiGet(`/api/schedules?userId=${consultant.id}&userRole=CONSULTANT`);
+            const response = await apiGet(`/api/v1/schedules?userId=${consultant.id}&userRole=CONSULTANT`);
             console.log(`📅 상담사 ${consultant.name} 스케줄 데이터:`, response);
             
             if (response && Array.isArray(response)) {
@@ -135,7 +144,7 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
+/**
      * 상태별 아이콘 반환
      */
     const getStatusIcon = (status) => {
@@ -151,20 +160,6 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
-     * 상담사 프로필 이미지 URL 생성
-     */
-    const getProfileImageUrl = (consultant) => {
-        // 실제 프로필 이미지가 있다면 사용
-        if (consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage) {
-            return consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage;
-        }
-        
-        // 기본 아바타 생성 (이름의 첫 글자 사용)
-        const firstChar = consultant.name ? consultant.name.charAt(0) : '?';
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstChar)}&background=3b82f6&color=ffffff&size=64&font-size=0.6&bold=true`;
-    };
-
     useEffect(() => {
         loadConsultants();
     }, []);
@@ -172,12 +167,7 @@ const ConsultantStatus = () => {
     if (loading) {
         return (
             <div className="consultant-status">
-                <UnifiedLoading 
-                    text="상담사 현황을 불러오는 중..." 
-                    size="medium" 
-                    variant="bars"
-                    className="loading-spinner-inline"
-                />
+                <UnifiedLoading type="inline" text="상담사 현황을 불러오는 중..." />
             </div>
         );
     }
@@ -204,31 +194,23 @@ const ConsultantStatus = () => {
                         const status = consultant.status;
                         return (
                             <div key={consultant.id} className="consultant-status-card">
-                                <div className="consultant-status-avatar">
-                                    <img 
-                                        src={getProfileImageUrl(consultant)} 
-                                        alt={consultant.name}
-                                        className="consultant-status-profile-image"
-                                        onError={(e) => {
-                                            // 이미지 로드 실패 시 기본 아이콘으로 대체
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                        }}
-                                    />
-                                    <div className="consultant-status-default-icon consultant-status-hidden">👨‍⚕️</div>
-                                </div>
+                                <Avatar
+                                    profileImageUrl={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
+                                    displayName={toDisplayString(consultant.name, '상담사')}
+                                    className="consultant-status-avatar"
+                                />
                                 <div className="consultant-status-info">
-                                    <div className="consultant-status-name">{consultant.name}</div>
-                                    <div className="consultant-status-email">{consultant.email}</div>
-                                    <div className="consultant-status-phone">{consultant.phone || '전화번호 없음'}</div>
-                                    <div className="consultant-status-specialty">{consultant.specialty || '전문분야 미설정'}</div>
+                                    <SafeText tag="div" className="consultant-status-name">{consultant.name}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-email">{consultant.email}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-phone" fallback="전화번호 없음">{consultant.phone}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-specialty" fallback="전문분야 미설정">{consultant.specialty}</SafeText>
                                     <div className="consultant-status-status">
                                         <span className="consultant-status-badge" data-status={status.color}>
-                                            {status.text}
+                                            <SafeText>{status.text}</SafeText>
                                         </span>
                                     </div>
                                     <div className="consultant-status-date">
-                                        등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                        등록일: <SafeText>{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}</SafeText>
                                     </div>
                                 </div>
                             </div>

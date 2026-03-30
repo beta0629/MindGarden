@@ -1,22 +1,22 @@
 import React from 'react';
-import BaseModal from './BaseModal';
+import UnifiedModal from './UnifiedModal';
 import '../../styles/main.css';
 
 /**
- * 폼 모달 컴포넌트
+ * 폼 모달 컴포넌트 - UnifiedModal 기반
  * 입력 폼이 있는 모달에 사용
  */
-const FormModal = ({ 
-  isOpen, 
-  onClose, 
+const FormModal = ({
+  isOpen,
+  onClose,
   onSubmit,
-  title, 
-  children, 
-  size = "medium",
-  submitText = "저장",
-  cancelText = "취소",
+  title,
+  children,
+  size = 'auto',
+  submitText = '저장',
+  cancelText = '취소',
   loading = false,
-  submitType = "primary"
+  submitType = 'primary'
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,37 +33,40 @@ const FormModal = ({
   };
 
   return (
-    <BaseModal
+    <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
       title={title}
       size={size}
-      type="form"
-    >
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-          {children}
-        </div>
-        
-        <div className="mg-modal__actions">
-          <button 
+      variant="form"
+      loading={loading}
+      actions={
+        <>
+          <button
             type="button"
-            className="mg-btn mg-btn--secondary" 
+            className="mg-btn mg-btn--secondary"
             onClick={onClose}
             disabled={loading}
           >
             {cancelText}
           </button>
-          <button 
-            type="submit"
+          <button
+            type="button"
             className={getSubmitButtonClass()}
+            onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? '저장중...' : submitText}
           </button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+          {children}
         </div>
       </form>
-    </BaseModal>
+    </UnifiedModal>
   );
 };
 

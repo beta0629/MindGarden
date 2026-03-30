@@ -1,0 +1,36 @@
+{
+  "name": "mindgarden",
+  "version": "1.0.0",
+  "description": "MindGarden Consultation Platform",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "mvn spring-boot:run -Dspring.profiles.active=dev",
+    "frontend": "cd frontend && npm start",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "cd frontend && npm run build",
+    "install-deps": "npm install && cd frontend && npm install",
+    "widget:create": "node scripts/create-standard-widget.js",
+    "widget:migrate": "node scripts/migrate-widgets-to-standard.js",
+    "widget:migrate:dry": "node scripts/migrate-widgets-to-standard.js --dry-run",
+    "widget:check": "node scripts/migrate-widgets-to-standard.js --dry-run",
+    "widget:lint": "cd frontend && npx eslint src/components/dashboard/widgets --config ../.eslintrc.widget-standards.js",
+    "hooks:install": "chmod +x .githooks/pre-commit-widget-standards && git config core.hooksPath .githooks",
+    "check:api": "node scripts/check-api-standardization.js",
+    "check:standards": "npm run check:api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "spring-boot",
+    "react",
+    "consultation"
+  ],
+  "author": "MindGarden",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "fs-extra": "^11.3.2",
+    "glob": "^13.0.0"
+  }
+}

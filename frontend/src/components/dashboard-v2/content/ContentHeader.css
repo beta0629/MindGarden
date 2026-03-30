@@ -1,0 +1,38 @@
+/**
+ * ContentHeader - B0KlA headerRow 스펙
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mg-layout-gap, 1rem);
+}
+
+.mg-v2-content-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-content-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-v2-content-header__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0;
+}
+
+.mg-v2-content-header__subtitle {
+  font-size: 15px;
+  color: var(--ad-b0kla-subtitle-color);
+  margin: 0;
+}

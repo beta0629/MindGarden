@@ -1,0 +1,459 @@
+/**
+ * SystemStatusWidget - 시스템 상태 모니터링 위젯 CSS
+ * 실시간 서버, 데이터베이스, 외부 서비스 상태를 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.system-status-widget {
+  width: 100%;
+}
+
+.system-status-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* 전체 상태 개요 */
+.status-overview {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.overall-status {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-light-subtle);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+}
+
+.overall-status-text {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+}
+
+.overall-status-text.healthy {
+  color: var(--cs-success-600);
+}
+
+.overall-status-text.warning {
+  color: var(--cs-warning-600);
+}
+
+.overall-status-text.error {
+  color: var(--cs-error-600);
+}
+
+.overall-status-text.unknown {
+  color: var(--cs-gray-600);
+}
+
+/* 상태 그리드 */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cs-spacing-lg);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+/* 상태 카드 */
+.status-card {
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.status-card:hover {
+  box-shadow: var(--cs-shadow-md);
+}
+
+/* 상태별 카드 스타일 */
+.status-card.status-healthy {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.status-card.status-warning {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.status-card.status-error {
+  border-left: 4px solid var(--cs-error-500);
+}
+
+.status-card.status-unknown {
+  border-left: 4px solid var(--cs-gray-400);
+}
+
+/* 상태 카드 헤더 */
+.status-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-gray-light);
+  border-bottom: 1px solid var(--cs-border-light);
+}
+
+.status-card-header .service-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--cs-primary-600);
+}
+
+.service-name {
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  flex: 1;
+  margin-left: var(--cs-spacing-sm);
+}
+
+/* 상태 아이콘 */
+.status-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.status-icon.healthy {
+  color: var(--cs-success-600);
+}
+
+.status-icon.warning {
+  color: var(--cs-warning-600);
+}
+
+.status-icon.error {
+  color: var(--cs-error-600);
+}
+
+.status-icon.unknown {
+  color: var(--cs-gray-500);
+}
+
+/* 상태 카드 본문 */
+.status-card-body {
+  padding: var(--cs-spacing-lg);
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+}
+
+.detail-value {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-primary);
+}
+
+/* 서비스 목록 */
+.service-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--cs-spacing-xs);
+  background: var(--cs-gray-50);
+  border-radius: var(--cs-radius-sm);
+}
+
+.service-item-name {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-primary);
+}
+
+.service-item-status {
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+  text-transform: uppercase;
+}
+
+.service-item-status.healthy {
+  background: var(--cs-success-100);
+  color: var(--cs-success-700);
+}
+
+.service-item-status.warning {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-700);
+}
+
+.service-item-status.error {
+  background: var(--cs-error-100);
+  color: var(--cs-error-700);
+}
+
+.service-item-status.unknown {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-700);
+}
+
+.service-more {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-muted);
+  text-align: center;
+  padding: var(--cs-spacing-xs);
+}
+
+/* 시스템 메트릭 */
+.system-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-light-subtle);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+}
+
+.metric-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+  min-width: 100px;
+}
+
+.metric-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--cs-gray-200);
+  border-radius: var(--cs-radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: var(--cs-radius-sm);
+  transition: width 0.3s ease;
+}
+
+.metric-bar-fill.cpu {
+  background: linear-gradient(90deg, var(--cs-blue-400), var(--cs-blue-600));
+}
+
+.metric-bar-fill.memory {
+  background: linear-gradient(90deg, var(--cs-warning-400), var(--cs-warning-600));
+}
+
+.metric-bar-fill.disk {
+  background: linear-gradient(90deg, var(--cs-success-400), var(--cs-success-600));
+}
+
+.metric-value {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  min-width: 60px;
+  text-align: right;
+}
+
+/* 마지막 업데이트 시간 */
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-gray-50);
+  border-radius: var(--cs-radius-md);
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-muted);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.timestamp-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 빈 상태 */
+.system-status-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.system-status-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.system-status-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .status-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--cs-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .status-grid {
+    grid-template-columns: 1fr;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .overall-status {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .overall-status-text {
+    font-size: var(--cs-text-md);
+  }
+  
+  .status-card-header,
+  .status-card-body {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .metric-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .metric-label {
+    min-width: auto;
+  }
+  
+  .metric-value {
+    text-align: left;
+  }
+  
+  .system-status-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .status-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .service-name {
+    margin-left: 0;
+    text-align: center;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .detail-value {
+    text-align: left;
+    font-weight: var(--cs-font-bold);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .overall-status {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .status-card {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .status-card-header {
+    background: var(--cs-glass-dark-strong);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .system-metrics {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .service-item {
+    background: var(--cs-gray-800);
+  }
+  
+  .metric-bar {
+    background: var(--cs-gray-700);
+  }
+  
+  .last-updated {
+    background: var(--cs-gray-800);
+  }
+}
+
+/* 애니메이션 효과 */
+.status-card {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.status-card:nth-child(1) { animation-delay: 0.05s; }
+.status-card:nth-child(2) { animation-delay: 0.1s; }
+.status-card:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 메트릭 바 애니메이션 */
+.metric-bar-fill {
+  animation: fillBar 1s ease-out 0.3s both;
+}
+
+@keyframes fillBar {
+  from {
+    width: 0%;
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.system-status-widget .widget-loading,
+.system-status-widget .widget-error {
+  min-height: 400px;
+}

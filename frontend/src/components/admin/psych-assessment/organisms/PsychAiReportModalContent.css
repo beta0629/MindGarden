@@ -1,0 +1,12 @@
+/**
+ * PsychAiReportModalContent - 모달 본문 래퍼 (스크롤, 간격)
+ * B0KlA·mg-v2 일관
+ *
+ * @author Core Solution
+ * @since 2026-03-02
+ */
+
+.mg-v2-psych-ai-report-modal-content {
+  max-height: 70vh;
+  overflow: auto;
+}

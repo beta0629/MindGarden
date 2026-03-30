@@ -1,0 +1,581 @@
+/**
+ * 테넌트 공통코드 관리 UI 스타일
+ * 
+ * 디자인 중앙화 표준 준수:
+ * - CSS 변수 사용 (--mg-* 접두사)
+ * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+ * - 하드코딩 금지
+ * 
+ * @author Core Solution
+ * @version 2.0.0
+ * @since 2025-12-03
+ */
+
+/* ==================== Container ==================== */
+
+.mg-tenant-code-manager {
+    padding: var(--mg-spacing-6);
+    background: var(--mg-gray-50);
+    min-height: 100vh;
+}
+
+/* ==================== Header ==================== */
+
+.mg-manager-header {
+    margin-bottom: var(--mg-spacing-8);
+}
+
+.mg-manager-header h2 {
+    font-size: var(--mg-font-size-3xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-2);
+}
+
+.mg-manager-description {
+    font-size: var(--mg-font-size-base);
+    color: var(--mg-gray-600);
+    margin: 0;
+}
+
+/* ==================== Error Message ==================== */
+
+.mg-error-message {
+    padding: var(--mg-spacing-4);
+    background: var(--mg-error-50);
+    border: var(--border-width) solid var(--mg-error);
+    border-radius: var(--mg-border-radius-md);
+    color: var(--mg-error-700);
+    margin-bottom: var(--mg-spacing-6);
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+}
+
+.mg-error-icon {
+    font-size: var(--mg-font-size-xl);
+}
+
+/* ==================== Content Layout ==================== */
+
+.mg-manager-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--mg-spacing-6);
+    min-height: 600px;
+}
+
+/* ==================== Code Groups Panel (Left) ==================== */
+
+.mg-code-groups-panel {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-code-groups-panel h3 {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-code-groups-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mg-code-groups-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-4);
+    margin-bottom: var(--mg-spacing-1);
+    background: var(--mg-gray-50);
+    border: 1px solid var(--mg-gray-200);
+    border-radius: var(--mg-border-radius-md);
+    cursor: pointer;
+    transition: all var(--mg-transition-fast);
+}
+
+.mg-code-groups-list li:hover {
+    background: var(--mg-primary-50);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-code-groups-list li.mg-active {
+    background: var(--mg-primary-500);
+    border-color: var(--mg-primary-600);
+    color: var(--mg-white);
+}
+
+.mg-group-icon {
+    font-size: var(--mg-font-size-xl);
+}
+
+.mg-group-info {
+    flex: 1;
+}
+
+.mg-group-name {
+    font-size: var(--mg-font-size-base);
+    font-weight: var(--mg-font-weight-medium);
+    margin-bottom: var(--mg-spacing-1);
+}
+
+.mg-code-groups-list li.mg-active .mg-group-name,
+.mg-code-groups-list li.mg-active .mg-group-code {
+    color: var(--mg-white);
+}
+
+.mg-group-code {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-500);
+    font-family: var(--mg-font-mono);
+}
+
+/* ==================== Codes Panel (Right) ==================== */
+
+.mg-codes-panel {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-codes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--mg-spacing-6);
+    padding-bottom: var(--mg-spacing-4);
+    border-bottom: 2px solid var(--mg-gray-200);
+}
+
+.mg-codes-header h3 {
+    font-size: var(--mg-font-size-xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-1);
+}
+
+.mg-codes-description {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-600);
+    margin: 0;
+}
+
+.mg-codes-actions {
+    display: flex;
+    gap: var(--mg-spacing-2);
+}
+
+/* ==================== Table ==================== */
+
+.mg-codes-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--mg-gray-200);
+}
+
+.mg-codes-table thead {
+    background: var(--mg-primary-500);
+    color: var(--mg-white);
+}
+
+.mg-codes-table th {
+    padding: var(--mg-spacing-4);
+    text-align: left;
+    font-weight: var(--mg-font-weight-semibold);
+    font-size: var(--mg-font-size-sm);
+}
+
+.mg-codes-table td {
+    padding: var(--mg-spacing-4);
+    border-bottom: 1px solid var(--mg-gray-200);
+    font-size: var(--mg-font-size-base);
+}
+
+.mg-codes-table tbody tr:hover {
+    background: var(--mg-gray-50);
+}
+
+.mg-codes-table code {
+    background: var(--mg-gray-100);
+    padding: var(--mg-spacing-1) var(--mg-spacing-2);
+    border-radius: var(--mg-border-radius-sm);
+    font-family: var(--mg-font-mono);
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-primary-600);
+}
+
+.mg-actions-cell {
+    display: flex;
+    gap: var(--mg-spacing-2);
+}
+
+/* ==================== Status Badge ==================== */
+
+.mg-status-badge {
+    padding: var(--mg-spacing-1) var(--mg-spacing-3);
+    border-radius: var(--mg-border-radius-full);
+    font-size: var(--mg-font-size-sm);
+    font-weight: var(--mg-font-weight-medium);
+    border: none;
+    cursor: pointer;
+    transition: all var(--mg-transition-fast);
+}
+
+.mg-status-badge.mg-active {
+    background: var(--mg-success-100);
+    color: var(--mg-success-700);
+}
+
+.mg-status-badge.mg-inactive {
+    background: var(--mg-gray-200);
+    color: var(--mg-gray-600);
+}
+
+.mg-status-badge:hover {
+    opacity: 0.8;
+}
+
+/* ==================== Buttons ==================== */
+
+.mg-btn {
+    padding: var(--mg-spacing-2) var(--mg-spacing-4);
+    border-radius: var(--mg-border-radius-md);
+    font-size: var(--mg-font-size-base);
+    font-weight: var(--mg-font-weight-medium);
+    border: none;
+    cursor: pointer;
+    transition: all var(--mg-transition-fast);
+}
+
+.mg-btn-primary {
+    background: var(--mg-primary-500);
+    color: var(--mg-white);
+}
+
+.mg-btn-primary:hover {
+    background: var(--mg-primary-600);
+}
+
+.mg-btn-primary:disabled {
+    background: var(--mg-gray-300);
+    cursor: not-allowed;
+}
+
+.mg-btn-secondary {
+    background: var(--mg-gray-600);
+    color: var(--mg-white);
+}
+
+.mg-btn-secondary:hover {
+    background: var(--mg-gray-700);
+}
+
+.mg-btn-icon {
+    background: transparent;
+    border: none;
+    font-size: var(--mg-font-size-lg);
+    cursor: pointer;
+    padding: var(--mg-spacing-1);
+    transition: transform var(--mg-transition-fast);
+}
+
+.mg-btn-icon:hover {
+    transform: scale(1.2);
+}
+
+/* ==================== Empty State ==================== */
+
+.mg-empty-state {
+    text-align: center;
+    padding: var(--mg-spacing-12);
+    color: var(--mg-gray-600);
+}
+
+.mg-empty-state p {
+    font-size: var(--mg-font-size-lg);
+    margin-bottom: var(--mg-spacing-6);
+}
+
+/* ==================== Loading ==================== */
+
+.mg-loading {
+    text-align: center;
+    padding: var(--mg-spacing-8);
+    color: var(--mg-gray-600);
+    font-size: var(--mg-font-size-base);
+}
+
+/* ==================== Modal ==================== */
+
+.mg-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--cs-glass-dark-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--mg-z-modal, 1000);
+}
+
+.mg-modal-content {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--mg-shadow-xl);
+}
+
+.mg-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--mg-spacing-6);
+    border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-modal-header h3 {
+    font-size: var(--mg-font-size-xl);
+    font-weight: var(--mg-font-weight-bold);
+    margin: 0;
+}
+
+.mg-modal-close {
+    background: transparent;
+    border: none;
+    font-size: var(--mg-font-size-3xl);
+    cursor: pointer;
+    color: var(--mg-gray-500);
+    line-height: 1;
+}
+
+.mg-modal-close:hover {
+    color: var(--mg-gray-900);
+}
+
+/* ==================== Form ==================== */
+
+.mg-modal-content form {
+    padding: var(--mg-spacing-6);
+}
+
+.mg-form-group {
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-form-group label {
+    display: block;
+    font-size: var(--mg-font-size-sm);
+    font-weight: var(--mg-font-weight-medium);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-1);
+}
+
+.mg-form-control {
+    width: 100%;
+    padding: var(--mg-spacing-2) var(--mg-spacing-4);
+    border: 1px solid var(--mg-gray-300);
+    border-radius: var(--mg-border-radius-md);
+    font-size: var(--mg-font-size-base);
+    transition: border-color var(--mg-transition-fast);
+}
+
+.mg-form-control:focus {
+    outline: none;
+    border-color: var(--mg-primary-500);
+    box-shadow: 0 0 0 3px var(--mg-primary-100);
+}
+
+.mg-form-control:disabled {
+    background: var(--mg-gray-100);
+    cursor: not-allowed;
+}
+
+.mg-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--mg-spacing-4);
+}
+
+.mg-form-text {
+    display: block;
+    font-size: var(--mg-font-size-xs);
+    color: var(--mg-gray-500);
+    margin-top: var(--mg-spacing-1);
+}
+
+.mg-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--mg-spacing-2);
+    padding: var(--mg-spacing-6);
+    border-top: 1px solid var(--mg-gray-200);
+}
+
+/* ==================== Codes Cards Grid ==================== */
+
+.mg-codes-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--mg-spacing-4);
+    padding: var(--mg-spacing-4) 0;
+}
+
+/* ==================== Code Card ==================== */
+
+.mg-code-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.mg-code-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--mg-spacing-4);
+    padding-bottom: var(--mg-spacing-3);
+    border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-code-card__title-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+    flex: 1;
+}
+
+.mg-code-value {
+    font-family: var(--mg-font-mono);
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-primary-600);
+    background: var(--mg-primary-50);
+    padding: var(--mg-spacing-1) var(--mg-spacing-2);
+    border-radius: var(--mg-border-radius-sm);
+}
+
+.mg-code-name {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin: 0;
+}
+
+.mg-code-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-3);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-code-card__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+}
+
+.mg-code-card__label {
+    font-size: var(--mg-font-size-xs);
+    color: var(--mg-gray-500);
+    font-weight: var(--mg-font-weight-medium);
+}
+
+.mg-code-card__value {
+    font-size: var(--mg-font-size-base);
+    color: var(--mg-gray-900);
+}
+
+.mg-code-card__actions {
+    display: flex;
+    gap: var(--mg-spacing-2);
+    padding-top: var(--mg-spacing-3);
+    border-top: 1px solid var(--mg-gray-200);
+}
+
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본) */
+.mg-manager-content {
+    grid-template-columns: 1fr;
+}
+
+.mg-code-groups-panel {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mg-codes-header {
+    flex-direction: column;
+    gap: var(--mg-spacing-4);
+}
+
+.mg-codes-actions {
+    width: 100%;
+    flex-direction: column;
+}
+
+.mg-codes-cards-grid {
+    grid-template-columns: 1fr;
+    gap: var(--mg-spacing-3);
+}
+
+.mg-form-row {
+    grid-template-columns: 1fr;
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
+    .mg-manager-content {
+        grid-template-columns: 250px 1fr;
+    }
+
+    .mg-code-groups-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .mg-codes-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .mg-codes-actions {
+        width: auto;
+        flex-direction: row;
+    }
+
+    .mg-codes-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--mg-spacing-4);
+    }
+
+    .mg-form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
+    .mg-codes-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--mg-spacing-4);
+    }
+}
+

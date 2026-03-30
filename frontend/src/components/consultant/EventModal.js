@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Calendar, XCircle, Save, Trash2, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
-import MGButton from '../common/MGButton';
 import { apiGet } from '../../utils/ajax';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button/Button';
 
 // 일정 모달 컴포넌트
 const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSULTANT', onWriteConsultationLog, onConsultationLogSaved }) => {
@@ -59,12 +58,13 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
         null;
 
       if (consultationId) {
-        const response = await apiGet(`/api/schedules/consultation-records?consultationId=${consultationId}`);
-        if (response.success && response.data && response.data.length > 0) {
+        const response = await apiGet(`/api/v1/schedules/consultation-records?consultationId=${consultationId}`);
+        const records = response?.records ?? response?.data?.records ?? (Array.isArray(response?.data) ? response.data : []);
+        if (records && records.length > 0) {
           setConsultationLogStatus({
             hasRecord: true,
             loading: false,
-            recordId: response.data[0].id
+            recordId: records[0].id
           });
         } else {
           setConsultationLogStatus({
@@ -139,23 +139,43 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
   };
 
   if (!event) return null;
-  
-  const portalTarget = document.body || document.createElement('div');
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Calendar size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="mg-v2-modal-body">
+  return (
+    <UnifiedModal
+      isOpen={!!event}
+      onClose={onClose}
+      title={mode === 'add' ? '새 일정 추가' : '일정 수정'}
+      size="medium"
+      backdropClick
+      showCloseButton
+      actions={
+        <>
+          {isReadOnly && event?.extendedProps?.clientId && (
+            <Button type="button" variant="outline" size="medium" onClick={handleSendMessage} preventDoubleClick={false}>
+              <MessageSquare size={20} className="mg-v2-icon-inline" />
+              메시지 보내기
+            </Button>
+          )}
+          {!isReadOnly && mode === 'edit' && (
+            <Button type="button" variant="danger" size="medium" onClick={handleDelete} preventDoubleClick={false}>
+              <Trash2 size={20} className="mg-v2-icon-inline" />
+              삭제
+            </Button>
+          )}
+          {!isReadOnly && (
+            <Button type="submit" form="event-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
+              <Save size={20} className="mg-v2-icon-inline" />
+              {mode === 'add' ? '추가' : '수정'}
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
+          </Button>
+        </>
+      }
+    >
+        <form id="event-modal-form" onSubmit={handleSubmit} className="mg-v2-modal-body">
           {/* 상담사 안내 메시지 */}
           {isReadOnly && (
             <div className="mg-v2-alert mg-v2-alert--warning mg-v2-mb-md">
@@ -258,62 +278,20 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
           <div className="mg-v2-modal-footer">
             {/* 상담사일 때 상담일지 작성 버튼 표시 */}
             {isReadOnly && (
-              <MGButton 
-                type="button" 
-                variant="info"
+              <Button
+                type="button"
+                variant="outline"
+                size="medium"
                 onClick={handleWriteConsultationLog}
+                preventDoubleClick={false}
               >
                 <FileText size={20} className="mg-v2-icon-inline" />
                 {consultationLogStatus.hasRecord ? '상담일지 수정' : '상담일지 작성'}
-              </MGButton>
+              </Button>
             )}
-
-            {/* 상담사일 때 메시지 전송 버튼 표시 */}
-            {isReadOnly && event?.extendedProps?.clientId && (
-              <MGButton 
-                type="button" 
-                variant="info"
-                onClick={handleSendMessage}
-              >
-                <MessageSquare size={20} className="mg-v2-icon-inline" />
-                메시지 보내기
-              </MGButton>
-            )}
-            
-            {/* 관리자일 때만 수정/삭제 버튼 표시 */}
-            {!isReadOnly && mode === 'edit' && (
-              <MGButton 
-                type="button" 
-                variant="danger"
-                onClick={handleDelete}
-              >
-                <Trash2 size={20} className="mg-v2-icon-inline" />
-                삭제
-              </MGButton>
-            )}
-            {!isReadOnly && (
-              <MGButton 
-                type="submit" 
-                variant="success"
-              >
-                <Save size={20} className="mg-v2-icon-inline" />
-                {mode === 'add' ? '추가' : '수정'}
-              </MGButton>
-            )}
-            <MGButton 
-              type="button" 
-              variant="secondary"
-              onClick={onClose}
-            >
-              <XCircle size={20} className="mg-v2-icon-inline" />
-              취소
-            </MGButton>
           </div>
         </form>
-      </div>
-      
-      
-      {/* 삭제 확인 모달 */}
+
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -344,8 +322,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
           onSend={handleMessageSent}
         />
       )}
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

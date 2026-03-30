@@ -1,0 +1,229 @@
+/**
+ * Consultation Summary Widget Styles
+ * 상담 요약 위젯 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-11-29
+ */
+
+.consultation-summary-widget {
+  --widget-bg: var(--cs-surface-primary);
+  background: var(--widget-bg);
+  border-radius: var(--cs-radius-md);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.summary-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--cs-glass-primary-20);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--cs-primary-500);
+}
+
+.empty-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.empty-description {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-sm);
+  line-height: 1.5;
+  max-width: 300px;
+}
+
+.summary-content {
+  padding: var(--cs-spacing-lg);
+}
+
+.summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cs-spacing-md);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-bg-secondary);
+  border-radius: var(--cs-radius-sm);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--cs-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cs-white);
+}
+
+.metric-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.metric-icon.sessions {
+  background: var(--cs-primary-500);
+}
+
+.metric-icon.clients {
+  background: var(--cs-success-500);
+}
+
+.metric-icon.duration {
+  background: var(--cs-warning-500);
+}
+
+.metric-icon.rating {
+  background: var(--cs-blue-500);
+}
+
+.metric-info {
+  flex: 1;
+}
+
+.metric-number {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-sm);
+  margin-bottom: 4px;
+}
+
+.metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.trend-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.trend-positive {
+  color: var(--cs-success-600);
+}
+
+.trend-negative {
+  color: var(--cs-error-600);
+}
+
+.trend-neutral {
+  color: var(--cs-text-secondary);
+}
+
+.performance-section {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.section-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.performance-item {
+  text-align: center;
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-primary-10);
+  border-radius: var(--cs-radius-sm);
+}
+
+.performance-label {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-xs);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.performance-value {
+  color: var(--cs-primary-600);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+}
+
+.summary-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--cs-spacing-md);
+  border-top: 1px solid var(--cs-border-secondary);
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 768px) {
+  .summary-content {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .summary-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .metric-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';
@@ -10,71 +14,69 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
+import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
+/**
  * - 단일 페이지 레이아웃
+/**
  * - 원클릭 회기 추가
+/**
  * - 빠른 접근성과 직관적 UI
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2024-12-19
  */
 const SessionManagement = () => {
-    // 데이터 상태
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     
-    // 검색/필터 상태
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('ALL');
     
-    // 코드 옵션 상태
     const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 모달 상태
     const [showSessionExtensionModal, setShowSessionExtensionModal] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
     
-    // 추가 회기 추가 방법들
     const [activeTab, setActiveTab] = useState('quick'); // 'quick', 'search', 'mapping'
     
-    // 회기 추가 요청 상태
     const [sessionExtensionRequests, setSessionExtensionRequests] = useState([]);
     
-    // 결제 확인 모달 상태
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [paymentReference, setPaymentReference] = useState('');
     
-    // 버튼 로딩 상태
     const [confirmingPayment, setConfirmingPayment] = useState(false);
     const [rejectingRequest, setRejectingRequest] = useState(false);
 
-    // 데이터 로드
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
             
-            // API 응답 구조에 맞게 수정
             const [clientsRes, consultantsRes, mappingsRes, requestsRes] = await Promise.all([
-                apiGet('/api/admin/clients/with-mapping-info'),
-                apiGet('/api/admin/consultants'),
-                apiGet('/api/admin/mappings'),
-                apiGet('/api/admin/session-extensions/requests')
+                apiGet('/api/v1/admin/clients/with-mapping-info'),
+                apiGet('/api/v1/admin/consultants'),
+                apiGet('/api/v1/admin/mappings'),
+                apiGet('/api/v1/admin/session-extensions/requests')
             ]);
             
-            // 응답 데이터 추출
             const clientsData = clientsRes?.data || clientsRes || [];
             const consultantsData = consultantsRes?.data || consultantsRes || [];
             const mappingsData = mappingsRes?.data || mappingsRes || [];
@@ -92,7 +94,6 @@ const SessionManagement = () => {
                 requests: requestsData.length
             });
             
-            // 회기 추가 요청 데이터 상세 로그
             if (requestsData.length > 0) {
                 console.log('🔍 회기 추가 요청 데이터 상세:', requestsData[0]);
                 console.log('🔍 매핑 정보:', requestsData[0].mapping);
@@ -104,7 +105,6 @@ const SessionManagement = () => {
             console.error('❌ 데이터 로드 실패:', error);
             notificationManager.error('데이터를 불러오는데 실패했습니다.');
             
-            // 빈 배열로 초기화
             setClients([]);
             setConsultants([]);
             setMappings([]);
@@ -114,11 +114,11 @@ const SessionManagement = () => {
         }
     }, []);
 
-    // 매핑 상태 코드 로드
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/MAPPING_STATUS');
+            // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+            const response = await apiGet('/api/v1/common-codes/groups/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,
@@ -132,19 +132,17 @@ const SessionManagement = () => {
         } catch (error) {
             console.error('매핑 상태 코드 로드 실패:', error);
             setMappingStatusOptions([
-                { value: 'ACTIVE', label: '활성', icon: '✅', color: 'var(--success-600)' },
-                { value: 'INACTIVE', label: '비활성', icon: '❌', color: 'var(--danger-600)' }
+                { value: 'ACTIVE', label: '활성', icon: 'Check', color: 'var(--mg-success-600)' },
+                { value: 'INACTIVE', label: '비활성', icon: 'X', color: 'var(--mg-error-600)' }
             ]);
         } finally {
             setLoadingCodes(false);
         }
     }, []);
 
-    // 필터링된 매핑 목록
     const getFilteredMappings = useCallback(() => {
         let filtered = mappings;
         
-        // 검색어 필터링
         if (searchTerm) {
             filtered = filtered.filter(mapping => 
                 (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -153,7 +151,6 @@ const SessionManagement = () => {
             );
         }
 
-        // 상태별 필터링
         if (filterStatus !== 'ALL') {
             filtered = filtered.filter(mapping => mapping.status === filterStatus);
         }
@@ -161,8 +158,8 @@ const SessionManagement = () => {
         return filtered;
     }, [mappings, searchTerm, filterStatus]);
 
-    // 최근 활성 매핑 (빠른 회기 추가용)
     const getRecentActiveMappings = useCallback(() => {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
         const recentMappings = activeMappings
             .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
@@ -178,27 +175,27 @@ const SessionManagement = () => {
         return recentMappings;
     }, [mappings]);
 
-    // 빠른 회기 추가
     const handleQuickAdd = (mapping) => {
         console.log('🚀 빠른 회기 추가 클릭:', mapping);
         setSelectedMapping(mapping);
         setShowSessionExtensionModal(true);
     };
 
-    // 최근 회기 추가 요청 목록 (최대 10개)
     const getRecentSessionExtensionRequests = useCallback(() => {
         return sessionExtensionRequests
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 10);
     }, [sessionExtensionRequests]);
 
-    // 상태 표시 함수
     const getStatusDisplay = (status) => {
         const statusMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'PENDING': { color: 'var(--warning-600)' },
             'PAYMENT_CONFIRMED': { color: 'var(--info-600)' },
             'ADMIN_APPROVED': { color: 'var(--success-600)' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'COMPLETED': { color: 'var(--success-600)' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'REJECTED': { color: 'var(--danger-600)' }
         };
         const config = statusMap[status] || { color: 'var(--gray-600)' };
@@ -206,7 +203,6 @@ const SessionManagement = () => {
         return { text, ...config };
     };
 
-    // 입금 확인 처리
     const handlePaymentConfirm = async (requestId) => {
         try {
             setConfirmingPayment(true);
@@ -216,7 +212,6 @@ const SessionManagement = () => {
             });
             notificationManager.success('입금이 확인되었습니다. 회기수가 업데이트되었습니다.');
             
-            // 즉시 데이터 새로고침 (회기수 업데이트 확인)
             setTimeout(async () => {
                 console.log('🔄 입금 확인 후 데이터 새로고침 시작...');
                 await loadData();
@@ -231,7 +226,6 @@ const SessionManagement = () => {
         }
     };
 
-    // 관리자 승인 처리
     const handleAdminApprove = async (requestId) => {
         try {
             setConfirmingPayment(true); // 재사용
@@ -249,7 +243,6 @@ const SessionManagement = () => {
         }
     };
 
-    // 요청 거부 처리
     const handleRejectRequest = async (requestId) => {
         try {
             setRejectingRequest(true);
@@ -267,13 +260,11 @@ const SessionManagement = () => {
         }
     };
 
-    // 회기 추가 요청 완료 처리
     const handleSessionExtensionRequested = async (mappingId) => {
         console.log('✅ 회기 추가 요청 완료:', mappingId);
         setShowSessionExtensionModal(false);
         setSelectedMapping(null);
         
-        // 즉시 데이터 새로고침 (약간의 지연 후)
         setTimeout(async () => {
             console.log('🔄 회기 추가 후 데이터 새로고침 시작...');
             await loadData();
@@ -281,31 +272,28 @@ const SessionManagement = () => {
         }, 1000); // 1초 후 새로고침
     };
 
-    // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadData();
         loadMappingStatusCodes();
     }, [loadData, loadMappingStatusCodes]);
 
     if (loading && mappings.length === 0) {
-        return <UnifiedLoading text="데이터를 불러오는 중..." type="page" />;
+        return (
+            <AdminCommonLayout title="회기 관리" loading={true} loadingText="데이터를 불러오는 중..." />
+        );
     }
 
     return (
-        <SimpleLayout>
-            <div className="mg-dashboard-layout">
-                {/* Dashboard Header */}
-                <div className="mg-dashboard-header">
-                    <div className="mg-dashboard-header-content">
-                        <div className="mg-dashboard-header-left">
-                            <Calendar size={32} />
-                            <div>
-                                <h1 className="mg-dashboard-title">회기 관리</h1>
-                                <p className="mg-dashboard-subtitle">상담 회기 추가 및 관리</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <AdminCommonLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
+            <div className="mg-v2-ad-b0kla mg-v2-session-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="회기 관리 본문">
+                        <ContentHeader
+                            title="회기 관리"
+                            subtitle="상담 회기 추가 및 관리"
+                            titleId="session-management-title"
+                        />
+                        <main aria-labelledby="session-management-title" className="mg-dashboard-layout">
 
                 {/* 통계 카드 그리드 */}
                 <div className="mg-dashboard-stats">
@@ -316,6 +304,7 @@ const SessionManagement = () => {
                     />
                     <StatCard
                         icon={<CheckCircle />}
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         value={mappings.filter(m => m.status === 'ACTIVE').length}
                         label="활성 매핑"
                     />
@@ -372,7 +361,7 @@ const SessionManagement = () => {
                                     const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
                                     const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
                                     const usedSessions = mapping.usedSessions || 0;
-                                    
+                                    const clientProfileImageUrl = mapping.client?.profileImageUrl ?? null;
                                     return (
                                         <div 
                                             key={mapping.id} 
@@ -380,24 +369,27 @@ const SessionManagement = () => {
                                             onClick={() => handleQuickAdd(mapping)}
                                         >
                                             <div className="mg-v2-quick-mapping-info">
-                                                <div className="mg-v2-quick-mapping-avatar">
-                                                    {clientName.charAt(0)}
-                                                </div>
+                                                <Avatar
+                                                    profileImageUrl={clientProfileImageUrl}
+                                                    displayName={toDisplayString(clientName)}
+                                                    className="mg-v2-quick-mapping-avatar"
+                                                />
                                                 <div className="mg-v2-quick-mapping-details">
-                                                    <div className="mg-v2-quick-mapping-client">{clientName}</div>
-                                                    <div className="mg-v2-quick-mapping-consultant">{consultantName}</div>
+                                                    <div className="mg-v2-quick-mapping-client"><SafeText>{clientName}</SafeText></div>
+                                                    <div className="mg-v2-quick-mapping-consultant"><SafeText>{consultantName}</SafeText></div>
                                                     <div className="mg-v2-quick-mapping-sessions">
-                                                        <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{usedSessions}</span>
+                                                        <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{toDisplayString(usedSessions)}</span>
                                                         <span className="mg-v2-sessions-separator">/</span>
-                                                        <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{totalSessions}</span>
+                                                        <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{toDisplayString(totalSessions)}</span>
                                                         <span className="mg-v2-sessions-unit">회기</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <MGButton 
+                                            <MGButton
                                                 variant="primary"
                                                 size="small"
                                                 className="mg-v2-quick-add-button"
+                                                preventDoubleClick={false}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleQuickAdd(mapping);
@@ -433,11 +425,10 @@ const SessionManagement = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    <MGButton 
-                                        variant="primary" 
+                                    <MGButton
+                                        variant="primary"
                                         size="medium"
                                         onClick={() => {
-                                            // 검색 로직
                                             console.log('검색 실행');
                                         }}
                                         preventDoubleClick={true}
@@ -453,27 +444,31 @@ const SessionManagement = () => {
                                         client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
                                     ).slice(0, 10).map(client => {
                                         const clientMappings = mappings.filter(m => 
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             m.clientId === client.id && m.status === 'ACTIVE'
                                         );
                                         
                                         return (
                                             <div key={client.id} className="mg-v2-client-mapping-card">
                                                 <div className="mg-v2-client-info">
-                                                    <div className="mg-v2-client-avatar">
-                                                        {client.name.charAt(0)}
-                                                    </div>
+                                                    <Avatar
+                                                        profileImageUrl={client.profileImageUrl}
+                                                        displayName={toDisplayString(client.name)}
+                                                        className="mg-v2-client-avatar"
+                                                    />
                                                     <div className="mg-v2-client-details">
-                                                        <div className="mg-v2-client-name">{client.name}</div>
+                                                        <SafeText className="mg-v2-client-name" tag="div">{client.name}</SafeText>
                                                         <div className="mg-v2-client-mappings">
                                                             {clientMappings.length}개 활성 매핑
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <MGButton 
+                                                <MGButton
                                                     variant="success"
                                                     size="small"
                                                     disabled={clientMappings.length === 0}
-                                                    title={clientMappings.length === 0 ? '활성 매핑이 없습니다' : ''}
+                                                    title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
+                                                    preventDoubleClick={false}
                                                     onClick={() => {
                                                         if (clientMappings.length > 0) {
                                                             handleQuickAdd(clientMappings[0]);
@@ -512,8 +507,10 @@ const SessionManagement = () => {
                                             onChange={(e) => setFilterStatus(e.target.value)}
                                         >
                                             <option value="ALL">모든 상태</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="ACTIVE">활성</option>
                                             <option value="PAYMENT_CONFIRMED">결제확인</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="COMPLETED">완료</option>
                                         </select>
                                     </div>
@@ -523,16 +520,16 @@ const SessionManagement = () => {
                                             <div key={mapping.id} className="mg-v2-mapping-card">
                                                 <div className="mg-v2-mapping-info">
                                                     <div className="mg-v2-mapping-client">
-                                                        👤 {mapping.clientName}
+                                                        👤 <SafeText>{mapping.clientName}</SafeText>
                                                     </div>
                                                     <div className="mg-v2-mapping-consultant">
-                                                        🤝 {mapping.consultantName}
+                                                        🤝 <SafeText>{mapping.consultantName}</SafeText>
                                                     </div>
                                                     <div className="mg-v2-mapping-sessions">
-                                                        📊 {mapping.usedSessions}/{mapping.totalSessions}회기
+                                                        📊 <SafeText>{mapping.usedSessions}</SafeText>/<SafeText>{mapping.totalSessions}</SafeText>회기
                                                     </div>
-                                                    <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
-                                                        {getMappingStatusKoreanNameSync(mapping.status)}
+                                                    <div className={`mg-mapping-status mg-status-${toDisplayString(mapping.status, 'unknown').toLowerCase()}`}>
+                                                        <SafeText>{getMappingStatusKoreanNameSync(mapping.status)}</SafeText>
                                                     </div>
                                                 </div>
                                                 <div className="mg-v2-mapping-card-actions">
@@ -541,7 +538,8 @@ const SessionManagement = () => {
                                                         size="small"
                                                         onClick={() => handleQuickAdd(mapping)}
                                                         disabled={mapping.status !== 'ACTIVE'}
-                                                        title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
+                                                        title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
+                                                        preventDoubleClick={false}
                                                     >
                                                         <Plus size={14} />
                                                         회기 추가
@@ -603,9 +601,10 @@ const SessionManagement = () => {
                                         </div>
                                     )}
                                     
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     {request.status === 'PENDING' && (
                                         <div className="mg-v2-request-actions">
-                                            <MGButton 
+                                            <MGButton
                                                 variant="success"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -616,7 +615,7 @@ const SessionManagement = () => {
                                             >
                                                 입금 확인
                                             </MGButton>
-                                            <MGButton 
+                                            <MGButton
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -632,7 +631,7 @@ const SessionManagement = () => {
                                     
                                     {request.status === 'PAYMENT_CONFIRMED' && (
                                         <div className="mg-v2-request-actions">
-                                            <MGButton 
+                                            <MGButton
                                                 variant="primary"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -643,7 +642,7 @@ const SessionManagement = () => {
                                             >
                                                 관리자 승인
                                             </MGButton>
-                                            <MGButton 
+                                            <MGButton
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -675,8 +674,11 @@ const SessionManagement = () => {
                     mapping={selectedMapping}
                     onSessionExtensionRequested={handleSessionExtensionRequested}
                 />
+                        </main>
+                    </ContentArea>
+                </div>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

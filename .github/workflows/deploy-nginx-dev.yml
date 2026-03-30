@@ -1,0 +1,241 @@
+name: 🌐 Nginx 설정 개발 서버 배포
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'config/nginx/**'
+      - '.github/workflows/deploy-nginx-dev.yml'
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  deploy-nginx:
+    name: 🌐 Nginx 설정 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 통합 설정)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/core-solution-dev.conf"
+        target: "/tmp/"
+        overwrite: true
+        
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/dev.m-garden.co.kr.conf"
+        target: "/tmp/"
+        overwrite: true
+        
+    - name: 🔄 Nginx 설정 적용 및 재시작
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          echo "🌐 Nginx 설정 업데이트 시작..."
+          
+          # SSL 인증서 확인 및 발급
+          echo "🔐 SSL 인증서 확인 중..."
+          
+          # dev.core-solution.co.kr 인증서 확인 및 발급 (네이버/카카오 OAuth callback 도메인)
+          NEED_DEV_CORE_ISSUE=false
+          if [ ! -f /etc/letsencrypt/live/dev.core-solution.co.kr/fullchain.pem ]; then
+            echo "⚠️ dev.core-solution.co.kr 인증서가 없습니다. 발급 시도 중..."
+            NEED_DEV_CORE_ISSUE=true
+          else
+            CERT_NOT_BEFORE=$(openssl x509 -noout -startdate -in /etc/letsencrypt/live/dev.core-solution.co.kr/fullchain.pem 2>/dev/null | cut -d= -f2)
+            # 1970년대 날짜 또는 유효기간 이상 = 잘못된/만료된 인증서 (ERR_CERT_DATE_INVALID 대응)
+            if echo "$CERT_NOT_BEFORE" | grep -q "1970\|Jan 21 00:00:00"; then
+              echo "⚠️ dev.core-solution.co.kr 인증서 날짜 오류 감지 (날짜: $CERT_NOT_BEFORE). 재발급 시도 중..."
+              NEED_DEV_CORE_ISSUE=true
+            else
+              echo "✅ dev.core-solution.co.kr 인증서 유효 (notBefore: $CERT_NOT_BEFORE)"
+            fi
+          fi
+          if [ "$NEED_DEV_CORE_ISSUE" = true ]; then
+            sudo certbot delete --cert-name dev.core-solution.co.kr --non-interactive 2>/dev/null || true
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ dev.core-solution.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ dev.core-solution.co.kr 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          fi
+          
+          # api.dev.core-solution.co.kr 인증서 확인 및 발급 (서브도메인)
+          NEED_API_ISSUE=false
+          if [ ! -f /etc/letsencrypt/live/api.dev.core-solution.co.kr/fullchain.pem ]; then
+            echo "⚠️ api.dev.core-solution.co.kr 인증서가 없습니다. 발급 시도 중..."
+            NEED_API_ISSUE=true
+          else
+            API_NOT_BEFORE=$(openssl x509 -noout -startdate -in /etc/letsencrypt/live/api.dev.core-solution.co.kr/fullchain.pem 2>/dev/null | cut -d= -f2)
+            if echo "$API_NOT_BEFORE" | grep -q "1970\|Jan 21 00:00:00"; then
+              echo "⚠️ api.dev.core-solution.co.kr 인증서 날짜 오류 (날짜: $API_NOT_BEFORE). 재발급 시도 중..."
+              NEED_API_ISSUE=true
+            else
+              echo "✅ api.dev.core-solution.co.kr 인증서 유효 (notBefore: $API_NOT_BEFORE)"
+            fi
+          fi
+          if [ "$NEED_API_ISSUE" = true ]; then
+            sudo certbot delete --cert-name api.dev.core-solution.co.kr --non-interactive 2>/dev/null || true
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d api.dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ api.dev.core-solution.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ api.dev.core-solution.co.kr 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          fi
+          
+          # mindgarden.dev.core-solution.co.kr 인증서 확인 및 발급 (서브도메인)
+          NEED_MINDGARDEN_ISSUE=false
+          if [ ! -f /etc/letsencrypt/live/mindgarden.dev.core-solution.co.kr/fullchain.pem ]; then
+            echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서가 없습니다. 발급 시도 중..."
+            NEED_MINDGARDEN_ISSUE=true
+          else
+            MG_NOT_BEFORE=$(openssl x509 -noout -startdate -in /etc/letsencrypt/live/mindgarden.dev.core-solution.co.kr/fullchain.pem 2>/dev/null | cut -d= -f2)
+            if echo "$MG_NOT_BEFORE" | grep -q "1970\|Jan 21 00:00:00"; then
+              echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서 날짜 오류 (날짜: $MG_NOT_BEFORE). 재발급 시도 중..."
+              NEED_MINDGARDEN_ISSUE=true
+            else
+              echo "✅ mindgarden.dev.core-solution.co.kr 인증서 유효 (notBefore: $MG_NOT_BEFORE)"
+            fi
+          fi
+          if [ "$NEED_MINDGARDEN_ISSUE" = true ]; then
+            sudo certbot delete --cert-name mindgarden.dev.core-solution.co.kr --non-interactive 2>/dev/null || true
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d mindgarden.dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ mindgarden.dev.core-solution.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          fi
+          
+          # dev.e-trinity.co.kr 인증서 확인 및 발급
+          if [ ! -f /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            # standalone 방식으로 인증서 발급 (Nginx 중지 필요)
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          else
+            # 인증서가 있지만 잘못된 인증서일 수 있으므로 확인 후 재발급
+            echo "🔍 dev.e-trinity.co.kr 인증서 확인 중..."
+            CERT_CN=$(openssl x509 -noout -subject -in /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem 2>/dev/null | grep -o 'CN=[^,]*' | cut -d= -f2)
+            if [ "$CERT_CN" != "dev.e-trinity.co.kr" ]; then
+              echo "⚠️ 잘못된 인증서 감지 (CN=$CERT_CN). 재발급 시도 중..."
+              sudo certbot delete --cert-name dev.e-trinity.co.kr --non-interactive 2>/dev/null || true
+              sudo systemctl stop nginx 2>/dev/null || true
+              if sudo certbot certonly --standalone -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --preferred-challenges http 2>&1; then
+                echo "✅ dev.e-trinity.co.kr 인증서 재발급 성공"
+              else
+                echo "⚠️ 인증서 재발급 실패 - 수동 발급 필요"
+              fi
+              sudo systemctl start nginx 2>/dev/null || true
+            else
+              echo "✅ dev.e-trinity.co.kr 인증서 유효"
+            fi
+          fi
+          
+          # apply.dev.e-trinity.co.kr 인증서 확인 및 발급
+          if [ ! -f /etc/letsencrypt/live/apply.dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ apply.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d apply.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ apply.dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          else
+            echo "✅ apply.dev.e-trinity.co.kr 인증서 유효"
+          fi
+          
+          # ops.dev.e-trinity.co.kr 인증서 확인 및 발급
+          if [ ! -f /etc/letsencrypt/live/ops.dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ ops.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d ops.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ ops.dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          else
+            echo "✅ ops.dev.e-trinity.co.kr 인증서 유효"
+          fi
+          
+          # Nginx 설정 업데이트 (전체 설정 적용)
+          if [ -f /tmp/core-solution-dev.conf ]; then
+            echo "🌐 Nginx 통합 설정 업데이트 중..."
+            sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
+            sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
+            echo "✅ 통합 설정 파일 적용 완료"
+          fi
+          
+          # 기존 도메인 설정 업데이트 (하위 호환성)
+          if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
+            echo "🌐 Nginx 기존 도메인 설정 업데이트 중..."
+            sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
+            sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/dev.m-garden.co.kr.conf
+            echo "✅ 기존 도메인 설정 파일 적용 완료"
+          fi
+          
+          # 프론트엔드 디렉토리 권한 설정
+          sudo mkdir -p /var/www/html-dev
+          sudo chown -R www-data:www-data /var/www/html-dev
+          sudo chmod -R 755 /var/www/html-dev
+          
+          # Trinity 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-trinity
+          sudo chown -R www-data:www-data /var/www/html-trinity
+          sudo chmod -R 755 /var/www/html-trinity
+          
+          # Ops 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-ops
+          sudo chown -R www-data:www-data /var/www/html-ops
+          sudo chmod -R 755 /var/www/html-ops
+          
+          # Nginx 설정 테스트
+          if sudo nginx -t; then
+            sudo systemctl reload nginx
+            echo "✅ Nginx 설정 업데이트 완료"
+          else
+            echo "❌ Nginx 설정 오류 - 수동 확인 필요"
+            sudo nginx -t
+            exit 1
+          fi
+          
+    - name: ✅ Nginx 설정 배포 완료
+      run: |
+        echo "✅ Nginx 설정 배포 완료"
+        echo "🌐 적용된 도메인:"
+        echo "  - dev.core-solution.co.kr (CoreSolution)"
+        echo "  - apply.dev.e-trinity.co.kr (Trinity 온보딩)"
+        echo "  - ops.dev.e-trinity.co.kr (Ops 포털)"
+

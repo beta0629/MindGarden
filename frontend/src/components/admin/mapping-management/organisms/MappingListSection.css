@@ -1,0 +1,92 @@
+/**
+ * MappingListSection - B0KlA 스타일 매칭 목록
+ *
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-list-section {
+  margin-bottom: 0;
+}
+
+.mg-v2-mapping-list-card {
+  margin-bottom: 0;
+}
+
+/* MappingCard: CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
+.mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card {
+  position: relative;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-16);
+  min-height: 140px;
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
+}
+
+.mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card:hover {
+  box-shadow: var(--mg-card-hover-shadow);
+}
+
+.mg-v2-mapping-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  width: 100%;
+}
+
+/* B0KlA empty state (mg-v2-ad-b0kla__chart-placeholder 스펙) */
+.mg-v2-mapping-empty {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: var(--mg-spacing-xxxl, 3rem) var(--mg-spacing-xl, 1.5rem);
+  background: var(--ad-b0kla-bg);
+  border-radius: 16px;
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-mapping-empty__icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.mg-v2-mapping-empty__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-empty__desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.mg-v2-mapping-empty__action {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-mapping-list-grid {
+    grid-template-columns: 1fr;
+  }
+}

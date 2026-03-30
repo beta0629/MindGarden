@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './SessionUserProfile.css';
+import Avatar from './Avatar';
 import { useSession } from '../../hooks/useSession';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
 
@@ -19,8 +20,8 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     const loadRoleDisplayNames = async () => {
       if (sessionUser?.role) {
         try {
-          const koreanName = await getRoleDisplayName(sessionUser.role, sessionUser.branchName);
-          const englishName = await getRoleDisplayNameEn(sessionUser.role, sessionUser.branchName);
+          const koreanName = await getRoleDisplayName(sessionUser.role);
+          const englishName = await getRoleDisplayNameEn(sessionUser.role);
           setRoleDisplayName(koreanName);
           setRoleDisplayNameEn(englishName);
         } catch (error) {
@@ -32,7 +33,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     };
 
     loadRoleDisplayNames();
-  }, [sessionUser?.role, sessionUser?.branchName]);
+  }, [sessionUser?.role]);
   
   // 디버깅: 세션 데이터 확인
   console.log('🔍 SessionUserProfile - 세션 데이터:', sessionUser);
@@ -64,16 +65,13 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
 
   // 사용자 이름 (복호화된 세션 데이터 사용)
   const getUserDisplayName = () => {
-    // 세션에서 복호화된 이름 우선 사용
-    if (sessionUser?.name && !sessionUser.name.includes('==')) {
-      return sessionUser.name;
-    }
-    if (sessionUser?.nickname && !sessionUser.nickname.includes('==')) {
-      return sessionUser.nickname;
-    }
-    if (sessionUser?.username) {
-      return sessionUser.username;
-    }
+    // legacy:: 접두사 = 복호화 실패로 노출된 암호문 → 표시하지 않음
+    const isEncryptedRaw = (s) => !s || s.includes('==') || s.startsWith('legacy::');
+    const name = sessionUser?.name && !isEncryptedRaw(sessionUser.name) ? sessionUser.name : null;
+    const nickname = sessionUser?.nickname && !isEncryptedRaw(sessionUser.nickname) ? sessionUser.nickname : null;
+    if (name) return name;
+    if (nickname) return nickname;
+    if (sessionUser?.userId) return sessionUser.userId;
     return '사용자';
   };
 
@@ -109,18 +107,11 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
         className="user-info-clickable"
       >
         <div className="user-avatar">
-          {profileImageUrl ? (
-            <img 
-              src={profileImageUrl} 
-              alt="프로필 이미지" 
-              className="profile-image"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              className="profile-image-loaded"
-            />
-          ) : (
-            <i className="bi bi-person-circle profile-icon"></i>
-          )}
+          <Avatar
+            profileImageUrl={sessionUser?.profileImageUrl || sessionUser?.socialProfileImage}
+            displayName={getUserDisplayName()}
+            className="profile-image"
+          />
           {/* 이미지 타입 배지 */}
           <div className="image-type-badge">
             {getProfileImageTypeText()}

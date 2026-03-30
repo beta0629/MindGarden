@@ -1,12 +1,16 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { X, Plus, Calendar } from 'lucide-react';
 
 /**
  * 모바일 달력 확대 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarMobileZoom = ({ 
@@ -41,14 +45,14 @@ const ScheduleCalendarMobileZoom = ({
                         <Calendar className="mg-v2-icon" />
                         {formatDate(date)}
                     </h3>
-                    <MGButton 
+                    <button className="mg-button" 
                         variant="text" 
                         size="small"
                         onClick={onClose}
                         className="mg-v2-mobile-zoom-close"
                     >
                         <X className="mg-v2-icon" />
-                    </MGButton>
+                    </button>
                 </div>
 
                 <div className="mg-v2-mobile-zoom-content">
@@ -85,14 +89,14 @@ const ScheduleCalendarMobileZoom = ({
                 </div>
 
                 <div className="mg-v2-mobile-zoom-footer">
-                    <MGButton 
+                    <button className="mg-button" 
                         variant="primary"
                         onClick={onAddSchedule}
                         className="mg-v2-mobile-zoom-add-button"
                     >
                         <Plus className="mg-v2-icon" />
                         일정 추가
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         </div>

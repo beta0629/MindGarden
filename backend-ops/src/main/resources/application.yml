@@ -1,5 +1,5 @@
 server:
-  port: 7080
+  port: ${SERVER_PORT:8081}  # 기본값: 8081 (로컬), 개발/운영은 프로파일에서 오버라이드
   servlet:
     context-path: /
 
@@ -7,21 +7,13 @@ spring:
   application:
     name: mindgarden-ops-backend
   profiles:
-    active: local
+    active: local  # 로컬 개발 환경 기본값 (포트 8081)
     group:
       staging: staging
       prod: prod
   main:
     banner-mode: off
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
+  # datasource 설정은 application-dev.yml에서 관리
 
 management:
   endpoints:
@@ -43,7 +35,9 @@ security:
     secret: ${SECURITY_JWT_SECRET:local-dev-secret-change-me-please-use-a-stronger-one}
     issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops}
     expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
+  password:
+    strength: ${SECURITY_PASSWORD_STRENGTH:12}  # BCrypt 강도 12 (표준화: CoreSolution과 동일)
   ops:
-    username: ${OPS_ADMIN_USERNAME:ops-admin}
-    password: ${OPS_ADMIN_PASSWORD:change-me}
+    username: ${OPS_ADMIN_USERNAME:ops_core}
+    password: ${OPS_ADMIN_PASSWORD:godgod826!}
     default-role: ${OPS_ADMIN_ROLE:HQ_ADMIN}

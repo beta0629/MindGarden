@@ -50,7 +50,7 @@ select option,
 
 /* 모달과 알림은 모달 레이어 */
 .modal,
-.modal-overlay,
+.mg-modal__overlay,
 .notification,
 .toast,
 .alert {

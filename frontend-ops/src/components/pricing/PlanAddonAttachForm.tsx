@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { attachAddonToPlan } from "@/services/pricingClient";
 import { PricingAddon, PricingPlan } from "@/types/pricing";
+import MGButton from "@/components/ui/MGButton";
 
 interface Props {
   plans: PricingPlan[];
@@ -109,9 +110,16 @@ export function PlanAddonAttachForm({ plans, addons }: Props) {
         </label>
       </div>
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "연결 중..." : "애드온 연결"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="연결 중..."
+          preventDoubleClick={true}
+          clickDelay={1000}
+        >
+          애드온 연결
+        </MGButton>
         {feedback && (
           <p
             className={`form-feedback ${

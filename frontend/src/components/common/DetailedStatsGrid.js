@@ -1,8 +1,12 @@
 /**
  * 상세 통계 그리드 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 
@@ -53,12 +57,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
             backgroundColor: '#7B68EE',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-people-fill detailed-stats-card-icon-svg"></i>
@@ -66,11 +71,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>내담자 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
           color: '#7B68EE',
           marginBottom: '8px'
         }}>
@@ -78,7 +85,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>이번 달 내담자: {statistics.thisMonthClients || 0}명</p>
         <div className="detailed-stats-card-header">
           alignItems: 'center',
@@ -89,19 +96,19 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <span className="detailed-stats-card-growth-value">{statistics.clientGrowth || 0}명</span>
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.clientGrowthRate || 0}% 증감률
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthClients || 0} 지난 달
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           지난 달 대비 지난 달 대비 내담자 변화
         </div>
@@ -116,12 +123,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
             backgroundColor: '#7B68EE',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-person-badge-fill detailed-stats-card-icon-svg"></i>
@@ -129,11 +137,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>상담사 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
           color: '#7B68EE',
           marginBottom: '8px'
         }}>
@@ -141,7 +151,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>이번 달 상담사: {statistics.thisMonthConsultants || 0}명</p>
         <div className="detailed-stats-card-header">
           alignItems: 'center',
@@ -152,19 +162,19 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <span className="detailed-stats-card-growth-value">{statistics.consultantGrowth || 0}명</span>
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.consultantGrowthRate || 0}% 증감률
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthConsultants || 0} 지난 달
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           지난 달 대비 지난 달 대비 상담사 변화
         </div>
@@ -179,12 +189,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
-            backgroundColor: '#4CAF50',
+            backgroundColor: 'var(--mg-success-500)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-check-circle-fill mg-v2-text-xl"></i>
@@ -192,28 +202,29 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>완료율</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
-          color: '#4CAF50',
+          color: 'var(--mg-success-500)',
           marginBottom: '8px'
         }}>
           {statistics.completionRate || 0}%
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>이번 달 완료율</p>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.completedSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 완료/전체
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           이번 달 기준 이번 달 기준 상담 완료율
         </div>
@@ -221,10 +232,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 취소율 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE0DB -> var(--mg-custom-FFE0DB)
         backgroundColor: '#FFE0DB',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCDD2 -> var(--mg-custom-FFCDD2)
         border: '1px solid #FFCDD2',
         transition: 'all 0.3s ease'
       }}>
@@ -235,12 +248,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
-            backgroundColor: '#F44336',
+            backgroundColor: 'var(--mg-error-500)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-x-circle-fill mg-v2-text-xl"></i>
@@ -248,28 +261,29 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>취소율</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
-          color: '#F44336',
+          color: 'var(--mg-error-500)',
           marginBottom: '8px'
         }}>
           {statistics.cancellationRate || 0}%
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>이번 달 취소율</p>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           {statistics.cancelledSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 취소/전체
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           이번 달 기준 이번 달 기준 상담 취소율
         </div>
@@ -277,10 +291,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 주간 현황 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE8D1 -> var(--mg-custom-FFE8D1)
         backgroundColor: '#FFE8D1',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCCBC -> var(--mg-custom-FFCCBC)
         border: '1px solid #FFCCBC',
         transition: 'all 0.3s ease'
       }}>
@@ -291,12 +307,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
-            backgroundColor: '#FF9800',
+            backgroundColor: 'var(--mg-warning-500)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-calendar-week-fill mg-v2-text-xl"></i>
@@ -304,28 +320,29 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>주간 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
-          color: '#FF9800',
+          color: 'var(--mg-warning-500)',
           marginBottom: '8px'
         }}>
           {statistics.weeklySchedules || 0}
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>최근 7일 상담</p>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           완료: {statistics.weeklyCompleted || 0}, 취소: {statistics.weeklyCancelled || 0}
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           최근 7일간 최근 7일간 상담 현황
         </div>
@@ -333,10 +350,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 오늘 현황 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E3F2FD -> var(--mg-custom-E3F2FD)
         backgroundColor: '#E3F2FD',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #BBDEFB -> var(--mg-custom-BBDEFB)
         border: '1px solid #BBDEFB',
         transition: 'all 0.3s ease'
       }}>
@@ -347,12 +366,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
-            backgroundColor: '#2196F3',
+            backgroundColor: 'var(--mg-primary-500)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 'var(--font-size-xl)',
-            color: '#ffffff',
+            color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
             <i className="bi bi-calendar-day-fill mg-v2-text-xl"></i>
@@ -360,28 +379,29 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>오늘 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
-          color: '#2196F3',
+          color: 'var(--mg-primary-500)',
           marginBottom: '8px'
         }}>
           {statistics.totalToday || 0}
         </div>
         <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>오늘 상담</p>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d',
+          color: 'var(--mg-secondary-500)',
           marginBottom: '4px'
         }}>
           완료: {statistics.completedToday || 0}, 예약: {statistics.bookedToday || 0}
         </div>
         <div className="detailed-stats-card-growth-label">
-          color: '#6c757d'
+          color: 'var(--mg-secondary-500)'
         }}>
           오늘 기준 오늘 기준 상담 현황
         </div>

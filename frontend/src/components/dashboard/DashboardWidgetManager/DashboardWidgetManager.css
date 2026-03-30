@@ -1,0 +1,409 @@
+/**
+ * DashboardWidgetManager 스타일
+ * 
+ * 목적: 위젯 관리 UI 스타일
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ * 
+ * ✅ CSS 변수 사용 (하드코딩 금지)
+ * ✅ BEM 네이밍 규칙
+ * ✅ 반응형 디자인
+ * 
+ * @author CoreSolution Team
+ * @since 2025-12-02
+ */
+
+/* ========================================
+   위젯 관리자 컨테이너
+   ======================================== */
+.mg-widget-manager {
+  padding: var(--mg-spacing-6);
+  background: var(--mg-bg-primary);
+  border-radius: var(--mg-border-radius-lg);
+  box-shadow: var(--mg-shadow-md);
+}
+
+/* ========================================
+   헤더
+   ======================================== */
+.mg-widget-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--mg-spacing-6);
+  padding-bottom: var(--mg-spacing-4);
+  border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-widget-manager-title {
+  margin: 0;
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--mg-gray-900);
+}
+
+/* ========================================
+   로딩 상태
+   ======================================== */
+.mg-widget-manager-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-16);
+  gap: var(--mg-spacing-4);
+}
+
+.mg-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--mg-gray-200);
+  border-top-color: var(--mg-primary-500);
+  border-radius: 50%;
+  animation: mg-spin 0.8s linear infinite;
+}
+
+@keyframes mg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   위젯 그룹
+   ======================================== */
+.mg-widget-group {
+  margin-bottom: var(--mg-spacing-8);
+}
+
+.mg-widget-group:last-child {
+  margin-bottom: 0;
+}
+
+.mg-widget-group-title {
+  margin: 0 0 var(--mg-spacing-4) 0;
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-gray-700);
+  padding-left: var(--mg-spacing-3);
+  border-left: 3px solid var(--mg-primary-500);
+}
+
+/* ========================================
+   위젯 목록
+   ======================================== */
+.mg-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-3);
+}
+
+/* ========================================
+   위젯 아이템
+   ======================================== */
+.mg-widget-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-4);
+  background: var(--mg-gray-50);
+  border: 1px solid var(--mg-gray-200);
+  border-radius: var(--mg-border-radius-md);
+  transition: all var(--mg-transition-base) ease;
+}
+
+.mg-widget-item:hover {
+  border-color: var(--mg-primary-300);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-widget-item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-4);
+  flex: 1;
+}
+
+.mg-widget-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-1);
+}
+
+.mg-widget-item-title {
+  margin: 0;
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-gray-900);
+}
+
+.mg-widget-item-type {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-gray-500);
+  font-family: var(--mg-font-mono);
+}
+
+/* ========================================
+   위젯 배지
+   ======================================== */
+.mg-widget-item-badges {
+  display: flex;
+  gap: var(--mg-spacing-2);
+  align-items: center;
+}
+
+.mg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-1);
+  padding: var(--mg-spacing-1) var(--mg-spacing-2);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  border-radius: var(--mg-border-radius-sm);
+}
+
+.mg-badge--system {
+  background: var(--mg-info);
+  background: color-mix(in srgb, var(--mg-info) 10%, white);
+  color: var(--mg-info);
+  border: 1px solid var(--mg-info);
+}
+
+.mg-badge--required {
+  background: var(--mg-warning);
+  background: color-mix(in srgb, var(--mg-warning) 10%, white);
+  color: var(--mg-warning);
+  border: 1px solid var(--mg-warning);
+}
+
+/* ========================================
+   위젯 액션
+   ======================================== */
+.mg-widget-item-actions {
+  display: flex;
+  gap: var(--mg-spacing-2);
+  align-items: center;
+}
+
+.mg-widget-item-locked {
+  display: flex;
+  align-items: center;
+  color: var(--mg-gray-400);
+  opacity: 0.5;
+}
+
+/* ========================================
+   버튼 스타일
+   ======================================== */
+.mg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-2);
+  padding: var(--mg-spacing-2) var(--mg-spacing-4);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  border-radius: var(--mg-border-radius-md);
+  transition: all var(--mg-transition-base) ease;
+  cursor: pointer;
+  border: none;
+}
+
+.mg-btn--primary {
+  background-color: var(--mg-primary-500);
+  color: white;
+}
+
+.mg-btn--primary:hover {
+  background-color: var(--mg-primary-600);
+}
+
+.mg-btn--danger {
+  background-color: var(--mg-error);
+  color: white;
+}
+
+.mg-btn--danger:hover {
+  background-color: color-mix(in srgb, var(--mg-error) 90%, black);
+}
+
+.mg-btn--ghost {
+  background-color: transparent;
+  color: var(--mg-gray-600);
+  border: 1px solid var(--mg-gray-300);
+}
+
+.mg-btn--ghost:hover {
+  background-color: var(--mg-gray-100);
+  border-color: var(--mg-gray-400);
+}
+
+.mg-btn--sm {
+  padding: var(--mg-spacing-1) var(--mg-spacing-3);
+  font-size: var(--mg-font-size-xs);
+}
+
+/* ========================================
+   모달
+   ======================================== */
+.mg-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--mg-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--mg-z-modal);
+  padding: var(--mg-spacing-4);
+}
+
+.mg-modal {
+  background: var(--mg-bg-primary);
+  border-radius: var(--mg-border-radius-xl);
+  box-shadow: var(--mg-shadow-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-6);
+  border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-modal-header h3 {
+  margin: 0;
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--mg-gray-900);
+}
+
+.mg-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--mg-gray-500);
+  cursor: pointer;
+  padding: var(--mg-spacing-1);
+  line-height: 1;
+  transition: color var(--mg-transition-fast) ease;
+}
+
+.mg-modal-close:hover {
+  color: var(--mg-gray-900);
+}
+
+.mg-modal-body {
+  padding: var(--mg-spacing-6);
+  overflow-y: auto;
+}
+
+/* ========================================
+   추가 가능한 위젯 목록
+   ======================================== */
+.mg-available-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-2);
+}
+
+.mg-available-widget-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-4);
+  background: var(--mg-gray-50);
+  border: 1px solid var(--mg-gray-200);
+  border-radius: var(--mg-border-radius-md);
+  cursor: pointer;
+  transition: all var(--mg-transition-base) ease;
+  text-align: left;
+}
+
+.mg-available-widget-item:hover {
+  border-color: var(--mg-primary-500);
+  background: color-mix(in srgb, var(--mg-primary-500) 5%, white);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-available-widget-info h5 {
+  margin: 0 0 var(--mg-spacing-1) 0;
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-gray-900);
+}
+
+/* ========================================
+   유틸리티 클래스
+   ======================================== */
+.mg-text--muted {
+  color: var(--mg-gray-600);
+}
+
+.mg-text--sm {
+  font-size: var(--mg-font-size-sm);
+}
+
+.mg-mb-md {
+  margin-bottom: var(--mg-spacing-4);
+}
+
+/* ========================================
+   반응형 디자인
+   ======================================== */
+@media (max-width: 768px) {
+  .mg-widget-manager {
+    padding: var(--mg-spacing-4);
+  }
+  
+  .mg-widget-manager-header {
+    flex-direction: column;
+    gap: var(--mg-spacing-3);
+    align-items: stretch;
+  }
+  
+  .mg-widget-item {
+    flex-direction: column;
+    gap: var(--mg-spacing-3);
+    align-items: stretch;
+  }
+  
+  .mg-widget-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .mg-widget-item-actions {
+    justify-content: flex-end;
+  }
+  
+  .mg-modal {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-widget-manager-title {
+    font-size: var(--mg-font-size-lg);
+  }
+  
+  .mg-widget-item-badges {
+    flex-wrap: wrap;
+  }
+  
+  .mg-available-widget-item {
+    flex-direction: column;
+    gap: var(--mg-spacing-2);
+    align-items: flex-start;
+  }
+}
+

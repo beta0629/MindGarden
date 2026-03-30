@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { CreditCard, RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign } from 'lucide-react';
+import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign, CreditCard } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import Button from '../../ui/Button/Button';
+import SafeText from '../../common/SafeText';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -87,7 +90,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
 
-      const response = await apiPost(`/api/admin/mappings/${mapping.id}/partial-refund`, {
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/partial-refund`, {
         refundSessions: refundSessions,
         reason: reason.trim()
       });
@@ -151,34 +155,57 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const withdrawalCheck = checkWithdrawalPeriod();
 
   return (
-    <div className="mg-v2-partial-refund-modal-overlay">
-      <div className="mg-v2-partial-refund-modal">
-        <div className="mg-v2-partial-refund-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <RefreshCcw size={28} className="mg-v2-modal-title-icon" />
-            <h3 className="mg-v2-partial-refund-modal-title">
-              부분 환불 처리
-            </h3>
-          </div>
-          <button
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="부분 환불 처리"
+      size="auto"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
             onClick={handleClose}
             disabled={loading}
-            className="mg-v2-partial-refund-modal-close"
+            preventDoubleClick={false}
           >
-            <XCircle size={24} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
+            <XCircle size={18} />
+            취소
+          </Button>
+          <Button
+            type="submit"
+            form="partial-refund-form"
+            variant={!withdrawalCheck.isValid ? 'danger' : 'primary'}
+            size="medium"
+            disabled={loading || !reason.trim() || reason.trim().length < 5}
+            loading={loading}
+            loadingText="처리 중..."
+            title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
+            preventDoubleClick={false}
+          >
+            {loading ? '처리 중...' :
+              !withdrawalCheck.isValid ? `${refundSessions}회기 특별 환불` :
+                `${refundSessions}회기 환불 처리`}
+          </Button>
+        </>
+      }
+    >
+        <form id="partial-refund-form" onSubmit={handleSubmit}>
+          <div className="mg-v2-modal-body">
           {/* 매핑 정보 */}
-          <div className="mg-v2-info-box">
+          <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
             <h4 className="mg-v2-info-box-title">
               <Package size={20} className="mg-v2-section-title-icon" />
               매핑 정보
             </h4>
             <div className="mg-v2-info-grid">
-              <div><strong>내담자:</strong> {mapping.clientName}</div>
-              <div><strong>상담사:</strong> {mapping.consultantName}</div>
+              <div><strong>내담자:</strong> <SafeText>{mapping.clientName}</SafeText></div>
+              <div><strong>상담사:</strong> <SafeText>{mapping.consultantName}</SafeText></div>
               <div><strong>총 회기:</strong> {mapping.totalSessions}회</div>
               <div><strong>사용 회기:</strong> {mapping.usedSessions}회</div>
               <div><strong>남은 회기:</strong> {mapping.remainingSessions}회</div>
@@ -187,13 +214,13 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* 최근 추가 패키지 정보 */}
-          <div className="mg-v2-refund-target-box">
+          <div className="mg-v2-ad-b0kla__card mg-v2-refund-target-box">
             <h4 className="mg-v2-refund-target-title">
               <Package size={20} className="mg-v2-section-title-icon" />
               환불 대상 (최근 추가 패키지)
             </h4>
             <div className="mg-v2-refund-package-grid">
-              <div><strong>패키지명:</strong> {lastAddedPackage.packageName}</div>
+              <div><strong>패키지명:</strong> <SafeText>{lastAddedPackage.packageName}</SafeText></div>
               <div><strong>패키지 회기수:</strong> {lastAddedPackage.sessions}회</div>
               <div><strong>패키지 가격:</strong> {lastAddedPackage.price?.toLocaleString()}원</div>
               <div><strong>회기당 단가:</strong> {lastAddedPackage.sessions > 0 ? Math.round(lastAddedPackage.price / lastAddedPackage.sessions).toLocaleString() : 0}원</div>
@@ -204,13 +231,13 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* 청약 철회 기간 확인 */}
-          <div className={`mg-v2-withdrawal-period-box mg-v2-withdrawal-period-box--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
+          <div className={`mg-v2-ad-b0kla__card mg-v2-withdrawal-period-box mg-v2-withdrawal-period-box--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
             <h4 className={`mg-v2-withdrawal-period-title mg-v2-withdrawal-period-title--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               <Clock size={20} className="mg-v2-section-title-icon" />
               청약 철회 기간 확인
             </h4>
             <div className={`mg-v2-withdrawal-period-message mg-v2-withdrawal-period-message--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
-              {withdrawalCheck.message}
+              <SafeText>{withdrawalCheck.message}</SafeText>
             </div>
             {mapping.paymentDate && (
               <div className={`mg-v2-withdrawal-period-date mg-v2-withdrawal-period-date--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
@@ -281,32 +308,9 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               {reason.length}/500자 (최소 5자 이상 입력)
             </small>
           </div>
-
-          {/* 버튼 */}
-          <div className="mg-v2-button-group">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="mg-v2-button mg-v2-button--secondary"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !reason.trim() || reason.trim().length < 5}
-              className={`mg-v2-button ${loading || !reason.trim() || reason.trim().length < 5 ? 'mg-v2-button--disabled' : 
-                             !withdrawalCheck.isValid ? 'mg-v2-button--warning' : 'mg-v2-button--danger'}`}
-              title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
-            >
-              {loading ? '처리 중...' : 
-               !withdrawalCheck.isValid ? `⚠️ ${refundSessions}회기 특별 환불` : 
-               `${refundSessions}회기 환불 처리`}
-            </button>
           </div>
         </form>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

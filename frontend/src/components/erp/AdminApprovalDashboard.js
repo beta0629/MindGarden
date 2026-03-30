@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import { RefreshCw } from 'lucide-react';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 관리자 승인 대시보드 컴포넌트
@@ -29,7 +33,7 @@ const AdminApprovalDashboard = () => {
   const loadPendingRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/erp/purchase-requests/pending-admin');
+      const response = await fetch('/api/v1/erp/purchase-requests/pending-admin');
       const data = await response.json();
       
       if (data.success) {
@@ -72,7 +76,7 @@ const AdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/approve-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/approve-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -114,7 +118,7 @@ const AdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/reject-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/reject-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -159,32 +163,36 @@ const AdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="승인 대기 목록을 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <AdminCommonLayout title="승인 관리">
+        <UnifiedLoading type="page" text="승인 대기 요청을 불러오는 중..." />
+      </AdminCommonLayout>
+    );
   }
 
   return (
-    <SimpleLayout>
-      <div className="approval-dashboard-container">
-        <ErpHeader
-          title="관리자 승인 대시보드"
-          subtitle="구매 요청 승인 및 거부"
-          actions={
-            <ErpButton
-              variant="primary"
-              onClick={loadPendingRequests}
-            >
-              새로고침
-            </ErpButton>
-          }
-        />
+    <AdminCommonLayout title="승인 관리">
+      <ContentHeader
+        title="관리자 승인 대시보드"
+        subtitle="구매 요청 승인 및 거부"
+        actions={
+          <ErpButton
+            variant="primary"
+            onClick={loadPendingRequests}
+          >
+            <RefreshCw size={16} aria-hidden />
+            새로고침
+          </ErpButton>
+        }
+      />
+      <ContentArea className="approval-dashboard-container">
+        {error && (
+          <div className="approval-dashboard-error">
+            <SafeErrorDisplay error={error} variant="inline" />
+          </div>
+        )}
 
-      {error && (
-        <div className="approval-dashboard-error">
-          {error}
-        </div>
-      )}
-
-      {requests.length === 0 ? (
+        {requests.length === 0 ? (
         <ErpCard title="승인 대기 목록">
           <div className="approval-dashboard-empty">
             승인 대기 중인 구매 요청이 없습니다.
@@ -193,13 +201,13 @@ const AdminApprovalDashboard = () => {
       ) : (
         <div className="approval-dashboard-grid">
           {requests.map(request => (
-            <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
+            <ErpCard key={request.id} title={toDisplayString(`구매 요청 #${request.id}`)}>
               <div className="approval-request-info">
                 <div className="approval-request-grid">
-                  <div><strong>요청자:</strong> {request.requester?.name || '알 수 없음'}</div>
-                  <div><strong>요청일:</strong> {formatDate(request.createdAt)}</div>
-                  <div><strong>아이템:</strong> {request.item?.name || '알 수 없음'}</div>
-                  <div><strong>수량:</strong> {request.quantity}개</div>
+                  <div><strong>요청자:</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
+                  <div><strong>요청일:</strong> {toDisplayString(formatDate(request.createdAt))}</div>
+                  <div><strong>아이템:</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
+                  <div><strong>수량:</strong> {toDisplayString(request.quantity)}개</div>
                   <div><strong>단가:</strong> {formatCurrency(request.unitPrice)}</div>
                   <div><strong>총액:</strong> {formatCurrency(request.totalAmount)}</div>
                 </div>
@@ -208,7 +216,7 @@ const AdminApprovalDashboard = () => {
                   <div className="approval-request-reason">
                     <strong>사유:</strong>
                     <div className="approval-request-reason-text">
-                      {request.reason}
+                      <SafeText>{request.reason}</SafeText>
                     </div>
                   </div>
                 )}
@@ -240,24 +248,21 @@ const AdminApprovalDashboard = () => {
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
         title="구매 요청 승인"
-        size="medium"
+        size="auto"
       >
         {selectedRequest && (
           <div>
             <div className="approval-request-details">
               <h4>승인할 구매 요청</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
-                <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
+                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
               </div>
             </div>
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
                 승인 코멘트 (선택사항)
               </label>
               <textarea
@@ -294,24 +299,21 @@ const AdminApprovalDashboard = () => {
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
         title="구매 요청 거부"
-        size="medium"
+        size="auto"
       >
         {selectedRequest && (
           <div>
             <div className="approval-request-comment-group">
               <h4>거부할 구매 요청</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
-                <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
+                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
               </div>
             </div>
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
                 거부 사유 *
               </label>
               <textarea
@@ -344,8 +346,8 @@ const AdminApprovalDashboard = () => {
           </div>
         )}
       </ErpModal>
-      </div>
-    </SimpleLayout>
+      </ContentArea>
+    </AdminCommonLayout>
   );
 };
 

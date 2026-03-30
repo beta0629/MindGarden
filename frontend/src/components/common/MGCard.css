@@ -1,5 +1,5 @@
 /**
- * MindGarden 공통 카드 스타일
+ * Core Solution 공통 카드 스타일
  * 기존 CSS 변수를 활용한 일관성 있는 카드 디자인
  */
 
@@ -18,7 +18,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   /* 미세한 그림자 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px var(--mg-shadow-light);
   
   /* 백드롭 블러 효과 */
   backdrop-filter: blur(20px);
@@ -48,10 +48,10 @@
 }
 
 .mg-card--glass {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--mg-glass-bg-light);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+  box-shadow: 0 8px 32px var(--mg-shadow-light), 
               0 4px 16px rgba(0, 0, 0, 0.05),
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -95,18 +95,19 @@
 }
 
 /* ===== 클릭 가능한 카드 ===== */
+/* 표준화 원칙 준수: CSS 변수 사용, 일관된 호버 효과 */
 .mg-card--clickable {
   cursor: pointer;
+  transition: var(--mg-card-transition, all 0.3s cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .mg-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-color);
+  transform: var(--mg-card-hover-transform, translateY(-2px));
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .mg-card--clickable:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--mg-primary-500, var(--primary-color));
   outline-offset: 2px;
 }
 

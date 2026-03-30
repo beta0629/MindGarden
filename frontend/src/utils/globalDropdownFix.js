@@ -1,5 +1,6 @@
 /**
  * 전역 드롭다운 고정 시스템
+/**
  * 모든 드롭다운이 스크롤과 독립적으로 동작하도록 보장
  */
 
@@ -7,13 +8,28 @@
 let dropdownObserver = null;
 let scrollHandler = null;
 
+/** v2 GNB 드롭다운 패널 클래스 (자체 포지셔닝 사용, 전역 fix 제외) */
+const V2_DROPDOWN_PANEL_CLASSES = [
+  'mg-v2-dropdown-panel',
+  'mg-v2-profile-dropdown__panel',
+  'mg-v2-quick-actions-dropdown__panel',
+  'mg-v2-notification-dropdown__panel'
+];
+
+const isV2DropdownPanel = (element) => {
+  if (!element?.classList) return false;
+  return V2_DROPDOWN_PANEL_CLASSES.some((cls) => element.classList.contains(cls));
+};
+
 /**
  * 드롭다운 요소를 강제로 고정 위치로 설정
+ * v2 GNB 드롭다운 패널은 제외 (자체 position fixed + top/left 관리)
  * @param {HTMLElement} element - 드롭다운 요소
  */
 const forceFixedPosition = (element) => {
   if (!element) return;
-  
+  if (isV2DropdownPanel(element)) return;
+
   // 모든 가능한 드롭다운 셀렉터
   const selectors = [
     'select option',
@@ -67,6 +83,7 @@ const fixAllDropdowns = () => {
   const allElements = document.querySelectorAll('*');
   
   allElements.forEach(element => {
+    if (isV2DropdownPanel(element)) return;
     // 드롭다운 관련 클래스나 속성을 가진 요소들
     if (element.classList.contains('dropdown') ||
         element.classList.contains('select') ||
@@ -90,6 +107,7 @@ const handleScroll = () => {
   );
   
   dropdowns.forEach(dropdown => {
+    if (isV2DropdownPanel(dropdown)) return;
     if (dropdown.offsetParent !== null) { // 보이는 드롭다운만
       forceFixedPosition(dropdown);
     }
@@ -108,14 +126,17 @@ const initDropdownObserver = () => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
+          if (isV2DropdownPanel(node)) return;
           // 새로 추가된 요소가 드롭다운인지 확인
           forceFixedPosition(node);
           
-          // 자식 요소들도 확인
+          // 자식 요소들도 확인 (v2 패널은 제외)
           const childDropdowns = node.querySelectorAll(
             'select option, .custom-select__dropdown, .dropdown-menu, [role="listbox"], [role="menu"], .select-dropdown, .ant-select-dropdown, .react-select__menu'
           );
-          childDropdowns.forEach(forceFixedPosition);
+          childDropdowns.forEach((el) => {
+            if (!isV2DropdownPanel(el)) forceFixedPosition(el);
+          });
         }
       });
     });

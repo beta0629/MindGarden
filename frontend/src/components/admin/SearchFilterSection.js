@@ -1,14 +1,21 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { toDisplayString } from '../../utils/safeDisplay';
 import './SearchFilterSection.css';
 
 /**
  * 검색 및 필터 섹션 컴포넌트
+/**
  * - 검색 입력, 필터 드롭다운을 포함
+/**
  * - 아이폰 스타일과 글래스모피즘 효과 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SearchFilterSection = ({ 
@@ -44,7 +51,9 @@ const SearchFilterSection = ({
                     <option value="">{filterLabel}</option>
                     {filterOptions.map((option, index) => (
                         <option key={`filter-${option.value}-${index}`} value={option.value}>
-                            {option.icon} {option.label}
+                            {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
+                              .filter((s) => s !== '')
+                              .join(' ')}
                         </option>
                     ))}
                 </select>

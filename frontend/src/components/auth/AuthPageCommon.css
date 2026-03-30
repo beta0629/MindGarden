@@ -1,433 +1,467 @@
-/* Auth 페이지 공통 스타일 - ForgotPassword, ResetPassword 등에서 재사용 */
+/**
+ * Auth 페이지 공통 스타일 (Redesign)
+ * TabletRegister, ForgotPassword, ResetPassword 등에서 사용
+ */
 
-.auth-page-container {
-  max-width: 480px;
-  margin: 0 auto;
+.mg-v2-auth-container {
+  display: flex;
+  height: 100vh;
   width: 100%;
+  background-color: var(--mg-bg-primary, #FAF9F7);
 }
 
-.auth-page-header {
-  text-align: center;
-  margin-bottom: var(--spacing-xxl);
-}
-
-.auth-page-icon-container {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--spacing-lg);
-  background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-blue-dark) 100%);
-  border-radius: var(--border-radius-full);
+/* 좌측: 브랜딩 이미지 영역 */
+.mg-v2-auth-hero {
+  flex: 1;
+  position: relative;
+  background: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
 }
 
-.auth-page-icon {
-  font-size: var(--font-size-xxl);
-  color: var(--ios-text-primary-light);
+.mg-v2-auth-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(44, 44, 44, 0.5);
 }
 
-.auth-page-title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--ios-text-primary);
-  margin-bottom: var(--spacing-sm);
-  line-height: 1.2;
-}
-
-.auth-page-subtitle {
-  font-size: var(--font-size-base);
-  color: var(--ios-text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.auth-page-form-group {
-  margin-bottom: var(--spacing-xl);
-}
-
-.auth-page-success-container {
-  max-width: 480px;
-  margin: 0 auto;
-  width: 100%;
+.mg-v2-auth-hero-content {
+  position: relative;
+  z-index: 1;
   text-align: center;
+  color: var(--mg-color-white, #FFFFFF);
 }
 
-.auth-page-success-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto var(--spacing-lg);
-  background: linear-gradient(135deg, var(--ios-green) 0%, var(--ios-green-dark) 100%);
-  border-radius: var(--border-radius-full);
+.mg-v2-auth-hero-logo {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+
+.mg-v2-auth-hero-slogan {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+/* 우측: 입력 폼 영역 */
+.mg-v2-auth-content {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
+  padding: 48px;
+  background-color: var(--mg-bg-primary, #FAF9F7);
+  overflow-y: auto;
 }
 
-.auth-page-success-message {
-  font-size: var(--font-size-base);
-  color: var(--ios-text-secondary);
-  margin-bottom: var(--spacing-lg);
-  line-height: 1.5;
-}
-
-.mg-auth-page {
-  min-height: 100vh;
-  background: var(--gray-50);
-}
-
-.mg-auth-section {
-  padding: var(--spacing-xxl) 0;
-}
-
-.mg-auth-card {
-  max-width: 420px;
-  margin: 0 auto;
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-medium);
-  padding: var(--spacing-xxl);
+.mg-v2-auth-form-wrapper {
+  max-width: 440px;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: 24px;
 }
 
-.mg-auth-header {
-  text-align: center;
+/* 타이포그래피 */
+.mg-v2-auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--mg-text-primary, #1A1A1A);
+  margin-bottom: 8px;
+}
+
+.mg-v2-auth-subtitle {
+  font-size: 16px;
+  color: var(--mg-text-secondary, #666666);
+  margin-bottom: 32px;
+}
+
+/* 폼 요소 */
+.mg-v2-auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
 }
 
-.mg-auth-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-lg);
-  background: var(--primary-100);
+.mg-v2-form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.mg-v2-form-row .mg-v2-form-group {
+  flex: 1;
+}
+
+.mg-v2-form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 이메일 + 중복확인 행 (ClientModal과 동일 레이아웃) */
+.mg-v2-auth-form .mg-v2-form-email-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--spacing-md);
-  font-size: var(--font-size-xl);
+  gap: 0.5rem;
 }
 
-.mg-auth-title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+.mg-v2-auth-form .mg-v2-form-email-row .mg-v2-form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-auth-form .mg-v2-form-email-row .mg-v2-auth-email-check-btn {
+  flex-shrink: 0;
+  width: auto;
+  min-width: 90px;
+  margin-top: 0;
+}
+
+.mg-v2-auth-form .mg-v2-form-help--error {
+  color: #E53E3E;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.mg-v2-auth-form .mg-v2-form-help--success {
+  color: var(--mg-primary-color, #3D5246);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* ClientModal 정렬용: auth 폼에서 form-label/form-input 사용 시 기존 스타일 적용 */
+.mg-v2-auth-form .mg-v2-form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-text-primary, #1A1A1A);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.mg-v2-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-text-primary, #1A1A1A);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.mg-v2-auth-form .mg-v2-form-readonly {
+  font-size: 14px;
+  color: var(--mg-text-secondary, #6B7280);
   margin: 0;
+  padding-top: 4px;
 }
 
-.mg-auth-description {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.mg-auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.mg-auth-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.mg-auth-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-}
-
-.mg-auth-input {
+.mg-v2-input,
+.mg-v2-auth-form .mg-v2-form-input {
+  background-color: var(--mg-surface-primary, #F5F3EF);
+  border: 1px solid var(--mg-border-color, #D4CFC8);
+  border-radius: var(--mg-radius-md, 8px);
+  padding: 14px 16px;
+  color: var(--mg-text-primary, #1A1A1A);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 2px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  background: var(--color-surface);
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+  box-sizing: border-box;
 }
 
-.mg-auth-input:focus-visible {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 4px rgba(156, 214, 156, 0.2);
+.mg-v2-input:focus,
+.mg-v2-auth-form .mg-v2-form-input:focus {
   outline: none;
+  border-color: var(--mg-primary-color, #3D5246);
+  box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
 }
 
-.mg-auth-input:disabled {
-  background: var(--gray-100);
+.mg-v2-input.error,
+.mg-v2-auth-form .mg-v2-form-input.error {
+  border-color: #E53E3E;
+}
+
+.mg-v2-input:disabled,
+.mg-v2-auth-form .mg-v2-form-input:disabled {
+  background-color: var(--mg-surface-secondary, #EBE9E4);
   cursor: not-allowed;
 }
 
-.mg-auth-primary-btn {
+.mg-v2-select {
+  background-color: var(--mg-surface-primary, #F5F3EF);
+  border: 1px solid var(--mg-border-color, #D4CFC8);
+  border-radius: var(--mg-radius-md, 8px);
+  padding: 14px 16px;
+  color: var(--mg-text-primary, #1A1A1A);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
-  padding: var(--spacing-md);
-  background: var(--primary-500);
-  color: var(--color-white);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
+  box-sizing: border-box;
+  appearance: none;
 }
 
-.mg-auth-primary-btn:hover:not(:disabled) {
-  background: var(--primary-600);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-medium);
+.mg-v2-select:focus {
+  outline: none;
+  border-color: var(--mg-primary-color, #3D5246);
+  box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
 }
 
-.mg-auth-primary-btn:disabled {
-  background: var(--gray-300);
+.mg-v2-select:disabled {
+  background-color: var(--mg-surface-secondary, #EBE9E4);
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
 }
 
-.mg-auth-btn-content {
-  display: inline-flex;
+.mg-v2-error-text {
+  font-size: 12px;
+  color: #E53E3E;
+  margin-top: 6px;
+  display: block;
+}
+
+.mg-v2-password-wrapper {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
 }
 
-.mg-auth-spinner {
+.mg-v2-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  color: var(--mg-text-secondary, #666666);
+}
+
+/* 체크박스 그룹 */
+.mg-v2-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.mg-v2-checkbox-group input[type="checkbox"] {
+  accent-color: var(--mg-primary-color, #3D5246);
   width: 16px;
   height: 16px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: var(--color-white);
-  animation: mg-auth-spin 1s linear infinite;
+  cursor: pointer;
 }
 
-.mg-auth-footer {
-  border-top: 1px solid var(--gray-200);
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-md);
-  text-align: center;
+.mg-v2-checkbox-group label,
+.mg-v2-checkbox-group span {
+  font-size: 14px;
+  color: var(--mg-text-primary, #1A1A1A);
+  cursor: pointer;
 }
 
-.mg-auth-link {
-  color: var(--primary-600);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-  transition: color var(--transition-fast);
+.mg-v2-checkbox-group a {
+  color: var(--mg-primary-color, #3D5246);
+  text-decoration: underline;
 }
 
-.mg-auth-link:hover {
-  color: var(--primary-700);
-}
-
-.mg-auth-success {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.mg-auth-success-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-lg);
-  background: var(--color-success, #10b981);
-  color: var(--color-white);
+/* 버튼 */
+.mg-v2-button-primary {
+  background-color: var(--mg-primary-color, #3D5246);
+  color: var(--mg-color-white, #FFFFFF);
+  border-radius: var(--mg-radius-lg, 10px);
+  height: 52px;
+  width: 100%;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
-  font-size: var(--font-size-xl);
-  box-shadow: var(--shadow-medium);
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.mg-auth-success-message {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+.mg-v2-button-primary:hover:not(:disabled) {
+  background-color: var(--mg-primary-light, #4F6B5A);
+}
+
+.mg-v2-button-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-v2-button-secondary {
+  background-color: transparent;
+  color: var(--mg-primary-color, #3D5246);
+  border: 1px solid var(--mg-primary-color, #3D5246);
+  border-radius: var(--mg-radius-lg, 10px);
+  height: 52px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mg-v2-button-secondary:hover:not(:disabled) {
+  background-color: rgba(61, 82, 70, 0.05);
+}
+
+.mg-v2-link-text {
+  font-size: 14px;
+  color: var(--mg-text-secondary, #666666);
+  text-decoration: none;
+  text-align: center;
+  display: block;
+  margin-top: 24px;
+  transition: color 0.2s;
+}
+
+.mg-v2-link-text:hover {
+  color: var(--mg-primary-color, #3D5246);
+  text-decoration: underline;
+}
+
+/* 체크박스 라벨 내 링크 스타일 버튼 (이용약관·개인정보처리방침) */
+.mg-v2-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--mg-primary-color, #3D5246);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.mg-v2-link-button:hover {
+  text-decoration: none;
+}
+
+/* 모달 내 약관/개인정보 본문 스크롤 영역 */
+.mg-modal-terms-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* 스피너 */
+.mg-v2-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--mg-color-white, #FFFFFF);
+  border-radius: 50%;
+  animation: mg-v2-spin 1s linear infinite;
+}
+
+@keyframes mg-v2-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 성공 화면 */
+.mg-v2-auth-success {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+
+.mg-v2-auth-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-lg, 16px);
+  background-color: #48bb78;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto;
+}
+
+.mg-v2-auth-success-message {
+  font-size: 16px;
+  color: var(--mg-text-secondary, #666666);
   line-height: 1.6;
 }
 
-.mg-auth-hint {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+.mg-v2-auth-hint {
+  background-color: var(--mg-surface-primary, #F5F3EF);
+  border: 1px solid var(--mg-border-color, #D4CFC8);
+  border-radius: var(--mg-radius-md, 8px);
+  padding: 16px;
   text-align: left;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  color: var(--mg-text-secondary, #666666);
   line-height: 1.5;
+  width: 100%;
 }
 
-.mg-auth-hint ul {
-  margin: var(--spacing-sm) 0 0;
-  padding-left: 1.1rem;
+.mg-v2-auth-hint ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
 }
 
-.mg-auth-hint li + li {
-  margin-top: var(--spacing-xs);
+.mg-v2-auth-hint li + li {
+  margin-top: 4px;
 }
 
-.mg-auth-success-actions {
+.mg-v2-auth-success-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.mg-auth-secondary-btn,
-.mg-auth-outline-btn {
+  gap: 12px;
   width: 100%;
-  padding: var(--spacing-md);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
 }
 
-.mg-auth-secondary-btn {
-  background: transparent;
-  border: 2px solid var(--primary-500);
-  color: var(--primary-600);
-  cursor: pointer;
-}
-
-.mg-auth-secondary-btn:hover:not(:disabled) {
-  background: var(--primary-500);
-  color: var(--color-white);
-  box-shadow: var(--shadow-small);
-}
-
-.mg-auth-secondary-btn:disabled {
-  border-color: var(--gray-300);
-  color: var(--gray-400);
-  cursor: not-allowed;
-}
-
-.mg-auth-outline-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--gray-200);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-}
-
-.mg-auth-outline-btn:hover {
-  border-color: var(--gray-300);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-sm);
+/* 반응형 브레이크포인트 */
+@media (max-width: 1023px) {
+  .mg-v2-auth-content {
+    padding: 32px;
+  }
 }
 
 @media (max-width: 767px) {
-  .mg-auth-section {
-    padding: var(--spacing-xl) var(--spacing-lg);
+  .mg-v2-auth-container {
+    flex-direction: column;
   }
 
-  .mg-auth-card {
-    padding: var(--spacing-xl);
+  .mg-v2-auth-hero {
+    flex: none;
+    height: 200px;
+    background-position: center 30%;
   }
 
-  .mg-auth-icon,
-  .mg-auth-success-icon {
-    width: 56px;
-    height: 56px;
-    font-size: var(--font-size-lg);
+  .mg-v2-auth-hero-logo {
+    font-size: 24px;
+    margin-bottom: 8px;
   }
-}
+  
+  .mg-v2-auth-hero-slogan {
+    font-size: 14px;
+  }
 
-@media (min-width: 768px) and (max-width: 1024px) {
-  .mg-auth-section {
-    padding: var(--spacing-xxl) var(--spacing-xl);
+  .mg-v2-auth-content {
+    padding: 24px;
+    align-items: flex-start;
+    padding-top: 40px;
+    height: auto;
+    overflow-y: visible;
   }
-}
 
-@keyframes mg-auth-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
-  .auth-page-container,
-  .auth-page-success-container {
+  .mg-v2-auth-form-wrapper {
     max-width: 100%;
-    padding: 0 var(--spacing-md);
   }
-  
-  .auth-page-header {
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .auth-page-icon-container {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .auth-page-icon {
-    font-size: var(--font-size-xl);
-  }
-  
-  .auth-page-title {
-    font-size: var(--font-size-xl);
-  }
-  
-  .auth-page-subtitle {
-    font-size: var(--font-size-sm);
-  }
-  
-  .auth-page-form-group {
-    margin-bottom: var(--spacing-lg);
+
+  .mg-v2-form-row {
+    flex-direction: column;
+    gap: 0;
   }
 }
-
-/* 태블릿 반응형 디자인 */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .auth-page-container,
-  .auth-page-success-container {
-    max-width: 420px;
-  }
-}
-
-/* 다크 모드 지원 */
-@media (prefers-color-scheme: dark) {
-  .auth-page-title {
-    color: var(--ios-text-primary-dark);
-  }
-  
-  .auth-page-subtitle,
-  .auth-page-success-message {
-    color: var(--ios-text-secondary-dark);
-  }
-}
-
-/* 접근성 개선 */
-@media (prefers-reduced-motion: reduce) {
-  .auth-page-icon-container,
-  .auth-page-success-icon {
-    transition: none;
-  }
-}
-
-/* 고대비 모드 지원 */
-@media (prefers-contrast: high) {
-  .auth-page-icon-container,
-  .auth-page-success-icon {
-    border: 2px solid var(--ios-border-dark);
-  }
-}
-

@@ -1,0 +1,43 @@
+/**
+ * MappingFilterSection - B0KlA 어드민 대시보드 필터 스타일
+ * mg-v2-ad-b0kla__search 스타일과 동일한 카드 래퍼
+ *
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-filter-section {
+  margin-bottom: var(--mg-layout-grid-gap, 1.5rem);
+}
+
+.mg-v2-mapping-filter-card {
+  padding: 1rem 1.5rem;
+}
+
+/* SearchBar / UnifiedFilterSearch B0KlA 스타일 (mg-v2-ad-b0kla__search 호환) */
+.mg-v2-mapping-filter-section .mg-v2-search-bar__wrapper,
+.mg-v2-mapping-filter-section .mg-v2-filter-search__search .mg-v2-search-bar__wrapper {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  color: var(--ad-b0kla-placeholder);
+}
+
+.mg-v2-mapping-filter-section .mg-v2-search-bar__input {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-filter-section .mg-v2-search-bar__input::placeholder {
+  color: var(--ad-b0kla-placeholder);
+}
+
+.mg-v2-mapping-filter-section .mg-v2-filter-search__toggle {
+  border-color: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-filter-section .mg-v2-filter-search__panel {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ad-b0kla-border);
+}

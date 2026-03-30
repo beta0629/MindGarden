@@ -1,0 +1,101 @@
+.voice-biomarker-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.biomarker-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.biomarker-metric {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.metric-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.metric-value.normal-range {
+    color: var(--mg-success-500);
+}
+
+.metric-value.out-of-range {
+    color: #dc2626;
+}
+
+.biomarker-metric small {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.emotion-indicators {
+    padding: var(--spacing-md, 1rem);
+    background: var(--cs-secondary-50, #f9fafb);
+    border-radius: var(--border-radius-md, 0.5rem);
+}
+
+.emotion-indicators h4 {
+    margin: 0 0 var(--spacing-md, 1rem) 0;
+    font-size: var(--font-size-base, 1rem);
+    color: var(--cs-secondary-700, #374151);
+}
+
+.indicator-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 0.75rem);
+    margin-bottom: var(--spacing-sm, 0.75rem);
+}
+
+.indicator-item span:first-child {
+    width: 80px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.indicator-bar {
+    flex: 1;
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.indicator-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.indicator-fill.anxiety { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
+.indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+.indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+
+.indicator-item span:last-child {
+    width: 50px;
+    text-align: right;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.tremor-alert {
+    padding: 12px 16px;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 14px;
+}

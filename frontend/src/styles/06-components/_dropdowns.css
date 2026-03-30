@@ -257,7 +257,7 @@ select option,
   .mg-dropdown__trigger {
     background: var(--ios-bg-secondary-dark, #2c2c2e);
     border-color: var(--ios-border-dark, #38383a);
-    color: var(--ios-text-primary-dark, #ffffff);
+    color: var(--ios-text-primary-dark, var(--mg-white));
   }
   
   .mg-dropdown__trigger:hover {
@@ -271,7 +271,7 @@ select option,
   }
   
   .mg-dropdown__item {
-    color: var(--ios-text-primary-dark, #ffffff);
+    color: var(--ios-text-primary-dark, var(--mg-white));
   }
   
   .mg-dropdown__item:hover {

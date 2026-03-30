@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../../utils/ajax';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './CommonCodeForm.css';
 
 /**
  * 공통코드 폼 컴포넌트
+/**
  * - 공통코드 생성/수정을 위한 모달 폼
+/**
  * - 유효성 검사 및 에러 처리 포함
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
@@ -39,7 +46,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
     const loadCommonCodeGroupOptions = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/COMMON_CODE_GROUP');
+            const response = await apiGet('/api/v1/common-codes?codeGroup=COMMON_CODE_GROUP');
             if (response && response.length > 0) {
                 setCommonCodeGroupOptions(response.map(code => ({
                     value: code.codeValue,
@@ -53,16 +60,17 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             console.error('공통 코드 그룹 옵션 로드 실패:', error);
             // 실패 시 기본값 설정
             setCommonCodeGroupOptions([
-                { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: '#3b82f6', description: '상담 패키지 유형' },
-                { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: '#10b981', description: '결제 수단' },
-                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: '#f59e0b', description: '책임 및 역할' },
-                { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: '#8b5cf6', description: '상담의 유형' },
-                { value: 'GENDER', label: '성별', icon: '⚧', color: '#ef4444', description: '사용자 성별' },
-                { value: 'ROLE', label: '역할', icon: '👑', color: '#06b6d4', description: '사용자 역할' },
-                { value: 'STATUS', label: '상태', icon: '🔄', color: '#f97316', description: '일반적인 상태' },
-                { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: '#dc2626', description: '우선순위 구분' },
-                { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: '#7c3aed', description: '알림의 유형' },
-                { value: 'STATUS', label: '일정 상태', icon: '📅', color: '#059669', description: '일정의 상태' }
+                { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: 'var(--mg-primary-500)', description: '상담 패키지 유형' },
+                { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: 'var(--mg-success-500)', description: '결제 수단' },
+                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
+                { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: 'var(--mg-purple-500)', description: '상담의 유형' },
+                { value: 'GENDER', label: '성별', icon: '⚧', color: 'var(--mg-error-500)', description: '사용자 성별' },
+                // 표준화 2025-12-05: CSS 변수 사용 (fallback 색상값)
+                { value: 'ROLE', label: '역할', icon: '👑', color: 'var(--mg-info-500)', description: '사용자 역할' },
+                { value: 'STATUS', label: '상태', icon: '🔄', color: 'var(--mg-warning-500)', description: '일반적인 상태' },
+                { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: 'var(--mg-error-500)', description: '우선순위 구분' },
+                { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: 'var(--mg-primary-500)', description: '알림의 유형' },
+                { value: 'STATUS', label: '일정 상태', icon: '📅', color: 'var(--mg-success-500)', description: '일정의 상태' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -156,11 +164,10 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         setIsSubmitting(true);
         try {
             // CONSULTATION_PACKAGE 그룹일 때 회기 수를 extraData에 포함
-            let submitData = { ...formData };
-            if (formData.codeGroup === 'CONSULTATION_PACKAGE') {
-                submitData.extraData = JSON.stringify({ sessions: packageSessions });
-            }
-            
+            const submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
+                ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
+                : { ...formData };
+
             await onSubmit(submitData);
         } catch (error) {
             console.error('폼 제출 오류:', error);
@@ -205,12 +212,14 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     <>
                                         {commonCodeGroupOptions.map(option => (
                                             <option key={option.value} value={option.value}>
-                                                {option.icon} {option.label}
+                                                {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
+                                                  .filter((s) => s !== '')
+                                                  .join(' ')}
                                             </option>
                                         ))}
                                         {codeGroups.filter(group => !commonCodeGroupOptions.some(opt => opt.value === group)).map(group => (
                                             <option key={group} value={group}>
-                                                {group}
+                                                {toDisplayString(group)}
                                             </option>
                                         ))}
                                     </>
@@ -318,20 +327,22 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                         <div className="form-group">
                             <label htmlFor="colorCode">색상 코드</label>
                             <div className="color-input-group">
+                                {/* 표준화 2025-12-05: CSS 변수 사용 (fallback) */}
                                 <input
                                     type="color"
                                     id="colorCode"
                                     name="colorCode"
-                                    value={formData.colorCode || '#6b7280'}
+                                    value={formData.colorCode || 'var(--mg-gray-500)'}
                                     onChange={handleChange}
                                     className="form-control color-picker"
                                 />
+                                {/* 표준화 2025-12-05: CSS 변수 사용 권장 */}
                                 <input
                                     type="text"
                                     value={formData.colorCode}
                                     onChange={handleChange}
                                     className="form-control color-text"
-                                    placeholder="#6b7280"
+                                    placeholder="var(--mg-gray-500) 또는 #hex"
                                     pattern="^#[0-9A-Fa-f]{6}$"
                                 />
                             </div>

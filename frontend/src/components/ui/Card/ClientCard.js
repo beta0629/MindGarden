@@ -1,15 +1,14 @@
 import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
+import Avatar from '../../common/Avatar';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 공통 내담자 카드 컴포넌트
- * - 디자인 시스템 v2.0 적용
- * - 글라스모피즘 효과
- * - 반응형 지원
- * - 선택 상태 관리
- * - 진행률 표시
- * 
- * @author MindGarden
+ * - 디자인 시스템 v2.0 적용, 글라스모피즘, 반응형, 선택 상태 관리, 진행률 표시
+ *
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-10-15
  */
@@ -23,18 +22,20 @@ const ClientCard = ({
     showProgress = true,
     className = ''
 }) => {
-    /**
+/**
      * 상태에 따른 클래스명 반환
      */
     const getStatusClass = () => {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (client.status === 'ACTIVE' || client.status === '진행중') return 'active';
         if (client.status === 'SCHEDULED' || client.status === '예약됨') return 'scheduled';
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (client.status === 'COMPLETED' || client.status === '완료') return 'completed';
         if (client.status === 'PAUSED' || client.status === '일시정지') return 'paused';
         return 'default';
     };
 
-    /**
+/**
      * 상태에 따른 텍스트 반환
      */
     const getStatusText = () => {
@@ -48,7 +49,7 @@ const ClientCard = ({
         }
     };
 
-    /**
+/**
      * 상태에 따른 아이콘 반환
      */
     const getStatusIcon = () => {
@@ -62,17 +63,7 @@ const ClientCard = ({
         }
     };
 
-    /**
-     * 이니셜 반환
-     */
-    const getInitial = () => {
-        if (client.name) {
-            return client.name.charAt(0);
-        }
-        return '?';
-    };
-
-    /**
+/**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -81,7 +72,7 @@ const ClientCard = ({
         }
     };
 
-    /**
+/**
      * 진행률 계산
      */
     const getProgressPercentage = () => {
@@ -94,7 +85,7 @@ const ClientCard = ({
         return 0;
     };
 
-    /**
+/**
      * 세션 정보 반환
      */
     const getSessionInfo = () => {
@@ -103,7 +94,6 @@ const ClientCard = ({
         return { total, completed };
     };
 
-    // 컴팩트 카드 렌더링
     const renderCompactCard = () => (
         <div
             className={`mg-client-card mg-client-card--compact ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -117,14 +107,16 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
-            <div className="mg-client-card__avatar">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={toDisplayString(client.name, '내담자')}
+                className="mg-client-card__avatar"
+            />
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
-                    <h4 className="mg-client-card__name">{client.name}</h4>
+                    <SafeText tag="h4" className="mg-client-card__name">{client.name}</SafeText>
                     <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                         {getStatusIcon()}
                         <span>{getStatusText()}</span>
@@ -144,7 +136,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 상세 카드 렌더링
     const renderDetailedCard = () => (
         <div
             className={`mg-client-card mg-client-card--detailed ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -158,7 +149,7 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             {/* 상태 배지 */}
             <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>
@@ -167,18 +158,20 @@ const ClientCard = ({
             </div>
 
             {/* 내담자 아바타 */}
-            <div className="mg-client-card__avatar mg-client-card__avatar--large">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={toDisplayString(client.name, '내담자')}
+                className="mg-client-card__avatar mg-client-card__avatar--large"
+            />
 
             {/* 내담자 정보 */}
             <div className="mg-client-card__info">
-                <h4 className="mg-client-card__name mg-client-card__name--large">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--large">{client.name}</SafeText>
                 
                 <div className="mg-client-card__details">
                     <div className="mg-client-card__detail-item">
                         <Calendar size={16} />
-                        <span>최근 상담: {client.lastConsultationDate || '없음'}</span>
+                        <span>최근 상담: <SafeText>{client.lastConsultationDate || '없음'}</SafeText></span>
                     </div>
                     
                     <div className="mg-client-card__detail-item">
@@ -189,7 +182,7 @@ const ClientCard = ({
                     {client.nextConsultationDate && (
                         <div className="mg-client-card__detail-item">
                             <Clock size={16} />
-                            <span>다음 상담: {client.nextConsultationDate}</span>
+                            <span>다음 상담: <SafeText>{client.nextConsultationDate}</SafeText></span>
                         </div>
                     )}
                 </div>
@@ -211,7 +204,7 @@ const ClientCard = ({
                 {client.consultantName && (
                     <div className="mg-client-card__consultant-info">
                         <div className="mg-client-card__consultant-label">담당 상담사</div>
-                        <div className="mg-client-card__consultant-name">{client.consultantName}</div>
+                        <SafeText tag="div" className="mg-client-card__consultant-name">{client.consultantName}</SafeText>
                     </div>
                 )}
                 
@@ -232,7 +225,6 @@ const ClientCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 내담자 상세 정보 모달 열기
                             }}
                         >
                             <MessageCircle size={16} />
@@ -242,7 +234,6 @@ const ClientCard = ({
                             className="mg-button mg-button-ghost mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 전화 걸기
                             }}
                         >
                             <Phone size={16} />
@@ -253,7 +244,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 모바일 카드 렌더링
     const renderMobileCard = () => (
         <div
             className={`mg-client-card mg-client-card--mobile ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -267,12 +257,14 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             <div className="mg-client-card__header-mobile">
-                <div className="mg-client-card__avatar mg-client-card__avatar--mobile">
-                    {getInitial()}
-                </div>
+                <Avatar
+                    profileImageUrl={client.profileImageUrl}
+                    displayName={toDisplayString(client.name, '내담자')}
+                    className="mg-client-card__avatar mg-client-card__avatar--mobile"
+                />
                 <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                     {getStatusIcon()}
                     <span>{getStatusText()}</span>
@@ -280,12 +272,12 @@ const ClientCard = ({
             </div>
             
             <div className="mg-client-card__content-mobile">
-                <h4 className="mg-client-card__name mg-client-card__name--mobile">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--mobile">{client.name}</SafeText>
                 
                 <div className="mg-client-card__info-mobile">
                     <div className="mg-client-card__info-row">
                         <Calendar size={14} />
-                        <span>최근: {client.lastConsultationDate || '없음'}</span>
+                        <span>최근: <SafeText>{client.lastConsultationDate || '없음'}</SafeText></span>
                     </div>
                     <div className="mg-client-card__info-row">
                         <TrendingUp size={14} />
@@ -308,7 +300,7 @@ const ClientCard = ({
                 {client.consultantName && (
                     <div className="mg-client-card__consultant-mobile">
                         <span className="mg-client-card__consultant-label-mobile">담당:</span>
-                        <span className="mg-client-card__consultant-name-mobile">{client.consultantName}</span>
+                        <SafeText tag="span" className="mg-client-card__consultant-name-mobile">{client.consultantName}</SafeText>
                     </div>
                 )}
                 
@@ -327,7 +319,6 @@ const ClientCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 내담자 상세 정보 모달 열기
                             }}
                         >
                             <MessageCircle size={16} />
@@ -338,7 +329,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
             className={`mg-client-card mg-client-card--mobile-simple ${selected ? 'mg-client-card--selected' : ''} ${getStatusClass() === 'unavailable' ? 'mg-client-card--unavailable' : ''} ${className}`}
@@ -352,14 +342,16 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
-            <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={toDisplayString(client.name, '내담자')}
+                className="mg-client-card__avatar mg-client-card__avatar--mobile-simple"
+            />
             
             <div className="mg-client-card__info mg-client-card__info--mobile-simple">
-                <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</SafeText>
                 
                 <div className="mg-client-card__meta mg-client-card__meta--mobile-simple">
                     <div className="mg-client-card__progress mg-client-card__progress--mobile-simple">
@@ -375,7 +367,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 변형에 따른 렌더링
     switch (variant) {
         case 'compact':
             return renderCompactCard();

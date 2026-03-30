@@ -1,8 +1,9 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { RoleUtils } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SummaryPanels.css';
@@ -74,9 +75,18 @@ const SummaryPanels = ({ user, consultationData }) => {
                   {upcomingCount > 0 ? (
                     <div>
                       <div className="summary-value-number">{upcomingCount}건</div>
-                      {/* 최근 3일치 상담만 표시 */}
-                      {consultationData?.upcomingConsultations?.slice(0, 3).map((schedule, index) => (
-                        <div key={index} className="summary-schedule-item">
+                      {/* 표준화 원칙: 최대 10개 (기본 3개) */}
+                      {consultationData?.upcomingConsultations?.slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS).map((schedule, index) => (
+                        <div 
+                          key={index} 
+                          className="summary-schedule-item clickable"
+                          onClick={() => {
+                            // 표준화 원칙: 모든 카드/위젯에 상세 페이지 링크 필수
+                            const scheduleUrl = schedule.url || `/consultant/schedule/${schedule.id || index}`;
+                            window.location.href = scheduleUrl;
+                          }}
+                          title="상담 상세 보기"
+                        >
                           <div className="summary-schedule-datetime">
                             {new Date(schedule.date).toLocaleDateString('ko-KR')} {schedule.startTime} - {schedule.endTime}
                           </div>
@@ -90,13 +100,13 @@ const SummaryPanels = ({ user, consultationData }) => {
                       ))}
                       
                       {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
-                      {upcomingCount > 3 && (
+                      {upcomingCount > WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS && (
                         <div className="summary-panels-more-indicator">
                           <a 
                             href="/consultant/schedule" 
                             className="mg-v2-link"
                           >
-                            +{upcomingCount - 3}건 더 보기 →
+                            +{upcomingCount - WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS}건 더 보기 →
                           </a>
                         </div>
                       )}

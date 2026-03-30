@@ -1,0 +1,133 @@
+/**
+ * Section 컴포넌트 스타일
+ */
+
+.trinity-section {
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .trinity-section {
+    padding: var(--spacing-xxl) var(--spacing-md);
+  }
+}
+
+@media (min-width: 768px) {
+  .trinity-section {
+    padding: calc(var(--spacing-xxl) * 1.5) var(--spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .trinity-section {
+    padding: calc(var(--spacing-xxl) * 2) var(--spacing-md);
+  }
+}
+
+.trinity-section--bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.trinity-section__title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .trinity-section__title {
+    font-size: calc(var(--font-size-xxxl) * 1.2);
+  }
+}
+
+.trinity-section__content {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .trinity-section__content {
+    max-width: 48rem;
+  }
+}
+
+.trinity-section__content--wide {
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .trinity-section__content--wide {
+    max-width: 80rem;
+  }
+}
+
+.trinity-section__text {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .trinity-section__text {
+    font-size: var(--font-size-lg);
+  }
+}
+
+.trinity-section__text:last-child {
+  margin-bottom: 0;
+}
+
+.trinity-section__text h2 {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.trinity-section__text h2:first-child {
+  margin-top: 0;
+}
+
+.trinity-section__text h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.trinity-section__text p {
+  margin-bottom: var(--spacing-sm);
+}
+
+.trinity-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.trinity-list li {
+  padding: var(--spacing-sm) 0;
+  padding-left: var(--spacing-lg);
+  position: relative;
+  color: var(--text-secondary);
+}
+
+.trinity-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.trinity-page {
+  min-height: calc(100vh - 200px);
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+

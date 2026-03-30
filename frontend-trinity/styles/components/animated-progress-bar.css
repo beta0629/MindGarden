@@ -1,0 +1,214 @@
+/**
+ * 애니메이션 진행 바 스타일
+ * 모바일 최초 설정 화면 스타일
+ * 
+ * @author Trinity Team
+ * @version 1.0.0
+ * @since 2025-12-09
+ */
+
+.trinity-progress-bar {
+  width: 100%;
+  margin-bottom: var(--spacing-xl);
+}
+
+.trinity-progress-bar__container {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-progress-bar__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  border-radius: var(--border-radius-sm);
+  transition: width var(--transition-slow) var(--animation-ease-in-out);
+  box-shadow: 0 0 8px var(--shadow-color-primary);
+}
+
+/* 진행 바 애니메이션 효과 */
+.trinity-progress-bar__fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--shadow-color-overlay),
+    transparent
+  );
+  animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.trinity-progress-bar__steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.trinity-progress-bar__step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.trinity-progress-bar__step-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all var(--transition-normal) var(--animation-ease-in-out);
+  position: relative;
+  z-index: 2;
+}
+
+.trinity-progress-bar__step--active .trinity-progress-bar__step-number {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px var(--shadow-color-primary-light);
+}
+
+.trinity-progress-bar__step--current .trinity-progress-bar__step-number {
+  animation: pulseScale 2s infinite;
+}
+
+@keyframes pulseScale {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.trinity-progress-bar__step-line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--bg-secondary);
+  margin: 0 var(--spacing-sm);
+  transition: background-color var(--transition-normal) ease;
+  position: relative;
+  z-index: 1;
+}
+
+.trinity-progress-bar__step--active .trinity-progress-bar__step-line {
+  background-color: var(--color-primary);
+}
+
+/* 진행 라인 애니메이션 */
+.trinity-progress-bar__step--active .trinity-progress-bar__step-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-primary-light);
+  animation: lineProgress var(--transition-slow) ease-out;
+}
+
+@keyframes lineProgress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.trinity-progress-bar__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.trinity-progress-bar__label {
+  flex: 1;
+  text-align: center;
+  transition: all var(--transition-normal) ease;
+}
+
+.trinity-progress-bar__label--current {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .trinity-progress-bar__container {
+    height: 3px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .trinity-progress-bar__step-number {
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-xs);
+  }
+
+  .trinity-progress-bar__step-line {
+    margin: 0 var(--spacing-xs);
+  }
+
+  .trinity-progress-bar__labels {
+    font-size: var(--font-size-xs);
+  }
+
+  .trinity-progress-bar__step--active .trinity-progress-bar__step-number {
+    transform: scale(1.15);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-progress-bar__step-number {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: var(--font-size-xs);
+  }
+
+  .trinity-progress-bar__labels {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* 접근성: 애니메이션 선호도 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .trinity-progress-bar__fill,
+  .trinity-progress-bar__step-number,
+  .trinity-progress-bar__step-line,
+  .trinity-progress-bar__label {
+    transition: none;
+    animation: none;
+  }
+}
+

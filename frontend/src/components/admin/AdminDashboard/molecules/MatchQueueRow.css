@@ -1,0 +1,50 @@
+/**
+ * MatchQueueRow - 매칭 대기열 행 스타일
+ */
+.match-queue-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 12px);
+  padding: var(--mg-spacing-md, 12px);
+  background: var(--mg-bg-surface, #fff);
+  border-radius: 12px;
+  border: 1px solid var(--mg-border-light, #e5e7eb);
+  margin-bottom: var(--mg-spacing-sm, 8px);
+}
+
+.match-queue-row:last-child {
+  margin-bottom: 0;
+}
+
+.match-queue-row__client {
+  flex: 1;
+  min-width: 0;
+}
+
+.match-queue-row__client-name {
+  font-weight: 600;
+  color: var(--mg-text-primary, #2d3748);
+  font-size: 0.9rem;
+}
+
+.match-queue-row__client-meta {
+  font-size: 0.8rem;
+  color: var(--mg-text-secondary, #64748b);
+  margin-top: 2px;
+}
+
+.match-queue-row__arrow {
+  color: var(--mg-pipeline-primary, #4b745c);
+  flex-shrink: 0;
+}
+
+.match-queue-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  flex-shrink: 0;
+}
+
+.match-queue-row__select {
+  min-width: 160px;
+}

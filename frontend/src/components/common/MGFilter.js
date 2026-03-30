@@ -1,8 +1,10 @@
 import React from 'react';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './MGFilter.css';
 
 /**
- * MindGarden 필터 컴포넌트
+ * Core Solution 필터 컴포넌트
+/**
  * 데이터 필터링을 위한 통합 컴포넌트
  */
 const MGFilter = ({
@@ -56,7 +58,7 @@ const MGFilter = ({
                 <option value="">{filter.placeholder || '전체'}</option>
                 {filter.options.map((option, optionIndex) => (
                   <option key={optionIndex} value={option.value}>
-                    {option.label}
+                    {toDisplayString(option.label)}
                   </option>
                 ))}
               </select>
@@ -128,7 +130,7 @@ const MGFilter = ({
                       className="mg-filter__checkbox"
                       disabled={loading}
                     />
-                    <span className="mg-filter__checkbox-text">{option.label}</span>
+                    <span className="mg-filter__checkbox-text">{toDisplayString(option.label)}</span>
                   </label>
                 ))}
               </div>

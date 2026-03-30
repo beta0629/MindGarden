@@ -1,5 +1,6 @@
 /**
  * 레이아웃 시스템 상수
+/**
  * 모든 레이아웃 관련 CSS 클래스를 중앙 관리
  */
 
@@ -176,6 +177,7 @@ export const STATE_LAYOUT = {LOADING: 'mg-v2-loading',
   WARNING: 'mg-v2-warning',
   INFO: 'mg-v2-info',
   DISABLED: 'mg-v2-disabled',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'mg-v2-active',
   HOVER: 'mg-v2-hover',
   FOCUS: 'mg-v2-focus'};

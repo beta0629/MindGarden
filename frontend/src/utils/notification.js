@@ -1,9 +1,14 @@
 /**
  * 공통 알림 시스템
+/**
  * Toast 알림을 위한 유틸리티
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -18,18 +23,28 @@ class NotificationManager {
         this.loadNotificationTypes();
     }
 
-    /**
+/**
      * 알림 유형 코드 로드 (캐시 적용)
      */
     async loadNotificationTypes() {
         try {
             const response = await cachedApiCall(
-                '/api/common-codes/NOTIFICATION_TYPE',
+                '/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE',
                 {},
                 CACHE_CONFIG.COMMON_CODES.ttl
             );
-            if (response && response.length > 0) {
-                this.notificationTypes = response.map(code => ({
+            // ApiResponse 래퍼 처리: response.data.codes 또는 response.codes
+            let codes = [];
+            if (response && response.data && response.data.codes) {
+                codes = response.data.codes;
+            } else if (response && response.codes) {
+                codes = response.codes;
+            } else if (Array.isArray(response)) {
+                codes = response;
+            }
+            
+            if (codes && codes.length > 0) {
+                this.notificationTypes = codes.map(code => ({
                     code: code.codeValue,
                     name: code.codeLabel,
                     icon: code.icon,
@@ -41,15 +56,15 @@ class NotificationManager {
             console.error('알림 유형 코드 로드 실패:', error);
             // 실패 시 기본값 설정 (통일된 색상 체계)
             this.notificationTypes = [
-                { code: 'SUCCESS', name: '성공', icon: '✅', color: '#10B981', description: '성공 알림' },     // 녹색
-                { code: 'ERROR', name: '오류', icon: '❌', color: '#EF4444', description: '오류 알림' },       // 빨강
-                { code: 'WARNING', name: '경고', icon: '⚠️', color: '#F59E0B', description: '경고 알림' },     // 주황
-                { code: 'INFO', name: '정보', icon: 'ℹ️', color: '#3B82F6', description: '정보 알림' }        // 파랑
+                { code: 'SUCCESS', name: '성공', icon: '✅', color: 'var(--mg-success-500)', description: '성공 알림' },     // 녹색
+                { code: 'ERROR', name: '오류', icon: '❌', color: 'var(--mg-error-500)', description: '오류 알림' },       // 빨강
+                { code: 'WARNING', name: '경고', icon: '⚠️', color: 'var(--mg-warning-500)', description: '경고 알림' },     // 주황
+                { code: 'INFO', name: '정보', icon: 'ℹ️', color: 'var(--mg-primary-500)', description: '정보 알림' }        // 파랑
             ];
         }
     }
 
-    /**
+/**
      * 알림 리스너 등록
      */
     addListener(callback) {
@@ -59,13 +74,10 @@ class NotificationManager {
         };
     }
 
-    /**
+/**
      * 알림 표시
      */
     show(message, type = 'success', duration = 1000) { // 기본 duration을 3초에서 1초로 단축
-        console.log('notificationManager.show 호출됨:', { message, type, duration });
-        console.log('현재 리스너 수:', this.listeners.length);
-        
         const notification = {
             id: ++this.notificationId,
             message,
@@ -74,47 +86,48 @@ class NotificationManager {
             timestamp: Date.now()
         };
 
-        this.listeners.forEach((listener, index) => {
+        this.listeners.forEach((listener) => {
             try {
-                console.log(`리스너 ${index} 호출 중:`, notification);
                 listener(notification);
             } catch (error) {
-                console.error('알림 리스너 오류:', error);
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('알림 리스너 오류:', error);
+                }
             }
         });
 
         return notification.id;
     }
 
-    /**
+/**
      * 성공 알림
      */
     success(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'success', duration);
     }
 
-    /**
+/**
      * 오류 알림
      */
     error(message, duration = 2000) { // 기본 duration을 5초에서 2초로 단축
         return this.show(message, 'error', duration);
     }
 
-    /**
+/**
      * 경고 알림
      */
     warning(message, duration = 1500) { // 기본 duration을 4초에서 1.5초로 단축
         return this.show(message, 'warning', duration);
     }
 
-    /**
+/**
      * 정보 알림
      */
     info(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'info', duration);
     }
 
-    /**
+/**
      * API 오류 처리
      */
     handleApiError(error, defaultMessage = '오류가 발생했습니다.') {
@@ -137,7 +150,7 @@ class NotificationManager {
         return message;
     }
 
-    /**
+/**
      * API 성공 처리
      */
     handleApiSuccess(response, defaultMessage = '성공했습니다.') {
@@ -151,9 +164,11 @@ class NotificationManager {
         return message;
     }
 
-    /**
+/**
      * 확인 다이얼로그 (Promise 기반)
+/**
      * @param {string} message - 확인 메시지
+/**
      * @param {function} callback - 콜백 함수 (true/false 전달)
      */
     confirm(message, callback) {
@@ -164,9 +179,11 @@ class NotificationManager {
         return result;
     }
 
-    /**
+/**
      * 알림 다이얼로그
+/**
      * @param {string} message - 알림 메시지
+/**
      * @param {function} callback - 콜백 함수
      */
     alert(message, callback) {
@@ -200,5 +217,15 @@ export const showWarning = (message, duration = 4000) => {
 export const showInfo = (message, duration = 3000) => {
     return notificationManager.info(message, duration);
 };
+
+// CustomEvent 'showNotification' 구독 → 토스트 표시 (비밀번호 초기화 등 전역 알림 연동)
+if (typeof globalThis.window !== 'undefined') {
+  globalThis.window.addEventListener('showNotification', (e) => {
+    const d = e.detail;
+    if (d && d.message) {
+      notificationManager.show(d.message, d.type || 'info', d.duration);
+    }
+  });
+}
 
 export default notificationManager;

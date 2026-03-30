@@ -1,0 +1,49 @@
+/**
+ * CoreFlowPipeline - 5단계 파이프라인 스타일
+ */
+.core-flow-pipeline {
+  margin-bottom: var(--mg-spacing-lg, 24px);
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.core-flow-pipeline__steps {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start; /* 좁은 화면: 왼쪽부터 스크롤 */
+  gap: var(--mg-layout-gap, 20px);
+  overflow-x: auto;
+  padding: var(--mg-spacing-md, 12px) var(--mg-layout-page-padding, 24px);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.core-flow-pipeline__loading {
+  padding: var(--mg-spacing-lg, 24px);
+  color: var(--mg-text-secondary, #64748b);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+/* 데스크톱: 카드 균형 배치 (좌우 여백 비슷하게) */
+@media (min-width: 1280px) {
+  .core-flow-pipeline__steps {
+    justify-content: center;
+  }
+}
+
+.core-flow-pipeline__connector {
+  width: 24px;
+  min-width: 24px;
+  flex-shrink: 0;
+  border-top: 2px dashed var(--mg-border-default, #cbd5e1);
+  margin-top: 40px;
+}
+
+/* 포커스 가능한 단계 카드: B0KlA 접근성 포커스 링 */
+.pipeline-step-card:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green, var(--mg-focus-ring-color, #059669));
+  outline-offset: 2px;
+}

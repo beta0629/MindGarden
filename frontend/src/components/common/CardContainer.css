@@ -1,0 +1,28 @@
+/* CardContainer - 공통 카드 (COMMON_UI_IMPLEMENTATION_SPEC, CARD_VISUAL_UNIFIED_SPEC) */
+/* hover 시 transform 미사용, box-shadow만 변경 */
+
+.mg-v2-card-container {
+  position: relative;
+  min-height: 140px;
+  padding: var(--mg-spacing-16, 16px);
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background: var(--mg-bg-card, var(--mg-color-surface-main, var(--mg-gray-50)));
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-card-container:hover {
+  box-shadow: var(--mg-card-hover-shadow);
+}
+
+.mg-v2-card-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  border-radius: 12px 0 0 12px;
+}

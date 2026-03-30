@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
 import { Shield, XCircle, Check, ChevronDown, ChevronUp, FileText, Megaphone } from 'lucide-react';
+import UnifiedModal from './modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 
 /**
  * 개인정보 수집 및 이용 동의 모달 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const PrivacyConsentModal = ({ 
@@ -51,25 +55,37 @@ const PrivacyConsentModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Shield size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">{title}</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="auto"
+      backdropClick={true}
+      showCloseButton={true}
+      actions={
+        <>
+          <button
+            className="mg-v2-button mg-v2-button--secondary"
+            onClick={onClose}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
           </button>
-        </div>
-
-        <div className="mg-v2-modal-body">
+          <button
+            className="mg-v2-button mg-v2-button--primary"
+            onClick={handleSubmit}
+            disabled={isSubmitDisabled}
+          >
+            <Check size={20} className="mg-v2-icon-inline" />
+            동의하고 계속하기
+          </button>
+        </>
+      }
+    >
           <div className="mg-v2-info-box mg-v2-mb-lg">
             <p className="mg-v2-text-sm">
-              마인드가든 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
+              Core Solution 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
             </p>
           </div>
 
@@ -224,28 +240,7 @@ const PrivacyConsentModal = ({
               관련 법령에 따라 안전하게 보호됩니다. 동의하지 않으실 경우 서비스 이용이 제한될 수 있습니다.
             </p>
           </div>
-        </div>
-
-        <div className="mg-v2-modal-footer">
-          <button
-            className="mg-v2-button mg-v2-button--secondary"
-            onClick={onClose}
-          >
-            <XCircle size={20} className="mg-v2-icon-inline" />
-            취소
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button--primary"
-            onClick={handleSubmit}
-            disabled={isSubmitDisabled}
-          >
-            <Check size={20} className="mg-v2-icon-inline" />
-            동의하고 계속하기
-          </button>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

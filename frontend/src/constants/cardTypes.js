@@ -1,5 +1,6 @@
 /**
  * 카드 타입 및 변형 상수
+/**
  * 통일된 카드 시스템을 위한 정의
  */
 
@@ -153,6 +154,7 @@ export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
  */
 export const CARD_STATES = {DEFAULT: 'default',
   HOVER: 'hover',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'active',
   DISABLED: 'disabled',
   LOADING: 'loading',

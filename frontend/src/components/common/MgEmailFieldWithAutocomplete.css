@@ -1,0 +1,40 @@
+/**
+ * MgEmailFieldWithAutocomplete — custom-dropdown 스타일
+ * BEM: mg-v2-email-field, __suggestions, __suggestion-item
+ * 디자인 토큰: unified-design-tokens, B0KlA
+ */
+.mg-v2-email-field__suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--mg-color-surface-main, var(--mg-surface-primary, #F5F3EF));
+  border: 1px solid var(--mg-color-border-main, var(--mg-border-color, #D4CFC8));
+  border-radius: var(--mg-radius-md, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.mg-v2-email-field__suggestion-item {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--mg-color-text-main, var(--mg-text-primary, #1A1A1A));
+  cursor: pointer;
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-border-color, #D4CFC8));
+}
+
+.mg-v2-email-field__suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-email-field__suggestion-item:hover,
+.mg-v2-email-field__suggestion-item:focus,
+.mg-v2-email-field__suggestion-item.mg-v2-email-field__suggestion-item--highlighted {
+  background: rgba(61, 82, 70, 0.08);
+  outline: none;
+}

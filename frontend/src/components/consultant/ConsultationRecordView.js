@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
-import '../../styles/mindgarden-design-system.css';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import Button from '../ui/Button/Button';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담일지 조회 전용 화면
+/**
  * 작성된 상담일지를 조회만 할 수 있는 화면
+/**
  * 디자인 시스템 v2.0 적용
  */
 const ConsultationRecordView = () => {
@@ -35,12 +39,19 @@ const ConsultationRecordView = () => {
       console.log('📋 상담기록 조회:', recordId);
 
       // 상담기록 상세 정보 조회
-      const response = await apiGet(`/api/consultant/${user.id}/consultation-records/${recordId}`);
+      const response = await apiGet(`/api/v1/admin/consultant-records/${user.id}/consultation-records/${recordId}`);
       
-      if (response.success) {
-        setRecord(response.data);
+      if (response) {
+        const data = response.data !== undefined ? response.data : response;
+        if (response.success === false) {
+          setError(response.message || '상담기록을 불러올 수 없습니다.');
+        } else if (data) {
+          setRecord(data);
+        } else {
+          setError('상담기록 데이터가 없습니다.');
+        }
       } else {
-        setError(response.message || '상담기록을 불러올 수 없습니다.');
+        setError('상담기록을 불러올 수 없습니다.');
       }
     } catch (err) {
       console.error('❌ 상담기록 조회 실패:', err);
@@ -52,50 +63,52 @@ const ConsultationRecordView = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담기록 조회">
-        <UnifiedLoading text="상담기록을 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout title="상담기록 조회" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout title="상담기록 조회">
+      <AdminCommonLayout title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
-          <button 
-            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
+          <Button 
+            variant="secondary"
+            className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!record) {
     return (
-      <SimpleLayout title="상담기록 조회">
+      <AdminCommonLayout title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
-          <button 
-            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
+          <Button 
+            variant="secondary"
+            className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담기록 조회">
+    <AdminCommonLayout title="상담기록 조회">
       <div className="mg-v2-record-view">
         {/* 기본 정보 카드 */}
         <div className="mg-v2-card">
@@ -152,16 +165,16 @@ const ConsultationRecordView = () => {
 
         {/* 액션 버튼 */}
         <div className="mg-v2-record-actions mg-mt-lg">
-          <button 
-            className="mg-v2-button mg-v2-button--secondary"
+          <Button 
+            variant="secondary"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

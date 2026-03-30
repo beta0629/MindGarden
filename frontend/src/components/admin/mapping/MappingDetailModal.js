@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
-import UnifiedLoading from '../../common/UnifiedLoading';
-import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
+import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import { StatusBadge, ActionButton } from '../../common';
+import './MappingDetailModal.css';
 
 /**
  * 매칭 상세보기 모달 컴포넌트
+/**
  * - 매칭의 모든 정보를 상세히 표시
+/**
  * - ERP 연동 상태, 금액 일관성 등 확인
+/**
  * - 거래 내역, 변경 이력 등 표시
  */
 const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
@@ -52,122 +56,92 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         }
     };
 
-    const getStatusBadge = (status) => {
-        const statusConfig = {
-            'ACTIVE': { className: 'status-active' },
-            'PENDING_PAYMENT': { className: 'status-pending' },
-            'PAYMENT_CONFIRMED': { className: 'status-confirmed' },
-            'TERMINATED': { className: 'status-terminated' },
-            'SESSIONS_EXHAUSTED': { className: 'status-exhausted' },
-            'INACTIVE': { className: 'status-inactive' },
-            'SUSPENDED': { className: 'status-suspended' }
-        };
-        
-        const config = statusConfig[status] || { className: 'status-default' };
-        const label = getMappingStatusKoreanNameSync(status);
-        
-        return (
-            <span className={`mg-v2-badge ${config.className}`}>
-                {label}
-            </span>
-        );
-    };
-
     const getPaymentStatusBadge = (paymentStatus) => {
-        const statusConfig = {
-            'PENDING': { className: 'payment-pending' },
-            'APPROVED': { className: 'payment-approved' },
-            'REJECTED': { className: 'payment-rejected' }
-        };
-        
-        const config = statusConfig[paymentStatus] || { className: 'payment-default' };
+        const variantMap = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' };
+        const variant = variantMap[paymentStatus] || 'neutral';
         const label = getUserStatusKoreanNameSync(paymentStatus) || '알 수 없음';
-        
-        return (
-            <span className={`mg-v2-badge ${config.className}`}>
-                {label}
-            </span>
-        );
+        return <StatusBadge variant={variant}>{label}</StatusBadge>;
     };
 
     if (!isOpen) return null;
 
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <h2 className="mg-v2-modal-title">
-                        <Info size={24} />
-                        매칭 상세 정보
-                    </h2>
-                    <button 
-                        className="mg-v2-modal-close"
-                        onClick={onClose}
-                        aria-label="닫기"
-                    >
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="매칭 상세 정보"
+            size="large"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+            actions={
+                <ActionButton variant="secondary" onClick={onClose}>
+                    <XCircle size={18} />
+                    닫기
+                </ActionButton>
+            }
+        >
                 {loading ? (
                     <div className="mg-v2-modal-body">
                         <div className="mg-v2-loading-container">
-                            <UnifiedLoading 
-                                text="상세 정보를 불러오는 중..." 
-                                size="medium" 
-                                type="inline"
-                            />
+                            <div className="mg-loading">로딩중...</div>
                         </div>
                     </div>
                 ) : (
                     <>
-                        {/* 탭 네비게이션 */}
-                        <div className="mg-v2-tabs">
-                            <button 
-                                className={`mg-v2-tab ${activeTab === 'basic' ? 'mg-v2-tab-active' : ''}`}
+                        {/* 탭 네비게이션 - B0KlA pill 스타일 */}
+                        <div className="mg-v2-ad-b0kla__pill-toggle mapping-detail-tabs">
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('basic')}
                             >
                                 <User size={18} />
                                 기본 정보
                             </button>
-                            <button 
-                                className={`mg-v2-tab ${activeTab === 'payment' ? 'mg-v2-tab-active' : ''}`}
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('payment')}
                             >
                                 <CreditCard size={18} />
                                 결제 정보
                             </button>
-                            <button 
-                                className={`mg-v2-tab ${activeTab === 'sessions' ? 'mg-v2-tab-active' : ''}`}
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'sessions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('sessions')}
                             >
                                 <Calendar size={18} />
                                 회기 정보
                             </button>
-                            <button 
-                                className={`mg-v2-tab ${activeTab === 'erp' ? 'mg-v2-tab-active' : ''}`}
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'erp' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('erp')}
                             >
                                 <TrendingUp size={18} />
                                 ERP 연동
                             </button>
-                            <button 
-                                className={`mg-v2-tab ${activeTab === 'history' ? 'mg-v2-tab-active' : ''}`}
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'history' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('history')}
                             >
                                 <Clock size={18} />
                                 변경 이력
                             </button>
                         </div>
-                        
+
                         <div className="mg-v2-modal-body">
 
                         {/* 탭 컨텐츠 */}
                         <div className="mapping-detail-tab-content">
                             {activeTab === 'basic' && (
                                 <div className="basic-info-tab">
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-person"></i> 매칭 기본 정보</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> 매칭 기본 정보</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
                                                 <label>매칭 ID</label>
@@ -175,47 +149,45 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             </div>
                                             <div className="info-item">
                                                 <label>상태</label>
-                                                <span>{getStatusBadge(mapping?.status)}</span>
+                                                <span><StatusBadge status={mapping?.status} /></span>
                                             </div>
                                             <div className="info-item">
                                                 <label>결제 상태</label>
                                                 <span>{getPaymentStatusBadge(mapping?.paymentStatus)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>지점</label>
+                                                <label>소속</label>
                                                 <span>{mapping?.branchCode || '-'}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-people"></i> 참여자 정보</h4>
-                                        <div className="participants-info">
-                                            <div className="participant-card consultant">
-                                                <div className="participant-header">
-                                                    <i className="bi bi-person-badge"></i>
-                                                    <span>상담사</span>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> 참여자 정보</h4>
+                                        <div className="participants-info mg-v2-ad-b0kla__counselor-list">
+                                            <div className="mg-v2-ad-b0kla__counselor-item participant-card consultant">
+                                                <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green">
+                                                    <User size={18} />
                                                 </div>
-                                                <div className="participant-details">
-                                                    <p><strong>{mapping?.consultantName}</strong></p>
-                                                    <p className="text-muted">ID: {mapping?.consultantId}</p>
+                                                <div className="mg-v2-ad-b0kla__counselor-data participant-details">
+                                                    <p className="mg-v2-ad-b0kla__counselor-name"><strong>{mapping?.consultantName}</strong></p>
+                                                    <p className="mg-v2-ad-b0kla__counselor-rating">ID: {mapping?.consultantId}</p>
                                                 </div>
                                             </div>
-                                            <div className="participant-card client">
-                                                <div className="participant-header">
-                                                    <i className="bi bi-person"></i>
-                                                    <span>내담자</span>
+                                            <div className="mg-v2-ad-b0kla__counselor-item participant-card client">
+                                                <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--blue">
+                                                    <User size={18} />
                                                 </div>
-                                                <div className="participant-details">
-                                                    <p><strong>{mapping?.clientName}</strong></p>
-                                                    <p className="text-muted">ID: {mapping?.clientId}</p>
+                                                <div className="mg-v2-ad-b0kla__counselor-data participant-details">
+                                                    <p className="mg-v2-ad-b0kla__counselor-name"><strong>{mapping?.clientName}</strong></p>
+                                                    <p className="mg-v2-ad-b0kla__counselor-rating">ID: {mapping?.clientId}</p>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-calendar-event"></i> 일정 정보</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> 일정 정보</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
                                                 <label>시작일</label>
@@ -240,8 +212,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                             {activeTab === 'payment' && (
                                 <div className="payment-info-tab">
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-credit-card"></i> 결제 정보</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><CreditCard size={18} className="mg-v2-icon-inline" /> 결제 정보</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
                                                 <label>패키지명</label>
@@ -275,17 +247,17 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                     </div>
 
                                     {detailInfo && (
-                                        <div className="info-section">
-                                            <h4><i className="bi bi-check-circle"></i> 금액 일관성 검사</h4>
+                                        <div className="mg-v2-ad-b0kla__card info-section">
+                                            <h4 className="mg-v2-ad-b0kla__section-title"><CheckCircle size={18} className="mg-v2-icon-inline" /> 금액 일관성 검사</h4>
                                             <div className="consistency-check">
                                                 {detailInfo.isConsistent ? (
                                                     <div className="consistency-success">
-                                                        <i className="bi bi-check-circle-fill"></i>
+                                                        <CheckCircle size={20} className="mg-v2-icon-inline" />
                                                         <span>모든 금액이 일관적입니다</span>
                                                     </div>
                                                 ) : (
                                                     <div className="consistency-warning">
-                                                        <i className="bi bi-exclamation-triangle-fill"></i>
+                                                        <AlertTriangle size={20} className="mg-v2-icon-inline" />
                                                         <div>
                                                             <p><strong>문제:</strong> {detailInfo.consistencyMessage}</p>
                                                             <p><strong>권장사항:</strong> {detailInfo.consistencyRecommendation}</p>
@@ -300,8 +272,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                             {activeTab === 'sessions' && (
                                 <div className="sessions-info-tab">
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-calendar-check"></i> 회기 현황</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> 회기 현황</h4>
                                         <div className="sessions-summary">
                                             <div className="session-card total">
                                                 <div className="session-number">{mapping?.totalSessions || 0}</div>
@@ -345,8 +317,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                             {activeTab === 'erp' && (
                                 <div className="erp-info-tab">
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-graph-up"></i> ERP 연동 상태</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><TrendingUp size={18} className="mg-v2-icon-inline" /> ERP 연동 상태</h4>
                                         {detailInfo?.relatedTransactions && detailInfo.relatedTransactions.length > 0 ? (
                                             <div className="erp-transactions">
                                                 {detailInfo.relatedTransactions.map((transaction, index) => (
@@ -356,7 +328,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                                 {transaction.type === 'INCOME' ? '수입' : '지출'}
                                                             </span>
                                                             <span className={`transaction-status ${transaction.status ? transaction.status.toLowerCase() : 'unknown'}`}>
-                                                                {transaction.status === 'PENDING' ? '대기중' : 
+                                                                {transaction.status === 'PENDING' ? '대기중' :
                                                                  transaction.status === 'COMPLETED' ? '완료' :
                                                                  transaction.status === 'REJECTED' ? '거부' :
                                                                  transaction.status || '알 수 없음'}
@@ -375,7 +347,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             </div>
                                         ) : (
                                             <div className="no-erp-data">
-                                                <i className="bi bi-exclamation-circle"></i>
+                                                <AlertTriangle size={24} className="mg-v2-icon-inline" />
                                                 <p>연동된 ERP 거래가 없습니다</p>
                                                 <small>입금 확인 후 자동으로 ERP 거래가 생성됩니다</small>
                                             </div>
@@ -386,8 +358,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                             {activeTab === 'history' && (
                                 <div className="history-info-tab">
-                                    <div className="info-section">
-                                        <h4><i className="bi bi-clock-history"></i> 변경 이력</h4>
+                                    <div className="mg-v2-ad-b0kla__card info-section">
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Clock size={18} className="mg-v2-icon-inline" /> 변경 이력</h4>
                                         {mapping?.notes ? (
                                             <div className="notes-content">
                                                 {mapping.notes.split('\n').map((note, index) => (
@@ -399,15 +371,15 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             </div>
                                         ) : (
                                             <div className="no-history">
-                                                <i className="bi bi-info-circle"></i>
+                                                <Info size={24} className="mg-v2-icon-inline" />
                                                 <p>변경 이력이 없습니다</p>
                                             </div>
                                         )}
                                     </div>
 
                                     {mapping?.specialConsiderations && (
-                                        <div className="info-section">
-                                            <h4><i className="bi bi-exclamation-triangle"></i> 특별 고려사항</h4>
+                                        <div className="mg-v2-ad-b0kla__card info-section">
+                                            <h4 className="mg-v2-ad-b0kla__section-title mg-v2-ad-b0kla__card-accent--orange"><AlertTriangle size={18} className="mg-v2-icon-inline" /> 특별 고려사항</h4>
                                             <div className="special-considerations">
                                                 {mapping.specialConsiderations}
                                             </div>
@@ -419,19 +391,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                         </div>
                     </>
                 )}
-
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        className="mg-v2-button mg-v2-button-secondary"
-                        onClick={onClose}
-                    >
-                        <XCircle size={18} />
-                        닫기
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
+        </UnifiedModal>
     );
 };
 

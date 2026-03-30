@@ -1,0 +1,131 @@
+package com.coresolution.consultation.repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import com.coresolution.consultation.entity.SystemNotification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 시스템 공지 리포지토리
+ */
+@Repository
+public interface SystemNotificationRepository extends BaseRepository<SystemNotification, Long> {
+    
+    /**
+     * 테넌트별 대상 유형별 유효한 공지 조회 (테넌트 필터링)
+     */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.isUrgent DESC, n.isImportant DESC, n.publishedAt DESC")
+    Page<SystemNotification> findValidNotificationsByTenantIdAndTargetTypes(
+        @Param("tenantId") String tenantId,
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now,
+        Pageable pageable);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 공지사항 노출!
+     */
+    @Deprecated
+    @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.isUrgent DESC, n.isImportant DESC, n.publishedAt DESC")
+    Page<SystemNotification> findValidNotificationsByTargetTypes(
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now,
+        Pageable pageable);
+    
+    /**
+     * 테넌트별 관리자용 전체 공지 조회 (테넌트 필터링)
+     */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.isDeleted = false " +
+           "AND (CAST(:targetType AS string) IS NULL OR n.targetType = :targetType) " +
+           "AND (CAST(:status AS string) IS NULL OR n.status = :status) " +
+           "ORDER BY n.createdAt DESC")
+    Page<SystemNotification> findAllForAdminByTenantId(
+        @Param("tenantId") String tenantId,
+        @Param("targetType") String targetType,
+        @Param("status") String status,
+        Pageable pageable);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 관리자 공지 노출!
+     */
+    @Deprecated
+    @Query("SELECT n FROM SystemNotification n WHERE n.isDeleted = false " +
+           "AND (CAST(:targetType AS string) IS NULL OR n.targetType = :targetType) " +
+           "AND (CAST(:status AS string) IS NULL OR n.status = :status) " +
+           "ORDER BY n.createdAt DESC")
+    Page<SystemNotification> findAllForAdmin(
+        @Param("targetType") String targetType,
+        @Param("status") String status,
+        Pageable pageable);
+    
+    /**
+     * 긴급 공지 조회
+     */
+    @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isUrgent = true " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.publishedAt DESC")
+    List<SystemNotification> findUrgentNotificationsByTargetTypes(
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now);
+    
+    /**
+     * 중요 공지 조회
+     */
+    @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isImportant = true " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.publishedAt DESC")
+    List<SystemNotification> findImportantNotificationsByTargetTypes(
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now);
+    
+    /**
+     * 사용자가 읽지 않은 공지 ID 목록 조회 (일괄 읽음 처리용)
+     */
+    @Query("SELECT n.id FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= CURRENT_TIMESTAMP) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > CURRENT_TIMESTAMP) " +
+           "AND n.id NOT IN (SELECT r.notificationId FROM SystemNotificationRead r WHERE r.tenantId = :tenantId AND r.userId = :userId AND r.isRead = true)")
+    List<Long> findUnreadNotificationIdsByTenantIdAndUser(
+        @Param("tenantId") String tenantId,
+        @Param("userId") Long userId,
+        @Param("targetTypes") List<String> targetTypes);
+
+    /**
+     * 특정 테넌트에서 특정 기간 내에 특정 타입의 공지가 존재하는지 확인 (Idempotency 체크용)
+     */
+    boolean existsByTenantIdAndNotificationTypeAndCreatedAtBetween(
+        String tenantId, String notificationType, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * 조회수 증가 (버전 충돌 방지를 위해 직접 업데이트)
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE SystemNotification n SET n.viewCount = n.viewCount + 1 WHERE n.id = :notificationId")
+    int incrementViewCount(@Param("notificationId") Long notificationId);
+}
+

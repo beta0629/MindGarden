@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.coresolution.core.controller.ops.ErdOpsControllerIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 36.47 s -- in com.coresolution.core.controller.ops.ErdOpsControllerIntegrationTest

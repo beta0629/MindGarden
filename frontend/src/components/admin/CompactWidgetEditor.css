@@ -1,0 +1,147 @@
+/**
+ * 컴팩트한 위젯 편집기 스타일
+ * Core Solution 디자인 시스템 v2.0 준수
+ */
+
+/* ===== 위젯 팔레트 컴팩트 그리드 ===== */
+.compact-widget-palette {
+  display: flex;
+  flex-direction: column;
+  background: var(--mg-bg-primary);
+  border-radius: var(--mg-border-radius-lg);
+  box-shadow: var(--mg-shadow-lg);
+  overflow: hidden;
+}
+
+.compact-palette-header {
+  padding: var(--mg-spacing-md);
+  background: var(--mg-gradient-primary);
+  color: var(--mg-text-on-primary);
+}
+
+.compact-palette-title {
+  margin: 0 0 var(--mg-spacing-xs) 0;
+  font-size: var(--mg-font-size-md);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+/* ===== 컴팩트한 위젯 그리드 ===== */
+.compact-widgets-grid {
+  padding: var(--mg-spacing-sm);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3열 그리드 */
+  gap: var(--mg-spacing-xs); /* 작은 간격 */
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+/* ===== 컴팩트한 위젯 카드 ===== */
+.compact-widget-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-2xs); /* 매우 작은 간격 */
+  padding: var(--mg-spacing-xs); /* 작은 패딩 */
+  background: var(--mg-bg-primary);
+  border: 1px solid var(--mg-border-color-light);
+  border-radius: var(--mg-border-radius-sm);
+  cursor: pointer;
+  transition: all var(--mg-transition-normal);
+  position: relative;
+  min-height: 60px; /* 작은 높이 */
+  max-height: 75px; /* 높이 제한 */
+}
+
+.compact-widget-card:hover {
+  border-color: var(--mg-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--mg-shadow-md);
+}
+
+/* ===== 컴팩트한 아이콘 ===== */
+.compact-widget-icon {
+  width: 24px; /* 작은 아이콘 */
+  height: 24px;
+  border-radius: var(--mg-border-radius-sm);
+  background: var(--mg-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px; /* 작은 아이콘 크기 */
+  color: var(--mg-text-secondary);
+}
+
+/* ===== 컴팩트한 텍스트 ===== */
+.compact-widget-name {
+  font-size: 11px; /* 작은 글씨 */
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-text-primary);
+  line-height: 1.2;
+  text-align: center;
+  margin: 0;
+  word-break: keep-all; /* 단어 끊어짐 방지 */
+}
+
+.compact-widget-category {
+  font-size: 9px; /* 매우 작은 글씨 */
+  color: var(--mg-text-tertiary);
+  opacity: 0.7;
+  line-height: 1;
+  margin: 0;
+}
+
+/* ===== 카테고리별 색상 ===== */
+.compact-widget-card.mg-category-common .compact-widget-icon {
+  color: var(--mg-blue);
+  background: var(--mg-blue-light);
+}
+
+.compact-widget-card.mg-category-admin .compact-widget-icon {
+  color: var(--mg-purple);
+  background: var(--mg-purple-light);
+}
+
+.compact-widget-card.mg-category-consultation .compact-widget-icon {
+  color: var(--mg-amber);
+  background: var(--mg-amber-light);
+}
+
+.compact-widget-card.mg-category-academy .compact-widget-icon {
+  color: var(--mg-emerald);
+  background: var(--mg-emerald-light);
+}
+
+.compact-widget-card.mg-category-erp .compact-widget-icon {
+  color: var(--mg-red);
+  background: var(--mg-red-light);
+}
+
+/* ===== 추가 버튼 ===== */
+.compact-add-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--mg-success);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  opacity: 0;
+  transition: all var(--mg-transition-fast);
+}
+
+.compact-widget-card:hover .compact-add-btn {
+  opacity: 1;
+}
+
+/* ===== 반응형 조정 ===== */
+@media (max-width: 400px) {
+  .compact-widgets-grid {
+    grid-template-columns: repeat(2, 1fr); /* 모바일에서 2열 */
+  }
+}

@@ -44,7 +44,7 @@
   
   .auto-responsive-wrapper--table .auto-responsive-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 var(--border-radius-md) 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 var(--border-radius-md) 32px var(--mg-shadow-medium);
   }
   
   .auto-responsive-wrapper--table .auto-responsive-card-header {

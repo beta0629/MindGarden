@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
+import Avatar from '../common/Avatar';
 import { 
   HEADER_CSS_CLASSES, 
   HEADER_TEXTS, 
@@ -16,9 +18,13 @@ import './SimpleHeader.css';
 
 /**
  * 간단한 헤더 컴포넌트
+/**
  * - 중앙 세션 상태만 표시 (세션 관리 로직 없음)
+/**
  * - 로그인/로그아웃 버튼과 사용자 정보 표시
+/**
  * - 세션 관리는 SessionContext에서만 처리
+/**
  * - 뒤로가기 버튼 (조건부 표시)
  */
 const SimpleHeader = () => {
@@ -26,17 +32,11 @@ const SimpleHeader = () => {
   const location = useLocation();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [imageLoadError, setImageLoadError] = useState(false);
   const [roleDisplayName, setRoleDisplayName] = useState('');
   const [roleDisplayNameEn, setRoleDisplayNameEn] = useState('');
   
   // 중앙 세션 훅 사용 (헤더는 단순히 상태만 표시)
   const { user, isLoggedIn, isLoading, logout } = useSession();
-
-  // 사용자가 변경될 때 이미지 로드 에러 상태 초기화
-  useEffect(() => {
-    setImageLoadError(false);
-  }, [user?.id, user?.profileImageUrl, user?.socialProfileImage]);
 
   // 사용자 역할 표시명 동적 로드
   useEffect(() => {
@@ -77,15 +77,19 @@ const SimpleHeader = () => {
   };
 
   // 뒤로가기 버튼 클릭 핸들러
-  const handleBackClick = () => {
+  const handleBackClick = async () => {
     // 브라우저 히스토리가 있으면 뒤로가기, 없으면 적절한 대시보드로 이동
     if (window.history.length > 1) {
       navigate(-1);
     } else {
       // 사용자 역할에 따른 기본 대시보드로 이동
       if (user?.role) {
-        const dashboardPath = getDashboardPath(user.role);
-        navigate(dashboardPath);
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: user,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         navigate('/');
       }
@@ -94,7 +98,9 @@ const SimpleHeader = () => {
 
   // 하드코딩된 역할 매핑 함수 제거 - 동적 로딩 사용
 
-  const handleLogout = async () => {
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShowLogoutModal(true);
   };
 
@@ -121,26 +127,7 @@ const SimpleHeader = () => {
   };
 
 
-  // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
-  const getProfileImageUrl = () => {
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    return null;
-  };
-
-  // 이미지 로드 실패 처리
-  const handleImageError = () => {
-    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 실패, 기본 아이콘으로 대체');
-    setImageLoadError(true);
-  };
-
-  const handleImageLoad = () => {
-    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 성공');
-  };
+  const profileImageUrl = user?.profileImageUrl || user?.socialProfileImage;
 
   return (
     <>
@@ -170,6 +157,12 @@ const SimpleHeader = () => {
         
         {/* 오른쪽 영역 */}
         <div className={HEADER_CSS_CLASSES.HEADER_RIGHT}>
+          {/* 디버그 정보 */}
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
+          <div style={{fontSize: '10px', color: '#666', marginRight: '10px'}}>
+            Debug: {isLoading ? 'Loading' : isLoggedIn ? 'LoggedIn' : 'NotLoggedIn'} | User: {user ? 'Yes' : 'No'}
+          </div>
+          
           {isLoading ? (
             <div className={HEADER_CSS_CLASSES.LOADING}>
               <i className={`bi ${HEADER_ICONS.LOADING}`}></i>
@@ -179,22 +172,14 @@ const SimpleHeader = () => {
             <>
               {/* 사용자 정보 */}
               <div className={HEADER_CSS_CLASSES.USER_INFO} onClick={handleProfileClick}>
-                <div className={HEADER_CSS_CLASSES.USER_AVATAR}>
-                  {getProfileImageUrl() ? (
-                    <img 
-                      src={getProfileImageUrl()} 
-                      alt="프로필" 
-                      className={HEADER_CSS_CLASSES.PROFILE_IMAGE}
-                      onError={handleImageError}
-                      onLoad={handleImageLoad}
-                    />
-                  ) : (
-                    <i className={`bi ${HEADER_ICONS.USER_DEFAULT}`}></i>
-                  )}
-                </div>
+                <Avatar
+                  profileImageUrl={profileImageUrl}
+                  displayName={user?.name || user?.nickname || user?.userId || HEADER_TEXTS.DEFAULT_USER}
+                  className={HEADER_CSS_CLASSES.USER_AVATAR}
+                />
                 <div className={HEADER_CSS_CLASSES.USER_DETAILS}>
                   <div className={HEADER_CSS_CLASSES.USER_NAME}>
-                    {user.name || user.nickname || user.username || HEADER_TEXTS.DEFAULT_USER}
+                    {user.name || user.nickname || user.userId || HEADER_TEXTS.DEFAULT_USER}
                   </div>
                   <div className={HEADER_CSS_CLASSES.USER_ROLE}>{roleDisplayName || user.role}</div>
                   <div className={HEADER_CSS_CLASSES.USER_ROLE_EN}>{roleDisplayNameEn || user.role}</div>
@@ -203,7 +188,7 @@ const SimpleHeader = () => {
 
               {/* 로그아웃 버튼 */}
               <button 
-                className="simple-header-logout-button"
+                className="simple-logout-button"
                 onClick={handleLogout}
                 title="로그아웃"
               >

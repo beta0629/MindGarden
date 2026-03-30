@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import ReactDOM from 'react-dom';
-import { CreditCard, X, Tag, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import BadgeSelect from '../common/BadgeSelect';
+import SafeText from '../common/SafeText';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
+/**
  * - 패키지 상품 할인 적용 입금확인
+/**
  * - 할인 코드 입력 및 적용
+/**
  * - 할인 후 최종 금액 계산
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-24
  */
 const DiscountPaymentConfirmationModal = ({ 
@@ -43,22 +51,24 @@ const DiscountPaymentConfirmationModal = ({
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // Constants
   const PAYMENT_STATUS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'pending',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: 'completed',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'cancelled'
   };
 
   useEffect(() => {
     if (isOpen && mappings.length > 0) {
-      // 초기 선택된 매핑 설정
       setSelectedMappings(mappings.filter(mapping => 
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         mapping.status === PAYMENT_STATUS.PENDING
       ));
       
-      // 총 금액 계산
       const totalAmount = mappings
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
         .reduce((sum, mapping) => sum + (mapping.amount || 0), 0);
       
@@ -73,13 +83,10 @@ const DiscountPaymentConfirmationModal = ({
         finalAmount: totalAmount
       }));
       
-      // 적용 가능한 할인 옵션 로드
       loadAvailableDiscounts();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mappings]);
 
-  // 적용 가능한 할인 옵션 로드
   const loadAvailableDiscounts = async () => {
     if (selectedMappings.length === 0) return;
     
@@ -98,7 +105,6 @@ const DiscountPaymentConfirmationModal = ({
     }
   };
 
-  // 할인 코드 적용
   const applyDiscount = async () => {
     if (!paymentData.discountCode.trim()) {
       notificationManager.warning('할인 코드를 입력해주세요.');
@@ -146,7 +152,6 @@ const DiscountPaymentConfirmationModal = ({
     }
   };
 
-  // 할인 제거
   const removeDiscount = () => {
     setDiscountInfo({
       applied: false,
@@ -166,7 +171,6 @@ const DiscountPaymentConfirmationModal = ({
     notificationManager.info('할인이 제거되었습니다.');
   };
 
-  // 결제 확인 처리
   const handleConfirmPayment = async () => {
     if (selectedMappings.length === 0) {
       notificationManager.warning('선택된 매핑이 없습니다.');
@@ -177,7 +181,8 @@ const DiscountPaymentConfirmationModal = ({
       setLoading(true);
       
       for (const mapping of selectedMappings) {
-        const response = await apiPost(`/api/admin/mappings/${mapping.id}/confirm-payment`, {
+        // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+        const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-payment`, {
           paymentMethod: paymentData.method,
           paymentReference: `REF-${Date.now()}`,
           paymentAmount: paymentData.amount,
@@ -203,31 +208,47 @@ const DiscountPaymentConfirmationModal = ({
     }
   };
 
-  // 금액 포맷팅
   const formatAmount = (amount) => {
     return new Intl.NumberFormat('ko-KR').format(amount);
   };
 
   if (!isOpen) return null;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h2 className="mg-v2-modal-title">
-            <Tag size={24} />
-            할인 적용 결제 확인
-          </h2>
-          <button 
-            className="mg-v2-modal-close"
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="할인 적용 결제 확인"
+      size="large"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
+          <button
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={onClose}
-            aria-label="닫기"
           >
-            <X size={24} />
+            취소
           </button>
-        </div>
-        
-        <div className="mg-v2-modal-body">
+          <button
+            className="mg-v2-button mg-v2-button-success"
+            onClick={handleConfirmPayment}
+            disabled={loading || selectedMappings.length === 0}
+          >
+            {loading ? (
+              <span>처리 중...</span>
+            ) : (
+              <>
+                <CheckCircle size={18} />
+                결제 확인
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
+      <div className="mg-v2-modal-body">
           {/* 선택된 매핑 정보 */}
           <div className="mg-v2-form-section">
             <h3 className="mg-v2-section-title">선택된 매핑</h3>
@@ -235,16 +256,16 @@ const DiscountPaymentConfirmationModal = ({
               {selectedMappings.map(mapping => (
                 <div key={mapping.id} className="mg-v2-mapping-card">
                   <div className="mg-v2-mapping-row">
-                    <strong>패키지:</strong> <span>{mapping.packageName}</span>
+                    <strong>패키지:</strong> <span><SafeText>{mapping.packageName}</SafeText></span>
                   </div>
                   <div className="mg-v2-mapping-row">
                     <strong>원래 금액:</strong> <span>{formatAmount(mapping.amount)}원</span>
                   </div>
                   <div className="mg-v2-mapping-row">
-                    <strong>상담사:</strong> <span>{mapping.consultantName}</span>
+                    <strong>상담사:</strong> <span><SafeText>{mapping.consultantName}</SafeText></span>
                   </div>
                   <div className="mg-v2-mapping-row">
-                    <strong>내담자:</strong> <span>{mapping.clientName}</span>
+                    <strong>내담자:</strong> <span><SafeText>{mapping.clientName}</SafeText></span>
                   </div>
                 </div>
               ))}
@@ -308,7 +329,7 @@ const DiscountPaymentConfirmationModal = ({
                   <span>{formatAmount(discountInfo.finalAmount)}원</span>
                 </div>
                 <div className="mg-v2-discount-name">
-                  적용된 할인: {discountInfo.discountName}
+                  적용된 할인: <SafeText>{discountInfo.discountName}</SafeText>
                 </div>
               </div>
             )}
@@ -328,10 +349,10 @@ const DiscountPaymentConfirmationModal = ({
                         }
                       }}
                     >
-                      <div className="mg-v2-discount-option-name">{discount.name}</div>
-                      <div className="mg-v2-discount-option-desc">{discount.description}</div>
+                      <div className="mg-v2-discount-option-name"><SafeText>{discount.name}</SafeText></div>
+                      <div className="mg-v2-discount-option-desc"><SafeText>{discount.description}</SafeText></div>
                       <div className={`mg-discount-option-status ${discount.isApplicable ? 'success' : 'error'}`}>
-                        {discount.isApplicable ? '적용 가능' : discount.reason}
+                        {discount.isApplicable ? '적용 가능' : <SafeText>{discount.reason}</SafeText>}
                       </div>
                     </div>
                   ))}
@@ -347,16 +368,19 @@ const DiscountPaymentConfirmationModal = ({
               결제 방법
             </h3>
             <div className="mg-v2-form-group">
-              <select
+              <BadgeSelect
                 value={paymentData.method}
-                onChange={(e) => setPaymentData(prev => ({ ...prev, method: e.target.value }))}
+                onChange={(val) => setPaymentData(prev => ({ ...prev, method: val }))}
+                options={[
+                  { value: 'CARD', label: '카드' },
+                  { value: 'BANK_TRANSFER', label: '계좌이체' },
+                  { value: 'CASH', label: '현금' },
+                  { value: 'OTHER', label: '기타' }
+                ]}
+                placeholder="선택하세요"
                 className="mg-v2-select"
-              >
-                <option value="CARD">카드</option>
-                <option value="BANK_TRANSFER">계좌이체</option>
-                <option value="CASH">현금</option>
-                <option value="OTHER">기타</option>
-              </select>
+                aria-label="결제 방법"
+              />
             </div>
           </div>
           
@@ -374,35 +398,7 @@ const DiscountPaymentConfirmationModal = ({
             </div>
           </div>
         </div>
-        
-        <div className="mg-v2-modal-footer">
-          <button
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={onClose}
-          >
-            취소
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-success"
-            onClick={handleConfirmPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={18} />
-                결제 확인
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
+    </UnifiedModal>
   );
 };
 

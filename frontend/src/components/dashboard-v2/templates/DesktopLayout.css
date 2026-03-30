@@ -1,0 +1,52 @@
+/**
+ * DesktopLayout - GNB + LNB + 메인
+ * RESPONSIVE_LAYOUT_SPEC
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-desktop-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    var(--mg-layout-main-bg-start, #FAF9F7) 0%,
+    var(--mg-layout-main-bg-end, #F2EDE8) 100%
+  );
+}
+
+.mg-v2-desktop-layout__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.mg-v2-desktop-layout__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--mg-layout-page-padding, 24px);
+  min-height: 0;
+}
+
+/* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
+.mg-v2-desktop-layout__main > * {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* ContentHeader는 본래 크기만 사용, 세로 확장 제외(ContentHeader+ContentArea 형제 페이지 대응) */
+.mg-v2-desktop-layout__main > .mg-v2-content-header {
+  flex: 0 0 auto;
+}
+
+/* 통합 스케줄: 내부 flex 높이 계산 체인 안정화 */
+.mg-v2-desktop-layout__main > .integrated-schedule.integrated-schedule--b0kla {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}

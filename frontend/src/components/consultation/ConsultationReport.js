@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ConsultationReport.css';
 
 const ConsultationReport = () => {
@@ -19,10 +19,10 @@ const ConsultationReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [periodOptions, setPeriodOptions] = useState([
-    { value: 'MONTH', label: '월별', icon: '📅', color: '#3b82f6', description: '월별 보고서' },
-    { value: 'YEAR', label: '년별', icon: '📊', color: '#10b981', description: '년별 보고서' },
-    { value: 'QUARTER', label: '분기별', icon: '📈', color: '#f59e0b', description: '분기별 보고서' },
-    { value: 'WEEK', label: '주별', icon: '📋', color: '#8b5cf6', description: '주별 보고서' }
+    { value: 'MONTH', label: '월별', icon: '📅', color: 'var(--mg-primary-500)', description: '월별 보고서' },
+    { value: 'YEAR', label: '년별', icon: '📊', color: 'var(--mg-success-500)', description: '년별 보고서' },
+    { value: 'QUARTER', label: '분기별', icon: '📈', color: 'var(--mg-warning-500)', description: '분기별 보고서' },
+    { value: 'WEEK', label: '주별', icon: '📋', color: 'var(--mg-purple-500)', description: '주별 보고서' }
   ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [yearOptions, setYearOptions] = useState(() => {
@@ -31,7 +31,7 @@ const ConsultationReport = () => {
       value: currentYear - i,
       label: `${currentYear - i}년`,
       icon: '📅',
-      color: '#3b82f6',
+      color: 'var(--mg-primary-500)',
       description: `${currentYear - i}년`
     }));
   });
@@ -40,20 +40,18 @@ const ConsultationReport = () => {
       value: i + 1,
       label: `${i + 1}월`,
       icon: '📅',
-      color: '#3b82f6',
+      color: 'var(--mg-primary-500)',
       description: `${i + 1}월`
     }));
   });
   const [loadingYearCodes, setLoadingYearCodes] = useState(false);
   const [loadingMonthCodes, setLoadingMonthCodes] = useState(false);
 
-  // 보고서 기간 코드 로드
   const loadPeriodCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/REPORT_PERIOD');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=REPORT_PERIOD');
       if (response && response.length > 0) {
-        // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
             acc.push(code);
@@ -72,19 +70,16 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('보고서 기간 코드 로드 실패:', error);
-      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingCodes(false);
     }
   }, []);
 
-  // 년도 코드 로드
   const loadYearCodes = useCallback(async () => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet('/api/common-codes/YEAR_RANGE');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=YEAR_RANGE');
       if (response && response.length > 0) {
-        // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
             acc.push(code);
@@ -102,19 +97,16 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('년도 코드 로드 실패:', error);
-      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingYearCodes(false);
     }
   }, []);
 
-  // 월 코드 로드
   const loadMonthCodes = useCallback(async () => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet('/api/common-codes/MONTH_RANGE');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=MONTH_RANGE');
       if (response && response.length > 0) {
-        // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
             acc.push(code);
@@ -132,7 +124,6 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('월 코드 로드 실패:', error);
-      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingMonthCodes(false);
     }
@@ -159,7 +150,6 @@ const ConsultationReport = () => {
 
       console.log('📊 상담 리포트 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
 
-      // 사용자 역할에 따라 다른 API 호출
       let response;
       if (user.role === 'CLIENT') {
         response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
@@ -198,7 +188,6 @@ const ConsultationReport = () => {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     
-    // 선택된 기간에 따른 필터링
     let filteredConsultations = consultations;
     
     if (selectedPeriod === 'MONTH') {
@@ -214,13 +203,14 @@ const ConsultationReport = () => {
       });
     }
 
-    // 통계 계산
     const totalConsultations = filteredConsultations.length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const completedConsultations = filteredConsultations.filter(c => c.status === 'COMPLETED').length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const confirmedConsultations = filteredConsultations.filter(c => c.status === 'CONFIRMED').length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const cancelledConsultations = filteredConsultations.filter(c => c.status === 'CANCELLED').length;
     
-    // 상담사별 통계 (내담자용)
     const consultantStats = {};
     if (user.role === 'CLIENT') {
       filteredConsultations.forEach(consultation => {
@@ -234,13 +224,15 @@ const ConsultationReport = () => {
           };
         }
         consultantStats[consultantName].total++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'COMPLETED') consultantStats[consultantName].completed++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'CONFIRMED') consultantStats[consultantName].confirmed++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'CANCELLED') consultantStats[consultantName].cancelled++;
       });
     }
 
-    // 내담자별 통계 (상담사용)
     const clientStats = {};
     if (user.role === 'CONSULTANT') {
       filteredConsultations.forEach(consultation => {
@@ -254,13 +246,15 @@ const ConsultationReport = () => {
           };
         }
         clientStats[clientName].total++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'COMPLETED') clientStats[clientName].completed++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'CONFIRMED') clientStats[clientName].confirmed++;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (consultation.status === 'CANCELLED') clientStats[clientName].cancelled++;
       });
     }
 
-    // 월별 통계
     const monthlyStats = {};
     filteredConsultations.forEach(consultation => {
       const date = new Date(consultation.date);
@@ -274,8 +268,11 @@ const ConsultationReport = () => {
         };
       }
       monthlyStats[monthKey].total++;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       if (consultation.status === 'COMPLETED') monthlyStats[monthKey].completed++;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       if (consultation.status === 'CONFIRMED') monthlyStats[monthKey].confirmed++;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       if (consultation.status === 'CANCELLED') monthlyStats[monthKey].cancelled++;
     });
 
@@ -315,30 +312,30 @@ const ConsultationReport = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="상담 리포트">
         <div className="consultation-report-page">
           <div className="loading-container">
-            <UnifiedLoading text="세션 확인 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="상담 리포트">
         <div className="consultation-report-page">
           <div className="loading-container">
-            <UnifiedLoading text="상담 리포트를 생성하는 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="상담 리포트">
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">
@@ -532,7 +529,7 @@ const ConsultationReport = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

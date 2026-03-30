@@ -1,0 +1,365 @@
+/**
+ * PaymentSessionsWidget 전용 스타일
+ * 하드코딩 제거 및 통합 디자인 토큰 사용
+ */
+
+.payment-sessions-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xl);
+  padding: var(--cs-spacing-md);
+}
+
+/* 결제 통계 카드들 */
+.payment-sessions-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cs-spacing-lg);
+}
+
+.payment-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  border-radius: var(--cs-radius-lg);
+  background: var(--cs-glass-light);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--cs-gray-300);
+  transition: all 0.3s ease;
+}
+
+.payment-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-lg);
+}
+
+/* 통계 카드 색상별 스타일 */
+.payment-stat-card--primary::before {
+  background: linear-gradient(180deg, var(--cs-primary-500), var(--cs-primary-600));
+}
+
+.payment-stat-card--primary .payment-stat-icon {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+}
+
+.payment-stat-card--success::before {
+  background: linear-gradient(180deg, var(--cs-success-500), var(--cs-success-600));
+}
+
+.payment-stat-card--success .payment-stat-icon {
+  background: var(--cs-success-100);
+  color: var(--cs-success-600);
+}
+
+.payment-stat-card--warning::before {
+  background: linear-gradient(180deg, var(--cs-warning-500), var(--cs-warning-600));
+}
+
+.payment-stat-card--warning .payment-stat-icon {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-700);
+}
+
+.payment-stat-card--info::before {
+  background: linear-gradient(180deg, var(--cs-blue-500), var(--cs-blue-600));
+}
+
+.payment-stat-card--info .payment-stat-icon {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-600);
+}
+
+/* 통계 아이콘 */
+.payment-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 통계 내용 */
+.payment-stat-content {
+  flex: 1;
+}
+
+.payment-stat-label {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-600);
+  margin-bottom: var(--cs-spacing-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.payment-stat-value {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-gray-900);
+}
+
+/* 결제 내역 리스트 */
+.payment-sessions-list {
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  padding: var(--cs-spacing-lg);
+  border: 1px solid var(--cs-slate-200);
+}
+
+.payment-sessions-subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-gray-900);
+  margin: 0 0 var(--cs-spacing-lg) 0;
+}
+
+.payment-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+/* 결제 아이템 */
+.payment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-white-90);
+  border-radius: var(--cs-radius-md);
+  border: 1px solid var(--cs-slate-100);
+  transition: all 0.2s ease;
+}
+
+.payment-item:hover {
+  background: white;
+  border-color: var(--cs-slate-200);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.payment-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+  flex-shrink: 0;
+}
+
+.payment-item__content {
+  flex: 1;
+}
+
+.payment-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.payment-item__package {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-gray-900);
+  margin: 0;
+}
+
+.payment-item__details {
+  display: flex;
+  gap: var(--cs-spacing-lg);
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-600);
+}
+
+.payment-item__sessions,
+.payment-item__date {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+}
+
+/* 빈 상태 */
+.payment-sessions-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cs-spacing-xxl);
+  text-align: center;
+}
+
+.payment-sessions-empty__icon {
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-gray-400);
+}
+
+.payment-sessions-empty__text {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-gray-700);
+  margin: 0 0 var(--cs-spacing-sm) 0;
+}
+
+.payment-sessions-empty__subtitle {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-500);
+  margin: 0;
+}
+
+/* 배지 스타일 개선 */
+.mg-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-lg);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mg-badge-success {
+  background: var(--cs-success-100);
+  color: var(--cs-success-800);
+}
+
+.mg-badge-warning {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-800);
+}
+
+.mg-badge-info {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-800);
+}
+
+.mg-badge-danger {
+  background: var(--cs-error-100);
+  color: var(--cs-error-800);
+}
+
+.mg-badge-secondary {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-800);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .payment-sessions-widget-content {
+    padding: var(--cs-spacing-sm);
+    gap: var(--cs-spacing-lg);
+  }
+  
+  .payment-sessions-stats {
+    grid-template-columns: 1fr;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .payment-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .payment-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .payment-stat-value {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .payment-sessions-list {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .payment-item {
+    flex-direction: column;
+    gap: var(--cs-spacing-sm);
+    text-align: center;
+  }
+  
+  .payment-item__header {
+    flex-direction: column;
+    gap: var(--cs-spacing-xs);
+    align-items: center;
+  }
+  
+  .payment-item__details {
+    justify-content: center;
+    gap: var(--cs-spacing-md);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .payment-stat-card {
+    background: var(--cs-glass-dark);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .payment-stat-label {
+    color: var(--cs-gray-400);
+  }
+  
+  .payment-stat-value {
+    color: var(--cs-gray-100);
+  }
+  
+  .payment-sessions-list {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .payment-sessions-subtitle {
+    color: var(--cs-gray-100);
+  }
+  
+  .payment-item {
+    background: var(--cs-slate-800);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .payment-item:hover {
+    background: var(--cs-slate-750);
+    border-color: var(--cs-slate-600);
+  }
+  
+  .payment-item__package {
+    color: var(--cs-gray-100);
+  }
+  
+  .payment-item__details {
+    color: var(--cs-gray-400);
+  }
+  
+  .payment-sessions-empty__text {
+    color: var(--cs-gray-300);
+  }
+  
+  .payment-sessions-empty__subtitle {
+    color: var(--cs-gray-400);
+  }
+}

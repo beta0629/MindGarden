@@ -1,0 +1,407 @@
+/**
+ * ErpManagementGridWidget - ERP 관리 그리드 위젯 CSS
+ * ERP 관리 메뉴 (재무, 구매, 예산 등)를 그리드로 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.erp-management-grid-widget {
+  width: 100%;
+}
+
+.erp-management-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* ERP 액션 카테고리 */
+.erp-action-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xl);
+}
+
+.erp-action-category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+/* 카테고리 헤더 */
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--cs-spacing-sm);
+  border-bottom: 2px solid var(--cs-border-light);
+}
+
+.category-title {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  margin: 0;
+}
+
+.category-count {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-muted);
+  background: var(--cs-gray-100);
+  padding: 2px 8px;
+  border-radius: var(--cs-radius-sm);
+}
+
+/* ERP 액션 그리드 */
+.erp-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cs-spacing-lg);
+}
+
+/* ERP 액션 카드 */
+.erp-action-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.erp-action-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-lg);
+  border-color: var(--cs-primary-300);
+}
+
+.erp-action-card.clickable:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 카테고리별 액션 카드 스타일 */
+.erp-action-finance {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.erp-action-finance:hover {
+  background: var(--cs-glass-success-light);
+}
+
+.erp-action-purchase {
+  border-left: 4px solid var(--cs-blue-500);
+}
+
+.erp-action-purchase:hover {
+  background: var(--cs-glass-blue-light);
+}
+
+.erp-action-budget {
+  border-left: 4px solid var(--cs-orange-500);
+}
+
+.erp-action-budget:hover {
+  background: var(--cs-glass-orange-light);
+}
+
+.erp-action-expense {
+  border-left: 4px solid var(--cs-purple-500);
+}
+
+.erp-action-expense:hover {
+  background: var(--cs-glass-primary-10);
+}
+
+.erp-action-report {
+  border-left: 4px solid var(--cs-teal-500);
+}
+
+.erp-action-report:hover {
+  background: var(--cs-glass-teal-light);
+}
+
+.erp-action-tax {
+  border-left: 4px solid var(--cs-yellow-600);
+}
+
+.erp-action-tax:hover {
+  background: var(--cs-glass-yellow-light);
+}
+
+.erp-action-analytics {
+  border-left: 4px solid var(--cs-pink-500);
+}
+
+.erp-action-analytics:hover {
+  background: var(--cs-glass-pink-light);
+}
+
+.erp-action-settings {
+  border-left: 4px solid var(--cs-gray-500);
+}
+
+.erp-action-settings:hover {
+  background: var(--cs-glass-gray-light);
+}
+
+.erp-action-other {
+  border-left: 4px solid var(--cs-gray-400);
+}
+
+.erp-action-other:hover {
+  background: var(--cs-glass-gray-light-subtle);
+}
+
+/* ERP 액션 아이콘 래퍼 */
+.erp-action-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  flex-shrink: 0;
+}
+
+.erp-action-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--cs-text-primary);
+}
+
+/* ERP 액션 콘텐츠 */
+.erp-action-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.erp-action-title {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.erp-action-description {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 빈 상태 */
+.erp-management-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.erp-management-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.erp-management-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .erp-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--cs-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-actions-grid {
+    grid-template-columns: 1fr;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .erp-action-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .erp-action-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .erp-action-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .category-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .category-count {
+    align-self: flex-start;
+  }
+  
+  .erp-management-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .erp-action-categories {
+    gap: var(--cs-spacing-lg);
+  }
+  
+  .erp-action-card {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .erp-action-icon-wrapper {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .erp-action-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .erp-action-title {
+    font-size: var(--cs-text-sm);
+  }
+  
+  .erp-action-description {
+    font-size: var(--cs-text-xs);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .category-header {
+    border-color: var(--cs-gray-700);
+  }
+  
+  .category-count {
+    background: var(--cs-gray-800);
+    color: var(--cs-gray-300);
+  }
+  
+  .erp-action-card {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .erp-action-card.clickable:hover {
+    border-color: var(--cs-primary-400);
+  }
+  
+  .erp-action-finance:hover {
+    background: var(--cs-glass-success-dark);
+  }
+  
+  .erp-action-purchase:hover {
+    background: var(--cs-glass-blue-dark);
+  }
+  
+  .erp-action-budget:hover {
+    background: var(--cs-glass-orange-dark);
+  }
+  
+  .erp-action-expense:hover {
+    background: var(--cs-glass-primary-40);
+  }
+  
+  .erp-action-report:hover {
+    background: var(--cs-glass-teal-dark);
+  }
+  
+  .erp-action-tax:hover {
+    background: var(--cs-glass-yellow-dark);
+  }
+  
+  .erp-action-analytics:hover {
+    background: var(--cs-glass-pink-dark);
+  }
+  
+  .erp-action-settings:hover,
+  .erp-action-other:hover {
+    background: var(--cs-glass-gray-dark);
+  }
+  
+  .erp-action-icon-wrapper {
+    background: var(--cs-glass-dark-strong);
+  }
+}
+
+/* 애니메이션 효과 */
+.erp-action-category {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.erp-action-category:nth-child(1) { animation-delay: 0.05s; }
+.erp-action-category:nth-child(2) { animation-delay: 0.1s; }
+.erp-action-category:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.erp-action-card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.erp-action-card:nth-child(1) { animation-delay: 0.1s; }
+.erp-action-card:nth-child(2) { animation-delay: 0.15s; }
+.erp-action-card:nth-child(3) { animation-delay: 0.2s; }
+.erp-action-card:nth-child(4) { animation-delay: 0.25s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 호버 애니메이션 */
+.erp-action-icon {
+  transition: transform 0.2s ease;
+}
+
+.erp-action-card:hover .erp-action-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* 로딩/에러 상태 스타일 */
+.erp-management-grid-widget .widget-loading,
+.erp-management-grid-widget .widget-error {
+  min-height: 300px;
+}

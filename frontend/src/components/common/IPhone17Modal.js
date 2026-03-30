@@ -7,14 +7,23 @@ import './IPhone17Modal.css';
  * 
  * @param {Object} props - 컴포넌트 props
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {function} props.onClose - 모달 닫기 핸들러
+/**
  * @param {string} props.title - 모달 제목
+/**
  * @param {React.ReactNode} props.children - 모달 내용
+/**
  * @param {string} props.variant - 모달 변형 (default, content, fullscreen, side-sheet, alert)
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {Object} props.style - 인라인 스타일
+/**
  * @param {boolean} props.closeOnOverlayClick - 오버레이 클릭 시 닫기 여부 (기본값: true)
+/**
  * @param {boolean} props.showCloseButton - 닫기 버튼 표시 여부 (기본값: true)
+/**
  * @param {React.ReactNode} props.footer - 푸터 내용
  */
 const IPhone17Modal = ({

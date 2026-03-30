@@ -1,0 +1,86 @@
+/* StatusBadge - 공통 상태 배지 단일 소스 (variant 기반, BADGE_STYLE_UNIFICATION_PLAN) */
+.mg-v2-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-8, 8px);
+  font-size: var(--mg-font-xs);
+  font-weight: 600;
+  border-radius: var(--mg-radius-full);
+  white-space: nowrap;
+}
+
+/* variant 기반 모디파이어 (권장) */
+.mg-v2-status-badge.mg-v2-badge--success {
+  background-color: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+  font-weight: 700;
+}
+
+.mg-v2-status-badge.mg-v2-badge--warning {
+  background-color: var(--mg-badge-status-warning-bg);
+  color: var(--mg-badge-status-warning-text);
+  font-weight: 700;
+}
+
+.mg-v2-status-badge.mg-v2-badge--neutral {
+  background-color: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}
+
+.mg-v2-status-badge.mg-v2-badge--danger {
+  background-color: var(--mg-badge-status-danger-bg);
+  color: var(--mg-badge-status-danger-text);
+}
+
+.mg-v2-status-badge.mg-v2-badge--info {
+  background-color: var(--mg-badge-status-info-bg);
+  color: var(--mg-badge-status-info-text);
+}
+
+/* 레거시 BEM 모디파이어 (--active 등): variant와 동일 스펙으로 매핑, Phase 3에서 StatusBadge 컴포넌트로 전환 후 제거 가능 */
+.mg-v2-status-badge--active {
+  background-color: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+}
+
+.mg-v2-status-badge--inactive {
+  background-color: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}
+
+.mg-v2-status-badge--pending {
+  background-color: var(--mg-badge-status-warning-bg);
+  color: var(--mg-badge-status-warning-text);
+}
+
+.mg-v2-status-badge--completed {
+  background-color: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+}
+
+.mg-v2-status-badge--suspended {
+  background-color: var(--mg-badge-status-danger-bg);
+  color: var(--mg-badge-status-danger-text);
+}
+
+.mg-v2-status-badge--default {
+  background-color: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}
+
+/* variant 이름 별칭 (AdminDashboardB0KlA 등 스코프 오버레이 호환) */
+.mg-v2-status-badge--success {
+  background-color: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+}
+
+.mg-v2-status-badge--warning {
+  background-color: var(--mg-badge-status-warning-bg);
+  color: var(--mg-badge-status-warning-text);
+}
+
+.mg-v2-status-badge--neutral {
+  background-color: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}

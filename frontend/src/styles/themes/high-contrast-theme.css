@@ -1,37 +1,37 @@
 /* ===== 고대비 테마 (접근성 향상) ===== */
 [data-theme="high-contrast"] {
   /* 기본 색상 - 고대비 */
-  --color-primary: #0000ff;
-  --color-primary-hover: #0000cc;
-  --color-primary-active: #000099;
-  --color-primary-light: #e6e6ff;
-  --color-primary-dark: #000066;
+  --color-primary: var(--cs-blue-600);
+  --color-primary-hover: var(--cs-blue-700);
+  --color-primary-active: var(--cs-blue-800);
+  --color-primary-light: var(--cs-blue-50);
+  --color-primary-dark: var(--cs-blue-900);
 
-  --color-secondary: #666666;
-  --color-secondary-hover: #333333;
-  --color-secondary-active: #000000;
-  --color-secondary-light: #f0f0f0;
-  --color-secondary-dark: #000000;
+  --color-secondary: var(--mg-gray-600);
+  --color-secondary-hover: var(--mg-gray-800);
+  --color-secondary-active: var(--mg-black);
+  --color-secondary-light: var(--cs-gray-100);
+  --color-secondary-dark: var(--mg-black);
 
   /* 배경 색상 - 고대비 */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8f8f8;
-  --color-bg-tertiary: #f0f0f0;
-  --color-bg-accent: #e8e8e8;
+  --color-bg-primary: var(--mg-white);
+  --color-bg-secondary: var(--cs-gray-50);
+  --color-bg-tertiary: var(--cs-gray-100);
+  --color-bg-accent: var(--cs-gray-200);
   --color-bg-glass: rgba(255, 255, 255, 0.95);
   --color-bg-glass-strong: rgba(255, 255, 255, 0.98);
 
   /* 텍스트 색상 - 고대비 */
-  --color-text-primary: #000000;
-  --color-text-secondary: #333333;
-  --color-text-tertiary: #666666;
-  --color-text-muted: #999999;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: var(--mg-black);
+  --color-text-secondary: var(--mg-gray-800);
+  --color-text-tertiary: var(--mg-gray-600);
+  --color-text-muted: var(--mg-gray-500);
+  --color-text-inverse: var(--mg-white);
 
   /* 테두리 색상 - 고대비 */
-  --color-border-primary: #000000;
-  --color-border-secondary: #333333;
-  --color-border-accent: #666666;
+  --color-border-primary: var(--mg-black);
+  --color-border-secondary: var(--mg-gray-800);
+  --color-border-accent: var(--mg-gray-600);
   --color-border-focus: #0000ff;
 
   /* 상태 색상 - 고대비 */
@@ -55,7 +55,7 @@
   --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 16px 0 rgba(0, 0, 0, 0.4), 0 4px 8px 0 rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 12px 24px 0 rgba(0, 0, 0, 0.5), 0 6px 12px 0 rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 12px 24px 0 var(--mg-overlay), 0 6px 12px 0 rgba(0, 0, 0, 0.4);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
   --shadow-glass-strong: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 
@@ -63,14 +63,14 @@
   --ios-bg-primary: rgba(255, 255, 255, 0.98);
   --ios-bg-secondary: rgba(248, 248, 248, 0.98);
   --ios-border: rgba(0, 0, 0, 0.9);
-  --ios-text-primary: #000000;
-  --ios-text-secondary: #333333;
+  --ios-text-primary: var(--mg-black);
+  --ios-text-secondary: var(--mg-gray-800);
 
   /* 헤더 특화 - 고대비 */
   --header-bg: rgba(255, 255, 255, 0.98);
   --header-border: rgba(0, 0, 0, 0.9);
-  --header-text: #000000;
-  --header-text-muted: #333333;
+  --header-text: var(--mg-black);
+  --header-text-muted: var(--mg-gray-800);
 
   /* 모달 특화 - 고대비 */
   --modal-bg: rgba(255, 255, 255, 0.98);
@@ -81,7 +81,7 @@
   /* 드롭다운 특화 - 고대비 */
   --dropdown-bg: rgba(255, 255, 255, 0.98);
   --dropdown-border: rgba(0, 0, 0, 0.9);
-  --dropdown-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --dropdown-shadow: 0 10px 15px -3px var(--mg-overlay);
 
   /* 고대비 모드 전용 스타일 */
   --border-width: 2px;

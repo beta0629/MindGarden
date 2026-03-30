@@ -1,50 +1,40 @@
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { XCircle, AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
+import UnifiedModal from './modals/UnifiedModal';
 
 /**
- * 확인 모달 컴포넌트
- * 알럿창 대신 사용할 커스텀 모달
+ * 확인 모달 컴포넌트 (단일 소스)
+ * 알럿창 대신 사용할 커스텀 모달 (UnifiedModal 기반)
+ * common/modals/ConfirmModal.js는 본 파일 re-export만 제공.
  */
-const ConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "확인", 
-  message = "정말로 진행하시겠습니까?", 
-  confirmText = "확인", 
-  cancelText = "취소",
-  type = "default" // default, danger, warning, success
+const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = '확인',
+  message = '정말로 진행하시겠습니까?',
+  confirmText = '확인',
+  cancelText = '취소',
+  type = 'default' // default, danger, warning, success
 }) => {
   const { setModalOpen } = useSession();
+  const prevIsOpenRef = useRef(isOpen);
 
   useEffect(() => {
-    if (isOpen) {
-      setModalOpen(true);
-      console.log('📱 확인 모달 열림 - 세션 체크 일시 중단');
-    } else {
-      setModalOpen(false);
-      console.log('📱 확인 모달 닫힘 - 세션 체크 재개');
+    if (isOpen !== prevIsOpenRef.current) {
+      setModalOpen(isOpen);
+      prevIsOpenRef.current = isOpen;
     }
+  }, [isOpen, setModalOpen]);
 
-    return () => {
-      setModalOpen(false);
-      console.log('📱 확인 모달 언마운트 - 세션 체크 재개');
-    };
-  }, [isOpen]); // setModalOpen 제거하여 무한 리렌더링 방지
-
-  if (!isOpen) return null;
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+  useEffect(() => {
+    return () => setModalOpen(false);
+  }, []);
 
   const handleConfirm = () => {
-    onConfirm();
-    onClose();
+    onConfirm?.();
+    onClose?.();
   };
 
   const getIcon = () => {
@@ -73,44 +63,36 @@ const ConfirmModal = ({
     }
   };
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={handleOverlayClick}>
-      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <h2 className="mg-v2-modal-title">{title}</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-        
-        <div className="mg-v2-modal-body">
-          <div className="mg-v2-empty-state">
-            {getIcon()}
-            <p className="mg-v2-text-base mg-v2-mt-md">{message}</p>
-          </div>
-        </div>
-        
-        <div className="mg-v2-modal-footer">
-          <button 
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="small"
+      showCloseButton={true}
+      backdropClick={true}
+      actions={
+        <>
+          <button
             className="mg-v2-button mg-v2-button--secondary"
             onClick={onClose}
           >
             {cancelText}
           </button>
-          <button 
+          <button
             className={`mg-v2-button ${getConfirmButtonClass()}`}
             onClick={handleConfirm}
           >
             {confirmText}
           </button>
-        </div>
+        </>
+      }
+    >
+      <div className="mg-v2-empty-state">
+        {getIcon()}
+        <p className="mg-v2-text-base mg-v2-mt-md">{message}</p>
       </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

@@ -1,0 +1,262 @@
+.soap-note-editor {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.editor-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.editor-info {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ai-badge,
+.model-badge,
+.confidence-badge,
+.completion-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ai-badge {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.model-badge {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.confidence-badge {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.completion-badge {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.approved-badge {
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    color: #065f46;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.soap-section {
+    margin-bottom: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.soap-section:hover {
+    border-color: #2563eb;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.section-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2563eb, var(--mg-primary-500));
+    color: white;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.section-title strong {
+    font-size: 16px;
+    color: #1f2937;
+}
+
+.section-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin-left: auto;
+}
+
+.soap-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: 'Malgun Gothic', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.soap-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.soap-textarea::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.save-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.save-message.success {
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    color: #065f46;
+}
+
+.save-message.error {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--mg-shadow-medium);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.btn-success {
+    background: var(--mg-success-500);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+}
+
+.approval-notice {
+    color: #059669;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 섹션별 색상 구분 (선택적) */
+.soap-section:nth-child(2) .section-letter {
+    background: linear-gradient(135deg, var(--mg-success-500), #34d399);
+}
+
+.soap-section:nth-child(3) .section-letter {
+    background: linear-gradient(135deg, var(--mg-warning-500), #fbbf24);
+}
+
+.soap-section:nth-child(4) .section-letter {
+    background: linear-gradient(135deg, var(--mg-purple-500), #a78bfa);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .soap-note-editor {
+        padding: 16px;
+    }
+
+    .editor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .editor-info {
+        width: 100%;
+    }
+
+    .section-title {
+        flex-wrap: wrap;
+    }
+
+    .section-desc {
+        margin-left: 0;
+        flex-basis: 100%;
+    }
+
+    .editor-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

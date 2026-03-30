@@ -1,0 +1,166 @@
+/**
+ * MobileLnbDrawer - 280px 슬라이드 드로어
+ * RESPONSIVE_LAYOUT_SPEC: 모바일 LNB 280px
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mobile-lnb-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--cs-black) 40%, transparent);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+}
+
+.mg-v2-mobile-lnb-overlay--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mg-v2-mobile-lnb-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--mg-layout-sidebar-width-mobile, 280px);
+  max-width: 85vw;
+  height: 100vh;
+  background: var(--mg-layout-sidebar-bg, #2C2C2C);
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px var(--mg-shadow-light);
+}
+
+.mg-v2-mobile-lnb-drawer--open {
+  transform: translateX(0);
+}
+
+.mg-v2-mobile-lnb-drawer__header {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--cs-glass-light-subtle);
+}
+
+.mg-v2-mobile-lnb-drawer__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cs-glass-white-90);
+}
+
+.mg-v2-mobile-lnb-drawer__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+}
+
+.mg-v2-mobile-lnb-drawer__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-v2-mobile-lnb-drawer__group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-mobile-lnb-drawer__group-head {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mobile-lnb-drawer__group-chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.mg-v2-mobile-lnb-drawer__group-chevron:hover {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link {
+  flex: 1;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* 아코디언: 접힌 상태에서는 서브리스트 비노출 */
+.mg-v2-mobile-lnb-drawer__group:not(.mg-v2-mobile-lnb-drawer__group--expanded) .mg-v2-mobile-lnb-drawer__sublist {
+  display: none;
+}
+
+.mg-v2-mobile-lnb-drawer__sublist {
+  margin: 2px 0 8px 14px;
+  padding: 4px 0 0 10px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.mg-v2-mobile-lnb-drawer__sublist .mg-v2-lnb-menu-item .mg-v2-nav-link {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.92;
+  min-height: 36px;
+  padding: 8px 14px;
+}
+
+.mg-v2-mobile-lnb-drawer__sublist .mg-v2-lnb-menu-item .mg-v2-nav-link:hover,
+.mg-v2-mobile-lnb-drawer__sublist .mg-v2-lnb-menu-item .mg-v2-nav-link.mg-v2-nav-link--active {
+  opacity: 1;
+}
+
+.mg-v2-mobile-lnb-drawer__footer {
+  padding: 16px 12px;
+  border-top: 1px solid var(--cs-glass-light-subtle);
+}
+
+.mg-v2-mobile-lnb-drawer__logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mg-v2-mobile-lnb-drawer__logout:hover {
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+}
+
+.mg-v2-mobile-lnb-drawer__logout:active {
+  background: color-mix(in srgb, var(--color-danger) 25%, transparent);
+}

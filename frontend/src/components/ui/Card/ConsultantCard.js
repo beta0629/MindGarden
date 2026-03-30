@@ -2,34 +2,43 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
+import Button from '../Button/Button';
+import Avatar from '../../common/Avatar';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
+import { formatCurrency } from '../../../utils/formatUtils';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 공통 상담사 카드 컴포넌트
- * - 디자인 시스템 v2.0 적용
- * - 글라스모피즘 효과
- * - 반응형 지원
- * - 선택 상태 관리
- * 
- * @author MindGarden
+ * - 디자인 시스템 v2.0 적용, 글라스모피즘, 반응형, 선택 상태 관리
+ *
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-10-15
  */
-const ConsultantCard = ({ 
-    consultant, 
-    onClick, 
+const ConsultantCard = ({
+    consultant,
+    onClick,
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select', 'salary-profile'
     showActions = true,
-    className = ''
+    className = '',
+    // salary-profile 전용
+    grade,
+    baseSalary = null,
+    formattedBaseSalary,
+    renderActions,
+    onCardClick,
+    compact: salaryProfileCompact = false,
+    nameId
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     
     // 평점 정보 계산
     const ratingInfo = getConsultantRatingInfo(consultant);
-    /**
+/**
      * 가용성 상태에 따른 클래스명 반환
      */
     const getAvailabilityClass = () => {
@@ -43,7 +52,7 @@ const ConsultantCard = ({
         return 'available';
     };
 
-    /**
+/**
      * 가용성 상태에 따른 텍스트 반환
      */
     const getAvailabilityText = () => {
@@ -56,7 +65,7 @@ const ConsultantCard = ({
         }
     };
 
-    /**
+/**
      * 가용성 상태에 따른 색상 반환 (CSS 변수 사용)
      */
     const getAvailabilityColor = () => {
@@ -70,17 +79,7 @@ const ConsultantCard = ({
     };
 
 
-    /**
-     * 이니셜 반환
-     */
-    const getInitial = () => {
-        if (consultant.name) {
-            return consultant.name.charAt(0);
-        }
-        return '?';
-    };
-
-    /**
+/**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -89,7 +88,7 @@ const ConsultantCard = ({
         }
     };
 
-    /**
+/**
      * 가용성 정보 반환
      */
     const getAvailabilityInfo = () => {
@@ -113,14 +112,16 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
-            <div className="mg-consultant-card__avatar">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={consultant.profileImageUrl}
+                displayName={toDisplayString(consultant.name)}
+                className="mg-consultant-card__avatar"
+            />
             <div className="mg-consultant-card__info">
                 <div className="mg-consultant-card__header">
-                    <h4 className="mg-consultant-card__name">{consultant.name}</h4>
+                    <h4 className="mg-consultant-card__name">{toDisplayString(consultant.name)}</h4>
                     <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                         <span>{getAvailabilityText()}</span>
                     </div>
@@ -152,7 +153,7 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             {/* 상태 배지 */}
             <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
@@ -160,13 +161,15 @@ const ConsultantCard = ({
             </div>
 
             {/* 상담사 아바타 */}
-            <div className="mg-consultant-card__avatar mg-consultant-card__avatar--large">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={consultant.profileImageUrl}
+                displayName={toDisplayString(consultant.name)}
+                className="mg-consultant-card__avatar mg-consultant-card__avatar--large"
+            />
 
             {/* 상담사 정보 */}
             <div className="mg-consultant-card__info">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{toDisplayString(consultant.name)}</h4>
                 
                 {/* 평점 섹션 */}
                 <div className="mg-consultant-card__rating-section">
@@ -188,12 +191,12 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__details">
                     <div className="mg-consultant-card__detail-item">
                         <Mail size={16} />
-                        <span>{consultant.email || '이메일 없음'}</span>
+                        <span>{toDisplayString(consultant.email, '이메일 없음')}</span>
                     </div>
                     
                     <div className="mg-consultant-card__detail-item">
                         <Phone size={16} />
-                        <span>{consultant.phone || '전화번호 없음'}</span>
+                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
                     </div>
                     
                     <div className="mg-consultant-card__detail-item">
@@ -276,19 +279,21 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             <div className="mg-consultant-card__header-mobile">
-                <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile">
-                    {getInitial()}
-                </div>
+                <Avatar
+                    profileImageUrl={consultant.profileImageUrl}
+                    displayName={toDisplayString(consultant.name)}
+                    className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile"
+                />
                 <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                     <span>{getAvailabilityText()}</span>
                 </div>
             </div>
             
             <div className="mg-consultant-card__content-mobile">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile">{toDisplayString(consultant.name)}</h4>
                 
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
@@ -304,11 +309,11 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__info-mobile">
                     <div className="mg-consultant-card__info-row">
                         <Mail size={14} />
-                        <span>{consultant.email || '이메일 없음'}</span>
+                        <span>{toDisplayString(consultant.email, '이메일 없음')}</span>
                     </div>
                     <div className="mg-consultant-card__info-row">
                         <Phone size={14} />
-                        <span>{consultant.phone || '전화번호 없음'}</span>
+                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
                     </div>
                 </div>
                 
@@ -363,6 +368,149 @@ const ConsultantCard = ({
         </div>
     );
 
+    // 스케줄 선택용 카드 (B0KlA, 48px 아바타, 전문분야 1줄, 평점/경력 간략, 선택하기/상세보기)
+    const renderScheduleSelectCard = () => (
+        <div
+            className={`mg-consultant-card mg-consultant-card--schedule-select ${selected ? 'mg-consultant-card--selected' : ''} ${!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) ? 'mg-consultant-card--unavailable' : ''} ${className}`}
+            data-availability={getAvailabilityClass()}
+            onClick={handleClick}
+            draggable={draggable}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
+        >
+            <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
+                <span>{getAvailabilityText()}</span>
+            </div>
+
+            <Avatar
+                profileImageUrl={consultant.profileImageUrl}
+                displayName={toDisplayString(consultant.name)}
+                className="mg-consultant-card__avatar mg-consultant-card__avatar--schedule-select"
+            />
+
+            <div className="mg-consultant-card__info mg-consultant-card__info--schedule-select">
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--schedule-select">{toDisplayString(consultant.name)}</h4>
+
+                <div className="mg-consultant-card__specialty-inline">
+                    <SpecialtyDisplay
+                        consultant={consultant}
+                        variant="inline"
+                        showTitle={false}
+                        maxItems={5}
+                        debug={false}
+                    />
+                </div>
+
+                <div className="mg-consultant-card__meta-brief">
+                    <div className="mg-consultant-card__rating mg-consultant-card__rating--brief">
+                        <Star size={14} />
+                        <span>{ratingInfo.formattedRating}</span>
+                    </div>
+                    <span className="mg-consultant-card__experience-brief">{getFormattedExperience(consultant)} 경력</span>
+                </div>
+
+                <div className="mg-consultant-card__actions mg-consultant-card__actions--schedule-select">
+                    <Button
+                        variant="primary"
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleClick();
+                        }}
+                        disabled={!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY'))}
+                        preventDoubleClick={false}
+                    >
+                        {selected ? '선택됨' : '선택하기'}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDetailModal(true);
+                        }}
+                        preventDoubleClick={false}
+                    >
+                        상세보기
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+
+    /** salary-profile: 등급·기본급 메타, renderActions, onCardClick(선택). 상세 모달은 호출처에서 처리. */
+    const getBaseSalaryDisplay = () => {
+        if (formattedBaseSalary != null && formattedBaseSalary !== '') return formattedBaseSalary;
+        if (baseSalary != null && baseSalary !== '') return formatCurrency(Number(baseSalary));
+        return '—';
+    };
+
+    const renderSalaryProfileCard = () => {
+        const profileNameId = nameId || `profile-name-${consultant.id}`;
+        const cardContent = (
+            <>
+                <span className="mg-consultant-card__accent mg-consultant-card__accent--salary-profile" aria-hidden />
+                <div className="mg-consultant-card__info mg-consultant-card__info--salary-profile">
+                    <h4 className="mg-consultant-card__name mg-consultant-card__name--salary-profile" id={profileNameId}>
+                        {toDisplayString(consultant.name)}
+                    </h4>
+                    <div className="mg-consultant-card__meta mg-consultant-card__meta--salary-profile">
+                        {toDisplayString(consultant.email, '—')}
+                    </div>
+                    <div className="mg-consultant-card__grade mg-consultant-card__grade--salary-profile">
+                        등급: {grade != null && grade !== '' ? toDisplayString(grade) : '—'}
+                    </div>
+                    <div className="mg-consultant-card__base mg-consultant-card__base--salary-profile">
+                        <span className="mg-consultant-card__base-label">기본급</span>
+                        <span className="mg-consultant-card__base-value">{getBaseSalaryDisplay()}</span>
+                    </div>
+                    {renderActions && (
+                        <div className="mg-consultant-card__actions mg-consultant-card__actions--salary-profile" style={{ position: 'relative', zIndex: 2 }}>
+                            {renderActions(consultant)}
+                        </div>
+                    )}
+                </div>
+            </>
+        );
+
+        const baseClass = `mg-consultant-card mg-consultant-card--salary-profile ${salaryProfileCompact ? 'mg-consultant-card--salary-profile-compact' : ''} ${className}`.trim();
+
+        if (onCardClick) {
+            return (
+                <div
+                    className={baseClass}
+                    role="button"
+                    tabIndex={0}
+                    aria-labelledby={profileNameId}
+                    aria-label={`${toDisplayString(consultant.name)} 상세 보기`}
+                    style={{ position: 'relative' }}
+                    onClick={() => onCardClick(consultant)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onCardClick(consultant);
+                        }
+                    }}
+                >
+                    {cardContent}
+                </div>
+            );
+        }
+
+        return (
+            <article className={baseClass} aria-labelledby={profileNameId}>
+                {cardContent}
+            </article>
+        );
+    };
+
     // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
@@ -377,14 +525,16 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
-            <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple">
-                {getInitial()}
-            </div>
+            <Avatar
+                profileImageUrl={consultant.profileImageUrl}
+                displayName={toDisplayString(consultant.name)}
+                className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple"
+            />
             
             <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{toDisplayString(consultant.name)}</h4>
                 
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
@@ -422,22 +572,28 @@ const ConsultantCard = ({
                 return renderMobileCard();
             case 'mobile-simple':
                 return renderMobileSimpleCard();
+            case 'schedule-select':
+                return renderScheduleSelectCard();
+            case 'salary-profile':
+                return renderSalaryProfileCard();
             case 'detailed':
             default:
                 return renderDetailedCard();
         }
     };
 
+    const showDetailModalForVariant = variant !== 'salary-profile';
+
     return (
         <>
             {renderCard()}
-            
-            {/* 상담사 상세 모달 */}
-            <ConsultantDetailModal
-                isOpen={showDetailModal}
-                onClose={() => setShowDetailModal(false)}
-                consultant={consultant}
-            />
+            {showDetailModalForVariant && (
+                <ConsultantDetailModal
+                    isOpen={showDetailModal}
+                    onClose={() => setShowDetailModal(false)}
+                    consultant={consultant}
+                />
+            )}
         </>
     );
 };

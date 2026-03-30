@@ -1,0 +1,57 @@
+package com.coresolution.core.repository.ops;
+
+import com.coresolution.core.domain.ops.FeatureFlag;
+import com.coresolution.core.domain.ops.FeatureFlagState;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Feature Flag Repository
+ * 
+ * @author CoreSolution
+ * @version 1.0.0
+ * @since 2025-01-XX
+ */
+@Repository
+public interface FeatureFlagRepository extends JpaRepository<FeatureFlag, UUID> {
+    
+    /**
+     * flag_key로 Feature Flag 조회
+     */
+    Optional<FeatureFlag> findByFlagKey(String flagKey);
+    
+    /**
+     * 상태별 Feature Flag 개수 조회
+     */
+    @Query("SELECT COUNT(f) FROM FeatureFlag f WHERE f.state = :state AND f.isDeleted = false")
+    long countByState(@Param("state") FeatureFlagState state);
+    
+    /**
+     * 활성화된 Feature Flag 목록 조회
+     */
+    @Query("SELECT f FROM FeatureFlag f WHERE f.state = 'ENABLED' AND f.isDeleted = false")
+    List<FeatureFlag> findAllEnabled();
+    
+    /**
+     * 만료되지 않은 Feature Flag 목록 조회
+     */
+    @Query("SELECT f FROM FeatureFlag f WHERE (f.expiresAt IS NULL OR f.expiresAt > CURRENT_TIMESTAMP) AND f.isDeleted = false")
+    List<FeatureFlag> findAllNotExpired();
+
+    /**
+     * 소프트 삭제 제외 PK 조회
+     */
+    Optional<FeatureFlag> findByIdAndIsDeletedFalse(UUID id);
+
+    /**
+     * 테넌트별 PK 조회 (테넌트 격리)
+     */
+    Optional<FeatureFlag> findByTenantIdAndId(String tenantId, UUID id);
+}
+

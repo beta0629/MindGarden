@@ -1,10 +1,11 @@
 /**
  * 상담센터 랜딩페이지 - 히어로 섹션
+/**
  * 한글 번역 및 수채화 테마 적용
  */
 
-import React from 'react';
-import MGButton from '../common/MGButton';
+// import React from 'react';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './CounselingHero.css';
 
 const CounselingHero = () => {
@@ -25,13 +26,13 @@ const CounselingHero = () => {
               여러분의 모든 걸음을 함께 걸어가겠습니다.
             </p>
             <div className="counseling-hero__actions">
-              <MGButton variant="primary" size="large" className="counseling-hero__cta">
+              <button className="mg-button" variant="primary" size="large" className="counseling-hero__cta">
                 상담 예약하기
                 <span className="counseling-hero__arrow">→</span>
-              </MGButton>
-              <MGButton variant="secondary" size="large">
+              </button>
+              <button className="mg-button" variant="secondary" size="large">
                 더 알아보기
-              </MGButton>
+              </button>
             </div>
           </div>
 

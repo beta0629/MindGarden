@@ -1,20 +1,44 @@
 import React, { useState } from 'react';
-import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database } from 'lucide-react';
+import {
+  User,
+  Calendar,
+  Package,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  Eye,
+  Edit,
+  XCircle,
+  DollarSign
+} from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
+import { ActionButton, StatusBadge, CardContainer } from '../../common';
+import Avatar from '../../common/Avatar';
+
+/** statusInfo.variant (legacy) → StatusBadge variant 매핑 */
+const mapStatusVariant = (v) => {
+  if (!v) return undefined;
+  if (v === 'secondary' || v === 'error') return v === 'secondary' ? 'neutral' : 'danger';
+  return ['success', 'warning', 'neutral', 'danger', 'info'].includes(v) ? v : undefined;
+};
 
 /**
- * 매칭 카드 컴포넌트 - 글래스모피즘 디자인
- * SessionManagement 디자인 시스템 기반
+ * 매칭 카드 컴포넌트
+ * B0KlA ContentCard 스타일 (mg-v2-content-card)
+ *
+ * @author Core Solution
+ * @since 2024-12-19
+ * @updated 2025-02-22 - B0KlA 어드민 대시보드 스타일 적용, 상태 배지 아토믹 디자인·Lucide 아이콘
  */
-const MappingCard = ({ 
-    mapping, 
-    statusInfo = {
-        label: mapping?.status || 'UNKNOWN',
-        color: 'var(--medium-gray)',
-        icon: '📋'
-    },
-    onView,
+const MappingCard = ({
+  mapping,
+  statusInfo = {
+    label: mapping?.status || 'UNKNOWN',
+    color: 'var(--mg-secondary-500)',
+    icon: null
+  },
+  onView,
     onEdit, 
     onConfirmPayment,
     onConfirmDeposit,
@@ -43,7 +67,7 @@ const MappingCard = ({
     };
 
     const isErpIntegrated = () => {
-        // 입금 확인 완료되거나 ACTIVE 상태일 때 ERP 연동됨으로 간주
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         return mapping.status === 'ACTIVE' || 
                mapping.status === 'DEPOSIT_PENDING' ||
                mapping.depositConfirmed === true ||
@@ -53,34 +77,35 @@ const MappingCard = ({
                mapping.paymentConfirmed === true;
     };
 
-    return (
-        <div className="mg-v2-card mg-v2-card-glass">
-            {/* Header */}
-            <div className="mg-v2-card-header">
-                <div className="mg-v2-mapping-card-header-left">
-                    <span className={`mg-v2-badge ${statusInfo.color === 'var(--color-danger)' ? 'mg-v2-badge-danger' : 'mg-v2-badge-success'}`}>
-                        {statusInfo.icon} {statusInfo.label}
-                    </span>
-                    
-                    {isErpIntegrated() && (
-                        <span className="mg-v2-badge mg-v2-badge-info">
-                            <Database size={12} />
-                            ERP 연동
-                        </span>
-                    )}
-                </div>
-                
-                {onView && (
-                    <button 
-                        className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
-                        onClick={() => onView(mapping)}
-                    >
-                        상세보기
-                    </button>
-                )}
-            </div>
+  const statusLabel = statusInfo.label || mapping?.status || 'N/A';
 
-            {/* Body */}
+  return (
+    <CardContainer className="mg-v2-mapping-card">
+      {/* Header */}
+      <div className="mg-v2-card-header">
+        <div className="mg-v2-mapping-card-header-left">
+          <StatusBadge status={mapping?.status} variant={mapStatusVariant(statusInfo.variant)}>
+            {statusLabel}
+          </StatusBadge>
+
+          {isErpIntegrated() && (
+            <StatusBadge variant="info">ERP 연동</StatusBadge>
+          )}
+        </div>
+
+        {onView && (
+          <ActionButton
+            variant="primary"
+            size="small"
+            onClick={() => onView(mapping)}
+          >
+            <Eye size={16} />
+            상세보기
+          </ActionButton>
+        )}
+      </div>
+
+      {/* Body */}
             <div className="mg-v2-mapping-card-body">
                 {/* Participants */}
                 <div className="mg-v2-mapping-participants">
@@ -95,7 +120,11 @@ const MappingCard = ({
                     </div>
                     
                     <div className="mg-v2-mapping-package-item">
-                        <User size={16} className="mg-v2-mapping-icon" />
+                        <Avatar
+                            profileImageUrl={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
+                            displayName={mapping.clientName}
+                            className="mg-v2-mapping-participant-avatar"
+                        />
                         <div className="mg-v2-mapping-participant-info">
                             <div className="mg-v2-mapping-participant-label">내담자</div>
                             <div className="mg-v2-mapping-participant-name">
@@ -160,48 +189,58 @@ const MappingCard = ({
             <div className="mg-v2-card-footer">
                 <div className="mg-v2-mapping-card-footer-left">
                     {mapping.status === 'PENDING_PAYMENT' && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
+                        <ActionButton
+                            variant="success"
+                            size="small"
                             onClick={() => setShowPaymentModal(true)}
                         >
+                            <CreditCard size={16} />
                             결제 확인
-                        </button>
+                        </ActionButton>
                     )}
                     
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
+                        <ActionButton
+                            variant="primary"
+                            size="small"
                             onClick={() => setShowDepositModal(true)}
                         >
+                            <DollarSign size={16} />
                             입금 확인
-                        </button>
+                        </ActionButton>
                     )}
                     
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
+                        <ActionButton
+                            variant="success"
+                            size="small"
                             onClick={() => onApprove(mapping)}
                         >
+                            <CheckCircle size={18} />
                             최종 승인
-                        </button>
+                        </ActionButton>
                     )}
                     
                     {onEdit && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-outline"
+                        <ActionButton
+                            variant="outline"
+                            size="small"
                             onClick={() => onEdit(mapping)}
                         >
+                            <Edit size={16} />
                             수정
-                        </button>
+                        </ActionButton>
                     )}
                     
                     {onRefund && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-danger"
+                        <ActionButton
+                            variant="danger"
+                            size="small"
                             onClick={() => onRefund(mapping)}
                         >
+                            <XCircle size={16} />
                             환불
-                        </button>
+                        </ActionButton>
                     )}
                 </div>
             </div>
@@ -224,7 +263,7 @@ const MappingCard = ({
                     onDepositConfirmed={onConfirmDeposit}
                 />
             )}
-        </div>
+        </CardContainer>
     );
 };
 

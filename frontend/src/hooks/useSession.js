@@ -4,9 +4,9 @@ import { PERIODIC_SESSION_CHECK_INTERVAL } from '../constants/session';
 
 export const useSession = () => {
     const [sessionState, setSessionState] = useState({
-        user: null,
-        sessionInfo: null,
-        isLoading: false  // 로딩 상태 없이 시작
+        user: sessionManager.getUser(),
+        sessionInfo: sessionManager.getSessionInfo(),
+        isLoading: sessionManager.isLoading  // 로딩 상태 없이 시작
     });
     
     const initializedRef = useRef(false);

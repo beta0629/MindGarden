@@ -22,7 +22,7 @@ const ProfileSection = ({
     const loadGenderCodes = async () => {
       try {
         setLoading(true);
-        const response = await apiGet('/api/common-codes/GENDER');
+        const response = await apiGet('/api/v1/common-codes?codeGroup=GENDER');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -36,8 +36,10 @@ const ProfileSection = ({
         console.error('성별 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️', color: '#3b82f6' },
+          { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
           { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
         ]);
       } finally {
@@ -193,8 +195,8 @@ const ProfileSection = ({
           <label>이름</label>
           <input
             type="text"
-            name="username"
-            value={formData.username}
+            name="userId"
+            value={formData.userId}
             onChange={handleInputChange}
             disabled={!isEditing}
           />

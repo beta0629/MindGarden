@@ -1,40 +1,26 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import { RoleUtils } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
+import Avatar from '../common/Avatar';
 import '../../styles/main.css';
 import './WelcomeSection.css';
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
-  const [imageLoadError, setImageLoadError] = useState(false);
   const navigate = useNavigate();
 
-  // 프로필 이미지 URL 가져오기
-  const getProfileImageUrl = () => {
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    // 기본 아바타 사용
-    return '/default-avatar.svg';
-  };
-
-  // 사용자 이름 가져오기
+  // 사용자 이름 가져오기 (legacy:: = 복호화 실패한 암호문 → 표시하지 않음)
   const getUserDisplayName = () => {
-    if (user?.name && !user.name.includes('==')) {
-      return user.name;
-    }
-    if (user?.nickname && !user.nickname.includes('==')) {
-      return user.nickname;
-    }
-    if (user?.username) {
-      return user.username;
+    const isEncryptedRaw = (s) => !s || s.includes('==') || s.startsWith('legacy::');
+    if (user?.name && !isEncryptedRaw(user.name)) return user.name;
+    if (user?.nickname && !isEncryptedRaw(user.nickname)) return user.nickname;
+    if (user?.userId) {
+      return user.userId;
     }
     return '사용자';
   };
@@ -59,7 +45,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     }
   };
 
-  const profileImageUrl = getProfileImageUrl();
+  const profileImageUrl = user?.profileImageUrl || user?.socialProfileImage;
   const displayName = getUserDisplayName();
 
   // 오늘 날짜의 상담만 필터링
@@ -101,14 +87,11 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     <div className={WELCOME_SECTION_CSS.CONTAINER}>
       <div className="welcome-card">
         <div className="welcome-profile">
-          <div className="profile-avatar">
-            <img 
-              src={profileImageUrl} 
-              alt="프로필 이미지" 
-              className="profile-image"
-              onError={() => setImageLoadError(true)}
-            />
-          </div>
+          <Avatar
+            profileImageUrl={profileImageUrl}
+            displayName={displayName}
+            className="profile-avatar"
+          />
           <div className="welcome-content">
             <h2 className="welcome-title">{getWelcomeTitle()}</h2>
             <p className="welcome-message">
@@ -123,7 +106,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       </div>
       
       {/* 내담자 전용 - 오늘의 상담 정보 (큰 카드) */}
-      {user?.role === 'CLIENT' && (
+      {RoleUtils.isClient(user) && (
         <div className="welcome-info-cards">
           <div className="welcome-info-card today-consultation-card">
             <div className="info-icon info-icon--consultation">

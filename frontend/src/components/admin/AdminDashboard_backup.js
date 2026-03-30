@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
@@ -13,19 +13,16 @@ import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
-// 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
-import './AdminDashboard.new.css';
+import '../../styles/unified-design-tokens.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 
-// 라우트 경로 상수
 const ADMIN_ROUTES = {
     SCHEDULES: '/admin/schedules',
     SESSIONS: '/admin/sessions',
@@ -58,21 +55,15 @@ const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
 
-    // 이름에서 아바타용 초성을 추출하는 함수
     const getAvatarInitial = (name) => {
         if (!name) return '?';
         
-        // 한글인 경우 초성 추출
         if (/[가-힣]/.test(name)) {
-            // 이름을 공백으로 분리하여 각 부분의 첫 글자를 가져옴
             const parts = name.trim().split(/\s+/);
             if (parts.length > 1) {
-                // 성과 이름이 분리된 경우 (예: "김 선희")
                 return parts[0].charAt(0) + parts[1].charAt(0);
             } else {
-                // 성명이 붙어있는 경우 (예: "김선희", "김김선희")
                 const chars = name.split('');
-                // 첫 글자가 성인지 확인하고, 연속된 같은 글자가 있는지 확인
                 let result = chars[0];
                 for (let i = 1; i < chars.length; i++) {
                     if (chars[i] === chars[0]) {
@@ -85,7 +76,6 @@ const AdminDashboard = ({ user: propUser }) => {
             }
         }
         
-        // 영문인 경우 첫 글자
         return name.charAt(0).toUpperCase();
     };
     const [userPermissions, setUserPermissions] = useState([]);
@@ -128,7 +118,6 @@ const AdminDashboard = ({ user: propUser }) => {
         oldestHours: 0
     });
     
-    // 새로 추가된 모달 상태들
     const [showErpReport, setShowErpReport] = useState(false);
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
@@ -159,7 +148,7 @@ const AdminDashboard = ({ user: propUser }) => {
         if (!user?.role) return;
         
         try {
-            const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${user.role}`, {
+            const response = await fetch(`${API_BASE_URL}/api/v1/schedules/today/statistics?userRole=${user.role}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -179,7 +168,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []); // 사용자 객체 의존성 제거
 
-    // 세션 체크 및 권한 확인
     useEffect(() => {
         if (isInitialized.current) return;
         
@@ -258,6 +246,7 @@ const AdminDashboard = ({ user: propUser }) => {
             if (mappingsRes.ok) {
                 const mappingsData = await mappingsRes.json();
                 totalMappings = mappingsData.count || 0;
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 activeMappings = (mappingsData.data || []).filter(m => m.status === 'ACTIVE').length;
             }
 
@@ -382,7 +371,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete');
@@ -401,7 +389,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 스케줄 자동 완료 처리 및 상담일지 미작성 알림
     const handleAutoCompleteWithReminder = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete-with-reminder');
@@ -420,10 +407,8 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 중복 매칭 통합 처리
     const handleMergeDuplicateMappings = async () => {
         try {
-            // 먼저 중복 매칭 조회
             const checkResponse = await fetch('/api/admin/duplicate-mappings');
             if (!checkResponse.ok) {
                 showToast('중복 매칭 조회에 실패했습니다.', 'danger');
@@ -436,7 +421,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 return;
             }
             
-            // 사용자 확인
             const confirmMessage = `중복된 매칭이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
             const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
@@ -445,7 +429,6 @@ const AdminDashboard = ({ user: propUser }) => {
         return;
     }
             
-            // 중복 매칭 통합 실행
             const response = await csrfTokenManager.post('/api/admin/merge-duplicate-mappings');
 
             if (response.ok) {
@@ -486,7 +469,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 시스템 상태 체크
     const checkSystemStatus = async () => {
         setLoading(true);
         try {
@@ -522,13 +504,11 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 로그 보기
     const viewLogs = async () => {
         try {
             const response = await fetch('/api/admin/logs/recent');
             if (response.ok) {
                 const logs = await response.json();
-                // 로그를 새 창에서 표시
                 const logWindow = window.open('', '_blank');
                 logWindow.document.write(`
                     <html>
@@ -549,14 +529,12 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 캐시 초기화
     const clearCache = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/cache/clear');
 
             if (response.ok) {
                 showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
-                // 통계도 새로고침
                 loadStats();
             } else {
                 showToast('캐시 초기화에 실패했습니다.', 'danger');
@@ -567,7 +545,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 백업 생성
     const createBackup = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/backup/create');
@@ -584,17 +561,11 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 로딩 상태 처리
     if (sessionLoading) {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <UnifiedLoading 
-                        text="세션 확인 중..."
-                        size="large"
-                        variant="default"
-                        type="page"
-                    />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </div>
         );
@@ -979,8 +950,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-management-icon">
                             <FaCog />
                         </div>
-                        <h3>공통코드 관리</h3>
-                        <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}>
@@ -1100,7 +1069,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaChartLine />
                             </div>
-                            <h3>ERP 대시보드</h3>
+                            <h3>운영 현황</h3>
                             <p className="mg-management-description">전체 ERP 현황을 한눈에 확인합니다</p>
                         </div>
                         
@@ -1141,7 +1110,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaFileExport />
                             </div>
-                            <h3>ERP 보고서</h3>
+                            <h3>운영 리포트</h3>
                             <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
                         </div>
                         
@@ -1175,14 +1144,13 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* 지점 관리 */}
-            {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                <DashboardSection
+            <DashboardSection
                     title="지점 관리"
                     subtitle="지점 정보 및 설정 관리"
                     icon={<Settings />}
                 >
                     <div className="mg-management-grid">
-                        <div className="mg-management-card" onClick={() => navigate('/hq/dashboard')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCHES)}>
                             <div className="mg-management-icon">
                                 <FaBuilding />
                             </div>
@@ -1231,7 +1199,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </DashboardSection>
-            )}
 
             {/* 통계 및 분석 */}
             {PermissionChecks.canViewStatistics(userPermissions) && (

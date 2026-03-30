@@ -1,0 +1,371 @@
+package com.coresolution.consultation.service.impl;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import jakarta.persistence.EntityNotFoundException;
+import com.coresolution.consultation.entity.Alert;
+import com.coresolution.consultation.repository.AlertRepository;
+import com.coresolution.consultation.service.AlertService;
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.TenantAccessControlService;
+import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * AlertService 구현체
+ * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2024-12-19
+ */
+@Slf4j
+@Service
+@Transactional
+public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long> 
+        implements AlertService {
+    
+    private final AlertRepository alertRepository;
+    
+    public AlertServiceImpl(
+            AlertRepository alertRepository,
+            TenantAccessControlService accessControlService) {
+        super(alertRepository, accessControlService);
+        this.alertRepository = alertRepository;
+    }
+    
+    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
+    
+    @Override
+    protected Optional<Alert> findEntityById(Long id) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 알림 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return alertRepository.findByTenantIdAndId(tenantId, id);
+    }
+    
+    @Override
+    protected List<Alert> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return alertRepository.findAllByTenantId(tenantId);
+    }
+    
+    // ==================== BaseService 구현 메서드 (BaseTenantEntityService 위임) ====================
+    
+    @Override
+    public com.coresolution.consultation.repository.BaseRepository<Alert, Long> getRepository() {
+        return alertRepository;
+    }
+    
+    // ==================== BaseService 구현 (BaseTenantEntityService 위임) ====================
+    
+    @Override
+    public Alert save(Alert alert) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (alert.getId() == null) {
+            if (alert.getStatus() == null) {
+                alert.setStatus("UNREAD");
+            }
+            if (alert.getPriority() == null) {
+                alert.setPriority("NORMAL");
+            }
+            if (tenantId != null) {
+                return create(tenantId, alert);
+            }
+        } else {
+            if (tenantId != null && alert.getTenantId() != null) {
+                return update(tenantId, alert);
+            }
+            String tenantForLoad = alert.getTenantId() != null && !alert.getTenantId().isEmpty()
+                ? alert.getTenantId()
+                : TenantContextHolder.getRequiredTenantId();
+            Alert existingAlert = alertRepository.findByTenantIdAndId(tenantForLoad, alert.getId())
+                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + alert.getId()));
+            if (existingAlert.getTenantId() != null) {
+                accessControlService.validateTenantAccess(existingAlert.getTenantId());
+            }
+            alert.setUpdatedAt(LocalDateTime.now());
+            alert.setVersion(existingAlert.getVersion() + 1);
+            return alertRepository.save(alert);
+        }
+        if (alert.getId() == null) {
+            alert.setCreatedAt(LocalDateTime.now());
+            alert.setVersion(1L);
+        }
+        alert.setUpdatedAt(LocalDateTime.now());
+        if (alert.getVersion() != null) {
+            alert.setVersion(alert.getVersion() + 1);
+        }
+        return alertRepository.save(alert);
+    }
+    
+    @Override
+    public List<Alert> saveAll(List<Alert> alerts) {
+        // BaseTenantEntityService는 saveAll을 제공하지 않으므로 개별 처리
+        return alerts.stream()
+                .map(this::save)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    @Override
+    public Alert update(Alert alert) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && alert.getTenantId() != null) {
+            return update(tenantId, alert);
+        }
+        String tenantForLoad = alert.getTenantId() != null && !alert.getTenantId().isEmpty()
+            ? alert.getTenantId()
+            : TenantContextHolder.getRequiredTenantId();
+        Alert existingAlert = alertRepository.findByTenantIdAndId(tenantForLoad, alert.getId())
+                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + alert.getId()));
+        if (existingAlert.getTenantId() != null) {
+            accessControlService.validateTenantAccess(existingAlert.getTenantId());
+        }
+        alert.setUpdatedAt(LocalDateTime.now());
+        alert.setVersion(existingAlert.getVersion() + 1);
+        return alertRepository.save(alert);
+    }
+    
+    @Override
+    public Alert partialUpdate(Long id, Alert updateData) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return partialUpdate(tenantId, id, updateData);
+    }
+    
+    @Override
+    public void softDeleteById(Long id) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        delete(tenantId, id);
+    }
+    
+    @Override
+    public void restoreById(Long id) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        accessControlService.validateTenantAccess(tenantId);
+        Alert ref = alertRepository.getReferenceById(id);
+        try {
+            String entityTenantId = ref.getTenantId();
+            if (entityTenantId == null || !entityTenantId.equals(tenantId)) {
+                throw new RuntimeException("알림을 찾을 수 없습니다: " + id);
+            }
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException("알림을 찾을 수 없습니다: " + id, e);
+        }
+        alertRepository.restoreByIdAndTenantId(id, tenantId);
+    }
+    
+    @Override
+    public void hardDeleteById(Long id) {
+        alertRepository.deleteById(id);
+    }
+    
+    @Override
+    public List<Alert> findAllActive() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
+    }
+
+    @Override
+    public Optional<Alert> findActiveById(Long id) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id).filter(a -> !a.getIsDeleted());
+    }
+    
+    @Override
+    public Alert findActiveByIdOrThrow(Long id) {
+        return findActiveById(id)
+                .orElseThrow(() -> new RuntimeException("활성 알림을 찾을 수 없습니다: " + id));
+    }
+    
+    @Override
+    public long countActive() {
+        return alertRepository.countActive();
+    }
+    
+    @Override
+    public List<Alert> findAllDeleted() {
+        return alertRepository.findAllDeleted();
+    }
+    
+    @Override
+    public long countDeleted() {
+        return alertRepository.countDeleted();
+    }
+    
+    @Override
+    public boolean existsActiveById(Long id) {
+        return alertRepository.existsActiveById(id);
+    }
+    
+    @Override
+    public Optional<Alert> findByIdAndVersion(Long id, Long version) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
+    }
+    
+    @Override
+    public Object[] getEntityStatistics() {
+        return alertRepository.getEntityStatistics();
+    }
+    
+    @Override
+    public void cleanupOldDeleted(LocalDateTime cutoffDate) {
+        alertRepository.cleanupOldDeleted(cutoffDate);
+    }
+    
+    @Override
+    public org.springframework.data.domain.Page<Alert> findAllActive(org.springframework.data.domain.Pageable pageable) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findAllByTenantId(tenantId, pageable);
+    }
+    
+    @Override
+    public List<Alert> findRecentActive(int limit) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findRecentActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
+    }
+    
+    @Override
+    public List<Alert> findRecentlyUpdatedActive(int limit) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findRecentlyUpdatedActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
+    }
+    
+    @Override
+    public List<Alert> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
+    }
+    
+    @Override
+    public List<Alert> findByUpdatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
+    }
+    
+    @Override
+    public boolean isDuplicateExcludingIdAll(Long excludeId, String fieldName, Object fieldValue, boolean includeDeleted) {
+        return alertRepository.isDuplicateExcludingIdAll(excludeId, fieldName, fieldValue, includeDeleted);
+    }
+    
+    // ==================== AlertService 특화 메서드 ====================
+    
+    @Override
+    public List<Alert> findByUserId(Long userId) {
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndUserId(tenantId, userId);
+    }
+    
+    @Override
+    public List<Alert> findUnreadByUserId(Long userId) {
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findUnreadByTenantIdAndUserId(tenantId, userId);
+    }
+    
+    @Override
+    public List<Alert> findReadByUserId(Long userId) {
+        return alertRepository.findReadByUserId(userId);
+    }
+    
+    @Override
+    public List<Alert> findByType(String type) {
+        return alertRepository.findByType(type);
+    }
+    
+    @Override
+    public List<Alert> findByPriority(String priority) {
+        return alertRepository.findByPriority(priority);
+    }
+    
+    @Override
+    public List<Alert> findByStatus(String status) {
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndStatus(tenantId, status);
+    }
+    
+    @Override
+    public void markAsRead(Long alertId) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setStatus("READ");
+        alert.setReadAt(LocalDateTime.now());
+        
+        save(alert);
+    }
+    
+    @Override
+    public void markAllAsRead(Long userId) {
+        List<Alert> unreadAlerts = findUnreadByUserId(userId);
+        unreadAlerts.forEach(alert -> {
+            alert.setStatus("READ");
+            alert.setReadAt(LocalDateTime.now());
+        });
+        alertRepository.saveAll(unreadAlerts);
+    }
+    
+    @Override
+    public void archiveAlert(Long alertId) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setStatus("ARCHIVED");
+        alert.setArchivedAt(LocalDateTime.now());
+        
+        save(alert);
+    }
+    
+    @Override
+    public void dismissAlert(Long alertId) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setStatus("DISMISSED");
+        
+        save(alert);
+    }
+    
+    @Override
+    public void setSticky(Long alertId) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setIsSticky(true);
+        
+        save(alert);
+    }
+    
+    @Override
+    public void changePriority(Long alertId, String newPriority) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setPriority(newPriority);
+        
+        save(alert);
+    }
+    
+    @Override
+    public void changeStatus(Long alertId, String newStatus) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setStatus(newStatus);
+        
+        switch (newStatus) {
+            case "READ":
+                alert.setReadAt(LocalDateTime.now());
+                break;
+            case "ARCHIVED":
+                alert.setArchivedAt(LocalDateTime.now());
+                break;
+        }
+        
+        save(alert);
+    }
+    
+    @Override
+    public Alert updateAlertContent(Long alertId, String title, String content) {
+        Alert alert = findActiveByIdOrThrow(alertId);
+        alert.setTitle(title);
+        alert.setContent(content);
+        
+        return save(alert);
+    }
+}

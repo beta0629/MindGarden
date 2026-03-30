@@ -1,6 +1,8 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Input Component
+ * Core Solution 디자인 시스템 v2.0 - Input Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  */
 
@@ -16,14 +18,23 @@ import React from 'react';
  * @param {string} [props.error] - 에러 메시지
  * @param {boolean} [props.required=false] - 필수 여부
  * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
  * 
+/**
  * @example
+/**
  * <Input
+/**
  *   label="이메일"
+/**
  *   type="email"
+/**
  *   placeholder="example@email.com"
+/**
  *   error="유효한 이메일을 입력하세요"
+/**
  *   required
+/**
  * />
  */
 const Input = ({

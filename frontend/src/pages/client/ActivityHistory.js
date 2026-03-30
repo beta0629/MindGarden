@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { API_BASE_URL } from '../../constants/api';
-import SimpleLayout from '../../components/layout/SimpleLayout';
+import AdminCommonLayout from '../../components/layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../../components/dashboard-v2/constants/menuItems';
 import './ActivityHistory.css';
 
 const ActivityHistory = () => {
@@ -127,19 +128,14 @@ const ActivityHistory = () => {
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="activity-history-loading">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩중...</span>
-          </div>
-          <p className="activity-history-loading-text">활동 내역을 불러오는 중...</p>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="활동 내역" loading={true} loadingText="활동 내역을 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="활동 내역">
       <div className="activity-history-container">
         {/* 헤더 */}
         <div className="activity-history-header">
@@ -258,7 +254,7 @@ const ActivityHistory = () => {
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

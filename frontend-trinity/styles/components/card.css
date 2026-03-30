@@ -1,0 +1,70 @@
+/**
+ * Card 컴포넌트 스타일
+ */
+
+.trinity-card {
+  background-color: var(--bg-primary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.trinity-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+@media (min-width: 640px) {
+  .trinity-card {
+    padding: var(--spacing-xl);
+  }
+}
+
+.trinity-card__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-xxl);
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .trinity-card__icon {
+    width: 4rem;
+    height: 4rem;
+    font-size: var(--font-size-xxxl);
+  }
+}
+
+.trinity-card__icon--primary {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.trinity-card__icon--success {
+  background-color: var(--color-success);
+  color: var(--text-inverse);
+}
+
+.trinity-card__icon--warning {
+  background-color: var(--color-warning);
+  color: var(--text-inverse);
+}
+
+.trinity-card__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.trinity-card__description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+

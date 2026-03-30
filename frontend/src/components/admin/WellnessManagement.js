@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
-import { 
-    Sparkles, 
+import {
     Send, 
     Database, 
     DollarSign, 
@@ -17,18 +16,29 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import SafeText from '../common/SafeText';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { sessionManager } from '../../utils/sessionManager';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './WellnessManagement.css';
 
 /**
  * 웰니스 알림 관리 페이지
+/**
  * - 관리자 전용 (BRANCH_ADMIN 이상)
+/**
  * - 템플릿 관리, 테스트 발송, AI 비용 통계
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const WellnessManagement = () => {
@@ -71,7 +81,7 @@ const WellnessManagement = () => {
             console.log('📊 웰니스 관리 데이터 로드 시작');
             
             // API 사용 통계 로드
-            const usageStatsResponse = await apiGet('/api/admin/wellness/usage-stats', {
+            const usageStatsResponse = await apiGet('/api/v1/admin/wellness/usage-stats', {
                 year: selectedMonth.year,
                 month: selectedMonth.month
             });
@@ -83,7 +93,7 @@ const WellnessManagement = () => {
             }
             
             // 템플릿 목록 로드
-            const templatesResponse = await apiGet('/api/admin/wellness/templates');
+            const templatesResponse = await apiGet('/api/v1/admin/wellness/templates');
             
             console.log('📋 템플릿 응답:', templatesResponse);
             
@@ -92,7 +102,7 @@ const WellnessManagement = () => {
             }
             
             // 환율 정보 로드
-            const exchangeRateResponse = await apiGet('/api/admin/wellness/exchange-rate');
+            const exchangeRateResponse = await apiGet('/api/v1/admin/wellness/exchange-rate');
             
             console.log('💰 환율 응답:', exchangeRateResponse);
             
@@ -131,7 +141,7 @@ const WellnessManagement = () => {
                 console.log('📊 웰니스 관리 데이터 로드 시작');
                 
                 // API 사용 통계 로드
-                const usageStatsResponse = await apiGet('/api/admin/wellness/usage-stats', {
+                const usageStatsResponse = await apiGet('/api/v1/admin/wellness/usage-stats', {
                     year: selectedMonth.year,
                     month: selectedMonth.month
                 });
@@ -143,7 +153,7 @@ const WellnessManagement = () => {
                 }
                 
                 // 템플릿 목록 로드
-                const templatesResponse = await apiGet('/api/admin/wellness/templates');
+                const templatesResponse = await apiGet('/api/v1/admin/wellness/templates');
                 
                 console.log('📋 템플릿 응답:', templatesResponse);
                 
@@ -152,7 +162,7 @@ const WellnessManagement = () => {
                 }
                 
                 // 환율 정보 로드
-                const exchangeRateResponse = await apiGet('/api/admin/wellness/exchange-rate');
+                const exchangeRateResponse = await apiGet('/api/v1/admin/wellness/exchange-rate');
                 
                 console.log('💰 환율 응답:', exchangeRateResponse);
                 
@@ -178,7 +188,7 @@ const WellnessManagement = () => {
 
 
 
-    /**
+/**
      * 테스트 발송
      */
     const handleTestSend = async () => {
@@ -190,7 +200,7 @@ const WellnessManagement = () => {
             onConfirm: async () => {
                 try {
                     setSending(true);
-                    const response = await apiPost('/api/admin/wellness/test-send');
+                    const response = await apiPost('/api/v1/admin/wellness/test-send');
                     
                     if (response.success) {
                         notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
@@ -209,20 +219,20 @@ const WellnessManagement = () => {
         });
     };
 
-    /**
+/**
      * 데이터 새로고침
      */
     const handleRefresh = () => {
         window.location.reload();
     };
 
-    /**
+/**
      * 환율 새로고침
      */
     const handleExchangeRateRefresh = async () => {
         try {
             setRefreshing(true);
-            const response = await apiPost('/api/admin/wellness/exchange-rate/refresh');
+            const response = await apiPost('/api/v1/admin/wellness/exchange-rate/refresh');
             
             if (response.success) {
                 notificationManager.show('환율을 새로고침했습니다.', 'success');
@@ -239,7 +249,7 @@ const WellnessManagement = () => {
         }
     };
 
-    /**
+/**
      * 월 변경
      */
     const handleMonthChange = (direction) => {
@@ -259,7 +269,7 @@ const WellnessManagement = () => {
         });
     };
 
-    /**
+/**
      * 카테고리 한글 변환
      */
     const getCategoryName = (category) => {
@@ -273,7 +283,7 @@ const WellnessManagement = () => {
         return categories[category] || category;
     };
 
-    /**
+/**
      * 요일 한글 변환
      */
     const getDayName = (dayOfWeek) => {
@@ -282,7 +292,7 @@ const WellnessManagement = () => {
         return days[dayOfWeek] + '요일';
     };
 
-    /**
+/**
      * 계절 한글 변환
      */
     const getSeasonName = (season) => {
@@ -298,59 +308,58 @@ const WellnessManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout>
-                <UnifiedLoading message="웰니스 관리 데이터를 불러오는 중..." />
-            </SimpleLayout>
+            <AdminCommonLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중..." />
         );
     }
 
     return (
-        <SimpleLayout>
-            <div className="mg-v2-container">
-                {/* 헤더 */}
-                <div className="mg-v2-section">
-                    <div className="mg-v2-dashboard-header">
-                        <div className="mg-v2-dashboard-header-content">
-                            <div className="mg-v2-dashboard-header-left">
-                                <Sparkles size={32} />
-                                <div>
-                                    <h1 className="mg-v2-dashboard-title">웰니스 알림 관리</h1>
-                                    <p className="mg-v2-dashboard-subtitle">AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리</p>
-                                </div>
-                            </div>
-                            <div className="mg-v2-header-actions">
-                                <MGButton 
-                                    variant="outline"
-                                    size="small"
-                                    onClick={handleExchangeRateRefresh}
-                                    disabled={refreshing}
-                                >
-                                    <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
-                                    환율 새로고침
-                                </MGButton>
-                                <MGButton 
-                                    variant="outline"
-                                    size="small"
-                                    onClick={handleRefresh}
-                                    disabled={refreshing}
-                                >
-                                    <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
-                                    새로고침
-                                </MGButton>
-                                <MGButton 
-                                    variant="primary"
-                                    size="small"
-                                    onClick={handleTestSend}
-                                    disabled={sending}
-                                >
-                                    <Send size={18} />
-                                    {sending ? '발송 중...' : '테스트 발송'}
-                                </MGButton>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <AdminCommonLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
+            <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="웰니스 알림 관리 본문">
+                        <ContentHeader
+                            title="웰니스 알림 관리"
+                            subtitle="AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리"
+                            titleId="wellness-management-title"
+                            actions={(
+                                <>
+                                    <MGButton
+                                        variant="outline"
+                                        size="small"
+                                        onClick={handleExchangeRateRefresh}
+                                        disabled={refreshing}
+                                        preventDoubleClick={false}
+                                    >
+                                        <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
+                                        환율 새로고침
+                                    </MGButton>
+                                    <MGButton
+                                        variant="outline"
+                                        size="small"
+                                        onClick={handleRefresh}
+                                        disabled={refreshing}
+                                        preventDoubleClick={false}
+                                    >
+                                        <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                                        새로고침
+                                    </MGButton>
+                                    <MGButton
+                                        variant="primary"
+                                        size="small"
+                                        onClick={handleTestSend}
+                                        disabled={sending}
+                                        loading={sending}
+                                        loadingText="발송 중..."
+                                        preventDoubleClick={true}
+                                    >
+                                        <Send size={18} />
+                                        테스트 발송
+                                    </MGButton>
+                                </>
+                            )}
+                        />
 
+                        <main aria-labelledby="wellness-management-title">
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
                     <div className="mg-v2-stat-card">
@@ -404,15 +413,28 @@ const WellnessManagement = () => {
                 {/* 월 선택 */}
                 <div className="mg-v2-section">
                     <div className="mg-v2-card wellness-month-selector">
-                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
+                        <MGButton
+                            variant="primary"
+                            size="small"
+                            onClick={() => handleMonthChange(-1)}
+                            preventDoubleClick={false}
+                        >
+                            ◀
                         </MGButton>
                         <span className="mg-v2-h2">
                             {selectedMonth.year}년 {selectedMonth.month}월
                         </span>
-                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(1)} disabled={
+                        <MGButton
+                            variant="primary"
+                            size="small"
+                            onClick={() => handleMonthChange(1)}
+                            disabled={
                                 selectedMonth.year === new Date().getFullYear() &&
                                 selectedMonth.month === new Date().getMonth() + 1
-                            }>▶
+                            }
+                            preventDoubleClick={false}
+                        >
+                            ▶
                         </MGButton>
                     </div>
                 </div>
@@ -479,7 +501,7 @@ const WellnessManagement = () => {
                             templates.map((template) => (
                                 <div key={template.id} className="wellness-template-card">
                                     <div className="wellness-template-header">
-                                        <h3 className="wellness-template-title">{template.title}</h3>
+                                        <h3 className="wellness-template-title"><SafeText>{template.title}</SafeText></h3>
                                         {template.isImportant && (
                                             <span className="wellness-template-badge wellness-template-badge--important">
                                                 중요
@@ -488,21 +510,21 @@ const WellnessManagement = () => {
                                     </div>
                                     <div className="wellness-template-meta">
                                         <span className="wellness-template-tag">
-                                            {getCategoryName(template.category)}
+                                            <SafeText>{getCategoryName(template.category)}</SafeText>
                                         </span>
                                         <span className="wellness-template-tag">
-                                            {getDayName(template.dayOfWeek)}
+                                            <SafeText>{getDayName(template.dayOfWeek)}</SafeText>
                                         </span>
                                         <span className="wellness-template-tag">
-                                            {getSeasonName(template.season)}
+                                            <SafeText>{getSeasonName(template.season)}</SafeText>
                                         </span>
                                     </div>
                                     <div className="wellness-template-stats">
                                         <span className="wellness-template-stat">
-                                            사용 {template.usageCount}회
+                                            사용 {toSafeNumber(template.usageCount)}회
                                         </span>
                                         <span className="wellness-template-stat">
-                                            생성자: {template.createdBy}
+                                            생성자: <SafeText>{template.createdBy}</SafeText>
                                         </span>
                                     </div>
                                     {template.lastUsedAt && (
@@ -523,18 +545,21 @@ const WellnessManagement = () => {
                     </div>
                     </div>
                 </div>
+                        </main>
+                    </ContentArea>
+                </div>
             </div>
-            
+
             {/* 컨펌 모달 */}
             <ConfirmModal
                 isOpen={confirmModal.isOpen}
                 onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
                 onConfirm={confirmModal.onConfirm}
-                title={confirmModal.title}
-                message={confirmModal.message}
+                title={toDisplayString(confirmModal.title, '')}
+                message={toDisplayString(confirmModal.message, '')}
                 type={confirmModal.type}
             />
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

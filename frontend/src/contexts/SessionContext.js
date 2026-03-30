@@ -2,8 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
-import { SESSION_CHECK_INTERVAL } from '../constants/session';
-import { RoleUtils, USER_ROLES } from '../constants/roles';
+import { SESSION_CHECK_INTERVAL, SESSION_CHECK_COOLDOWN_MS } from '../constants/session';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -19,10 +18,9 @@ const SessionState = {
     message: '',
     loginData: null
   }, // 중복 로그인 확인 모달 상태 추가
-  branchMappingModal: {
-    isOpen: false,
-    needsMapping: false
-  } // 지점 매핑 모달 상태 추가
+  // branchMappingModal 제거됨 - 브랜치 코드 제거 정책
+  /** 한 번이라도 세션 확인(동기 복원 또는 checkSession 완료)을 했는지 */
+  hasCheckedSession: false
 };
 
 // 액션 타입 정의
@@ -35,8 +33,9 @@ const SessionActionTypes = {
   SET_LAST_CHECK_TIME: 'SET_LAST_CHECK_TIME',
   SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
   SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL', // 중복 로그인 모달 액션 추가
-  SET_BRANCH_MAPPING_MODAL: 'SET_BRANCH_MAPPING_MODAL', // 지점 매핑 모달 액션 추가
-  SET_LOGGED_IN: 'SET_LOGGED_IN' // 로그인 상태 액션 추가
+  // SET_BRANCH_MAPPING_MODAL 제거됨 - 브랜치 코드 제거 정책
+  SET_LOGGED_IN: 'SET_LOGGED_IN', // 로그인 상태 액션 추가
+  SET_HAS_CHECKED_SESSION: 'SET_HAS_CHECKED_SESSION'
 };
 
 // 리듀서 함수
@@ -97,18 +96,20 @@ const sessionReducer = (state, action) => {
         duplicateLoginModal: action.payload
       };
     
-    case SessionActionTypes.SET_BRANCH_MAPPING_MODAL:
-      return {
-        ...state,
-        branchMappingModal: action.payload
-      };
+    // SET_BRANCH_MAPPING_MODAL 케이스 제거됨 - 브랜치 코드 제거 정책
     
     case SessionActionTypes.SET_LOGGED_IN:
       return {
         ...state,
         isLoggedIn: action.payload
       };
-    
+
+    case SessionActionTypes.SET_HAS_CHECKED_SESSION:
+      return {
+        ...state,
+        hasCheckedSession: action.payload
+      };
+
     default:
       return state;
   }
@@ -127,28 +128,46 @@ export const SessionProvider = ({ children }) => {
     stateRef.current = state;
   }, [state]);
 
-  // 초기 마운트 시 sessionManager에서 사용자 정보 복원
+  // 초기 마운트 시 checkSession( true )로 서버 검증 후 성공(200)일 때만 Context에 user 설정
   useEffect(() => {
-    console.log('🔄 SessionProvider 마운트: sessionManager에서 사용자 정보 복원');
-    const user = sessionManager.getUser();
-    const sessionInfo = sessionManager.getSessionInfo();
-    const isLoggedIn = sessionManager.isLoggedIn();
-    
-    if (user && isLoggedIn) {
-      console.log('✅ SessionProvider: sessionManager에서 사용자 정보 발견:', user);
-      dispatch({ type: SessionActionTypes.SET_USER, payload: user });
-      dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
-      if (sessionInfo) {
-        dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+    let cancelled = false;
+    (async () => {
+      console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행');
+      const ok = await sessionManager.checkSession(true);
+      if (cancelled) return;
+      if (ok) {
+        const user = sessionManager.getUser();
+        const sessionInfo = sessionManager.getSessionInfo();
+        if (user) {
+          console.log('✅ SessionProvider: checkSession 성공, 사용자 설정:', user);
+          dispatch({ type: SessionActionTypes.SET_USER, payload: user });
+          dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
+          if (sessionInfo) {
+            dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+          }
+        } else {
+          dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+        }
+      } else {
+        console.log('❌ SessionProvider: checkSession 실패(401 등), 로그인 상태 없음');
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
-    } else {
-      console.log('❌ SessionProvider: sessionManager에 사용자 정보 없음');
-    }
+      dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+    })();
+    return () => { cancelled = true; };
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
   const checkSession = useCallback(async (force = false) => {
     const now = Date.now();
+    
+    // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
+    if (!force) {
+      const lastCheck = sessionManager.getLastCheckTime();
+      if (lastCheck && (now - lastCheck) < SESSION_CHECK_COOLDOWN_MS) {
+        return sessionManager.isLoggedIn();
+      }
+    }
     
     // stateRef를 통해 최신 state 값 참조
     const currentState = stateRef.current;
@@ -188,42 +207,11 @@ export const SessionProvider = ({ children }) => {
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
         
-        // 지점 매핑 필요 여부 확인 (branchCode가 없으면 매핑 필요)
-        // 단, SUPER_HQ_ADMIN, HQ_MASTER만 지점 매핑 불필요 (본사 관리자)
-        const hqAdminRoles = ['SUPER_HQ_ADMIN', 'HQ_MASTER'];
-        
-        // 사용자 정보가 완전한지 확인 (branchCode와 needsBranchMapping이 모두 있어야 함)
-        const hasCompleteUserInfo = user.branchCode && user.needsBranchMapping !== undefined;
-        
-        if (!hasCompleteUserInfo) {
-          console.log('⚠️ 불완전한 사용자 정보, 백엔드에서 최신 정보 가져오기:', user);
-          // 불완전한 정보면 백엔드에서 최신 정보를 가져오도록 함
-          return;
-        }
-        
-        if ((user.needsBranchMapping || !user.branchCode) && !hqAdminRoles.includes(user.role)) {
-          console.log('🏢 지점 매핑 필요:', user);
-          dispatch({ 
-            type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
-            payload: { isOpen: true, needsMapping: true }
-          });
-        } else if (hqAdminRoles.includes(user.role)) {
-          console.log('✅ 본사 관리자 - 지점 매핑 불필요:', user.role);
-        } else {
-          console.log('✅ 지점 매핑 불필요:', user);
-        }
+        // 지점 매핑 로직 제거됨 - 브랜치 코드 제거 정책
         
         console.log('✅ 중앙 세션 확인 완료:', user);
       } else {
-        // 세션 확인 실패 시 기존 사용자 정보가 있으면 보존
-        if (state.user && state.user.role) {
-          console.log('🔄 세션 확인 실패했지만 기존 사용자 정보 보존:', state.user.role);
-          // 기존 사용자 정보 유지, 세션만 클리어하지 않음
-          return true; // 로그인 상태 유지
-        } else {
-          dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-          // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 오류는 정상적인 상황이므로 콘솔에 로그하지 않음
-        }
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
 
       return isLoggedIn;
@@ -236,6 +224,7 @@ export const SessionProvider = ({ children }) => {
       return false;
     } finally {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+      dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
     }
   }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
 
@@ -380,10 +369,8 @@ export const SessionProvider = ({ children }) => {
       
       console.log('✅ 중앙 세션 로그아웃 완료');
       
-      // 로그인 페이지로 리다이렉트
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_STORED_NOTIFICATIONS);
+      // 로그인 페이지로 즉시 리다이렉트 (sessionManager에서 처리하므로 여기서는 스킵)
+      // sessionManager.logout()에서 이미 리다이렉트 처리함
       return true;
     } catch (error) {
       console.error('❌ 중앙 세션 로그아웃 실패:', error);
@@ -392,30 +379,33 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // 주기적 세션 체크
-  // 무한루프 방지를 위해 임시 비활성화
-  // useEffect(() => {
-  //   // 현재 페이지가 로그인 페이지인지 확인
-  //   const currentPath = window.location.pathname;
-  //   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  //   
-  //   // 로그인 페이지가 아니면 초기 세션 체크
-  //   if (!isLoginPage) {
-  //     checkSession();
-  //   }
+  // 주기적 세션 체크 (30초마다)
+  useEffect(() => {
+    // 로그인 페이지에서는 세션 체크 안 함
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+    
+    if (isLoginPage) {
+      return;
+    }
 
-  //   // 주기적 세션 체크 설정 (로그인 페이지가 아닐 때만)
-  //   const interval = setInterval(() => {
-  //     const currentPath = window.location.pathname;
-  //     const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  //     
-  //     if (!state.isLoading && !isLoginPage) {
-  //       checkSession();
-  //     }
-  //   }, SESSION_CHECK_INTERVAL);
+    // 주기적 세션 체크 설정
+    const interval = setInterval(() => {
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+      
+      // stateRef로 최신 상태 참조 (클로저 문제 방지)
+      const currentState = stateRef.current;
+      
+      // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
+      if (!currentState.isLoading && !isLoginPage && currentState.user) {
+        console.log('🔍 주기적 세션 체크 실행');
+        checkSession();
+      }
+    }, SESSION_CHECK_INTERVAL);
 
-  //   return () => clearInterval(interval);
-  // }, []); // 의존성 배열을 빈 배열로 설정 (checkSession이 안정적이므로)
+    return () => clearInterval(interval);
+  }, [checkSession]); // state.user, state.isLoading 제거 - stateRef로 최신 상태 참조
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리
@@ -454,31 +444,7 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, payload: modalState });
   }, []);
 
-  // 지점 매핑 모달 상태 관리 함수
-  const setBranchMappingModal = useCallback((modalState) => {
-    dispatch({ type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, payload: modalState });
-  }, []);
-
-  // 지점 매핑 성공 처리
-  const handleBranchMappingSuccess = useCallback((mappingData) => {
-    // 사용자 정보 업데이트
-    const updatedUser = {
-      ...state.user,
-      branchId: mappingData.branchId,
-      branchName: mappingData.branchName,
-      branchCode: mappingData.branchCode,
-      needsBranchMapping: false
-    };
-    
-    dispatch({ type: SessionActionTypes.SET_USER, payload: updatedUser });
-    dispatch({ 
-      type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
-      payload: { isOpen: false, needsMapping: false }
-    });
-    
-    // sessionManager에도 업데이트
-    sessionManager.setUser(updatedUser);
-  }, [state.user]);
+  // 지점 매핑 모달 관련 함수 제거됨 - 브랜치 코드 제거 정책
 
   const value = {
     // 상태
@@ -486,10 +452,11 @@ export const SessionProvider = ({ children }) => {
     sessionInfo: state.sessionInfo,
     isLoading: state.isLoading,
     isLoggedIn: state.isLoggedIn,
+    hasCheckedSession: state.hasCheckedSession,
     error: state.error,
     isModalOpen: state.isModalOpen,
     duplicateLoginModal: state.duplicateLoginModal,
-    branchMappingModal: state.branchMappingModal,
+    // branchMappingModal 제거됨 - 브랜치 코드 제거 정책
     
     // 액션
     checkSession,
@@ -498,23 +465,25 @@ export const SessionProvider = ({ children }) => {
     logout,
     setModalOpen,
     setDuplicateLoginModal,
-    setBranchMappingModal,
-    handleBranchMappingSuccess,
+    // setBranchMappingModal, handleBranchMappingSuccess 제거됨 - 브랜치 코드 제거 정책
     
-    // 유틸리티
+    // 유틸리티 (서버에서 받은 role, permissionGroupCodes 기준)
     hasRole: (role) => state.user?.role === role,
-    hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => RoleUtils.isAdmin(state.user),
-    isSuperAdmin: () => state.user?.role === USER_ROLES.BRANCH_SUPER_ADMIN || 
-                        state.user?.role === USER_ROLES.SUPER_HQ_ADMIN,
-    isConsultant: () => RoleUtils.isConsultant(state.user),
-    isClient: () => RoleUtils.isClient(state.user),
-    
-    // 동적 권한 체크 (백엔드 API 호출)
+    hasAnyRole: (roles) => Array.isArray(roles) && roles.includes(state.user?.role),
+    isAdmin: () => state.user?.role === 'ADMIN',
+    isConsultant: () => state.user?.role === 'CONSULTANT',
+    isClient: () => state.user?.role === 'CLIENT',
+    isStaff: () => state.user?.role === 'STAFF',
+    /** 서버에서 받은 권한 그룹 코드 목록으로 그룹 코드 보유 여부 확인 (동적 권한) */
+    hasPermissionGroup: (groupCode) => Array.isArray(state.user?.permissionGroupCodes) &&
+      state.user.permissionGroupCodes.includes(groupCode),
+    /** 권한 그룹 코드 목록 (API current-user에서 내려준 값) */
+    permissionGroupCodes: state.user?.permissionGroupCodes ?? [],
+    /** 단일 권한 코드 체크는 백엔드 API 호출 (기존 호환) */
     hasPermission: async (permission) => {
       try {
         const { apiPost } = await import('../utils/ajax');
-        const result = await apiPost('/api/admin/permissions/check-permission', { permission });
+        const result = await apiPost('/api/v1/permissions/check-permission', { permission });
         return result?.success && result?.data?.hasPermission === true;
       } catch (error) {
         console.error('권한 체크 오류:', error);

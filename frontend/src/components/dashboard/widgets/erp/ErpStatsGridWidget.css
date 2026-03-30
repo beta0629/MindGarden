@@ -1,0 +1,419 @@
+/**
+ * ErpStatsGridWidget - ERP 통계 그리드 위젯 CSS
+ * ERP 주요 통계 (매출, 지출, 이익, 예산 등)를 그리드로 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.erp-stats-grid-widget {
+  width: 100%;
+}
+
+.erp-stats-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* ERP 통계 그리드 */
+.erp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cs-spacing-lg);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+/* ERP 통계 카드 */
+.erp-stat-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.erp-stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-lg);
+  border-color: var(--cs-primary-300);
+}
+
+.erp-stat-card.clickable:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 카테고리별 스타일 */
+.erp-stat-revenue {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.erp-stat-revenue:hover {
+  background: var(--cs-glass-success-light);
+}
+
+.erp-stat-expenses {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.erp-stat-expenses:hover {
+  background: var(--cs-glass-warning-light);
+}
+
+.erp-stat-profit {
+  border-left: 4px solid var(--cs-blue-500);
+}
+
+.erp-stat-profit:hover {
+  background: var(--cs-glass-blue-light);
+}
+
+.erp-stat-loss {
+  border-left: 4px solid var(--cs-error-500);
+}
+
+.erp-stat-loss:hover {
+  background: var(--cs-glass-error-light);
+}
+
+.erp-stat-margin {
+  border-left: 4px solid var(--cs-purple-500);
+}
+
+.erp-stat-margin:hover {
+  background: var(--cs-glass-primary-10);
+}
+
+.erp-stat-purchase {
+  border-left: 4px solid var(--cs-teal-500);
+}
+
+.erp-stat-purchase:hover {
+  background: var(--cs-glass-teal-light);
+}
+
+.erp-stat-budget {
+  border-left: 4px solid var(--cs-orange-500);
+}
+
+.erp-stat-budget:hover {
+  background: var(--cs-glass-orange-light);
+}
+
+/* 상태별 스타일 */
+.erp-stat-card.stat-warning {
+  border-color: var(--cs-warning-400);
+  background: var(--cs-glass-warning-light);
+}
+
+.erp-stat-card.stat-error {
+  border-color: var(--cs-error-400);
+  background: var(--cs-glass-error-light);
+}
+
+/* ERP 통계 헤더 */
+.erp-stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.erp-stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-md);
+  margin-right: var(--cs-spacing-sm);
+}
+
+.stat-card-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--cs-text-primary);
+}
+
+.erp-stat-title {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.erp-stat-badge {
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+  text-transform: uppercase;
+}
+
+.erp-stat-badge.badge-info {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-700);
+}
+
+.erp-stat-badge.badge-success {
+  background: var(--cs-success-100);
+  color: var(--cs-success-700);
+}
+
+.erp-stat-badge.badge-warning {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-700);
+}
+
+/* ERP 통계 본문 */
+.erp-stat-body {
+  flex: 1;
+}
+
+.erp-stat-value {
+  font-size: var(--cs-text-2xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+  line-height: 1.2;
+}
+
+.erp-stat-change {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+}
+
+.erp-stat-change.positive {
+  color: var(--cs-success-600);
+}
+
+.erp-stat-change.negative {
+  color: var(--cs-error-600);
+}
+
+.change-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 빈 상태 */
+.erp-stats-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.erp-stats-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.erp-stats-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .erp-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--cs-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .erp-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .erp-stat-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .stat-card-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .erp-stat-value {
+    font-size: var(--cs-text-xl);
+  }
+  
+  .erp-stats-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .erp-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .erp-stat-card {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .erp-stat-header {
+    margin-bottom: var(--cs-spacing-sm);
+  }
+  
+  .erp-stat-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    margin-right: var(--cs-spacing-xs);
+  }
+  
+  .stat-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .erp-stat-title {
+    font-size: var(--cs-text-xs);
+  }
+  
+  .erp-stat-value {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .erp-stat-badge {
+    display: none; /* 모바일에서는 배지 숨김 */
+  }
+  
+  .erp-stat-change {
+    font-size: var(--cs-text-xs);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .erp-stat-card {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .erp-stat-card.clickable:hover {
+    border-color: var(--cs-primary-400);
+  }
+  
+  .erp-stat-revenue:hover {
+    background: var(--cs-glass-success-dark);
+  }
+  
+  .erp-stat-expenses:hover {
+    background: var(--cs-glass-warning-dark);
+  }
+  
+  .erp-stat-profit:hover {
+    background: var(--cs-glass-blue-dark);
+  }
+  
+  .erp-stat-loss:hover {
+    background: var(--cs-glass-error-dark);
+  }
+  
+  .erp-stat-margin:hover {
+    background: var(--cs-glass-primary-40);
+  }
+  
+  .erp-stat-purchase:hover {
+    background: var(--cs-glass-teal-dark);
+  }
+  
+  .erp-stat-budget:hover {
+    background: var(--cs-glass-orange-dark);
+  }
+  
+  .erp-stat-card.stat-warning {
+    background: var(--cs-glass-warning-dark);
+  }
+  
+  .erp-stat-card.stat-error {
+    background: var(--cs-glass-error-dark);
+  }
+  
+  .erp-stat-icon-wrapper {
+    background: var(--cs-glass-dark-strong);
+  }
+  
+  .erp-stat-badge.badge-info {
+    background: var(--cs-blue-900);
+    color: var(--cs-blue-300);
+  }
+  
+  .erp-stat-badge.badge-success {
+    background: var(--cs-success-900);
+    color: var(--cs-success-300);
+  }
+  
+  .erp-stat-badge.badge-warning {
+    background: var(--cs-warning-900);
+    color: var(--cs-warning-300);
+  }
+}
+
+/* 애니메이션 효과 */
+.erp-stat-card {
+  animation: slideInScale 0.3s ease-out;
+}
+
+.erp-stat-card:nth-child(1) { animation-delay: 0.05s; }
+.erp-stat-card:nth-child(2) { animation-delay: 0.1s; }
+.erp-stat-card:nth-child(3) { animation-delay: 0.15s; }
+.erp-stat-card:nth-child(4) { animation-delay: 0.2s; }
+.erp-stat-card:nth-child(5) { animation-delay: 0.25s; }
+.erp-stat-card:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 수치 애니메이션 */
+.erp-stat-value {
+  animation: countUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.erp-stats-grid-widget .widget-loading,
+.erp-stats-grid-widget .widget-error {
+  min-height: 300px;
+}

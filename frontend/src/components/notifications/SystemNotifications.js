@@ -4,8 +4,10 @@ import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { Bell, AlertCircle, Info, AlertTriangle, Settings, Calendar } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './SystemNotifications.css';
+import SafeText from '../common/SafeText';
 
 /**
  * 시스템 공지 목록 페이지
@@ -47,7 +49,7 @@ const SystemNotifications = () => {
 
     try {
       setLoading(true);
-      const response = await apiGet(`/api/system-notifications?page=${page}&size=20`);
+      const response = await apiGet(`/api/v1/system-notifications?page=${page}&size=20`);
 
       if (response.success) {
         setNotifications(response.data || []);
@@ -65,7 +67,7 @@ const SystemNotifications = () => {
   const handleNotificationClick = async (notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/system-notifications/${notification.id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
       
       if (response.success) {
         setSelectedNotification(response.data);
@@ -107,18 +109,13 @@ const SystemNotifications = () => {
     loadNotifications();
   }, [isLoggedIn]);
 
-  if (!isLoggedIn) {
-    return (
-      <SimpleLayout title="시스템 공지">
+  return (
+    <AdminCommonLayout title="시스템 알림">
+      {!isLoggedIn ? (
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
-    );
-  }
-
-  return (
-    <SimpleLayout title="시스템 공지">
+      ) : (
       <div className="system-notifications-container">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
@@ -133,10 +130,7 @@ const SystemNotifications = () => {
 
         {/* 로딩 */}
         {loading && (
-          <div className="mg-loading-container">
-            <div className="mg-spinner"></div>
-            <p>공지를 불러오는 중...</p>
-          </div>
+          <UnifiedLoading type="inline" text="공지를 불러오는 중..." />
         )}
 
         {/* 공지 목록 */}
@@ -172,7 +166,7 @@ const SystemNotifications = () => {
                         <div className="mg-flex-1">
                           <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
                             <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
-                              <h4 className="mg-h5 mg-mb-0">{notification.title}</h4>
+                              <SafeText tag="h4" className="mg-h5 mg-mb-0">{notification.title}</SafeText>
                               {notification.isUrgent && (
                                 <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                               )}
@@ -232,7 +226,7 @@ const SystemNotifications = () => {
               <div className="mg-modal-header">
                 <div>
                   <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-                    <h3 className="mg-h3 mg-mb-0">{selectedNotification.title}</h3>
+                    <SafeText tag="h3" className="mg-h3 mg-mb-0">{selectedNotification.title}</SafeText>
                     {selectedNotification.isUrgent && (
                       <span className="mg-badge mg-badge-danger">긴급</span>
                     )}
@@ -270,7 +264,8 @@ const SystemNotifications = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+      )}
+    </AdminCommonLayout>
   );
 };
 

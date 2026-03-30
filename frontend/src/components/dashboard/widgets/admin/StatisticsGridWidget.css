@@ -1,0 +1,317 @@
+/**
+ * StatisticsGridWidget - 통계 그리드 위젯 CSS
+ * 실시간 관리자 주요 통계를 그리드 형태로 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 3.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.statistics-grid-widget {
+  width: 100%;
+}
+
+.statistics-grid-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* 통계 그리드 */
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--cs-spacing-lg);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+/* 통계 카드 */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-lg);
+  border-color: var(--cs-primary-300);
+}
+
+.stat-card.clickable:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 카테고리별 스타일 */
+.stat-card-user {
+  border-left: 4px solid var(--cs-blue-500);
+}
+
+.stat-card-user:hover {
+  background: var(--cs-glass-blue-light);
+}
+
+.stat-card-mapping {
+  border-left: 4px solid var(--cs-purple-500);
+}
+
+.stat-card-mapping:hover {
+  background: var(--cs-glass-primary-10);
+}
+
+.stat-card-schedule {
+  border-left: 4px solid var(--cs-orange-500);
+}
+
+.stat-card-schedule:hover {
+  background: var(--cs-glass-orange-light);
+}
+
+.stat-card-session {
+  border-left: 4px solid var(--cs-teal-500);
+}
+
+.stat-card-session:hover {
+  background: var(--cs-glass-teal-light);
+}
+
+.stat-card-finance {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.stat-card-finance:hover {
+  background: var(--cs-glass-success-light);
+}
+
+/* 경고 상태 카드 */
+.stat-card-warning {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.stat-card-warning:hover {
+  background: var(--cs-glass-warning-light);
+}
+
+/* 카드 헤더 */
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.stat-card-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-md);
+  margin-right: var(--cs-spacing-sm);
+}
+
+.stat-card-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--cs-text-primary);
+}
+
+.stat-card-title {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 카드 본문 */
+.stat-card-body {
+  flex: 1;
+}
+
+.stat-card-value {
+  font-size: var(--cs-text-2xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+  line-height: 1.2;
+}
+
+.stat-card-description {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-muted);
+  line-height: 1.4;
+}
+
+/* 빈 상태 */
+.statistics-grid-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.statistics-grid-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.statistics-grid-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .statistics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--cs-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .statistics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .stat-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .stat-card-icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .stat-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .stat-card-value {
+    font-size: var(--cs-text-xl);
+  }
+  
+  .statistics-grid-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .statistics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .stat-card {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .stat-card-header {
+    margin-bottom: var(--cs-spacing-sm);
+  }
+  
+  .stat-card-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    margin-right: var(--cs-spacing-xs);
+  }
+  
+  .stat-card-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .stat-card-title {
+    font-size: var(--cs-text-xs);
+  }
+  
+  .stat-card-value {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .stat-card-description {
+    font-size: var(--cs-text-xxs);
+    display: none; /* 모바일에서는 설명 숨김 */
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .stat-card {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .stat-card.clickable:hover {
+    border-color: var(--cs-primary-400);
+  }
+  
+  .stat-card-user:hover {
+    background: var(--cs-glass-blue-dark);
+  }
+  
+  .stat-card-mapping:hover {
+    background: var(--cs-glass-primary-40);
+  }
+  
+  .stat-card-schedule:hover {
+    background: var(--cs-glass-orange-dark);
+  }
+  
+  .stat-card-session:hover {
+    background: var(--cs-glass-teal-dark);
+  }
+  
+  .stat-card-finance:hover {
+    background: var(--cs-glass-success-dark);
+  }
+  
+  .stat-card-warning:hover {
+    background: var(--cs-glass-warning-dark);
+  }
+  
+  .stat-card-icon-wrapper {
+    background: var(--cs-glass-dark-strong);
+  }
+}
+
+/* 애니메이션 효과 */
+.stat-card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+.stat-card:nth-child(5) { animation-delay: 0.25s; }
+.stat-card:nth-child(6) { animation-delay: 0.3s; }
+.stat-card:nth-child(7) { animation-delay: 0.35s; }
+.stat-card:nth-child(8) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.statistics-grid-widget .widget-loading,
+.statistics-grid-widget .widget-error {
+  min-height: 400px;
+}

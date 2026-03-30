@@ -1,8 +1,8 @@
 /**
- * MindGarden - 공통 UI 컴포넌트 관리 모듈
+ * Core Solution - 공통 UI 컴포넌트 관리 모듈
  * 모든 페이지에서 공통으로 사용되는 UI 컴포넌트들
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2024-12-19
  */
@@ -10,9 +10,9 @@
 (function() {
     'use strict';
 
-    // ===== 전역 MindGarden 객체 확인 =====
+    // ===== 전역 Core Solution 객체 확인 =====
     if (!window.MindGarden) {
-        console.error('MindGarden.Utils가 로드되지 않았습니다.');
+        console.error('Core Solution Utils가 로드되지 않았습니다.');
         return;
     }
 

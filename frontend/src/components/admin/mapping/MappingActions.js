@@ -3,15 +3,22 @@ import {
     MAPPING_ACTIONS, 
     MAPPING_ACTION_BUTTONS 
 } from '../../../constants/mapping';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './MappingActions.css';
 
 /**
  * 매핑 액션 컴포넌트
+/**
  * - 매핑 관련 액션 버튼들
+/**
  * - 승인, 거부, 수정, 삭제 등
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingActions = ({ 
@@ -53,6 +60,7 @@ const MappingActions = ({
                         onClick: () => onReject?.(mapping.id)
                     }
                 ];
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'ACTIVE':
                 return [
                     { 
@@ -71,6 +79,7 @@ const MappingActions = ({
                         onClick: () => onSuspend?.(mapping.id)
                     }
                 ];
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'SUSPENDED':
                 return [
                     { 
@@ -114,10 +123,10 @@ const MappingActions = ({
                         key={index}
                         className={`btn ${action.className} btn-sm`}
                         onClick={action.onClick}
-                        title={action.label}
+                        title={toDisplayString(action.label)}
                     >
                         <i className={action.icon}></i>
-                        <span className="action-label">{action.label}</span>
+                        <span className="action-label">{toDisplayString(action.label)}</span>
                     </button>
                 ))}
             </div>

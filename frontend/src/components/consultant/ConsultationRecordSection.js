@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 
@@ -20,7 +20,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
       setLoading(true);
       
       // 최근 상담일지 조회
-      const response = await apiGet(`/api/consultant/${consultantId}/consultation-records`);
+      const response = await apiGet(`/api/v1/admin/consultant-records/${consultantId}/consultation-records`);
       
       if (response && response.data) {
         const records = response.data;

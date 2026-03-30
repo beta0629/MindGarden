@@ -7,9 +7,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: 6px 12px; /* 더 작은 패딩 */
   border-radius: var(--border-radius-md);
-  font-size: var(--font-size-sm);
+  font-size: 0.8rem; /* 13px - 더 작게 */
   font-weight: var(--font-weight-semibold);
   font-family: var(--font-family-ios);
   text-decoration: none;
@@ -21,6 +21,11 @@
   position: relative;
   overflow: hidden;
   outline: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  min-height: 32px;
+  max-width: 100%;
 }
 
 .mg-btn::before {
@@ -64,14 +69,14 @@
   background: rgba(248, 249, 250, 0.6);
   color: var(--ios-text-primary);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
 }
 
 .mg-btn--secondary:hover {
   background: rgba(248, 249, 250, 0.8);
   color: var(--ios-text-primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 .mg-btn--success {

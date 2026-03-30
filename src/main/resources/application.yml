@@ -2,49 +2,43 @@
 # Spring Boot 3.x + Hibernate 6.x + MySQL 8.x
 
 spring:
-  profiles:
-    active: local
-  
+  # 프로파일은 환경 변수나 명령줄 인자로 설정 (--spring.profiles.active=dev)
+  # Spring Boot 3.x에서는 spring.profiles 대신 환경 변수 사용
+
   application:
     name: consultation-management-system
-  
-  # 데이터베이스 설정
-  # 기본값: 개발서버 DB (beta0629.cafe24.com)
-  # 로컬 DB 사용: 환경 변수 DB_HOST=localhost 설정
-  # 운영서버 DB 사용: 환경 변수 DB_HOST=beta74.cafe24.com 설정
+
+  # 빈 정의 오버라이딩 허용 (레거시 Repository와의 호환성을 위해)
+  main:
+    allow-bean-definition-overriding: true
+
+  # 데이터베이스 설정 (환경 변수로 설정 - 하드코딩 금지)
   datasource:
-    url: jdbc:mysql://${DB_HOST:beta0629.cafe24.com}:${DB_PORT:3306}/${DB_NAME:mind_garden}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&useServerPrepStmts=true
-    username: ${DB_USERNAME:mindgarden_dev}
-    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (예: export DB_PASSWORD="MindGardenDev2025!@#")
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=5000&socketTimeout=10000&autoReconnect=false&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&zeroDateTimeBehavior=CONVERT_TO_NULL&sessionVariables=wait_timeout=180,interactive_timeout=180
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # 문자셋 설정 추가
-    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
-    # HikariCP 연결 풀 설정 (안정적인 데이터베이스 연결)
+    # 문자셋 설정 및 세션 타임아웃 설정 (HikariCP idle-timeout과 일치: 3분 = 180초)
+    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=180; SET SESSION interactive_timeout=180"
+    # HikariCP 연결 풀 설정
     hikari:
-      # 연결 풀 크기 설정
-      minimum-idle: 5                    # 최소 유휴 연결 수
-      maximum-pool-size: 20              # 최대 연결 풀 크기
-      auto-commit: true                  # 자동 커밋
-      # 연결 타임아웃 설정
-      connection-timeout: 30000          # 연결 대기 타임아웃 (30초)
-      validation-timeout: 5000           # 유효성 검사 타임아웃 (5초)
-      idle-timeout: 600000               # 유휴 연결 타임아웃 (10분)
-      max-lifetime: 1800000              # 연결 최대 수명 (30분)
-      # 연결 유효성 검사
-      connection-test-query: SELECT 1    # 연결 유효성 검사 쿼리
-      # 연결 누수 감지
-      leak-detection-threshold: 60000    # 연결 누수 감지 임계값 (60초)
-      # 연결 풀 이름 (로그에서 식별 용이)
-      pool-name: MindGardenHikariPool
-      # 재시도 설정
-      initialization-fail-timeout: 1     # 초기화 실패 시 즉시 실패 (1ms)
-      # 연결 등록 정보
-      register-mbeans: true              # JMX 모니터링 활성화
-  
+      connection-timeout: 5000   # 5초 (연결 대기 시간 - 빠른 실패로 누수 방지)
+      validation-timeout: 3000   # 3초 (연결 검증 시간 - 빠른 실패)
+      idle-timeout: 180000       # 3분 (유휴 연결 타임아웃 - 더 짧게)
+      max-lifetime: 300000       # 5분 (연결 최대 수명 - 더 짧게)
+      maximum-pool-size: 2       # 최대 연결 수 (최소화 - Too many connections 오류 방지)
+      minimum-idle: 0           # 최소 유휴 연결 수 (0으로 설정하여 시작 시 연결 시도 방지)
+      leak-detection-threshold: 30000  # 30초 (연결 누수 감지 - 매우 빠른 감지)
+      connection-test-query: SELECT 1  # 연결 검증 쿼리
+      keepalive-time: 30000     # 30초 (연결 유지 시간)
+      register-mbeans: true     # JMX 모니터링 활성화
+      initialization-fail-timeout: -1  # 연결 실패 시에도 애플리케이션 시작 허용
+      # 애플리케이션 종료 시 연결 정리 보장
+      allow-pool-suspension: false  # 풀 일시 중단 비활성화 (안정성 향상)
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none  # Flyway가 스키마 관리, Hibernate는 아무것도 안 함
     show-sql: true  # SQL 로그 활성화
     # 데이터소스 연결 관리
     open-in-view: false  # OSIV 비활성화 (연결 누수 방지)
@@ -53,14 +47,10 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
-        # 연결 관리 및 성능 최적화
-        connection:
-          provider_disables_autocommit: false
-        # JDBC 배치 처리 및 성능 최적화
-        jdbc:
-          batch_size: 20
-          batch_versioned_data: true
-          fetch_size: 50  # 배치 페치 크기
+        # 스키마 검증 설정
+        # Flyway가 스키마를 관리하므로 Hibernate는 검증만 수행
+        hbm2ddl:
+          auto: none
         # 로그 레벨 분리 설정
         logging:
           level:
@@ -69,12 +59,23 @@ spring:
             org.hibernate.engine.transaction.internal: DEBUG      # 트랜잭션
             org.hibernate.resource.transaction: DEBUG             # 트랜잭션 리소스
             org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR  # SQL 예외만
-        # 스키마 업데이트 로깅
-        hbm2ddl:
-          auto: update
-          import_files: false
+        # SQL 예외 상세 로깅
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
-  
+
+  # ⚠️ 포트 충돌 방지: 애플리케이션 종료 설정
+  lifecycle:
+    timeout-per-shutdown-phase: 30s  # 종료 시 최대 30초 대기 (연결 풀 정리 시간 확보)
+
+  # 스케줄러: graceful shutdown 시 작업 완료 후 풀 종료(HikariDataSource has been closed 완화)
+  task:
+    scheduling:
+      shutdown:
+        await-termination: true
+        await-termination-period: 25s  # lifecycle timeout-per-shutdown-phase(30s) 이하
+
   # Thymeleaf 설정
   thymeleaf:
     cache: false
@@ -82,7 +83,7 @@ spring:
     encoding: UTF-8
     servlet:
       content-type: text/html
-  
+
   # 보안 설정 (OAuth2 임시 비활성화)
   # security:
   #   oauth2:
@@ -128,32 +129,46 @@ spring:
   #             - basic
   #           client-name: Instagram
 
-# JWT 설정
+# JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET}
   expiration: 3600000   # 1시간 (밀리초)
   refresh-expiration: 604800000  # 7일 (밀리초)
 
-# 개인정보 암호화 설정
+# 개인정보 암호화 설정 (프로파일별 설정에서 기본값 제공)
 encryption:
   personal-data:
+    # 활성 키 ID (환경 변수 또는 프로파일별 기본값 사용)
     active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:}
+    # 다중 키 버전 (환경 변수 또는 프로파일별 기본값 사용)
     key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:}
+    # 다중 IV 버전 (환경 변수 또는 프로파일별 기본값 사용)
     iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:}
+    # 레거시 단일 키/IV (하위 호환성)
     key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 
-# 결제 시스템 설정
+# 결제 시스템 설정 (프로파일별 설정에서 기본값 제공)
 payment:
   toss:
+    # 토스페이먼츠 시크릿 키 (환경 변수 또는 프로파일별 기본값 사용)
     secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    # 토스페이먼츠 웹훅 시크릿 (환경 변수 또는 프로파일별 기본값 사용)
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:}
+    # 토스페이먼츠 상점 아이디 (선택사항)
+    merchant-id: ${PAYMENT_TOSS_MERCHANT_ID:}
+    # 토스페이먼츠 API 기본 URL
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
+    # 시뮬레이션 모드
     simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
+    # 테스트 결제 URL
     test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
+    # 테스트 결제 키 접두사
     test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
   iamport:
+    # 아임포트 API 키 (환경 변수 또는 프로파일별 기본값 사용)
     api-key: ${PAYMENT_IAMPORT_API_KEY:}
     api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
@@ -162,6 +177,14 @@ payment:
 # 서버 설정
 server:
   port: ${SERVER_PORT:8080}
+  # ⚠️ 포트 충돌 방지: Graceful shutdown 설정
+  shutdown: graceful  # Graceful shutdown 활성화 (자동 재시작 시 포트 충돌 방지)
+  # 대용량 POST 본문 수용 (기본 2MB 초과 시 400 방지)
+  # Spring Boot 3.2+: max-http-post-size 폐기 → max-http-form-post-size 사용.
+  # 구현상 Connector#setMaxPostSize에 연결되며(JSON 포함) 전체 POST 바이트 한도로 동작함.
+  tomcat:
+    max-http-form-post-size: 10MB
+    max-swallow-size: 10MB
   servlet:
     context-path: /
     encoding:
@@ -170,19 +193,28 @@ server:
     session:
       cookie:
         http-only: true
-        secure: false  # 로컬 개발 환경에서는 false, 프로덕션에서는 true
-        same-site: strict
+        # OAuth2(카카오/네이버 등) 외부 리다이렉트 콜백에서는 SameSite=strict일 경우 세션 쿠키가 전송되지 않아
+        # state 검증/세션 연속성이 깨질 수 있으므로 Lax로 설정합니다.
+        # - local 프로파일은 application-local.yml에서 secure=false로 오버라이드됩니다.
+        secure: true
+        same-site: lax
         max-age: 3600  # 1시간
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
     min-response-size: 1024
 
+# ERD 자동 생성 설정 (로컬/개발 환경에서는 비활성화)
+erd:
+  auto-generation:
+    enabled: false  # JPA 순환 참조 문제 방지를 위해 비활성화
+    trigger-on-migration: false
+
 # 로깅 설정
 logging:
   level:
     # 애플리케이션 로그 (정상 로그 계속 남기기)
-    com.mindgarden: INFO
+    com.coresolution: INFO
     # Spring 관련 로그
     org.springframework.transaction: INFO
     org.springframework.orm.jpa: INFO
@@ -196,18 +228,18 @@ logging:
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
     # 기타 로그는 INFO 레벨로 (정상 로그 계속 남기기)
     root: INFO
-  
+
   # 로그 파일 설정은 logback-spring.xml에서 관리
   # file:
-  #   name: logs/mindgarden.log
+  #   name: logs/coresolution.log
   #   max-size: 100MB
   #   max-history: 30
-  
+
   # 로그 패턴 설정은 logback-spring.xml에서 관리
   # pattern:
   #   console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   #   file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-  
+
   # SQL/데이터베이스 오류 로그 별도 파일
   config: classpath:logback-spring.xml
 
@@ -232,6 +264,17 @@ file:
     allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
     upload-dir: ./uploads
 
+# 심리검사 PDF/이미지 업로드 검열 (보안)
+psych:
+  assessment:
+    upload:
+      max-file-size: 52428800  # 50MB (바이트). PDF·이미지(JPG, PNG) 허용, 매직 바이트 검증
+    tesseract:
+      # tessdata 디렉터리 경로. TESSDATA_PREFIX 환경 변수 또는 tessdata 상위 경로.
+      # macOS Homebrew: /opt/homebrew/share/tessdata 또는 /usr/local/share/tessdata
+      # Linux apt: /usr/share/tesseract-ocr/4.00/tessdata
+      datapath: ${TESSDATA_PREFIX:}
+
 # 상담 시스템 설정
 consultation:
   system:
@@ -250,20 +293,202 @@ consultation:
 frontend:
   base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
-# SMS 인증 설정 (비용 절약을 위해 사용 여부 제어)
+# SMS 인증 설정 (프로파일별 설정에서 기본값 제공)
 sms:
   auth:
     enabled: ${SMS_AUTH_ENABLED:false}  # 기본값: 비활성화 (비용 절약)
     provider: ${SMS_PROVIDER:nhn}  # nhn, twilio, aligo 등
-    api-key: ${SMS_API_KEY:}
-    api-secret: ${SMS_API_SECRET:}
-    sender-number: ${SMS_SENDER_NUMBER:}
+    api-key: ${SMS_API_KEY}
+    api-secret: ${SMS_API_SECRET}
+    sender-number: ${SMS_SENDER_NUMBER}
     test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
 
-# OpenAI API 설정 (웰니스 컨텐츠 자동 생성)
+# OpenAI API 설정 (프로파일별 설정에서 기본값 제공)
 openai:
   api:
-    key: ${OPENAI_API_KEY:}  # 환경 변수로 설정 필수
+    key: ${OPENAI_API_KEY}
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
+
+# Claude AI 설정 (향후 지원)
+#claude:
+#  api:
+#    key: ${CLAUDE_API_KEY:}
+#    url: ${CLAUDE_API_URL:https://api.anthropic.com/v1/messages}
+#  model: ${CLAUDE_MODEL:claude-3-opus-20240229}
+#
+# Google Gemini 설정 (향후 지원)
+#gemini:
+#  api:
+#    key: ${GEMINI_API_KEY:}
+#    url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1/models}
+#  model: ${GEMINI_MODEL:gemini-pro}
+
+# AI 모델 및 모니터링 설정 (통합)
+ai:
+  # AI 모델 설정 (확장 가능)
+  model:
+    provider: ${AI_MODEL_PROVIDER:openai}  # openai, claude, gemini 등
+  # AI 모니터링 설정 (하이브리드 방식)
+  monitoring:
+    enabled: ${AI_MONITORING_ENABLED:false}  # AI 모니터링 활성화 여부 (기본: 비활성화)
+    hybrid:
+      enabled: true  # 하이브리드 모드 (통계 + AI)
+      # 1차 필터링: 통계 기반 임계값
+      statistical-threshold:
+        cpu: 70.0      # CPU 70% 이상일 때만 AI 분석 고려
+        memory: 75.0   # 메모리 75% 이상일 때만 AI 분석 고려
+        jvm: 80.0      # JVM 80% 이상일 때만 AI 분석 고려
+      # 2차 분석: AI 호출 조건
+      ai-trigger:
+        consecutive-violations: 3  # 연속 3회 임계값 초과 시 AI 호출
+        severity-threshold: "MEDIUM"  # MEDIUM 이상 심각도일 때만 AI 호출
+        cooldown-minutes: 30  # AI 호출 후 30분간 재호출 방지 (비용 절감)
+    # 비용 관리
+    cost-control:
+      daily-limit: 100  # 일일 AI 호출 최대 횟수
+      monthly-budget: 50.0  # 월 예산 (USD)
+      alert-threshold: 80  # 예산 80% 도달 시 알림
+
+# 민감정보 보호 설정은 아래 security 섹션으로 통합됨
+
+# 온보딩 자동 승인 설정
+onboarding:
+  auto-approval:
+    enabled: ${ONBOARDING_AUTO_APPROVAL_ENABLED:true}  # 자동 승인 활성화 여부
+    allowed-risk-levels: ${ONBOARDING_AUTO_APPROVAL_RISK_LEVELS:LOW}  # 허용 위험도 (쉼표로 구분: LOW,MEDIUM)
+    allowed-business-types: ${ONBOARDING_AUTO_APPROVAL_BUSINESS_TYPES:}  # 허용 업종 (쉼표로 구분, 비어있으면 모든 업종 허용)
+    require-payment-method: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_PAYMENT:false}  # 결제 수단 필수 여부 (false: 선택 사항)
+    require-subscription: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_SUBSCRIPTION:false}  # 구독 필수 여부 (false: 선택 사항)
+
+# Ops Portal 관리자 계정 설정 (프로파일별 설정에서 기본값 제공)
+ops:
+  admin:
+    # Ops Portal 관리자 아이디 (환경 변수 또는 프로파일별 기본값 사용)
+    # OpsAuthController에서 userId로 사용하므로 userId로 설정
+    userId: ${OPS_ADMIN_USERNAME:ops_core}
+    username: ${OPS_ADMIN_USERNAME:ops_core}  # 하위 호환성
+    # Ops Portal 관리자 비밀번호 (환경 변수 또는 프로파일별 기본값 사용)
+    password: ${OPS_ADMIN_PASSWORD:godgod826!}
+    # Ops Portal 관리자 역할 (환경 변수 또는 프로파일별 기본값 사용)
+    role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
+
+# 환경변수 기본값 설정은 프로파일별 설정 파일에서 관리
+
+# 이메일 설정은 프로파일별 설정 파일에서 관리
+
+# 카카오 알림톡 설정은 프로파일별 설정 파일에서 관리
+
+# =====================================================
+# 스케줄러 설정 (배치 작업 표준화)
+# =====================================================
+scheduler:
+  # 전역 설정
+  task:
+    scheduling:
+      pool:
+        size: 10  # 스케줄러 스레드 풀 크기
+      thread-name-prefix: scheduler-
+
+  # 알림 설정
+  alert:
+    enabled: ${SCHEDULER_ALERT_ENABLED:true}
+    success-rate-threshold: ${SCHEDULER_SUCCESS_RATE_THRESHOLD:0.95}  # 95% 미만 시 알림
+
+  # 개별 스케줄러 설정
+  # 1. 급여 배치 스케줄러
+  salary-batch:
+    enabled: ${SCHEDULER_SALARY_BATCH_ENABLED:true}
+    cron: ${SCHEDULER_SALARY_BATCH_CRON:0 0 2 * * ?}  # 매일 새벽 2시
+
+  salary-batch-monitor:
+    enabled: ${SCHEDULER_SALARY_BATCH_MONITOR_ENABLED:true}
+    cron: ${SCHEDULER_SALARY_BATCH_MONITOR_CRON:0 0 * * * ?}  # 매시간 정각
+
+  # 2. 구독 만료 스케줄러
+  subscription-expiration:
+    enabled: ${SCHEDULER_SUBSCRIPTION_EXPIRATION_ENABLED:true}
+    cron: ${SCHEDULER_SUBSCRIPTION_EXPIRATION_CRON:0 0 2 * * ?}  # 매일 새벽 2시
+
+  # 3. 스케줄 자동 완료 스케줄러
+  schedule-auto-complete:
+    enabled: ${SCHEDULER_SCHEDULE_AUTO_COMPLETE_ENABLED:true}
+    cron: ${SCHEDULER_SCHEDULE_AUTO_COMPLETE_CRON:0 */10 * * * *}  # 매 10분마다
+
+  # 4. 통계 생성 스케줄러
+  statistics-generation:
+    enabled: ${SCHEDULER_STATISTICS_GENERATION_ENABLED:true}
+    cron: ${SCHEDULER_STATISTICS_GENERATION_CRON:0 1 0 * * *}  # 매일 자정 1분 후
+
+  # 5. 웰니스 알림 스케줄러
+  wellness-notification:
+    enabled: ${SCHEDULER_WELLNESS_NOTIFICATION_ENABLED:true}
+    cron: ${SCHEDULER_WELLNESS_NOTIFICATION_CRON:0 0 9 * * ?}  # 매일 오전 9시
+
+  # 6. 상담일지 알림 스케줄러
+  consultation-record-alert:
+    enabled: ${SCHEDULER_CONSULTATION_RECORD_ALERT_ENABLED:true}
+    cron: ${SCHEDULER_CONSULTATION_RECORD_ALERT_CRON:0 0 9 * * *}  # 매일 오전 9시
+
+  # 7. 워크플로우 자동화 스케줄러
+  workflow-automation:
+    enabled: ${SCHEDULER_WORKFLOW_AUTOMATION_ENABLED:true}
+    cron: ${SCHEDULER_WORKFLOW_AUTOMATION_CRON:0 */10 * * * *}  # 매 10분마다
+
+  # 8. 은행 이체 처리 스케줄러
+  bank-transfer:
+    enabled: ${SCHEDULER_BANK_TRANSFER_ENABLED:true}
+    cron: ${SCHEDULER_BANK_TRANSFER_CRON:0 */5 * * * *}  # 매 5분마다
+
+  # 9. 개인정보 파기 스케줄러
+  personal-data-destruction:
+    enabled: ${SCHEDULER_PERSONAL_DATA_DESTRUCTION_ENABLED:true}
+    cron: ${SCHEDULER_PERSONAL_DATA_DESTRUCTION_CRON:0 0 3 * * ?}  # 매일 새벽 3시
+
+  # 10. 세션 정리 스케줄러
+  session-cleanup:
+    enabled: ${SCHEDULER_SESSION_CLEANUP_ENABLED:true}
+    cron: ${SCHEDULER_SESSION_CLEANUP_CRON:0 */5 * * * *}  # 매 5분마다
+
+  # 11. 스키마 변경 감지 스케줄러
+  schema-change-detection:
+    enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}
+    cron: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_CRON:0 0 2 * * ?}  # 매일 새벽 2시
+
+# =====================================================
+# 보안 설정 (보안 표준화 + 민감정보 보호)
+# =====================================================
+security:
+  # 민감정보 보호 (데이터 마스킹)
+  data-masking:
+    enabled: ${DATA_MASKING_ENABLED:true}  # 민감정보 마스킹 활성화 (운영: true, 개발: false)
+    mask-in-logs: true  # 로그 출력 시 마스킹
+    mask-in-ai-analysis: true  # AI 분석 시 마스킹
+    mask-in-external-api: true  # 외부 API 전송 시 마스킹
+
+  # 로그인 보안
+  login:
+    max-attempts: ${SECURITY_LOGIN_MAX_ATTEMPTS:5}  # 최대 로그인 시도 횟수
+    lockout-duration-minutes: ${SECURITY_LOGIN_LOCKOUT_DURATION:30}  # 계정 잠금 시간 (분)
+
+  # JWT 설정
+  jwt:
+    secret-min-length: ${JWT_SECRET_MIN_LENGTH:32}  # JWT 비밀키 최소 길이
+    access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}  # 1시간 (ms)
+    refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:604800000}  # 7일 (ms)
+
+  # 비밀번호 정책
+  password:
+    strength: ${SECURITY_PASSWORD_STRENGTH:12}  # BCrypt 강도 12 (표준화: backend-ops와 동일)
+    min-length: ${PASSWORD_MIN_LENGTH:8}  # 최소 길이
+    max-length: ${PASSWORD_MAX_LENGTH:100}  # 최대 길이
+    require-uppercase: ${PASSWORD_REQUIRE_UPPERCASE:true}  # 대문자 필수
+    require-lowercase: ${PASSWORD_REQUIRE_LOWERCASE:true}  # 소문자 필수
+    require-digit: ${PASSWORD_REQUIRE_DIGIT:true}  # 숫자 필수
+    require-special: ${PASSWORD_REQUIRE_SPECIAL:true}  # 특수문자 필수
+
+  # 보안 감사 로그
+  audit:
+    enabled: ${SECURITY_AUDIT_ENABLED:true}  # 감사 로그 활성화
+    retention-days: ${SECURITY_AUDIT_RETENTION_DAYS:365}  # 로그 보관 기간 (일)

@@ -1,0 +1,467 @@
+/**
+ * 구독 관리 컴포넌트
+ * 
+ * 구독 생성, 조회, 활성화, 취소 기능을 제공합니다.
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-11-20
+ */
+
+import React, { useState, useEffect } from 'react';
+import { CreditCard, Calendar, DollarSign, AlertCircle } from 'lucide-react';
+import { useSession } from '../../contexts/SessionContext';
+import {
+  getSubscriptions,
+  getPaymentMethods,
+  getActivePricingPlans,
+  createSubscription,
+  activateSubscription,
+  cancelSubscription,
+  formatCurrency,
+  formatCardExpiry,
+  getErrorMessage,
+  getSubscriptionStatusCodes,
+  getBillingCycleCodes,
+  getCodeLabel,
+} from '../../utils/billingService';
+import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
+import Button from '../ui/Button/Button';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
+import PaymentMethodRegistration from './PaymentMethodRegistration';
+import {
+  BILLING_CSS,
+  ICON_SIZES,
+  BILLING_MESSAGES,
+  SUBSCRIPTION_CONSTANTS,
+  COMMON_CODE_GROUPS,
+} from '../../constants/billing';
+import SafeText from '../common/SafeText';
+import './SubscriptionManagement.css';
+
+/**
+ * 구독 관리 컴포넌트
+ * 
+ * @param {Object} props
+ * @param {string} props.tenantId - 테넌트 ID (선택적, 세션에서 가져옴)
+ */
+const SubscriptionManagement = ({ tenantId: propTenantId }) => {
+  const { user, sessionInfo } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [pricingPlans, setPricingPlans] = useState([]);
+  const [showPaymentMethodRegistration, setShowPaymentMethodRegistration] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [subscriptionStatusCodes, setSubscriptionStatusCodes] = useState([]);
+  const [billingCycleCodes, setBillingCycleCodes] = useState([]);
+
+  const tenantId = propTenantId || sessionInfo?.tenantId || user?.tenantId;
+
+  useEffect(() => {
+    if (tenantId) {
+      loadSubscriptions();
+      loadPaymentMethods();
+      loadPricingPlans();
+      loadCommonCodes();
+    }
+  }, [tenantId]);
+
+  /**
+   * 공통 코드 로드
+   */
+  const loadCommonCodes = async () => {
+    try {
+      const [statusCodes, cycleCodes] = await Promise.all([
+        getSubscriptionStatusCodes(),
+        getBillingCycleCodes(),
+      ]);
+      setSubscriptionStatusCodes(statusCodes);
+      setBillingCycleCodes(cycleCodes);
+    } catch (err) {
+      console.error('공통 코드 로드 실패:', err);
+    }
+  };
+
+  /**
+   * 구독 목록 로드
+   */
+  const loadSubscriptions = async () => {
+    if (!tenantId) return;
+
+    try {
+      setLoading(true);
+      const subscriptions = await getSubscriptions(tenantId);
+      setSubscriptions(subscriptions);
+    } catch (err) {
+      console.error('구독 목록 로드 실패:', err);
+      notificationManager.error(BILLING_MESSAGES.ERROR.LOAD_SUBSCRIPTIONS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 결제 수단 목록 로드
+   */
+  const loadPaymentMethods = async () => {
+    if (!tenantId) return;
+
+    try {
+      const methods = await getPaymentMethods(tenantId);
+      setPaymentMethods(methods);
+    } catch (err) {
+      console.error('결제 수단 목록 로드 실패:', err);
+    }
+  };
+
+  /**
+   * 요금제 목록 로드
+   */
+  const loadPricingPlans = async () => {
+    try {
+      const plans = await getActivePricingPlans();
+      setPricingPlans(plans);
+    } catch (err) {
+      console.error('요금제 목록 로드 실패:', err);
+    }
+  };
+
+  /**
+   * 구독 생성
+   */
+  const handleCreateSubscription = async (planId, paymentMethodId) => {
+    if (!tenantId) {
+      notificationManager.error(BILLING_MESSAGES.ERROR.TENANT_NOT_FOUND);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await createSubscription({
+        tenantId,
+        planId,
+        paymentMethodId,
+      });
+
+      notificationManager.success(BILLING_MESSAGES.SUCCESS.SUBSCRIPTION_CREATED);
+      await loadSubscriptions();
+      setShowPaymentMethodRegistration(false);
+      setSelectedPlan(null);
+    } catch (err) {
+      console.error('구독 생성 실패:', err);
+      const errorMsg = getErrorMessage(err, BILLING_MESSAGES.ERROR.CREATE_SUBSCRIPTION);
+      notificationManager.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 구독 활성화
+   */
+  const handleActivateSubscription = async (subscriptionId) => {
+    try {
+      setLoading(true);
+      await activateSubscription(subscriptionId);
+      notificationManager.success(BILLING_MESSAGES.SUCCESS.SUBSCRIPTION_ACTIVATED);
+      await loadSubscriptions();
+    } catch (err) {
+      console.error('구독 활성화 실패:', err);
+      const errorMsg = getErrorMessage(err, BILLING_MESSAGES.ERROR.ACTIVATE_SUBSCRIPTION);
+      notificationManager.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 구독 취소
+   */
+  const handleCancelSubscription = async (subscriptionId) => {
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM, resolve);
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await cancelSubscription(subscriptionId);
+      notificationManager.success(BILLING_MESSAGES.SUCCESS.SUBSCRIPTION_CANCELLED);
+      await loadSubscriptions();
+    } catch (err) {
+      console.error('구독 취소 실패:', err);
+      const errorMsg = getErrorMessage(err, BILLING_MESSAGES.ERROR.CANCEL_SUBSCRIPTION);
+      notificationManager.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!tenantId) {
+    return (
+      <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.CONTAINER}>
+        <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.ERROR}>
+          <AlertCircle size={ICON_SIZES.MEDIUM} />
+          <span>{BILLING_MESSAGES.ERROR.TENANT_NOT_FOUND}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SimpleLayout title={BILLING_MESSAGES.SUBSCRIPTION.TITLE}>
+      <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.CONTAINER}>
+        <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.HEADER}>
+          <CreditCard size={ICON_SIZES.LARGE} />
+          <h2>{BILLING_MESSAGES.SUBSCRIPTION.TITLE}</h2>
+        </div>
+
+        {/* 결제 수단 등록 */}
+        {showPaymentMethodRegistration && (
+          <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION}>
+            <PaymentMethodRegistration
+              tenantId={tenantId}
+              onSuccess={() => {
+                setShowPaymentMethodRegistration(false);
+                loadPaymentMethods();
+              }}
+              onCancel={() => setShowPaymentMethodRegistration(false)}
+            />
+          </div>
+        )}
+
+        {/* 결제 수단 목록 */}
+        <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION}>
+            <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION_HEADER}>
+            <h3>{BILLING_MESSAGES.SUBSCRIPTION.PAYMENT_METHODS_TITLE}</h3>
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() => setShowPaymentMethodRegistration(true)}
+            >
+              {BILLING_MESSAGES.SUBSCRIPTION.ADD_PAYMENT_METHOD}
+            </Button>
+          </div>
+          {paymentMethods.length === 0 ? (
+            <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
+              <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHODS}</p>
+              <Button
+                variant="primary"
+                onClick={() => setShowPaymentMethodRegistration(true)}
+              >
+                {BILLING_MESSAGES.SUBSCRIPTION.REGISTER_PAYMENT_METHOD}
+              </Button>
+            </div>
+          ) : (
+            <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHODS}>
+              {paymentMethods.map((method) => (
+                <div key={method.paymentMethodId} className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHOD}>
+                  <CreditCard size={ICON_SIZES.MEDIUM} />
+                  <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHOD_INFO}>
+                    <div>
+                      <strong><SafeText fallback={BILLING_MESSAGES.SUBSCRIPTION.CARD_DEFAULT_LABEL}>{method.cardBrand}</SafeText></strong>
+                      {method.cardLast4 && <span> **** <SafeText>{method.cardLast4}</SafeText></span>}
+                    </div>
+                    {method.cardExpMonth && method.cardExpYear && (
+                      <small>
+                        {BILLING_MESSAGES.SUBSCRIPTION.CARD_EXPIRY_LABEL}: {formatCardExpiry(method.cardExpMonth, method.cardExpYear)}
+                      </small>
+                    )}
+                  </div>
+                  {method.isDefault && (
+                    <span className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.BADGE}>{BILLING_MESSAGES.SUBSCRIPTION.DEFAULT_BADGE_LABEL}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 구독 목록 */}
+        <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION}>
+          <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION_HEADER}>
+            <h3>{BILLING_MESSAGES.SUBSCRIPTION.SUBSCRIPTIONS_TITLE}</h3>
+          </div>
+          {loading ? (
+            <UnifiedLoading type="inline" text={BILLING_MESSAGES.SUBSCRIPTION.LOADING_TEXT} />
+          ) : subscriptions.length === 0 ? (
+            <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
+              <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_SUBSCRIPTIONS}</p>
+              {pricingPlans.length > 0 && (
+                <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLANS}>
+                  <h4>{BILLING_MESSAGES.SUBSCRIPTION.PLAN_SELECTION_TITLE}</h4>
+                  <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_GRID}>
+                    {pricingPlans.map((plan) => (
+                      <div
+                        key={plan.planId}
+                        className={`${BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_CARD} ${
+                          selectedPlan?.planId === plan.planId ? 'selected' : ''
+                        }`}
+                        onClick={() => setSelectedPlan(plan)}
+                      >
+                        <h4><SafeText>{plan.nameKo || plan.name}</SafeText></h4>
+                        <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_PRICE}>
+                          {formatCurrency(plan.baseFee, plan.currency)}
+                          {BILLING_MESSAGES.SUBSCRIPTION.MONTHLY_LABEL}
+                        </div>
+                        {plan.descriptionKo && (
+                          <p className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_DESCRIPTION}>
+                            <SafeText>{plan.descriptionKo}</SafeText>
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {selectedPlan && paymentMethods.length > 0 && (
+                    <Button
+                      variant="primary"
+                      onClick={() =>
+                        handleCreateSubscription(selectedPlan.planId, paymentMethods[0].paymentMethodId)
+                      }
+                      fullWidth
+                    >
+                      {BILLING_MESSAGES.SUBSCRIPTION.CREATE_SUBSCRIPTION}
+                    </Button>
+                  )}
+                  {selectedPlan && paymentMethods.length === 0 && (
+                    <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.WARNING}>
+                      <AlertCircle size={ICON_SIZES.MEDIUM} />
+                      <span>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHOD_FOR_SUBSCRIPTION}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTIONS}>
+              {subscriptions.map((subscription) => (
+                <div key={subscription.subscriptionId} className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION}>
+                  <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_HEADER}>
+                    <div>
+                      <h4><SafeText fallback={BILLING_MESSAGES.SUBSCRIPTION.DEFAULT_PLAN_NAME}>{subscription.planName}</SafeText></h4>
+                      <SubscriptionStatusBadgeLabel
+                        status={subscription.status}
+                        statusCodes={subscriptionStatusCodes}
+                      />
+                    </div>
+                  </div>
+                  <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_INFO}>
+                    {subscription.billingCycle && (
+                      <div>
+                        <Calendar size={ICON_SIZES.SMALL} />
+                        <span>
+                          {BILLING_MESSAGES.SUBSCRIPTION.BILLING_CYCLE_LABEL}:{' '}
+                          <BillingCycleLabel cycle={subscription.billingCycle} cycleCodes={billingCycleCodes} />
+                        </span>
+                      </div>
+                    )}
+                    {subscription.amount && (
+                      <div>
+                        <DollarSign size={ICON_SIZES.SMALL} />
+                        <span>{formatCurrency(subscription.amount, subscription.currency)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_ACTIONS}>
+                    {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.PENDING_ACTIVATION && (
+                      <Button
+                        variant="primary"
+                        size="small"
+                        onClick={() => handleActivateSubscription(subscription.subscriptionId)}
+                      >
+                        {BILLING_MESSAGES.SUBSCRIPTION.ACTIVATE}
+                      </Button>
+                    )}
+                    {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
+                    {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
+                      <Button
+                        variant="danger"
+                        size="small"
+                        onClick={() => handleCancelSubscription(subscription.subscriptionId)}
+                      >
+                        {BILLING_MESSAGES.SUBSCRIPTION.CANCEL}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </SimpleLayout>
+  );
+};
+
+/**
+ * 구독 상태 배지 (common StatusBadge + 공통코드 라벨)
+ */
+const SubscriptionStatusBadgeLabel = ({ status, statusCodes }) => {
+  const [statusLabel, setStatusLabel] = useState(status || BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!status) {
+        setStatusLabel(BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
+        return;
+      }
+      if (statusCodes?.length > 0) {
+        const code = statusCodes.find((c) => c.codeValue === status);
+        setStatusLabel(code ? (code.koreanName || code.codeLabel || status) : status);
+      } else {
+        const label = await getCodeLabel(COMMON_CODE_GROUPS.SUBSCRIPTION_STATUS, status);
+        setStatusLabel(label);
+      }
+    };
+    load();
+  }, [status, statusCodes]);
+
+  const normalized = (status || '').toLowerCase();
+  const variant = normalized.includes('active')
+    ? 'success'
+    : normalized.includes('pending')
+      ? 'warning'
+      : 'neutral';
+
+  return <StatusBadge variant={variant}><SafeText>{statusLabel}</SafeText></StatusBadge>;
+};
+
+/**
+ * 결제 주기 라벨 컴포넌트 (공통 코드 기반)
+ */
+const BillingCycleLabel = ({ cycle, cycleCodes }) => {
+  const [cycleLabel, setCycleLabel] = useState(cycle);
+
+  useEffect(() => {
+    const loadCycleLabel = async () => {
+      if (!cycle) {
+        setCycleLabel('');
+        return;
+      }
+
+      if (cycleCodes && cycleCodes.length > 0) {
+        const code = cycleCodes.find(c => c.codeValue === cycle);
+        if (code) {
+          setCycleLabel(code.koreanName || code.codeLabel || cycle);
+        } else {
+          setCycleLabel(cycle);
+        }
+      } else {
+        const label = await getCodeLabel(COMMON_CODE_GROUPS.BILLING_CYCLE, cycle);
+        setCycleLabel(label);
+      }
+    };
+
+    loadCycleLabel();
+  }, [cycle, cycleCodes]);
+
+  return <span><SafeText>{cycleLabel}</SafeText></span>;
+};
+
+export default SubscriptionManagement;
+

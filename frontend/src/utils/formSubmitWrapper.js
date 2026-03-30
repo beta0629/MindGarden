@@ -1,9 +1,14 @@
 /**
  * 폼 제출 래퍼 유틸리티
+/**
  * 폼 제출 시 자동으로 세션 체크를 일시 중지하여 데이터 수정 중 되돌아가는 문제를 방지
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -11,7 +16,9 @@ import { sessionManager } from './sessionManager';
 
 /**
  * 폼 제출 함수를 래핑하여 자동으로 세션 체크를 일시 중지
+/**
  * @param {Function} submitFunction - 실제 폼 제출 함수
+/**
  * @returns {Function} - 래핑된 함수
  */
 export const withFormSubmit = (submitFunction) => {
@@ -35,7 +42,9 @@ export const withFormSubmit = (submitFunction) => {
 
 /**
  * 폼 제출 함수를 래핑하는 고차 함수 (HOC)
+/**
  * @param {Function} WrappedComponent - 래핑할 컴포넌트
+/**
  * @returns {Function} - 래핑된 컴포넌트
  */
 export const withFormSubmitHOC = (WrappedComponent) => {
@@ -57,6 +66,7 @@ export const withFormSubmitHOC = (WrappedComponent) => {
 
 /**
  * 수동으로 폼 제출 시작/종료를 관리하는 훅
+/**
  * @returns {Object} - 폼 제출 관리 함수들
  */
 export const useFormSubmit = () => {

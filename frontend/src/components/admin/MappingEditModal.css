@@ -1,0 +1,101 @@
+/**
+ * MappingEditModal - B0KlA 토큰 기반 매칭 수정 모달
+ * mg-v2-ad-b0kla__card, 섹션 구분, 악센트 바, 금액·회기 강조
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+/* 패키지 선택 카드 그리드 */
+.mg-v2-mapping-edit-modal__package-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* 패키지 카드 (선택 시 좌측 악센트) */
+.mg-v2-mapping-edit-modal__package-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-left: 4px solid transparent;
+  border-radius: var(--ad-b0kla-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.mg-v2-mapping-edit-modal__package-card:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.mg-v2-mapping-edit-modal__package-card--selected {
+  border-color: var(--ad-b0kla-green);
+  border-left: 4px solid var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
+}
+
+.mg-v2-mapping-edit-modal__package-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.mg-v2-mapping-edit-modal__package-card-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-edit-modal__package-card-meta {
+  font-size: 0.8125rem;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* 금액·회기수 강조 (font-weight 700, --ad-b0kla-green) */
+.mg-v2-mapping-edit-modal__value-emphasis {
+  font-weight: 700;
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-mapping-edit-modal__value-emphasis--title {
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+/* 섹션 마진 */
+.mg-v2-mapping-edit-modal__section {
+  margin-bottom: 1.5rem;
+}
+
+.mg-v2-mapping-edit-modal__section:last-of-type {
+  margin-bottom: 0;
+}
+
+/* 섹션 제목 아이콘 */
+.mg-v2-mapping-edit-modal__section-title-icon {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* 변경 예정 서브섹션 */
+.mg-v2-mapping-edit-modal__change-summary .mg-v2-mapping-edit-modal__change-summary-title {
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
+}
+
+.mg-v2-mapping-edit-modal__change-summary .mg-v2-info-grid {
+  gap: 0.75rem;
+}
+
+.mg-v2-mapping-edit-modal__change-summary .mg-v2-form-help {
+  margin-top: 0.5rem;
+}
+
+/* 주의사항 마진 */
+.mg-v2-mapping-edit-modal__alert {
+  margin-top: 1rem;
+}

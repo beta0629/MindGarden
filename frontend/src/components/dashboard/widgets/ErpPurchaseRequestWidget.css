@@ -1,0 +1,419 @@
+/* ErpPurchaseRequestWidget.css - ERP 구매 요청 위젯 스타일 */
+
+/* ============================================================================
+   아코디언 헤더 스타일
+   ============================================================================ */
+.erp-purchase-header-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: var(--cs-spacing-xs);
+  border-radius: var(--cs-radius-md);
+}
+
+.erp-purchase-header-title:hover {
+  background: var(--cs-bg-hover);
+}
+
+.erp-purchase-title-content {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+}
+
+.erp-purchase-pending-badge {
+  background: var(--cs-warning-500);
+  color: white;
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-bold);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+  margin-left: var(--cs-spacing-xs);
+  min-width: 18px;
+  text-align: center;
+}
+
+.erp-purchase-expand-icon {
+  color: var(--cs-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.erp-purchase-expand-icon:hover {
+  color: var(--cs-text-primary);
+}
+
+/* ============================================================================
+   빈 상태 스타일
+   ============================================================================ */
+.erp-purchase-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-text-secondary);
+}
+
+.erp-purchase-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+  color: var(--cs-gray-400);
+}
+
+.erp-purchase-empty-text {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.erp-purchase-empty-hint {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.erp-purchase-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  background: var(--cs-primary-500);
+  border: none;
+  color: white;
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  border-radius: var(--cs-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.erp-purchase-empty-btn:hover {
+  background: var(--cs-primary-600);
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   콘텐츠 레이아웃
+   ============================================================================ */
+.erp-purchase-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-lg);
+  padding: var(--cs-spacing-md) 0;
+}
+
+/* ============================================================================
+   통계 카드 스타일
+   ============================================================================ */
+.erp-purchase-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.erp-purchase-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.erp-purchase-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-md);
+}
+
+.erp-purchase-stat-card.pending {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.erp-purchase-stat-card.approved {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.erp-purchase-stat-card.total {
+  border-left: 4px solid var(--cs-blue-500);
+}
+
+.erp-purchase-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.erp-purchase-stat-card.pending .erp-purchase-stat-icon {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-600);
+}
+
+.erp-purchase-stat-card.approved .erp-purchase-stat-icon {
+  background: var(--cs-success-100);
+  color: var(--cs-success-600);
+}
+
+.erp-purchase-stat-card.total .erp-purchase-stat-icon {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-600);
+}
+
+.erp-purchase-stat-content {
+  flex: 1;
+}
+
+.erp-purchase-stat-value {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.erp-purchase-stat-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+}
+
+/* ============================================================================
+   액션 버튼 스타일
+   ============================================================================ */
+.erp-purchase-actions {
+  display: flex;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.erp-purchase-action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  border: 1px solid;
+  border-radius: var(--cs-radius-md);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.erp-purchase-action-btn.primary {
+  background: var(--cs-primary-500);
+  border-color: var(--cs-primary-500);
+  color: white;
+}
+
+.erp-purchase-action-btn.primary:hover {
+  background: var(--cs-primary-600);
+  border-color: var(--cs-primary-600);
+  transform: translateY(-1px);
+}
+
+.erp-purchase-action-btn.secondary {
+  background: transparent;
+  border-color: var(--cs-border-primary);
+  color: var(--cs-text-primary);
+}
+
+.erp-purchase-action-btn.secondary:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-300);
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+@media (max-width: 768px) {
+  .erp-purchase-title-content {
+    font-size: var(--cs-text-sm);
+  }
+
+  .erp-purchase-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .erp-purchase-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+
+  .erp-purchase-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .erp-purchase-stat-value {
+    font-size: var(--cs-text-lg);
+  }
+
+  .erp-purchase-actions {
+    flex-direction: column;
+  }
+
+  .erp-purchase-action-btn {
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .erp-purchase-header-title {
+    padding: var(--cs-spacing-xs) 0;
+  }
+
+  .erp-purchase-content {
+    padding: var(--cs-spacing-sm) 0;
+  }
+
+  .erp-purchase-stats {
+    gap: var(--cs-spacing-sm);
+  }
+
+  .erp-purchase-stat-card {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--cs-spacing-sm);
+  }
+}
+
+/* ============================================================================
+   다크 테마 지원
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  .erp-purchase-title-content {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .erp-purchase-expand-icon {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .erp-purchase-expand-icon:hover {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .erp-purchase-stat-card {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .erp-purchase-stat-value {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .erp-purchase-stat-label {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .erp-purchase-actions {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+
+  .erp-purchase-action-btn.secondary {
+    color: var(--cs-text-primary-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .erp-purchase-action-btn.secondary:hover {
+    background: var(--cs-bg-hover-dark);
+  }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.erp-purchase-content {
+  animation: slideInDown 0.3s ease-out;
+}
+
+.erp-purchase-stat-card {
+  animation: slideInDown 0.3s ease-out;
+}
+
+.erp-purchase-stat-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.erp-purchase-stat-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* 아코디언 확장 아이콘 회전 */
+.erp-purchase-expand-icon {
+  transform-origin: center;
+  transition: transform 0.3s ease;
+}
+
+/* 호버 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.erp-purchase-pending-badge:hover {
+  animation: pulse 0.6s ease-in-out;
+}
+
+/* 버튼 호버 효과 */
+.erp-purchase-action-btn:active {
+  transform: translateY(1px);
+}
+
+.erp-purchase-empty-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================
+   아코디언 특수 스타일
+   ============================================================================ */
+.erp-purchase-request-widget[data-accordion="true"] .widget-header {
+  cursor: pointer;
+}
+
+.erp-purchase-request-widget[data-accordion="true"] .widget-content {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.erp-purchase-request-widget[data-accordion="collapsed"] .widget-content {
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.erp-purchase-request-widget[data-accordion="expanded"] .widget-content {
+  max-height: 1000px;
+  opacity: 1;
+}

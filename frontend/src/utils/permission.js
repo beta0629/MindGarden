@@ -1,9 +1,14 @@
 /**
  * 동적 권한 체크 유틸리티
+/**
  * 백엔드의 DynamicPermissionService와 연동하여 권한을 체크합니다.
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 
@@ -18,8 +23,11 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 /**
  * 특정 권한을 가졌는지 확인
+/**
  * @param {string} permission - 권한 코드 (예: 'ACCESS_ERD', 'ACCESS_PAYMENT')
+/**
  * @param {Object} session - 세션 정보 (fetch 함수 포함)
+/**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
 export const hasPermission = async (permission, session) => {
@@ -66,8 +74,11 @@ export const hasPermission = async (permission, session) => {
 
 /**
  * 여러 권한 중 하나라도 가지고 있는지 확인
+/**
  * @param {string[]} permissions - 권한 코드 배열
+/**
  * @param {Object} session - 세션 정보
+/**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
 export const hasAnyPermission = async (permissions, session) => {
@@ -85,8 +96,11 @@ export const hasAnyPermission = async (permissions, session) => {
 
 /**
  * 모든 권한을 가지고 있는지 확인
+/**
  * @param {string[]} permissions - 권한 코드 배열
+/**
  * @param {Object} session - 세션 정보
+/**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
 export const hasAllPermissions = async (permissions, session) => {
@@ -111,7 +125,9 @@ export const clearPermissionCache = () => {
 
 /**
  * 사용자의 모든 권한 목록 조회
+/**
  * @param {Object} session - 세션 정보
+/**
  * @returns {Promise<string[]>} 권한 목록
  */
 export const getUserPermissions = async (session) => {
@@ -139,8 +155,11 @@ export const getUserPermissions = async (session) => {
 
 /**
  * 권한 체크를 위한 React Hook
+/**
  * @param {string} permission - 권한 코드
+/**
  * @param {Object} session - 세션 정보
+/**
  * @returns {Object} { hasPermission, loading, error }
  */
 export const usePermission = (permission, session) => {
@@ -205,21 +224,19 @@ export const PERMISSION_GROUPS = {
         PERMISSIONS.ACCESS_PAYMENT,
         PERMISSIONS.REQUEST_PAYMENT_APPROVAL,
         PERMISSIONS.REGISTER_SCHEDULER,
-        PERMISSIONS.VIEW_SCHEDULER_CONSULTANTS
+        PERMISSIONS.VIEW_SCHEDULER_CONSULTANTS,
+        PERMISSIONS.VIEW_BRANCH_DETAILS,
+        PERMISSIONS.MANAGE_BRANCH,
+        PERMISSIONS.MANAGE_SYSTEM,
+        PERMISSIONS.APPROVE_PAYMENT
     ],
-    BRANCH_BRANCH_SUPER_ADMIN: [
+    STAFF: [
         PERMISSIONS.ACCESS_ERD,
         PERMISSIONS.ACCESS_PAYMENT,
-        PERMISSIONS.APPROVE_PAYMENT,
         PERMISSIONS.REGISTER_SCHEDULER,
         PERMISSIONS.VIEW_SCHEDULER_CONSULTANTS
     ],
     CONSULTANT: [
         PERMISSIONS.REQUEST_SUPPLY_PURCHASE
-    ],
-    HQ_MASTER: [
-        PERMISSIONS.VIEW_BRANCH_DETAILS,
-        PERMISSIONS.MANAGE_BRANCH,
-        PERMISSIONS.MANAGE_SYSTEM
     ]
 };

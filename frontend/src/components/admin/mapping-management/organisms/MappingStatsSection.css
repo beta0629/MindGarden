@@ -1,0 +1,37 @@
+/**
+ * MappingStatsSection - B0KlA KPI 카드 스타일 (ContentKpiRow 호환)
+ *
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-stats-section.mg-v2-content-section--plain {
+  padding: 0;
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+}
+
+.mg-v2-content-kpi-card--clickable {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  margin: 0;
+}
+
+.mg-v2-content-kpi-card--clickable:focus {
+  outline: 2px solid var(--ad-b0kla-blue);
+  outline-offset: 2px;
+}
+
+.mg-v2-content-kpi-card__icon-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.mg-v2-content-kpi-card--skeleton .mg-v2-content-kpi-card__icon {
+  opacity: 0.5;
+}
+
+.mg-v2-mapping-stats-loading .mg-v2-content-kpi-card--skeleton {
+  pointer-events: none;
+}

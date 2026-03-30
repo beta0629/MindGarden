@@ -1,0 +1,45 @@
+/**
+ * MobileLayout - GNB + 드로어 + 메인 + 탭바(선택)
+ * RESPONSIVE_LAYOUT_SPEC: 모바일 패딩 16px
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mobile-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    var(--mg-layout-main-bg-start, #FAF9F7) 0%,
+    var(--mg-layout-main-bg-end, #F2EDE8) 100%
+  );
+}
+
+.mg-v2-mobile-layout__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--mg-layout-page-padding-mobile, 16px);
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  min-height: 0;
+}
+
+/* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
+.mg-v2-mobile-layout__main > * {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.mg-v2-mobile-layout__tabbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--mg-layout-header-bg, #FAF9F7);
+  border-top: 1px solid var(--mg-layout-header-border, #D4CFC8);
+}

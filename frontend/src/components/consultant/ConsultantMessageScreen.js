@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import UnifiedLoading from '../common/UnifiedLoading';
+import { getLucideIcon } from '../../utils/iconUtils';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 메시지 전송 화면
+/**
  * 상담일지 완료 후 내담자에게 메시지를 전송할 수 있는 화면
  */
 const ConsultantMessageScreen = () => {
@@ -31,33 +36,36 @@ const ConsultantMessageScreen = () => {
     isUrgent: false
   });
 
-  // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: '#6c757d' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: '#007bff' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: '#ffc107' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: '#dc3545' }
+    { value: 'GENERAL', label: '일반', icon: 'MessageCircle', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: 'ClipboardList', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: 'FileText', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: 'Bell', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: 'AlertTriangle', color: 'var(--mg-error-500)' }
   ];
 
   // 컴포넌트 스타일
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: 'var(--mg-gray-100)',
       padding: '20px'
     },
     header: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '8px',
       display: 'flex',
@@ -66,20 +74,24 @@ const ConsultantMessageScreen = () => {
     },
     headerSubtitle: {
       fontSize: 'var(--font-size-base)',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       marginBottom: '20px'
     },
     clientInfoCard: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '16px',
       display: 'flex',
@@ -99,25 +111,30 @@ const ConsultantMessageScreen = () => {
     clientInfoLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       fontWeight: '500'
     },
     messageCard: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     messageTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '20px',
       display: 'flex',
@@ -137,19 +154,23 @@ const ConsultantMessageScreen = () => {
     formLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
       color: '#495057',
       marginBottom: '4px'
     },
     formInput: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       transition: 'all 0.2s ease',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff'
     },
     formTextarea: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
@@ -157,19 +178,23 @@ const ConsultantMessageScreen = () => {
       resize: 'vertical',
       fontFamily: 'inherit',
       transition: 'all 0.2s ease',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff'
     },
     formSelect: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },
     formInputFocus: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,123,255,0.1) -> var(--mg-custom-color)
       boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
     },
     checkboxGroup: {
@@ -191,6 +216,7 @@ const ConsultantMessageScreen = () => {
     checkboxLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '500',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
       color: '#495057',
       cursor: 'pointer'
     },
@@ -201,15 +227,18 @@ const ConsultantMessageScreen = () => {
     },
     messageTypeItem: {
       padding: '16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       textAlign: 'center',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff'
     },
     messageTypeItemSelected: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
       backgroundColor: '#f8f9ff'
     },
     messageTypeIcon: {
@@ -219,6 +248,7 @@ const ConsultantMessageScreen = () => {
     messageTypeLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
       color: '#495057'
     },
     buttonGroup: {
@@ -227,6 +257,7 @@ const ConsultantMessageScreen = () => {
       justifyContent: 'flex-end',
       marginTop: '24px',
       paddingTop: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       borderTop: '1px solid #e9ecef'
     },
     button: {
@@ -242,15 +273,18 @@ const ConsultantMessageScreen = () => {
       gap: '8px'
     },
     primaryButton: {
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     secondaryButton: {
-      backgroundColor: '#6c757d',
+      backgroundColor: 'var(--mg-secondary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     successButton: {
-      backgroundColor: '#28a745',
+      backgroundColor: 'var(--mg-success-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     loadingOverlay: {
@@ -259,6 +293,7 @@ const ConsultantMessageScreen = () => {
       left: 0,
       right: 0,
       bottom: 0,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.5) -> var(--mg-custom-color)
       backgroundColor: 'rgba(0,0,0,0.5)',
       display: 'flex',
       alignItems: 'center',
@@ -293,11 +328,11 @@ const ConsultantMessageScreen = () => {
         // 기본 메시지 제목 설정
         setMessageData(prev => ({
           ...prev,
-          title: `상담 완료 안내 - ${location.state.client.name}님`
+          title: `상담 완료 안내 - ${toDisplayString(location.state.client?.name, '고객')}님`
         }));
       } else {
         // state가 없는 경우 API에서 데이터 로드
-        const consultationResponse = await apiGet(`/api/schedules/${consultationId}`);
+        const consultationResponse = await apiGet(`/api/v1/schedules/${consultationId}`);
         if (consultationResponse.success) {
           setConsultation(consultationResponse.data);
           
@@ -309,7 +344,7 @@ const ConsultantMessageScreen = () => {
                 setClient(clientData);
                 setMessageData(prev => ({
                   ...prev,
-                  title: `상담 완료 안내 - ${clientData.name}님`
+                  title: `상담 완료 안내 - ${toDisplayString(clientData.name, '고객')}님`
                 }));
               }
             }
@@ -355,7 +390,7 @@ const ConsultantMessageScreen = () => {
         isUrgent: messageData.isUrgent
       };
 
-      const response = await apiPost('/api/consultation-messages', messagePayload);
+      const response = await apiPost('/api/v1/consultation-messages', messagePayload);
 
       if (response.success) {
         notificationManager.show('메시지가 전송되었습니다.', 'success');
@@ -377,29 +412,27 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="메시지 전송">
-        <div className="consultant-message-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (!client || !consultation) {
     return (
-      <SimpleLayout title="메시지 전송">
+      <AdminCommonLayout title="메시지">
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">메시지 전송</h1>
             <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="메시지 전송">
+    <AdminCommonLayout title="메시지">
       <div className="mg-dashboard-layout">
       {/* 헤더 */}
       <div className="mg-dashboard-header">
@@ -419,23 +452,23 @@ const ConsultantMessageScreen = () => {
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이메일</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.email || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">전화번호</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.phone || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">주소</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.address || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.address}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담일</span>
-            <span className="mg-v2-text-base mg-font-medium">{consultation.startTime?.split('T')[0]}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{consultation.startTime?.split('T')[0]}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담시간</span>
@@ -445,7 +478,7 @@ const ConsultantMessageScreen = () => {
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담사</span>
-            <span className="mg-v2-text-base mg-font-medium">{user.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{user.name}</SafeText></span>
           </div>
         </div>
       </div>
@@ -470,8 +503,8 @@ const ConsultantMessageScreen = () => {
                   }}
                   onClick={() => handleMessageTypeSelect(type.value)}
                 >
-                  <div style={styles.messageTypeIcon}>{type.icon}</div>
-                  <div style={styles.messageTypeLabel}>{type.label}</div>
+                  <div style={styles.messageTypeIcon}>{getLucideIcon(type.icon, { size: 24 })}</div>
+                  <div style={styles.messageTypeLabel}><SafeText>{type.label}</SafeText></div>
                 </div>
               ))}
             </div>
@@ -548,12 +581,12 @@ const ConsultantMessageScreen = () => {
             style={{...styles.button, ...styles.successButton}}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
           >
-            {sending ? <UnifiedLoading variant="dots" size="small" /> : '📤 메시지 전송'}
+            {sending ? <div className="mg-loading">로딩중...</div> : '📤 메시지 전송'}
           </button>
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

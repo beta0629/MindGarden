@@ -1,7 +1,17 @@
+/**
+ * @deprecated 2026-03-16 /erp/tax 단일화로 ImprovedTaxManagement만 사용.
+ * 라우트는 App.js에서 ImprovedTaxManagement로 통일됨. 실데이터 연동은 ImprovedTaxManagement 참조.
+ */
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
-import { apiGet, apiPost } from '../../utils/ajax';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import StandardizedApi from '../../utils/standardizedApi';
+import {
+  SALARY_API_ENDPOINTS,
+  TAX_BREAKDOWN_ORDER,
+  TAX_BREAKDOWN_LABELS
+} from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
 import './TaxManagement.css';
@@ -18,9 +28,11 @@ const TaxManagement = () => {
     const loadTaxStatistics = async (period) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/tax/statistics?period=${period}`);
-            if (response && response.success) {
-                setTaxStatistics(response.data);
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
+              period
+            });
+            if (response != null && typeof response === 'object') {
+                setTaxStatistics(response.data ?? response);
             }
         } catch (error) {
             console.error('세금 통계 로드 실패:', error);
@@ -34,9 +46,11 @@ const TaxManagement = () => {
     const loadTaxCalculationsByType = async (taxType) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/tax/type/${taxType}`);
-            if (response && response.success) {
-                setTaxCalculations(response.data);
+            const response = await StandardizedApi.get(
+              `${SALARY_API_ENDPOINTS.TAX_BY_TYPE}/${taxType}`
+            );
+            if (response != null && typeof response === 'object') {
+                setTaxCalculations(response.data ?? response ?? []);
             }
         } catch (error) {
             console.error('세금 내역 로드 실패:', error);
@@ -57,8 +71,11 @@ const TaxManagement = () => {
                 taxRate
             };
 
-            const response = await apiPost('/api/admin/salary/tax/calculate', requestData);
-            if (response && response.success) {
+            const response = await StandardizedApi.post(
+              SALARY_API_ENDPOINTS.TAX_CALCULATE,
+              requestData
+            );
+            if (response != null && (response.success === true || response.data != null)) {
                 showNotification('추가 세금이 계산되었습니다.', 'success');
                 loadTaxStatistics(selectedPeriod);
             }
@@ -88,40 +105,34 @@ const TaxManagement = () => {
     };
 
     const taxTypes = [
-        { value: 'WITHHOLDING_TAX', label: '원천징수', color: '#007bff' },
-        { value: 'VAT', label: '부가세', color: '#28a745' },
-        { value: 'INCOME_TAX', label: '소득세', color: '#dc3545' },
-        { value: 'ADDITIONAL_TAX', label: '추가세금', color: '#ffc107' }
+        { value: 'WITHHOLDING_TAX', label: '원천징수', color: 'var(--mg-primary-500)' },
+        { value: 'VAT', label: '부가세', color: 'var(--mg-success-500)' },
+        { value: 'INCOME_TAX', label: '소득세', color: 'var(--mg-error-500)' },
+        { value: 'FOUR_INSURANCE', label: '4대보험', color: 'var(--mg-info-500)' },
+        { value: 'LOCAL_INCOME_TAX', label: '지방소득세', color: 'var(--mg-neutral-500)' },
+        { value: 'ADDITIONAL_TAX', label: '추가세금', color: 'var(--mg-warning-500)' }
     ];
 
     return (
-        <SimpleLayout>
-            <div className="mg-dashboard-layout">
-                {/* Dashboard Header */}
-                <div className="mg-dashboard-header">
-                    <div className="mg-dashboard-header-content">
-                        <div className="mg-dashboard-header-left">
-                            <Calculator className="mg-dashboard-icon" size={28} />
-                            <div>
-                                <h1 className="mg-dashboard-title">세무 관리</h1>
-                                <p className="mg-dashboard-subtitle">세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다</p>
-                            </div>
-                        </div>
-                        <div className="mg-dashboard-header-right">
-                            <select 
-                                value={selectedPeriod} 
-                                onChange={(e) => setSelectedPeriod(e.target.value)}
-                                className="mg-v2-select"
-                            >
-                                <option key="tax-period-default" value="">기간 선택</option>
-                                <option key="2025-01" value="2025-01">2025년 1월</option>
-                                <option key="2025-02" value="2025-02">2025년 2월</option>
-                                <option key="2025-03" value="2025-03">2025년 3월</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
+        <AdminCommonLayout title="세금 관리" loading={loading} loadingText="세금 데이터를 불러오는 중...">
+            <ContentHeader
+                title="세무 관리"
+                subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
+                actions={
+                    <select
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="mg-v2-select"
+                        aria-label="기간 선택"
+                    >
+                        <option key="tax-period-default" value="">기간 선택</option>
+                        <option key="2025-01" value="2025-01">2025년 1월</option>
+                        <option key="2025-02" value="2025-02">2025년 2월</option>
+                        <option key="2025-03" value="2025-03">2025년 3월</option>
+                    </select>
+                }
+            />
+            <ContentArea className="mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
                 {/* 통계 카드 그리드 */}
                 {taxStatistics && (
                     <div className="mg-dashboard-stats">
@@ -208,28 +219,31 @@ const TaxManagement = () => {
                                         </button>
                                     </div>
                                     
-                                    {taxStatistics && taxStatistics.taxByType && (
+                                    {taxStatistics && (taxStatistics.breakdown || taxStatistics.taxByType) && (
                                         <div className="mg-dashboard-section-content">
                                             <div className="tax-breakdown-grid">
-                                                {Object.entries(taxStatistics.taxByType).map(([type, amount]) => {
-                                                    const taxTypeInfo = taxTypes.find(t => t.value === type);
-                                                    return (
-                                                        <div key={type} className="mg-v2-card tax-breakdown-item">
-                                                            <div 
-                                                                className="tax-type-indicator" 
-                                                                data-color={taxTypeInfo?.color || 'default'}
-                                                            ></div>
-                                                            <div className="tax-type-info">
-                                                                <span className="tax-type-name">
-                                                                    {taxTypeInfo?.label || type}
-                                                                </span>
-                                                                <span className="tax-type-amount">
-                                                                    {formatCurrency(amount)}
-                                                                </span>
-                                                            </div>
+                                                {(taxStatistics.breakdown
+                                                    ? TAX_BREAKDOWN_ORDER.map((key) => ({
+                                                            key,
+                                                            label: TAX_BREAKDOWN_LABELS[key] ?? key,
+                                                            amount: taxStatistics.breakdown[key]
+                                                      })).filter(({ amount }) => amount != null && Number(amount) !== 0)
+                                                    : Object.entries(taxStatistics.taxByType || {}).map(([type, amount]) => ({
+                                                            key: type,
+                                                            label: taxTypes.find(t => t.value === type)?.label ?? type,
+                                                            amount
+                                                      }))
+                                                ).map(({ key, label, amount }) => (
+                                                    <div key={key} className="mg-v2-card tax-breakdown-item">
+                                                        <div className="tax-type-indicator" data-color="default" />
+                                                        <div className="tax-type-info">
+                                                            <span className="tax-type-name">{label}</span>
+                                                            <span className="tax-type-amount">
+                                                                {formatCurrency(Number(amount))}
+                                                            </span>
                                                         </div>
-                                                    );
-                                                })}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     )}
@@ -366,16 +380,16 @@ const TaxManagement = () => {
                             )}
 
                             {loading && (
-                                <div className="mg-loading-container">
-                                    <div className="mg-spinner"></div>
+                                <div>
+                                    <UnifiedLoading type="inline" text="로딩 중..." />
                                     <p>데이터를 불러오는 중...</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-            </div>
-        </SimpleLayout>
+            </ContentArea>
+        </AdminCommonLayout>
     );
 };
 

@@ -1,7 +1,21 @@
 /**
  * 통합 레이아웃 시스템
+/**
  * 헤더, 드롭다운, z-index 등 모든 레이아웃 요소를 구조적으로 관리
  */
+
+/** GNB v2 드롭다운 패널 클래스 (자체 포지셔닝 사용 → 전역 등록 제외) */
+const V2_DROPDOWN_PANEL_CLASSES = [
+  'mg-v2-dropdown-panel',
+  'mg-v2-profile-dropdown__panel',
+  'mg-v2-quick-actions-dropdown__panel',
+  'mg-v2-notification-dropdown__panel'
+];
+
+const isV2DropdownPanel = (element) => {
+  if (!element?.classList) return false;
+  return V2_DROPDOWN_PANEL_CLASSES.some((cls) => element.classList.contains(cls));
+};
 
 // 전역 레이아웃 관리자
 class UnifiedLayoutManager {
@@ -12,7 +26,7 @@ class UnifiedLayoutManager {
     this.scrollHandlers = new Set();
   }
 
-  /**
+/**
    * 통합 레이아웃 시스템 초기화
    */
   init() {
@@ -39,7 +53,7 @@ class UnifiedLayoutManager {
     console.log('✅ 통합 레이아웃 시스템 초기화 완료');
   }
 
-  /**
+/**
    * 헤더 시스템 초기화
    */
   initHeaderSystem() {
@@ -60,7 +74,7 @@ class UnifiedLayoutManager {
     });
   }
 
-  /**
+/**
    * 드롭다운 시스템 초기화
    */
   initDropdownSystem() {
@@ -83,11 +97,12 @@ class UnifiedLayoutManager {
     });
   }
 
-  /**
+/**
    * 드롭다운 등록 및 고정
    */
   registerDropdown(element) {
     if (!element || this.dropdownInstances.has(element)) return;
+    if (isV2DropdownPanel(element)) return;
 
     // 드롭다운 고정 설정
     element.style.position = 'relative';
@@ -107,7 +122,7 @@ class UnifiedLayoutManager {
     console.log('📋 드롭다운 등록:', element.tagName, element.className);
   }
 
-  /**
+/**
    * 드롭다운 포커스 핸들러
    */
   handleDropdownFocus(element) {
@@ -118,7 +133,7 @@ class UnifiedLayoutManager {
     }
   }
 
-  /**
+/**
    * 드롭다운 블러 핸들러
    */
   handleDropdownBlur(element) {
@@ -128,14 +143,14 @@ class UnifiedLayoutManager {
     }
   }
 
-  /**
+/**
    * 드롭다운 변경 핸들러
    */
   handleDropdownChange(element) {
     this.fixDropdownPosition(element);
   }
 
-  /**
+/**
    * 드롭다운 위치 고정
    */
   fixDropdownPosition(element) {
@@ -165,7 +180,7 @@ class UnifiedLayoutManager {
     }
   }
 
-  /**
+/**
    * 스크롤 시스템 초기화
    */
   initScrollSystem() {
@@ -185,7 +200,7 @@ class UnifiedLayoutManager {
     this.scrollHandlers.add(scrollHandler);
   }
 
-  /**
+/**
    * 리사이즈 시스템 초기화
    */
   initResizeSystem() {
@@ -203,7 +218,7 @@ class UnifiedLayoutManager {
     this.scrollHandlers.add(resizeHandler);
   }
 
-  /**
+/**
    * DOM 변경 감지 시스템 초기화
    */
   initMutationObserver() {
@@ -246,7 +261,7 @@ class UnifiedLayoutManager {
     });
   }
 
-  /**
+/**
    * 헤더 높이 업데이트
    */
   updateHeaderHeight(header) {
@@ -256,7 +271,7 @@ class UnifiedLayoutManager {
     }
   }
 
-  /**
+/**
    * 모든 헤더 높이 업데이트
    */
   updateAllHeaderHeights() {
@@ -264,7 +279,7 @@ class UnifiedLayoutManager {
     headers.forEach(header => this.updateHeaderHeight(header));
   }
 
-  /**
+/**
    * 시스템 정리
    */
   cleanup() {

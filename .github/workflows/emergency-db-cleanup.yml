@@ -1,0 +1,124 @@
+name: 🚨 긴급 DB 연결 정리
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CLEANUP" to proceed with database connection cleanup'
+        required: true
+        default: ''
+
+jobs:
+  cleanup-connections:
+    if: github.event.inputs.confirm == 'CLEANUP'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 🔧 MySQL 클라이언트 설치
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mysql-client
+        
+    - name: 🚨 긴급 DB 연결 정리
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        script: |
+          echo "🚨 긴급 DB 연결 정리 시작"
+          echo "=================================="
+          
+          # 환경 변수 로드
+          if [ -f /etc/mindgarden/dev.env ]; then
+            source /etc/mindgarden/dev.env
+            echo "✅ 환경 변수 로드 완료"
+          else
+            echo "⚠️ /etc/mindgarden/dev.env 파일을 찾을 수 없습니다."
+            exit 1
+          fi
+          
+          # MySQL 연결 정보
+          DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+          DB_PORT="${DB_PORT:-3306}"
+          DB_NAME="${DB_NAME:-core_solution}"
+          DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"
+          DB_PASSWORD="${DB_PASSWORD:-MindGardenDev2025!@#}"
+          
+          echo ""
+          echo "📊 정리 전 연결 상태:"
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          SELECT 
+              COUNT(*) as total_connections,
+              COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,
+              COUNT(CASE WHEN command = 'Sleep' THEN 1 END) as idle_connections
+          FROM information_schema.processlist;
+          
+          SHOW VARIABLES LIKE 'max_connections';
+          EOF
+          
+          echo ""
+          echo "🔍 현재 연결 상세 정보:"
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          SELECT 
+              id,
+              user,
+              host,
+              db,
+              command,
+              time,
+              state,
+              LEFT(info, 50) as query_preview
+          FROM information_schema.processlist
+          WHERE user = '$DB_USERNAME'
+          ORDER BY time DESC
+          LIMIT 20;
+          EOF
+          
+          echo ""
+          echo "🧹 모든 유휴 연결 정리 중..."
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          -- 모든 유휴 연결 정리
+          SET @kill_ids = (
+              SELECT GROUP_CONCAT(id SEPARATOR ', ')
+              FROM information_schema.processlist
+              WHERE command = 'Sleep' AND user = '$DB_USERNAME'
+          );
+          
+          SET @sql = IF(@kill_ids IS NOT NULL AND @kill_ids != '', 
+              CONCAT('KILL ', @kill_ids), 
+              'SELECT "No idle connections to kill" as result');
+          PREPARE stmt FROM @sql;
+          EXECUTE stmt;
+          DEALLOCATE PREPARE stmt;
+          
+          SELECT "✅ 유휴 연결 정리 완료" as result;
+          EOF
+          
+          echo ""
+          echo "📊 정리 후 연결 상태:"
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          SELECT 
+              COUNT(*) as total_connections,
+              COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,
+              COUNT(CASE WHEN command = 'Sleep' THEN 1 END) as idle_connections
+          FROM information_schema.processlist;
+          EOF
+          
+          echo ""
+          echo "🔍 실행 중인 애플리케이션 프로세스 확인:"
+          ps aux | grep java | grep mindgarden || echo "실행 중인 프로세스 없음"
+          
+          echo ""
+          echo "📊 서비스 상태:"
+          systemctl status mindgarden-dev.service --no-pager | head -10 || true
+          
+          echo ""
+          echo "✅ 긴급 연결 정리 완료"
+

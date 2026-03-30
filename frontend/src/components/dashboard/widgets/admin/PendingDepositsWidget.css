@@ -1,0 +1,321 @@
+/**
+ * PendingDepositsWidget - 입금 확인 대기 위젯 CSS
+ * 관리자가 확인해야 할 입금 내역들을 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.pending-deposits-widget {
+  width: 100%;
+}
+
+.pending-deposits-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* 요약 정보 */
+.deposits-summary {
+  display: flex;
+  gap: var(--cs-spacing-lg);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-md);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.summary-value {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+}
+
+/* 입금 목록 */
+.deposits-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+/* 입금 아이템 */
+.deposit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.deposit-item:hover {
+  box-shadow: var(--cs-shadow-md);
+  border-color: var(--cs-primary-300);
+}
+
+/* 상태별 스타일 */
+.deposit-item.status-pending {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.deposit-item.status-confirmed {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.deposit-item.status-rejected {
+  border-left: 4px solid var(--cs-error-500);
+}
+
+.deposit-item.status-unknown {
+  border-left: 4px solid var(--cs-gray-400);
+}
+
+/* 입금 정보 */
+.deposit-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+}
+
+.deposit-client {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.client-name {
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+}
+
+.client-id {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-muted);
+  background: var(--cs-gray-100);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+}
+
+/* 입금 상세 정보 */
+.deposit-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.deposit-amount {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-primary-600);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.deposit-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.deposit-date,
+.deposit-bank {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+}
+
+.meta-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--cs-gray-500);
+}
+
+.deposit-memo {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-muted);
+  font-style: italic;
+  margin-top: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-xs);
+  background: var(--cs-gray-50);
+  border-radius: var(--cs-radius-sm);
+}
+
+/* 입금 액션 버튼 */
+.deposit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+  margin-left: var(--cs-spacing-md);
+}
+
+.deposit-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--cs-radius-md);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-width: 80px;
+  justify-content: center;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.deposit-btn-confirm {
+  background: var(--cs-success-500);
+  color: white;
+  border-color: var(--cs-success-600);
+}
+
+.deposit-btn-confirm:hover {
+  background: var(--cs-success-600);
+  transform: translateY(-1px);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.deposit-btn-reject {
+  background: var(--cs-error-500);
+  color: white;
+  border-color: var(--cs-error-600);
+}
+
+.deposit-btn-reject:hover {
+  background: var(--cs-error-600);
+  transform: translateY(-1px);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.deposit-btn:active {
+  transform: translateY(0);
+}
+
+/* 빈 상태 */
+.pending-deposits-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.pending-deposits-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.pending-deposits-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .deposits-summary {
+    flex-direction: column;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .deposit-item {
+    flex-direction: column;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .deposit-actions {
+    flex-direction: row;
+    margin-left: 0;
+    margin-top: var(--cs-spacing-sm);
+    justify-content: flex-end;
+  }
+  
+  .deposit-btn {
+    min-width: 70px;
+    padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  }
+  
+  .pending-deposits-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .deposit-meta {
+    gap: 4px;
+  }
+  
+  .deposit-date,
+  .deposit-bank {
+    font-size: var(--cs-text-xs);
+  }
+  
+  .deposit-amount {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .client-name {
+    font-size: var(--cs-text-sm);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .deposits-summary {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .deposit-item {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .deposit-item:hover {
+    border-color: var(--cs-primary-400);
+  }
+  
+  .client-id {
+    background: var(--cs-gray-800);
+    color: var(--cs-gray-300);
+  }
+  
+  .deposit-memo {
+    background: var(--cs-gray-800);
+    color: var(--cs-gray-300);
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.pending-deposits-widget .widget-loading,
+.pending-deposits-widget .widget-error {
+  min-height: 300px;
+}

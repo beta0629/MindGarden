@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
-import UnifiedModal from '../common/modals/UnifiedModal';
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
 import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
+import { fetchUserPermissions } from '../../utils/permissionUtils';
+import CompactConfirmModal from '../common/CompactConfirmModal';
 import './SimpleHamburgerMenu.css';
 
 /**
  * 동적 햄버거 메뉴 컴포넌트
+/**
  * 공통 코드 기반 권한별 메뉴 표시
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
@@ -25,33 +30,80 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 메뉴 구조 로드
+  // 메뉴 구조 로드 (성능 최적화: 권한 체크 병렬 처리)
   useEffect(() => {
     const loadMenus = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log('🍔 동적 햄버거 메뉴 로딩 시작 (v3.0) - 파일 정리 후 배포');
-        const structure = await loadMenuStructure();
+        console.log('🍔 동적 햄버거 메뉴 로딩 시작 (성능 최적화 버전)');
+        
+        // 병렬로 메뉴 구조와 사용자 권한 동시 로드
+        const [structure, userPermissions] = await Promise.all([
+          loadMenuStructure(),
+          fetchUserPermissions()
+        ]);
         
         setMenuStructure(structure);
         console.log('✅ 동적 햄버거 메뉴 로딩 완료');
         
-        // 권한에 따라 메뉴 필터링
+        // 권한에 따라 메뉴 필터링 (권한 체크를 메모리에서 수행)
         const transformedStructure = transformMenuStructure(structure);
-        const filteredMainMenus = [];
-        for (const menu of transformedStructure.mainMenus) {
-          if (menu.menuGroup) {
-            const hasAccess = await hasMenuAccess(menu.menuGroup);
-            if (hasAccess) {
-              filteredMainMenus.push(menu);
-            }
-          } else {
+        
+        // 권한 매핑 테이블 (4역할: ADMIN, STAFF, CONSULTANT, CLIENT)
+        const menuGroupPermissionMap = {
+          'COMMON_MENU': ['ADMIN_DASHBOARD_VIEW'],
+          'ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'USER_MANAGE', 'CONSULTANT_MANAGE', 'CLIENT_MANAGE'],
+          'ERP_MENU': ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'],
+          'CLIENT_MENU': ['CONSULTATION_RECORD_VIEW'],
+          'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
+        };
+        
+        // 관리자 여부: 서버에서 받은 role 기준 (동적 권한)
+        const isAdmin = user?.role === 'ADMIN';
+        
+        console.log('🔍 사용자 역할 및 권한 체크:', {
+          role: user?.role,
+          isAdmin,
+          userPermissionsCount: userPermissions?.length || 0,
+          userPermissions: userPermissions
+        });
+        
+        // 모든 메뉴 그룹의 권한을 한 번에 체크 (병렬 처리)
+        const menuAccessChecks = transformedStructure.mainMenus.map(menu => {
+          if (!menu.menuGroup) {
             // 메뉴 그룹이 없는 경우 기본적으로 표시
-            filteredMainMenus.push(menu);
+            return { menu, hasAccess: true };
           }
-        }
+          
+          // 관리자는 모든 메뉴 접근 가능
+          if (isAdmin) {
+            console.log(`✅ 관리자 권한으로 메뉴 접근 허용: ${menu.label} (${menu.menuGroup})`);
+            return { menu, hasAccess: true };
+          }
+          
+          const requiredPermissions = menuGroupPermissionMap[menu.menuGroup];
+          if (!requiredPermissions) {
+            console.warn(`⚠️ 알 수 없는 메뉴 그룹: ${menu.menuGroup}`);
+            return { menu, hasAccess: false };
+          }
+          
+          // 필요한 권한 중 하나라도 있으면 접근 가능
+          const hasAccess = requiredPermissions.some(permission => 
+            userPermissions && userPermissions.includes(permission)
+          );
+          
+          if (!hasAccess) {
+            console.log(`🚫 메뉴 접근 거부: ${menu.label} (${menu.menuGroup}) - 필요한 권한: ${requiredPermissions.join(', ')}`);
+          }
+          
+          return { menu, hasAccess };
+        });
+        
+        const filteredMainMenus = menuAccessChecks
+          .filter(({ hasAccess }) => hasAccess)
+          .map(({ menu }) => menu);
         
         setFilteredMenus({ 
           mainMenus: filteredMainMenus, 
@@ -199,7 +251,23 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           <div className="user-info">
             <div className="user-name">{user?.name || '사용자'}</div>
         <div className="user-role">
-          {menuStructure?.roleDisplayName || user?.role || 'USER'}
+          {(() => {
+            // 역할 표시명 우선순위: menuStructure > user.role 매핑 > user.role
+            if (menuStructure?.roleDisplayName) {
+              return menuStructure.roleDisplayName;
+            }
+            
+            // user.role을 한국어로 매핑
+            const roleDisplayMap = {
+              'ADMIN': '관리자',
+              'BRANCH_SUPER_ADMIN': '지점 관리자',
+              'SUPER_ADMIN': '슈퍼 관리자',
+              'CONSULTANT': '상담사',
+              'CLIENT': '내담자'
+            };
+            
+            return roleDisplayMap[user?.role] || user?.role || '사용자';
+          })()}
         </div>
           </div>
           <button className="simple-hamburger-close" onClick={onClose}>
@@ -283,34 +351,16 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       </div>
 
       {/* 로그아웃 확인 모달 */}
-      <UnifiedModal
+      <CompactConfirmModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
         title="로그아웃"
-        subtitle="정말 로그아웃 하시겠습니까?"
-        size="small"
-        variant="confirm"
-        actions={
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={() => setShowLogoutModal(false)}
-              className="mg-v2-button mg-v2-button-secondary"
-            >
-              취소
-            </button>
-            <button 
-              onClick={confirmLogout}
-              className="mg-v2-button mg-v2-button-danger"
-            >
-              로그아웃
-            </button>
-          </div>
-        }
-      >
-        <p style={{ textAlign: 'center', margin: 0 }}>
-          로그아웃하면 현재 세션이 종료됩니다.
-        </p>
-      </UnifiedModal>
+        message="로그아웃하면 현재 세션이 종료됩니다."
+        confirmText="로그아웃"
+        cancelText="취소"
+        type="danger"
+      />
     </div>
   );
 };

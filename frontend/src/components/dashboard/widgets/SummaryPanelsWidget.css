@@ -1,0 +1,298 @@
+/**
+ * SummaryPanelsWidget 전용 스타일
+ * 하드코딩 제거 및 통합 디자인 토큰 사용
+ */
+
+.summary-panels-widget-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-lg);
+}
+
+/* 개별 패널 스타일 */
+.summary-panel {
+  padding: var(--cs-spacing-md);
+}
+
+.summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+/* 요약 아이템 */
+.summary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-md);
+  border-radius: var(--cs-radius-md);
+  background: var(--cs-glass-light-subtle);
+  border: 1px solid var(--cs-slate-200);
+  transition: all 0.2s ease;
+}
+
+.summary-item:hover {
+  background: var(--cs-glass-light);
+  border-color: var(--cs-slate-300);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+/* 요약 아이콘 */
+.summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+  flex-shrink: 0;
+}
+
+/* 요약 정보 */
+.summary-info {
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.summary-label {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-600);
+  margin-bottom: var(--cs-spacing-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.summary-value {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.summary-value-number {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-gray-900);
+  display: inline;
+}
+
+.summary-value-unit {
+  font-size: var(--cs-text-md);
+  color: var(--cs-gray-700);
+  margin-left: var(--cs-spacing-xs);
+}
+
+.summary-value-count {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-primary-600);
+}
+
+.summary-value-detail {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-gray-500);
+}
+
+.summary-no-data {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-500);
+  font-style: italic;
+}
+
+/* 스케줄 아이템 */
+.summary-schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  background: var(--cs-slate-50);
+  border-radius: var(--cs-radius-sm);
+  margin-top: var(--cs-spacing-xs);
+  border-left: 3px solid var(--cs-primary-300);
+}
+
+.summary-schedule-datetime {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-gray-700);
+  font-weight: var(--cs-font-medium);
+}
+
+.summary-schedule-status {
+  font-size: var(--cs-text-xs);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  font-weight: var(--cs-font-medium);
+}
+
+/* 스케줄 상태별 색상 */
+.summary-schedule-status.status-confirmed {
+  background: var(--cs-success-100);
+  color: var(--cs-success-800);
+}
+
+.summary-schedule-status.status-pending {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-800);
+}
+
+.summary-schedule-status.status-cancelled {
+  background: var(--cs-error-100);
+  color: var(--cs-error-800);
+}
+
+.summary-schedule-status.status-completed {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-800);
+}
+
+/* 더보기 인디케이터 */
+.summary-more-indicator {
+  margin-top: var(--cs-spacing-sm);
+  text-align: center;
+}
+
+.summary-more-btn {
+  background: none;
+  border: none;
+  color: var(--cs-primary-600);
+  font-size: var(--cs-text-sm);
+  cursor: pointer;
+  padding: var(--cs-spacing-xs);
+  border-radius: var(--cs-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.summary-more-btn:hover {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-700);
+}
+
+/* 평점 표시 */
+.rating-display {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-yellow-600);
+}
+
+/* 매핑 관리 액션 */
+.mapping-actions {
+  margin-top: var(--cs-spacing-md);
+  padding-top: var(--cs-spacing-md);
+  border-top: 1px solid var(--cs-slate-200);
+}
+
+.mapping-manage-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
+  color: white;
+  border: none;
+  border-radius: var(--cs-radius-md);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.mapping-manage-btn:hover {
+  background: linear-gradient(135deg, var(--cs-primary-600), var(--cs-primary-700));
+  box-shadow: var(--cs-shadow-md);
+  transform: translateY(-1px);
+}
+
+.mapping-manage-btn:active {
+  transform: translateY(0);
+}
+
+/* 패널별 특별 아이콘 색상 */
+.consultation-summary .summary-icon {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-600);
+}
+
+.consultation-stats .summary-icon {
+  background: var(--cs-success-100);
+  color: var(--cs-success-600);
+}
+
+.system-status .summary-icon {
+  background: var(--cs-purple-100);
+  color: var(--cs-purple-600);
+}
+
+.mapping-management .summary-icon {
+  background: var(--cs-orange-100);
+  color: var(--cs-orange-600);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .summary-panels-widget-wrapper {
+    gap: var(--cs-spacing-md);
+  }
+  
+  .summary-panel {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .summary-item {
+    padding: var(--cs-spacing-sm);
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .summary-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .summary-value-number {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .summary-schedule-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .summary-item {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .summary-item:hover {
+    background: var(--cs-glass-dark);
+    border-color: var(--cs-slate-600);
+  }
+  
+  .summary-label {
+    color: var(--cs-gray-400);
+  }
+  
+  .summary-value-number {
+    color: var(--cs-gray-100);
+  }
+  
+  .summary-value-unit {
+    color: var(--cs-gray-300);
+  }
+  
+  .summary-schedule-item {
+    background: var(--cs-slate-800);
+  }
+  
+  .summary-schedule-datetime {
+    color: var(--cs-gray-300);
+  }
+  
+  .mapping-actions {
+    border-top-color: var(--cs-slate-600);
+  }
+}

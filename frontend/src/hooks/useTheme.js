@@ -74,26 +74,78 @@ export const useTheme = () => {
         
         if (currentTheme === 'dark') {
             // 다크 테마 색상
-            root.style.setProperty('--theme-bg-primary', '#1a1a1a');
-            root.style.setProperty('--theme-bg-secondary', '#2a2a2a');
-            root.style.setProperty('--theme-bg-tertiary', '#3a3a3a');
-            root.style.setProperty('--theme-text-primary', '#ffffff');
-            root.style.setProperty('--theme-text-secondary', '#b3b3b3');
-            root.style.setProperty('--theme-text-tertiary', '#666666');
+            root.style.setProperty('--theme-bg-primary', 'var(--cs-gray-900)');
+            root.style.setProperty('--theme-bg-secondary', 'var(--cs-gray-800)');
+            root.style.setProperty('--theme-bg-tertiary', 'var(--cs-gray-700)');
+            root.style.setProperty('--theme-text-primary', 'var(--mg-white)');
+            root.style.setProperty('--theme-text-secondary', 'var(--cs-gray-400)');
+            root.style.setProperty('--theme-text-tertiary', 'var(--mg-gray-600)');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
             root.style.setProperty('--theme-border', 'rgba(255, 255, 255, 0.1)');
-            root.style.setProperty('--theme-shadow', 'rgba(0, 0, 0, 0.5)');
+            root.style.setProperty('--theme-shadow', 'var(--mg-overlay)');
         } else {
             // 라이트 테마 색상
-            root.style.setProperty('--theme-bg-primary', '#ffffff');
+            root.style.setProperty('--theme-bg-primary', 'var(--mg-white)');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f2f2f7 -> var(--mg-custom-f2f2f7)
             root.style.setProperty('--theme-bg-secondary', '#f2f2f7');
-            root.style.setProperty('--theme-bg-tertiary', '#ffffff');
+            root.style.setProperty('--theme-bg-tertiary', 'var(--mg-white)');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d1d1f -> var(--mg-custom-1d1d1f)
             root.style.setProperty('--theme-text-primary', '#1d1d1f');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #86868b -> var(--mg-custom-86868b)
             root.style.setProperty('--theme-text-secondary', '#86868b');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c7c7cc -> var(--mg-custom-c7c7cc)
             root.style.setProperty('--theme-text-tertiary', '#c7c7cc');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.05) -> var(--mg-custom-color)
             root.style.setProperty('--theme-border', 'rgba(0, 0, 0, 0.05)');
-            root.style.setProperty('--theme-shadow', 'rgba(0, 0, 0, 0.1)');
+            root.style.setProperty('--theme-shadow', 'var(--mg-shadow-light)');
         }
     }, [theme, systemTheme]);
+
+    const resolvedTheme = theme === 'system' ? systemTheme : theme;
+    let themeDisplayName = '라이트 모드';
+    if (theme === 'system') {
+        themeDisplayName = `시스템 (${resolvedTheme === 'dark' ? '다크' : '라이트'})`;
+    } else if (resolvedTheme === 'dark') {
+        themeDisplayName = '다크 모드';
+    }
+    const currentTheme = {
+        type: theme,
+        name: themeDisplayName,
+        description:
+            resolvedTheme === 'dark'
+                ? '어두운 배경으로 눈의 피로를 줄입니다.'
+                : '밝은 배경의 기본 화면 테마입니다.'
+    };
+
+    const themeColors = {
+        primary:
+            resolvedTheme === 'dark'
+                ? 'var(--theme-text-primary)'
+                : 'var(--mg-primary-500)'
+    };
+
+    const changeToTheme = useCallback(
+        async (themeType) => {
+            setThemeMode(themeType);
+            return { success: true, theme: { type: themeType } };
+        },
+        [setThemeMode]
+    );
+
+    const applyCustomTheme = useCallback(
+        async (baseThemeType, _customColors) => {
+            if (baseThemeType === 'light' || baseThemeType === 'dark' || baseThemeType === 'system') {
+                setThemeMode(baseThemeType);
+            }
+            return { success: true, theme: { type: baseThemeType } };
+        },
+        [setThemeMode]
+    );
+
+    const resetToDefault = useCallback(async () => {
+        setThemeMode('light');
+        return { success: true, theme: { type: 'light' } };
+    }, [setThemeMode]);
 
     return {
         theme,
@@ -101,6 +153,13 @@ export const useTheme = () => {
         toggleTheme,
         setThemeMode,
         isDark: theme === 'system' ? systemTheme === 'dark' : theme === 'dark',
-        isLight: theme === 'system' ? systemTheme === 'light' : theme === 'light'
+        isLight: theme === 'system' ? systemTheme === 'light' : theme === 'light',
+        currentTheme,
+        themeColors,
+        changeToTheme,
+        applyCustomTheme,
+        resetToDefault,
+        isLoading: false,
+        error: null
     };
 };

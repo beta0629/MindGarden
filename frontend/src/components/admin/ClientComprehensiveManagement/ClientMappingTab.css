@@ -1,0 +1,242 @@
+/**
+ * 매칭 관리 탭 레이아웃 스타일
+ * CLIENT_MAPPING_TAB_LAYOUT_SPEC 4절 간격·정렬 규칙 적용
+ * 색/타이포: --ad-b0kla-*, --mg-*, unified-design-tokens
+ *
+ * @author CoreSolution
+ * @since 2025-02-26
+ */
+
+/* ===== 4.1 최상위 (mg-v2-client-mapping) ===== */
+.mg-v2-client-mapping {
+  display: flex;
+  flex-direction: column;
+  padding: var(--mg-layout-section-padding, 1.5rem);
+  gap: var(--mg-layout-gap, 1.5rem);
+}
+
+/* ===== 4.2 페이지 헤더 (mg-v2-mapping-page-header) ===== */
+.mg-v2-mapping-page-header {
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  padding-left: 20px;
+  border-bottom: 1px solid var(--color-border-light, var(--ad-b0kla-border));
+}
+
+.mg-v2-mapping-page-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--ad-b0kla-green, #3D5246);
+  border-radius: 2px;
+}
+
+.mg-v2-mapping-page-header__title,
+.mg-v2-mapping-page-header__title.mg-v2-h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, var(--ad-b0kla-title-color));
+  line-height: 1.3;
+}
+
+.mg-v2-mapping-page-header__desc {
+  margin: 0.25rem 0 0 0;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+/* ===== 4.3 내담자 목록 (mg-v2-client-list + mg-v2-content-area) ===== */
+.mg-v2-client-mapping .mg-v2-client-list.mg-v2-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ===== 4.4 내담자별 블록 (mg-v2-mapping-client-block) — 그룹 구분용 두꺼운 보더 (B0KlA 일관) ===== */
+.mg-v2-mapping-client-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--mg-layout-section-padding, 1.5rem);
+  margin-bottom: 0;
+  background: var(--ad-b0kla-card-bg);
+  border: 2px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius, 16px);
+}
+
+/* ===== 4.5 헤더 내부 (__header) ===== */
+.mg-v2-mapping-client-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-mapping-client-block__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mg-v2-mapping-client-block__name {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-client-block__email {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+.mg-v2-mapping-client-block__actions {
+  flex-shrink: 0;
+}
+
+/* ===== 4.6 "총 N건의 매칭" (__count) ===== */
+.mg-v2-mapping-client-block__count {
+  margin: 0 0 1rem 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+/* ===== 4.7 매칭 카드 그리드 (블록 내부) — 해상도에 맞게 가로 배열, 여러 개 노출 ===== */
+.mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--mg-spacing-md, 1rem);
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 매칭 카드: CardContainer + __compact modifier (내부 padding/gap 축소) ===== */
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact {
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-header {
+  padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-content {
+  padding: var(--spacing-sm, 12px) var(--spacing-md, 16px);
+}
+
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-footer {
+  padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
+  border-top: 1px solid var(--ad-b0kla-border);
+}
+
+/* 제목·날짜·상태 타이포 (스펙 3.3) */
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-mapping-card__title,
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-mapping-card__title.mg-v2-h4 {
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  margin: 0;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-date {
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 400;
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+}
+
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 본문 라벨-값 그리드 (스펙 2.3, 3.2) */
+.mg-v2-mapping-client-block .mg-v2-mapping-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-xs, 6px) var(--spacing-sm, 12px);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row {
+  display: contents;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row .mg-v2-mapping-card__label {
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 500;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row .mg-v2-mapping-card__value {
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 400;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__value--emphasis {
+  font-weight: 600;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__memo {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 400;
+  color: var(--ad-b0kla-title-color);
+}
+
+/* ===== 4.8 빈 상태 (블록 내부) ===== */
+.mg-v2-mapping-client-block .mg-v2-mapping-list-block__empty {
+  padding: 3rem 2rem;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.mg-v2-mapping-list-block__empty-icon {
+  color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+.mg-v2-mapping-list-block__empty-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, var(--ad-b0kla-title-color));
+}
+
+.mg-v2-mapping-list-block__empty-desc {
+  margin: 0;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+/* 전체 빈 상태 (등록된 내담자 없음) ===== */
+.mg-v2-client-mapping > .mg-v2-mapping-list-block__empty {
+  padding: 3rem 2rem;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}

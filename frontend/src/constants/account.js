@@ -4,17 +4,15 @@
 
 import { createApiUrl } from './environment';
 
-// API 엔드포인트
 export const ACCOUNT_API_ENDPOINTS = {
-  BASE: createApiUrl('/api/accounts'),
-  ACTIVE: createApiUrl('/api/accounts/active'),
-  BANKS: createApiUrl('/api/accounts/banks'),
-  STATISTICS: createApiUrl('/api/accounts/statistics'),
-  VALIDATE: createApiUrl('/api/accounts/validate'),
-  PRIMARY: createApiUrl('/api/accounts/primary')
+  BASE: createApiUrl('/api/v1/accounts'),
+  ACTIVE: createApiUrl('/api/v1/accounts/active'),
+  BANKS: createApiUrl('/api/v1/accounts/banks'),
+  STATISTICS: createApiUrl('/api/v1/accounts/statistics'),
+  VALIDATE: createApiUrl('/api/v1/accounts/validate'),
+  PRIMARY: createApiUrl('/api/v1/accounts/primary')
 };
 
-// HTTP 메서드
 export const HTTP_METHODS = {
   GET: 'GET',
   POST: 'POST',
@@ -23,37 +21,31 @@ export const HTTP_METHODS = {
   PATCH: 'PATCH'
 };
 
-// HTTP 헤더
 export const HTTP_HEADERS = {
   CONTENT_TYPE: 'Content-Type',
   APPLICATION_JSON: 'application/json'
 };
 
-// 계좌 상태
 export const ACCOUNT_STATUS = {
   ACTIVE: 'active',
   INACTIVE: 'inactive'
 };
 
-// 계좌 상태 라벨
 export const ACCOUNT_STATUS_LABELS = {
   ACTIVE: '활성',
   INACTIVE: '비활성'
 };
 
-// 기본 계좌 설정
 export const ACCOUNT_PRIMARY = {
   TRUE: true,
   FALSE: false
 };
 
-// 기본 계좌 라벨
 export const ACCOUNT_PRIMARY_LABELS = {
   TRUE: '기본',
   FALSE: ''
 };
 
-// 폼 필드명
 export const ACCOUNT_FORM_FIELDS = {
   BANK_CODE: 'bankCode',
   BANK_NAME: 'bankName',
@@ -65,7 +57,6 @@ export const ACCOUNT_FORM_FIELDS = {
   DESCRIPTION: 'description'
 };
 
-// 폼 라벨
 export const ACCOUNT_FORM_LABELS = {
   BANK: '은행',
   ACCOUNT_NUMBER: '계좌번호',
@@ -76,7 +67,6 @@ export const ACCOUNT_FORM_LABELS = {
   IS_ACTIVE: '활성 상태'
 };
 
-// 폼 플레이스홀더
 export const ACCOUNT_FORM_PLACEHOLDERS = {
   BANK_SELECT: '은행을 선택하세요',
   ACCOUNT_NUMBER: '계좌번호를 입력하세요',
@@ -85,7 +75,6 @@ export const ACCOUNT_FORM_PLACEHOLDERS = {
   DESCRIPTION: '계좌 설명 (선택사항)'
 };
 
-// 버튼 텍스트
 export const ACCOUNT_BUTTON_TEXT = {
   REGISTER: '계좌 등록',
   EDIT: '수정',
@@ -99,7 +88,6 @@ export const ACCOUNT_BUTTON_TEXT = {
   SET_PRIMARY: '기본설정'
 };
 
-// 메시지
 export const ACCOUNT_MESSAGES = {
   SUCCESS: {
     CREATED: '계좌가 등록되었습니다.',
@@ -122,7 +110,6 @@ export const ACCOUNT_MESSAGES = {
   }
 };
 
-// 계좌번호 검증 정규식
 export const ACCOUNT_VALIDATION = {
   ACCOUNT_NUMBER_PATTERN: /^[0-9-]+$/,
   MIN_ACCOUNT_NUMBER_LENGTH: 10,
@@ -131,7 +118,6 @@ export const ACCOUNT_VALIDATION = {
   MAX_DESCRIPTION_LENGTH: 500
 };
 
-// 테이블 컬럼
 export const ACCOUNT_TABLE_COLUMNS = {
   BANK: '은행',
   ACCOUNT_NUMBER: '계좌번호',
@@ -143,9 +129,19 @@ export const ACCOUNT_TABLE_COLUMNS = {
   ACTIONS: '작업'
 };
 
-// 페이지 제목
 export const ACCOUNT_PAGE_TITLES = {
   MAIN: '계좌 관리',
   CREATE: '계좌 등록',
   EDIT: '계좌 수정'
+};
+
+/** 목록 영역(B0KlA 섹션) 제목 */
+export const ACCOUNT_SECTION_TITLES = {
+  REGISTERED_LIST: '등록된 계좌'
+};
+
+/** 계좌 목록이 비었을 때 안내 */
+export const ACCOUNT_EMPTY_STATE = {
+  TITLE: '등록된 계좌가 없습니다',
+  DESCRIPTION: '상단의 계좌 등록 버튼으로 정산·입금 안내에 사용할 계좌를 추가해 주세요.'
 };

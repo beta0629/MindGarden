@@ -1,30 +1,27 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
+import StatusBadge from '../../common/StatusBadge';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
+const ERP_STATUS_MAP = {
+  SENT: { text: '전송완료', variant: 'success' },
+  PENDING: { text: '전송대기', variant: 'warning' },
+  FAILED: { text: '전송실패', variant: 'danger' },
+  CONFIRMED: { text: '확인완료', variant: 'neutral' }
+};
+
 const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
     };
 
     const getErpStatusBadge = (status) => {
-        const statusConfig = {
-            'SENT': { text: '전송완료', color: '#28a745' },
-            'PENDING': { text: '전송대기', color: '#ffc107' },
-            'FAILED': { text: '전송실패', color: '#dc3545' },
-            'CONFIRMED': { text: '확인완료', color: '#6f42c1' }
-        };
-
-        const config = statusConfig[status] || { text: '알수없음', color: '#6c757d' };
-
-        return (
-            <span className="refund-history-table-status">
-                {config.text}
-            </span>
-        );
+        const config = ERP_STATUS_MAP[status] || { text: '알수없음', variant: 'neutral' };
+        return <StatusBadge variant={config.variant}>{toDisplayString(config.text, '—')}</StatusBadge>;
     };
 
     return (
@@ -95,7 +92,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                                 이전
                             </ErpButton>
                             
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-gray-500)' }}>
                                 {pageInfo.currentPage + 1} / {pageInfo.totalPages} 페이지
                             </span>
                             
@@ -113,7 +110,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                 <div style={{ 
                     textAlign: 'center', 
                     padding: '40px',
-                    color: '#666',
+                    color: 'var(--mg-gray-500)',
                     fontSize: 'var(--font-size-base)'
                 }}>
                     선택한 기간에 환불 이력이 없습니다.

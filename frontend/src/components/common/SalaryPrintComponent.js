@@ -4,14 +4,23 @@ import PrintComponent from './PrintComponent';
 /**
  * 급여 계산서 프린트 컴포넌트
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {Object} props.salaryData - 급여 데이터
+/**
  * @param {string} props.consultantName - 상담사 이름
+/**
  * @param {string} props.period - 계산 기간
+/**
  * @param {boolean} props.includeTaxDetails - 세금 내역 포함 여부
+/**
  * @param {boolean} props.includeCalculationDetails - 계산 상세 포함 여부
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const SalaryPrintComponent = ({ 
@@ -26,13 +35,11 @@ const SalaryPrintComponent = ({
     return <div>급여 데이터가 없습니다.</div>;
   }
 
-  // 금액 포맷팅 함수
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
-  // 세금 계산 (총급여 - 실지급액)
   const taxAmount = (salaryData.totalSalary || 0) - (salaryData.totalSalary - (salaryData.taxAmount || 0));
   const netSalary = (salaryData.totalSalary || 0) - (salaryData.taxAmount || 0);
 
@@ -45,7 +52,7 @@ const SalaryPrintComponent = ({
             textAlign: 'center',
             marginBottom: '30px',
             padding: '20px',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--mg-gray-100)',
             border: '2px solid #333'
           },
           '.salary-info': {
@@ -74,7 +81,7 @@ const SalaryPrintComponent = ({
           '.salary-table td.label': {
             textAlign: 'left',
             fontWeight: 'bold',
-            backgroundColor: '#f8f9fa'
+            backgroundColor: 'var(--mg-gray-100)'
           },
           '.total-row': {
             backgroundColor: '#e8f5e8',
@@ -163,6 +170,7 @@ const SalaryPrintComponent = ({
               </tr>
               <tr>
                 <td className="label">계산 상태</td>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 <td>{salaryData.status || 'PENDING'}</td>
                 <td className="salary-table-desc">급여 계산 상태</td>
               </tr>
@@ -178,7 +186,7 @@ const SalaryPrintComponent = ({
 
       <div className="salary-footer">
         <div className="salary-footer-text">
-          본 급여 계산서는 마인드가든 통합 상담관리 시스템에서 자동 생성되었습니다.
+          본 급여 계산서는 Core Solution 통합 상담관리 시스템에서 자동 생성되었습니다.
         </div>
         <div className="salary-footer-text">
           문의사항이 있으시면 관리자에게 연락해주세요.

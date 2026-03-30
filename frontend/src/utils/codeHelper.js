@@ -1,18 +1,38 @@
 import { apiGet } from './ajax';
 
 /**
- * 공통코드 관련 유틸리티 함수들
  * 하드코딩된 값들을 동적으로 처리하기 위한 헬퍼 함수들
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 
-// 코드그룹 메타데이터 캐시
 let groupMetadataCache = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
+
+/** Base64 암호문으로 간주할 최소 길이 (평문 오탐 최소화) */
+const ENCRYPTED_BASE64_MIN_LENGTH = 32;
+
+/**
+ * 복호화되지 않은 값(legacy:: 또는 암호문 패턴)이면 마스킹하여 표시용 문자열 반환
+ * @param {string} value - 표시할 값
+ * @param {string} fallback - 암호문일 때 반환할 대체 문자열
+ * @returns {string}
+ */
+export const maskEncryptedDisplay = (value, fallback = '—') => {
+  if (value == null || value === '') return fallback;
+  const s = String(value).trim();
+  if (s.startsWith('legacy::')) return fallback;
+  const looksLikeBase64 = /^[A-Za-z0-9+/]+=*$/.test(s) && s.length >= ENCRYPTED_BASE64_MIN_LENGTH;
+  if (looksLikeBase64) return fallback;
+  return s;
+};
 
 /**
  * 코드그룹 메타데이터 로드 (캐시 적용)
@@ -20,16 +40,22 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 export const loadCodeGroupMetadata = async () => {
     const now = Date.now();
     
-    // 캐시가 유효한 경우 캐시된 데이터 반환
     if (groupMetadataCache && (now - lastCacheTime) < CACHE_DURATION) {
         return groupMetadataCache;
     }
     
     try {
-        const response = await apiGet('/api/common-codes/groups/list');
-        if (response && response.length > 0) {
-            // 문자열 배열을 메타데이터 형태로 변환
-            groupMetadataCache = response.map(groupCode => ({
+        const { getCodeGroups } = await import('./commonCodeApi');
+        let groups = [];
+        try {
+            groups = await getCodeGroups();
+        } catch (error) {
+            const response = await apiGet('/api/v1/common-codes/groups/list');
+            groups = Array.isArray(response) ? response : [];
+        }
+        
+        if (groups && groups.length > 0) {
+            groupMetadataCache = groups.map(groupCode => ({
                 codeGroup: groupCode,
                 koreanName: getCodeGroupKoreanNameSync(groupCode),
                 icon: getCodeGroupIconSync(groupCode)
@@ -41,7 +67,6 @@ export const loadCodeGroupMetadata = async () => {
         console.error('코드그룹 메타데이터 로드 실패:', error);
     }
     
-    // API 실패 시 빈 배열 반환
     return [];
 };
 
@@ -50,25 +75,22 @@ export const loadCodeGroupMetadata = async () => {
  */
 export const getCodeGroupKoreanName = async (groupName) => {
     try {
-        // 캐시에서 먼저 확인
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata) {
                 return metadata.koreanName;
             }
         }
         
-        // 캐시에 없으면 API 호출
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            // 첫 번째 코드의 koreanName 반환 (그룹명으로 사용)
             return response[0].koreanName || groupName;
         }
     } catch (error) {
         console.error('코드그룹 한글명 조회 실패:', error);
     }
     
-    // 실패 시 원본 그룹명 반환
     return groupName;
 };
 
@@ -78,23 +100,22 @@ export const getCodeGroupKoreanName = async (groupName) => {
 export const getCodeGroupIcon = async (groupName) => {
     try {
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata && metadata.icon) {
                 return metadata.icon;
             }
         }
         
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            // 첫 번째 코드의 icon 반환
-            return response[0].icon || '📋';
+            return response[0].icon || 'ClipboardList';
         }
     } catch (error) {
         console.error('코드그룹 아이콘 조회 실패:', error);
     }
     
-    // 기본 아이콘 반환
-    return '📁';
+    return 'Folder';
 };
 
 /**
@@ -103,42 +124,53 @@ export const getCodeGroupIcon = async (groupName) => {
 export const getCodeGroupColor = async (groupName) => {
     try {
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata && metadata.colorCode) {
                 return metadata.colorCode;
             }
         }
         
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            // 첫 번째 코드의 colorCode 반환
-            return response[0].colorCode || '#6c757d';
+            return response[0].colorCode || 'var(--mg-secondary-500)';
         }
     } catch (error) {
         console.error('코드그룹 색상 조회 실패:', error);
     }
     
-    // 기본 색상 반환
-    return '#007bff';
+    return 'var(--mg-primary-500)';
 };
 
 /**
- * 상태별 색상 조회 (동기 버전 - fallback 사용)
- * @deprecated - getStatusColorAsync 사용 권장
+ * 상태별 배경색 조회 (동기 버전 - fallback 사용)
+ * 배지용 색상은 StatusBadge 컴포넌트 사용 권장. 레거시/보조용.
+ * @deprecated - 배지 표시 시 StatusBadge 사용 권장, getStatusColorAsync 사용 권장
  */
 export const getStatusColorSync = (codeValue) => {
     if (!codeValue) {
-        return '#6b7280';
+        return 'var(--mg-gray-500)';
     }
-    
-    // 기본 색상 매칭 (fallback) - 최소한의 매칭만 유지
     const defaultColorMap = {
-        // 기본 상태
-        'true': '#10b981',
-        'false': '#ef4444'
+        'true': 'var(--mg-success-500)',
+        'false': 'var(--mg-error-500)',
+        /* 사용자 상태 (ACTIVE/INACTIVE 등) - StatusBadge variant와 동일 의미 */
+        ACTIVE: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        INACTIVE: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        PENDING: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        SUSPENDED: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        COMPLETED: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        TERMINATED: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        SESSIONS_EXHAUSTED: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        PAYMENT_CONFIRMED: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        DEPOSIT_PENDING: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        PENDING_PAYMENT: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        ACTIVE_MAPPING: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        INACTIVE_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        TERMINATED_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        SESSIONS_EXHAUSTED_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))'
     };
-    
-    return defaultColorMap[codeValue] || '#6b7280';
+    return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
 /**
@@ -146,16 +178,13 @@ export const getStatusColorSync = (codeValue) => {
  */
 export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
-        return '📋';
+        return 'ClipboardList';
     }
-    
+
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
-            
-            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
             if (!code && groupName === 'MAPPING_STATUS') {
                 const statusMapping = {
                     'ACTIVE': 'ACTIVE_MAPPING',
@@ -163,13 +192,11 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
                     'TERMINATED': 'TERMINATED_MAPPING',
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
                 };
-                
                 const mappedStatus = statusMapping[codeValue];
                 if (mappedStatus) {
                     code = response.find(c => c.codeValue === mappedStatus);
                 }
             }
-            
             if (code && code.icon) {
                 return code.icon;
             }
@@ -177,44 +204,35 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     } catch (error) {
         console.error('아이콘 조회 실패, fallback 사용:', error);
     }
-    
-    // 기본 아이콘 매칭 (fallback) - 확장된 매칭
+
     const defaultIconMap = {
-        // 스케줄 상태
-        'AVAILABLE': '⚪',
-        'BOOKED': '📅',
-        'CONFIRMED': '✅',
-        'IN_PROGRESS': '🔄',
-        'COMPLETED': '🎉',
-        'CANCELLED': '❌',
-        'BLOCKED': '🚫',
-        'UNDER_REVIEW': '🔍',
-        'VACATION': '🏖️',
-        'NO_SHOW': '👻',
-        'MAINTENANCE': '🔧',
-        
-        // 매칭 상태
-        'PENDING_PAYMENT': '⏳',
-        'PAYMENT_CONFIRMED': '💰',
-        'ACTIVE': '✅',
-        'INACTIVE': '⏸️',
-        'SUSPENDED': '⏸️',
-        'TERMINATED': '❌',
-        'SESSIONS_EXHAUSTED': '🔚',
-        
-        // 사용자 상태
-        'PENDING': '⏳',
-        'APPROVED': '✅',
-        'REJECTED': '❌',
-        'PAYMENT_PENDING': '⏳',
-        'PAYMENT_REJECTED': '❌',
-        
-        // 기타
-        'true': '✅',
-        'false': '❌'
+        'AVAILABLE': 'Circle',
+        'BOOKED': 'Calendar',
+        'CONFIRMED': 'Check',
+        'IN_PROGRESS': 'RefreshCw',
+        'COMPLETED': 'PartyPopper',
+        'CANCELLED': 'X',
+        'BLOCKED': 'Ban',
+        'UNDER_REVIEW': 'Search',
+        'VACATION': 'Palmtree',
+        'NO_SHOW': 'Ghost',
+        'MAINTENANCE': 'Wrench',
+        'PENDING_PAYMENT': 'Loader2',
+        'PAYMENT_CONFIRMED': 'DollarSign',
+        'ACTIVE': 'Check',
+        'INACTIVE': 'Pause',
+        'SUSPENDED': 'Pause',
+        'TERMINATED': 'X',
+        'SESSIONS_EXHAUSTED': 'CircleDot',
+        'PENDING': 'Loader2',
+        'APPROVED': 'Check',
+        'REJECTED': 'X',
+        'PAYMENT_PENDING': 'Loader2',
+        'PAYMENT_REJECTED': 'X',
+        'true': 'Check',
+        'false': 'X'
     };
-    
-    return defaultIconMap[codeValue] || '📋';
+    return defaultIconMap[codeValue] || 'ClipboardList';
 };
 
 /**
@@ -222,28 +240,25 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
  */
 export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
-        return { color: '#6b7280', icon: '📋' };
+        return { color: 'var(--mg-color-text-secondary)', icon: 'ClipboardList' };
     }
-    
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && Array.isArray(response)) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
                 return {
-                    color: code.colorCode || '#6b7280',
-                    icon: code.icon || '📋'
+                    color: code.colorCode || 'var(--mg-color-text-secondary)',
+                    icon: code.icon || 'ClipboardList'
                 };
             }
         }
     } catch (error) {
         console.warn('상태 스타일 조회 실패, fallback 사용:', error);
     }
-    
-    // Fallback
     return {
         color: getStatusColorSync(codeValue),
-        icon: '📋'
+        icon: 'ClipboardList'
     };
 };
 
@@ -252,15 +267,16 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
  */
 export const getStatusColor = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
             
-            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
             if (!code && groupName === 'MAPPING_STATUS') {
                 const statusMapping = {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'ACTIVE': 'ACTIVE_MAPPING',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'INACTIVE': 'INACTIVE_MAPPING',
                     'TERMINATED': 'TERMINATED_MAPPING',
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
@@ -280,43 +296,49 @@ export const getStatusColor = async (codeValue, groupName) => {
         console.error('상태별 색상 조회 실패:', error);
     }
     
-    // 기본 색상 매칭 (fallback) - 확장된 매칭
     const defaultColorMap = {
-        // 스케줄 상태
-        'AVAILABLE': '#e5e7eb',
-        'BOOKED': '#3b82f6',
-        'CONFIRMED': '#8b5cf6',
-        'IN_PROGRESS': '#f59e0b',
-        'COMPLETED': '#10b981',
-        'CANCELLED': '#ef4444',
-        'BLOCKED': '#6b7280',
-        'UNDER_REVIEW': '#f97316',
-        'VACATION': '#06b6d4',
-        'NO_SHOW': '#dc2626',
-        'MAINTENANCE': '#6b7280',
+        'AVAILABLE': 'var(--mg-gray-200)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'BOOKED': 'var(--mg-primary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'CONFIRMED': 'var(--mg-purple-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'IN_PROGRESS': 'var(--mg-warning-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'COMPLETED': 'var(--mg-success-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'CANCELLED': 'var(--mg-error-500)',
+        'BLOCKED': 'var(--mg-gray-500)',
+        'UNDER_REVIEW': 'var(--mg-warning-500)',
+        'VACATION': 'var(--mg-info-500)',
+        'NO_SHOW': 'var(--mg-error-600)',
+        'MAINTENANCE': 'var(--mg-gray-500)',
         
-        // 매칭 상태
-        'PENDING_PAYMENT': '#ffc107',
-        'PAYMENT_CONFIRMED': '#17a2b8',
-        'ACTIVE': '#28a745',
-        'INACTIVE': '#6c757d',
-        'SUSPENDED': '#fd7e14',
-        'TERMINATED': '#dc3545',
-        'SESSIONS_EXHAUSTED': '#6f42c1',
+        'PENDING_PAYMENT': 'var(--mg-warning-500)',
+        'PAYMENT_CONFIRMED': 'var(--mg-info-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'ACTIVE': 'var(--mg-success-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'INACTIVE': 'var(--mg-secondary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'SUSPENDED': 'var(--mg-warning-600)',
+        'TERMINATED': 'var(--mg-error-500)',
+        'SESSIONS_EXHAUSTED': 'var(--mg-primary-700)',
         
-        // 사용자 상태
-        'PENDING': '#6b7280',
-        'APPROVED': '#10b981',
-        'REJECTED': '#ef4444',
-        'PAYMENT_PENDING': '#ffc107',
-        'PAYMENT_REJECTED': '#dc3545',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'PENDING': 'var(--mg-gray-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'APPROVED': 'var(--mg-success-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'REJECTED': 'var(--mg-error-500)',
+        'PAYMENT_PENDING': 'var(--mg-warning-500)',
+        'PAYMENT_REJECTED': 'var(--mg-error-500)',
         
-        // 기타
-        'true': '#10b981',
-        'false': '#ef4444'
+        'true': 'var(--mg-success-500)',
+        'false': 'var(--mg-error-500)'
     };
     
-    return defaultColorMap[codeValue] || '#6b7280';
+    return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
 /**
@@ -324,7 +346,8 @@ export const getStatusColor = async (codeValue, groupName) => {
  */
 export const getCodeGroupDisplayOptions = async (groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response.success && response.data) {
             return response.data;
         }
@@ -366,7 +389,7 @@ export const getCodeGroupIconSync = (groupName) => {
             return metadata.icon;
         }
     }
-    return '📁';
+    return 'Folder';
 };
 
 /**
@@ -374,7 +397,8 @@ export const getCodeGroupIconSync = (groupName) => {
  */
 export const getUserStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/STATUS`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/STATUS`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
@@ -385,14 +409,20 @@ export const getUserStatusKoreanName = async (status) => {
         console.error('사용자 상태 한글명 조회 실패:', error);
     }
     
-    // 기본 매칭 (fallback)
     const defaultStatusMap = {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'ACTIVE': '활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'INACTIVE': '비활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'SUSPENDED': '일시정지',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'COMPLETED': '완료',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'PENDING': '대기중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'APPROVED': '승인됨',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'REJECTED': '거부됨',
         'PAYMENT_CONFIRMED': '결제확인',
         'PAYMENT_PENDING': '결제대기',
@@ -408,13 +438,20 @@ export const getUserStatusKoreanName = async (status) => {
  */
 export const getUserStatusKoreanNameSync = (status) => {
     const defaultStatusMap = {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'ACTIVE': '활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'INACTIVE': '비활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'PENDING': '대기',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'SUSPENDED': '정지',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'DELETED': '삭제됨',
         'PENDING_APPROVAL': '승인대기',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'APPROVED': '승인됨',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'REJECTED': '거부됨'
     };
     
@@ -437,21 +474,24 @@ export const getUserGradeKoreanName = async (grade) => {
         console.error('사용자 등급 한글명 조회 실패:', error);
     }
     
-    // 기본 매칭 (fallback)
     const defaultGradeMap = {
         'CLIENT_BRONZE': '브론즈',
         'CLIENT_SILVER': '실버',
         'CLIENT_GOLD': '골드',
         'CLIENT_PLATINUM': '플래티넘',
         'CLIENT_DIAMOND': '다이아몬드',
+        'BRONZE': '브론즈',
+        'SILVER': '실버',
+        'GOLD': '골드',
+        'PLATINUM': '플래티넘',
+        'DIAMOND': '다이아몬드',
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
-        'ADMIN': '관리자',
-        'BRANCH_SUPER_ADMIN': '수퍼관리자',
-        'HQ_ADMIN': '본사 관리자',
-        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
-        'HQ_MASTER': '본사 총관리자'
+        'JUNIOR': '주니어',
+        'SENIOR': '시니어',
+        'EXPERT': '전문가',
+        'ADMIN': '관리자'
     };
     
     return defaultGradeMap[grade] || grade || '브론즈';
@@ -467,14 +507,18 @@ export const getUserGradeKoreanNameSync = (grade) => {
         'CLIENT_GOLD': '골드',
         'CLIENT_PLATINUM': '플래티넘',
         'CLIENT_DIAMOND': '다이아몬드',
+        'BRONZE': '브론즈',
+        'SILVER': '실버',
+        'GOLD': '골드',
+        'PLATINUM': '플래티넘',
+        'DIAMOND': '다이아몬드',
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
-        'ADMIN': '관리자',
-        'BRANCH_SUPER_ADMIN': '수퍼관리자',
-        'HQ_ADMIN': '본사 관리자',
-        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
-        'HQ_MASTER': '본사 총관리자'
+        'JUNIOR': '주니어',
+        'SENIOR': '시니어',
+        'EXPERT': '전문가',
+        'ADMIN': '관리자'
     };
     
     return defaultGradeMap[grade] || grade || '브론즈';
@@ -496,21 +540,24 @@ export const getUserGradeIcon = async (grade) => {
         console.error('사용자 등급 아이콘 조회 실패:', error);
     }
     
-    // 기본 매칭 (fallback)
     const defaultGradeIconMap = {
         'CLIENT_BRONZE': '🥉',
         'CLIENT_SILVER': '🥈',
         'CLIENT_GOLD': '🥇',
         'CLIENT_PLATINUM': '💎',
         'CLIENT_DIAMOND': '💠',
+        'BRONZE': '🥉',
+        'SILVER': '🥈',
+        'GOLD': '🥇',
+        'PLATINUM': '💎',
+        'DIAMOND': '💠',
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑',
-        'BRANCH_SUPER_ADMIN': '👑👑',
-        'HQ_ADMIN': '🏢',
-        'SUPER_HQ_ADMIN': '🏢👑',
-        'HQ_MASTER': '👑🏢'
+        'JUNIOR': '⭐',
+        'SENIOR': '⭐⭐',
+        'EXPERT': '⭐⭐⭐',
+        'ADMIN': '👑'
     };
     
     return defaultGradeIconMap[grade] || '🥉';
@@ -526,14 +573,18 @@ export const getUserGradeIconSync = (grade) => {
         'CLIENT_GOLD': '🥇',
         'CLIENT_PLATINUM': '💎',
         'CLIENT_DIAMOND': '💠',
+        'BRONZE': '🥉',
+        'SILVER': '🥈',
+        'GOLD': '🥇',
+        'PLATINUM': '💎',
+        'DIAMOND': '💠',
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑',
-        'BRANCH_SUPER_ADMIN': '👑👑',
-        'HQ_ADMIN': '🏢',
-        'SUPER_HQ_ADMIN': '🏢👑',
-        'HQ_MASTER': '👑🏢'
+        'JUNIOR': '⭐',
+        'SENIOR': '⭐⭐',
+        'EXPERT': '⭐⭐⭐',
+        'ADMIN': '👑'
     };
     
     return defaultGradeIconMap[grade] || '👤';
@@ -544,15 +595,16 @@ export const getUserGradeIconSync = (grade) => {
  */
 export const getMappingStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/MAPPING_STATUS`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/MAPPING_STATUS`);
         if (response && response.length > 0) {
-            // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === status);
             
-            // 정확한 매칭이 없으면 매칭 테이블 사용
             if (!code) {
                 const statusMapping = {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'ACTIVE': 'ACTIVE_MAPPING',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'INACTIVE': 'INACTIVE_MAPPING',
                     'TERMINATED': 'TERMINATED_MAPPING',
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
@@ -572,12 +624,14 @@ export const getMappingStatusKoreanName = async (status) => {
         console.error('매칭 상태 한글명 조회 실패:', error);
     }
     
-    // 기본 매칭 (fallback)
     const defaultMappingStatusMap = {
         'PENDING_PAYMENT': '결제 대기',
         'PAYMENT_CONFIRMED': '결제 확인',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'ACTIVE': '활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'INACTIVE': '비활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'SUSPENDED': '일시정지',
         'TERMINATED': '종료됨',
         'SESSIONS_EXHAUSTED': '회기 소진'
@@ -593,12 +647,17 @@ export const getMappingStatusKoreanNameSync = (status) => {
     const defaultMappingStatusMap = {
         'PENDING_PAYMENT': '결제 대기',
         'PAYMENT_CONFIRMED': '결제 확인',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'ACTIVE': '활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'INACTIVE': '비활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'SUSPENDED': '일시정지',
         'TERMINATED': '종료됨',
         'SESSIONS_EXHAUSTED': '회기 소진',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'PENDING': '대기',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'COMPLETED': '완료'
     };
     
@@ -613,12 +672,10 @@ export const getSpecialtyKoreanName = (code) => {
         return '미설정';
     }
     
-    // 이미 한글로 된 경우 그대로 반환
     if (code.match(/[가-힣]/)) {
         return code;
     }
     
-    // 백엔드와 동일한 매핑 테이블
     const specialtyMap = {
         'DEPRESSION': '우울증',
         'ANXIETY': '불안장애',
@@ -655,11 +712,12 @@ export const getSpecialtyKoreanNames = (codes) => {
 };
 
 /**
- * 공통코드에서 전문분야 정보 조회 (동적)
+ * 공통 코드에서 전문분야 조회
  */
 export const getSpecialtyFromCommonCode = async (codeValue) => {
     try {
-        const response = await apiGet(`/api/common-codes/SPECIALTY`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/SPECIALTY`);
         if (response && response.length > 0) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
@@ -672,10 +730,10 @@ export const getSpecialtyFromCommonCode = async (codeValue) => {
             }
         }
     } catch (error) {
-        console.error('공통코드 전문분야 조회 실패:', error);
+        // 에러 발생 시 기본값 반환
+        console.warn('코드 조회 실패:', error);
     }
     
-    // fallback: 직접 매핑
     return {
         codeValue: codeValue,
         koreanName: getSpecialtyKoreanName(codeValue),
@@ -686,9 +744,13 @@ export const getSpecialtyFromCommonCode = async (codeValue) => {
 
 /**
  * 텍스트 말줄임표 처리 함수
+/**
  * @param {string} text - 원본 텍스트
+/**
  * @param {number} maxLength - 최대 길이 (기본값: 50)
+/**
  * @param {string} suffix - 말줄임표 문자 (기본값: '...')
+/**
  * @returns {string} 처리된 텍스트
  */
 export const truncateText = (text, maxLength = 50, suffix = '...') => {
@@ -705,8 +767,11 @@ export const truncateText = (text, maxLength = 50, suffix = '...') => {
 
 /**
  * 전문분야 텍스트 말줄임표 처리 (특화된 함수)
+/**
  * @param {Array} specialties - 전문분야 배열
+/**
  * @param {number} maxLength - 최대 길이 (기본값: 50)
+/**
  * @returns {string} 처리된 전문분야 텍스트
  */
 export const truncateSpecialtyText = (specialties, maxLength = 50) => {
@@ -724,7 +789,9 @@ export const truncateSpecialtyText = (specialties, maxLength = 50) => {
 
 /**
  * 상담사 경력 정보 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 경력 텍스트
  */
 export const getFormattedExperience = (consultant) => {
@@ -745,7 +812,9 @@ export const getFormattedExperience = (consultant) => {
 
 /**
  * 상담사 연락처 정보 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {Object} 포맷된 연락처 정보
  */
 export const getFormattedContact = (consultant) => {
@@ -757,7 +826,9 @@ export const getFormattedContact = (consultant) => {
 
 /**
  * 상담사 상담 횟수 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 상담 횟수
  */
 export const getFormattedConsultationCount = (consultant) => {
@@ -770,7 +841,9 @@ export const getFormattedConsultationCount = (consultant) => {
 
 /**
  * 상담사 등록일 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 등록일
  */
 export const getFormattedRegistrationDate = (consultant) => {
@@ -788,7 +861,9 @@ export const getFormattedRegistrationDate = (consultant) => {
 
 /**
  * 상담사 현재 상담 중 인원 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 현재 상담 중 인원
  */
 export const getFormattedCurrentClients = (consultant) => {
@@ -798,7 +873,9 @@ export const getFormattedCurrentClients = (consultant) => {
 
 /**
  * 상담사 가용성 상태 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {Object} 가용성 상태 정보
  */
 export const getFormattedAvailability = (consultant) => {
@@ -809,16 +886,16 @@ export const getFormattedAvailability = (consultant) => {
     
     if (isOnVacation) {
         text = '휴무';
-        color = '#ef4444';
+        color = 'var(--mg-error-500)';
     } else if (!consultant?.available) {
         text = '상담 불가';
         color = '#6b7280';
     } else if (consultant?.busy) {
         text = '상담 중';
-        color = '#f59e0b';
+        color = 'var(--mg-warning-500)';
     } else {
         text = '상담 가능';
-        color = '#10b981';
+        color = 'var(--mg-success-500)';
     }
     
     return { text, color };

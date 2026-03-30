@@ -1,7 +1,7 @@
 /* ===== 테블릿 전용 CSS ===== */
 
 /* 공통 스타일 import */
-@import '../common/index.css';
+@import '../components/common.css';
 
 :root {
   --tablet-register-max-width: 520px;
@@ -180,7 +180,7 @@
   right: 0;
   background: var(--color-surface);
   border-top: 1px solid var(--gray-200);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 8px var(--mg-shadow-light);
   z-index: 1000;
 }
 
@@ -303,7 +303,7 @@
   margin-bottom: 2rem;
 }
 
-.tablet-layout .form-group {
+.tablet-layout .mg-form__group {
   margin-bottom: 1.5rem;
 }
 
@@ -313,7 +313,7 @@
   gap: 1rem;
 }
 
-.form-label {
+.mg-form__label {
   display: block;
   font-weight: 600;
   color: var(--gray-700);
@@ -334,7 +334,7 @@
   z-index: 1;
 }
 
-.tablet-layout .form-input,
+.tablet-layout .mg-form__input,
 .tablet-layout .form-select {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
@@ -345,14 +345,14 @@
   background: var(--color-surface);
 }
 
-.tablet-layout .form-input:focus,
+.tablet-layout .mg-form__input:focus,
 .tablet-layout .form-select:focus {
   border-color: var(--primary-500);
   box-shadow: 0 0 0 3px var(--primary-100);
   outline: none;
 }
 
-.tablet-layout .form-input.error {
+.tablet-layout .mg-form__input.error {
   border-color: var(--red-500);
 }
 
@@ -576,7 +576,7 @@
 }
 
 /* 테블릿 전용 스타일 */
-@import '../common/index.css';
+@import '../components/common.css';
 
 /* 테블릿 홈페이지 - 파스텔 톤 */
 .tablet-homepage {
@@ -634,7 +634,7 @@
 .card-icon {
   font-size: 3rem;
   margin-bottom: var(--spacing-md);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 2px 4px var(--mg-shadow-light));
 }
 
 .card-title {
@@ -790,31 +790,31 @@
   overflow-y: auto;
 }
 
-.modal-overlay {
+.mg-modal__overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   z-index: 1000;
   backdrop-filter: blur(4px);
 }
 
-.modal-header {
+.mg-modal__header {
   padding: 1.5rem 2rem 1rem;
   border-bottom: 1px solid var(--color-gray-200);
   text-align: center;
 }
 
-.modal-header h3 {
+.mg-modal__header h3 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--color-primary-700);
   margin: 0;
 }
 
-.modal-body {
+.mg-modal__body {
   padding: 1.5rem 2rem 2rem;
 }
 
@@ -837,11 +837,11 @@
   font-size: 0.9rem;
 }
 
-.signup-form .tablet-layout .form-group {
+.signup-form .tablet-layout .mg-form__group {
   margin-bottom: 1.5rem;
 }
 
-.signup-form .form-label {
+.signup-form .mg-form__label {
   display: block;
   font-weight: 600;
   color: var(--color-primary-700);
@@ -849,7 +849,7 @@
   font-size: 0.9rem;
 }
 
-.signup-form .form-input {
+.signup-form .mg-form__input {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 2px solid var(--color-gray-200);
@@ -858,12 +858,12 @@
   transition: border-color 0.3s ease;
 }
 
-.signup-form .form-input:focus {
+.signup-form .mg-form__input:focus {
   outline: none;
   border-color: var(--color-primary-500);
 }
 
-.signup-form .form-input:disabled {
+.signup-form .mg-form__input:disabled {
   background: var(--color-gray-100);
   color: var(--color-gray-500);
   cursor: not-allowed;
@@ -962,8 +962,8 @@
     margin: 1rem;
   }
   
-  .modal-header,
-  .modal-body {
+  .mg-modal__header,
+  .mg-modal__body {
     padding: 1rem 1.5rem;
   }
 }
@@ -995,8 +995,8 @@
     max-height: 100vh;
   }
   
-  .modal-header,
-  .modal-body {
+  .mg-modal__header,
+  .mg-modal__body {
     padding: 1rem;
   }
 }
@@ -1086,8 +1086,8 @@
     max-width: 460px;
   }
   
-  .modal-header,
-  .modal-body {
+  .mg-modal__header,
+  .mg-modal__body {
     padding: 1.25rem 1.75rem;
   }
 }
@@ -1127,8 +1127,8 @@
     margin: 1rem;
   }
   
-  .modal-header,
-  .modal-body {
+  .mg-modal__header,
+  .mg-modal__body {
     padding: 1rem 1.5rem;
   }
 }
@@ -1169,8 +1169,8 @@
     border-radius: 16px;
   }
   
-  .modal-header,
-  .modal-body {
+  .mg-modal__header,
+  .mg-modal__body {
     padding: 0.875rem 1.25rem;
   }
 }
@@ -1275,7 +1275,7 @@
 
 .action-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 .action-button {
@@ -1293,7 +1293,7 @@
 
 .feature-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px var(--mg-shadow-light);
 }
 
 .feature-icon {
@@ -1611,7 +1611,7 @@ html {
   font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-sm);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .login-subtitle {
@@ -1659,11 +1659,11 @@ html {
 }
 
 /* 폼 그룹 */
-.form-group {
+.mg-form__group {
   margin-bottom: var(--spacing-lg);
 }
 
-.form-label {
+.mg-form__label {
   display: block;
   font-size: 1rem;
   font-weight: 500;
@@ -1674,12 +1674,12 @@ html {
   gap: var(--spacing-sm);
 }
 
-.form-label i {
+.mg-form__label i {
   color: var(--color-primary);
   font-size: 1.1rem;
 }
 
-.tablet-layout .form-input {
+.tablet-layout .mg-form__input {
   width: 100%;
   padding: var(--spacing-md);
   border: 2px solid var(--color-neutral);
@@ -1690,13 +1690,13 @@ html {
   color: var(--color-text-primary);
 }
 
-.tablet-layout .form-input:focus {
+.tablet-layout .mg-form__input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.1);
 }
 
-.tablet-layout .form-input::placeholder {
+.tablet-layout .mg-form__input::placeholder {
   color: var(--color-text-muted);
 }
 
@@ -1730,7 +1730,7 @@ html {
   gap: var(--spacing-sm);
 }
 
-.phone-input-group .form-input {
+.phone-input-group .mg-form__input {
   flex: 1;
 }
 
@@ -1763,7 +1763,7 @@ html {
   gap: var(--spacing-sm);
 }
 
-.verification-input-group .form-input {
+.verification-input-group .mg-form__input {
   flex: 1;
 }
 

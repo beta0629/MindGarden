@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
-import '../../styles/mindgarden-design-system.css';
+import UnifiedLoading from '../common/UnifiedLoading';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSchedule.css';
 
+const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
+
 /**
- * 내담자 일정 페이지
- * 디자인 시스템 적용 버전
+ * 내담자 일정 페이지 (디자인 시스템 적용)
  */
 const ClientSchedule = () => {
   const navigate = useNavigate();
@@ -29,61 +34,69 @@ const ClientSchedule = () => {
     }
   }, [user, isLoggedIn, sessionLoading, navigate]);
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="내담자 일정">
+          <ContentHeader
+            title="내 일정"
+            subtitle="예약된 상담 일정을 확인하고 관리할 수 있습니다."
+            titleId={CLIENT_SCHEDULE_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_SCHEDULE_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (sessionLoading || loading) {
     return (
-      <SimpleLayout>
-        <div className="client-schedule-loading">
-          <UnifiedLoading text="일정을 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="스케줄">
+        {pageShell(
+          <UnifiedLoading type="page" text="로딩중..." />
+        )}
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout>
-        <div className="client-schedule-error">
-          <div className="client-schedule-error__icon">
-            <AlertTriangle size={48} />
+      <AdminCommonLayout title="스케줄">
+        {pageShell(
+          <div className="client-schedule-error">
+            <div className="client-schedule-error__icon">
+              <AlertTriangle size={48} />
+            </div>
+            <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
+            <p className="client-schedule-error__message">{error}</p>
+            <MGButton
+              variant="primary"
+              onClick={() => window.location.reload()}
+              preventDoubleClick={false}
+            >
+              다시 시도
+            </MGButton>
           </div>
-          <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
-          <p className="client-schedule-error__message">{error}</p>
-          <button 
-            className="mg-v2-button mg-v2-button-primary"
-            onClick={() => window.location.reload()}
-          >
-            다시 시도
-          </button>
-        </div>
-      </SimpleLayout>
+        )}
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
-      <div className="client-schedule-container">
-        <div className="client-schedule-header">
-          <div className="client-schedule-header__icon">
-            <Calendar size={32} />
-          </div>
-          <div className="client-schedule-header__content">
-            <h1 className="client-schedule-header__title">내 일정</h1>
-            <p className="client-schedule-header__subtitle">
-              예약된 상담 일정을 확인하고 관리할 수 있습니다.
-            </p>
-          </div>
-        </div>
-        
+    <AdminCommonLayout title="스케줄">
+      {pageShell(
         <div className="client-schedule-calendar-wrapper">
-          <ScheduleCalendar 
+          <ScheduleCalendar
             userRole={user?.role || 'CLIENT'}
             userId={user?.id || null}
             readOnly={false}
             showClientView={true}
           />
         </div>
-      </div>
-    </SimpleLayout>
+      )}
+    </AdminCommonLayout>
   );
 };
 

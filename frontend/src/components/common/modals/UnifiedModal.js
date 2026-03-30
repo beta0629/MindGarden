@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
+import ReactDOM from 'react-dom';
+import UnifiedLoading from '../UnifiedLoading';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
 /**
@@ -11,17 +13,26 @@ import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal s
  * @param {string} props.title - 모달 제목
  * @param {string} props.subtitle - 모달 부제목
  * @param {React.ReactNode} props.children - 모달 내용
- * @param {string} props.size - 모달 크기 (small, medium, large, fullscreen)
+ * @param {string} props.size - 모달 크기 (auto | small | medium | large | fullscreen). auto = 콘텐츠에 맞춤
  * @param {string} props.variant - 모달 타입 (default, confirm, form, detail, alert)
  * @param {boolean} props.backdropClick - 배경 클릭으로 닫기 여부
+/**
  * @param {boolean} props.showCloseButton - 닫기 버튼 표시 여부
+/**
  * @param {number} props.zIndex - z-index 값 (중첩 모달용)
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {Object} props.actions - 액션 버튼들
+/**
  * @param {boolean} props.loading - 로딩 상태
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-31
  */
 const UnifiedModal = ({ 
@@ -30,7 +41,7 @@ const UnifiedModal = ({
   title = '',
   subtitle = '',
   children,
-  size = 'medium',
+  size = 'auto',
   variant = 'default',
   backdropClick = true,
   showCloseButton = true,
@@ -40,6 +51,8 @@ const UnifiedModal = ({
   loading = false,
   ...props 
 }) => {
+  const titleId = useId();
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -86,13 +99,19 @@ const UnifiedModal = ({
   // z-index 스타일 적용
   const overlayStyle = zIndex ? { zIndex } : {};
 
-  return (
-    <div 
+  // 표준화 2025-12-08: DOM에 전달되면 안 되는 props 필터링
+  const { isOpen: _isOpen, backdropClick: _backdropClick, loading: _loading, ...domProps } = props;
+
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
       className={overlayClasses}
       onClick={handleBackdropClick}
       style={overlayStyle}
       data-backdrop-click={backdropClick}
-      {...props}
+      {...domProps}
     >
       <div className={modalClasses}>
         {/* 헤더 */}
@@ -100,14 +119,14 @@ const UnifiedModal = ({
           <div className="mg-modal__header">
             <div className="mg-modal__header-content">
               {title && (
-                <h2 className="mg-modal__title">{title}</h2>
+                <h2 id={titleId} className="mg-modal__title">{title}</h2>
               )}
               {subtitle && (
                 <p className="mg-modal__subtitle">{subtitle}</p>
               )}
             </div>
             {showCloseButton && (
-              <button 
+              <button
                 className="mg-modal__close"
                 onClick={onClose}
                 aria-label="닫기"
@@ -118,33 +137,37 @@ const UnifiedModal = ({
             )}
           </div>
         )}
-        
+
         {/* 바디 */}
         <div className="mg-modal__body">
           {children}
         </div>
-        
+
         {/* 액션 버튼들 */}
         {actions && (
           <div className="mg-modal__actions">
             {actions}
           </div>
         )}
-        
-        {/* 로딩 오버레이 */}
+
+        {/* 로딩 오버레이 - 공통 스피너(UnifiedLoading) 사용 */}
         {loading && (
           <div className="mg-modal__loading-overlay">
-            <div className="mg-modal__loading-spinner">
-              <div className="mg-loading-spinner-icon mg-loading-spinner-small"></div>
-              <div className="mg-modal__loading-text">
-                처리 중...
-              </div>
-            </div>
+            <UnifiedLoading
+              type="inline"
+              text="처리 중..."
+              variant="spinner"
+              size="medium"
+              centered
+              showText
+            />
           </div>
         )}
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default UnifiedModal;

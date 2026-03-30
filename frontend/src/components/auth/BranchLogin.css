@@ -14,15 +14,15 @@
     --branch-login-gray-700: #374151;
     --branch-login-gray-800: #1f2937;
     --branch-login-gray-900: #111827;
-    --branch-login-white: #ffffff;
+    --branch-login-white: var(--mg-white);
     --branch-login-border-radius: 12px;
-    --branch-login-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --branch-login-box-shadow: 0 4px 6px -1px var(--mg-shadow-light);
     --branch-login-transition: all 0.2s ease-in-out;
 }
 
 /* 메인 컨테이너 */
 .branch-login-page {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -99,11 +99,11 @@
     margin-bottom: 32px;
 }
 
-.form-group {
+.mg-form__group {
     margin-bottom: 20px;
 }
 
-.form-group label {
+.mg-form__group label {
     display: block;
     font-size: var(--font-size-sm);
     font-weight: 500;
@@ -111,7 +111,7 @@
     margin-bottom: 6px;
 }
 
-.form-input,
+.mg-form__input,
 .form-select {
     width: 100%;
     padding: 12px 16px;
@@ -122,14 +122,14 @@
     background: var(--branch-login-white);
 }
 
-.form-input:focus,
+.mg-form__input:focus,
 .form-select:focus {
     outline: none;
     border-color: var(--branch-login-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.form-input::placeholder {
+.mg-form__input::placeholder {
     color: var(--branch-login-gray-500);
 }
 
@@ -274,7 +274,7 @@
         font-size: 22px;
     }
     
-    .form-input,
+    .mg-form__input,
     .form-select {
         font-size: var(--font-size-base); /* iOS 줌 방지 */
     }
@@ -328,14 +328,14 @@ select:focus {
 /* 고대비 모드 지원 */
 @media (prefers-contrast: high) {
     :root {
-        --branch-login-gray-200: #000000;
-        --branch-login-gray-500: #000000;
-        --branch-login-gray-700: #000000;
+        --branch-login-gray-200: var(--mg-black);
+        --branch-login-gray-500: var(--mg-black);
+        --branch-login-gray-700: var(--mg-black);
     }
     
-    .form-input,
+    .mg-form__input,
     .form-select {
-        border-color: #000000;
+        border-color: var(--mg-black);
     }
 }
 
@@ -499,14 +499,14 @@ select:focus {
         color: var(--branch-login-gray-300);
     }
     
-    .form-input,
+    .mg-form__input,
     .form-select {
         background: var(--branch-login-gray-700);
         border-color: var(--branch-login-gray-600);
         color: var(--branch-login-white);
     }
     
-    .form-input::placeholder {
+    .mg-form__input::placeholder {
         color: var(--branch-login-gray-400);
     }
     

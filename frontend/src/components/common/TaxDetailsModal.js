@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { Receipt, XCircle, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
-import UnifiedLoading from './UnifiedLoading';
-import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
-import { apiGet } from '../../utils/ajax';
+import { Receipt, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import UnifiedModal from './modals/UnifiedModal';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS, SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import StandardizedApi from '../../utils/standardizedApi';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {Function} props.onClose - 모달 닫기 함수
+/**
  * @param {number} props.calculationId - 급여 계산 ID
+/**
  * @param {string} props.consultantName - 상담사 이름
+/**
  * @param {string} props.period - 계산 기간
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const TaxDetailsModal = ({ 
@@ -37,12 +46,15 @@ const TaxDetailsModal = ({
     setError(null);
     
     try {
-      const response = await apiGet(`/api/admin/salary/tax/${calculationId}`);
-      
-      if (response.success) {
-        setTaxDetails(response.data?.taxDetails || []);
+      const response = await StandardizedApi.get(
+        `${SALARY_API_ENDPOINTS.TAX_DETAILS}/${calculationId}`
+      );
+
+      if (response && (response.success !== false)) {
+        const data = response.data ?? response;
+        setTaxDetails(data?.taxDetails ?? []);
       } else {
-        setError(response.message || SALARY_MESSAGES.CALCULATION_ERROR);
+        setError((response && response.message) || SALARY_MESSAGES.CALCULATION_ERROR);
       }
     } catch (err) {
       console.error('세금 내역 조회 실패:', err);
@@ -81,22 +93,23 @@ const TaxDetailsModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Receipt size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">세금 내역 상세</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-
-        <div className="mg-v2-modal-body">
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="세금 내역 상세"
+      size="large"
+      backdropClick={true}
+      showCloseButton={true}
+      actions={
+        <button
+          className="mg-v2-button mg-v2-button--primary"
+          onClick={onClose}
+        >
+          닫기
+        </button>
+      }
+    >
           {/* 상담사 정보 */}
           <div className="mg-v2-info-grid mg-v2-mb-lg">
             <div className="mg-v2-info-item">
@@ -114,7 +127,7 @@ const TaxDetailsModal = ({
           {/* 내용 */}
           {loading ? (
             <div className="mg-v2-loading-overlay">
-              <UnifiedLoading variant="pulse" size="large" text="세금 내역을 불러오는 중..." type="inline" />
+              <div className="mg-loading">로딩중...</div>
             </div>
           ) : error ? (
             <div className="mg-v2-alert mg-v2-alert--error">
@@ -171,20 +184,7 @@ const TaxDetailsModal = ({
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mg-v2-modal-footer">
-          <button 
-            className="mg-v2-button mg-v2-button--primary"
-            onClick={onClose}
-          >
-            <XCircle size={20} className="mg-v2-icon-inline" />
-            닫기
-          </button>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

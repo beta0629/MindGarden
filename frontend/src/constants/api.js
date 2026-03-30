@@ -1,280 +1,360 @@
 /**
  * API 엔드포인트 상수
+/**
  * 백엔드와 프론트엔드 간 일관성 유지
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
 import ENV from './environment';
 
-// 기본 API 경로 (백엔드 서버 직접 연결)
-export const API_BASE_URL = ENV.API_BASE_URL;
+// 기본 API 경로 (런타임에 동적 생성)
+// getter를 사용하여 런타임에 window.location을 확인
+export const getApiBaseUrl = () => ENV.API_BASE_URL;
+export const API_BASE_URL = ENV.API_BASE_URL; // 하위 호환성을 위해 유지 (getter로 동작)
 
-// 인증 관련 API
+// 인증 관련 API (표준 경로: /api/v1/auth)
 export const AUTH_API = {
   // 일반 로그인/회원가입
-  LOGIN: '/api/auth/login',
-  REGISTER: '/api/auth/register',
-  LOGOUT: '/api/auth/logout',
-  REFRESH_TOKEN: '/api/auth/refresh',
-  GET_CURRENT_USER: '/api/auth/me',
+  LOGIN: '/api/v1/auth/login',
+  REGISTER: '/api/v1/auth/register',
+  LOGOUT: '/api/v1/auth/logout',
+  REFRESH_TOKEN: '/api/v1/auth/refresh',
+  GET_CURRENT_USER: '/api/v1/auth/me',
   
   // 소셜 로그인
-  KAKAO_OAUTH: '/api/auth/oauth2/kakao',
-  NAVER_OAUTH: '/api/auth/oauth2/naver',
-  GOOGLE_OAUTH: '/api/auth/oauth2/google',
-  FACEBOOK_OAUTH: '/api/auth/oauth2/facebook',
+  KAKAO_OAUTH: '/api/v1/auth/oauth2/kakao',
+  NAVER_OAUTH: '/api/v1/auth/oauth2/naver',
+  GOOGLE_OAUTH: '/api/v1/auth/oauth2/google',
+  FACEBOOK_OAUTH: '/api/v1/auth/oauth2/facebook',
   
   // 소셜 간편 회원가입
-  SOCIAL_SIGNUP: '/api/auth/social/signup',
-  SOCIAL_STATUS: '/api/auth/social/status',
-  SOCIAL_UNLINK: '/api/auth/social/unlink',
+  SOCIAL_SIGNUP: '/api/v1/auth/social/signup',
+  SOCIAL_STATUS: '/api/v1/auth/social/status',
+  SOCIAL_UNLINK: '/api/v1/auth/social/unlink',
   
   // OAuth2 콜백
-  OAUTH2_CALLBACK: '/api/auth/oauth2/callback',
+  OAUTH2_CALLBACK: '/api/v1/auth/oauth2/callback',
   
   // OAuth2 설정
-  GET_OAUTH2_CONFIG: '/api/auth/config/oauth2',
+  GET_OAUTH2_CONFIG: '/api/v1/auth/config/oauth2',
   
   // OAuth2 인증 URL 생성
-  KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
-  NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
+  KAKAO_AUTHORIZE: '/api/v1/auth/oauth2/kakao/authorize',
+  NAVER_AUTHORIZE: '/api/v1/auth/oauth2/naver/authorize',
   
   // 중복 로그인 확인
-  CONFIRM_DUPLICATE_LOGIN: '/api/auth/confirm-duplicate-login'
+  CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login'
 };
 
-// 권한 관련 API
+// 권한 관련 API (표준 경로: /api/v1/permissions)
 export const PERMISSIONS_API = {
-  MY_PERMISSIONS: '/api/admin/permissions/my-permissions',
-  CHECK_PERMISSION: '/api/admin/permissions/check-permission',
-  ROLE_PERMISSIONS: '/api/admin/permissions/role',
-  PERMISSION_ROLES: '/api/admin/permissions/permission',
-  ALL_PERMISSION_CODES: '/api/admin/permissions/codes'
+  MY_PERMISSIONS: '/api/v1/permissions/my-permissions',
+  MY_GROUPS: '/api/v1/permissions/groups/my',
+  CHECK_PERMISSION: '/api/v1/permissions/check-permission',
+  ROLE_PERMISSIONS: '/api/v1/permissions/role',
+  PERMISSION_ROLES: '/api/v1/permissions/permission',
+  ALL_PERMISSION_CODES: '/api/v1/permissions/codes'
 };
 
-// 사용자 관련 API
+// 사용자 관련 API (표준 경로: /api/v1/users)
 export const USER_API = {
   // 프로필 관련
-  GET_PROFILE: '/api/users/profile',
-  UPDATE_PROFILE: '/api/users/profile',
-  DELETE_ACCOUNT: '/api/users/account',
-  UPLOAD_PROFILE_IMAGE: '/api/users/profile/image',
+  GET_PROFILE: '/api/v1/users/profile',
+  UPDATE_PROFILE: '/api/v1/users/profile',
+  DELETE_ACCOUNT: '/api/v1/users/account',
+  UPLOAD_PROFILE_IMAGE: '/api/v1/users/profile/image',
   
   // 사용자 정보
-  GET_USER_INFO: '/api/users',
-  UPDATE_USER_INFO: '/api/users',
-  DELETE_USER: '/api/users',
+  GET_USER_INFO: '/api/v1/users',
+  UPDATE_USER_INFO: '/api/v1/users',
+  DELETE_USER: '/api/v1/users',
   
   // 최근 활동
-  GET_RECENT_ACTIVITIES: '/api/users/recent-activities',
+  GET_RECENT_ACTIVITIES: '/api/v1/users/recent-activities',
   
   // 소셜 계정 관리
-  GET_SOCIAL_ACCOUNTS: '/api/users/social-accounts',
-  LINK_SOCIAL_ACCOUNT: '/api/users/social-accounts/link',
-  UNLINK_SOCIAL_ACCOUNT: '/api/users/social-accounts/unlink'
+  GET_SOCIAL_ACCOUNTS: '/api/v1/users/social-accounts',
+  LINK_SOCIAL_ACCOUNT: '/api/v1/users/social-accounts/link',
+  UNLINK_SOCIAL_ACCOUNT: '/api/v1/users/social-accounts/unlink'
 };
 
-// 마이페이지 관련 API
+// 마이페이지 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const MYPAGE_API = {
   // 마이페이지 정보 (백엔드 실제 엔드포인트와 일치)
-  GET_INFO: '/api/client/profile',
-  UPDATE_INFO: '/api/client/profile',
+  GET_INFO: '/api/v1/clients/profile',
+  UPDATE_INFO: '/api/v1/clients/profile',
   
   // 비밀번호 관리
-  CHANGE_PASSWORD: '/api/client/profile/change-password',
-  RESET_PASSWORD: '/api/password/reset/request',
+  CHANGE_PASSWORD: '/api/v1/clients/profile/change-password',
+  RESET_PASSWORD: '/api/v1/auth/password-reset/request',
   
   // 프로필 이미지
-  UPLOAD_IMAGE: '/api/client/profile/image',
+  UPLOAD_IMAGE: '/api/v1/clients/profile/image',
   
   // 소셜 계정 관리
-  GET_SOCIAL_ACCOUNTS: '/api/client/social-accounts',
-  MANAGE_SOCIAL_ACCOUNT: '/api/client/social-account'
+  GET_SOCIAL_ACCOUNTS: '/api/v1/clients/social-accounts',
+  MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts'
 };
 
-// 역할별 프로필 API
+// 역할별 프로필 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const PROFILE_API = {
   // 클라이언트용
   CLIENT: {
-    GET_INFO: '/api/client/profile',
-    UPDATE_INFO: '/api/client/profile',
-    CHANGE_PASSWORD: '/api/client/profile/password',
-    UPLOAD_IMAGE: '/api/client/profile/image',
-    GET_SOCIAL_ACCOUNTS: '/api/client/social-accounts',
-    MANAGE_SOCIAL_ACCOUNT: '/api/client/social-account'
+    GET_INFO: '/api/v1/clients/profile',
+    UPDATE_INFO: '/api/v1/clients/profile',
+    CHANGE_PASSWORD: '/api/v1/clients/profile/password',
+    UPLOAD_IMAGE: '/api/v1/clients/profile/image',
+    GET_SOCIAL_ACCOUNTS: '/api/v1/clients/social-accounts',
+    MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts'
   },
 
-  // 상담사용
+  // 상담사용 (표준화 2025-12-05: /api/v1/ 경로 적용)
   CONSULTANT: {
-    GET_INFO: (userId) => `/api/user/profile/${userId}`,
-    UPDATE_INFO: (userId) => `/api/user/profile/${userId}`,
-    CHANGE_PASSWORD: (userId) => `/api/user/profile/${userId}/password`,
-    UPLOAD_IMAGE: (userId) => `/api/user/profile/${userId}/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/user/profile/${userId}/social-accounts`,
-    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/user/profile/${userId}/social-account`
+    GET_INFO: (userId) => `/api/v1/users/profile/${userId}`,
+    UPDATE_INFO: (userId) => `/api/v1/users/profile/${userId}`,
+    CHANGE_PASSWORD: (userId) => `/api/v1/users/profile/${userId}/password`,
+    UPLOAD_IMAGE: (userId) => `/api/v1/users/profile/${userId}/image`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/v1/users/profile/${userId}/social-accounts`,
+    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/v1/users/profile/${userId}/social-accounts`
   },
 
-  // 관리자용 (MyPageService 사용)
+  // 관리자용 (MyPageService 사용) (표준화 2025-12-05: /api/v1/ 경로 적용)
   ADMIN: {
-    GET_INFO: (userId) => `/api/client/profile`,
-    UPDATE_INFO: (userId) => `/api/client/profile`,
-    CHANGE_PASSWORD: (userId) => `/api/client/profile/password`,
-    UPLOAD_IMAGE: (userId) => `/api/client/profile/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/admin/users/${userId}/social-accounts`,
-    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/client/social-account`
+    GET_INFO: (userId) => `/api/v1/clients/profile`,
+    UPDATE_INFO: (userId) => `/api/v1/clients/profile`,
+    CHANGE_PASSWORD: (userId) => `/api/v1/clients/profile/password`,
+    UPLOAD_IMAGE: (userId) => `/api/v1/clients/profile/image`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/v1/admin/users/${userId}/social-accounts`,
+    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/v1/clients/social-accounts`
   }
 };
 
-// 메시지 관련 API
+// 메시지 관련 API (표준 경로: /api/v1/consultation-messages)
 export const MESSAGE_API = {
   // 메시지 전송
-  SEND_MESSAGE: '/api/consultation-messages',
+  SEND_MESSAGE: '/api/v1/consultation-messages',
   
   // 상담사 메시지 조회
-  GET_CONSULTANT_MESSAGES: (consultantId) => `/api/consultation-messages/consultant/${consultantId}`,
+  GET_CONSULTANT_MESSAGES: (consultantId) => `/api/v1/consultation-messages/consultant/${consultantId}`,
   
   // 내담자 메시지 조회
-  GET_CLIENT_MESSAGES: (clientId) => `/api/consultation-messages/client/${clientId}`,
+  GET_CLIENT_MESSAGES: (clientId) => `/api/v1/consultation-messages/client/${clientId}`,
   
   // 메시지 읽음 처리
-  MARK_AS_READ: (messageId) => `/api/consultation-messages/${messageId}/read`,
+  MARK_AS_READ: (messageId) => `/api/v1/consultation-messages/${messageId}/read`,
   
   // 메시지 상세 조회
-  GET_MESSAGE_DETAIL: (messageId) => `/api/consultation-messages/${messageId}`
+  GET_MESSAGE_DETAIL: (messageId) => `/api/v1/consultation-messages/${messageId}`
 };
 
-// 상담 관련 API
+// 상담 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const CONSULTATION_API = {
   // 상담 목록
-  GET_CONSULTATIONS: '/api/consultations',
-  GET_CONSULTATION: '/api/consultations',
-  CREATE_CONSULTATION: '/api/consultations',
-  UPDATE_CONSULTATION: '/api/consultations',
-  DELETE_CONSULTATION: '/api/consultations',
+  GET_CONSULTATIONS: '/api/v1/consultations',
+  GET_CONSULTATION: '/api/v1/consultations',
+  CREATE_CONSULTATION: '/api/v1/consultations',
+  UPDATE_CONSULTATION: '/api/v1/consultations',
+  DELETE_CONSULTATION: '/api/v1/consultations',
   
   // 상담 예약
-  BOOK_CONSULTATION: '/api/consultations/book',
-  CANCEL_CONSULTATION: '/api/consultations/cancel',
-  RESCHEDULE_CONSULTATION: '/api/consultations/reschedule',
+  BOOK_CONSULTATION: '/api/v1/consultations/book',
+  CANCEL_CONSULTATION: '/api/v1/consultations/cancel',
+  RESCHEDULE_CONSULTATION: '/api/v1/consultations/reschedule',
   
   // 상담사 관련
-  GET_CONSULTANTS: '/api/consultants',
-  GET_CONSULTANT_PROFILE: '/api/consultants/profile',
-  GET_CONSULTANT_SCHEDULE: '/api/consultants/schedule',
+  GET_CONSULTANTS: '/api/v1/consultants',
+  GET_CONSULTANT_PROFILE: '/api/v1/consultants/profile',
+  GET_CONSULTANT_SCHEDULE: '/api/v1/consultants/schedule',
   
   // 상담 세션
-  START_SESSION: '/api/consultations/session/start',
-  END_SESSION: '/api/consultations/session/end',
-  GET_SESSION_INFO: '/api/consultations/session'
+  START_SESSION: '/api/v1/consultations/session/start',
+  END_SESSION: '/api/v1/consultations/session/end',
+  GET_SESSION_INFO: '/api/v1/consultations/session'
 };
 
-// 관리자 관련 API
+// 관리자 관련 API (표준 경로: /api/v1/admin)
 export const ADMIN_API = {
   // 사용자 관리
-  GET_ALL_USERS: '/api/admin/users',
-  UPDATE_ROLE: '/api/admin/users/role',
-  DEACTIVATE_USER: '/api/admin/users/deactivate',
+  GET_ALL_USERS: '/api/v1/admin/users',
+  UPDATE_ROLE: '/api/v1/admin/users/role',
+  DEACTIVATE_USER: '/api/v1/admin/users/deactivate',
   
   // 상담사 승인
-  GET_CONSULTANT_APPLICATIONS: '/api/admin/consultant-applications',
-  APPROVE_CONSULTANT: '/api/admin/consultant-applications/approve',
-  REJECT_CONSULTANT: '/api/admin/consultant-applications/reject',
+  GET_CONSULTANT_APPLICATIONS: '/api/v1/admin/consultant-applications',
+  APPROVE_CONSULTANT: '/api/v1/admin/consultant-applications/approve',
+  REJECT_CONSULTANT: '/api/v1/admin/consultant-applications/reject',
   
   // 시스템 관리
-  GET_SYSTEM_STATS: '/api/admin/system/stats',
-  GET_SYSTEM_LOGS: '/api/admin/system/logs'
+  GET_SYSTEM_STATS: '/api/v1/admin/system/stats',
+  GET_SYSTEM_LOGS: '/api/v1/admin/system/logs'
 };
 
-// 스케줄 관련 API (중앙화)
+// 스케줄 관련 API (중앙화) (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const SCHEDULE_API = {
   // 기본 스케줄 조회
-  SCHEDULES: '/api/schedules',
-  SCHEDULES_BY_DATE: '/api/schedules/date',
-  SCHEDULES_BY_DATE_RANGE: '/api/schedules/date-range',
-  SCHEDULES_BY_CONSULTANT: '/api/schedules/consultant',
-  SCHEDULES_BY_CLIENT: '/api/schedules/client',
+  SCHEDULES: '/api/v1/schedules',
+  SCHEDULES_BY_DATE: '/api/v1/schedules/date',
+  SCHEDULES_BY_DATE_RANGE: '/api/v1/schedules/date-range',
+  SCHEDULES_BY_CONSULTANT: '/api/v1/schedules/consultant',
+  SCHEDULES_BY_CLIENT: '/api/v1/schedules/client',
   
   // 관리자용 스케줄 조회 (통합)
-  ADMIN_SCHEDULES: '/api/schedules/admin',
+  ADMIN_SCHEDULES: '/api/v1/schedules/admin',
   
   // 스케줄 관리
-  SCHEDULE_DETAIL: '/api/schedules',
-  SCHEDULE_CREATE: '/api/schedules/consultant',
-  SCHEDULE_UPDATE: '/api/schedules',
-  SCHEDULE_DELETE: '/api/schedules',
-  SCHEDULE_CONFIRM: '/api/schedules',
-  SCHEDULE_CANCEL: '/api/schedules',
-  SCHEDULE_COMPLETE: '/api/schedules',
+  SCHEDULE_DETAIL: '/api/v1/schedules',
+  SCHEDULE_CREATE: '/api/v1/schedules/consultant',
+  SCHEDULE_UPDATE: '/api/v1/schedules',
+  SCHEDULE_DELETE: '/api/v1/schedules',
+  SCHEDULE_CONFIRM: '/api/v1/schedules',
+  SCHEDULE_CANCEL: '/api/v1/schedules',
+  SCHEDULE_COMPLETE: '/api/v1/schedules',
   
   // 자동 완료 처리 (통합)
-  AUTO_COMPLETE: '/api/schedules/auto-complete',
+  AUTO_COMPLETE: '/api/v1/schedules/auto-complete',
   
   // 통계
-  STATISTICS: '/api/admin/schedules/statistics',
-  TODAY_STATISTICS: '/api/admin/schedules/today/statistics',
+  STATISTICS: '/api/v1/admin/schedules/statistics',
+  TODAY_STATISTICS: '/api/v1/admin/schedules/today/statistics',
   
   // 페이지네이션
-  PAGED_SCHEDULES: '/api/schedules/paged',
+  PAGED_SCHEDULES: '/api/v1/schedules/paged',
   
   // 한글 변환
-  STATUS_KOREAN: '/api/schedules/status-korean',
-  TYPE_KOREAN: '/api/schedules/type-korean',
-  CONSULTATION_TYPE_KOREAN: '/api/schedules/consultation-type-korean'
+  STATUS_KOREAN: '/api/v1/schedules/status-korean',
+  TYPE_KOREAN: '/api/v1/schedules/type-korean',
+  CONSULTATION_TYPE_KOREAN: '/api/v1/schedules/consultation-type-korean'
 };
 
-// 대시보드 관련 API
+// 대시보드 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const DASHBOARD_API = {
   // 내담자 대시보드
-  CLIENT_SCHEDULES: '/api/schedules',
-  CLIENT_CONSULTANT_INFO: '/api/admin/mappings/client',
+  CLIENT_SCHEDULES: '/api/v1/schedules',
+  CLIENT_CONSULTANT_INFO: '/api/v1/admin/mappings/client',
   
   // 상담사 대시보드
-  CONSULTANT_SCHEDULES: '/api/schedules',
-  CONSULTANT_STATS: '/api/schedules/today/statistics',
+  CONSULTANT_SCHEDULES: '/api/v1/schedules',
+  CONSULTANT_STATS: '/api/v1/schedules/today/statistics',
+  CONSULTANT_UPCOMING_SCHEDULES: '/api/v1/schedules/upcoming',
+  CONSULTANT_INCOMPLETE_RECORDS: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/incomplete-records`,
+  CONSULTANT_HIGH_PRIORITY_CLIENTS: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/high-priority-clients`,
+  CONSULTANT_UPCOMING_PREPARATION: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/upcoming-preparation`,
   
   // 관리자 대시보드
-  ADMIN_STATS: '/api/schedules/admin/statistics',
-  ADMIN_SYSTEM_INFO: '/api/admin/system/stats',
+  ADMIN_STATS: '/api/v1/schedules/admin/statistics',
+  ADMIN_SYSTEM_INFO: '/api/v1/admin/system/stats',
   
   // 세션 정보
-  SESSION_INFO: '/api/auth/session-info'
+  SESSION_INFO: '/api/v1/auth/session-info'
 };
 
-// 파일 업로드 관련 API
+// 파일 업로드 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const FILE_API = {
-  UPLOAD_IMAGE: '/api/files/upload/image',
-  UPLOAD_DOCUMENT: '/api/files/upload/document',
-  DELETE_FILE: '/api/files/delete',
-  GET_FILE_INFO: '/api/files/info'
+  UPLOAD_IMAGE: '/api/v1/files/upload/image',
+  UPLOAD_DOCUMENT: '/api/v1/files/upload/document',
+  DELETE_FILE: '/api/v1/files/delete',
+  GET_FILE_INFO: '/api/v1/files/info'
 };
 
-// 알림 관련 API
+// 알림 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const NOTIFICATION_API = {
-  GET_NOTIFICATIONS: '/api/notifications',
-  MARK_AS_READ: '/api/notifications/read',
-  DELETE_NOTIFICATION: '/api/notifications/delete',
-  UPDATE_PREFERENCES: '/api/notifications/preferences'
+  GET_NOTIFICATIONS: '/api/v1/notifications',
+  MARK_AS_READ: '/api/v1/notifications/read',
+  DELETE_NOTIFICATION: '/api/v1/notifications/delete',
+  UPDATE_PREFERENCES: '/api/v1/notifications/preferences'
 };
 
-// 검색 관련 API
+// 검색 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const SEARCH_API = {
-  SEARCH_CONSULTANTS: '/api/search/consultants',
-  SEARCH_CONSULTATIONS: '/api/search/consultations',
-  SEARCH_USERS: '/api/search/users'
+  SEARCH_CONSULTANTS: '/api/v1/search/consultants',
+  SEARCH_CONSULTATIONS: '/api/v1/search/consultations',
+  SEARCH_USERS: '/api/v1/search/users'
 };
 
-// 지점 관리 관련 API
-export const BRANCH_API = {
-  BRANCHES: '/api/branches',
-  BRANCH_DETAIL: '/api/branches',
-  BRANCH_CREATE: '/api/branches',
-  BRANCH_UPDATE: '/api/branches',
-  BRANCH_DELETE: '/api/branches',
-  BRANCH_USERS: '/api/branches',
-  BRANCH_STATISTICS: '/api/branches'
+// ERP 및 재무 관련 API (표준 경로: /api/v1/erp)
+export const ERP_API = {
+  // ERP 고도화 API (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+  // 분개 관리
+  JOURNAL_ENTRIES: '/api/v1/erp/accounting/entries',
+  ACCOUNT_TYPES: '/api/v1/erp/accounting/account-types',
+  JOURNAL_ENTRY_DETAIL: (id) => `/api/v1/erp/accounting/entries/${id}`,
+  JOURNAL_ENTRY_UPDATE: (id) => `/api/v1/erp/accounting/entries/${id}`,
+  JOURNAL_ENTRY_APPROVE: (id) => `/api/v1/erp/accounting/entries/${id}/approve`,
+  JOURNAL_ENTRY_POST: (id) => `/api/v1/erp/accounting/entries/${id}/post`,
+  
+  // 원장 조회
+  LEDGERS_ACCOUNT: (accountId) => `/api/v1/erp/accounting/ledgers/account/${accountId}`,
+  LEDGERS_PERIOD: '/api/v1/erp/accounting/ledgers/period',
+  LEDGERS_BALANCE: (accountId) => `/api/v1/erp/accounting/ledgers/balance/${accountId}`,
+  
+  // 재무제표
+  FINANCIAL_STATEMENT_INCOME: '/api/v1/erp/accounting/statements/income',
+  FINANCIAL_STATEMENT_BALANCE: '/api/v1/erp/accounting/statements/balance',
+  FINANCIAL_STATEMENT_CASHFLOW: '/api/v1/erp/accounting/statements/cash-flow',
+  
+  // 정산 관리
+  SETTLEMENT_RULES: '/api/v1/erp/settlement/rules',
+  SETTLEMENT_CALCULATE: '/api/v1/erp/settlement/calculate',
+  SETTLEMENT_RESULTS: '/api/v1/erp/settlement/results',
+  SETTLEMENT_APPROVE: (id) => `/api/v1/erp/settlement/results/${id}/approve`,
+  
+  // 기존 ERP API
+  // 통합 재무 대시보드
+  FINANCE_DASHBOARD: '/api/v1/erp/finance/dashboard',
+  FINANCE_BALANCE_SHEET: '/api/v1/erp/finance/balance-sheet',
+  FINANCE_INCOME_STATEMENT: '/api/v1/erp/finance/income-statement',
+  FINANCE_DAILY_REPORT: '/api/v1/erp/finance/daily-report',
+  FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
+  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report'
+};
+
+// 온보딩 관련 API
+export const ONBOARDING_API = {
+  CREATE_REQUEST: '/api/v1/onboarding/requests',
+  GET_REQUEST: '/api/v1/onboarding/requests',
+  GET_REQUEST_BY_ID: '/api/v1/onboarding/requests',
+  GET_PENDING_REQUESTS: '/api/v1/onboarding/requests/pending',
+  GET_REQUEST_COUNT: '/api/v1/onboarding/requests/count',
+  DECISION: '/api/v1/onboarding/requests',
+  RETRY: '/api/v1/onboarding/requests'
+};
+
+// 업종 카테고리 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
+export const BUSINESS_CATEGORY_API = {
+  ROOT: '/api/v1/business-categories/root',
+  ALL: '/api/v1/business-categories',
+  ITEMS: '/api/v1/business-categories/items',
+  ITEM_BY_BUSINESS_TYPE: '/api/v1/business-categories/items/by-business-type',
+  VALIDATE: '/api/v1/business-categories/validate',
+  TREE: '/api/v1/business-categories/tree'
+};
+
+// 공통 코드 관련 API (표준 경로: /api/v1/common-codes)
+export const COMMON_CODE_API = {
+  BASE: '/api/v1/common-codes',
+  BY_GROUP: '/api/v1/common-codes',
+  GROUPS: '/api/v1/common-codes/groups',
+  GROUP_ACTIVE: '/api/v1/common-codes/group',
+  CORE_GROUPS: '/api/v1/common-codes/core/groups',
+  TENANT_GROUPS: '/api/v1/common-codes/tenant/groups'
+};
+
+// 평가(Rating) 관련 API (표준 경로: /api/v1/ratings)
+export const RATING_API = {
+  CREATE: '/api/v1/ratings/create',
+  CONSULTANT_STATS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}/stats`,
+  CONSULTANT_RATINGS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}`,
+  CLIENT_RATABLE: (clientId) => `/api/v1/ratings/client/${clientId}/ratable-schedules`,
+  POPULAR_TAGS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}/popular-tags`,
+  RANKING: '/api/v1/ratings/ranking',
+  ADMIN_STATS: '/api/v1/ratings/admin/statistics'
 };
 
 // 전체 API 엔드포인트 객체
@@ -289,8 +369,11 @@ export const API_ENDPOINTS = {
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,
   SEARCH: SEARCH_API,
-  BRANCH: BRANCH_API,
-  BRANCHES: '/api/branches' // 기존 컴포넌트 호환성을 위해 추가
+  ERP: ERP_API,
+  ONBOARDING: ONBOARDING_API,
+  BUSINESS_CATEGORY: BUSINESS_CATEGORY_API,
+  COMMON_CODE: COMMON_CODE_API,
+  RATING: RATING_API
 };
 
 // API 응답 상태 코드

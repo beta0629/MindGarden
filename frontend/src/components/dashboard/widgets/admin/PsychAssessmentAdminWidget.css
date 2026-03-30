@@ -1,0 +1,26 @@
+/**
+ * Psych Assessment Admin Widget - B0KlA 아토믹 디자인
+ * BaseWidget 제거, Organism 조합 전용
+ * mg-upload-area: PsychUploadSection.css에 정의
+ *
+ * @author Core Solution
+ * @since 2026-02-27
+ */
+
+/* 위젯 컨테이너 */
+.psych-assessment-admin-widget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-gap, 1.5rem);
+}
+
+.psych-assessment-admin-widget--loading,
+.psych-assessment-admin-widget--error {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+

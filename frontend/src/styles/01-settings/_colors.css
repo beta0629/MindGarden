@@ -3,59 +3,59 @@
 
 :root {
   /* 아이폰 시스템 색상 */
-  --ios-blue: #007aff;
-  --ios-green: #34c759;
-  --ios-orange: #ff9500;
-  --ios-red: #ff3b30;
-  --ios-purple: #5856d6;
-  --ios-pink: #ff2d92;
-  --ios-yellow: #ffcc00;
-  --ios-gray: #8e8e93;
+  --ios-blue: var(--mg-primary-500);
+  --ios-green: var(--mg-success-500);
+  --ios-orange: var(--mg-warning-500);
+  --ios-red: var(--mg-error-500);
+  --ios-purple: var(--mg-purple-500);
+  --ios-pink: var(--cs-pink-500);
+  --ios-yellow: var(--cs-yellow-400);
+  --ios-gray: var(--cs-gray-500);
 
   /* 아이패드 색상 시스템 */
-  --ipad-blue: #007aff;
-  --ipad-green: #34c759;
-  --ipad-orange: #ff9500;
-  --ipad-red: #ff3b30;
-  --ipad-purple: #5856d6;
-  --ipad-pink: #ff2d92;
-  --ipad-yellow: #ffcc00;
-  --ipad-gray: #8e8e93;
+  --ipad-blue: var(--mg-primary-500);
+  --ipad-green: var(--mg-success-500);
+  --ipad-orange: var(--mg-warning-500);
+  --ipad-red: var(--mg-error-500);
+  --ipad-purple: var(--mg-purple-500);
+  --ipad-pink: var(--cs-pink-500);
+  --ipad-yellow: var(--cs-yellow-400);
+  --ipad-gray: var(--cs-gray-500);
 
   /* 시맨틱 색상 */
   --color-primary: var(--ios-blue);
-  --color-secondary: #6c757d;
+  --color-secondary: var(--mg-secondary-500);
   --color-success: var(--ios-green);
   --color-danger: var(--ios-red);
   --color-warning: var(--ios-orange);
-  --color-info: #17a2b8;
-  --color-light: #f8f9fa;
-  --color-dark: #343a40;
+  --color-info: var(--mg-info-500);
+  --color-light: var(--mg-gray-100);
+  --color-dark: var(--cs-gray-800);
 
   /* 아이폰 텍스트 색상 */
-  --ios-text-primary: #1d1d1f;
-  --ios-text-secondary: #86868b;
-  --ios-text-tertiary: #c7c7cc;
+  --ios-text-primary: var(--cs-gray-900);
+  --ios-text-secondary: var(--cs-gray-500);
+  --ios-text-tertiary: var(--cs-gray-300);
 
   /* 아이패드 텍스트 색상 */
-  --ipad-text-primary: #1d1d1f;
-  --ipad-text-secondary: #86868b;
-  --ipad-text-tertiary: #c7c7cc;
+  --ipad-text-primary: var(--cs-gray-900);
+  --ipad-text-secondary: var(--cs-gray-500);
+  --ipad-text-tertiary: var(--cs-gray-300);
 
   /* 아이폰 배경 색상 */
-  --ios-bg-primary: #ffffff;
-  --ios-bg-secondary: #f2f2f7;
-  --ios-bg-tertiary: #ffffff;
+  --ios-bg-primary: var(--mg-white);
+  --ios-bg-secondary: var(--cs-gray-50);
+  --ios-bg-tertiary: var(--mg-white);
 
   /* 아이패드 배경 색상 */
-  --ipad-bg-primary: #ffffff;
+  --ipad-bg-primary: var(--mg-white);
   --ipad-bg-secondary: #f2f2f7;
-  --ipad-bg-tertiary: #ffffff;
+  --ipad-bg-tertiary: var(--mg-white);
 
   /* 글래스모피즘 색상 */
-  --glass-bg-light: rgba(255, 255, 255, 0.25);
-  --glass-bg-medium: rgba(255, 255, 255, 0.35);
-  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-bg-light: var(--mg-glass-bg-light);
+  --glass-bg-medium: var(--mg-glass-bg-medium);
+  --glass-bg-strong: var(--mg-glass-bg-strong);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-border-strong: rgba(255, 255, 255, 0.3);
 
@@ -65,7 +65,7 @@
   --ipad-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   /* 아이패드 버튼 색상 */
-  --ipad-btn-primary: #007aff;
+  --ipad-btn-primary: var(--mg-primary-500);
   --ipad-btn-secondary: rgba(142, 142, 147, 0.12);
-  --ipad-btn-destructive: #ff3b30;
+  --ipad-btn-destructive: var(--mg-error-500);
 }

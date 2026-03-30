@@ -1,4 +1,4 @@
-/* ===== AdminDashboard 스타일 - MindGarden 디자인 시스템 적용 ===== */
+/* ===== AdminDashboard 스타일 - Core Solution 디자인 시스템 적용 ===== */
 /* 모든 하드코딩된 색상과 크기를 CSS 변수로 변경 */
 
 .admin-dashboard-content {
@@ -109,9 +109,9 @@
     gap: var(--spacing-xl);
 }
 
-/* management-card 스타일은 glassmorphism.css에서 관리 */
+/* management-card: mindgarden-design-system / MGCard 유틸 참고 */
 
-/* management-card 호버 효과는 glassmorphism.css에서 관리 */
+/* management-card 호버: 디자인 시스템 카드 토큰 사용 */
 
 .management-icon {
     width: 80px;
@@ -237,7 +237,7 @@
 
 .toast-header {
     background: transparent;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--mg-shadow-light);
     padding: var(--admin-spacing-md) var(--admin-spacing-lg);
 }
 
@@ -287,8 +287,7 @@
     }
     
     .overview-card,
-    /* management-card 반응형 스타일은 glassmorphism.css에서 관리 */
-    
+    .mg-management-card,
     .card-icon,
     .management-icon {
         width: 50px;
@@ -316,8 +315,7 @@
     }
     
     .overview-card,
-    /* management-card 모바일 스타일은 glassmorphism.css에서 관리 */
-    
+    .mg-management-card,
     .card-value {
         font-size: var(--admin-font-huge);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import { useSearchParams } from 'react-router-dom';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
@@ -9,22 +10,33 @@ import DateActionModal from './DateActionModal';
 import ScheduleHeader from '../ui/Schedule/ScheduleHeader';
 import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
-import { apiGet } from '../../utils/ajax';
+import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
-// import './ScheduleCalendar.css'; // 제거: mindgarden-design-system.css 사용
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ScheduleB0KlA.css';
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트
+/**
  * - 비즈니스 로직만 담당
+/**
  * - 상태 관리, 데이터 로드, 이벤트 핸들러
+/**
  * - Presentational 컴포넌트에 데이터와 핸들러 전달
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0 (Presentational/Container 분리)
+/**
  * @since 2024-12-19
  */
-const UnifiedScheduleComponent = ({ userRole, userId }) => {
+/** refetchTrigger: 부모에서 변경 시 캘린더 데이터 재로드(통합 스케줄 화면 등) */
+/** onDropFromExternal: (date, mappingPayload) => void — 외부 매칭 카드 드롭 시 호출(통합 스케줄 화면) */
+const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFromExternal }) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
@@ -41,9 +53,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
+    // URL 쿼리 파라미 (스케줄 페이지 직행 시 초기 필터)
+    const [searchParams] = useSearchParams();
+    const consultantIdFromUrl = searchParams.get('consultantId');
+    const clientIdFromUrl = searchParams.get('clientId');
+
     // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
-    const [selectedConsultantId, setSelectedConsultantId] = useState('');
+    const [selectedConsultantId, setSelectedConsultantId] = useState(consultantIdFromUrl || '');
+    const [clientIdFilter, setClientIdFilter] = useState(clientIdFromUrl || '');
     const [loadingConsultants, setLoadingConsultants] = useState(false);
 
     // ========== 유틸리티 함수 ==========
@@ -78,8 +96,9 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     const getConsultantColor = (consultantId) => {
         const colors = [
-            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+            'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
+            'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
+            '#5a7d6a', '#7a9dbb', '#d4987a', '#3d5a48'
         ];
         const colorIndex = consultantId % colors.length;
         return colors[colorIndex];
@@ -94,41 +113,41 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             case 'MORNING':
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌅 오전 휴무';
-                backgroundColor = '#FF9800';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
-                backgroundColor = '#FF5722';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
                 endDate = new Date(date + 'T11:00:00+09:00');
                 title = '🌄 오전 반반차 1';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌄 오전 반반차 2';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'CUSTOM_TIME':
@@ -136,19 +155,19 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--ad-b0kla-blue)';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--ad-b0kla-blue)';
                 }
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
                 endDate = new Date(date + 'T23:59:59+09:00');
                 title = '🏖️ 하루 종일 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = true;
                 break;
             default:
@@ -161,7 +180,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     allDay = true;
                 }
                 title = '🏖️ 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 break;
         }
         
@@ -173,7 +192,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
-            textColor: '#fff',
+            textColor: 'var(--mg-white)',
             className: 'vacation-event',
             extendedProps: {
                 type: 'vacation',
@@ -192,51 +211,48 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/STATUS');
-            console.log('📋 스케줄 상태 코드 응답:', response);
+            // 공통코드 API 사용 (표준화된 방법)
+            const codes = await getCommonCodes('SCHEDULE_STATUS');
+            console.log('📋 스케줄 상태 코드 응답:', codes);
             
-            if (response && Array.isArray(response) && response.length > 0) {
-                const statusOptions = await Promise.all(response.map(async (code) => {
+            if (codes && Array.isArray(codes) && codes.length > 0) {
+                const statusOptions = await Promise.all(codes.map(async (code) => {
                     try {
                         const [color, icon] = await Promise.all([
-                            getStatusColor(code.codeValue, 'STATUS'),
-                            getStatusIcon(code.codeValue, 'STATUS')
+                            getStatusColor(code.codeValue, 'SCHEDULE_STATUS'),
+                            getStatusIcon(code.codeValue, 'SCHEDULE_STATUS')
                         ]);
                         
                         return {
                             value: code.codeValue,
-                            label: code.codeLabel,
-                            color: color,
-                            icon: icon,
+                            label: code.koreanName || code.codeLabel,
+                            color: code.colorCode || color,
+                            icon: code.icon || icon,
                             description: code.codeDescription
                         };
                     } catch (error) {
                         console.error(`스케줄 상태 ${code.codeValue} 처리 오류:`, error);
                         return {
                             value: code.codeValue,
-                            label: code.codeLabel,
-                            color: '#6b7280',
-                            icon: '📋',
+                            label: code.koreanName || code.codeLabel,
+                            color: code.colorCode || 'var(--mg-gray-500)',
+                            icon: code.icon || '📋',
                             description: code.codeDescription
                         };
                     }
                 }));
                 
-                console.log('📋 변환된 상태 옵션 (동적 처리):', statusOptions);
+                console.log('📋 변환된 상태 옵션 (공통코드 기반):', statusOptions);
                 setScheduleStatusOptions(statusOptions);
             } else {
-                console.warn('📋 스케줄 상태 코드 데이터가 없습니다:', response);
+                console.warn('📋 스케줄 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
+                setScheduleStatusOptions([]); // 하드코딩된 fallback 제거
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
-                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
-                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
-            ]);
+            // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+            setScheduleStatusOptions([]);
+            notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
         } finally {
             setLoadingCodes(false);
         }
@@ -245,13 +261,42 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
-            const response = await apiGet('/api/admin/consultants');
+            const dateStr = new Date().toISOString().split('T')[0];
+            console.log('👥 상담사 목록 로드 시작: date=', dateStr);
             
-            if (response && response.success) {
-                setConsultants(response.data || []);
+            const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`);
+            
+            console.log('👥 상담사 목록 API 응답:', response);
+            console.log('👥 응답 타입:', typeof response, Array.isArray(response));
+            
+            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 { consultants: [...], count: N } 형태
+            let consultantsList = [];
+            
+            if (response) {
+                if (response.consultants && Array.isArray(response.consultants)) {
+                    consultantsList = response.consultants;
+                    console.log('👥 response.consultants에서 추출:', consultantsList.length, '개');
+                } else if (Array.isArray(response)) {
+                    consultantsList = response;
+                    console.log('👥 response (배열)에서 추출:', consultantsList.length, '개');
+                } else if (response.data && Array.isArray(response.data)) {
+                    consultantsList = response.data;
+                    console.log('👥 response.data (배열)에서 추출:', consultantsList.length, '개');
+                } else if (response.success && response.data) {
+                    if (response.data.consultants && Array.isArray(response.data.consultants)) {
+                        consultantsList = response.data.consultants;
+                        console.log('👥 response.success.data.consultants에서 추출:', consultantsList.length, '개');
+                    } else if (Array.isArray(response.data)) {
+                        consultantsList = response.data;
+                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, '개');
+                    }
+                }
             }
+            
+            console.log('👥 최종 상담사 목록:', consultantsList);
+            setConsultants(consultantsList);
         } catch (error) {
-            console.error('상담사 목록 로드 실패:', error);
+            console.error('❌ 상담사 목록 로드 실패:', error);
             setConsultants([]);
         } finally {
             setLoadingConsultants(false);
@@ -259,8 +304,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     }, []);
 
     const loadSchedules = useCallback(async () => {
-        // userId가 없으면 로드하지 않음
-        if (!userId) {
+        // 관리자는 userId 없이도 전체 조회 가능
+        const isAdmin = userRole === 'ADMIN';
+        
+        // 관리자가 아니면서 userId가 없으면 로드하지 않음
+        if (!isAdmin && !userId) {
             console.warn('⚠️ userId가 없어 스케줄을 로드하지 않습니다');
             setLoading(false);
             return;
@@ -274,22 +322,23 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             
             // 상담사는 자신의 스케줄만 조회
             if (userRole === 'CONSULTANT') {
-                url = `/api/schedules/consultant/${userId}`;
+                url = `/api/v1/schedules/consultant/${userId}`;
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
             // 관리자는 관리자 API 사용
-            else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
-                url = '/api/schedules/admin';
+            else if (userRole === 'ADMIN') {
+                url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
+                    // TODO: API clientId 지원 시 url += `&clientId=${clientIdFilter}`;
                 } else {
                     console.log('🔍 전체 상담사 조회');
                 }
             }
             // 기타 사용자 (내담자 등)
             else {
-                url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+                url = `/api/v1/schedules?userId=${userId}&userRole=${userRole}`;
                 console.log('🔍 일반 사용자 스케줄 조회');
             }
             
@@ -298,22 +347,62 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
 
             console.log('📅 API 응답:', response);
+            console.log('📅 API 응답 타입:', typeof response, Array.isArray(response));
+            console.log('📅 API 응답 키:', response ? Object.keys(response) : 'null');
 
             let scheduleEvents = [];
+            
+            const formatTimeStr = (timeData) => {
+                if (!timeData) return '00:00:00';
+                if (Array.isArray(timeData)) {
+                    const h = String(timeData[0] || 0).padStart(2, '0');
+                    const m = String(timeData[1] || 0).padStart(2, '0');
+                    const s = String(timeData[2] || 0).padStart(2, '0');
+                    return `${h}:${m}:${s}`;
+                }
+                return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
+            };
+            
+            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 data 부분만 받음
+            // 응답 구조: { schedules: [...], count: N, ... } 또는 배열
             
             // 응답이 배열인 경우 (상담사 API 응답)
             if (Array.isArray(response)) {
                 console.log('📅 배열 형태 응답 받음:', response);
                 scheduleEvents = response.map(schedule => {
                     console.log('📅 스케줄 데이터 처리:', schedule);
+                    
+                    // 날짜/시간 형식 검증 및 변환
+                    let startDateStr = '';
+                    let endDateStr = '';
+                    
+                    if (schedule.date) {
+                        // LocalDate는 "YYYY-MM-DD" 형식
+                        const dateStr = schedule.date.includes('T') 
+                            ? schedule.date.split('T')[0] 
+                            : schedule.date;
+                        
+                        // LocalTime은 배열 또는 "HH:mm:ss" 형식
+                        const startTimeStr = formatTimeStr(schedule.startTime);
+                        const endTimeStr = formatTimeStr(schedule.endTime);
+                        
+                        startDateStr = `${dateStr}T${startTimeStr}`;
+                        endDateStr = `${dateStr}T${endTimeStr}`;
+                    } else {
+                        console.error('❌ 스케줄에 날짜가 없습니다:', schedule);
+                        return null;
+                    }
+                    
+                    const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
                     return {
                         id: schedule.id,
                         title: schedule.title || '상담',
-                        start: `${schedule.date}T${schedule.startTime}`,
-                        end: `${schedule.date}T${schedule.endTime}`,
+                        start: startDateStr,
+                        end: endDateStr,
                         backgroundColor: getConsultantColor(schedule.consultantId),
                         borderColor: getConsultantColor(schedule.consultantId),
                         className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                        editable: !isCompleted,
                         extendedProps: {
                             id: schedule.id,
                             consultantId: schedule.consultantId,
@@ -327,26 +416,92 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                             description: schedule.description
                         }
                     };
-                });
+                }).filter(event => event !== null); // null 제거
+                
                 console.log('📅 변환된 이벤트:', scheduleEvents);
+                console.log('📅 이벤트 개수:', scheduleEvents.length);
             }
-            // 응답이 객체이고 success가 있는 경우
-            else if (response && response.success) {
-                console.log('📅 성공 응답 데이터:', response);
+            // 응답이 객체인 경우 (apiGet이 이미 data를 추출했으므로, response는 data 부분)
+            else if (response && typeof response === 'object' && !Array.isArray(response)) {
+                console.log('📅 객체 형태 응답 받음:', response);
                 
-                const schedules = response.data || response;
+                // apiGet이 이미 ApiResponse의 data를 추출했으므로, response는 { schedules: [...], count: N } 형태
+                let schedules = [];
                 
-                if (Array.isArray(schedules)) {
+                // response.schedules가 있는 경우 (관리자 API 응답)
+                if (response.schedules && Array.isArray(response.schedules)) {
+                    schedules = response.schedules;
+                    console.log('📅 response.schedules에서 추출:', schedules.length, '개');
+                } 
+                // response.data.schedules가 있는 경우 (이중 래핑된 경우)
+                else if (response.data && response.data.schedules && Array.isArray(response.data.schedules)) {
+                    schedules = response.data.schedules;
+                    console.log('📅 response.data.schedules에서 추출:', schedules.length, '개');
+                }
+                // response.data가 배열인 경우
+                else if (response.data && Array.isArray(response.data)) {
+                    schedules = response.data;
+                    console.log('📅 response.data (배열)에서 추출:', schedules.length, '개');
+                }
+                // response.success가 있고 response.data가 있는 경우 (원본 ApiResponse 구조)
+                else if (response.success && response.data) {
+                    if (response.data.schedules && Array.isArray(response.data.schedules)) {
+                        schedules = response.data.schedules;
+                        console.log('📅 response.success.data.schedules에서 추출:', schedules.length, '개');
+                    } else if (Array.isArray(response.data)) {
+                        schedules = response.data;
+                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, '개');
+                    }
+                } else {
+                    console.warn('⚠️ 응답 형식을 파악할 수 없습니다:', response);
+                }
+                
+                console.log('📅 최종 추출된 스케줄 데이터:', schedules);
+                console.log('📅 스케줄 개수:', schedules.length);
+                
+                if (Array.isArray(schedules) && schedules.length > 0) {
                     scheduleEvents = schedules.map(schedule => {
                         console.log('📅 스케줄 데이터 처리:', schedule);
+                        
+                        // 날짜/시간 형식 검증 및 변환
+                        let startDateStr = '';
+                        let endDateStr = '';
+                        
+                        if (schedule.date) {
+                            // LocalDate는 "YYYY-MM-DD" 형식
+                            const dateStr = schedule.date.includes('T') 
+                                ? schedule.date.split('T')[0] 
+                                : schedule.date;
+                            
+                            // LocalTime은 배열 또는 "HH:mm:ss" 형식
+                            const startTimeStr = formatTimeStr(schedule.startTime);
+                            const endTimeStr = formatTimeStr(schedule.endTime);
+                            
+                            startDateStr = `${dateStr}T${startTimeStr}`;
+                            endDateStr = `${dateStr}T${endTimeStr}`;
+                            
+                            console.log('📅 날짜 변환:', { 
+                                originalDate: schedule.date, 
+                                originalStartTime: schedule.startTime,
+                                originalEndTime: schedule.endTime,
+                                startDateStr, 
+                                endDateStr 
+                            });
+                        } else {
+                            console.error('❌ 스케줄에 날짜가 없습니다:', schedule);
+                            return null;
+                        }
+                        
+                        const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
                         return {
                             id: schedule.id,
                             title: schedule.title || '상담',
-                            start: `${schedule.date}T${schedule.startTime}`,
-                            end: `${schedule.date}T${schedule.endTime}`,
+                            start: startDateStr,
+                            end: endDateStr,
                             backgroundColor: getConsultantColor(schedule.consultantId),
                             borderColor: getConsultantColor(schedule.consultantId),
                             className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                            editable: !isCompleted,
                             extendedProps: {
                                 id: schedule.id,
                                 consultantId: schedule.consultantId,
@@ -360,51 +515,20 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                                 description: schedule.description
                             }
                         };
-                    });
+                    }).filter(event => event !== null); // null 제거
+                    
                     console.log('📅 변환된 이벤트:', scheduleEvents);
+                    console.log('📅 이벤트 개수:', scheduleEvents.length);
                 } else {
-                    console.warn('📅 스케줄 데이터가 배열이 아닙니다:', schedules);
+                    console.warn('📅 스케줄 데이터가 배열이 아니거나 비어있습니다:', schedules);
                 }
             } else {
                 console.warn('📅 API 응답 실패 또는 빈 응답:', response);
             }
 
+            // 표준화 2025-12-08: 휴가 이벤트는 상담사 목록에 이미 포함되어 있으므로 별도 로드 불필요
+            // 성능 개선: 불필요한 API 호출 제거
             const vacationEvents = [];
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-                try {
-                    const today = new Date();
-                    const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-                    const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
-                    
-                    const vacationResponse = await fetch(`/api/consultant/vacations`, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                    });
-                    
-                    if (vacationResponse.ok) {
-                        const vacationResult = await vacationResponse.json();
-                        console.log('🏖️ 어드민 휴가 API 응답:', vacationResult);
-                        if (vacationResult.success && vacationResult.data) {
-                            Object.entries(vacationResult.data).forEach(([consultantId, consultantVacations]) => {
-                                console.log('🏖️ 상담사 휴가 데이터:', consultantId, consultantVacations);
-                                Object.entries(consultantVacations).forEach(([date, vacationData]) => {
-                                    if (!vacationData.consultantName) {
-                                        vacationData.consultantName = `상담사 ${consultantId}`;
-                                    }
-                                    const vacationEvent = convertVacationToEvent(vacationData, consultantId, date);
-                                    if (vacationEvent) {
-                                        vacationEvents.push(vacationEvent);
-                                        console.log('🏖️ 휴가 이벤트 추가:', vacationEvent);
-                                    }
-                                });
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error('휴가 데이터 로드 실패:', error);
-                }
-            }
 
             const allEvents = [...scheduleEvents, ...vacationEvents];
             setEvents(allEvents);
@@ -414,17 +538,54 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, userRole, selectedConsultantId]);
+    }, [userId, userRole, selectedConsultantId, clientIdFilter]);
+
+    // URL 쿼리 변경 시 selectedConsultantId, clientIdFilter 동기화
+    useEffect(() => {
+        const consultantId = searchParams.get('consultantId');
+        const clientId = searchParams.get('clientId');
+        if (consultantId) {
+            setSelectedConsultantId(consultantId);
+        }
+        if (clientId) {
+            setClientIdFilter(clientId);
+        }
+    }, [searchParams]);
+
+    // 부모에서 refetchTrigger 변경 시 스케줄만 재로드 (통합 스케줄 화면에서 저장 후 캘린더 갱신)
+    useEffect(() => {
+        if (refetchTrigger != null && refetchTrigger > 0 && (userRole === 'ADMIN' || userId)) {
+            loadSchedules();
+        }
+    }, [refetchTrigger, userRole, userId, loadSchedules]);
 
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
-        
-        loadSchedules();
-        loadScheduleStatusCodes();
-        
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-            loadConsultants();
-        }
+
+        // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
+        const loadData = async () => {
+            const promises = [];
+            const isAdmin = userRole === 'ADMIN';
+
+            // 스케줄 로드 (필수)
+            // 관리자는 userId 없이도 로드 가능
+            if (isAdmin || userId) {
+                promises.push(loadSchedules());
+            }
+
+            // 공통코드 로드 (필수)
+            promises.push(loadScheduleStatusCodes());
+
+            // 상담사 목록 로드 (관리자만, 선택적)
+            if (isAdmin) {
+                promises.push(loadConsultants());
+            }
+
+            // 모든 데이터를 병렬로 로드
+            await Promise.all(promises);
+        };
+
+        loadData();
     }, [userId, userRole, selectedConsultantId]);
 
     // ========== 이벤트 핸들러 ==========
@@ -453,7 +614,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         }
         
         // 관리자는 스케줄/휴가 선택 모달 표시
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+        if (userRole === 'ADMIN') {
             if (isPastDate) {
                 notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -500,6 +661,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 }
             }
             
+            // 공통코드에서 VACATION 상태값 조회
+            const vacationStatus = scheduleStatusOptions.find(opt => 
+                opt.value === 'VACATION' || opt.label?.includes('휴가')
+            )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
+            
             const scheduleData = {
                 id: event.extendedProps.consultantId,
                 title: event.title,
@@ -508,7 +674,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 consultationType: 'VACATION',
                 startTime: event.allDay ? '하루 종일' : formatTime(event.start),
                 endTime: event.allDay ? '하루 종일' : formatTime(event.end),
-                status: 'VACATION',
+                status: vacationStatus,
                 description: event.extendedProps.reason || event.extendedProps.description || '휴가',
                 reason: event.extendedProps.reason || event.extendedProps.description || '휴가',
                 vacationType: event.extendedProps.vacationType,
@@ -526,6 +692,21 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         const consultantName = event.extendedProps.consultantName || '상담사 정보 없음';
         const clientName = event.extendedProps.clientName || '내담자 정보 없음';
 
+        const startDate = event.start;
+        const sessionDateStr = (() => {
+            if (!startDate) return '';
+            if (startDate instanceof Date) {
+                const y = startDate.getFullYear();
+                const m = String(startDate.getMonth() + 1).padStart(2, '0');
+                const d = String(startDate.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            if (typeof startDate === 'string' && startDate.includes('T')) {
+                return startDate.split('T')[0];
+            }
+            return '';
+        })();
+
         const scheduleData = {
             id: event.extendedProps.id,
             title: event.title,
@@ -534,7 +715,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             consultationType: koreanConsultationType,
             startTime: formatTime(event.start),
             endTime: formatTime(event.end),
-            status: koreanStatus
+            status: koreanStatus,
+            clientId: event.extendedProps.clientId ?? undefined,
+            consultantId: event.extendedProps.consultantId ?? undefined,
+            sessionDate: sessionDateStr || undefined,
+            date: sessionDateStr || undefined
         };
 
         setSelectedSchedule(scheduleData);
@@ -545,29 +730,61 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         console.log('🔄 이벤트 이동:', info.event.title);
         
         const event = info.event;
+        const status = event.extendedProps?.status;
+
+        // 완료된 스케줄은 드래그 이동 불가
+        if (status === 'COMPLETED' || status === '완료됨') {
+            info.revert();
+            notificationManager.warning('완료된 스케줄은 이동할 수 없습니다.');
+            return;
+        }
+
         const newStart = event.start;
         const newEnd = event.end;
 
+        // 과거 날짜로 이동 불가: 날짜만 비교(자정 기준)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dropDate = new Date(newStart);
+        dropDate.setHours(0, 0, 0, 0);
+        if (dropDate.getTime() < today.getTime()) {
+            info.revert();
+            notificationManager.warning('과거 날짜로는 스케줄을 이동할 수 없습니다.');
+            return;
+        }
+
+        // 같은 시간대에 이미 예약/휴가가 있으면 이동 불가 (같은 상담사 기준)
+        const movedConsultantId = event.extendedProps?.consultantId;
+        if (movedConsultantId != null) {
+            const newStartMs = newStart.getTime();
+            const newEndMs = newEnd.getTime();
+            const hasConflict = events.some((e) => {
+                if (e.id === event.id) return false;
+                const otherConsultantId = e.extendedProps?.consultantId;
+                if (otherConsultantId == null || String(otherConsultantId) !== String(movedConsultantId)) return false;
+                const otherStart = e.start instanceof Date ? e.start : new Date(e.start);
+                const otherEnd = e.end instanceof Date ? e.end : new Date(e.end);
+                const otherStartMs = otherStart.getTime();
+                const otherEndMs = otherEnd.getTime();
+                return newStartMs < otherEndMs && newEndMs > otherStartMs;
+            });
+            if (hasConflict) {
+                info.revert();
+                notificationManager.warning('해당 시간대에 이미 예약 또는 휴가가 있어 이동할 수 없습니다.');
+                return;
+            }
+        }
+
         try {
-            const response = await fetch(`/api/schedules/${event.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    date: newStart.toISOString().split('T')[0],
-                    startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
-                    endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
-                })
+            await apiPut(`/api/v1/schedules/${event.id}`, {
+                date: newStart.toISOString().split('T')[0],
+                startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
+                endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
             });
 
-            if (!response.ok) {
-                info.revert();
-                notificationManager.error('스케줄 이동에 실패했습니다.');
-            } else {
-                console.log('✅ 스케줄 이동 완료');
-                notificationManager.success('스케줄 이동이 완료되었습니다.');
-            }
+            console.log('✅ 스케줄 이동 완료');
+            notificationManager.success('스케줄 이동이 완료되었습니다.');
+            await loadSchedules(); // 스케줄 다시 로드
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
@@ -631,7 +848,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
-        <div className="mg-v2-schedule-calendar">
+        <div className="mg-v2-schedule-calendar mg-v2-ad-b0kla">
             <ScheduleHeader
                 userRole={userRole}
                 consultants={consultants}
@@ -649,12 +866,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             />
 
             {loading && (
-                <UnifiedLoading 
-                    text="스케줄을 불러오는 중..." 
-                    size="large" 
-                    variant="pulse"
-                    className="loading-spinner-fullscreen"
-                />
+                <UnifiedLoading type="inline" text="스케줄을 불러오는 중..." />
             )}
 
             <ScheduleCalendarView
@@ -663,6 +875,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}
+                onExternalEventReceive={onDropFromExternal}
             />
 
             {/* 모달들 */}

@@ -1,21 +1,20 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
+import { USER_ROLES } from './constants/roles';
+// import './styles/css-variables.css'; // CSS 상수 시스템 (통합됨)
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
+import { useTenantBranding } from './hooks/useTenantBranding';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
+import UnifiedLogin from './components/auth/UnifiedLogin';
 import TabletRegister from './components/auth/TabletRegister';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import OAuth2Callback from './components/auth/OAuth2Callback';
-import BranchLogin from './components/auth/BranchLogin';
-import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
-import HeadquartersLogin from './components/auth/HeadquartersLogin';
-import CommonDashboard from './components/dashboard/CommonDashboard';
-import ClientDashboard from './components/client/ClientDashboard';
-import AdminDashboard from './components/admin/AdminDashboard';
-import HQDashboard from './components/hq/HQDashboard';
+// BranchLogin, BranchSpecificLogin, HeadquartersLogin 제거됨 - 브랜치 코드 제거 정책
+// 대시보드 컴포넌트는 DynamicDashboard에서 동적으로 로드됨
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
 import ConsultationRecordScreen from './components/consultant/ConsultationRecordScreen';
@@ -24,40 +23,43 @@ import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
 import ImprovedTaxManagement from './components/erp/ImprovedTaxManagement';
+import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
-import UnifiedScheduleComponent from './components/schedule/UnifiedScheduleComponent';
+import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
-import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
-import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
+import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
+import ConsultationLogView from './components/admin/ConsultationLogView';
+import IntegratedMatchingSchedule from './components/admin/mapping-management/IntegratedMatchingSchedule';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
-import ScheduleList from './components/common/ScheduleList';
+// ScheduleList는 현재 사용되지 않음
 import ComingSoon from './components/common/ComingSoon';
-import PaymentManagement from './components/super-admin/PaymentManagement';
-import MindGardenDesignSample from './pages/MindGardenDesignSample';
-import PremiumDesignSample from './pages/PremiumDesignSample';
-import AdvancedDesignSample from './pages/AdvancedDesignSample';
-import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
-import ComponentTestPage from './pages/ComponentTestPage';
-import SimpleLayout from './components/layout/SimpleLayout';
+// PaymentManagement는 현재 사용되지 않음
+import AdminCommonLayout from './components/layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from './components/dashboard-v2/constants/menuItems';
+import AcademyDashboard from './components/academy/AcademyDashboard';
+import AcademyRegister from './components/academy/AcademyRegister';
+// 대시보드 컴포넌트 지연 로드 (로그인 직후 초기화 순서 오류 방지)
+const DynamicDashboard = lazy(() => import('./components/dashboard/DynamicDashboard'));
+const DashboardManagement = lazy(() => import('./components/admin/DashboardManagement'));
+const WidgetBasedAdminDashboard = lazy(() => import('./components/admin/WidgetBasedAdminDashboard'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashboardV2'));
+const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
+const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
+const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
-import IntegrationTest from './components/test/IntegrationTest';
+// IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
-import UserManagement from './components/admin/UserManagement';
-import PermissionManagement from './components/admin/PermissionManagement';
-import BranchManagement from './components/hq/BranchManagement';
-import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
-import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
-import FinancialReports from './components/hq/FinancialReports';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
@@ -73,8 +75,6 @@ import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
 import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDashboard';
 import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
-import TaxManagement from './components/erp/TaxManagement';
-import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
@@ -85,24 +85,41 @@ import WellnessNotificationList from './components/wellness/WellnessNotification
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
+import TenantProfile from './components/tenant/TenantProfile';
+import PgConfigurationList from './components/tenant/PgConfigurationList';
+import PgConfigurationCreate from './components/tenant/PgConfigurationCreate';
+import PgConfigurationDetail from './components/tenant/PgConfigurationDetail';
+import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
+import AdminLayout from './components/layout/AdminLayout';
+import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
 // DuplicateLoginAlert는 UnifiedNotification으로 통합됨
-import BranchMappingModal from './components/common/BranchMappingModal';
+// BranchMappingModal 제거됨 - 브랜치 코드 제거 정책
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
-import IOSCardSample from './pages/IOSCardSample';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
+import AdminNotificationsPage from './components/admin/AdminNotificationsPage';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import PsychAssessmentManagement from './components/admin/PsychAssessmentManagement';
+import BrandingManagementPage from './pages/BrandingManagementPage';
+import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
+import UnifiedHeader from './components/common/UnifiedHeader';
+import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
+import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
+import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
+import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -117,6 +134,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
       // URL에서 쿼리 파라미터 제거
       const cleanUrl = location.pathname;
       if (window.history && window.history.replaceState) {
+        // eslint-disable-next-line no-restricted-globals
         window.history.replaceState({}, document.title, cleanUrl);
       }
       
@@ -132,40 +150,27 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
-  const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
+  const { pathname } = useLocation();
+  const { setPathname } = useNotification();
+  const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
+
+  // 공개→보호 경로 전환 시 NotificationContext가 loadUnreadCount 하도록 pathname 동기화
+  useEffect(() => {
+    setPathname(pathname);
+  }, [pathname, setPathname]);
+
+  // 테넌트별 브랜딩 시스템 초기화
+  const { hasCustomBranding, companyName, primaryColor } = useTenantBranding({
+    autoApply: true
+  });
   
-  // 공개 경로 정의 (인증 없이 접근 가능)
-  const publicPaths = [
-    '/login',
-    '/register', 
-    '/forgot-password',
-    '/reset-password',
-    '/oauth2/callback',
-    '/design-system',
-    '/design-system-v2',
-    '/test/notifications',
-    '/test/payment', 
-    '/test/integration',
-    '/test/ios-cards',
-    '/test/design-sample',
-    '/test/premium-sample',
-    '/test/advanced-sample',
-    '/test/components'
-  ];
-  
-  // 세션 체크를 useEffect에서 완전히 제거하고 다른 방식으로 처리
-  // const isPublicPath = publicPaths.includes(window.location.pathname);
-  // if (!isPublicPath) {
-  //   console.log('🔍 세션 확인 시작...');
-  //   checkSession();
-  // } else {
-  //   console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
-  // }
-  
+  // pathname 변경 시 checkSession은 SessionGuard에서만 호출 (중복 제거 - 무한루프 방지)
+
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
   
-  // 중복 로그인 알림 상태
+  // 중복 로그인 알림 상태 (향후 사용 예정)
+  // eslint-disable-next-line no-unused-vars
   const [showDuplicateLoginAlert, setShowDuplicateLoginAlert] = React.useState(false);
 
   // 개발 환경에서만 로그 출력 (무한루프 방지를 위해 임시 비활성화)
@@ -175,7 +180,7 @@ function AppContent() {
   //     console.log('🌐 현재 환경:', process.env.NODE_ENV);
   //     console.log('📱 React 버전:', React.version);
   //     console.log('🔗 라우터 초기화 완료');
-  //     console.log('✅ 마인드가든 앱 시작됨');
+  //     console.log('✅ Core Solution 앱 시작됨');
   //   }
   //   
   //   return () => {
@@ -185,13 +190,16 @@ function AppContent() {
   //   };
   // }, []); // 의존성 배열을 빈 배열로 설정
 
-  // 동적 테마 시스템 초기화 (API 호출 비활성화로 무한루프 방지)
+  // 동적 테마 시스템 초기화 (로그인 후에만 CSS 테마 로드)
   useEffect(() => {
+    // 로그인 전에는 CSS 테마 로드를 건너뛰고 기본 테마만 설정
+    const shouldLoadColors = !!user; // 로그인된 경우에만 색상 로드
+    
     initializeDynamicThemeSystem({
       theme: 'ios', // iOS 스타일 기본 테마
       enableThemeWatcher: true, // 테마 변경 감지 활성화
       enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
-      loadConsultantColors: true, // 상담사 색상 로드 활성화 (오류 확인용)
+      loadConsultantColors: shouldLoadColors, // 로그인 후에만 상담사 색상 로드
       autoDetectTheme: false, // 시스템 테마 자동 감지 비활성화 (iOS 라이트 모드 고정)
       zIndexOffsets: {
         // 테마별 z-index 오프셋 커스터마이징
@@ -200,7 +208,7 @@ function AppContent() {
         highContrast: 1000
       }
     });
-  }, []);
+  }, [user]); // user 상태에 따라 재실행
 
   // 통합 레이아웃 시스템 초기화
   useEffect(() => {
@@ -229,6 +237,7 @@ function AppContent() {
 
   // 중복 로그인 이벤트 리스너
   useEffect(() => {
+    // eslint-disable-next-line no-unused-vars
     const handleDuplicateLoginEvent = (event) => {
       
       // UnifiedNotification을 통해 중복 로그인 알림 표시
@@ -263,18 +272,21 @@ function AppContent() {
     };
   }, []);
 
-  // 중복 로그인 알림 핸들러
+  // 중복 로그인 알림 핸들러 (향후 사용 예정)
+  // eslint-disable-next-line no-unused-vars
   const handleDuplicateLoginConfirm = useCallback(() => {
     setShowDuplicateLoginAlert(false);
     duplicateLoginManager.forceLogout();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleDuplicateLoginCancel = useCallback(() => {
     setShowDuplicateLoginAlert(false);
     // 취소 시에도 강제 로그아웃 (보안상 필요)
     duplicateLoginManager.forceLogout();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleLogout = useCallback(() => {
     logout();
   }, [logout]);
@@ -283,80 +295,122 @@ function AppContent() {
     // 세션 재확인 전에 잠시 대기 (백엔드 세션 설정 완료 대기)
     setTimeout(() => {
       checkSession();
-    }, 1000); // 1초 대기
+    }, 1000); // eslint-disable-line no-magic-numbers
   }, []); // checkSession 의존성 제거 (무한루프 방지)
 
-  if (isLoading) {
-    return <div>로딩 중...</div>;
-  }
-
   return (
-    <Router>
-      <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
+    <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
+      <SessionGuard>
+        {isLoading && (
+          <div
+            className="session-loading-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--cs-glass-strong)'
+            }}
+          >
+            <div className="mg-loading-container mg-loading-container--centered">
+              <div className="mg-loading-content">
+                <div className="mg-loading-spinner" />
+                <span className="mg-loading-text">로딩 중...</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="App">
           <UnifiedNotification type="toast" position="top-right" />
+          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />
-            <Route path="/test/modal" element={<UnifiedModalTest />} />
-            <Route path="/test/loading" element={<UnifiedLoadingTest />} />
-            <Route path="/test/header" element={<UnifiedHeaderTest />} />
-            <Route path="/login" element={<TabletLogin />} />
+            <Route path="/test/modal" element={<div className="mg-modal"Test />} />
+            <Route path="/test/loading" element={<div className="mg-loading">로딩중...</div>} />
+            <Route path="/test/header" element={<UnifiedHeader />} />
+            {/* Phase 3: 통합 로그인 시스템 */}
+            <Route path="/login" element={<UnifiedLogin />} />
+            <Route path="/login/tablet" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/oauth2/callback" element={<OAuth2Callback />} />
             
-            {/* 지점별 로그인 라우트 */}
-            <Route path="/login/branch" element={<BranchLogin />} />
-            <Route path="/login/branch/:branchCode" element={<BranchSpecificLogin />} />
-            <Route path="/login/headquarters" element={<HeadquartersLogin />} />
+            {/* 지점별 로그인 라우트 제거됨 - 브랜치 코드 제거 정책 */}
             
-            {/* 일반 대시보드 라우트 */}
-            <Route path="/dashboard" element={<CommonDashboard user={user} />} />
+            {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
+            <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
-            {/* 역할별 대시보드 라우트 */}
-            <Route path="/client/dashboard" element={<ClientDashboard />} />
-            <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/hq_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/super_hq_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/hq_master/dashboard" element={<HQDashboard user={user} />} />
-            <Route path="/branch_super_admin/dashboard" element={<Navigate to="/super_admin/dashboard" replace />} />
-            <Route path="/branch_manager/dashboard" element={<AdminDashboard user={user} />} />
+            {/* 역할별 대시보드 라우트 - 세션/권한 체크 후 해당 역할만 접근 (링크만으로 어드민 대시보드 이동 불가) */}
+            <Route path="/client/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                <ClientDashboard user={user} />
+              </ProtectedRoute>
+            } />
+            <Route path="/consultant/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                <ConsultantDashboardV2 user={user} />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminDashboardV2 user={user} />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboard-legacy" element={<AdminDashboard user={user} />} />
+            <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
+            <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
+            <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/branch_super_admin/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/branch_manager/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />
             <Route path="/super_admin/mypage" element={<MyPage />} />
-            <Route path="/hq_admin/mypage" element={<MyPage />} />
-            <Route path="/super_hq_admin/mypage" element={<MyPage />} />
-            <Route path="/hq_master/mypage" element={<MyPage />} />
-            <Route path="/branch_super_admin/mypage" element={<Navigate to="/super_admin/mypage" replace />} />
-            <Route path="/branch_manager/mypage" element={<MyPage />} />
+            <Route path="/branch_super_admin/mypage" element={<Navigate to="/admin/mypage" replace />} />
+            <Route path="/branch_manager/mypage" element={<Navigate to="/admin/mypage" replace />} />
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
             <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
             
-            {/* 권한 관리 */}
-            <Route path="/admin/permissions" element={
-              <SimpleLayout>
-                <PermissionManagement />
-              </SimpleLayout>
-            } />
+            {/* 권한 관리 화면 제거: 역할·권한은 사용자 관리에서 처리 */}
+            <Route path="/admin/permissions" element={<Navigate to="/admin/user-management" replace />} />
+            
+            {/* 관리자 전용 메뉴 시스템 (관리자·스태프 역할 접근, ERP는 STAFF 제외) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/admin/common-codes" replace />} />
+              <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
+              <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
+              <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
+              <Route path="package-pricing" element={<PackagePricingListPage />} />
+              <Route path="menu-permissions" element={<Navigate to="/admin/user-management" replace />} />
+              <Route path="permission-groups" element={<Navigate to="/admin/user-management" replace />} />
+              {/* 추후 추가될 관리자 페이지들 */}
+            </Route>
             
             {/* ERP 관리 */}
             <Route path="/erp/purchase" element={<PurchaseManagement />} />
             <Route path="/erp/financial" element={<FinancialManagement />} />
             <Route path="/erp/budget" element={<BudgetManagement />} />
-            <Route path="/erp/tax" element={<ImprovedTaxManagement />} />
+            <Route path="/erp/tax" element={<Navigate to="/erp/salary?tab=tax" replace />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
+            <Route path="/consultant/consultation-logs" element={<ConsultationLogView />} />
             <Route path="/consultant/reports" element={<ConsultantRecords />} />
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
@@ -366,7 +420,9 @@ function AppContent() {
             
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />
+            <Route path="/client/booking" element={<Navigate to="/client/schedule" replace />} />
             <Route path="/client/schedule" element={<ClientSchedule />} />
+            <Route path="/client/records" element={<Navigate to="/client/session-management" replace />} />
             <Route path="/client/session-management" element={<ClientSessionManagement />} />
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
             <Route path="/client/settings" element={<ClientSettings />} />
@@ -381,6 +437,18 @@ function AppContent() {
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            
+            {/* 테넌트 프로필/설정 라우트 */}
+            <Route path="/tenant/profile" element={<TenantProfile />} />
+            <Route path="/tenant/settings" element={<TenantProfile />} />
+            {/* PG 설정 라우트 (P1: 단수 경로 리다이렉트) */}
+            <Route path="/tenant/pg-configuration" element={<Navigate to="/tenant/pg-configurations" replace />} />
+            <Route path="/tenant/pg-configurations" element={<PgConfigurationList />} />
+            <Route path="/tenant/pg-configurations/new" element={<PgConfigurationCreate />} />
+            <Route path="/tenant/pg-configurations/:id" element={<PgConfigurationDetail />} />
+            <Route path="/tenant/pg-configurations/:id/edit" element={<PgConfigurationEdit />} />
+            
+            {/* 온보딩 관련 라우트 */}
             
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />
@@ -403,50 +471,82 @@ function AppContent() {
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />
             <Route path="/admin/schedule" element={<SchedulePage user={user} />} />
+            <Route path="/staff/schedule" element={<Navigate to="/admin/schedule" replace />} />
+            <Route path="/staff/clients" element={<Navigate to="/admin/user-management?type=client" replace />} />
+            <Route path="/staff/records" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
             <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
             
-            {/* 관리자 전용 라우트 */}
-            <Route path="/admin/consultant-comprehensive" element={<ConsultantComprehensiveManagement />} />
-            <Route path="/admin/client-comprehensive" element={<ClientComprehensiveManagement />} />
+            {/* 관리자/스태프 전용 라우트 */}
+            <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
+            <Route path="/admin/client-comprehensive" element={
+              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+                <Navigate to="/admin/user-management?type=client" replace />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
+            <Route
+              path="/admin/integrated-schedule"
+              element={
+                <AdminCommonLayout title="통합 스케줄링">
+                  <IntegratedMatchingSchedule />
+                </AdminCommonLayout>
+              }
+            />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
-            <Route path="/admin/accounts" element={<AccountManagement />} />
-            <Route path="/admin/user-management" element={<UserManagement />} />
-            <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
+            <Route path="/admin/accounts" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AccountManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/user-management" element={
+              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboards" element={<DashboardManagement />} />
+                <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
+                <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />
+            <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
+            <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+            <Route path="/admin/system-notifications" element={<Navigate to="/admin/notifications" replace />} />
+            <Route path="/admin/users" element={<Navigate to="/admin/user-management" replace />} />
+            <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
+            <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
-            <Route path="/admin/messages" element={<AdminMessages />} />
-            <Route path="/hq/branch-management" element={<BranchManagement />} />
-            <Route path="/hq/branches" element={<BranchManagement />} />
-            <Route path="/hq/dashboard" element={<HQDashboard />} />
-            <Route path="/hq/erp/branch-financial" element={<BranchFinancialManagement />} />
-            <Route path="/hq/erp/consolidated" element={<ConsolidatedFinancial />} />
-            <Route path="/hq/erp/reports" element={<FinancialReports />} />
+            <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
+            <Route path="/admin/branding" element={<BrandingManagementPage />} />
+            <Route path="/admin/messages" element={<Navigate to="/admin/notifications" replace />} />
             
+            {/* 학원 시스템 라우트 */}
+            <Route path="/academy" element={<AcademyDashboard />} />
+            <Route path="/admin/academy" element={<AcademyDashboard />} />
+            <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/admin/schedules" element={
-              <SimpleLayout>
-                <UnifiedScheduleComponent 
+              <AdminCommonLayout title="스케줄">
+                <AdminSchedulesPage
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             <Route path="/admin/statistics" element={
-              <SimpleLayout>
+              <AdminCommonLayout title="통계">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             <Route path="/admin/statistics-dashboard" element={
-              <SimpleLayout>
+              <AdminCommonLayout title="통계 대시보드">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             
             
@@ -470,44 +570,17 @@ function AppContent() {
               />
             } />
             
-            {/* 지점 수퍼 어드민 시스템 관리 라우트 (준비중) */}
-            <Route path="/branch-super-admin/system" element={
-              <ComingSoon 
-                title="시스템 도구"
-                description="시스템 도구 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/branch-super-admin/logs" element={
-              <ComingSoon 
-                title="시스템 로그"
-                description="시스템 로그 조회 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/branch-super-admin/settings" element={
-              <ComingSoon 
-                title="관리자 설정"
-                description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            
             {/* 기존 재무관리 라우트들은 ERP로 통합되어 제거됨 */}
             
             {/* ERP 라우트 (기존) */}
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
-            <Route path="/erp/finance-dashboard" element={<IntegratedFinanceDashboard />} />
             <Route path="/erp/refund-management" element={<RefundManagement />} />
             <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
             <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
             <Route path="/erp/items" element={<ItemManagement />} />
-            <Route path="/erp/budgets" element={
-              <ComingSoon 
-                title="예산 관리"
-                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            <Route path="/erp/budgets" element={<BudgetManagement />} />
             <Route path="/erp/salary" element={<SalaryManagement />} />
-            <Route path="/erp/tax" element={<TaxManagement />} />
             <Route path="/erp/orders" element={
               <ComingSoon 
                 title="주문 관리"
@@ -515,22 +588,29 @@ function AppContent() {
               />
             } />
             
-            {/* Admin ERP 라우트 (메뉴 연동용) */}
-            <Route path="/admin/erp/dashboard" element={<ErpDashboard />} />
-            <Route path="/admin/erp/purchase" element={<PurchaseRequestForm />} />
-            <Route path="/admin/erp/budget" element={
-              <ComingSoon 
-                title="예산 관리"
-                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            {/* Admin ERP 라우트: 어드민 전용(IntegratedFinanceDashboard)만 /admin/erp/ 유지, 나머지는 /erp/로 리다이렉트 */}
+            <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
+            <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
             <Route path="/admin/erp/financial" element={<IntegratedFinanceDashboard />} />
+            <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route path="/admin/erp/reports" element={
               <ComingSoon 
                 title="ERP 보고서"
                 description="ERP 보고서 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
+            
+            {/* 관리자 추가 메뉴 (준비중) */}
+            <Route path="/admin/branches" element={
+              <AdminCommonLayout title="준비 중">
+                <ComingSoon title="준비 중" description="해당 기능은 현재 개발 중입니다." />
+              </AdminCommonLayout>
+            } />
+            <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-managers" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-status" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-consultants" element={<Navigate to="/admin/branches" replace />} />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />
@@ -539,12 +619,6 @@ function AppContent() {
             <Route path="/test/notifications" element={<NotificationTest />} />
             <Route path="/test/payment" element={<PaymentTest />} />
             {/* <Route path="/test/integration" element={<IntegrationTest />} /> */}
-            <Route path="/test/ios-cards" element={<IOSCardSample />} />
-            <Route path="/test/design-sample" element={<MindGardenDesignSample />} />
-            <Route path="/test/premium-sample" element={<PremiumDesignSample />} />
-            <Route path="/test/advanced-sample" element={<AdvancedDesignSample />} />
-            <Route path="/test/components" element={<ComponentTestPage />} />
-            <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}
@@ -552,6 +626,7 @@ function AppContent() {
             {/* catch-all 라우트 제거 (개발 중) */}
             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           </Routes>
+          </Suspense>
           
           {/* 통계 모달 */}
           <StatisticsModal
@@ -571,20 +646,13 @@ function AppContent() {
             }}
           />
           
-          {/* 지점 매핑 모달 */}
-          <BranchMappingModal
-            isOpen={branchMappingModal.isOpen}
-            onClose={() => {
-              setBranchMappingModal({ isOpen: false, needsMapping: false });
-            }}
-            onSuccess={handleBranchMappingSuccess}
-          />
+          {/* 지점 매핑 모달 제거됨 - 브랜치 코드 제거 정책 */}
           
           {/* 중복 로그인 모달 */}
           <DuplicateLoginModal />
         </div>
-      </QueryParamHandler>
-    </Router>
+        </SessionGuard>
+    </QueryParamHandler>
   );
 }
 
@@ -594,7 +662,9 @@ function App() {
     <ThemeProvider>
       <SessionProvider>
         <NotificationProvider>
-          <AppContent />
+          <Router>
+            <AppContent />
+          </Router>
         </NotificationProvider>
       </SessionProvider>
     </ThemeProvider>

@@ -12,17 +12,18 @@ import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ProfileSection from './components/ProfileSection';
-import SettingsSection from './components/SettingsSection';
-import SecuritySection from './components/SecuritySection';
-import SocialAccountsSection from './components/SocialAccountsSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPage.css';
+
+const MYPAGE_TITLE_ID = 'mypage-page-title';
 
 const MyPage = () => {
   const [user, setUser] = useState(null);
@@ -34,7 +35,7 @@ const MyPage = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    userId: '',
     nickname: '',
     email: '',
     phone: '',
@@ -82,7 +83,7 @@ const MyPage = () => {
       if (response) {
         setUser(response);
         setFormData({
-          username: response.username || response.name || '',
+          userId: response.userId || response.name || '',
           nickname: response.nickname || '',
           email: response.email || '',
           phone: response.phone || response.phoneNumber || '',
@@ -104,7 +105,7 @@ const MyPage = () => {
       if (currentUser) {
         console.log('🔄 세션에서 사용자 데이터 로드:', currentUser);
         console.log('📝 로드된 필드 확인:');
-        console.log('  - username:', currentUser.username);
+        console.log('  - userId:', currentUser.userId);
         console.log('  - nickname:', currentUser.nickname);
         console.log('  - email:', currentUser.email);
         console.log('  - phone:', currentUser.phone);
@@ -115,7 +116,7 @@ const MyPage = () => {
         console.log('🔍 모든 필드:', Object.keys(currentUser));
         
         const formDataToSet = {
-          username: currentUser.username || currentUser.name || '',
+          userId: currentUser.userId || currentUser.name || '',
           nickname: currentUser.nickname || '',
           email: currentUser.email || '',
           phone: currentUser.phone || currentUser.phoneNumber || '',
@@ -302,7 +303,7 @@ const MyPage = () => {
     const response = await mypageApi.updateProfileInfo(currentUser.role, currentUser.id, requestData);
     console.log('✅ 백엔드 응답:', response);
     console.log('📝 백엔드 응답 필드 확인:');
-    console.log('  - username:', response.username);
+    console.log('  - userId:', response.userId);
     console.log('  - nickname:', response.nickname);
     console.log('  - phone:', response.phone);
     console.log('  - gender:', response.gender);
@@ -311,7 +312,7 @@ const MyPage = () => {
               // 사용자 정보 업데이트 (크롭된 이미지는 프론트엔드 데이터 우선 사용)
           setUser(prev => ({
             ...prev,
-            username: response.username || dataToUpdate.username,
+            userId: response.userId || dataToUpdate.userId,
             nickname: response.nickname || dataToUpdate.nickname,
             phone: response.phone || dataToUpdate.phone,
             gender: response.gender || dataToUpdate.gender,
@@ -331,7 +332,7 @@ const MyPage = () => {
     if (sessionManager.user) {
       sessionManager.user = {
         ...sessionManager.user,
-        username: dataToUpdate.username,
+        userId: dataToUpdate.userId,
         nickname: dataToUpdate.nickname,
         phone: dataToUpdate.phone,
         gender: dataToUpdate.gender,
@@ -438,72 +439,93 @@ const MyPage = () => {
   // displayUser가 null이면 로딩 상태로 처리
   if (!displayUser) {
     return (
-      <SimpleLayout>
-        <div className="mypage-container">
-          <UnifiedLoading text="사용자 정보를 불러오는 중..." />
+      <AdminCommonLayout title="마이페이지">
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="마이페이지 본문">
+              <ContentHeader
+                title="마이페이지"
+                subtitle="내 정보를 관리하고 설정을 변경할 수 있습니다"
+                titleId={MYPAGE_TITLE_ID}
+              />
+              <main aria-labelledby={MYPAGE_TITLE_ID}>
+                <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
+              </main>
+            </ContentArea>
+          </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="마이페이지">
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
-        {/* 페이지 헤더 */}
-        <div className="mypage-header">
-          <div className="mypage-header__icon">
-            <User size={32} />
-          </div>
-          <div className="mypage-header__content">
-            <h1 className="mypage-header__title">마이페이지</h1>
-            <p className="mypage-header__subtitle">
-              내 정보를 관리하고 설정을 변경할 수 있습니다
-            </p>
-          </div>
-        </div>
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="마이페이지 본문">
+              <ContentHeader
+                title="마이페이지"
+                subtitle="내 정보를 관리하고 설정을 변경할 수 있습니다"
+                titleId={MYPAGE_TITLE_ID}
+              />
+              <nav
+                className="mg-v2-tab-buttons mg-v2-mypage__tabs"
+                aria-label="마이페이지 섹션"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'profile'}
+                  className={`mg-v2-tab-button${activeTab === 'profile' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <User size={18} aria-hidden />
+                  프로필 정보
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'settings'}
+                  className={`mg-v2-tab-button${activeTab === 'settings' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  <Settings size={18} aria-hidden />
+                  설정
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'security'}
+                  className={`mg-v2-tab-button${activeTab === 'security' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('security')}
+                >
+                  <Shield size={18} aria-hidden />
+                  보안
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'social'}
+                  className={`mg-v2-tab-button${activeTab === 'social' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('social')}
+                >
+                  <LinkIcon size={18} aria-hidden />
+                  소셜 계정
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'privacy'}
+                  className={`mg-v2-tab-button${activeTab === 'privacy' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('privacy')}
+                >
+                  <FileText size={18} aria-hidden />
+                  개인정보 동의
+                </button>
+              </nav>
 
-      <div className="mypage-content">
-        <div className="mypage-top-nav">
-          <div className="mypage-nav">
-            <button
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <User size={18} />
-              프로필 정보
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Settings size={18} />
-              설정
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
-              onClick={() => setActiveTab('security')}
-            >
-              <Shield size={18} />
-              보안
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}
-              onClick={() => setActiveTab('social')}
-            >
-              <LinkIcon size={18} />
-              소셜 계정
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'privacy' ? 'active' : ''}`}
-              onClick={() => setActiveTab('privacy')}
-            >
-              <FileText size={18} />
-              개인정보 동의
-            </button>
-          </div>
-        </div>
-
-        <div className="mypage-main-content">
+              <main aria-labelledby={MYPAGE_TITLE_ID} className="mypage-main-content">
           {activeTab === 'profile' && (
                     <ProfileSection
           user={user}
@@ -615,7 +637,7 @@ const MyPage = () => {
                         </div>
                         <div className="social-account-details">
                           <h3>{account.provider === 'KAKAO' ? '카카오' : account.provider === 'NAVER' ? '네이버' : account.provider} 계정</h3>
-                          <p>{account.providerUsername || '사용자명 없음'}</p>
+                          <p>{account.providerUsername || '사용자 ID 없음'}</p>
                           {account.providerProfileImage && (
                             <div className="social-profile-image">
                               <img 
@@ -671,8 +693,10 @@ const MyPage = () => {
           {activeTab === 'privacy' && (
             <PrivacyConsentSection />
           )}
+              </main>
+            </ContentArea>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* 비밀번호 재설정 모달 */}
@@ -688,7 +712,7 @@ const MyPage = () => {
         onClose={() => setShowPasswordChangeModal(false)}
         onSuccess={handlePasswordChangeSuccess}
       />
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

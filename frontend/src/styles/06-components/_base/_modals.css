@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   backdrop-filter: var(--ios-backdrop-blur-lg);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
   z-index: var(--z-modal-backdrop);
@@ -34,7 +34,7 @@
   border-radius: var(--border-radius-xxl);
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.1),
+    0 25px 50px var(--mg-shadow-light),
     0 0 0 1px rgba(255, 255, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   max-width: 90vw;
@@ -262,7 +262,7 @@
   justify-content: center;
   z-index: 10;
   border-radius: inherit;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 20px var(--mg-shadow-light);
 }
 
 .mg-modal__loading-spinner {
@@ -301,6 +301,16 @@
   height: 40px;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+/* 모달 로딩 오버레이 내 공통 스피너 - 폴백으로 항상 표시 (B0KlA/테마 변수 미적용 시) */
+.mg-modal__loading-overlay .mg-loading-spinner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border-light, #e5e7eb);
+  border-top-color: var(--color-primary, var(--ad-b0kla-green, #0d9488));
+  animation: mg-spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -435,7 +445,7 @@
 
 .time-slot-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
   border-color: var(--color-primary);
 }
 
@@ -463,27 +473,7 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.time-slot-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-success);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--spacing-sm);
-  flex-shrink: 0;
-}
-
-.time-slot-indicator--booked {
-  background: var(--color-neutral-light);
-}
-
-.time-slot-indicator__text {
-  color: white;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
+/* 시간 슬롯: 전역 mg-time-slot-indicator 사용 (mindgarden-design-system.css) */
 
 .time-slot-time {
   font-size: var(--font-size-base);

@@ -3,22 +3,22 @@
 [data-theme="light"],
 [data-theme="ios"] {
   /* iOS 기본 색상 팔레트 */
-  --color-primary: #007AFF;
-  --color-primary-hover: #0056CC;
-  --color-primary-active: #004499;
-  --color-primary-light: #E3F2FD;
-  --color-primary-dark: #003366;
+  --color-primary: var(--mg-primary-500);
+  --color-primary-hover: var(--cs-blue-700);
+  --color-primary-active: var(--cs-blue-800);
+  --color-primary-light: var(--cs-blue-50);
+  --color-primary-dark: var(--cs-blue-900);
 
-  --color-secondary: #8E8E93;
-  --color-secondary-hover: #6D6D70;
-  --color-secondary-active: #48484A;
-  --color-secondary-light: #F2F2F7;
-  --color-secondary-dark: #1C1C1E;
+  --color-secondary: var(--cs-gray-500);
+  --color-secondary-hover: var(--cs-gray-600);
+  --color-secondary-active: var(--cs-gray-700);
+  --color-secondary-light: var(--cs-gray-50);
+  --color-secondary-dark: var(--cs-gray-900);
 
   /* iOS 배경 색상 (부드럽게 조정) */
-  --color-bg-primary: #FAFAFA;
+  --color-bg-primary: var(--cs-gray-50);
   --color-bg-secondary: #F5F5F7;
-  --color-bg-tertiary: #F8F9FA;
+  --color-bg-tertiary: var(--mg-gray-100);
   --color-bg-accent: #E8E8ED;
   --color-bg-glass: rgba(250, 250, 250, 0.8);
   --color-bg-glass-strong: rgba(250, 250, 250, 0.95);
@@ -28,24 +28,24 @@
   --color-text-secondary: #424245;
   --color-text-tertiary: #636366;
   --color-text-muted: #8E8E93;
-  --color-text-inverse: #FFFFFF;
+  --color-text-inverse: var(--mg-white);
 
   /* iOS 테두리 색상 (부드럽게 조정) */
   --color-border-primary: #D1D1D6;
   --color-border-secondary: #E8E8ED;
   --color-border-accent: #A1A1A6;
-  --color-border-focus: #007AFF;
+  --color-border-focus: var(--mg-primary-500);
 
   /* iOS 상태 색상 */
-  --color-success: #34C759;
+  --color-success: var(--mg-success-500);
   --color-success-light: #D4F4DD;
   --color-success-dark: #2AB346;
 
-  --color-warning: #FF9500;
+  --color-warning: var(--mg-warning-500);
   --color-warning-light: #FFE5CC;
   --color-warning-dark: #E6850E;
 
-  --color-error: #FF3B30;
+  --color-error: var(--mg-error-500);
   --color-error-light: #FFE5E5;
   --color-error-dark: #E63429;
 
@@ -53,11 +53,11 @@
   --color-info-light: #E5F7FE;
   --color-info-dark: #4BB5E6;
 
-  /* MindGarden 브랜드 색상 (연두빛) */
-  --color-mindgarden: #7ED321;
-  --color-mindgarden-light: #B8E994;
-  --color-mindgarden-dark: #6BCF7F;
-  --color-mindgarden-accent: #82CC6E;
+  /* Core Solution 브랜드 색상 (표준화) */
+  --color-mindgarden: var(--mg-primary-500);
+  --color-mindgarden-light: var(--mg-primary-300);
+  --color-mindgarden-dark: var(--mg-primary-700);
+  --color-mindgarden-accent: var(--mg-primary-400);
 
   /* iOS 그림자 */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -84,7 +84,7 @@
   --modal-bg: rgba(250, 250, 250, 0.98);
   --modal-backdrop: rgba(0, 0, 0, 0.3);
   --modal-border: rgba(209, 209, 214, 0.8);
-  --modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+  --modal-shadow: 0 25px 50px var(--mg-shadow-light);
 
   /* iOS 드롭다운 (부드럽게 조정) */
   --dropdown-bg: rgba(250, 250, 250, 0.98);
@@ -123,7 +123,7 @@
   /* 다크 테마를 강제로 부드러운 라이트 모드로 설정 */
   --color-bg-primary: #FAFAFA !important;
   --color-bg-secondary: #F5F5F7 !important;
-  --color-bg-tertiary: #F8F9FA !important;
+  --color-bg-tertiary: var(--mg-gray-100) !important;
   --color-bg-accent: #E8E8ED !important;
   --color-bg-glass: rgba(250, 250, 250, 0.8) !important;
   --color-bg-glass-strong: rgba(250, 250, 250, 0.95) !important;
@@ -132,7 +132,7 @@
   --color-text-secondary: #424245 !important;
   --color-text-tertiary: #636366 !important;
   --color-text-muted: #8E8E93 !important;
-  --color-text-inverse: #FFFFFF !important;
+  --color-text-inverse: var(--mg-white) !important;
 
   --color-border-primary: #D1D1D6 !important;
   --color-border-secondary: #E8E8ED !important;
@@ -169,11 +169,11 @@
   --text-tertiary: #636366 !important;
   --bg-primary: #FAFAFA !important;
   --bg-secondary: #F5F5F7 !important;
-  --bg-tertiary: #F8F9FA !important;
+  --bg-tertiary: var(--mg-gray-100) !important;
 
-  /* MindGarden 브랜드 색상 유지 */
-  --color-mindgarden: #7ED321 !important;
-  --color-mindgarden-light: #B8E994 !important;
-  --color-mindgarden-dark: #6BCF7F !important;
-  --color-mindgarden-accent: #82CC6E !important;
+  /* Core Solution 브랜드 색상 유지 (표준화) */
+  --color-mindgarden: var(--mg-primary-500) !important;
+  --color-mindgarden-light: var(--mg-primary-300) !important;
+  --color-mindgarden-dark: var(--mg-primary-700) !important;
+  --color-mindgarden-accent: var(--mg-primary-400) !important;
 }

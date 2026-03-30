@@ -1,7 +1,10 @@
 import { apiGet } from './ajax';
+import { getCommonCodes as getCommonCodesStandard } from './commonCodeApi';
 
 /**
  * 공통 코드 관련 유틸리티 함수들
+/**
+ * 표준화된 API 사용 (하위 호환성 유지)
  */
 
 // 공통 코드 캐시
@@ -9,8 +12,15 @@ const codeCache = new Map();
 
 /**
  * 공통 코드 그룹의 모든 코드를 가져옵니다
+/**
+ * 표준화된 API 사용 (하위 호환성 유지)
+/**
+ * 
+/**
  * @param {string} groupCode - 코드 그룹명
+/**
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Promise<Array>} 공통 코드 배열
  */
 export const getCommonCodes = async (groupCode, useCache = true) => {
@@ -20,14 +30,25 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
             return codeCache.get(groupCode);
         }
 
-        const response = await apiGet(`/api/common-codes/${groupCode}`);
+        // 표준화된 API 사용
+        let codes = [];
+        try {
+            codes = await getCommonCodesStandard(groupCode);
+        } catch (error) {
+            console.warn('표준화된 API 조회 실패, 기존 API 사용:', error);
+            // 하위 호환성: 기존 API 사용
+            const response = await apiGet(`/api/common-codes/${groupCode}`);
+            if (Array.isArray(response)) {
+                codes = response;
+            }
+        }
         
-        if (Array.isArray(response)) {
+        if (codes && codes.length > 0) {
             // 캐시에 저장
             if (useCache) {
-                codeCache.set(groupCode, response);
+                codeCache.set(groupCode, codes);
             }
-            return response;
+            return codes;
         }
         
         return [];
@@ -39,8 +60,11 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
 
 /**
  * 특정 코드의 값을 가져옵니다
+/**
  * @param {string} groupCode - 코드 그룹명
+/**
  * @param {string} codeValue - 코드 값
+/**
  * @returns {Promise<string>} 코드 라벨
  */
 export const getCodeLabel = async (groupCode, codeValue) => {
@@ -56,6 +80,7 @@ export const getCodeLabel = async (groupCode, codeValue) => {
 
 /**
  * 상담사 등급별 기본 급여를 가져옵니다
+/**
  * @returns {Promise<Object>} 등급별 급여 매핑 객체
  */
 export const getGradeSalaryMap = async () => {
@@ -89,7 +114,9 @@ export const getGradeSalaryMap = async () => {
 
 /**
  * 상담사 등급을 한글로 변환합니다
+/**
  * @param {string} grade - 등급 코드
+/**
  * @returns {Promise<string>} 한글 등급명
  */
 export const getGradeKoreanName = async (grade) => {
@@ -110,43 +137,85 @@ export const getGradeKoreanName = async (grade) => {
 
 /**
  * 패키지 타입별 세션 수와 가격을 가져옵니다
+/**
  * @returns {Promise<Array>} 패키지 옵션 배열
  */
 export const getPackageOptions = async () => {
     try {
-        console.log('🔍 getPackageOptions 시작');
-        const codes = await getCommonCodes('CONSULTATION_PACKAGE');
-        console.log('📋 CONSULTATION_PACKAGE 코드들:', codes);
+        console.log('🔍 getPackageOptions 시작 (테넌트 코드 전용)');
+        // 테넌트 코드 전용 API 사용 (독립성 보장)
+        const { getTenantCodes } = await import('./commonCodeApi');
+        const codes = await getTenantCodes('CONSULTATION_PACKAGE');
+        console.log('📋 CONSULTATION_PACKAGE 코드들 (테넌트별):', codes);
         
         return codes.map(code => {
             console.log(`🔧 처리 중인 코드: ${code.codeValue}`);
-            let sessions = 1; // 기본값
-            let price = 50000; // 기본값
+            // 표준화 2025-12-08: 테넌트별 공통코드에서 가격과 세션 수 동적 조회 (하드코딩 완전 제거)
+            let sessions = 20; // 기본값 (extraData에 없을 경우만 사용)
+            let price = 0;
             
-            // 코드 값에 따라 세션 수와 가격 설정
-            if (code.codeValue === 'BASIC') {
-                sessions = 20;
-                price = 200000;
-            } else if (code.codeValue === 'STANDARD') {
-                sessions = 20;
-                price = 400000;
-            } else if (code.codeValue === 'PREMIUM') {
-                sessions = 20;
-                price = 600000;
-            } else if (code.codeValue === 'VIP') {
-                sessions = 20;
-                price = 1000000;
-            } else if (code.codeValue.startsWith('SINGLE_')) {
-                sessions = 1;
-                // SINGLE_30000 -> 30000
+            // SINGLE_ 패키지 처리 (codeValue에서 가격 추출)
+            if (code.codeValue.startsWith('SINGLE_')) {
+                sessions = 1; // 단회기는 항상 1회기
                 const priceStr = code.codeValue.replace('SINGLE_', '');
                 price = parseInt(priceStr, 10);
-                // NaN 체크
                 if (isNaN(price)) {
                     console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${priceStr}`);
-                    price = 30000; // 기본값
+                    price = 0; // 가격 정보 없음
                 }
-                console.log(`단회기 옵션 처리: ${code.codeValue} -> ${sessions}회기, ${price}원`);
+                
+                // SINGLE_ 패키지도 extraData가 있으면 우선 사용
+                if (code.extraData) {
+                    try {
+                        const extraData = JSON.parse(code.extraData);
+                        if (extraData.price !== undefined && extraData.price !== null) {
+                            const extraPrice = parseFloat(extraData.price);
+                            if (!isNaN(extraPrice) && extraPrice > 0) {
+                                price = extraPrice;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`SINGLE_ 패키지 extraData 파싱 실패: ${code.codeValue}`, e);
+                    }
+                }
+            } else {
+                // 일반 패키지: extraData에서 가격과 세션 수 추출 (우선순위 1)
+                if (code.extraData) {
+                    try {
+                        const extraData = JSON.parse(code.extraData);
+                        
+                        // 가격 추출 (필수)
+                        if (extraData.price !== undefined && extraData.price !== null) {
+                            price = parseFloat(extraData.price);
+                            if (isNaN(price) || price <= 0) {
+                                console.warn(`가격 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, price=${extraData.price}`);
+                                price = 0;
+                            }
+                        }
+                        
+                        // 세션 수 추출
+                        if (extraData.sessions !== undefined && extraData.sessions !== null) {
+                            sessions = parseInt(extraData.sessions, 10);
+                            if (isNaN(sessions) || sessions <= 0) {
+                                console.warn(`세션 수 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, sessions=${extraData.sessions}`);
+                                sessions = 20; // 기본값
+                            }
+                        }
+                        
+                        console.log(`✅ 패키지 데이터 파싱: codeValue=${code.codeValue}, price=${price}, sessions=${sessions}, extraData=`, extraData);
+                    } catch (e) {
+                        console.warn(`extraData 파싱 실패: codeValue=${code.codeValue}, extraData=${code.extraData}`, e);
+                    }
+                }
+                
+                // extraData에서 가격을 찾지 못한 경우 codeDescription 시도 (하위 호환성)
+                if (price === 0 && code.codeDescription) {
+                    const parsedPrice = parseFloat(code.codeDescription);
+                    if (!isNaN(parsedPrice) && parsedPrice > 0) {
+                        price = parsedPrice;
+                        console.log(`⚠️ codeDescription에서 가격 추출: codeValue=${code.codeValue}, price=${price}`);
+                    }
+                }
             }
             
             // 패키지별 라벨 생성
@@ -163,6 +232,7 @@ export const getPackageOptions = async () => {
                 // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
                 label = code.codeValue;
             } else {
+                // 한글명 우선 사용 (표준화된 API)
                 label = code.koreanName || code.codeLabel;
             }
             
@@ -191,6 +261,7 @@ export const getPackageOptions = async () => {
 
 /**
  * 만족도 관련 데이터를 가져옵니다
+/**
  * @returns {Promise<Object>} 만족도 데이터
  */
 export const getSatisfactionData = async () => {
@@ -242,6 +313,7 @@ export const clearCodeCache = () => {
 
 /**
  * 특정 그룹의 캐시를 제거합니다
+/**
  * @param {string} groupCode - 코드 그룹명
  */
 export const clearGroupCache = (groupCode) => {

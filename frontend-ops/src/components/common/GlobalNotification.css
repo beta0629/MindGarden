@@ -1,0 +1,129 @@
+/**
+ * 전역 알림 컴포넌트 스타일
+ * CSS 변수 사용 (현재 색상값 유지)
+ */
+
+.global-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.global-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: var(--ops-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+  background: var(--ops-color-bg-white, white);
+  animation: slideIn 0.3s ease-out;
+  min-width: 300px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.global-notification__icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  border-radius: 50%;
+}
+
+.global-notification__message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ops-color-text-primary, #333);
+}
+
+.global-notification__close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--ops-color-text-secondary, #666);
+  padding: 0;
+  line-height: 1;
+}
+
+.global-notification__close:hover {
+  color: var(--ops-color-text-primary, #333);
+}
+
+/* 타입별 스타일 */
+.global-notification--success {
+  border-left: 4px solid var(--ops-color-success, #10b981);
+}
+
+.global-notification--success .global-notification__icon {
+  background: var(--ops-color-success, #10b981);
+  color: var(--ops-color-white, white);
+}
+
+.global-notification--error {
+  border-left: 4px solid var(--ops-color-danger, #ef4444);
+}
+
+.global-notification--error .global-notification__icon {
+  background: var(--ops-color-danger, #ef4444);
+  color: var(--ops-color-white, white);
+}
+
+.global-notification--warning {
+  border-left: 4px solid var(--ops-color-warning, #f59e0b);
+}
+
+.global-notification--warning .global-notification__icon {
+  background: var(--ops-color-warning, #f59e0b);
+  color: var(--ops-color-white, white);
+}
+
+.global-notification--info {
+  border-left: 4px solid var(--ops-color-info, #3b82f6);
+}
+
+.global-notification--info .global-notification__icon {
+  background: var(--ops-color-info, #3b82f6);
+  color: var(--ops-color-white, white);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .global-notification-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .global-notification {
+    min-width: auto;
+  }
+}
+

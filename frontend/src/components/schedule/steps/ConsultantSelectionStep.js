@@ -1,19 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { UserCheck, Users } from 'lucide-react';
 import ConsultantCard from '../../ui/Card/ConsultantCard';
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ConsultantFilter from '../components/ConsultantFilter';
-import UnifiedLoading from '../../common/UnifiedLoading';
+import UnifiedLoading from '../../../components/common/UnifiedLoading';
 import notificationManager from '../../../utils/notification';
 import './ConsultantSelectionStep.css';
+import SafeText from '../../common/SafeText';
 
 /**
  * 새로운 디자인의 상담사 선택 단계 컴포넌트
+/**
  * - CSS 클래스 상수 사용
+/**
  * - JavaScript 상수 사용
+/**
  * - 현대적인 디자인 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-05
  */
 const ConsultantSelectionStepNew = ({ 
@@ -31,7 +40,7 @@ const ConsultantSelectionStepNew = ({
         search: ''
     });
 
-    /**
+/**
      * 상담사 목록 로드
      */
     const loadConsultants = useCallback(async () => {
@@ -55,7 +64,7 @@ const ConsultantSelectionStepNew = ({
             console.log('🗓️ API 호출 날짜:', dateStr);
             
             // 휴무 정보를 포함한 상담사 목록 조회
-            const response = await fetch(`/api/admin/consultants/with-vacation?date=${dateStr}`, {
+            const response = await fetch(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,10 +75,22 @@ const ConsultantSelectionStepNew = ({
             if (response.ok) {
                 const responseData = await response.json();
                 console.log('👨‍⚕️ API 응답 데이터:', responseData);
-                console.log('👨‍⚕️ API URL:', `/api/admin/consultants/with-vacation?date=${dateStr}`);
+                console.log('👨‍⚕️ API URL:', `/api/v1/admin/consultants/with-vacation?date=${dateStr}`);
                 
                 // API 응답 구조에 따라 데이터 추출
-                const data = responseData.data || responseData;
+                // ApiResponse 래퍼: { success: true, data: { consultants: [...], count: N } }
+                let data = null;
+                if (responseData.data && responseData.data.consultants) {
+                    data = responseData.data.consultants;
+                } else if (responseData.consultants) {
+                    data = responseData.consultants;
+                } else if (Array.isArray(responseData.data)) {
+                    data = responseData.data;
+                } else if (Array.isArray(responseData)) {
+                    data = responseData;
+                } else {
+                    data = [];
+                }
                 console.log('👨‍⚕️ 추출된 데이터:', data);
                 console.log('👨‍⚕️ 김선희2 데이터 확인:', data.find(c => c.name === '김선희2'));
                 
@@ -202,7 +223,7 @@ const ConsultantSelectionStepNew = ({
     }, [selectedDate]);
 
 
-    /**
+/**
      * 필터 적용
      */
     const applyFilters = useCallback(() => {
@@ -260,7 +281,7 @@ const ConsultantSelectionStepNew = ({
         applyFilters();
     }, [applyFilters]);
 
-    /**
+/**
      * 상담사 선택 핸들러
      */
     const handleConsultantSelect = (consultant) => {
@@ -272,14 +293,14 @@ const ConsultantSelectionStepNew = ({
         onConsultantSelect(consultant);
     };
 
-    /**
+/**
      * 필터 변경 핸들러
      */
     const handleFilterChange = (newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
     };
 
-    /**
+/**
      * 필터 초기화
      */
     const handleResetFilters = () => {
@@ -303,13 +324,7 @@ const ConsultantSelectionStepNew = ({
     if (loading && consultants.length === 0) {
         return (
             <div className="consultant-selection-step">
-                <UnifiedLoading 
-                    text="상담사 목록을 불러오는 중..." 
-                    size="large" 
-                    variant="dots"
-                    type="inline"
-                    className="loading-spinner-inline"
-                />
+                <UnifiedLoading type="inline" text="상담사 목록을 불러오는 중..." />
             </div>
         );
     }
@@ -318,7 +333,10 @@ const ConsultantSelectionStepNew = ({
         <div className="consultant-selection-step">
             {/* 단계 헤더 */}
             <div className="consultant-selection-header">
-                <h4 className="consultant-selection-title">👨‍⚕️ 상담사를 선택하세요</h4>
+                <h4 className="consultant-selection-title">
+                    <UserCheck className="mg-v2-icon" size={24} />
+                    상담사를 선택하세요
+                </h4>
                 <p className="consultant-selection-subtitle">
                     {selectedDate?.toLocaleDateString('ko-KR', { 
                         year: 'numeric', 
@@ -339,10 +357,12 @@ const ConsultantSelectionStepNew = ({
             </div>
 
             {/* 상담사 그리드 */}
-            <div className="mg-consultant-cards-grid mg-consultant-cards-grid--detailed">
+            <div className={`mg-consultant-cards-grid mg-consultant-cards-grid--${isMobile ? 'mobile' : 'schedule-select'}`}>
                 {filteredConsultants.length === 0 ? (
                     <div className="mg-empty-state">
-                        <div className="mg-empty-state__icon">👨‍⚕️</div>
+                        <div className="mg-empty-state__icon">
+                            <Users size={40} className="mg-v2-text-muted" strokeWidth={1.5} />
+                        </div>
                         <p className="mg-empty-state__text">조건에 맞는 상담사가 없습니다.</p>
                         <small className="mg-empty-state__hint">필터를 조정해보세요.</small>
                     </div>
@@ -354,7 +374,7 @@ const ConsultantSelectionStepNew = ({
                             onClick={() => handleConsultantSelect(consultant)}
                             selected={selectedConsultant?.id === consultant.id}
                             draggable={false}
-                            variant={isMobile ? 'mobile-simple' : 'detailed'}
+                            variant={isMobile ? 'mobile-simple' : 'schedule-select'}
                         />
                     ))
                 )}
@@ -364,7 +384,7 @@ const ConsultantSelectionStepNew = ({
             {selectedConsultant && (
                 <div className="consultant-selection-selected">
                     <div className="consultant-selection-selected-text">
-                        <strong>선택된 상담사:</strong> {selectedConsultant.name}
+                        <strong>선택된 상담사:</strong> <SafeText>{selectedConsultant.name}</SafeText>
                         <SpecialtyDisplay 
                             consultant={selectedConsultant} 
                             variant="inline" 

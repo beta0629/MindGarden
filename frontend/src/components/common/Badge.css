@@ -1,0 +1,108 @@
+/**
+ * Badge - 공통 표시용 배지 스타일
+ * unified-design-tokens .mg-badge, .mg-v2-badge, .mg-v2-status-badge 및 B0KlA 토큰 연동
+ *
+ * @author CoreSolution
+ * @since 2026-03-17
+ */
+
+.mg-common-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--mg-radius-full, 9999px);
+}
+
+/* size */
+.mg-common-badge--sm {
+  padding: 2px 6px;
+  font-size: var(--mg-font-xs, 0.75rem);
+}
+
+.mg-common-badge--default {
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-8, 8px);
+  font-size: var(--mg-font-xs, 0.75rem);
+}
+
+.mg-common-badge--lg {
+  padding: 4px 12px;
+  font-size: var(--mg-font-sm, 0.875rem);
+}
+
+/* ===== variant: status (StatusBadge 시각·토큰 정합성) ===== */
+.mg-common-badge--status {
+  font-weight: 600;
+}
+
+.mg-common-badge--status.mg-common-badge--success {
+  background-color: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+}
+
+.mg-common-badge--status.mg-common-badge--warning {
+  background-color: var(--mg-badge-status-warning-bg);
+  color: var(--mg-badge-status-warning-text);
+}
+
+.mg-common-badge--status.mg-common-badge--neutral {
+  background-color: var(--mg-badge-status-neutral-bg);
+  color: var(--mg-badge-status-neutral-text);
+}
+
+.mg-common-badge--status.mg-common-badge--danger {
+  background-color: var(--mg-badge-status-danger-bg);
+  color: var(--mg-badge-status-danger-text);
+}
+
+.mg-common-badge--status.mg-common-badge--info {
+  background-color: var(--mg-badge-status-info-bg);
+  color: var(--mg-badge-status-info-text);
+}
+
+/* ===== variant: count (mg-v2-count-badge, mg-v2-notification-badge 정합성) ===== */
+.mg-common-badge--count {
+  min-width: 18px;
+  background-color: var(--mg-badge-count-bg, var(--mg-color-error-500, #EF4444));
+  color: var(--mg-badge-count-text, #FFFFFF);
+  line-height: 1;
+}
+
+/* ===== variant: tab / pill ===== */
+.mg-common-badge--tab,
+.mg-common-badge--pill {
+  background-color: var(--ad-b0kla-bg, var(--mg-gray-100));
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+  border: 1px solid transparent;
+}
+
+.mg-common-badge--tab.mg-common-badge--selected,
+.mg-common-badge--pill.mg-common-badge--selected {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+}
+
+/* ===== variant: kpi (B0KlA mg-v2-ad-b0kla__kpi-badge 연동) ===== */
+.mg-common-badge--kpi {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.mg-common-badge--kpi.mg-common-badge--kpi-green {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-common-badge--kpi.mg-common-badge--kpi-orange {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+
+.mg-common-badge--kpi.mg-common-badge--kpi-blue {
+  background: var(--ad-b0kla-blue-bg);
+  color: var(--ad-b0kla-blue);
+}

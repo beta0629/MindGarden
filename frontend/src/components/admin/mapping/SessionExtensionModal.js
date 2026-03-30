@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Plus, XCircle, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import BadgeSelect from '../../common/BadgeSelect';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
+/**
  * - 기존 매칭의 패키지 정보를 그대로 사용
+/**
  * - 회기 수 조정 및 사유 입력
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SessionExtensionModal = ({ 
@@ -114,7 +121,7 @@ const SessionExtensionModal = ({
 
             console.log('🚀 회기 추가 요청:', requestData);
 
-            const response = await csrfTokenManager.post('/api/admin/session-extensions/requests', requestData);
+            const response = await csrfTokenManager.post('/api/v1/admin/session-extensions/requests', requestData);
             const result = await response.json();
 
             if (result.success !== false) {
@@ -145,36 +152,47 @@ const SessionExtensionModal = ({
 
     if (!isOpen || !mapping) return null;
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-lg mg-v2-modal--scrollable" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-header-content">
-                        <div className="mg-v2-modal-icon">
-                            <Plus size={28} />
-                        </div>
-                        <div className="mg-v2-modal-title-area">
-                            <h3 className="mg-v2-modal-title">
-                                회기 추가 요청
-                            </h3>
-                            <p className="mg-v2-modal-subtitle">
-                                새로운 패키지를 선택하고 회기를 추가하세요
-                            </p>
-                        </div>
-                    </div>
-                    <button 
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="회기 추가 요청"
+            subtitle="새로운 패키지를 선택하고 회기를 추가하세요"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={isLoading}
+            actions={
+                <>
+                    <button
                         type="button"
-                        className="mg-v2-modal-close"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </div>
-                
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleSubmit}
+                        disabled={isLoading || additionalSessions <= 0}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className="loading-spinner"></div>
+                                요청 중...
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={16} />
+                                {additionalSessions}회기 추가 요청
+                            </>
+                        )}
+                    </button>
+                </>
+            }
+        >
                 <div className="mg-v2-modal-content mg-v2-modal-content--scrollable">
                     {/* 매칭 정보 표시 */}
                     <div className="mg-v2-card mg-v2-card--outlined">
@@ -250,16 +268,18 @@ const SessionExtensionModal = ({
                         {/* 결제 방법 선택 */}
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">결제 방법</label>
-                            <select
-                                className="mg-v2-select"
+                            <BadgeSelect
+                                className="mg-v2-form-badge-select"
                                 value={paymentMethod}
-                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                                onChange={(val) => handlePaymentMethodChange(val)}
+                                options={[
+                                    { value: '신용카드', label: '신용카드' },
+                                    { value: '계좌이체', label: '계좌이체' },
+                                    { value: '현금', label: '현금' }
+                                ]}
+                                placeholder="선택하세요"
                                 disabled={isLoading}
-                            >
-                                <option value="신용카드">신용카드</option>
-                                <option value="계좌이체">계좌이체</option>
-                                <option value="현금">현금</option>
-                            </select>
+                            />
                         </div>
                         
                         {/* 결제 참조번호 */}
@@ -290,39 +310,7 @@ const SessionExtensionModal = ({
                         </form>
                     </div>
                 </div>
-                
-                {/* 모달 액션 버튼 */}
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        type="button"
-                        className="mg-v2-button mg-v2-button-secondary"
-                        onClick={handleClose}
-                        disabled={isLoading}
-                    >
-                        취소
-                    </button>
-                    <button 
-                        type="submit"
-                        className="mg-v2-button mg-v2-button-primary"
-                        onClick={handleSubmit}
-                        disabled={isLoading || additionalSessions <= 0}
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="loading-spinner"></div>
-                                요청 중...
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={16} />
-                                {additionalSessions}회기 추가 요청
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

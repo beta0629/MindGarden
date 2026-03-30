@@ -1,6 +1,7 @@
 import React from 'react';
-import { FaChartBar, FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
+import { FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
+import './ClientStatisticsTab.css';
 
 /**
  * 내담자 통계 분석 탭 컴포넌트
@@ -10,26 +11,23 @@ const ClientStatisticsTab = ({
     consultations,
     mappings
 }) => {
-    // 통계 데이터 계산
     const totalClients = clients.length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const activeClients = clients.filter(client => client.status === 'ACTIVE').length;
     const totalConsultations = consultations.length;
     const totalMappings = mappings.length;
     
-    // 등급별 내담자 수
     const clientsByGrade = clients.reduce((acc, client) => {
         const grade = client.grade || '미설정';
         acc[grade] = (acc[grade] || 0) + 1;
         return acc;
     }, {});
     
-    // 상태별 내담자 수
     const clientsByStatus = clients.reduce((acc, client) => {
         acc[client.status] = (acc[client.status] || 0) + 1;
         return acc;
     }, {});
     
-    // 월별 상담 수
     const consultationsByMonth = consultations.reduce((acc, consultation) => {
         const month = new Date(consultation.date).toLocaleDateString('ko-KR', { 
             year: 'numeric', 
@@ -39,22 +37,19 @@ const ClientStatisticsTab = ({
         return acc;
     }, {});
 
-    // 통계 카드 렌더링
-    const renderStatCard = (title, value, icon, color = '#007bff') => (
-        <div className="mg-v2-card mg-v2-stat-card">
-            <div className="mg-v2-stat-icon" style={{ '--icon-color': color }}>
+    const renderStatCard = (title, value, icon, iconVariant = 'blue') => (
+        <div className="mg-v2-mapping-kpi-section__card">
+            <div className={`mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--${iconVariant}`}>
                 {icon}
             </div>
-            <div className="mg-v2-stat-content">
-                <h3>{value}</h3>
-                <p>{title}</p>
+            <div className="mg-v2-mapping-kpi-section__info">
+                <span className="mg-v2-mapping-kpi-section__label">{title}</span>
+                <span className="mg-v2-mapping-kpi-section__value">{value}</span>
             </div>
         </div>
     );
 
-    // 차트 데이터 렌더링
-    const renderChartData = (title, data, color = '#007bff') => {
-        // 데이터가 없으면 빈 상태 표시
+    const renderChartData = (title, data, color = 'var(--ad-b0kla-green)') => {
         if (!data || Object.keys(data).length === 0) {
             return (
                 <div className="mg-v2-card mg-v2-chart-card">
@@ -68,21 +63,16 @@ const ClientStatisticsTab = ({
 
         const maxValue = Math.max(...Object.values(data));
         
-        // 라벨 변환 함수
         const getLabel = (key) => {
-            // undefined, null 체크
             if (!key || key === 'undefined' || key === 'null') {
                 return '알 수 없음';
             }
-            // 등급별 분포인 경우
             if (title.includes('등급')) {
-                // '미설정'은 그대로 표시
                 if (key === '미설정') {
                     return '미설정';
                 }
                 return getUserGradeKoreanNameSync(key) || key || '알 수 없음';
             }
-            // 상태별 분포인 경우
             if (title.includes('상태')) {
                 return getUserStatusKoreanNameSync(key) || key || '알 수 없음';
             }
@@ -121,20 +111,20 @@ const ClientStatisticsTab = ({
             </div>
             
             {/* 주요 통계 */}
-            <div className="mg-v2-stats-grid">
-                {renderStatCard('총 내담자 수', totalClients, <FaUsers />, '#28a745')}
-                {renderStatCard('활성 내담자', activeClients, <FaUsers />, '#007bff')}
-                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt />, '#ffc107')}
-                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake />, '#dc3545')}
+            <div className="mg-v2-mapping-kpi-section__grid">
+                {renderStatCard('총 내담자 수', totalClients, <FaUsers size={24} />, 'blue')}
+                {renderStatCard('활성 내담자', activeClients, <FaUsers size={24} />, 'green')}
+                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt size={24} />, 'orange')}
+                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake size={24} />, 'gray')}
             </div>
             
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">
                 <div className="mg-mobile-card-stack">
-                    {renderChartData('등급별 내담자 분포', clientsByGrade, '#6f42c1')}
-                    {renderChartData('상태별 내담자 분포', clientsByStatus, '#17a2b8')}
-                    {Object.keys(consultationsByMonth).length > 0 && 
-                        renderChartData('월별 상담 수', consultationsByMonth, '#fd7e14')
+                    {renderChartData('등급별 내담자 분포', clientsByGrade, 'var(--ad-b0kla-blue)')}
+                    {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--ad-b0kla-green)')}
+                    {Object.keys(consultationsByMonth).length > 0 &&
+                        renderChartData('월별 상담 수', consultationsByMonth, 'var(--ad-b0kla-orange)')
                     }
                 </div>
             </div>

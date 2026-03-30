@@ -1,0 +1,325 @@
+/* ConsultantClientWidget.css - 상담사 내담자 위젯 스타일 */
+
+/* ============================================================================
+   헤더 스타일
+   ============================================================================ */
+.consultant-client-header {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+}
+
+.consultant-client-view-all-btn {
+  background: transparent;
+  border: none;
+  color: var(--cs-primary-500);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultant-client-view-all-btn:hover {
+  background: var(--cs-primary-50);
+  color: var(--cs-primary-600);
+}
+
+/* ============================================================================
+   빈 상태 스타일
+   ============================================================================ */
+.consultant-client-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-text-secondary);
+}
+
+.consultant-client-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+}
+
+.consultant-client-empty-text {
+  font-size: var(--cs-text-md);
+  color: var(--cs-gray-500);
+}
+
+/* ============================================================================
+   내담자 카드 그리드
+   ============================================================================ */
+.consultant-client-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--cs-spacing-md);
+}
+
+@media (min-width: 768px) {
+  .consultant-client-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .consultant-client-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ============================================================================
+   내담자 카드 스타일
+   ============================================================================ */
+.consultant-client-card {
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-lg);
+  padding: var(--cs-spacing-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultant-client-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-md);
+  border-color: var(--cs-primary-200);
+}
+
+/* ============================================================================
+   카드 헤더 (아바타 + 정보 + 상태)
+   ============================================================================ */
+.consultant-client-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cs-spacing-sm);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.consultant-client-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cs-primary-400), var(--cs-primary-600));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--cs-font-bold);
+  font-size: var(--cs-text-lg);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.consultant-client-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.consultant-client-name {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  margin: 0 0 2px 0;
+  line-height: 1.3;
+}
+
+.consultant-client-email {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   상태 배지
+   ============================================================================ */
+.consultant-client-status-badge {
+  padding: 4px 8px;
+  border-radius: var(--cs-radius-sm);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.consultant-client-status-badge.status-active {
+  background: var(--cs-success-100);
+  color: var(--cs-success-700);
+  border: 1px solid var(--cs-success-200);
+}
+
+.consultant-client-status-badge.status-pending {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-700);
+  border: 1px solid var(--cs-warning-200);
+}
+
+.consultant-client-status-badge.status-inactive {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-600);
+  border: 1px solid var(--cs-gray-200);
+}
+
+.consultant-client-status-badge.status-completed {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-700);
+  border: 1px solid var(--cs-blue-200);
+}
+
+.consultant-client-status-badge.status-suspended {
+  background: var(--cs-error-100);
+  color: var(--cs-error-700);
+  border: 1px solid var(--cs-error-200);
+}
+
+.consultant-client-status-badge.status-deleted,
+.consultant-client-status-badge.status-unknown {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-500);
+  border: 1px solid var(--cs-gray-200);
+}
+
+/* ============================================================================
+   통계 정보
+   ============================================================================ */
+.consultant-client-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--cs-spacing-sm);
+  margin-bottom: var(--cs-spacing-md);
+  padding: var(--cs-spacing-sm);
+  background: var(--cs-glass-light);
+  border-radius: var(--cs-radius-md);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.consultant-client-stat {
+  text-align: center;
+}
+
+.consultant-client-stat-label {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+  margin-bottom: 2px;
+  font-weight: var(--cs-font-medium);
+}
+
+.consultant-client-stat-value {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-primary-600);
+}
+
+/* ============================================================================
+   카드 푸터 (마지막 상담일)
+   ============================================================================ */
+.consultant-client-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+  padding-top: var(--cs-spacing-sm);
+  border-top: 1px solid var(--cs-border-secondary);
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+@media (max-width: 768px) {
+  .consultant-client-card {
+    padding: var(--cs-spacing-sm);
+  }
+
+  .consultant-client-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: var(--cs-text-md);
+  }
+
+  .consultant-client-name {
+    font-size: var(--cs-text-sm);
+  }
+
+  .consultant-client-email {
+    font-size: var(--cs-text-xs);
+  }
+
+  .consultant-client-stats {
+    padding: var(--cs-spacing-xs);
+  }
+}
+
+/* ============================================================================
+   다크 테마 지원
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  .consultant-client-card {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultant-client-card:hover {
+    border-color: var(--cs-primary-400);
+    box-shadow: var(--cs-shadow-dark);
+  }
+
+  .consultant-client-name {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultant-client-email {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .consultant-client-stats {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+
+  .consultant-client-footer {
+    color: var(--cs-text-secondary-dark);
+    border-color: var(--cs-border-secondary-dark);
+  }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.consultant-client-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.consultant-client-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.consultant-client-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.consultant-client-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.consultant-client-card:nth-child(5) {
+  animation-delay: 0.4s;
+}

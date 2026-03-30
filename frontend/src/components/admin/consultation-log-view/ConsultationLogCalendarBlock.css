@@ -1,0 +1,169 @@
+/**
+ * 상담일지 조회 - 캘린더 뷰 블록 스타일 (B0KlA)
+ * @author Core Solution
+ * @since 2025-03-02
+ */
+
+.mg-v2-consultation-log-calendar-block {
+  margin-bottom: 0;
+}
+
+.mg-v2-consultation-log-calendar-block__card {
+  min-height: 320px;
+}
+
+.mg-v2-consultation-log-calendar-wrapper {
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  border-radius: var(--ad-b0kla-radius-sm);
+  padding: 1rem;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc {
+  font-family: inherit;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard .fc-scrollgrid,
+.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard td,
+.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard th {
+  border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
+  background: var(--ad-b0kla-bg);
+  padding: 8px 0;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-daygrid-day-number {
+  color: var(--ad-b0kla-title-color);
+  font-weight: 500;
+  padding: 8px;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-day-today {
+  background: var(--ad-b0kla-green-bg) !important;
+}
+
+/* FullCalendar 이벤트 - 상담사별 색상 (일정관리와 동일) */
+.mg-v2-consultation-log-calendar-wrapper .fc-event {
+  border-radius: var(--ad-b0kla-radius-sm);
+  border-color: transparent;
+  color: var(--mg-white);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  box-shadow: var(--ad-b0kla-shadow);
+  cursor: pointer;
+  transition: box-shadow 0.2s, opacity 0.2s;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-event:hover {
+  box-shadow: var(--ad-b0kla-shadow-hover);
+  opacity: 0.95;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
+  background: var(--ad-b0kla-card-bg) !important;
+  color: var(--ad-b0kla-text-secondary) !important;
+  border: 1px solid var(--ad-b0kla-border) !important;
+  text-transform: capitalize;
+  font-weight: 600;
+  border-radius: var(--ad-b0kla-radius-sm) !important;
+  box-shadow: none !important;
+  transition: all 0.2s;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-button-primary:hover {
+  background: var(--ad-b0kla-bg) !important;
+  color: var(--ad-b0kla-title-color) !important;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-toolbar-title {
+  font-size: 1.125rem !important;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+/* 빈 상태 */
+.mg-v2-consultation-log-calendar-block__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.mg-v2-consultation-log-calendar-block__empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.mg-v2-consultation-log-calendar-block__empty-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.mg-v2-consultation-log-calendar-block__empty-desc {
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+}
+
+/* 날짜 클릭 시 여러 건 선택 팝오버 */
+.mg-v2-consultation-log-calendar-popover {
+  position: fixed;
+  z-index: 1100;
+  min-width: 200px;
+  max-width: 320px;
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  padding: 0.75rem 0;
+}
+
+.mg-v2-consultation-log-calendar-popover__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+  padding: 0 1rem 0.5rem;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  margin-bottom: 0.25rem;
+}
+
+.mg-v2-consultation-log-calendar-popover__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-consultation-log-calendar-popover__item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mg-v2-consultation-log-calendar-popover__item:hover {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-title-color);
+}

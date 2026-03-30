@@ -1,0 +1,263 @@
+<!--
+  관리자 알림·메시지 통합 페이지 — Phase 1 확정 스펙 기반 HTML 마크업
+  참조: docs/design-system/ADMIN_NOTIFICATIONS_UNIFIED_UI_SPEC.md
+        docs/project-management/ADMIN_NOTIFICATIONS_RENEWAL_PLAN.md §4
+        docs/design-system/GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md §2
+  AdminCommonLayout 내부만 포함. JS/React·스타일 연동은 core-coder 담당.
+  unified-design-tokens.css·B0KlA 클래스 사용.
+-->
+
+<!-- ========== Organism: 메인 콘텐츠 영역 (AdminCommonLayout children) ========== -->
+<main class="mg-v2-dashboard-layout" aria-labelledby="admin-notifications-page-title">
+
+  <!-- ---------- Molecule: ContentHeader ---------- -->
+  <header class="mg-v2-content-header">
+    <div class="mg-v2-content-header__left">
+      <h1 id="admin-notifications-page-title" class="mg-v2-content-header__title">알림·메시지 관리</h1>
+      <p class="mg-v2-content-header__subtitle">공지 작성과 메시지 조회를 한 화면에서 관리합니다.</p>
+    </div>
+    <div class="mg-v2-content-header__right">
+      <!-- 공지 탭 활성 시에만 노출. 권한 SYSTEM_NOTIFICATION_MANAGE 있을 때 코더가 표시 -->
+      <button type="button" class="mg-v2-button mg-v2-button--primary" aria-label="공지 작성">
+        공지 작성
+      </button>
+    </div>
+  </header>
+
+  <!-- ---------- Molecule: 탭 바 (시스템 공지 | 메시지) ---------- -->
+  <nav
+    class="mg-v2-ad-b0kla__tabs"
+    role="tablist"
+    aria-label="알림·메시지 탭"
+  >
+    <button
+      type="button"
+      role="tab"
+      id="admin-tab-system"
+      aria-selected="true"
+      aria-controls="admin-panel-system"
+      class="mg-v2-ad-b0kla__tab mg-v2-ad-b0kla__tab--active"
+    >
+      시스템 공지
+    </button>
+    <button
+      type="button"
+      role="tab"
+      id="admin-tab-messages"
+      aria-selected="false"
+      aria-controls="admin-panel-messages"
+      class="mg-v2-ad-b0kla__tab"
+    >
+      메시지
+    </button>
+  </nav>
+
+  <!-- ---------- Organism: 탭 패널 — 공지 목록 블록 ---------- -->
+  <section
+    id="admin-panel-system"
+    role="tabpanel"
+    aria-labelledby="admin-tab-system"
+    class="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card"
+    aria-label="시스템 공지 목록"
+  >
+    <h2 class="mg-v2-ad-b0kla__section-title">공지 목록</h2>
+
+    <!-- Molecule: 필터 영역 -->
+    <div class="mg-v2-ad-b0kla__section-filters" role="search" aria-label="목록 필터">
+      <label for="admin-notice-target" class="sr-only">대상</label>
+      <select id="admin-notice-target" class="mg-v2-ad-b0kla__filter-select" aria-label="대상 선택">
+        <option value="">전체</option>
+      </select>
+      <label for="admin-notice-status" class="sr-only">상태</label>
+      <select id="admin-notice-status" class="mg-v2-ad-b0kla__filter-select" aria-label="상태 선택">
+        <option value="">전체</option>
+      </select>
+      <label for="admin-notice-search" class="sr-only">검색</label>
+      <input
+        type="search"
+        id="admin-notice-search"
+        class="mg-v2-ad-b0kla__filter-input"
+        placeholder="제목·내용 검색"
+        aria-label="공지 검색"
+      />
+    </div>
+
+    <!-- Molecule: 목록 컨테이너 — 카드 그리드 -->
+    <div class="mg-v2-ad-notifications__list">
+      <!-- 빈 상태 시 코더가 아래 블록으로 교체: <p class="mg-v2-notification-empty mg-v2-ad-b0kla__table-empty" aria-live="polite">등록된 공지가 없습니다.</p> -->
+      <ul class="mg-v2-ad-notifications__card-grid" role="list" aria-label="공지 카드 목록">
+        <!-- 플레이스홀더 카드 1 -->
+        <li class="mg-v2-ad-notifications__card" role="listitem">
+          <span class="mg-v2-ad-notifications__card-accent" aria-hidden="true"></span>
+          <div>
+            <h3 class="mg-v2-ad-notifications__card-title">공지 제목 플레이스홀더</h3>
+            <div class="mg-v2-ad-notifications__card-meta">
+              <span class="mg-v2-status-badge mg-v2-badge--info">대상</span>
+              <span class="mg-v2-status-badge mg-v2-badge--success">게시중</span>
+              <span>등록일</span>
+            </div>
+          </div>
+          <div class="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
+            <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="수정">수정</button>
+            <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="삭제">삭제</button>
+          </div>
+        </li>
+        <!-- 플레이스홀더 카드 2 (코더가 데이터로 반복) -->
+        <li class="mg-v2-ad-notifications__card" role="listitem">
+          <span class="mg-v2-ad-notifications__card-accent" aria-hidden="true"></span>
+          <div>
+            <h3 class="mg-v2-ad-notifications__card-title">두 번째 공지 제목</h3>
+            <div class="mg-v2-ad-notifications__card-meta">
+              <span class="mg-v2-status-badge mg-v2-badge--neutral">만료</span>
+              <span>등록일</span>
+            </div>
+          </div>
+          <div class="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
+            <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="수정">수정</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ---------- Organism: 탭 패널 — 메시지 목록 블록 ---------- -->
+  <section
+    id="admin-panel-messages"
+    role="tabpanel"
+    aria-labelledby="admin-tab-messages"
+    class="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card"
+    aria-label="메시지 목록"
+    hidden
+  >
+    <h2 class="mg-v2-ad-b0kla__section-title">메시지 목록</h2>
+
+    <!-- Molecule: 필터 영역 -->
+    <div class="mg-v2-ad-b0kla__section-filters" role="search" aria-label="목록 필터">
+      <label for="admin-message-search" class="sr-only">검색</label>
+      <input
+        type="search"
+        id="admin-message-search"
+        class="mg-v2-ad-b0kla__filter-input"
+        placeholder="제목, 내용, 발신·수신자 검색"
+        aria-label="메시지 검색"
+      />
+      <label for="admin-message-type" class="sr-only">유형</label>
+      <select id="admin-message-type" class="mg-v2-ad-b0kla__filter-select" aria-label="유형 선택">
+        <option value="">전체</option>
+      </select>
+      <label for="admin-message-read" class="sr-only">읽음 상태</label>
+      <select id="admin-message-read" class="mg-v2-ad-b0kla__filter-select" aria-label="읽음 상태 선택">
+        <option value="">전체</option>
+        <option value="read">읽음</option>
+        <option value="unread">미읽음</option>
+      </select>
+      <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="일괄 읽음">
+        일괄 읽음
+      </button>
+    </div>
+
+    <!-- Molecule: 목록 컨테이너 — 카드 그리드 -->
+    <div class="mg-v2-ad-notifications__list">
+      <!-- 빈 상태 시 코더가 아래 블록으로 교체: <p class="mg-v2-notification-empty mg-v2-ad-b0kla__table-empty" aria-live="polite">메시지가 없습니다.</p> -->
+      <ul class="mg-v2-ad-notifications__card-grid" role="list" aria-label="메시지 카드 목록">
+        <!-- 플레이스홀더 카드 1 (미읽음 악센트) -->
+        <li class="mg-v2-ad-notifications__card" role="listitem">
+          <span class="mg-v2-ad-notifications__card-accent" aria-hidden="true"></span>
+          <div>
+            <p class="mg-v2-ad-notifications__card-meta">발신자 → 수신자</p>
+            <h3 class="mg-v2-ad-notifications__card-title">메시지 제목 플레이스홀더</h3>
+            <p class="mg-v2-ad-notifications__card-meta">일부 내용 미리보기…</p>
+            <span class="mg-v2-ad-notifications__card-meta">시간</span>
+          </div>
+          <div class="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
+            <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="상세 보기">상세</button>
+          </div>
+        </li>
+        <!-- 플레이스홀더 카드 2 -->
+        <li class="mg-v2-ad-notifications__card" role="listitem">
+          <span class="mg-v2-ad-notifications__card-accent" aria-hidden="true"></span>
+          <div>
+            <p class="mg-v2-ad-notifications__card-meta">발신자 → 수신자</p>
+            <h3 class="mg-v2-ad-notifications__card-title">두 번째 메시지 제목</h3>
+            <p class="mg-v2-ad-notifications__card-meta">내용 요약…</p>
+            <span class="mg-v2-ad-notifications__card-meta">시간</span>
+          </div>
+          <div class="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
+            <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="상세 보기">상세</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========== 모달 플레이스홀더 (UnifiedModal 사용 필수. 코더가 조건부 렌더) ========== -->
+
+<!-- ---------- Organism: 공지 작성/수정 모달 플레이스홀더 ---------- -->
+<div
+  class="mg-modal__overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-notice-modal-title"
+  aria-hidden="true"
+  hidden
+>
+  <div class="mg-modal mg-v2-ad-b0kla mg-modal--medium" id="admin-notice-form-modal">
+    <div class="mg-modal__header">
+      <h2 id="admin-notice-modal-title" class="mg-modal__title mg-v2-ad-b0kla-modal__title">공지 작성</h2>
+      <button type="button" class="mg-modal__close" aria-label="닫기">×</button>
+    </div>
+    <div class="mg-v2-ad-b0kla-modal__body mg-modal__body">
+      <!-- 코더가 폼 필드 연동: 대상, 제목, 내용, 유형, 중요/긴급 체크, 만료일 -->
+      <form aria-label="공지 작성 폼">
+        <fieldset>
+          <legend class="sr-only">공지 정보</legend>
+          <label for="admin-notice-form-target">대상</label>
+          <select id="admin-notice-form-target" class="mg-v2-ad-b0kla__form-select">대상 선택</select>
+          <label for="admin-notice-form-title">제목</label>
+          <input type="text" id="admin-notice-form-title" class="mg-v2-ad-b0kla__form-input" placeholder="제목" />
+          <label for="admin-notice-form-body">내용</label>
+          <textarea id="admin-notice-form-body" class="mg-v2-ad-b0kla__form-textarea" placeholder="내용"></textarea>
+          <label for="admin-notice-form-type">유형</label>
+          <select id="admin-notice-form-type" class="mg-v2-ad-b0kla__form-select">유형 선택</select>
+          <label><input type="checkbox" /> 중요</label>
+          <label><input type="checkbox" /> 긴급</label>
+          <label for="admin-notice-form-expiry">만료일</label>
+          <input type="date" id="admin-notice-form-expiry" class="mg-v2-ad-b0kla__form-input" />
+        </fieldset>
+      </form>
+    </div>
+    <div class="mg-modal__actions">
+      <button type="button" class="mg-v2-button mg-v2-button--outline" aria-label="취소">취소</button>
+      <button type="button" class="mg-v2-button mg-v2-button--primary" aria-label="저장">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Organism: 메시지 상세 모달 플레이스홀더 ---------- -->
+<div
+  class="mg-modal__overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-message-detail-modal-title"
+  aria-describedby="admin-message-detail-body"
+  aria-hidden="true"
+  hidden
+>
+  <div class="mg-modal mg-v2-ad-b0kla mg-modal--medium" id="admin-message-detail-modal">
+    <div class="mg-modal__header">
+      <h2 id="admin-message-detail-modal-title" class="mg-modal__title mg-v2-ad-b0kla-modal__title">메시지 상세</h2>
+      <button type="button" class="mg-modal__close" aria-label="닫기">×</button>
+    </div>
+    <div id="admin-message-detail-body" class="mg-v2-ad-b0kla-modal__body mg-modal__body">
+      <p class="mg-v2-ad-notifications__card-meta">발신 → 수신</p>
+      <h3 class="mg-v2-ad-notifications__card-title">메시지 제목</h3>
+      <p>본문 내용 플레이스홀더. 코더가 읽음 처리·데이터 바인딩 연동.</p>
+      <p class="mg-v2-ad-notifications__card-meta">발송일</p>
+    </div>
+    <div class="mg-modal__actions">
+      <button type="button" class="mg-v2-button mg-v2-button--primary" aria-label="닫기">닫기</button>
+    </div>
+  </div>
+</div>

@@ -28,17 +28,39 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-bg-primary, var(--mg-layout-main-bg-start, #FAF9F7));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: var(--z-modal);
 }
 
+/* 페이지 타입: 영역 전체 채우고 스피너·텍스트 중앙 정렬, 배경 일관 */
 .mg-loading-container--page {
   padding: var(--spacing-xxl);
-  background: var(--color-bg-primary);
+  background: var(--color-bg-primary, var(--mg-layout-main-bg-start, #FAF9F7));
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
+  min-height: 50vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 레이아웃 main 내부에서 페이지 로딩이 남은 높이를 채우도록 */
+.mg-loading-container--page.mg-loading-container--centered {
+  min-height: 50vh;
+  flex: 1 1 0%;
+}
+
+/* 페이지 타입: 스피너 비율 확대(가독성) */
+.mg-loading-container--page .mg-loading--medium .mg-loading-spinner-icon {
+  width: 48px;
+  height: 48px;
+  border-width: 3px;
+}
+
+.mg-loading-container--page .mg-loading-content {
+  gap: var(--spacing-lg, 1.5rem);
 }
 
 .mg-loading-container--button {

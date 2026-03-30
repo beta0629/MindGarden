@@ -10,7 +10,7 @@
   background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px var(--mg-shadow-light), 0 4px 16px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(226, 232, 240, 0.6);
   backdrop-filter: blur(20px);
 }
@@ -147,13 +147,13 @@
   background: var(--color-bg-surface);
   color: #1a202c;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .mg-form-input__field:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
   transform: translateY(-1px);
 }
 
@@ -201,13 +201,13 @@
   transition: all 0.2s ease;
   resize: vertical;
   min-height: 100px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .mg-form-textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
   transform: translateY(-1px);
 }
 
@@ -244,13 +244,13 @@
   transition: all 0.2s ease;
   appearance: none;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .mg-form-select__field:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
   transform: translateY(-1px);
 }
 

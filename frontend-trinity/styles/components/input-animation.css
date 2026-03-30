@@ -1,0 +1,209 @@
+/**
+ * 입력 필드 인터랙션 애니메이션
+ * iOS/Android 설정 화면 스타일의 부드러운 입력 경험
+ * 
+ * @author Trinity Team
+ * @version 1.0.0
+ * @since 2025-12-09
+ */
+
+/* 입력 필드 기본 스타일 개선 */
+.trinity-onboarding__input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-md);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all var(--transition-normal) var(--animation-ease-out);
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation; /* 터치 최적화 */
+}
+
+/* Focus 상태 애니메이션 */
+.trinity-onboarding__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--bg-primary);
+  box-shadow: 0 0 0 4px var(--shadow-color-primary-light);
+  transform: translateY(-1px);
+}
+
+/* 활성 상태 (입력 중) */
+.trinity-onboarding__input:not(:placeholder-shown) {
+  border-color: var(--color-primary);
+}
+
+/* 에러 상태 */
+.trinity-onboarding__input--error {
+  border-color: var(--color-danger);
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+.trinity-onboarding__input--error:focus {
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
+}
+
+/* 성공 상태 */
+.trinity-onboarding__input--success {
+  border-color: var(--color-success);
+}
+
+.trinity-onboarding__input--success:focus {
+  box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+}
+
+/* 비활성 상태 */
+.trinity-onboarding__input:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 라벨 애니메이션 */
+.trinity-onboarding__label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  transition: all var(--transition-normal) ease;
+  transform-origin: left top;
+}
+
+.trinity-onboarding__field:focus-within .trinity-onboarding__label {
+  color: var(--color-primary);
+  transform: scale(0.95);
+}
+
+/* 플레이스홀더 스타일 */
+.trinity-onboarding__input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+.trinity-onboarding__input:focus::placeholder {
+  opacity: 0.4;
+}
+
+/* 입력 필드 래퍼 */
+.trinity-onboarding__field {
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+}
+
+/* 힌트 텍스트 애니메이션 */
+.trinity-onboarding__hint {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all var(--transition-normal) ease;
+}
+
+.trinity-onboarding__field:focus-within .trinity-onboarding__hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 에러 메시지 애니메이션 */
+.trinity-onboarding__error {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  opacity: 0;
+  transform: translateY(-4px);
+  animation: slideDownFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideDownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 성공 아이콘 애니메이션 */
+.trinity-onboarding__field--success::after {
+  content: "✓";
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-success);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  animation: checkMark 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes checkMark {
+  0% {
+    transform: translateY(-50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+  }
+  100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .trinity-onboarding__input {
+    font-size: 16px; /* iOS 자동 줌 방지 */
+    padding: var(--spacing-md) var(--spacing-sm);
+    min-height: 44px; /* 터치 영역 최소 크기 */
+  }
+
+  .trinity-onboarding__label {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .trinity-onboarding__field {
+    margin-bottom: var(--spacing-md);
+  }
+
+  /* 모바일에서 focus 효과 축소 */
+  .trinity-onboarding__input:focus {
+    transform: none;
+    box-shadow: 0 0 0 3px var(--shadow-color-primary-light);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding__input {
+    padding: var(--spacing-sm);
+    min-height: 48px; /* 더 큰 터치 영역 */
+  }
+}
+
+/* 접근성: 애니메이션 선호도 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .trinity-onboarding__input,
+  .trinity-onboarding__label,
+  .trinity-onboarding__hint,
+  .trinity-onboarding__error {
+    transition: none;
+    animation: none;
+  }
+  
+  .trinity-onboarding__input:focus {
+    transform: none;
+  }
+}
+

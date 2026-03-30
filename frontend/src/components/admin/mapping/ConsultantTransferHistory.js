@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { XCircle, Clock } from 'lucide-react';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './ConsultantTransferHistory.css';
 
 /**
  * 상담사 변경 이력 컴포넌트
+/**
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {number} props.clientId - 내담자 ID
+/**
  * @param {boolean} props.isOpen - 이력 표시 상태
+/**
  * @param {Function} props.onClose - 이력 닫기 함수
  */
 const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
@@ -14,14 +21,12 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 이력 로드
   useEffect(() => {
     if (isOpen && clientId) {
       loadTransferHistory();
     }
   }, [isOpen, clientId]);
 
-  // 상담사 변경 이력 로드
   const loadTransferHistory = async () => {
     setLoading(true);
     setError('');
@@ -43,7 +48,6 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     }
   };
 
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -56,23 +60,11 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     });
   };
 
-  // 상태 배지 스타일
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'TERMINATED':
-        return 'transfer-status-badge transfer-status-terminated';
-      case 'ACTIVE':
-        return 'transfer-status-badge transfer-status-active';
-      default:
-        return 'transfer-status-badge transfer-status-pending';
-    }
-  };
-
-  // 상태 텍스트
   const getStatusText = (status) => {
     switch (status) {
       case 'TERMINATED':
         return '종료됨';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return '활성';
       default:
@@ -83,21 +75,27 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="transfer-history-overlay">
-      <div className="transfer-history-modal">
-        <div className="transfer-history-header">
-          <h2 className="transfer-history-title">상담사 변경 이력</h2>
-          <button 
-            type="button" 
-            className="transfer-history-close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            ✕
-          </button>
-        </div>
-        
-        <div className="transfer-history-content">
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="상담사 변경 이력"
+      size="auto"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <button
+          type="button"
+          className="mg-v2-button mg-v2-button-secondary"
+          onClick={onClose}
+        >
+          <XCircle size={18} />
+          닫기
+        </button>
+      }
+    >
+        <div className="mg-v2-modal-body">
           {loading ? (
             <div className="transfer-history-loading">
               <div className="transfer-loading-spinner"></div>
@@ -106,8 +104,9 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           ) : error ? (
             <div className="transfer-history-error">
               <p>❌ {error}</p>
-              <button 
-                className="transfer-btn transfer-btn-primary"
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button-primary"
                 onClick={loadTransferHistory}
               >
                 다시 시도
@@ -118,15 +117,15 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
               <p>📝 상담사 변경 이력이 없습니다.</p>
             </div>
           ) : (
-            <div className="transfer-history-list">
+            <div className="transfer-history-list mg-v2-ad-b0kla__counselor-list">
               {transferHistory.map((history, index) => (
-                <div key={history.id || index} className="transfer-history-item">
+                <div key={history.id || index} className="transfer-history-item mg-v2-ad-b0kla__card">
                   <div className="transfer-history-item-header">
                     <div className="transfer-history-item-info">
                       <h3 className="transfer-history-consultant-name">
                         {history.consultant?.name || '알 수 없음'}
                       </h3>
-                      <span className={getStatusBadgeClass(history.status)}>
+                      <span className={`mg-v2-ad-b0kla__kpi-badge ${history.status === 'ACTIVE' ? 'mg-v2-ad-b0kla__kpi-badge--green' : history.status === 'TERMINATED' ? 'mg-v2-ad-b0kla__kpi-badge--orange' : 'mg-v2-ad-b0kla__kpi-badge--blue'}`}>
                         {getStatusText(history.status)}
                       </span>
                     </div>
@@ -176,18 +175,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
             </div>
           )}
         </div>
-        
-        <div className="transfer-history-footer">
-          <button
-            type="button"
-            className="transfer-btn transfer-btn-secondary"
-            onClick={onClose}
-          >
-            닫기
-          </button>
-        </div>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

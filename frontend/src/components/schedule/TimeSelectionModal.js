@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import UnifiedModal from '../../components/common/modals/UnifiedModal';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * 드래그앤드롭 시 시간 선택 모달 컴포넌트
@@ -13,14 +12,23 @@ import CustomSelect from '../common/CustomSelect';
  * @param {object} props - 컴포넌트 props
  * @param {boolean} props.isOpen - 모달 열림/닫힘 상태
  * @param {function} props.onClose - 모달 닫기 핸들러
+/**
  * @param {object} props.selectedSchedule - 선택된 스케줄 데이터
+/**
  * @param {function} props.onScheduleUpdate - 스케줄 업데이트 핸들러
+/**
  * @param {array} props.availableTimes - 사용 가능한 시간대 목록
+/**
  * @param {function} props.isTimeSlotBooked - 시간대 예약 여부 확인 함수
+/**
  * @param {function} props.onConfirm - 확인 버튼 클릭 핸들러
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-02
  */
 const TimeSelectionModal = ({
@@ -57,7 +65,7 @@ const TimeSelectionModal = ({
         { value: '100', label: '100분 (100분)' }
     ];
 
-    /**
+/**
      * 상담 유형 변경 핸들러
      */
     const handleConsultationTypeChange = (value) => {
@@ -69,7 +77,7 @@ const TimeSelectionModal = ({
         onScheduleUpdate?.(updatedSchedule);
     };
 
-    /**
+/**
      * 상담 시간 변경 핸들러
      */
     const handleDurationChange = (value) => {
@@ -81,7 +89,7 @@ const TimeSelectionModal = ({
         onScheduleUpdate?.(updatedSchedule);
     };
 
-    /**
+/**
      * 시간대 선택 핸들러
      */
     const handleTimeSlotSelect = (timeSlot) => {
@@ -98,7 +106,7 @@ const TimeSelectionModal = ({
         }
     };
 
-    /**
+/**
      * 확인 버튼 클릭 핸들러
      */
     const handleConfirm = () => {
@@ -114,27 +122,48 @@ const TimeSelectionModal = ({
             isOpen={isOpen}
             onClose={onClose}
             title="시간을 선택하세요"
-            size="medium"
+            size="large"
+            backdropClick={true}
+            showCloseButton={true}
+            className="mg-v2-ad-b0kla"
+            actions={
+                <>
+                    <button
+                        className="mg-btn mg-btn--secondary"
+                        onClick={onClose}
+                    >
+                        취소
+                    </button>
+                    <button
+                        className="mg-btn mg-btn--primary"
+                        onClick={handleConfirm}
+                    >
+                        확인
+                    </button>
+                </>
+            }
         >
             {/* 상담 유형 선택 */}
             <div className="time-selection-field">
                 <label className="time-selection-label">상담 유형</label>
-                <CustomSelect
+                <BadgeSelect
                     value={localSchedule.consultationType || 'INDIVIDUAL'}
                     onChange={handleConsultationTypeChange}
                     options={consultationTypeOptions}
                     placeholder="상담 유형을 선택하세요"
+                    className="mg-v2-form-badge-select"
                 />
             </div>
 
             {/* 상담 시간 선택 */}
             <div className="time-selection-field">
                 <label className="time-selection-label">상담 시간</label>
-                <CustomSelect
+                <BadgeSelect
                     value={localSchedule.duration || '50'}
                     onChange={handleDurationChange}
                     options={durationOptions}
                     placeholder="상담 시간을 선택하세요"
+                    className="mg-v2-form-badge-select"
                 />
             </div>
 
@@ -153,8 +182,8 @@ const TimeSelectionModal = ({
                                 onClick={() => handleTimeSlotSelect(timeSlot)}
                             >
                                 <div className="time-slot-card__header">
-                                    <div className={`time-slot-indicator ${isBooked ? 'time-slot-indicator--booked' : ''}`}>
-                                        <span className="time-slot-indicator__text">
+                                    <div className={`mg-time-slot-indicator ${isBooked ? 'mg-time-slot-indicator--booked' : 'mg-time-slot-indicator--available'}`}>
+                                        <span className="mg-time-slot-indicator__text">
                                             {isBooked ? '×' : '가'}
                                         </span>
                                     </div>
@@ -169,22 +198,6 @@ const TimeSelectionModal = ({
                         );
                     })}
                 </div>
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="mg-modal__actions mg-modal__actions--horizontal">
-                <button
-                    className="mg-btn mg-btn--secondary"
-                    onClick={onClose}
-                >
-                    취소
-                </button>
-                <button
-                    className="mg-btn mg-btn--primary"
-                    onClick={handleConfirm}
-                >
-                    확인
-                </button>
             </div>
         </UnifiedModal>
     );

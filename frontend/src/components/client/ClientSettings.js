@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSettings.css';
+
+const CLIENT_SETTINGS_TITLE_ID = 'client-settings-page-title';
 
 const ClientSettings = () => {
   const { user } = useSession();
@@ -37,6 +45,23 @@ const ClientSettings = () => {
     }
   };
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="내담자 설정">
+          <ContentHeader
+            title="계정 설정"
+            subtitle="개인정보 및 알림 설정을 관리할 수 있습니다."
+            titleId={CLIENT_SETTINGS_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_SETTINGS_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   const handleSettingChange = async (key, value) => {
     try {
       const newSettings = { ...settings, [key]: value };
@@ -57,26 +82,19 @@ const ClientSettings = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="설정">
-        <UnifiedLoading text="설정을 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout title="설정">
+        {pageShell(
+          <UnifiedLoading type="page" text="로딩중..." />
+        )}
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="설정">
+    <AdminCommonLayout title="설정">
+      {pageShell(
       <div className="client-settings-container">
         <div className="client-settings-card">
-          <div className="client-settings-header">
-            <h2 className="client-settings-title">
-              <i className="bi bi-gear"></i>
-              계정 설정
-            </h2>
-            <p className="client-settings-subtitle">
-              개인정보 및 알림 설정을 관리할 수 있습니다.
-            </p>
-          </div>
-
           {message && (
             <div className="client-settings-message">
               <i className="bi bi-check-circle"></i> {message}
@@ -179,17 +197,20 @@ const ClientSettings = () => {
 
             {/* 저장 버튼 */}
             <div className="client-settings-footer">
-              <button 
-                className="btn btn-primary client-settings-save-btn"
+              <MGButton
+                variant="primary"
+                className="client-settings-save-btn"
                 onClick={() => setMessage('설정이 저장되었습니다.')}
+                preventDoubleClick={false}
               >
                 설정 저장
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>
       </div>
-    </SimpleLayout>
+      )}
+    </AdminCommonLayout>
   );
 };
 

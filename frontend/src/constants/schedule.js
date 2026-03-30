@@ -1,62 +1,80 @@
 /**
  * 스케줄 관련 상수 정의 (간소화된 버전)
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-09-16
  */
 
-// ==================== 간소화된 스케줄 상태 ====================
 export const STATUS = {
   AVAILABLE: 'AVAILABLE',     // 가능
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   BOOKED: 'BOOKED',           // 예약됨
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   CONFIRMED: 'CONFIRMED',     // 확정됨
   VACATION: 'VACATION',       // 휴가
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   COMPLETED: 'COMPLETED',     // 완료
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   CANCELLED: 'CANCELLED'      // 취소됨
 };
 
-// ==================== 스케줄 상태 라벨 ====================
 export const STATUS_LABELS = {
   [STATUS.AVAILABLE]: '가능',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.BOOKED]: '예약됨',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.CONFIRMED]: '확정됨',
   [STATUS.VACATION]: '휴가',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: '완료',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.CANCELLED]: '취소됨'
 };
 
-// ==================== 스케줄 상태 색상 ====================
 export const STATUS_COLORS = {
-  [STATUS.AVAILABLE]: '#28a745',    // 초록색
-  [STATUS.BOOKED]: '#007bff',       // 파란색
-  [STATUS.CONFIRMED]: '#17a2b8',    // 청록색
-  [STATUS.VACATION]: '#ffc107',     // 노란색
+  [STATUS.AVAILABLE]: 'var(--mg-success-500)',    // 초록색
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.BOOKED]: 'var(--mg-primary-500)',       // 파란색
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.CONFIRMED]: 'var(--mg-info-500)',    // 청록색
+  [STATUS.VACATION]: 'var(--mg-warning-500)',     // 노란색
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: '#b8b8b8',    // 연한 회색 (완료된 상태)
-  [STATUS.CANCELLED]: '#dc3545'     // 빨간색
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.CANCELLED]: 'var(--mg-error-500)'     // 빨간색
 };
 
-// ==================== 스케줄 상태 아이콘 ====================
 export const STATUS_ICONS = {
   [STATUS.AVAILABLE]: '✅',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.BOOKED]: '📅',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.CONFIRMED]: '✅',
   [STATUS.VACATION]: '🏖️',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: '✅',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.CANCELLED]: '❌'
 };
 
-// ==================== 스케줄 상태 텍스트 색상 ====================
 export const STATUS_TEXT_COLORS = {
-  [STATUS.AVAILABLE]: '#ffffff',
-  [STATUS.BOOKED]: '#ffffff',
-  [STATUS.CONFIRMED]: '#ffffff',
-  [STATUS.VACATION]: '#ffffff',
-  [STATUS.COMPLETED]: '#ffffff',
-  [STATUS.CANCELLED]: '#ffffff'
+  [STATUS.AVAILABLE]: 'var(--mg-white)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.BOOKED]: 'var(--mg-white)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.CONFIRMED]: 'var(--mg-white)',
+  [STATUS.VACATION]: 'var(--mg-white)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.COMPLETED]: 'var(--mg-white)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  [STATUS.CANCELLED]: 'var(--mg-white)'
 };
 
-// ==================== 스케줄 타입 ====================
 export const SCHEDULE_TYPES = {
   CONSULTATION: 'CONSULTATION',
   MEETING: 'MEETING',
@@ -64,7 +82,6 @@ export const SCHEDULE_TYPES = {
   OTHER: 'OTHER'
 };
 
-// ==================== 스케줄 타입 라벨 ====================
 export const SCHEDULE_TYPE_LABELS = {
   [SCHEDULE_TYPES.CONSULTATION]: '상담',
   [SCHEDULE_TYPES.MEETING]: '회의',
@@ -72,7 +89,6 @@ export const SCHEDULE_TYPE_LABELS = {
   [SCHEDULE_TYPES.OTHER]: '기타'
 };
 
-// ==================== 상담 유형 ====================
 export const CONSULTATION_TYPES = {
   INDIVIDUAL: 'INDIVIDUAL',
   FAMILY: 'FAMILY',
@@ -81,7 +97,6 @@ export const CONSULTATION_TYPES = {
   OTHER: 'OTHER'
 };
 
-// ==================== 상담 유형 라벨 ====================
 export const CONSULTATION_TYPE_LABELS = {
   [CONSULTATION_TYPES.INDIVIDUAL]: '개인상담',
   [CONSULTATION_TYPES.FAMILY]: '가족상담',
@@ -90,7 +105,6 @@ export const CONSULTATION_TYPE_LABELS = {
   [CONSULTATION_TYPES.OTHER]: '기타'
 };
 
-// ==================== 정렬 옵션 ====================
 export const SORT_OPTIONS = {
   DATE_ASC: 'date_asc',
   DATE_DESC: 'date_desc',
@@ -102,7 +116,6 @@ export const SORT_OPTIONS = {
   CONSULTANT_DESC: 'consultant_desc'
 };
 
-// ==================== 정렬 옵션 라벨 ====================
 export const SORT_OPTION_LABELS = {
   [SORT_OPTIONS.DATE_ASC]: '날짜 (오름차순)',
   [SORT_OPTIONS.DATE_DESC]: '날짜 (내림차순)',
@@ -114,42 +127,46 @@ export const SORT_OPTION_LABELS = {
   [SORT_OPTIONS.CONSULTANT_DESC]: '상담사 (내림차순)'
 };
 
-// ==================== 필터 옵션 ====================
 export const FILTER_OPTIONS = {
   ALL: 'all',
   TODAY: 'today',
   THIS_WEEK: 'this_week',
   THIS_MONTH: 'this_month',
   AVAILABLE: 'available',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   BOOKED: 'booked',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   CONFIRMED: 'confirmed',
   VACATION: 'vacation',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   COMPLETED: 'completed',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   CANCELLED: 'cancelled'
 };
 
-// ==================== 필터 옵션 라벨 ====================
 export const FILTER_OPTION_LABELS = {
   [FILTER_OPTIONS.ALL]: '전체',
   [FILTER_OPTIONS.TODAY]: '오늘',
   [FILTER_OPTIONS.THIS_WEEK]: '이번 주',
   [FILTER_OPTIONS.THIS_MONTH]: '이번 달',
   [FILTER_OPTIONS.AVAILABLE]: '가능',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [FILTER_OPTIONS.BOOKED]: '예약됨',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [FILTER_OPTIONS.CONFIRMED]: '확정됨',
   [FILTER_OPTIONS.VACATION]: '휴가',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [FILTER_OPTIONS.COMPLETED]: '완료',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [FILTER_OPTIONS.CANCELLED]: '취소됨'
 };
 
-// ==================== 페이지네이션 ====================
 export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 10,
   PAGE_SIZE_OPTIONS: [5, 10, 20, 50],
   MAX_VISIBLE_PAGES: 5
 };
 
-// ==================== 페이지네이션 라벨 ====================
 export const PAGINATION_LABELS = {
   FIRST: '처음',
   PREVIOUS: '이전',
@@ -160,7 +177,6 @@ export const PAGINATION_LABELS = {
   TOTAL: '총'
 };
 
-// ==================== 스케줄 액션 ====================
 export const SCHEDULE_ACTIONS = {
   VIEW: 'view',
   EDIT: 'edit',
@@ -170,7 +186,6 @@ export const SCHEDULE_ACTIONS = {
   COMPLETE: 'complete'
 };
 
-// ==================== 스케줄 액션 라벨 ====================
 export const SCHEDULE_ACTION_LABELS = {
   [SCHEDULE_ACTIONS.VIEW]: '보기',
   [SCHEDULE_ACTIONS.EDIT]: '수정',
@@ -180,7 +195,6 @@ export const SCHEDULE_ACTION_LABELS = {
   [SCHEDULE_ACTIONS.COMPLETE]: '완료'
 };
 
-// ==================== 스케줄 액션 아이콘 ====================
 export const SCHEDULE_ACTION_ICONS = {
   [SCHEDULE_ACTIONS.VIEW]: 'bi-eye',
   [SCHEDULE_ACTIONS.EDIT]: 'bi-pencil',
@@ -190,7 +204,6 @@ export const SCHEDULE_ACTION_ICONS = {
   [SCHEDULE_ACTIONS.COMPLETE]: 'bi-check2-circle'
 };
 
-// ==================== 스케줄 로딩 상태 ====================
 export const SCHEDULE_LOADING_STATES = {
   IDLE: 'idle',
   LOADING: 'loading',
@@ -198,7 +211,6 @@ export const SCHEDULE_LOADING_STATES = {
   ERROR: 'error'
 };
 
-// ==================== 스케줄 에러 메시지 ====================
 export const SCHEDULE_ERROR_MESSAGES = {
   LOAD_FAILED: '스케줄을 불러오는데 실패했습니다.',
   SAVE_FAILED: '스케줄 저장에 실패했습니다.',
@@ -209,7 +221,6 @@ export const SCHEDULE_ERROR_MESSAGES = {
   SERVER_ERROR: '서버 오류가 발생했습니다.'
 };
 
-// ==================== 스케줄 성공 메시지 ====================
 export const SCHEDULE_SUCCESS_MESSAGES = {
   LOAD_SUCCESS: '스케줄이 성공적으로 로드되었습니다.',
   SAVE_SUCCESS: '스케줄이 성공적으로 저장되었습니다.',
@@ -220,7 +231,6 @@ export const SCHEDULE_SUCCESS_MESSAGES = {
   COMPLETE_SUCCESS: '스케줄이 완료되었습니다.'
 };
 
-// ==================== 날짜 형식 ====================
 export const DATE_FORMATS = {
   DISPLAY: 'YYYY-MM-DD',
   API: 'YYYY-MM-DD',
@@ -229,14 +239,12 @@ export const DATE_FORMATS = {
   FULL: 'YYYY년 MM월 DD일 HH:mm'
 };
 
-// ==================== 시간 형식 ====================
 export const TIME_FORMATS = {
   DISPLAY: 'HH:mm',
   API: 'HH:mm:ss',
   FULL: 'HH시 mm분'
 };
 
-// ==================== 상담 시간 관련 상수 ====================
 export const CONSULTATION_DURATIONS = {
   THIRTY_MINUTES: 30,
   FORTY_FIVE_MINUTES: 45,
@@ -257,8 +265,6 @@ export const DEFAULT_CONSULTATION_DURATION = CONSULTATION_DURATIONS.SIXTY_MINUTE
 
 export const BREAK_TIME_MINUTES = 10;
 
-// ==================== 영업 시간 (동적 로딩) ====================
-// 실제 값은 businessTimeUtils.js에서 동적으로 로딩됩니다
 export const BUSINESS_HOURS = {
   START: '10:00',  // 기본값, 실제로는 서버에서 로딩
   END: '20:00',    // 기본값, 실제로는 서버에서 로딩
@@ -272,11 +278,9 @@ export const BUSINESS_HOURS_DISPLAY = {
   LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
 };
 
-// ==================== 시간 슬롯 관련 ====================
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격
 export const TIME_SLOT_DURATION = 30; // 30분 슬롯
 
-// ==================== 상담 시간 유효성 검사 ====================
 export const MIN_CONSULTATION_DURATION = 30; // 최소 30분
 export const MAX_CONSULTATION_DURATION = 180; // 최대 3시간
 export const MAX_ADVANCE_BOOKING_DAYS = 30; // 최대 30일 후까지 예약 가능

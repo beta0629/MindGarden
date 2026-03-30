@@ -1,13 +1,13 @@
 /* ========================================
-   MindGarden - 공통 CSS 변수
+   CoreSolution - 공통 CSS 변수
    디자인 가이드 기반 색상 및 타이포그래피 시스템
    ======================================== */
 
 :root {
   /* 파스텔 톤 메인 컬러 */
-  --color-primary: #B8E6B8;        /* 부드러운 민트 그린 */
-  --color-primary-light: #D4F0D4;  /* 밝은 민트 */
-  --color-primary-dark: #9CD69C;   /* 진한 민트 */
+  --color-primary: var(--cs-success-200);        /* 부드러운 민트 그린 */
+  --color-primary-light: var(--cs-success-100);  /* 밝은 민트 */
+  --color-primary-dark: var(--cs-success-300);   /* 진한 민트 */
   /* Design System primary scale (theme provider가 주입하는 토큰과 연결) */
   --primary-50: var(--color-primary-light, var(--mint-green));
   --primary-100: var(--color-primary-light, var(--mint-green));
@@ -18,24 +18,24 @@
   
   /* 역할별 대시보드 색상 */
   /* 상담사/관리자 대시보드 (기본 파란색) */
-  --dashboard-consultant-primary: #667eea;
-  --dashboard-consultant-primary-light: #7c8ef0;
-  --dashboard-consultant-primary-dark: #5a67d8;
+  --dashboard-consultant-primary: var(--mg-primary-500);
+  --dashboard-consultant-primary-light: var(--cs-primary-400);
+  --dashboard-consultant-primary-dark: var(--cs-primary-600);
   
   /* 내담자 대시보드 (연한 연두색) */
-  --dashboard-client-primary: #A8E6A8;        /* 연한 연두색 */
-  --dashboard-client-primary-light: #C4F0C4;  /* 밝은 연두색 */
-  --dashboard-client-primary-dark: #8CD68C;   /* 진한 연두색 */
+  --dashboard-client-primary: var(--cs-success-200);        /* 연한 연두색 */
+  --dashboard-client-primary-light: var(--cs-success-100);  /* 밝은 연두색 */
+  --dashboard-client-primary-dark: var(--cs-success-300);   /* 진한 연두색 */
   
   /* 파스텔 톤 보조 컬러 */
-  --color-secondary: #FFB3BA;      /* 부드러운 파스텔 핑크 */
-  --color-secondary-light: #FFD1D6; /* 밝은 파스텔 핑크 */
-  --color-secondary-dark: #FF9AA2;  /* 진한 파스텔 핑크 */
+  --color-secondary: var(--cs-pink-200);      /* 부드러운 파스텔 핑크 */
+  --color-secondary-light: var(--cs-pink-100); /* 밝은 파스텔 핑크 */
+  --color-secondary-dark: var(--cs-pink-300);  /* 진한 파스텔 핑크 */
   
   /* 파스텔 톤 액센트 컬러 */
-  --color-accent: #B8D4FF;         /* 부드러운 파스텔 블루 */
-  --color-accent-light: #D4E6FF;   /* 밝은 파스텔 블루 */
-  --color-accent-dark: #9CC2FF;    /* 진한 파스텔 블루 */
+  --color-accent: var(--cs-blue-200);         /* 부드러운 파스텔 블루 */
+  --color-accent-light: var(--cs-blue-100);   /* 밝은 파스텔 블루 */
+  --color-accent-dark: var(--cs-blue-300);    /* 진한 파스텔 블루 */
   
   /* 파스텔 톤 보조 액센트 */
   --color-tertiary: #FFE5B3;       /* 부드러운 파스텔 옐로우 */
@@ -45,18 +45,18 @@
   /* 파스텔 톤 뉴트럴 */
   --color-neutral: #F0F0F0;        /* 매우 연한 그레이 */
   --color-neutral-light: #F8F8F8;  /* 거의 흰색 */
-  --color-neutral-dark: #E0E0E0;   /* 연한 그레이 */
+  --color-neutral-dark: var(--mg-gray-300);   /* 연한 그레이 */
   
   /* 파스텔 톤 배경 */
   --color-background: #FAFAFA;     /* 매우 연한 크림 */
-  --color-surface: #FFFFFF;        /* 순백 */
-  --color-card: #FFFFFF;           /* 카드 배경 */
+  --color-surface: var(--mg-white);        /* 순백 */
+  --color-card: var(--mg-white);           /* 카드 배경 */
   
   /* 파스텔 톤 텍스트 */
   --color-text-primary: #4A4A4A;   /* 진한 그레이 */
   --color-text-secondary: #6B6B6B; /* 중간 그레이 */
   --color-text-muted: #9B9B9B;     /* 연한 그레이 */
-  --color-text-light: #FFFFFF;     /* 흰색 텍스트 */
+  --color-text-light: var(--mg-white);     /* 흰색 텍스트 */
   
   /* 파스텔 톤 상태 */
   --color-success: #C8E6C9;        /* 부드러운 그린 */
@@ -67,7 +67,7 @@
   /* 상태 색상 확장 팔레트 (에러/경고 텍스트 가시성) */
   --color-red-50: #FEF2F2;
   --color-red-200: #FECACA;
-  --color-red-500: #EF4444;
+  --color-red-500: var(--mg-error-500);
   --color-red-600: #DC2626;
   --color-red-700: #B91C1C;
   --red-50: var(--color-red-50);
@@ -145,9 +145,9 @@
   --toast-gap: 10px;
   
   /* Toast 기본 스타일 */
-  --toast-bg: #FFFFFF;
+  --toast-bg: var(--mg-white);
   --toast-border-radius: 8px;
-  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-shadow: 0 4px 12px var(--mg-shadow-medium);
   --toast-animation-duration: 0.3s;
   --toast-border-left-width: 4px;
   --toast-min-width: 300px;
@@ -158,10 +158,10 @@
   --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   
   /* Toast 타입별 색상 (통일된 색상 체계) */
-  --toast-success-color: #10B981;  /* 녹색 - 성공/시스템 */
-  --toast-error-color: #EF4444;    /* 빨강 - 오류 */
-  --toast-warning-color: #F59E0B;  /* 주황 - 경고 */
-  --toast-info-color: #3B82F6;     /* 파랑 - 안내 */
+  --toast-success-color: var(--mg-success-500);  /* 녹색 - 성공/시스템 */
+  --toast-error-color: var(--mg-error-500);    /* 빨강 - 오류 */
+  --toast-warning-color: var(--mg-warning-500);  /* 주황 - 경고 */
+  --toast-info-color: var(--mg-primary-500);     /* 파랑 - 안내 */
   
   /* Toast 콘텐츠 */
   --toast-content-padding: 16px;
@@ -176,23 +176,23 @@
   --toast-close-bg: none;
   --toast-close-border: none;
   --toast-close-font-size: var(--font-size-lg);
-  --toast-close-color: #999999;
+  --toast-close-color: var(--mg-gray-500);
   --toast-close-padding: 0;
   --toast-close-size: 20px;
   --toast-close-border-radius: 50%;
   --toast-close-transition: all 0.2s ease;
-  --toast-close-hover-bg: #f5f5f5;
-  --toast-close-hover-color: #666666;
+  --toast-close-hover-bg: var(--mg-gray-100);
+  --toast-close-hover-color: var(--mg-gray-600);
   
   /* Toast 진행바 */
   --toast-progress-height: 3px;
-  --toast-progress-bg: rgba(0, 0, 0, 0.1);
-  --toast-progress-bar-bg: linear-gradient(90deg, #007bff, #0056b3);
-  --toast-success-progress-bg: linear-gradient(90deg, #28a745, #1e7e34);
-  --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
-  --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
-  --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
-  --toast-system-progress-bg: linear-gradient(90deg, #10B981, #059669);  /* 시스템은 녹색 사용 */
+  --toast-progress-bg: var(--mg-shadow-light);
+  --toast-progress-bar-bg: linear-gradient(90deg, var(--mg-primary-500), #0056b3);
+  --toast-success-progress-bg: linear-gradient(90deg, var(--mg-success-500), #1e7e34);
+  --toast-error-progress-bg: linear-gradient(90deg, var(--mg-error-500), #c82333);
+  --toast-warning-progress-bg: linear-gradient(90deg, var(--mg-warning-500), #e0a800);
+  --toast-info-progress-bg: linear-gradient(90deg, var(--mg-info-500), #138496);
+  --toast-system-progress-bg: linear-gradient(90deg, var(--mg-success-500), #059669);  /* 시스템은 녹색 사용 */
   
   /* Toast 모바일 반응형 */
   --toast-mobile-top: 10px;
@@ -448,10 +448,10 @@
    ======================================== */
 
 /* 차트 컨테이너 */
---chart-container-bg: #ffffff;
+--chart-container-bg: var(--mg-white);
 --chart-container-border: #e9ecef;
 --chart-container-radius: 0.5rem;
---chart-container-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+--chart-container-shadow: 0 2px 8px var(--mg-shadow-light);
 --chart-container-padding: 1.5rem;
 --chart-container-margin: 1rem 0;
 
@@ -468,30 +468,30 @@
 --chart-height-xl: 500px;
 
 /* 차트 색상 팔레트 */
---chart-color-primary: #007bff;
---chart-color-success: #28a745;
---chart-color-warning: #ffc107;
---chart-color-danger: #dc3545;
---chart-color-info: #17a2b8;
---chart-color-secondary: #6c757d;
---chart-color-light: #f8f9fa;
+--chart-color-primary: var(--mg-primary-500);
+--chart-color-success: var(--mg-success-500);
+--chart-color-warning: var(--mg-warning-500);
+--chart-color-danger: var(--mg-error-500);
+--chart-color-info: var(--mg-info-500);
+--chart-color-secondary: var(--mg-secondary-500);
+--chart-color-light: var(--mg-gray-100);
 --chart-color-dark: #343a40;
 
 /* 대시보드 그리드 */
 --dashboard-grid-gap: 1.5rem;
 --dashboard-grid-padding: 1.5rem;
---dashboard-grid-bg: #f8f9fa;
+--dashboard-grid-bg: var(--mg-gray-100);
 
 /* 대시보드 카드 */
---dashboard-card-bg: #ffffff;
+--dashboard-card-bg: var(--mg-white);
 --dashboard-card-border: #e9ecef;
 --dashboard-card-radius: 0.5rem;
---dashboard-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+--dashboard-card-shadow: 0 2px 4px var(--mg-shadow-light);
 --dashboard-card-padding: 1.5rem;
 --dashboard-card-margin: 0 0 1.5rem 0;
 
 /* 대시보드 헤더 */
---dashboard-header-bg: #ffffff;
+--dashboard-header-bg: var(--mg-white);
 --dashboard-header-border: #e9ecef;
 --dashboard-header-padding: 1.5rem;
 --dashboard-header-margin: 0 0 1.5rem 0;
@@ -506,11 +506,11 @@
 /* 대시보드 부제목 */
 --dashboard-subtitle-size: 1rem;
 --dashboard-subtitle-weight: 400;
---dashboard-subtitle-color: #6c757d;
+--dashboard-subtitle-color: var(--mg-secondary-500);
 --dashboard-subtitle-margin: 0;
 
 /* 필터 섹션 */
---filter-section-bg: #ffffff;
+--filter-section-bg: var(--mg-white);
 --filter-section-border: #e9ecef;
 --filter-section-radius: 0.5rem;
 --filter-section-padding: 1rem;
@@ -527,7 +527,7 @@
 --filter-label-margin: 0 0 0.5rem 0;
 
 /* 필터 입력 */
---filter-input-bg: #ffffff;
+--filter-input-bg: var(--mg-white);
 --filter-input-border: #ced4da;
 --filter-input-focus-border: #80bdff;
 --filter-input-radius: 0.375rem;
@@ -535,9 +535,9 @@
 --filter-input-margin: 0 0.5rem 0 0;
 
 /* 필터 버튼 */
---filter-btn-bg: #007bff;
---filter-btn-color: #ffffff;
---filter-btn-border: #007bff;
+--filter-btn-bg: var(--mg-primary-500);
+--filter-btn-color: var(--mg-white);
+--filter-btn-border: var(--mg-primary-500);
 --filter-btn-hover-bg: #0056b3;
 --filter-btn-hover-border: #0056b3;
 --filter-btn-radius: 0.375rem;
@@ -545,14 +545,14 @@
 --filter-btn-margin: 0 0.5rem 0 0;
 
 /* 테이블 */
---table-bg: #ffffff;
+--table-bg: var(--mg-white);
 --table-border: #e9ecef;
 --table-radius: 0.5rem;
---table-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+--table-shadow: 0 2px 4px var(--mg-shadow-light);
 --table-margin: 1rem 0;
 
 /* 테이블 헤더 */
---table-header-bg: #f8f9fa;
+--table-header-bg: var(--mg-gray-100);
 --table-header-color: #495057;
 --table-header-weight: 600;
 --table-header-padding: 0.75rem;
@@ -564,12 +564,12 @@
 --table-cell-color: #495057;
 
 /* 테이블 행 */
---table-row-hover-bg: #f8f9fa;
+--table-row-hover-bg: var(--mg-gray-100);
 --table-row-border: #dee2e6;
 
 /* 로딩 스피너 */
 --loading-spinner-size: 2rem;
---loading-spinner-color: #007bff;
+--loading-spinner-color: var(--mg-primary-500);
 --loading-spinner-margin: 2rem auto;
 
 /* 에러 메시지 */
@@ -594,12 +594,12 @@
 
 /* 카드 색상 - 기존 변수 재사용 */
 /* 카드 컴포넌트에서 사용할 추가 색상 변수들 */
---card-color-success: #28a745;
---card-color-warning: #ffc107;
---card-color-danger: #dc3545;
---card-color-info: #17a2b8;
---card-color-secondary: #6c757d;
---card-color-primary: #007bff;
+--card-color-success: var(--mg-success-500);
+--card-color-warning: var(--mg-warning-500);
+--card-color-danger: var(--mg-error-500);
+--card-color-info: var(--mg-info-500);
+--card-color-secondary: var(--mg-secondary-500);
+--card-color-primary: var(--mg-primary-500);
 --card-color-primary-light: #e3f2fd;
 
 /* 모바일 반응형 변수 */

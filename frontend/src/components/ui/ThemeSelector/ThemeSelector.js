@@ -1,5 +1,6 @@
 /**
  * 테마 선택기 컴포넌트
+/**
  * 사용자가 테마를 선택하고 미리보기할 수 있는 UI 컴포넌트
  */
 
@@ -10,6 +11,7 @@ import Button from '../Button/Button';
 import Card from '../Card/Card';
 import CardContent from '../Card/CardContent';
 import Icon from '../Icon/Icon';
+import SafeText from '../../common/SafeText';
 import './ThemeSelector.css';
 
 const ThemeSelector = ({onThemeChange, 
@@ -73,8 +75,8 @@ const ThemeSelector = ({onThemeChange,
                   style={{'--theme-preview': theme.preview}}
                 />
                 <div className="mg-v2-v2-v2-theme-info">
-                  <h4 className="mg-v2-v2-v2-theme-name">{theme.name}</h4>
-                  <p className="mg-v2-v2-v2-theme-description">{theme.description}</p>
+                  <SafeText tag="h4" className="mg-v2-v2-v2-theme-name">{theme.name}</SafeText>
+                  <SafeText tag="p" className="mg-v2-v2-v2-theme-description">{theme.description}</SafeText>
                 </div>
                 {selectedTheme === theme.id && (<Icon name="CHECK" size="SM" color="SUCCESS" className="mg-v2-v2-v2-theme-check" />)}
               </div>))}
@@ -85,7 +87,7 @@ const ThemeSelector = ({onThemeChange,
               <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary mg-v2-v2-v2-mb-md">커스텀 색상</h4>
               <div className="mg-v2-v2-v2-color-inputs">
                 {Object.entries(currentTheme.colors).map(([key, value]) => (<div key={key} className="mg-v2-v2-v2-color-input">
-                    <label className="mg-v2-v2-v2-color-label">{key}</label>
+                    <SafeText tag="label" className="mg-v2-v2-v2-color-label">{key}</SafeText>
                     <input
                       type="color"
                       value={customColors[key] || value.replace('var(', '').replace(')', '')}
@@ -102,7 +104,7 @@ const ThemeSelector = ({onThemeChange,
               variant="primary"
               onClick={handleApplyTheme}
               loading={isLoading}
-              disabled={selectedTheme === currentTheme.type && Object.keys(customColors).length === COLOR_CONSTANTS.ALPHA_TRANSPARENT}
+              disabled={selectedTheme === currentTheme.type && Object.keys(customColors).length === 0}
             >
               <Icon name="CHECK" size="SM" />
               적용하기
@@ -126,8 +128,8 @@ const ThemeSelector = ({onThemeChange,
                 style={{'--theme-primary': currentTheme.colors.primary}}
               />
               <div>
-                <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-font-medium">{currentTheme.name}</p>
-                <p className="mg-v2-v2-v2-text-xs mg-v2-v2-v2-text-muted">{currentTheme.description}</p>
+                <SafeText tag="p" className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-font-medium">{currentTheme.name}</SafeText>
+                <SafeText tag="p" className="mg-v2-v2-v2-text-xs mg-v2-v2-v2-text-muted">{currentTheme.description}</SafeText>
               </div>
             </div>
           </div>

@@ -1,7 +1,10 @@
 /**
  * 사용자 역할 관련 헬퍼 유틸리티
+/**
  * 백엔드에서 동적으로 역할 정보를 로드하여 사용
  */
+
+import { USER_ROLES } from '../constants/roles';
 
 let roleDataCache = null;
 let lastFetchTime = null;
@@ -49,33 +52,22 @@ const loadRoleData = async () => {
 /**
  * Fallback 역할 데이터 (API 실패 시 사용)
  */
-const getFallbackRoleData = () => {
-    return {
-        'CLIENT': { displayName: '내담자', displayNameEn: 'Client' },
-        'CONSULTANT': { displayName: '상담사', displayNameEn: 'Consultant' },
-        'ADMIN': { displayName: '지점관리자', displayNameEn: 'Admin' },
-        'BRANCH_SUPER_ADMIN': { displayName: '본점수퍼어드민', displayNameEn: 'Branch Super Admin' },
-        'BRANCH_MANAGER': { displayName: '지점장', displayNameEn: 'Branch Manager' },
-        'HQ_ADMIN': { displayName: '헤드쿼터어드민', displayNameEn: 'HQ Admin' },
-        'SUPER_HQ_ADMIN': { displayName: '본사고급관리자', displayNameEn: 'Super HQ Admin' },
-        'HQ_MASTER': { displayName: '본사총관리자', displayNameEn: 'HQ Master' },
-        'HQ_SUPER_ADMIN': { displayName: '본사최고관리자', displayNameEn: 'HQ Super Admin' }
-    };
-};
+const getFallbackRoleData = () => ({
+    CLIENT: { displayName: '내담자', displayNameEn: 'Client' },
+    CONSULTANT: { displayName: '상담사', displayNameEn: 'Consultant' },
+    ADMIN: { displayName: '관리자', displayNameEn: 'Admin' },
+    STAFF: { displayName: '사무원', displayNameEn: 'Staff' }
+});
 
 /**
  * 역할의 한국어 표시명 가져오기
  */
-export const getRoleDisplayName = async (role, branchName = null) => {
+export const getRoleDisplayName = async (role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayName) {
-            // 지점 정보가 있는 경우 추가
-            if (branchName && (role === 'ADMIN' || role === 'BRANCH_MANAGER' || role === 'BRANCH_SUPER_ADMIN')) {
-                return `${roleInfo.displayName} (${branchName})`;
-            }
             return roleInfo.displayName;
         }
         
@@ -89,16 +81,12 @@ export const getRoleDisplayName = async (role, branchName = null) => {
 /**
  * 역할의 영문 표시명 가져오기
  */
-export const getRoleDisplayNameEn = async (role, branchName = null) => {
+export const getRoleDisplayNameEn = async (role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayNameEn) {
-            // 지점 정보가 있는 경우 추가
-            if (branchName && (role === 'ADMIN' || role === 'BRANCH_MANAGER' || role === 'BRANCH_SUPER_ADMIN')) {
-                return `${roleInfo.displayNameEn} (${branchName})`;
-            }
             return roleInfo.displayNameEn;
         }
         

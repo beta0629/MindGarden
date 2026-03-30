@@ -1,0 +1,229 @@
+/**
+ * 상담일지 조회 페이지 - B0KlA 스타일
+ * @author Core Solution
+ * @since 2025-03-02
+ */
+
+.mg-v2-consultation-log-view.mg-v2-ad-b0kla {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.mg-v2-consultation-log-view .mg-v2-ad-b0kla__container {
+  max-width: var(--mg-container-max, 1400px);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 뷰 전환 탭 */
+.mg-v2-consultation-log-view-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.mg-v2-consultation-log-view-tabs__tab {
+  padding: 0.5rem 1rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-secondary);
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.mg-v2-consultation-log-view-tabs__tab:hover {
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-consultation-log-view-tabs__tab--active {
+  color: var(--mg-color-primary-main);
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--mg-color-primary-main);
+}
+
+/* 필터 섹션 */
+.mg-v2-consultation-log-filter {
+  margin-bottom: 1.5rem;
+}
+
+.mg-v2-consultation-log-filter__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+@media (min-width: 768px) {
+  .mg-v2-consultation-log-filter__row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-consultation-log-filter__row {
+    gap: 1.25rem;
+  }
+}
+
+.mg-v2-consultation-log-filter__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.mg-v2-consultation-log-filter__label {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  font-weight: 500;
+}
+
+.mg-v2-consultation-log-filter__select,
+.mg-v2-consultation-log-filter__input {
+  padding: 0.5rem 0.75rem;
+  font-size: 14px;
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-consultation-log-filter__select:focus,
+.mg-v2-consultation-log-filter__input:focus {
+  outline: none;
+  border-color: var(--mg-color-primary-main);
+}
+
+/* 목록 블록 */
+.mg-v2-consultation-log-list-block {
+  margin-bottom: 0;
+}
+
+.mg-v2-consultation-log-list-block__card-wrap {
+  min-height: 200px;
+}
+
+.mg-v2-consultation-log-list-block__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .mg-v2-consultation-log-list-block__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-consultation-log-list-block__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+.mg-v2-consultation-log-list-block__card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 24px;
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: var(--ad-b0kla-radius, 16px);
+  cursor: pointer;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.mg-v2-consultation-log-list-block__card:hover {
+  border-color: var(--mg-color-primary-main);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-consultation-log-list-block__card:focus {
+  outline: none;
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-consultation-log-list-block__card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mg-v2-consultation-log-list-block__card-row {
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-consultation-log-list-block__card-row--date {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mg-v2-consultation-log-list-block__card-row--name {
+  font-weight: 600;
+}
+
+.mg-v2-consultation-log-list-block__card-row--secondary,
+.mg-v2-consultation-log-list-block__card-row--meta {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.mg-v2-badge--success {
+  background: var(--mg-success-500);
+  color: #fff;
+}
+
+.mg-v2-badge--warning {
+  background: var(--mg-warning-500);
+  color: #fff;
+}
+
+/* 빈 상태 */
+.mg-v2-consultation-log-list-block__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.mg-v2-consultation-log-list-block__empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.mg-v2-consultation-log-list-block__empty-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.mg-v2-consultation-log-list-block__empty-desc {
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+}

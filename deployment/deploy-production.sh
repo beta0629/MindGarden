@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # MindGarden 운영 서버 배포 스크립트
-# 서버: beta74.cafe24.com (211.37.179.204)
-# 도메인: https://m-garden.co.kr
+# 서버 예시: beta74.cafe24.com (211.37.179.204)
+# 도메인: dev FQDN에서 `.dev` 제거 규칙 — 예) mindgarden.dev → mindgarden.core-solution.co.kr (HTTPS)
+# 통합 Nginx: config/nginx/core-solution-prod.conf | 레거시 스니펫의 m-garden.co.kr은 참고용
 
 set -e  # 오류 발생 시 스크립트 중단
 
 echo "🚀 MindGarden 운영 서버 배포 시작..."
 echo "📍 서버: beta74.cafe24.com"
-echo "🌐 도메인: https://m-garden.co.kr"
+echo "🌐 공개 URL(예시): https://mindgarden.core-solution.co.kr"
 echo ""
 
 # 배포 변수 설정
@@ -64,22 +65,28 @@ echo "🔒 6. 환경변수 설정 안내..."
 cat << 'EOF'
 서버에서 다음 환경변수를 설정해주세요:
 
-# ~/.bashrc 또는 /etc/environment에 추가
+# ~/.bashrc, /etc/environment 또는 systemd EnvironmentFile (deployment/mindgarden.prod-env.example 참고)
+export OAUTH2_BASE_URL=https://mindgarden.core-solution.co.kr
+export FRONTEND_BASE_URL=https://mindgarden.core-solution.co.kr
+export SERVER_BASE_URL=https://mindgarden.core-solution.co.kr
+# export SESSION_COOKIE_DOMAIN=core-solution.co.kr
+
 export DB_USERNAME=mindgarden_prod
-export DB_PASSWORD=MindGarden2025!@#
-export JWT_SECRET=$(openssl rand -base64 64)
-export PERSONAL_DATA_ENCRYPTION_KEY=$(openssl rand -base64 32)
-export PERSONAL_DATA_ENCRYPTION_IV=$(openssl rand -base64 16)
+export DB_PASSWORD=changeme
+# openssl rand -base64 64 | tr -d '\n'
+export JWT_SECRET=changeme
+export PERSONAL_DATA_ENCRYPTION_KEY=changeme
+export PERSONAL_DATA_ENCRYPTION_IV=changeme
 
-# OAuth2 설정
-export KAKAO_CLIENT_ID=your_kakao_client_id
-export KAKAO_CLIENT_SECRET=your_kakao_client_secret
-export NAVER_CLIENT_ID=your_naver_client_id
-export NAVER_CLIENT_SECRET=your_naver_client_secret
+# OAuth2 (콘솔 값, 저장소 커밋 금지)
+export KAKAO_CLIENT_ID=changeme
+export KAKAO_CLIENT_SECRET=changeme
+export NAVER_CLIENT_ID=changeme
+export NAVER_CLIENT_SECRET=changeme
 
-# 이메일 설정
-export SMTP_USERNAME=mindgarden1013@gmail.com
-export SMTP_PASSWORD=your_app_password
+# 이메일
+export SMTP_USERNAME=changeme
+export SMTP_PASSWORD=changeme
 
 # 결제 시스템
 export PAYMENT_TOSS_SECRET_KEY=your_toss_secret
@@ -99,17 +106,20 @@ EOF
 
 echo "🌐 7. 웹서버 설정 안내..."
 cat << 'EOF'
+# 통합 설정 우선: config/nginx/core-solution-prod.conf (app · *.core-solution.co.kr 등)
+# 아래는 단일 호스트 예시(실제 server_name은 운영 FQDN에 맞출 것).
+
 Nginx 설정 (/etc/nginx/sites-available/mindgarden):
 
 server {
     listen 80;
-    server_name m-garden.co.kr www.m-garden.co.kr;
+    server_name mindgarden.core-solution.co.kr;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name m-garden.co.kr www.m-garden.co.kr;
+    server_name mindgarden.core-solution.co.kr;
     
     # SSL 인증서 설정
     ssl_certificate /etc/ssl/mindgarden/fullchain.pem;
@@ -182,6 +192,8 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 Environment=JAVA_OPTS="-Xms512m -Xmx2g -XX:+UseG1GC"
+# 환경변수 키 목록 예시: deployment/mindgarden.prod-env.example
+# EnvironmentFile=-/etc/mindgarden/mindgarden.env
 
 [Install]
 WantedBy=multi-user.target
@@ -232,10 +244,10 @@ EOF
 
 echo ""
 echo "🔍 배포 후 확인사항:"
-echo "- https://m-garden.co.kr (프론트엔드)"
-echo "- https://m-garden.co.kr/api/actuator/health (백엔드)"
-echo "- https://m-garden.co.kr/login (로그인 테스트)"
-echo "- https://m-garden.co.kr/admin/memory/ (메모리 모니터링)"
+echo "- https://mindgarden.core-solution.co.kr (프론트엔드, 실제 호스트로 치환)"
+echo "- https://mindgarden.core-solution.co.kr/api/actuator/health (백엔드)"
+echo "- https://mindgarden.core-solution.co.kr/login (로그인 테스트)"
+echo "- https://mindgarden.core-solution.co.kr/admin/memory/ (메모리 모니터링)"
 echo ""
 echo "🧠 메모리 관리 명령어:"
 echo "- ./memory-management.sh check    # 메모리 확인"
@@ -245,6 +257,6 @@ echo ""
 echo "🔐 OAuth2 설정 확인:"
 echo "- ./oauth2-callback-test.sh       # 콜백 URL 테스트"
 echo ""
-echo "📋 OAuth2 콜백 URL (개발자 콘솔에 등록 필요):"
-echo "- 카카오: http://m-garden.co.kr/api/auth/kakao/callback"
-echo "- 네이버: http://m-garden.co.kr/api/auth/naver/callback"
+echo "📋 OAuth2 콜백 URL (HTTPS, OAUTH2_BASE_URL과 동일 호스트):"
+echo "- 카카오: https://mindgarden.core-solution.co.kr/api/auth/kakao/callback"
+echo "- 네이버: https://mindgarden.core-solution.co.kr/api/auth/naver/callback"

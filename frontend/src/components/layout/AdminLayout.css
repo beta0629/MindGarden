@@ -1,0 +1,33 @@
+/**
+ * AdminLayout - 4K 반응형 레이아웃
+ * RESPONSIVE_LAYOUT_SPEC.md 기준
+ *
+ * @author Core Solution
+ * @since 2025-02-21
+ */
+
+.mg-admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
+}
+
+.mg-admin-layout__main {
+  flex: 1;
+  margin-left: 0;
+  overflow-y: auto;
+  min-height: 100vh;
+  padding: var(--mg-layout-page-padding);
+}
+
+@media (max-width: calc(var(--mg-breakpoint-desktop) - 1px)) {
+  .mg-admin-layout__main {
+    padding: var(--mg-layout-page-padding-mobile);
+  }
+}
+
+@media (min-width: 768px) and (max-width: calc(var(--mg-breakpoint-desktop) - 1px)) {
+  .mg-admin-layout__main {
+    padding: var(--mg-layout-page-padding-tablet);
+  }
+}

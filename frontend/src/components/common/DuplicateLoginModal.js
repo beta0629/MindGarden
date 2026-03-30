@@ -1,15 +1,15 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
-import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import UnifiedModal from './modals/UnifiedModal';
+import Button from '../ui/Button/Button';
+import SafeText from './SafeText';
 
 const DuplicateLoginModal = () => {
-  const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
-  
+  const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
 
   const handleConfirm = async () => {
     if (!duplicateLoginModal.loginData) {
@@ -19,46 +19,61 @@ const DuplicateLoginModal = () => {
 
     try {
       console.log('🔔 중복 로그인 확인 처리 시작:', duplicateLoginModal.loginData);
-      
-      // 중복 로그인 확인 API 호출
+
       const response = await authAPI.confirmDuplicateLogin({
         email: duplicateLoginModal.loginData.email,
         password: duplicateLoginModal.loginData.password,
         confirmTerminate: true
       });
 
-      if (response && response.success) {
+      if (response && response.user) {
         console.log('✅ 중복 로그인 확인 후 로그인 성공:', response.user);
-        
-        // 모달 닫기
+
         setDuplicateLoginModal({
           isOpen: false,
           message: '',
           loginData: null
         });
-        
-        // 세션에 사용자 정보 설정
+
         console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', response.user);
         sessionManager.setUser(response.user, {
-          accessToken: response.accessToken || 'duplicate_login_token',
-          refreshToken: response.refreshToken || 'duplicate_login_refresh_token'
+          sessionId: response.sessionId || null
         });
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+        await checkSession(true);
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
-        
-        // 성공 알림
+
         notificationManager.show('로그인에 성공했습니다.', 'success');
-        
-        // 역할에 따른 대시보드로 리다이렉트
-        const userRole = response.user.role;
-        console.log('🎯 중복 로그인 성공 후 리다이렉트:', userRole);
-        
-        setTimeout(() => {
-          const dashboardPath = getDashboardPath(userRole);
-          window.location.href = dashboardPath;
-        }, 1000); // 1초 후 리다이렉트
+
+        const authResponse = {
+          user: response.user,
+          currentTenantRole: response.currentTenantRole || null
+        };
+        console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
+
+        setTimeout(async () => {
+          try {
+
+            const { getCurrentUserDashboard, getDynamicDashboardPath } = await import('../../utils/dashboardUtils');
+            const dashboard = await getCurrentUserDashboard(
+              response.user.tenantId,
+              response.currentTenantRole?.tenantRoleId
+            );
+            if (dashboard) {
+              const dashboardPath = getDynamicDashboardPath(dashboard);
+              window.location.href = dashboardPath;
+            } else {
+              const { getLegacyDashboardPath } = await import('../../utils/dashboardUtils');
+              window.location.href = getLegacyDashboardPath(response.user.role);
+            }
+          } catch (error) {
+            console.error('대시보드 리다이렉트 실패:', error);
+            window.location.href = '/dashboard';
+          }
+        }, 500);
       } else {
-        console.log('❌ 중복 로그인 확인 후 로그인 실패:', response?.message);
-        notificationManager.show(response?.message || '로그인에 실패했습니다.', 'error');
+        console.log('❌ 중복 로그인 확인 후 로그인 실패:', response);
+        notificationManager.show('로그인에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('❌ 중복 로그인 확인 처리 실패:', error);
@@ -68,8 +83,7 @@ const DuplicateLoginModal = () => {
 
   const handleCancel = () => {
     console.log('❌ 중복 로그인 확인 취소');
-    
-    // 모달 닫기
+
     setDuplicateLoginModal({
       isOpen: false,
       message: '',
@@ -77,56 +91,39 @@ const DuplicateLoginModal = () => {
     });
   };
 
-  if (!duplicateLoginModal.isOpen) {
-    return null;
-  }
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay mg-v2-modal-overlay--high-z">
-      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <AlertTriangle size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">중복 로그인 감지</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={handleCancel} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-        
-        <div className="mg-v2-modal-body">
-          <div className="mg-v2-empty-state">
-            <AlertTriangle size={48} className="mg-v2-color-warning" />
-            <p className="mg-v2-text-base mg-v2-mt-md">{duplicateLoginModal.message}</p>
-          </div>
-          
-          <div className="mg-v2-info-box mg-v2-mt-md">
-            <p className="mg-v2-text-sm mg-v2-text-secondary">
-              기존 세션을 종료하면 현재 기기에서 로그인할 수 있습니다.
-            </p>
-          </div>
-        </div>
-
-        <div className="mg-v2-modal-footer">
-          <button
-            onClick={handleCancel}
-            className="mg-v2-button mg-v2-button--secondary"
-          >
+  return (
+    <UnifiedModal
+      isOpen={!!duplicateLoginModal.isOpen}
+      onClose={handleCancel}
+      title="중복 로그인 감지"
+      size="medium"
+      backdropClick={false}
+      showCloseButton
+      zIndex={10000}
+      actions={
+        <>
+          <Button variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </button>
-          
-          <button
-            onClick={handleConfirm}
-            className="mg-v2-button mg-v2-button--primary"
-          >
+          </Button>
+          <Button variant="primary" size="medium" onClick={handleConfirm} preventDoubleClick={false}>
             <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <div className="mg-v2-empty-state">
+        <AlertTriangle size={48} className="mg-v2-color-warning" />
+        <SafeText className="mg-v2-text-base mg-v2-mt-md" tag="p">{duplicateLoginModal.message}</SafeText>
       </div>
-    </div>,
-    document.body
+
+      <div className="mg-v2-info-box mg-v2-mt-md">
+        <p className="mg-v2-text-sm mg-v2-text-secondary">
+          기존 세션을 종료하면 현재 기기에서 로그인할 수 있습니다.
+        </p>
+      </div>
+    </UnifiedModal>
   );
 };
 

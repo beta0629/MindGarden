@@ -1,8 +1,12 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Dashboard Layout Component
+ * Core Solution 디자인 시스템 v2.0 - Dashboard Layout Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
+/**
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Dashboard Layout 섹션)
+/**
  * @reference /design-system (DashboardLayoutShowcase)
  */
 
@@ -22,14 +26,23 @@ import React from 'react';
  * @example
  * <DashboardLayout
  *   title="관리자 대시보드"
+/**
  *   subtitle="시스템 전체 현황"
+/**
  *   icon={<LayoutDashboard />}
+/**
  *   actions={<>
+/**
  *     <button className="mg-dashboard-icon-btn"><Bell /></button>
+/**
  *     <button className="mg-dashboard-icon-btn"><Settings /></button>
+/**
  *   </>}
+/**
  * >
+/**
  *   {children}
+/**
  * </DashboardLayout>
  */
 const DashboardLayout = ({

@@ -1,0 +1,186 @@
+/**
+ * ContentKpiRow - B0KlA kpiRow 스펙
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+/* 그리드 필수: 카드 행 레이아웃. 덮어쓰지 말 것 */
+.mg-v2-content-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  min-width: 0;
+}
+
+.mg-v2-content-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  min-width: 0; /* flex 자식 수축 시 그리드 셀 넘침 방지 */
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  transition: all 0.2s;
+}
+
+/* B0KlA 통일: 좌측 세로 악센트 4px */
+.mg-v2-content-kpi-card--accent-green {
+  border-left: 4px solid var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-content-kpi-card--accent-orange {
+  border-left: 4px solid var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-content-kpi-card--accent-blue {
+  border-left: 4px solid var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-content-kpi-card--accent-gray {
+  border-left: 4px solid var(--ad-b0kla-text-secondary, #4a5568);
+}
+
+.mg-v2-content-kpi-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* 클릭 가능 카드 (button reset + cursor) */
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  margin: 0;
+}
+
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.mg-v2-content-kpi-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-content-kpi-card__icon--green {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-content-kpi-card__icon--orange {
+  background: var(--ad-b0kla-orange-bg, #fcf3ed);
+  color: var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-content-kpi-card__icon--blue {
+  background: var(--ad-b0kla-blue-bg, #f0f5f9);
+  color: var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-content-kpi-card__icon--gray {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.mg-v2-content-kpi-card__info {
+  flex: 1;
+  min-width: 0; /* flex 맥락에서 그리드가 찌그러지지 않도록 */
+}
+
+.mg-v2-content-kpi-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mg-v2-content-kpi-card__label {
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-content-kpi-card__badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.mg-v2-content-kpi-card__badge--green {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-content-kpi-card__badge--orange {
+  background: var(--ad-b0kla-orange-bg, #fcf3ed);
+  color: var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-content-kpi-card__badge--blue {
+  background: var(--ad-b0kla-blue-bg, #f0f5f9);
+  color: var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-content-kpi-card__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.mg-v2-content-kpi-card__subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--mg-spacing-xs, 0.25rem);
+  flex-wrap: wrap;
+}
+
+.mg-v2-content-kpi-card__subtitle {
+  font-size: var(--mg-font-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, #64748b);
+  display: inline;
+}
+
+.mg-v2-content-kpi-card__subtitle-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 9999px;
+}
+
+.mg-v2-content-kpi-card__subtitle-badge--green {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-content-kpi-card__subtitle-badge--orange {
+  background: var(--ad-b0kla-orange-bg, #fcf3ed);
+  color: var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-content-kpi-card__subtitle-badge--blue {
+  background: var(--ad-b0kla-blue-bg, #f0f5f9);
+  color: var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-content-kpi-card__subtitle-badge--gray {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-content-kpi-card__value {
+    font-size: 1.5rem;
+  }
+}

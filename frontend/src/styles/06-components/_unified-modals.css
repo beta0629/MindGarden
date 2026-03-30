@@ -1,0 +1,138 @@
+/* ===== Unified Modal Core CSS (_unified-modals.css) ===== */
+/* 
+ * Single Source of Truth for Modal Layouts
+ * 어떤 테마(.mg-v2-ad-b0kla 등)와 결합되더라도 모달의 레이아웃, 크기 조절 등을 중앙에서 강력하게 캡슐화합니다.
+ */
+
+/* 오버레이: 모달을 화면 정중앙에 배치 (왼쪽 상단 고정 방지) */
+.mg-modal-overlay {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: var(--spacing-lg, 1rem);
+}
+
+/* fullscreen 모달: 오버레이 패딩 제거하여 전체 화면 사용 */
+.mg-modal-overlay:has(.mg-modal--fullscreen) {
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+
+.mg-modal {
+  margin: auto; /* flex 보조: 중앙 고정 */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white, var(--mg-white));
+  border-radius: var(--border-radius-lg, 0.75rem);
+  box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow: hidden;
+  width: 100%;
+}
+
+.mg-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg, 1.5rem);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* UnifiedModal children(.mg-v2-modal-body)가 본문 영역 전체 폭 사용 (어드민/상담사/내담자/매핑/ERP 등 공통) */
+.mg-modal__body .mg-v2-modal-body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* B0KlA 모달 본문: min-width: 0으로 인한 이메일 행 입력란 수축 방지 (내담자/상담사/스태프 등록·수정 모달) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body {
+  min-width: 280px !important;
+}
+
+.mg-modal__actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+}
+
+/* 액션 버튼 크기 통일: 아이콘 유무와 관계없이 동일한 최소 크기 (취소/등록 등) */
+.mg-modal__actions .mg-button,
+.mg-modal__actions > button,
+.mg-modal__actions .mg-v2-button,
+.mg-modal__actions .mg-btn,
+.mg-modal__actions .mg-modal__button {
+  min-width: 112px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+/* 
+ * Auto-sizing Modal (.mg-modal--auto)
+ * 내용물 높이만큼만 커지며, 100vh 등으로 강제 늘어나는 것을 절대 방지합니다.
+ */
+.mg-modal.mg-modal--auto {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 90vh !important;
+  flex: 0 0 auto !important;
+}
+
+.mg-modal.mg-modal--auto .mg-modal__body {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: calc(90vh - 140px) !important; /* 헤더, 푸터 높이 제외 */
+}
+
+/*
+ * small / medium / large 모달도 콘텐츠 높이에 맞춤 (위·아래 여백 최소화)
+ * 테마(.mg-v2-ad-b0kla)와 결합돼도 100vh로 늘어나지 않도록 동일 캡슐화 적용
+ */
+.mg-modal.mg-modal--small,
+.mg-modal.mg-modal--medium,
+.mg-modal.mg-modal--large {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 90vh !important;
+  align-self: center;
+}
+
+/* large 모달: 테이블/폼이 들어갈 때 500px로 짓눌리지 않도록 (디자인 가이드) */
+.mg-modal.mg-modal--large {
+  min-width: 720px;
+  max-width: min(900px, 92vw);
+  width: 90%;
+}
+
+.mg-modal.mg-modal--small .mg-modal__body,
+.mg-modal.mg-modal--medium .mg-modal__body,
+.mg-modal.mg-modal--large .mg-modal__body {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none;
+}
+
+/* fullscreen: 500px 등 기본 max-width 덮어서 전체 화면 사용 (상담일지 등 참고 자료용) */
+.mg-modal.mg-modal--fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+  margin: 0;
+  align-self: stretch;
+}
+
+.mg-modal.mg-modal--fullscreen .mg-modal__body {
+  max-height: none !important;
+  flex: 1 1 auto;
+}

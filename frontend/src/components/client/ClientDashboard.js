@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
-import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
+import { DASHBOARD_API } from '../../constants/api';
 import { 
   Heart, 
   Calendar, 
@@ -16,35 +16,38 @@ import {
   Sparkles,
   Sun
 } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import MGButton from '../common/MGButton';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
 import RatableConsultationsSection from './RatableConsultationsSection';
 import ClientMessageSection from '../dashboard/ClientMessageSection';
 import HealingCard from '../common/HealingCard';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/dashboard-tokens-extension.css';
+import '../../styles/themes/client-theme.css';
+import SafeText from '../common/SafeText';
 import './ClientDashboard.css';
 
+const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
+
 /**
- * 내담자 대시보드
- * 화사하고 산뜻한 느낌의 디자인으로 구성
+ * 내담자 대시보드 — 화사하고 산뜻한 느낌의 디자인
  */
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
-  // sessionManager로 직접 확인
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
   
-  // 세션 재확인 (SNS 로그인 시 세션이 로드되지 않는 경우)
   useEffect(() => {
-    // 컴포넌트가 마운트된 후 한 번만 실행
     let isMounted = true;
     
     const checkAndRestoreSession = async () => {
-      // URL 파라미터에서 OAuth 정보 확인
       const urlParams = new URLSearchParams(window.location.search);
       const oauth = urlParams.get('oauth');
       
@@ -63,24 +66,23 @@ const ClientDashboard = () => {
         
         console.log('✅ URL 파라미터에서 사용자 정보:', userInfo);
         
-        // sessionManager에 사용자 정보 설정
         sessionManager.setUser(userInfo, {
           accessToken: 'oauth2_token',
           refreshToken: 'oauth2_refresh_token'
         });
         
-        // URL 파라미터 제거
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // URL 파라미터 완전히 제거 후 새로고침 (무한 루프 방지)
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
         
-        // 컴포넌트가 아직 마운트되어 있으면 새로고침
         if (isMounted) {
           console.log('🔄 세션 복원 완료, 페이지 새로고침...');
-          window.location.reload();
+          // URL 파라미터가 제거된 상태로 새로고침
+          window.location.href = cleanUrl;
         }
         return;
       }
       
-      // localStorage에 사용자 정보가 있는지 확인
       const storedUser = localStorage.getItem('userInfo');
       
       if (storedUser) {
@@ -89,13 +91,11 @@ const ClientDashboard = () => {
           const userInfo = JSON.parse(storedUser);
           console.log('✅ localStorage 사용자 정보:', userInfo);
           
-          // sessionManager에 사용자 정보 설정
           sessionManager.setUser(userInfo, {
             accessToken: userInfo.accessToken || 'local_token',
             refreshToken: userInfo.refreshToken || 'local_refresh_token'
           });
           
-          // 컴포넌트가 아직 마운트되어 있으면 새로고침
           if (isMounted) {
             console.log('🔄 세션 복원 완료, 페이지 새로고침...');
             window.location.reload();
@@ -106,15 +106,12 @@ const ClientDashboard = () => {
         }
       }
       
-      // localStorage에 정보가 없으면 아무것도 하지 않고 대기
       console.log('⏳ localStorage에 사용자 정보가 없음, 세션 로딩 대기 중...');
     };
     
-    // 세션이 아직 로드되지 않았을 때만 세션 재확인
     if (!sessionIsLoggedIn && !sessionUser) {
       console.log('⏳ 세션이 로드되지 않음, 세션 재확인 시작...');
       
-      // 약간의 지연 후 세션 확인 (백엔드 리다이렉트 완료 대기)
       const timer = setTimeout(() => {
         checkAndRestoreSession();
       }, 500);
@@ -143,7 +140,6 @@ const ClientDashboard = () => {
   const [clientStatus, setClientStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 현재 시간 업데이트
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -159,9 +155,7 @@ const ClientDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 내담자 데이터 로드
   const loadClientData = useCallback(async () => {
-    // sessionUser 또는 user 둘 중 하나라도 있으면 진행
     const currentUser = sessionUser || user;
     if (!currentUser?.id) {
       return;
@@ -170,21 +164,20 @@ const ClientDashboard = () => {
     try {
       setIsLoading(true);
 
-      // 스케줄 데이터 로드
       const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
         userId: currentUser.id,
         userRole: 'CLIENT'
       });
 
-      // 매핑 정보 로드 (실제 회기 수를 가져오기 위해)
-      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${currentUser.id}`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${currentUser.id}`);
 
       let totalSessions = 0;
       let usedSessions = 0;
       let remainingSessions = 0;
 
-      // 매핑 정보에서 실제 회기 수 계산
       if (mappingResponse?.success && mappingResponse?.data) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const activeMappings = mappingResponse.data.filter(mapping => mapping.status === 'ACTIVE');
         totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
         usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
@@ -196,10 +189,8 @@ const ClientDashboard = () => {
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
 
-        // 오늘의 상담
         const todaySchedules = schedules.filter(s => s.date === todayStr);
 
-        // 이번 주 상담
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
         const endOfWeek = new Date(today);
@@ -210,13 +201,13 @@ const ClientDashboard = () => {
           return scheduleDate >= startOfWeek && scheduleDate <= endOfWeek;
         });
 
-        // 다가오는 상담
         const upcomingSchedules = schedules.filter(schedule => {
           const scheduleDate = new Date(schedule.date);
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           return scheduleDate > today && schedule.status === 'CONFIRMED';
-        }).slice(0, 3);
+        }).slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
 
-        // 완료된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const completedCount = schedules.filter(s => s.status === 'COMPLETED').length;
 
         setConsultationData({
@@ -229,7 +220,6 @@ const ClientDashboard = () => {
           remainingSessions // 매핑 정보에서 가져온 값 (실제 구매한 회기 수)
         });
       } else {
-        // 스케줄 정보가 없어도 회기 정보는 표시
         setConsultationData(prev => ({
           ...prev,
           totalSessions,
@@ -246,12 +236,10 @@ const ClientDashboard = () => {
   }, [user?.id, sessionUser?.id]);
 
   useEffect(() => {
-    // 세션이 로딩 중이면 대기
     if (sessionLoading) {
       return;
     }
     
-    // sessionManager로 직접 확인
     const currentUser = sessionUser || user;
     const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
     
@@ -260,22 +248,34 @@ const ClientDashboard = () => {
     }
   }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]);
 
-  // 로딩 상태 또는 로그인하지 않은 경우
   const currentUser = sessionUser || user;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
-  
-  // 세션 로딩 중이거나, 세션이 아직 로드되지 않았거나, 사용자 정보가 없으면 로딩 표시
+
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="내담자 대시보드">
+          <ContentHeader
+            title="내 대시보드"
+            subtitle="오늘의 상담·회기·메시지를 한곳에서 확인하세요."
+            titleId={CLIENT_DASHBOARD_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>{body}</main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
-      <SimpleLayout>
-        <div className="mg-v2-dashboard-layout">
-          <UnifiedLoading text="대시보드를 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="대시보드">
+        {pageShell(
+          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+        )}
+      </AdminCommonLayout>
     );
   }
 
-  // 인사말 메시지
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return '좋은 아침이에요';
@@ -284,36 +284,41 @@ const ClientDashboard = () => {
   };
 
   return (
-    <SimpleLayout>
-      <div className="mg-v2-dashboard-layout">
-        
-        {/* 웰컴 헤더 - 화사하고 밝은 느낌 */}
-        <div className="mg-v2-client-dashboard-header">
-          <div className="mg-v2-dashboard-header-content">
-            <div className="mg-v2-flex mg-align-center mg-gap-md">
-              <div className="mg-v2-dashboard-icon">
-                <Sun size={32} />
-              </div>
-              <div>
-                <h1 className="mg-v2-h1">
-                  {getGreeting()}, <span className="mg-v2-color-primary">{currentUser?.name}</span>님!
-                </h1>
-                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mt-xs">
-                  <Sparkles size={16} className="mg-v2-mr-xs" />
-                  오늘도 마음 건강을 위한 한 걸음을 함께해요
-                </p>
-              </div>
-            </div>
-            <div className="mg-v2-flex mg-align-center mg-gap-sm">
-              <Clock size={18} />
-              <span className="mg-v2-text-sm">{currentTime}</span>
-            </div>
-          </div>
-        </div>
+    <AdminCommonLayout title="대시보드">
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="내담자 대시보드">
+            <ContentHeader
+              title="내 대시보드"
+              subtitle={
+                <>
+                  <Sparkles size={16} className="mg-v2-mr-xs" aria-hidden />
+                  {getGreeting()},{' '}
+                  <span className="mg-v2-color-primary">
+                    <SafeText>{currentUser?.name}</SafeText>
+                  </span>
+                  {' '}
+                  님 · 오늘도 마음 건강을 위한 한 걸음을 함께해요
+                </>
+              }
+              titleId={CLIENT_DASHBOARD_TITLE_ID}
+              actions={(
+                <div className="mg-v2-flex mg-align-center mg-gap-sm">
+                  <Sun size={24} aria-hidden />
+                  <Clock size={18} aria-hidden />
+                  <span className="mg-v2-text-sm">{currentTime}</span>
+                </div>
+              )}
+            />
+            <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID} className="mg-v2-dashboard-layout">
 
-        {/* 주요 통계 카드 - 밝고 화사한 색상 */}
+        {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
         <div className="client-dashboard__stats">
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--primary">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--primary clickable"
+            onClick={() => navigate('/client/consultations?filter=today')}
+            title="오늘의 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <Calendar />
             </div>
@@ -325,7 +330,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--success">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--success clickable"
+            onClick={() => navigate('/client/consultations?filter=completed')}
+            title="완료한 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <CheckCircle />
             </div>
@@ -337,7 +346,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--info">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--info clickable"
+            onClick={() => navigate('/client/consultations?filter=weekly')}
+            title="이번 주 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <TrendingUp />
             </div>
@@ -349,7 +362,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--warning">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--warning clickable"
+            onClick={() => navigate('/client/mappings')}
+            title="남은 회기 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <Heart />
             </div>
@@ -373,7 +390,12 @@ const ClientDashboard = () => {
             </div>
             <div className="client-dashboard__schedule-list">
               {consultationData.upcomingSchedules.map((schedule, index) => (
-                <div key={index} className="client-dashboard__schedule-item">
+                <div 
+                  key={index} 
+                  className="client-dashboard__schedule-item clickable"
+                  onClick={() => navigate(`/client/consultations/${schedule.id || index}`)}
+                  title="상담 상세 보기"
+                >
                   <div className="client-dashboard__schedule-date">
                     <div className="client-dashboard__schedule-day">
                       {new Date(schedule.date).getDate()}
@@ -383,10 +405,10 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                   <div className="client-dashboard__schedule-info">
-                    <h3 className="client-dashboard__schedule-title">{schedule.title}</h3>
+                    <SafeText tag="h3" className="client-dashboard__schedule-title">{schedule.title}</SafeText>
                     <p className="client-dashboard__schedule-time">
                       <Clock size={14} />
-                      {schedule.startTime} - {schedule.endTime}
+                      <SafeText>{schedule.startTime}</SafeText> - <SafeText>{schedule.endTime}</SafeText>
                     </p>
                   </div>
                   <div className="client-dashboard__schedule-status">
@@ -418,38 +440,38 @@ const ClientDashboard = () => {
         <div className="client-dashboard__quick-actions">
           <h2 className="client-dashboard__section-title">빠른 메뉴</h2>
           <div className="client-dashboard__action-grid">
-            <MGButton 
+            <MGButton
               variant="primary"
-              fullWidth={true}
-              onClick={() => navigate('/client/schedule')}
               className="client-dashboard__action-btn"
+              onClick={() => navigate('/client/schedule')}
+              preventDoubleClick={false}
             >
               <Calendar size={24} />
               <span>상담 일정</span>
             </MGButton>
-            <MGButton 
+            <MGButton
               variant="success"
-              fullWidth={true}
-              onClick={() => navigate('/client/messages')}
               className="client-dashboard__action-btn"
+              onClick={() => navigate('/client/messages')}
+              preventDoubleClick={false}
             >
               <MessageCircle size={24} />
               <span>메시지</span>
             </MGButton>
-            <MGButton 
+            <MGButton
               variant="info"
-              fullWidth={true}
-              onClick={() => navigate('/client/payment-history')}
               className="client-dashboard__action-btn"
+              onClick={() => navigate('/client/payment-history')}
+              preventDoubleClick={false}
             >
               <CreditCard size={24} />
               <span>결제 내역</span>
             </MGButton>
-            <MGButton 
+            <MGButton
               variant="warning"
-              fullWidth={true}
-              onClick={() => navigate('/client/settings')}
               className="client-dashboard__action-btn"
+              onClick={() => navigate('/client/settings')}
+              preventDoubleClick={false}
             >
               <Heart size={24} />
               <span>내 정보</span>
@@ -459,8 +481,11 @@ const ClientDashboard = () => {
 
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

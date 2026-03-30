@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut, apiPost } from '../../utils/ajax';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ClientMessageScreen.css';
 
 /**
@@ -13,7 +14,7 @@ import './ClientMessageScreen.css';
  */
 const ClientMessageScreen = () => {
   const navigate = useNavigate();
-  const { user } = useSession();
+  const { user, isLoading: sessionLoading, isLoggedIn } = useSession();
   
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -23,22 +24,75 @@ const ClientMessageScreen = () => {
   
   // 데이터 로드
   useEffect(() => {
-    loadMessages();
-  }, []);
+    // 세션이 로딩 중이면 대기
+    if (sessionLoading) {
+      return;
+    }
+    
+    // 로그인되어 있고 사용자 정보가 있으면 메시지 로드
+    if (isLoggedIn && user && user.id) {
+      loadMessages();
+    } else if (!isLoggedIn) {
+      // 로그인되지 않았으면 로그인 페이지로 리다이렉트
+      navigate('/login');
+    } else {
+      // 로그인되어 있지만 사용자 정보가 없으면 로딩 종료
+      console.warn('⚠️ 로그인되어 있지만 사용자 정보가 없습니다.');
+      setLoading(false);
+    }
+  }, [user, sessionLoading, isLoggedIn, navigate]);
 
   const loadMessages = async () => {
+    if (!user || !user.id) {
+      console.warn('사용자 정보가 없어 메시지를 로드할 수 없습니다.');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
-      const response = await apiGet(`/api/consultation-messages/client/${user.id}`);
-      if (response.success) {
-        setMessages(response.data);
+      // ClientMessageSection과 동일한 방식으로 API 호출
+      const response = await apiGet(`/api/v1/consultation-messages/client/${user.id}`, {
+        page: 0,
+        size: 100,
+        sort: 'createdAt,desc'
+      });
+      
+      console.log('📨 메시지 API 응답:', response);
+      
+      if (response && response.success) {
+        // 백엔드 응답 형식: { success: true, data: { messages: [...], totalElements: ... } }
+        // ClientMessageSection과 동일하게 처리: response.data는 객체이고, messages 배열을 포함
+        let messageData = [];
+        if (response.data) {
+          if (Array.isArray(response.data)) {
+            // data가 직접 배열인 경우 (레거시)
+            messageData = response.data;
+          } else if (response.data.messages && Array.isArray(response.data.messages)) {
+            // data.messages가 배열인 경우 (표준)
+            messageData = response.data.messages;
+          }
+        }
+        setMessages(messageData);
+        console.log('✅ 메시지 로드 성공:', messageData.length, '개');
+      } else if (response === null || response === undefined) {
+        // 403 등으로 null이 반환된 경우 (권한 문제)
+        console.warn('⚠️ 메시지 API 응답이 null입니다. 권한이 없을 수 있습니다.');
+        setMessages([]);
       } else {
-        throw new Error(response.message || '메시지 목록을 불러오는데 실패했습니다.');
+        // success가 false인 경우
+        console.warn('⚠️ 메시지 API 응답 실패:', response);
+        setMessages([]);
+        // 에러 메시지는 표시하지 않음 (권한 문제일 수 있음)
       }
     } catch (error) {
       console.error('메시지 로드 오류:', error);
-      notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      // 403 오류는 조용히 처리 (권한 문제)
+      if (error.status !== 403 && error.message?.includes('접근 권한') === false) {
+        notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      }
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -50,7 +104,7 @@ const ClientMessageScreen = () => {
     // 읽지 않은 메시지인 경우 읽음 처리
     if (!message.isRead) {
       try {
-        await apiPut(`/api/consultation-messages/${message.id}/read`);
+        await apiPut(`/api/v1/consultation-messages/${message.id}/read`);
         // 로컬 상태 업데이트
         setMessages(prev => prev.map(m => 
           m.id === message.id ? { ...m, isRead: true, readAt: new Date().toISOString() } : m
@@ -78,7 +132,7 @@ const ClientMessageScreen = () => {
         isUrgent: false
       };
 
-      const response = await apiPost(`/api/consultation-messages/${selectedMessage.id}/reply`, replyData);
+      const response = await apiPost(`/api/v1/consultation-messages/${selectedMessage.id}/reply`, replyData);
       
       if (response.success) {
         notificationManager.show('답장이 전송되었습니다.', 'success');
@@ -135,16 +189,14 @@ const ClientMessageScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담사 메시지">
-        <div className="client-message-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="메시지를 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담사 메시지">
+    <AdminCommonLayout title="메시지">
       <div className="client-message-screen-container">
       {/* 헤더 */}
       <div className="client-message-screen-header">
@@ -215,9 +267,9 @@ const ClientMessageScreen = () => {
                   </div>
                 </div>
                 <div className="client-message-screen-message-content">
-                  {message.content.length > 100 
-                    ? `${message.content.substring(0, 100)}...` 
-                    : message.content}
+                  {(message.content || '').length > 100
+                    ? `${(message.content || '').substring(0, 100)}...`
+                    : (message.content || '')}
                 </div>
                 <div className="client-message-screen-message-footer">
                   <span>상담사</span>
@@ -254,7 +306,7 @@ const ClientMessageScreen = () => {
             </div>
             
             <div className="client-message-screen-message-detail-content">
-              {selectedMessage.content}
+              {selectedMessage.content ?? ''}
             </div>
             
             <div className="client-message-screen-reply-section">
@@ -277,7 +329,7 @@ const ClientMessageScreen = () => {
                   onClick={handleReply}
                   disabled={replying || !replyContent.trim()}
                 >
-                  {replying ? <UnifiedLoading variant="dots" size="small" /> : '📤 답장 전송'}
+                  {replying ? <div className="mg-loading">로딩중...</div> : '📤 답장 전송'}
                 </button>
               </div>
             </div>
@@ -285,7 +337,7 @@ const ClientMessageScreen = () => {
         </div>
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

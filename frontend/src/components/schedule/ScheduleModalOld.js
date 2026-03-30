@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -8,16 +8,24 @@ import notificationManager from '../../utils/notification';
 import { CSS_VARIABLES } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleModal.css';
 
 /**
  * 스케줄 생성 모달 컴포넌트
+/**
  * - 상담사 선택 (드래그 앤 드롭)
+/**
  * - 내담자 선택 (드래그 앤 드롭)
+/**
  * - 시간 슬롯 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleModal = ({ 
@@ -44,7 +52,7 @@ const ScheduleModal = ({
     const loadConsultationTypeCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/common-codes/CONSULTATION_TYPE');
+            const response = await fetch('/api/v1/common-codes/groups/CONSULTATION_TYPE');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {
@@ -61,11 +69,11 @@ const ScheduleModal = ({
             console.error('상담 유형 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setConsultationTypeOptions([
-                { value: 'INDIVIDUAL', label: '개인상담 (50분)', icon: '👤', color: '#3b82f6', description: '개인 상담' },
-                { value: 'FAMILY', label: '가족상담 (100분)', icon: '👨‍👩‍👧‍👦', color: '#10b981', description: '가족 상담' },
-                { value: 'INITIAL', label: '초기상담 (60분)', icon: '🎯', color: '#f59e0b', description: '초기 상담' },
-                { value: 'COUPLE', label: '부부상담 (80분)', icon: '💑', color: '#8b5cf6', description: '부부 상담' },
-                { value: 'GROUP', label: '집단상담 (90분)', icon: '👥', color: '#ef4444', description: '집단 상담' }
+                { value: 'INDIVIDUAL', label: '개인상담 (50분)', icon: '👤', color: 'var(--mg-primary-500)', description: '개인 상담' },
+                { value: 'FAMILY', label: '가족상담 (100분)', icon: '👨‍👩‍👧‍👦', color: 'var(--mg-success-500)', description: '가족 상담' },
+                { value: 'INITIAL', label: '초기상담 (60분)', icon: '🎯', color: 'var(--mg-warning-500)', description: '초기 상담' },
+                { value: 'COUPLE', label: '부부상담 (80분)', icon: '💑', color: 'var(--mg-purple-500)', description: '부부 상담' },
+                { value: 'GROUP', label: '집단상담 (90분)', icon: '👥', color: 'var(--mg-error-500)', description: '집단 상담' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -96,7 +104,7 @@ const ScheduleModal = ({
 
 
 
-    /**
+/**
      * 상담 유형별 기본 시간 반환
      */
     const getConsultationDuration = (type) => {
@@ -110,7 +118,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -124,7 +132,7 @@ const ScheduleModal = ({
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
-    /**
+/**
      * 상담사 드래그 앤 드롭 핸들러
      */
     const handleConsultantDrop = (consultant) => {
@@ -133,7 +141,7 @@ const ScheduleModal = ({
         setStep(2); // 내담자 선택 단계로
     };
 
-    /**
+/**
      * 내담자 드래그 앤 드롭 핸들러
      */
     const handleClientDrop = (client) => {
@@ -142,7 +150,7 @@ const ScheduleModal = ({
         setStep(3); // 시간 선택 단계로
     };
 
-    /**
+/**
      * 시간 슬롯 선택 핸들러
      */
     const handleTimeSlotSelect = (timeSlot) => {
@@ -151,12 +159,12 @@ const ScheduleModal = ({
         setStep(4); // 세부사항 입력 단계로
     };
 
-    /**
+/**
      * 스케줄 생성
      */
     const handleCreateSchedule = async () => {
         if (!selectedConsultant || !selectedClient || !selectedTimeSlot) {
-            alert('모든 항목을 선택해주세요.');
+            notificationManager.warning('모든 항목을 선택해주세요.');
             return;
         }
 
@@ -190,7 +198,7 @@ const ScheduleModal = ({
 
             console.log('📝 스케줄 생성 데이터:', scheduleData);
 
-            const response = await csrfTokenManager.post('/api/schedules/consultant', scheduleData);
+            const response = await csrfTokenManager.post('/api/v1/schedules/consultant', scheduleData);
 
             if (response.ok) {
                 const result = await response.json();
@@ -210,7 +218,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 이전 단계로
      */
     const handlePrevStep = () => {
@@ -222,7 +230,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 모달 리셋
      */
     const resetModal = () => {
@@ -235,7 +243,7 @@ const ScheduleModal = ({
         setConsultationType('INDIVIDUAL');
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {
@@ -305,7 +313,7 @@ const ScheduleModal = ({
                                 >
                                     {consultationTypeOptions.map(option => (
                                         <option key={option.value} value={option.value}>
-                                            {option.icon} {option.label}
+                                            {option.icon} {toDisplayString(option.label)}
                                         </option>
                                     ))}
                                 </select>

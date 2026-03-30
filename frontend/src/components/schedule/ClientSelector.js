@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import ClientCard from '../ui/Card/ClientCard';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -8,19 +7,27 @@ import '../../styles/main.css';
 
 /**
  * 내담자 선택 컴포넌트
+/**
  * - 결제 승인되고 세션이 남은 내담자만 표시
+/**
  * - 드래그 앤 드롭 기능 지원
+/**
  * - 세션 정보 표시
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ClientSelector = ({ 
     clients, 
     selectedConsultant, 
     onClientSelect, 
-    selectedClient 
+    selectedClient,
+    hideFooterCount = false 
 }) => {
     const [clientHistory, setClientHistory] = useState({});
     const [loadingHistory, setLoadingHistory] = useState({});
@@ -28,7 +35,6 @@ const ClientSelector = ({
     const [loadingMappings, setLoadingMappings] = useState({});
     const [isMobile, setIsMobile] = useState(false);
 
-    // 모바일 감지
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth <= 768);
@@ -40,7 +46,7 @@ const ClientSelector = ({
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    /**
+/**
      * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 일괄 로드
      */
     useEffect(() => {
@@ -50,7 +56,7 @@ const ClientSelector = ({
         }
     }, [clients, selectedConsultant]);
 
-    /**
+/**
      * 모든 내담자의 매핑 정보를 일괄 로드
      */
     const loadAllClientMappings = useCallback(async (clientsList) => {
@@ -60,8 +66,8 @@ const ClientSelector = ({
             const consultantId = selectedConsultant.originalId || selectedConsultant.id;
             console.log('📊 모든 내담자 매핑 정보 일괄 로드 시작:', { consultantId, clientCount: clientsList.length });
             
-            // 상담사별 매핑 정보를 일괄 조회
-            const response = await fetch(`/api/admin/mappings/consultant/${consultantId}/clients`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await fetch(`/api/v1/admin/mappings/consultant/${consultantId}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -71,9 +77,22 @@ const ClientSelector = ({
 
             if (response.ok) {
                 const responseData = await response.json();
-                const mappingsData = responseData.data || [];
+                console.log('📊 API 응답 데이터:', responseData);
                 
-                // 매핑 데이터를 클라이언트 ID별로 정리
+                // ApiResponse 래퍼 처리: { success: true, data: { mappings: [...], count: N } }
+                let mappingsData = [];
+                if (responseData && responseData.data) {
+                    if (responseData.data.mappings && Array.isArray(responseData.data.mappings)) {
+                        mappingsData = responseData.data.mappings;
+                    } else if (Array.isArray(responseData.data)) {
+                        mappingsData = responseData.data;
+                    }
+                } else if (Array.isArray(responseData)) {
+                    mappingsData = responseData;
+                }
+                
+                console.log('📊 추출된 매핑 데이터:', mappingsData);
+                
                 const mappingsByClientId = {};
                 mappingsData.forEach(mapping => {
                     const clientId = mapping.clientId || mapping.client?.id;
@@ -82,6 +101,7 @@ const ClientSelector = ({
                             hasMapping: true,
                             remainingSessions: mapping.remainingSessions || 0,
                             packageName: mapping.packageName || '기본 패키지',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             mappingStatus: mapping.status || 'ACTIVE',
                             lastSessionDate: mapping.lastSessionDate,
                             totalSessions: mapping.totalSessions || 0,
@@ -90,7 +110,6 @@ const ClientSelector = ({
                     }
                 });
                 
-                // 모든 클라이언트에 대해 매핑 정보 설정 (매핑이 없는 경우 기본값)
                 const allClientMappings = {};
                 clientsList.forEach(client => {
                     const clientId = client.originalId || client.id;
@@ -98,6 +117,7 @@ const ClientSelector = ({
                         hasMapping: false,
                         remainingSessions: 0,
                         packageName: '매핑 없음',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mappingStatus: 'INACTIVE',
                         lastSessionDate: null,
                         totalSessions: 0
@@ -108,7 +128,6 @@ const ClientSelector = ({
                 console.log('📊 모든 내담자 매핑 정보 일괄 로드 완료:', allClientMappings);
             } else {
                 console.error('❌ 매핑 정보 일괄 조회 실패:', response.status);
-                // 실패 시 기본값 설정
                 const defaultMappings = {};
                 clientsList.forEach(client => {
                     const clientId = client.originalId || client.id;
@@ -116,6 +135,7 @@ const ClientSelector = ({
                         hasMapping: false,
                         remainingSessions: 0,
                         packageName: '확인 불가',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mappingStatus: 'INACTIVE',
                         lastSessionDate: null,
                         totalSessions: 0
@@ -125,7 +145,6 @@ const ClientSelector = ({
             }
         } catch (error) {
             console.error('❌ 내담자 매핑 정보 일괄 로드 오류:', error);
-            // 오류 시 기본값 설정
             const defaultMappings = {};
             clientsList.forEach(client => {
                 const clientId = client.originalId || client.id;
@@ -133,6 +152,7 @@ const ClientSelector = ({
                     hasMapping: false,
                     remainingSessions: 0,
                     packageName: '확인 불가',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: 'INACTIVE',
                     lastSessionDate: null,
                     totalSessions: 0
@@ -142,7 +162,7 @@ const ClientSelector = ({
         }
     }, [selectedConsultant]);
 
-    /**
+/**
      * 개별 내담자 매핑 정보 로드 (필요시에만 사용)
      */
     const loadClientMapping = useCallback(async (client) => {
@@ -162,13 +182,13 @@ const ClientSelector = ({
             setClientMappings(prev => ({ ...prev, [clientId]: mappingInfo }));
         } catch (error) {
             console.error('❌ 내담자 매핑 정보 로드 오류:', error);
-            // 오류 시 기본값 설정
             setClientMappings(prev => ({ 
                 ...prev, 
                 [clientId]: {
                     hasMapping: false,
                     remainingSessions: 0,
                     packageName: '확인 불가',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: 'INACTIVE',
                     lastSessionDate: null,
                     totalSessions: 0
@@ -179,7 +199,7 @@ const ClientSelector = ({
         }
     }, [clientMappings, loadingMappings, selectedConsultant]);
 
-    /**
+/**
      * 내담자 상담 히스토리 조회
      */
     const loadClientHistory = async (client) => {
@@ -209,20 +229,21 @@ const ClientSelector = ({
         }
     };
 
-    /**
+/**
      * 내담자와 상담사 간의 매핑 확인
      */
     const getClientMappingInfo = async (client) => {
-        // API 엔드포인트와 상수 정의
         const API_ENDPOINTS = {
-            CHECK_MAPPING: '/api/schedules/client/mapping/check'
+            CHECK_MAPPING: '/api/v1/schedules/client/mapping/check'
         };
         const MESSAGES = {
             NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
             NO_SESSIONS: '남은 세션이 없는 내담자입니다.'
         };
         const MAPPING_STATUS = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             ACTIVE: 'ACTIVE',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             INACTIVE: 'INACTIVE'
         };
         
@@ -257,6 +278,7 @@ const ClientSelector = ({
                     hasMapping: data.data.hasMapping,
                     remainingSessions: data.data.remainingSessions || 0,
                     packageName: data.data.packageName || '기본 패키지',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: data.data.mappingStatus || MAPPING_STATUS.ACTIVE,
                     lastSessionDate: data.data.lastSessionDate,
                     totalSessions: data.data.totalSessions || 0
@@ -267,6 +289,7 @@ const ClientSelector = ({
                     hasMapping: false,
                     remainingSessions: 0,
                     packageName: '매핑 없음',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: MAPPING_STATUS.INACTIVE,
                     lastSessionDate: null,
                     totalSessions: 0
@@ -275,11 +298,11 @@ const ClientSelector = ({
         } catch (error) {
             console.error('매핑 정보 확인 오류:', error);
             console.error('오류 상세:', error.message);
-            // 에러 시 기본값 반환
             return {
                 hasMapping: false,
                 remainingSessions: 0,
                 packageName: '확인 불가',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 mappingStatus: MAPPING_STATUS.INACTIVE,
                 lastSessionDate: null,
                 totalSessions: 0
@@ -287,19 +310,7 @@ const ClientSelector = ({
         }
     };
 
-    /**
-     * 프로필 이미지 URL 생성
-     */
-    const getClientProfileImage = (client) => {
-        if (client.profileImage) {
-            return client.profileImage;
-        }
-        
-        const firstChar = client.name ? client.name.charAt(0) : '?';
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstChar)}&background=28a745&color=fff&size=60&font-size=0.5`;
-    };
-
-    /**
+/**
      * 세션 상태 배지 색상
      */
     const getSessionBadgeColor = (remainingSessions) => {
@@ -308,7 +319,7 @@ const ClientSelector = ({
         return 'success';
     };
 
-    /**
+/**
      * 내담자 카드 클릭 핸들러
      */
     const handleClientClick = async (client) => {
@@ -318,7 +329,6 @@ const ClientSelector = ({
         };
         
         try {
-            // 매핑 정보 확인
             const mappingInfo = await getClientMappingInfo(client);
             
             if (!mappingInfo.hasMapping) {
@@ -331,7 +341,6 @@ const ClientSelector = ({
                 return;
             }
             
-            // 매핑 정보를 클라이언트 객체에 추가
             const clientWithMapping = {
                 ...client,
                 mappingInfo
@@ -344,7 +353,7 @@ const ClientSelector = ({
         }
     };
 
-    /**
+/**
      * 드래그 시작 핸들러
      */
     const handleDragStart = (e, client) => {
@@ -370,19 +379,19 @@ const ClientSelector = ({
 
     return (
         <div className="client-selector">
-            <div className="mg-client-cards-grid mg-client-cards-grid--detailed">
+            <div className="mg-client-cards-grid mg-client-cards-grid--detailed mg-client-cards-grid--schedule-client">
                 {clients.map(client => {
                     const clientId = client.originalId || client.id;
                     const mappingInfo = clientMappings[clientId] || {
                         hasMapping: false,
                         remainingSessions: 0,
                         packageName: loadingMappings[clientId] ? '로딩 중' : '확인 중',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mappingStatus: 'INACTIVE',
                         lastSessionDate: null,
                         totalSessions: 0
                     };
                     
-                    // 디버깅용 로그
                     console.log(`🔍 내담자 ${client.name} (ID: ${clientId}) 매핑 정보:`, {
                         mappingInfo,
                         clientMappings: clientMappings[clientId],
@@ -397,6 +406,7 @@ const ClientSelector = ({
                             key={client.id}
                             client={{
                                 ...client,
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 status: isAvailable ? 'ACTIVE' : 'INACTIVE',
                                 totalSessions: mappingInfo.totalSessions || 0,
                                 completedSessions: (mappingInfo.totalSessions || 0) - (mappingInfo.remainingSessions || 0),
@@ -415,10 +425,11 @@ const ClientSelector = ({
                 })}
             </div>
 
-            {/* 필터링된 내담자 수 표시 */}
-            <div className="client-count">
-                총 {clients.length}명의 내담자
-            </div>
+            {!hideFooterCount && (
+                <div className="client-count">
+                    총 {clients.length}명의 내담자
+                </div>
+            )}
         </div>
     );
 };

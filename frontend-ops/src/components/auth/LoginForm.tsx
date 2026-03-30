@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import MGButton from "@/components/ui/MGButton";
+import { login, type LoginRequest } from "@/services/authApi";
 
 interface LoginFormProps {
   redirectTo: string;
@@ -20,31 +22,66 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     startTransition(async () => {
       try {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ username, password })
-        });
-
-        const body = await response.json();
-
-        if (!response.ok) {
-          setFeedback(
-            body?.message ?? "로그인에 실패했습니다. 입력 정보를 다시 확인하세요."
-          );
+        // 입력값 trim 처리
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+        
+        if (!trimmedUsername || !trimmedPassword) {
+          setFeedback("아이디와 비밀번호를 모두 입력해주세요.");
           return;
         }
-
-        router.replace(redirectTo || "/dashboard");
-        router.refresh();
+        
+        // 표준화된 로그인 API 호출
+        const loginRequest: LoginRequest = {
+          username: trimmedUsername,
+          password: trimmedPassword
+        };
+        
+        console.log("[LoginForm] 로그인 요청 시작:", { username: loginRequest.username });
+        
+        const responseData = await login(loginRequest);
+        
+        // 로그인 성공
+        const redirectPath = redirectTo || "/dashboard";
+        
+        console.log("[LoginForm] 로그인 성공:", {
+          actorId: responseData.actorId,
+          actorRole: responseData.actorRole,
+          hasToken: !!responseData.token
+        });
+        
+        // 쿠키 설정은 authApi.login에서 이미 완료됨
+        // 쿠키가 브라우저에 적용될 시간을 확보한 후 리다이렉트
+        setTimeout(() => {
+          // 쿠키 확인 (authApi.login에서 이미 확인했지만, 리다이렉트 전 재확인)
+          const cookies = document.cookie;
+          const hasToken = cookies.includes("ops_token=");
+          console.log("[LoginForm] 리다이렉트 전 최종 쿠키 확인:", {
+            hasToken,
+            cookies: cookies.substring(0, 200) + "...",
+            redirectPath
+          });
+          
+          if (!hasToken) {
+            console.error("[LoginForm] 쿠키 설정 실패, 리다이렉트 취소");
+            setFeedback("쿠키 설정에 실패했습니다. 브라우저 설정을 확인해주세요.");
+            return;
+          }
+          
+          console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
+          // window.location.href를 사용하여 전체 페이지 리로드 (쿠키 적용 보장)
+          window.location.href = redirectPath;
+        }, 300); // 쿠키 적용 대기 시간 (200ms -> 300ms로 증가)
       } catch (error) {
-        setFeedback(
-          error instanceof Error
-            ? error.message
-            : "로그인 처리 중 오류가 발생했습니다."
-        );
+        const errorMessage = error instanceof Error
+          ? error.message
+          : "로그인 처리 중 오류가 발생했습니다.";
+        console.error("[LoginForm] 로그인 실패:", {
+          error,
+          errorMessage,
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        setFeedback(errorMessage);
       }
     });
   };
@@ -85,9 +122,16 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       </div>
 
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "로그인 중..." : "로그인"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="로그인 중..."
+          preventDoubleClick={false}
+          disabled={isPending}
+        >
+          로그인
+        </MGButton>
         {feedback && (
           <p className="form-feedback form-feedback--error">{feedback}</p>
         )}

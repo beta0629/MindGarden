@@ -20,6 +20,15 @@ export function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get("ops_token")?.value;
+  
+  // 디버깅: 쿠키 확인
+  if (!token) {
+    console.log("[Middleware] 토큰 없음:", {
+      pathname,
+      cookies: request.cookies.getAll().map(c => c.name),
+      hasCookies: request.cookies.getAll().length > 0
+    });
+  }
 
   if (!token) {
     const loginUrl = new URL("/auth/login", request.url);

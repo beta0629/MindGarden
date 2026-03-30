@@ -54,15 +54,21 @@
     position: relative;
 }
 
-.status-indicator svg {
+.status-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-indicator svg,
+.status-icon-wrap svg {
     font-size: var(--admin-font-lg);
     color: var(--admin-text-secondary);
 }
 
-.status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
+/* 상태 도트: 전역 mg-status-dot + 수정자 사용 (mindgarden-design-system.css) */
+.status-indicator .mg-status-dot {
     position: absolute;
     top: -2px;
     right: -2px;
@@ -128,8 +134,8 @@
         font-size: var(--admin-font-md);
     }
     
-    .status-dot {
-        width: 10px;
-        height: 10px;
+    .status-indicator .mg-status-dot {
+        width: 8px;
+        height: 8px;
     }
 }

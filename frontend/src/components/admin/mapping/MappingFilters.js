@@ -1,17 +1,25 @@
 import React from 'react';
 import { Search, Filter, RotateCcw, X } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
-import MGButton from '../../common/MGButton';
+// import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import './MappingFilters.css';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 매칭 필터 컴포넌트
+/**
  * - 상태별 필터링
+/**
  * - 검색 기능
+/**
  * - 필터 초기화
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingFilters = ({ 
@@ -27,13 +35,13 @@ const MappingFilters = ({
         <div className="mg-v2-mapping-filters">
             <div className="mg-v2-mapping-filters-header">
                 <h3 className="mg-v2-mapping-filters-title">🔍 필터 및 검색</h3>
-                <MGButton 
+                <button className="mg-button" 
                     variant="secondary"
                     size="small"
                     onClick={onReset}
                 >
                     <RotateCcw size={16} /> 초기화
-                </MGButton>
+                </button>
             </div>
             
             <div className="mg-v2-mapping-filters-content">
@@ -49,7 +57,7 @@ const MappingFilters = ({
                     >
                         {statusOptions.map(option => (
                             <option key={option.value} value={option.value}>
-                                {option.label}
+                                {toDisplayString(option.label)}
                             </option>
                         ))}
                     </select>

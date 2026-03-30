@@ -1,8 +1,12 @@
 /**
  * ScheduleCalendar 유틸리티 함수들
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -49,16 +53,14 @@ export const convertConsultationTypeToKorean = (consultationType) => {
  * 상담사별 색상 생성
  */
 export const getConsultantColor = (consultantId) => {
-    if (!consultantId) return '#6b7280';
+    if (!consultantId) return 'var(--mg-gray-500)';
     
-    // 상담사 ID를 기반으로 일관된 색상 생성
     const colors = [
-        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-        '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
-        '#14b8a6', '#a855f7', '#22c55e', '#eab308', '#ef4444'
+        'var(--mg-primary-500)', 'var(--mg-error-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-purple-500)',
+        'var(--mg-info-500)', 'var(--mg-success-400)', 'var(--mg-warning-500)', 'var(--mg-pink-500)', 'var(--mg-indigo-500)',
+        'var(--mg-teal-500)', 'var(--mg-purple-500)', 'var(--mg-green-500)', 'var(--mg-yellow-500)', 'var(--mg-error-500)'
     ];
     
-    // 간단한 해시 함수로 일관된 색상 선택
     let hash = 0;
     for (let i = 0; i < consultantId.toString().length; i++) {
         const char = consultantId.toString().charCodeAt(i);
@@ -74,14 +76,18 @@ export const getConsultantColor = (consultantId) => {
  */
 export const getEventColor = (status) => {
     const statusColors = {
-        'AVAILABLE': '#28a745',
-        'BOOKED': '#007bff',
-        'CONFIRMED': '#17a2b8',
-        'VACATION': '#ffc107',
-        'COMPLETED': '#6c757d',
-        'CANCELLED': '#dc3545'
+        'AVAILABLE': 'var(--mg-success-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'BOOKED': 'var(--mg-primary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'CONFIRMED': 'var(--mg-info-500)',
+        'VACATION': 'var(--mg-warning-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'COMPLETED': 'var(--mg-secondary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        'CANCELLED': 'var(--mg-error-500)'
     };
-    return statusColors[status] || '#6b7280';
+    return statusColors[status] || 'var(--mg-gray-500)';
 };
 
 /**
@@ -96,8 +102,8 @@ export const convertVacationToEvent = (vacationData, consultantId, date) => {
         title: '휴가',
         start: startDate.toISOString(),
         end: endDate.toISOString(),
-        backgroundColor: '#ffc107',
-        borderColor: '#ffc107',
+        backgroundColor: 'var(--mg-warning-500)',
+        borderColor: 'var(--mg-warning-500)',
         className: 'vacation-event',
         allDay: true,
         extendedProps: {

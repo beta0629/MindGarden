@@ -1,177 +1,72 @@
 /**
- * 사용자 역할 상수 정의
- * 하드코딩 방지를 위한 역할 상수
- * 
- * @author MindGarden
- * @version 1.0.0
+ * 사용자 역할 상수 정의 (ADMIN, STAFF, CONSULTANT, CLIENT 4개만 사용)
+ *
+ * @author Core Solution
+ * @version 2.0.0
  * @since 2025-01-28
+ * @updated 2026-02 - 4역할만 사용 (BRANCH_*, HQ_*, TENANT_ADMIN 등 제거)
  */
 
+/** 표준 역할 4개만 */
 export const USER_ROLES = {
-    CLIENT: 'CLIENT',
-    CONSULTANT: 'CONSULTANT',
-    ADMIN: 'ADMIN',
-    BRANCH_ADMIN: 'BRANCH_ADMIN',
-    BRANCH_SUPER_ADMIN: 'BRANCH_SUPER_ADMIN',
-    BRANCH_MANAGER: 'BRANCH_MANAGER',
-    HQ_ADMIN: 'HQ_ADMIN',
-    SUPER_HQ_ADMIN: 'SUPER_HQ_ADMIN',
-    HQ_MASTER: 'HQ_MASTER',
-    HQ_SUPER_ADMIN: 'HQ_SUPER_ADMIN' // 기존 호환성
+  ADMIN: 'ADMIN',
+  STAFF: 'STAFF',
+  CONSULTANT: 'CONSULTANT',
+  CLIENT: 'CLIENT'
 };
 
-// 관리자 역할 목록
-export const ADMIN_ROLES = [
-    USER_ROLES.ADMIN,
-    USER_ROLES.BRANCH_ADMIN,
-    USER_ROLES.BRANCH_SUPER_ADMIN,
-    USER_ROLES.BRANCH_MANAGER,
-    USER_ROLES.HQ_ADMIN,
-    USER_ROLES.SUPER_HQ_ADMIN,
-    USER_ROLES.HQ_MASTER,
-    USER_ROLES.HQ_SUPER_ADMIN
-];
+/** 관리자 역할 (서버 역할 ADMIN 기준). 표시/선택용은 getAdminRoles() 사용. */
+const SERVER_ADMIN_ROLE = 'ADMIN';
+let ADMIN_ROLES = [USER_ROLES.ADMIN];
 
-// 본사 관리자 역할 목록
-export const HQ_ADMIN_ROLES = [
-    USER_ROLES.HQ_ADMIN,
-    USER_ROLES.SUPER_HQ_ADMIN,
-    USER_ROLES.HQ_MASTER,
-    USER_ROLES.HQ_SUPER_ADMIN
-];
+/**
+ * 공통코드에서 역할 목록을 동적으로 로드하여 업데이트 (4개 역할만 반환)
+ *
+ * @returns {Promise<void>}
+ */
+export const loadRoleCodesFromCommonCode = async () => {
+  try {
+    const { getAdminRoleCodes } = await import('../utils/roleCodeUtils');
+    ADMIN_ROLES = await getAdminRoleCodes();
+    console.log('✅ 역할 코드 공통코드에서 로드 완료:', { admin: ADMIN_ROLES.length });
+  } catch (error) {
+    console.warn('⚠️ 역할 코드 공통코드 로드 실패, 기본값 사용:', error);
+  }
+};
 
-// 지점 관리자 역할 목록
-export const BRANCH_ADMIN_ROLES = [
-    USER_ROLES.BRANCH_ADMIN,
-    USER_ROLES.BRANCH_SUPER_ADMIN,
-    USER_ROLES.BRANCH_MANAGER,
-    USER_ROLES.ADMIN
-];
+if (typeof window !== 'undefined') {
+  loadRoleCodesFromCommonCode().catch(console.error);
+}
 
-// 역할 체크 유틸리티
+export const getAdminRoles = () => ADMIN_ROLES;
+
+/** 표준 역할 4개 배열 (드롭다운/목록용) */
+export const ROLES_LIST = [USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CONSULTANT, USER_ROLES.CLIENT];
+
+/** 역할 체크 유틸리티 */
 export const RoleUtils = {
-    /**
-     * 사용자가 관리자 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isAdmin: (user) => {
-        if (!user?.role) return false;
-        return ADMIN_ROLES.includes(user.role);
-    },
+  /** 서버에서 받은 role 기준 관리자 여부 */
+  isAdmin: (user) => user?.role === SERVER_ADMIN_ROLE,
 
-    /**
-     * 사용자가 본사 관리자 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isHqAdmin: (user) => {
-        if (!user?.role) return false;
-        return HQ_ADMIN_ROLES.includes(user.role);
-    },
+  /**
+   * @deprecated 브랜치 개념 제거. ADMIN_ROLES 사용 권장
+   */
+  isBranchAdmin: (user) => user?.role && ADMIN_ROLES.includes(user.role),
 
-    /**
-     * 사용자가 지점 관리자 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isBranchAdmin: (user) => {
-        if (!user?.role) return false;
-        return BRANCH_ADMIN_ROLES.includes(user.role);
-    },
+  isConsultant: (user) => !!user?.role && user.role === USER_ROLES.CONSULTANT,
+  isClient: (user) => !!user?.role && user.role === USER_ROLES.CLIENT,
+  isStaff: (user) => !!user?.role && user.role === USER_ROLES.STAFF,
 
-    /**
-     * 사용자가 상담사 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isConsultant: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.CONSULTANT;
-    },
+  /** 서버에서 받은 role과 비교 */
+  hasRole: (user, role) => !!user?.role && user.role === role,
 
-    /**
-     * 사용자가 내담자 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isClient: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.CLIENT;
-    },
+  /** 서버에서 받은 role이 목록에 포함되는지 */
+  hasAnyRole: (user, roles) => !!user?.role && Array.isArray(roles) && roles.includes(user.role),
 
-    /**
-     * 사용자가 특정 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @param {string} role - 확인할 역할
-     * @returns {boolean}
-     */
-    hasRole: (user, role) => {
-        if (!user?.role) return false;
-        return user.role === role;
-    },
-
-    /**
-     * 사용자가 여러 역할 중 하나인지 확인
-     * @param {Object} user - 사용자 객체
-     * @param {string[]} roles - 확인할 역할 목록
-     * @returns {boolean}
-     */
-    hasAnyRole: (user, roles) => {
-        if (!user?.role) return false;
-        return roles.includes(user.role);
-    },
-
-    /**
-     * 사용자가 지점 수퍼 어드민 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isBranchSuperAdmin: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.BRANCH_SUPER_ADMIN;
-    },
-
-    /**
-     * 사용자가 본사 수퍼 어드민 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isSuperHqAdmin: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.SUPER_HQ_ADMIN;
-    },
-
-    /**
-     * 사용자가 본사 마스터 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isHqMaster: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.HQ_MASTER;
-    },
-
-    /**
-     * 사용자가 지점 관리자 역할인지 확인
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isBranchManager: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.BRANCH_MANAGER;
-    },
-
-    /**
-     * 사용자가 본사 수퍼 어드민 역할인지 확인 (기존 호환성)
-     * @param {Object} user - 사용자 객체
-     * @returns {boolean}
-     */
-    isHqSuperAdmin: (user) => {
-        if (!user?.role) return false;
-        return user.role === USER_ROLES.HQ_SUPER_ADMIN || user.role === USER_ROLES.SUPER_HQ_ADMIN;
-    }
+  /** @deprecated 4역할 단순화. isAdmin 사용 */
+  isBranchSuperAdmin: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
+  /** @deprecated 4역할 단순화. isAdmin 사용 */
+  isBranchManager: (user) => !!user?.role && user.role === USER_ROLES.ADMIN
 };
 
 export default USER_ROLES;
-

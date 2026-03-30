@@ -1,6 +1,6 @@
 /**
  * Icon 컴포넌트 CSS
- * MindGarden 디자인 시스템 v2.0
+ * Core Solution 디자인 시스템 v2.0
  */
 
 /* ============================================
@@ -142,7 +142,7 @@
 
 .mg-v2-icon--clickable:hover {
   transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--mg-shadow-medium);
 }
 
 .mg-v2-icon--clickable:active {

@@ -1,7 +1,8 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getDashboardPath } from '../../utils/session';
+import { getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const TabletBottomNavigation = ({ userRole }) => {
   const navigate = useNavigate();
@@ -11,24 +12,24 @@ const TabletBottomNavigation = ({ userRole }) => {
     switch (role) {
       case 'CLIENT':
         return [
-          { path: getDashboardPath('CLIENT'), icon: 'bi-house', label: '홈' },
-          { path: '/client/consultations', icon: 'bi-calendar-check', label: '상담' },
-          { path: '/client/tasks', icon: 'bi-list-task', label: '과제' },
-          { path: '/client/profile', icon: 'bi-person', label: '프로필' }
+          { path: getLegacyDashboardPath('CLIENT'), icon: 'bi-house', label: '홈' },
+          { path: '/client/schedule', icon: 'bi-calendar-check', label: '상담' },
+          { path: '/client/session-management', icon: 'bi-list-task', label: '과제' },
+          { path: '/client/mypage', icon: 'bi-person', label: '프로필' }
         ];
       case 'CONSULTANT':
         return [
-          { path: getDashboardPath('CONSULTANT'), icon: 'bi-house', label: '홈' },
+          { path: getLegacyDashboardPath('CONSULTANT'), icon: 'bi-house', label: '홈' },
           { path: '/consultant/schedule', icon: 'bi-calendar-week', label: '일정' },
           { path: '/consultant/clients', icon: 'bi-people', label: '내담자' },
-          { path: '/consultant/profile', icon: 'bi-person', label: '프로필' }
+          { path: '/consultant/mypage', icon: 'bi-person', label: '프로필' }
         ];
       case 'ADMIN':
         return [
-          { path: getDashboardPath('ADMIN'), icon: 'bi-house', label: '홈' },
-          { path: '/admin/users', icon: 'bi-people', label: '사용자' },
+          { path: getLegacyDashboardPath('ADMIN'), icon: 'bi-house', label: '홈' },
+          { path: '/admin/user-management', icon: 'bi-people', label: '사용자' },
           { path: '/admin/system', icon: 'bi-gear', label: '설정' },
-          { path: '/admin/profile', icon: 'bi-person', label: '프로필' }
+          { path: '/admin/mypage', icon: 'bi-person', label: '프로필' }
         ];
       default:
         return [];
@@ -55,7 +56,7 @@ const TabletBottomNavigation = ({ userRole }) => {
             }}
           >
             <i className={item.icon}></i>
-            <span>{item.label}</span>
+            <span>{toDisplayString(item.label, '—')}</span>
           </a>
         ))}
       </div>

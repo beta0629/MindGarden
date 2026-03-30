@@ -13,10 +13,9 @@
 
 ### 3. 카카오 로그인 설정
 **제품 설정 > 카카오 로그인**
-- **Redirect URI 추가**:
-  - 기존: `http://localhost:8080/api/auth/kakao/callback`
-  - **운영 HTTP**: `http://m-garden.co.kr/api/auth/kakao/callback`
-  - **운영 HTTPS**: `https://m-garden.co.kr/api/auth/kakao/callback` (권장)
+- **⚠️ 2025년 정책 변경**: 카카오 개발자 센터에서 Redirect URI 등록 항목이 제거되었습니다.
+- 리다이렉트 URI는 코드에서 동적으로 생성되며, 개발자 센터에 별도 등록이 필요 없습니다.
+- 기존 등록된 URI가 있다면 그대로 유지해도 무방합니다.
 
 ### 4. 동의항목 확인
 **제품 설정 > 카카오 로그인 > 동의항목**

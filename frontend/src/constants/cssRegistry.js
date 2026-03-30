@@ -1,7 +1,9 @@
 /**
  * CSS 클래스 레지스트리
+/**
  * 자동 생성됨 - 수동 수정 금지
- * MindGarden 디자인 시스템 v2.0
+/**
+ * Core Solution 디자인 시스템 v2.0
  */
 
 export const CSS_REGISTRY = {// 기존 클래스 (레거시)
@@ -39,6 +41,7 @@ export const CSS_REGISTRY = {// 기존 클래스 (레거시)
     'mg-progress',
     'mg-scrollspy',
     'mg-spinner',
+    'mg-spinner--sm',
     'mg-toast',
     'mg-tooltip'],
   

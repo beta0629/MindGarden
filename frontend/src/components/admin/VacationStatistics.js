@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { Calendar, User, BarChart3, Clock } from 'lucide-react';
+import Avatar from '../common/Avatar';
 import './VacationStatistics.css';
 
 /**
@@ -29,39 +30,6 @@ const getConsultantColor = (consultantId) => {
 };
 
 /**
- * 이름에서 아바타용 초성을 추출하는 함수
- */
-const getAvatarInitial = (name) => {
-    if (!name) return '?';
-    
-    // 한글인 경우 초성 추출
-    if (/[가-힣]/.test(name)) {
-        // 이름을 공백으로 분리하여 각 부분의 첫 글자를 가져옴
-        const parts = name.trim().split(/\s+/);
-        if (parts.length > 1) {
-            // 성과 이름이 분리된 경우 (예: "김 선희")
-            return parts[0].charAt(0) + parts[1].charAt(0);
-        } else {
-            // 성명이 붙어있는 경우 (예: "김선희", "김김선희")
-            const chars = name.split('');
-            // 첫 글자가 성인지 확인하고, 연속된 같은 글자가 있는지 확인
-            let result = chars[0];
-            for (let i = 1; i < chars.length; i++) {
-                if (chars[i] === chars[0]) {
-                    result += chars[i];
-                } else {
-                    break;
-                }
-            }
-            return result;
-        }
-    }
-    
-    // 영문인 경우 첫 글자
-    return name.charAt(0).toUpperCase();
-};
-
-/**
  * 휴가 유형을 한글로 변환
  */
 const getVacationTypeKorean = (type) => {
@@ -79,12 +47,19 @@ const getVacationTypeKorean = (type) => {
 
 /**
  * 휴가 통계 컴포넌트
+/**
  * - 상담사별 휴가 사용 현황
+/**
  * - 휴가 유형별 통계
+/**
  * - 최근 휴가 동향
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-17
  */
 const VacationStatistics = ({ className = "" }) => {
@@ -102,7 +77,7 @@ const VacationStatistics = ({ className = "" }) => {
     const [error, setError] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState('month');
 
-    /**
+/**
      * 휴가 통계 데이터 로드
      */
     const loadVacationStats = useCallback(async () => {
@@ -176,14 +151,14 @@ const VacationStatistics = ({ className = "" }) => {
         loadVacationStats();
     }, [loadVacationStats]);
 
-    /**
+/**
      * 기간 변경 핸들러
      */
     const handlePeriodChange = (period) => {
         setSelectedPeriod(period);
     };
 
-    /**
+/**
      * 날짜 포맷팅
      */
     const formatDate = (dateString) => {
@@ -192,37 +167,47 @@ const VacationStatistics = ({ className = "" }) => {
         return date.toLocaleDateString('ko-KR');
     };
 
-    /**
+/**
      * 휴가 유형별 색상 (디자인 시스템 변수 사용)
      */
     const getVacationTypeColor = (type) => {
         const colors = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(52, 199, 89, 0.2) -> var(--mg-custom-color)
             '연차': 'rgba(52, 199, 89, 0.2)',        // 연한 초록 (연차)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
             '반차': 'rgba(255, 149, 0, 0.2)',         // 연한 노랑 (반차) 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
             '반반차': 'rgba(0, 122, 255, 0.2)',       // 연한 파랑 (반반차)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(88, 86, 214, 0.2) -> var(--mg-custom-color)
             '개인사정': 'rgba(88, 86, 214, 0.2)',     // 연한 보라 (개인사정)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 59, 48, 0.2) -> var(--mg-custom-color)
             '병가': 'rgba(255, 59, 48, 0.2)',         // 연한 빨강 (병가)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(52, 199, 89, 0.2) -> var(--mg-custom-color)
             '하루 종일 휴가': 'rgba(52, 199, 89, 0.2)',  // 연한 초록 (종일 휴가)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.15) -> var(--mg-custom-color)
             '사용자 정의 휴가': 'rgba(0, 122, 255, 0.15)', // 연한 하늘색 (사용자 정의)
             // 상세 유형별 색상
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
             '오전 반반차 1 (09:00-11:00)': 'rgba(0, 122, 255, 0.2)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
             '오전 반반차 2 (11:00-13:00)': 'rgba(0, 122, 255, 0.2)', 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
             '오후 반반차 1 (14:00-16:00)': 'rgba(0, 122, 255, 0.2)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
             '오후 반반차 2 (16:00-18:00)': 'rgba(0, 122, 255, 0.2)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
             '오전반차': 'rgba(255, 149, 0, 0.2)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
             '오후반차': 'rgba(255, 149, 0, 0.2)'
         };
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(248, 249, 250, 0.5) -> var(--mg-custom-color)
         return colors[type] || 'rgba(248, 249, 250, 0.5)'; // 기본 연한 회색
     };
 
     if (loading) {
         return (
             <div className={`vacation-statistics ${className}`}>
-                <UnifiedLoading 
-                    text="휴가 통계를 불러오는 중..." 
-                    size="medium"
-                    inline={true}
-                />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }
@@ -235,7 +220,7 @@ const VacationStatistics = ({ className = "" }) => {
                         <Calendar size={48} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
-                    <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
+                    <button className="mg-button" variant="primary" onClick={loadVacationStats}>다시 시도</button>
                 </div>
             </div>
         );
@@ -256,7 +241,7 @@ const VacationStatistics = ({ className = "" }) => {
                     <div className="mg-dashboard-header-right">
                         <div className="period-selector">
                             {['week', 'month', 'quarter', 'year'].map(period => (
-                                <MGButton
+                                <button className="mg-button"
                                     key={period}
                                     variant={selectedPeriod === period ? 'primary' : 'outline'}
                                     size="small"
@@ -266,7 +251,7 @@ const VacationStatistics = ({ className = "" }) => {
                                     {period === 'month' && '1개월'}
                                     {period === 'quarter' && '3개월'}
                                     {period === 'year' && '1년'}
-                                </MGButton>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -308,12 +293,16 @@ const VacationStatistics = ({ className = "" }) => {
                                     key={consultant.consultantId} 
                                     className="consultant-card" 
                                 >
-                                    <div className={`consultant-avatar ${consultantColor}`}>
-                                            {getAvatarInitial(consultant.consultantName)}
-                                        </div>
+                                    <div className="consultant-info">
+                                        <Avatar
+                                            profileImageUrl={consultant.profileImageUrl}
+                                            displayName={consultant.consultantName}
+                                            className={`consultant-avatar ${consultantColor} mg-v2-consultant-detail-avatar`}
+                                        />
                                         <div className="consultant-name">{consultant.consultantName}</div>
                                         <div className="consultant-vacation-info">{consultant.consultantEmail}</div>
                                     </div>
+                                    <div className="consultant-vacation-details">
                                         <div className="consultant-vacation-count">
                                             {typeof consultant.vacationDays === 'number' 
                                                 ? consultant.vacationDays.toFixed(1)

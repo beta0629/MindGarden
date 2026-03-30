@@ -1,20 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+import { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
 import { ACCOUNT_CSS_CLASSES } from '../../constants/css';
-import { 
-  ACCOUNT_API_ENDPOINTS, 
-  HTTP_METHODS, 
+import {
+  ACCOUNT_API_ENDPOINTS,
+  HTTP_METHODS,
   HTTP_HEADERS,
   ACCOUNT_BUTTON_TEXT,
   ACCOUNT_MESSAGES,
-  ACCOUNT_PAGE_TITLES
+  ACCOUNT_PAGE_TITLES,
+  ACCOUNT_SECTION_TITLES
 } from '../../constants/account';
+
+const FETCH_CREDENTIALS = 'include';
+
+/**
+ * API가 배열을 직접 주거나 ApiResponse({ data: [] }) 형태일 때 모두 안전하게 배열로 정규화
+ */
+const normalizeListResponse = (payload) => {
+  if (payload == null) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === 'object' && Array.isArray(payload.data)) return payload.data;
+  return [];
+};
 
 const AccountManagement = () => {
   const [accounts, setAccounts] = useState([]);
@@ -41,13 +57,18 @@ const AccountManagement = () => {
   const loadAccounts = async() => {
     try {
       setLoading(true);
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE);
+      const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE, {
+        credentials: FETCH_CREDENTIALS
+      });
       if (response.ok) {
-        const data = await response.json();
-        setAccounts(data);
+        const raw = await response.json();
+        setAccounts(normalizeListResponse(raw));
+      } else {
+        notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, error);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -55,10 +76,12 @@ const AccountManagement = () => {
 
   const loadBanks = async() => {
     try {
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS);
+      const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS, {
+        credentials: FETCH_CREDENTIALS
+      });
       if (response.ok) {
-        const data = await response.json();
-        setBanks(data);
+        const raw = await response.json();
+        setBanks(normalizeListResponse(raw));
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.BANK_LOAD_FAILED, error);
@@ -79,7 +102,7 @@ const AccountManagement = () => {
         method,
         headers: {
           [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON },
-        credentials: 'include',
+        credentials: FETCH_CREDENTIALS,
         body: JSON.stringify(formData)
       });
 
@@ -124,7 +147,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}`, {
         method: HTTP_METHODS.DELETE,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -146,7 +169,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/toggle-status`, {
         method: HTTP_METHODS.PATCH,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -168,7 +191,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/set-primary`, {
         method: HTTP_METHODS.PATCH,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -216,37 +239,55 @@ const AccountManagement = () => {
     }));
   };
 
+  const accountHeaderActions = (
+    <MGButton variant="primary" onClick={() => setShowForm(true)} preventDoubleClick={false}>
+      {ACCOUNT_BUTTON_TEXT.REGISTER}
+    </MGButton>
+  );
+
   return (
-    <SimpleLayout>
-      <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
-        <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
-          <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
-          <MGButton variant="primary" className="btn btn-primary" onClick={ () => setShowForm(true) }>{ ACCOUNT_BUTTON_TEXT.REGISTER }
-          </MGButton>
+    <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
+      <div className={`mg-v2-ad-b0kla ${ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}`}>
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="계좌 관리 콘텐츠">
+            <ContentHeader
+              title={ACCOUNT_PAGE_TITLES.MAIN}
+              subtitle="정산·입금 안내에 사용할 계좌를 등록·관리합니다."
+              actions={accountHeaderActions}
+              titleId="account-management-page-title"
+            />
+
+            <AccountForm
+              showForm={showForm}
+              editingAccount={editingAccount}
+              formData={formData}
+              loading={loading}
+              onClose={resetForm}
+              onSubmit={handleSubmit}
+              onBankChange={handleBankChange}
+              onFormDataChange={handleFormDataChange}
+            />
+
+            <section
+              className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_LIST_SECTION}`}
+              aria-labelledby="account-registered-list-title"
+            >
+              <h2 id="account-registered-list-title" className="mg-v2-ad-b0kla__section-title">
+                {ACCOUNT_SECTION_TITLES.REGISTERED_LIST}
+              </h2>
+              <AccountTable
+                accounts={accounts}
+                loading={loading}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+                onSetPrimary={handleSetPrimary}
+              />
+            </section>
+          </ContentArea>
         </div>
-
-        <AccountForm
-          showForm={ showForm }
-          editingAccount={ editingAccount }
-          formData={ formData }
-          banks={ banks }
-          loading={ loading }
-          onClose={ resetForm }
-          onSubmit={ handleSubmit }
-          onBankChange={ handleBankChange }
-          onFormDataChange={ handleFormDataChange }
-        />
-
-        <AccountTable
-          accounts={ accounts }
-          loading={ loading }
-          onEdit={ handleEdit }
-          onDelete={ handleDelete }
-          onToggleStatus={ handleToggleStatus }
-          onSetPrimary={ handleSetPrimary }
-        />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

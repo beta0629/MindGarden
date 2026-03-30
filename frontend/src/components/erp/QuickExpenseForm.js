@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import ReactDOM from 'react-dom';
 import axios from 'axios';
-import './QuickExpenseForm.css';
+import MGButton from '../common/MGButton';
+import { getLucideIcon } from '../../utils/iconUtils';
+import ErpModal from './common/ErpModal';
 import notificationManager from '../../utils/notification';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import './QuickExpenseForm.css';
 
 /**
- * 빠른 지출 등록 컴포넌트 (공통 코드 사용)
+ * 빠른 지출 등록 컴포넌트 (ErpModal + 모달 내 금액 입력)
  */
 const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -14,8 +16,9 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const [expenseCategories, setExpenseCategories] = useState([]);
   const [expenseSubcategories, setExpenseSubcategories] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(true);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [amountInput, setAmountInput] = useState('');
 
-  // 공통 코드 로드
   useEffect(() => {
     loadExpenseCodes();
   }, []);
@@ -23,10 +26,10 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const loadExpenseCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/erp/common-codes/financial', {
+      const response = await axios.get('/api/v1/erp/common-codes/financial', {
         withCredentials: true
       });
-      
+
       if (response.data.success) {
         setExpenseCategories(response.data.data.expenseCategories || []);
         setExpenseSubcategories(response.data.data.expenseSubcategories || []);
@@ -34,32 +37,32 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     } catch (err) {
       console.error('지출 공통 코드 로드 실패:', err);
       setError('공통 코드를 불러오는데 실패했습니다.');
+      notificationManager.error('공통 코드를 불러오는데 실패했습니다.');
     } finally {
       setLoadingCodes(false);
     }
   };
 
-  // 빠른 지출 항목 생성 (공통 코드 기반)
   const getQuickExpenses = () => {
     const quickExpenseConfigs = [
-      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
-      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: '#e67e22' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: '#f39c12' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: '💧', color: '#3498db' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: '🔥', color: '#e74c3c' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: '🌐', color: '#9b59b6' },
-      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: '📋', color: '#9b59b6' },
-      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: '📊', color: '#8e44ad' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: '📝', color: '#3498db' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: '🖥️', color: '#2c3e50' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: '📢', color: '#1abc9c' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: '📈', color: '#27ae60' }
+      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: 'DollarSign', color: 'var(--mg-error-500)' },
+      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: 'Building2', color: 'var(--mg-finance-dark)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: 'Zap', color: 'var(--mg-finance-primary)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: 'Droplet', color: 'var(--mg-primary-500)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: 'Flame', color: 'var(--mg-error-500)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: 'Globe', color: 'var(--mg-purple-500)' },
+      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: 'ClipboardList', color: 'var(--mg-purple-500)' },
+      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: 'BarChart3', color: 'var(--mg-purple-600)' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: 'FileText', color: 'var(--mg-primary-500)' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: 'Monitor', color: 'var(--mg-color-text-main)' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: 'Megaphone', color: 'var(--mg-success-500)' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: 'TrendingUp', color: 'var(--mg-success-600)' }
     ];
 
     return quickExpenseConfigs.map(config => {
       const category = expenseCategories.find(cat => cat.codeValue === config.categoryCode);
       const subcategory = expenseSubcategories.find(sub => sub.codeValue === config.subcategoryCode);
-      
+
       return {
         ...config,
         category,
@@ -70,27 +73,17 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     }).filter(item => item.category && item.subcategory);
   };
 
-  const handleQuickExpense = async (categoryCode, subcategoryCode) => {
-    // 공통 코드에서 카테고리 정보 찾기
-    const category = expenseCategories.find(c => c.codeValue === categoryCode);
-    const subcategory = expenseSubcategories.find(s => s.codeValue === subcategoryCode);
-    
-    if (!category || !subcategory) {
-      setError('선택한 카테고리 정보를 찾을 수 없습니다.');
-      return;
-    }
-    
-    const isVatApplicable = categoryCode !== 'SALARY'; // 급여는 부가세 없음
-    
-    let message = `${category.codeLabel} > ${subcategory.codeLabel} 금액을 입력하세요 (원):`;
-    if (isVatApplicable) {
-      message += '\n※ 부가세 포함 금액을 입력하세요 (실제 지불한 금액)';
-    } else {
-      message += '\n※ 급여는 부가세가 없습니다';
-    }
-    
-    const amount = prompt(message);
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+  const submitQuickExpense = async () => {
+    if (!selectedExpense) return;
+    const category = selectedExpense.category;
+    const subcategory = selectedExpense.subcategory;
+    const categoryCode = selectedExpense.categoryCode;
+    const subcategoryCode = selectedExpense.subcategoryCode;
+
+    const amount = Number.parseFloat(amountInput, 10);
+    if (!amountInput.trim() || isNaN(amount) || amount <= 0) {
+      setError('올바른 금액을 입력해주세요.');
+      notificationManager.warning('올바른 금액을 입력해주세요.');
       return;
     }
 
@@ -98,120 +91,143 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/erp/finance/quick-expense', null, {
+      const response = await axios.post('/api/v1/erp/finance/quick-expense', null, {
         params: {
           category: categoryCode,
           subcategory: subcategoryCode,
-          amount: parseFloat(amount),
+          amount,
           description: `${category.codeLabel} 지출`,
           transactionDate: new Date().toISOString().split('T')[0]
-        }
+        },
+        withCredentials: true
       });
 
       if (response.data.success) {
-        const taxInfo = response.data.data;
-        let successMessage = `${category.codeLabel} 지출이 성공적으로 등록되었습니다.`;
-        
-        if (isVatApplicable) {
-          const vatAmount = taxInfo.taxAmount || 0;
-          const totalAmount = taxInfo.amount || parseFloat(amount);
-          successMessage += `\n금액: ${parseFloat(amount).toLocaleString()}원 + 부가세: ${vatAmount.toLocaleString()}원 = 총 ${totalAmount.toLocaleString()}원`;
+        const taxInfo = response?.data?.data ?? {};
+        const isVatApplicable = categoryCode !== 'SALARY';
+        let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
+        if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
+          const totalAmount = taxInfo.amount ?? amount;
+          successMessage += ` (총 ${Number(totalAmount).toLocaleString()}원)`;
         }
-        
-        notificationManager.show(successMessage, 'info');
-        onSuccess && onSuccess(response.data.data);
-        onClose && onClose();
+        notificationManager.show(successMessage, 'success', 3000);
+        onSuccess?.(response.data.data);
+        onClose?.();
       } else {
-        setError(response.data.message);
+        const msg = response.data.message || '지출 등록에 실패했습니다.';
+        setError(msg);
+        notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || '지출 등록 중 오류가 발생했습니다.');
+      const msg = err.response?.data?.message || '지출 등록 중 오류가 발생했습니다.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
     } finally {
       setLoading(false);
     }
   };
 
-  // ReactDOM.createPortal을 사용하여 document.body에 렌더링
-  return ReactDOM.createPortal(
-    <div className="quick-expense-modal-overlay">
-      <div className="quick-expense-modal">
-        <div className="quick-expense-modal-header">
-          <h2 className="quick-expense-modal-title">
-            ⚡ 빠른 지출 등록
-          </h2>
-          <button
-            onClick={onClose}
-            className="quick-expense-modal-close"
-          >
-            ×
-          </button>
+  const openAmountForm = (expense) => {
+    setSelectedExpense(expense);
+    setAmountInput('');
+    setError(null);
+  };
+
+  const closeAmountForm = () => {
+    setSelectedExpense(null);
+    setAmountInput('');
+    setError(null);
+  };
+
+  const isVatApplicable = selectedExpense ? selectedExpense.categoryCode !== 'SALARY' : false;
+
+  return (
+    <ErpModal
+      isOpen={true}
+      onClose={onClose}
+      title="빠른 지출 등록"
+      size="medium"
+    >
+      {error && (
+        <SafeErrorDisplay error={error} variant="inline" className="quick-expense-error" />
+      )}
+
+      {loadingCodes ? (
+        <div className="quick-expense-loading">
+          공통 코드 로딩 중...
         </div>
-
-        {error && (
-          <div className="quick-expense-error">
-            {error}
-          </div>
-        )}
-
-        {loadingCodes ? (
-          <div className="quick-expense-loading">
-            공통 코드 로딩 중...
-          </div>
-        ) : (
-          <div className="quick-expense-categories">
-            {getQuickExpenses().map((expense, index) => {
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleQuickExpense(expense.categoryCode, expense.subcategoryCode)}
-                  disabled={loading}
-                  className="quick-expense-category-btn"
-                  onMouseOver={(e) => {
-                    if (!loading) {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (!loading) {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                    }
-                  }}
-                >
-                  <div className="quick-expense-category-icon">
-                    {expense.icon}
-                  </div>
-                  <div className="quick-expense-category-name">
-                    {expense.displayName}
-                  </div>
-                  <div className="quick-expense-category-subname">
-                    {expense.subDisplayName}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="quick-expense-info-box">
-          <p className="quick-expense-info-text">
-            💡 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+      ) : selectedExpense ? (
+        <div className="quick-expense-amount-form">
+          <p className="quick-expense-selected-label">
+            {getLucideIcon(selectedExpense.icon, { size: 20 })} {selectedExpense.displayName} &gt; {selectedExpense.subDisplayName}
           </p>
+          <p className="quick-expense-amount-hint">
+            {isVatApplicable ? '부가세 포함 금액(원)을 입력하세요.' : '금액(원)을 입력하세요. (급여는 부가세 없음)'}
+          </p>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="금액 입력"
+            value={amountInput}
+            onChange={(e) => setAmountInput(e.target.value)}
+            className="quick-expense-amount-input"
+            disabled={loading}
+            autoFocus
+          />
+          <div className="quick-expense-amount-actions">
+            <MGButton
+              type="button"
+              variant="secondary"
+              onClick={closeAmountForm}
+              disabled={loading}
+            >
+              취소
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="primary"
+              onClick={submitQuickExpense}
+              loading={loading}
+              loadingText="등록 중..."
+              preventDoubleClick
+            >
+              등록
+            </MGButton>
+          </div>
         </div>
-
-        <div className="quick-expense-close-container">
-          <button
-            onClick={onClose}
-            className="quick-expense-close-btn"
-          >
-            닫기
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
+      ) : (
+        <>
+          <div className="quick-expense-categories">
+            {getQuickExpenses().map((expense) => (
+              <MGButton
+                key={`${expense.categoryCode}-${expense.subcategoryCode}`}
+                type="button"
+                variant="secondary"
+                onClick={() => openAmountForm(expense)}
+                loading={loading}
+                className="quick-expense-category-btn"
+              >
+                <div className="quick-expense-category-icon">
+                  {getLucideIcon(expense.icon, { size: 20 })}
+                </div>
+                <div className="quick-expense-category-name">
+                  {expense.displayName}
+                </div>
+                <div className="quick-expense-category-subname">
+                  {expense.subDisplayName}
+                </div>
+              </MGButton>
+            ))}
+          </div>
+          <div className="quick-expense-info-box">
+            <p className="quick-expense-info-text">
+              {getLucideIcon('Lightbulb', { size: 16 })} 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+            </p>
+          </div>
+        </>
+      )}
+    </ErpModal>
   );
 };
 

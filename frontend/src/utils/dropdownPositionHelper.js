@@ -1,13 +1,18 @@
 /**
  * 드롭다운 위치 계산 및 고정 유틸리티
+/**
  * 전체 애플리케이션의 모든 드롭다운이 스크롤과 독립적으로 동작하도록 도움
+/**
  * CustomSelect는 자체 위치 관리를 사용하므로 제외됨
  */
 
 /**
  * 드롭다운 메뉴의 최적 위치를 계산하고 설정
+/**
  * @param {HTMLElement} triggerElement - 드롭다운 트리거 요소
+/**
  * @param {HTMLElement} dropdownElement - 드롭다운 메뉴 요소
+/**
  * @param {Object} options - 옵션 설정
  */
 export const calculateDropdownPosition = (triggerElement, dropdownElement, options = {}) => {
@@ -66,6 +71,7 @@ export const calculateDropdownPosition = (triggerElement, dropdownElement, optio
 
 /**
  * 개별 드롭다운 요소 초기화
+/**
  * @param {HTMLElement} dropdown - 드롭다운 컨테이너 요소
  */
 export const initSingleDropdown = (dropdown) => {
@@ -129,6 +135,7 @@ export const initSingleDropdown = (dropdown) => {
 
 /**
  * 모든 드롭다운에 공통 이벤트 리스너 추가
+/**
  * @param {string} selector - 드롭다운 컨테이너 선택자
  */
 export const initDropdownPositioning = (selector = '.dropdown, .custom-dropdown') => {

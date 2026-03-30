@@ -1,0 +1,98 @@
+/**
+ * 상담일지 조회 - 테이블 뷰 블록 스타일 (B0KlA)
+ * @author Core Solution
+ * @since 2025-03-02
+ */
+
+.mg-v2-consultation-log-table-block {
+  margin-bottom: 0;
+}
+
+.mg-v2-consultation-log-table-block__card {
+  min-height: 200px;
+}
+
+.mg-v2-consultation-log-table-block__mobile-hint {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 0.75rem 0;
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-consultation-log-table-block__mobile-hint {
+    display: block;
+  }
+}
+
+.mg-v2-consultation-log-table-block__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mg-v2-consultation-log-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.mg-v2-consultation-log-table th,
+.mg-v2-consultation-log-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-consultation-log-table th {
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+  background: var(--ad-b0kla-bg);
+  white-space: nowrap;
+}
+
+.mg-v2-consultation-log-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mg-v2-consultation-log-table tbody tr:hover {
+  background: var(--ad-b0kla-green-bg);
+}
+
+.mg-v2-consultation-log-table tbody tr:focus {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: -2px;
+}
+
+.mg-v2-consultation-log-table__summary {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 빈 상태 (EmptyState 공통 컴포넌트 + 블록 스코프) */
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state {
+  padding: 3rem 2rem;
+}
+
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__desc {
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+}

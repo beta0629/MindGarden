@@ -1,6 +1,8 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Dashboard Stats Grid Component
+ * Core Solution 디자인 시스템 v2.0 - Dashboard Stats Grid Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  */
 
@@ -11,14 +13,23 @@ import React from 'react';
  * 
  * @param {Object} props
  * @param {Array} props.stats - 통계 데이터 배열
+/**
  * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
  * 
+/**
  * @example
+/**
  * const stats = [
+/**
  *   { icon: <Users />, value: '2,543', label: '총 사용자', change: '+12.5%', positive: true },
+/**
  *   { icon: <Calendar />, value: '1,234', label: '예약된 상담', change: '+8.2%', positive: true }
+/**
  * ];
+/**
  * 
+/**
  * <DashboardStats stats={stats} />
  */
 const DashboardStats = ({ stats, className = '' }) => {

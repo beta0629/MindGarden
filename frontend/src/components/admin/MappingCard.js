@@ -1,47 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
-import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
-import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
+import React from 'react';
+import { User, Package } from 'lucide-react';
+import Avatar from '../common/Avatar';
+import StatusBadge from '../common/StatusBadge';
 
-const MappingCard = ({ 
-    mapping, 
+const MappingCard = ({
+    mapping,
     onClick,
-    actions = null 
+    actions = null
 }) => {
-    const [statusInfo, setStatusInfo] = useState({
-        color: 'var(--color-gray)',
-        icon: '❓',
-        label: '로딩 중...'
-    });
-
-    useEffect(() => {
-        const loadStatusInfo = async() => {
-            try {
-                const [statusColor, statusIcon, statusLabel] = await Promise.all([
-                    getStatusColor(mapping.status, 'MAPPING_STATUS'),
-                    getStatusIcon(mapping.status, 'MAPPING_STATUS'),
-                    getMappingStatusKoreanName(mapping.status)
-                ]);
-                
-                setStatusInfo({
-                    color: statusColor,
-                    icon: statusIcon,
-                    label: statusLabel
-                });
-            } catch (error) {
-                console.error('❌ 상태 정보 로드 실패:', error);
-                setStatusInfo({
-                    color: 'var(--color-gray)',
-                    icon: '❓',
-                    label: mapping.status || '알 수 없음'
-                });
-            }
-        };
-
-        loadStatusInfo();
-    }, [mapping.status]);
-
     return(
         <div 
             className="mg-v2-card mg-v2-mapping-card"
@@ -49,9 +15,11 @@ const MappingCard = ({
         >
             <div className="mg-v2-mapping-card-header">
                 <div className="mg-v2-mapping-card-title-section">
-                    <div className="mg-v2-client-avatar">
-                        { mapping.clientName?.charAt(0) || '?' }
-                    </div>
+                    <Avatar
+                        profileImageUrl={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
+                        displayName={mapping.clientName}
+                        className="mg-v2-client-avatar"
+                    />
                     <div className="mg-v2-mapping-client-info">
                         <h5 className="mg-v2-client-name">
                             { mapping.clientName || '알 수 없음' }
@@ -61,13 +29,7 @@ const MappingCard = ({
                         </span>
                     </div>
                 </div>
-                
-                <div 
-                    className="mg-v2-status-badge" 
-                    style={{ '--status-color': statusInfo.color }}
-                >
-                    { statusInfo.icon } { statusInfo.label }
-                </div>
+                <StatusBadge status={mapping.status} />
             </div>
 
             <div className="mg-v2-mapping-card-details">

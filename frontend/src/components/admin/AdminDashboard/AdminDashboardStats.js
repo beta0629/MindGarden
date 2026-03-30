@@ -5,9 +5,13 @@ import { Users, User, Link2, Calendar, CalendarCheck, DollarSign, TrendingUp, Ch
 
 /**
  * AdminDashboard 통계 카드 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const AdminDashboardStats = ({
@@ -101,7 +105,7 @@ const AdminDashboardStats = ({
             value: stats.systemNotifications,
             icon: <AlertTriangle className="mg-v2-icon" />,
             color: 'red',
-            onClick: () => onNavigate('/admin/system-notifications'),
+            onClick: () => onNavigate('/admin/notifications'),
             description: '미확인 시스템 알림'
         },
         {

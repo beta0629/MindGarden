@@ -1,8 +1,12 @@
 /**
  * 차트 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 
@@ -35,6 +39,7 @@ import {
   CHART_HEIGHTS,
   CHART_DEFAULTS 
 } from '../../constants/charts';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './Chart.css';
 
 // Chart.js 등록
@@ -98,6 +103,7 @@ const Chart = ({
             size: 16,
             weight: 'bold'
           },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
           color: '#2c3e50'
         }
       },
@@ -123,8 +129,13 @@ const Chart = ({
     // 기본 색상 적용
     const colors = data.colors || CHART_DEFAULTS.COLORS;
     
+    const safeLabels = Array.isArray(data.labels)
+      ? data.labels.map((l) => (typeof l === 'string' || typeof l === 'number' ? String(l) : toDisplayString(l, '')))
+      : data.labels;
+
     const processed = {
       ...data,
+      labels: safeLabels,
       datasets: data.datasets?.map((dataset, index) => ({
         ...dataset,
         backgroundColor: dataset.backgroundColor || colors[index % colors.length],
@@ -198,7 +209,9 @@ const Chart = ({
         <div className="chart-error-content">
           <i className="bi bi-exclamation-triangle chart-error-icon"></i>
           <p className="chart-error-text">차트를 불러올 수 없습니다</p>
-          <small className="chart-error-detail">{error}</small>
+          <small className="chart-error-detail">
+            {typeof error === 'string' ? error : (error?.message ?? JSON.stringify(error))}
+          </small>
         </div>
       </div>
     );
@@ -276,7 +289,7 @@ Chart.propTypes = {
   height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   options: PropTypes.object,
   loading: PropTypes.bool,
-  error: PropTypes.string,
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   className: PropTypes.string,
   onDataPointClick: PropTypes.func,
   onLegendClick: PropTypes.func

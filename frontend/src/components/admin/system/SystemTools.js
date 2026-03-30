@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, FileText, Trash2, Download } from 'lucide-react';
-import MGButton from '../../common/MGButton';
+import Button from '../../ui/Button/Button';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const SystemTools = ({ 
     onRefresh, 
@@ -48,22 +49,23 @@ const SystemTools = ({
         <div className="mg-v2-stats-grid">
             {tools.map((tool) => (
                 <div key={tool.id} className="mg-v2-dashboard-stat-card mg-system-tool-card">
-                    <MGButton 
+                    <Button
                         variant={tool.variant}
+                        size="medium"
+                        fullWidth
+                        className="mg-system-tool-button"
                         onClick={tool.onClick}
                         disabled={loading}
-                        className="mg-system-tool-button"
                         title={tool.description}
-                        fullWidth
                     >
                         <div className="mg-v2-system-tool-icon">
                             {tool.icon}
                         </div>
                         <div className="mg-v2-system-tool-content">
-                            <span className="mg-v2-system-tool-label">{tool.label}</span>
-                            <div className="mg-v2-system-tool-description">{tool.description}</div>
+                            <span className="mg-v2-system-tool-label">{toDisplayString(tool.label)}</span>
+                            <div className="mg-v2-system-tool-description">{toDisplayString(tool.description)}</div>
                         </div>
-                    </MGButton>
+                    </Button>
                 </div>
             ))}
         </div>

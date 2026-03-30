@@ -39,13 +39,13 @@
 }
 
 .loading-spinner-medium {
-  width: 60px;
-  height: 40px; /* 스케줄과 정확히 동일한 크기 */
+  width: 40px;
+  height: 40px;
 }
 
 .loading-spinner-large {
-  width: 60px; /* 스케줄과 정확히 동일한 크기 */
-  height: 40px;
+  width: 48px;
+  height: 48px;
 }
 
 /* ==================== 도트 로딩 ==================== */
@@ -59,7 +59,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
+  background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, #0056CC));
   animation: dot-bounce 1.4s ease-in-out infinite both;
 }
 
@@ -83,7 +83,7 @@
 
 .pulse-circle {
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
+  background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, #0056CC));
   animation: pulse-scale 1.5s ease-in-out infinite;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .loading-bars .bar {
-  background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
+  background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, #0056CC));
   border-radius: 2px;
   animation: bar-wave 1.2s ease-in-out infinite;
 }
@@ -259,13 +259,13 @@
   }
   
   .loading-spinner-medium {
-    width: 50px;
-    height: 32px; /* 스케줄 스타일 비율 유지 */
+    width: 40px;
+    height: 40px;
   }
   
   .loading-spinner-large {
-    width: 50px;
-    height: 32px; /* 스케줄 스타일 비율 유지 */
+    width: 32px;
+    height: 32px;
   }
   
   .loading-spinner-text {
@@ -302,8 +302,13 @@
   }
   
   .loading-spinner-medium {
-    width: 40px;
-    height: 28px; /* 스케줄 스타일 비율 유지 */
+    width: 32px;
+    height: 32px;
+  }
+  
+  .loading-spinner-large {
+    width: 28px;
+    height: 28px;
   }
   
   .loading-spinner-text {

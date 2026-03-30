@@ -1,127 +1,148 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import { useNavigate } from 'react-router-dom';
-import CommonPageTemplate from '../common/CommonPageTemplate';
+import { useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import {
+  getTenantSubdomainFromHost,
+  shouldRedirectWrongPath,
+  WRONG_PATH_MESSAGE,
+  WRONG_PATH_REDIRECT_DELAY_MS
+} from '../../utils/subdomainUtils';
+import { VALIDATION_MESSAGES } from '../../constants/messages';
+import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { TermsOfServiceContent } from '../common/TermsOfService';
+import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
+import '../common/PrivacyPolicy.css';
+import './AuthPageCommon.css';
+
+/** 주민번호 7번째 자리로 성별 코드 반환 (1,3: 남성 / 2,4: 여성 / 그 외: 기타) */
+const GENDER_FROM_RRN = {
+  '1': 'MALE',
+  '3': 'MALE',
+  '2': 'FEMALE',
+  '4': 'FEMALE'
+};
+const GENDER_LABEL = { MALE: '남성', FEMALE: '여성', OTHER: '기타' };
 
 const TabletRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    nickname: '',
     email: '',
     password: '',
     confirmPassword: '',
     phone: '',
     gender: '',
-    birthDate: '',
-    branchCode: '',
+    rrnFirst6: '',
+    rrnLast1: '',
     agreeTerms: false,
     agreePrivacy: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [oauth2Config, setOauth2Config] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [genderOptions, setGenderOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [branches, setBranches] = useState([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
 
-  // OAuth2 설정 가져오기
   useEffect(() => {
     getOAuth2Config();
   }, []);
 
-  // 지점 목록 로드
+  /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
   useEffect(() => {
-    const loadBranches = async () => {
-      try {
-        setIsLoadingBranches(true);
-        const response = await apiGet('/api/auth/branches');
-        if (response?.branches?.length) {
-          setBranches(response.branches);
-          setErrors(prev => ({
-            ...prev,
-            branchCode: ''
-          }));
-        } else {
-          setBranches([]);
-        }
-      } catch (error) {
-        console.error('지점 목록 로드 실패:', error);
-        setBranches([]);
-        setErrors(prev => ({
-          ...prev,
-          branchCode: '지점 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
-        }));
-      } finally {
-        setIsLoadingBranches(false);
-      }
-    };
-
-    loadBranches();
-  }, []);
-
-  // 성별 코드 로드
-  useEffect(() => {
-    const loadGenderCodes = async () => {
-      try {
-        setLoading(true);
-        const response = await apiGet('/api/common-codes/GENDER');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode
-          }));
-          setGenderOptions(options);
-        }
-      } catch (error) {
-        console.error('성별 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
-        setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️', color: '#3b82f6' },
-          { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
-          { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGenderCodes();
-  }, []);
+    if (!shouldRedirectWrongPath()) return;
+    notificationManager.show(WRONG_PATH_MESSAGE, 'warning');
+    const timer = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, WRONG_PATH_REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   const getOAuth2Config = async () => {
     try {
-      const response = await fetch('/api/auth/config/oauth2');
+      const response = await fetch('/api/v1/auth/config/oauth2');
       if (response.ok) {
-        const config = await response.json();
-        setOauth2Config(config);
+        // OAuth2 설정 사용 시 활용
       }
     } catch (error) {
       console.error('OAuth2 설정을 가져오는데 실패했습니다:', error);
     }
   };
 
+  /** 이메일 중복 여부만 API로 확인. true: 중복, false: 사용가능, 예외 시 null */
+  const checkEmailDuplicate = async (email) => {
+    const trimmed = email?.trim();
+    if (!trimmed) return null;
+    try {
+      const response = await apiGet(`/api/v1/auth/duplicate-check/email?email=${encodeURIComponent(trimmed)}`);
+      if (response && typeof response.isDuplicate === 'boolean') {
+        return response.isDuplicate;
+      }
+      return null;
+    } catch (error) {
+      console.error('이메일 중복 확인 오류:', error);
+      return null;
+    }
+  };
+
+  const handleEmailDuplicateCheck = async () => {
+    const email = formData.email?.trim();
+    if (!email) {
+      notificationManager.show(VALIDATION_MESSAGES.REQUIRED_EMAIL, 'warning');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      notificationManager.show(VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT, 'warning');
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    setEmailCheckStatus('checking');
+    try {
+      const isDuplicate = await checkEmailDuplicate(email);
+      if (isDuplicate === true) {
+        setEmailCheckStatus('duplicate');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_EXISTS, 'error');
+      } else if (isDuplicate === false) {
+        setEmailCheckStatus('available');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_AVAILABLE, 'success');
+      } else {
+        setEmailCheckStatus(null);
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, 'error');
+      }
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    
-    // 에러 메시지 제거
+    let nextValue = type === 'checkbox' ? checked : value;
+    if (name === 'rrnFirst6') {
+      nextValue = value.replaceAll(/\D/g, '').slice(0, 6);
+    } else if (name === 'rrnLast1') {
+      nextValue = value.replaceAll(/\D/g, '').slice(0, 1);
+    }
+
+    setFormData(prev => {
+      const next = { ...prev, [name]: nextValue };
+      if (name === 'rrnLast1' && nextValue.length === 1) {
+        next.gender = GENDER_FROM_RRN[nextValue] || 'OTHER';
+      }
+      return next;
+    });
+
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (name === 'email') {
+      setEmailCheckStatus(null);
     }
   };
 
@@ -141,9 +162,9 @@ const TabletRegister = () => {
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = '이메일을 입력해주세요.';
+      newErrors.email = VALIDATION_MESSAGES.REQUIRED_EMAIL;
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+      newErrors.email = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
     }
 
     if (!formData.password) {
@@ -162,8 +183,11 @@ const TabletRegister = () => {
       newErrors.phone = '휴대폰 번호를 입력해주세요.';
     }
 
-    if (!formData.branchCode) {
-      newErrors.branchCode = '지점을 선택해주세요.';
+    if (formData.rrnFirst6.length !== 6 || !/^\d{6}$/.test(formData.rrnFirst6)) {
+      newErrors.rrnFirst6 = '주민번호 앞 6자리를 입력해주세요.';
+    }
+    if (formData.rrnLast1.length !== 1 || !/^\d$/.test(formData.rrnLast1)) {
+      newErrors.rrnLast1 = '주민번호 뒤 1자리를 입력해주세요.';
     }
 
     if (!formData.agreeTerms) {
@@ -180,18 +204,45 @@ const TabletRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
+    }
+
+    if (emailCheckStatus !== 'available') {
+      const isDuplicate = await checkEmailDuplicate(formData.email);
+      if (isDuplicate === true) {
+        setEmailCheckStatus('duplicate');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_REQUIRED_MESSAGE, 'error');
+        return;
+      }
+      if (isDuplicate === false) {
+        setEmailCheckStatus('available');
+      } else {
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, 'error');
+        return;
+      }
     }
 
     setIsLoading(true);
 
     try {
-      const response = await csrfTokenManager.post('/api/auth/register', formData);
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        phone: formData.phone.trim(),
+        gender: formData.gender || 'OTHER',
+        agreeTerms: formData.agreeTerms,
+        agreePrivacy: formData.agreePrivacy
+      };
+      const subdomain = getTenantSubdomainFromHost();
+      const registerOptions = subdomain ? { headers: { 'X-Tenant-Subdomain': subdomain } } : {};
+      const response = await csrfTokenManager.post('/api/v1/auth/register', payload, registerOptions);
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         notificationManager.show('회원가입이 완료되었습니다!', 'info');
         navigate('/login');
       } else {
@@ -206,350 +257,273 @@ const TabletRegister = () => {
     }
   };
 
-  /*
-   * 소셜 회원가입 기능은 현재 미사용 상태입니다.
-   * 추후 재활성화 시 아래 구현을 복원하세요.
-   *
-   * const kakaoLogin = () => { ... };
-   * const naverLogin = () => { ... };
-   */
-
   return (
-    <CommonPageTemplate>
-      <div className="tablet-register-page tablet-page">
-        <main className="tablet-main">
-          <div className="tablet-container">
-            <div className="register-container">
-              {/* 회원가입 폼 섹션 */}
-              <div className="register-form-section">
-                <div className="form-container">
-                  <h2 className="form-title">회원가입</h2>
-                  <p className="form-subtitle">새로운 계정을 만들어 서비스를 이용하세요</p>
-                  
-                  <form onSubmit={handleSubmit} className="register-form">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="name" className="form-label">이름 *</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <path d="M20 20C20 15.5817 15.5228 12 10 12C4.47715 12 0 15.5817 0 20" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            </svg>
-                          </div>
-                          <input 
-                            type="text" 
-                            id="name" 
-                            name="name" 
-                            className={`form-input ${errors.name ? 'error' : ''}`}
-                            placeholder="이름을 입력하세요" 
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required 
-                          />
-                        </div>
-                        {errors.name && <span className="error-message">{errors.name}</span>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="nickname" className="form-label">닉네임</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <path d="M20 20C20 15.5817 15.5228 12 10 12C4.47715 12 0 15.5817 0 20" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            </svg>
-                          </div>
-                          <input 
-                            type="text" 
-                            id="nickname" 
-                            name="nickname" 
-                            className="form-input"
-                            placeholder="닉네임을 입력하세요"
-                            value={formData.nickname}
-                            onChange={handleInputChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="email" className="form-label">이메일 *</label>
-                      <div className="input-wrapper">
-                        <div className="input-icon">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M2.5 5.83333C2.5 4.91286 3.24619 4.16667 4.16667 4.16667H15.8333C16.7538 4.16667 17.5 4.91286 17.5 5.83333V14.1667C17.5 15.0871 16.7538 15.8333 15.8333 15.8333H4.16667C3.24619 15.8333 2.5 15.0871 2.5 14.1667V5.83333Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            <path d="M17.5 5.83333L10 10.8333L2.5 5.83333" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                          </svg>
-                        </div>
-                        <input 
-                          type="email" 
-                          id="email" 
-                          name="email" 
-                          className={`form-input ${errors.email ? 'error' : ''}`}
-                          placeholder="이메일을 입력하세요" 
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required 
-                        />
-                      </div>
-                      {errors.email && <span className="error-message">{errors.email}</span>}
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="password" className="form-label">비밀번호 *</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M15 8.33333V6.66667C15 4.08934 12.9107 2 10.3333 2C7.756 2 5.66667 4.08934 5.66667 6.66667V8.33333" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <rect x="3.33333" y="8.33333" width="14" height="9.66667" rx="1" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <circle cx="10" cy="13" r="1" fill="var(--secondary-400)"/>
-                            </svg>
-                          </div>
-                          <input 
-                            type={showPassword ? "text" : "password"} 
-                            id="password" 
-                            name="password" 
-                            className={`form-input ${errors.password ? 'error' : ''}`}
-                            placeholder="8자 이상 입력하세요" 
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            required 
-                            minLength="8"
-                          />
-                          <button 
-                            type="button" 
-                            className="password-toggle" 
-                            onClick={() => togglePassword('password')}
-                          >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            </svg>
-                          </button>
-                        </div>
-                        {errors.password && <span className="error-message">{errors.password}</span>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="confirmPassword" className="form-label">비밀번호 확인 *</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M15 8.33333V6.66667C15 4.08934 12.9107 2 10.3333 2C7.756 2 5.66667 4.08934 5.66667 6.66667V8.33333" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <rect x="3.33333" y="8.33333" width="14" height="9.66667" rx="1" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <circle cx="10" cy="13" r="1" fill="var(--secondary-400)"/>
-                            </svg>
-                          </div>
-                          <input 
-                            type={showConfirmPassword ? "text" : "password"} 
-                            id="confirmPassword" 
-                            name="confirmPassword" 
-                            className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                            placeholder="비밀번호를 다시 입력하세요" 
-                            value={formData.confirmPassword}
-                            onChange={handleInputChange}
-                            required 
-                            minLength="8"
-                          />
-                          <button 
-                            type="button" 
-                            className="password-toggle" 
-                            onClick={() => togglePassword('confirmPassword')}
-                          >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            </svg>
-                          </button>
-                        </div>
-                        {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-                      </div>
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="phone" className="form-label">휴대폰 번호 *</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M15 2.5H5C4.11929 2.5 3.5 3.11929 3.5 4V16C3.5 16.8807 4.11929 17.5 5 17.5H15C15.8807 17.5 16.5 16.8807 16.5 16V4C16.5 3.11929 15.8807 2.5 15 2.5Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <path d="M12.5 15C12.5 15.2761 12.2761 15.5 12 15.5C11.7239 15.5 11.5 15.2761 11.5 15C11.5 14.7239 11.7239 14.5 12 14.5C12.2761 14.5 12.5 14.7239 12.5 15Z" fill="var(--secondary-400)"/>
-                            </svg>
-                          </div>
-                          <input 
-                            type="tel" 
-                            id="phone" 
-                            name="phone" 
-                            className={`form-input ${errors.phone ? 'error' : ''}`}
-                            placeholder="010-0000-0000" 
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            required 
-                            maxLength="13"
-                          />
-                        </div>
-                        {errors.phone && <span className="error-message">{errors.phone}</span>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="gender" className="form-label">성별</label>
-                        <div className="input-wrapper">
-                          <div className="input-icon">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                              <path d="M20 20C20 15.5817 15.5228 12 10 12C4.47715 12 0 15.5817 0 20" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            </svg>
-                          </div>
-                          <select 
-                            id="gender" 
-                            name="gender" 
-                            className="form-select"
-                            value={formData.gender}
-                            onChange={handleInputChange}
-                            disabled={loading}
-                          >
-                            <option value="">성별을 선택하세요</option>
-                            {genderOptions.map(option => (
-                              <option key={option.value} value={option.value}>
-                                {option.icon} {option.label} ({option.value})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                
-                <div className="form-group">
-                  <label htmlFor="branchCode" className="form-label">지점 선택 *</label>
-                  {isLoadingBranches ? (
-                    <div className="form-input">
-                      지점 목록을 불러오는 중입니다...
-                    </div>
-                  ) : (
-                    <select
-                      id="branchCode"
-                      name="branchCode"
-                      className={`form-select ${errors.branchCode ? 'error' : ''}`}
-                      value={formData.branchCode}
-                      onChange={handleInputChange}
-                      required
-                      disabled={branches.length === 0}
-                    >
-                      <option value="">지점을 선택하세요</option>
-                      {branches.map((branch) => (
-                        <option key={branch.branchCode} value={branch.branchCode}>
-                          {branch.branchName} ({branch.branchCode})
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  {errors.branchCode && <span className="error-message">{errors.branchCode}</span>}
-                </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="birthDate" className="form-label">생년월일</label>
-                      <div className="input-wrapper">
-                        <div className="input-icon">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M6.5 2.5H13.5M6.5 2.5V1.25C6.5 0.559644 7.05964 0 7.75 0C8.44036 0 9 0.559644 9 1.25V2.5M6.5 2.5H5C4.11929 2.5 3.5 3.11929 3.5 4V17C3.5 17.8807 4.11929 18.5 5 18.5H15C15.8807 18.5 16.5 17.8807 16.5 17V4C16.5 3.11929 15.8807 2.5 15 2.5H13.5M9 2.5V1.25C9 0.559644 9.55964 0 10.25 0C10.9404 0 11.5 0.559644 11.5 1.25V2.5M9 2.5H11.5" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                            <path d="M3.5 7H16.5" stroke="var(--secondary-400)" strokeWidth="1.5"/>
-                          </svg>
-                        </div>
-                        <input 
-                          type="date" 
-                          id="birthDate" 
-                          name="birthDate" 
-                          className="form-input"
-                          value={formData.birthDate}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-options">
-                      <label className="checkbox-wrapper">
-                        <input 
-                          type="checkbox" 
-                          id="agreeTerms" 
-                          name="agreeTerms"
-                          checked={formData.agreeTerms}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <span className="checkmark"></span>
-                        <a href="#" className="link">이용약관</a>에 동의합니다
-                      </label>
-                      {errors.agreeTerms && <span className="error-message">{errors.agreeTerms}</span>}
-                      
-                      <label className="checkbox-wrapper">
-                        <input 
-                          type="checkbox" 
-                          id="agreePrivacy" 
-                          name="agreePrivacy"
-                          checked={formData.agreePrivacy}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <span className="checkmark"></span>
-                        <a href="#" className="link">개인정보처리방침</a>에 동의합니다
-                      </label>
-                      {errors.agreePrivacy && <span className="error-message">{errors.agreePrivacy}</span>}
-                    </div>
-                    
-                    <button type="submit" className="register-button" disabled={isLoading}>
-                      <span className="button-text">
-                        {isLoading ? '회원가입 중...' : '회원가입'}
-                      </span>
-                      <div className="button-icon">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                          <path d="M3.33333 10H16.6667M16.6667 10L11.6667 5M16.6667 10L11.6667 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </button>
-                  </form>
-                  
-                  <div className="divider">
-                    <span>또는</span>
-                  </div>
-                  
-                  {/* 소셜 회원가입 기능은 현재 비활성화 상태입니다.
-                  <div className="social-signup">
-                    <button className="social-button kakao" onClick={kakaoLogin}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path
-                          d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          d="M10 6C7.79086 6 6 7.79086 6 10C6 12.2091 7.79086 14 10 14C12.2091 14 14 12.2091 14 10C14 7.79086 12.2091 6 10 6Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                      카카오로 회원가입
-                    </button>
-                    
-                    <button className="social-button naver" onClick={naverLogin}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect width="20" height="20" rx="2" fill="currentColor"/>
-                        <path d="M6 6L14 14M14 6L6 14" stroke="var(--color-white)" strokeWidth="2"/>
-                      </svg>
-                      네이버로 회원가입
-                    </button>
-                  </div>
-                  */}
-                  
-                  <div className="login-link">
-                    <p>이미 계정이 있으신가요? <a href="/login" className="link">로그인</a></p>
-                  </div>
-                </div>
+    <div className="mg-v2-auth-container">
+      <div className="mg-v2-auth-hero">
+        <div className="mg-v2-auth-hero-content">
+          <h1 className="mg-v2-auth-hero-logo">CoreSolution</h1>
+          <p className="mg-v2-auth-hero-slogan">비즈니스의 핵심을 솔루션하다</p>
+        </div>
+      </div>
+
+      <div className="mg-v2-auth-content">
+        <div className="mg-v2-auth-form-wrapper">
+          <div>
+            <h2 className="mg-v2-auth-title">회원가입</h2>
+            <p className="mg-v2-auth-subtitle">CoreSolution 서비스 이용을 위해 정보를 입력해주세요.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mg-v2-auth-form">
+            <div className="mg-v2-form-group">
+              <label htmlFor="name" className="mg-v2-form-label">이름 *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className={`mg-v2-form-input ${errors.name ? 'mg-v2-input error' : ''}`}
+                placeholder="이름을 입력하세요"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+              {errors.name && <span className="mg-v2-error-text">{errors.name}</span>}
+            </div>
+
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label htmlFor="rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리</label>
+                <input
+                  type="text"
+                  id="rrnFirst6"
+                  name="rrnFirst6"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className={`mg-v2-form-input ${errors.rrnFirst6 ? 'mg-v2-input error' : ''}`}
+                  placeholder="900101"
+                  value={formData.rrnFirst6}
+                  onChange={handleInputChange}
+                />
+                {errors.rrnFirst6 && <span className="mg-v2-error-text">{errors.rrnFirst6}</span>}
+              </div>
+              <div className="mg-v2-form-group">
+                <label htmlFor="rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리</label>
+                <input
+                  type="text"
+                  id="rrnLast1"
+                  name="rrnLast1"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className={`mg-v2-form-input ${errors.rrnLast1 ? 'mg-v2-input error' : ''}`}
+                  placeholder="1"
+                  value={formData.rrnLast1}
+                  onChange={handleInputChange}
+                />
+                {errors.rrnLast1 && <span className="mg-v2-error-text">{errors.rrnLast1}</span>}
               </div>
             </div>
-          </div>
-        </main>
+
+            <div className="mg-v2-form-group">
+              <span className="mg-v2-form-label">성별</span>
+              <p className="mg-v2-form-readonly">
+                성별: {formData.gender ? GENDER_LABEL[formData.gender] : '주민번호 뒤 1자리 입력 시 자동 표시'}
+              </p>
+            </div>
+
+            <div className="mg-v2-form-group">
+              <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
+              <div className="mg-v2-form-email-row">
+                <div className="mg-v2-form-email-row__input-wrap">
+                  <MgEmailFieldWithAutocomplete
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder={VALIDATION_MESSAGES.REQUIRED_EMAIL}
+                    required
+                    autocompleteMode="custom-dropdown"
+                    ariaInvalid={!!errors.email}
+                    className={errors.email ? 'mg-v2-email-field--has-error' : ''}
+                    onBlur={() => {
+                      const email = formData.email?.trim();
+                      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        handleEmailDuplicateCheck();
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEmailDuplicateCheck}
+                  disabled={isCheckingEmail || !formData.email?.trim()}
+                  className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                >
+                  {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                </button>
+              </div>
+              {emailCheckStatus === 'duplicate' && (
+                <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
+              )}
+              {emailCheckStatus === 'available' && (
+                <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
+              )}
+              {errors.email && <span className="mg-v2-error-text">{errors.email}</span>}
+            </div>
+
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label htmlFor="password" className="mg-v2-form-label">비밀번호 *</label>
+                <div className="mg-v2-password-wrapper">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    className={`mg-v2-form-input ${errors.password ? 'mg-v2-input error' : ''}`}
+                    placeholder="8자 이상 입력하세요"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    minLength="8"
+                  />
+                  <button
+                    type="button"
+                    className="mg-v2-password-toggle"
+                    onClick={() => togglePassword('password')}
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+                {errors.password && <span className="mg-v2-error-text">{errors.password}</span>}
+              </div>
+
+              <div className="mg-v2-form-group">
+                <label htmlFor="confirmPassword" className="mg-v2-form-label">비밀번호 확인 *</label>
+                <div className="mg-v2-password-wrapper">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    className={`mg-v2-form-input ${errors.confirmPassword ? 'mg-v2-input error' : ''}`}
+                    placeholder="비밀번호를 다시 입력하세요"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    minLength="8"
+                  />
+                  <button
+                    type="button"
+                    className="mg-v2-password-toggle"
+                    onClick={() => togglePassword('confirmPassword')}
+                  >
+                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+                {errors.confirmPassword && <span className="mg-v2-error-text">{errors.confirmPassword}</span>}
+              </div>
+            </div>
+
+            <div className="mg-v2-form-group">
+              <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호 *</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
+                placeholder="010-0000-0000"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                maxLength="13"
+              />
+              {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
+            </div>
+
+            <div className="mg-v2-checkbox-group">
+              <input
+                type="checkbox"
+                id="agreeTerms"
+                name="agreeTerms"
+                checked={formData.agreeTerms}
+                onChange={handleInputChange}
+                required
+              />
+              <label htmlFor="agreeTerms">
+                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}>
+                  이용약관
+                </button>
+                {' '}에 동의합니다
+              </label>
+            </div>
+            {errors.agreeTerms && (
+              <span className="mg-v2-error-text" style={{ marginTop: '-20px', marginBottom: '20px' }}>
+                {errors.agreeTerms}
+              </span>
+            )}
+
+            <div className="mg-v2-checkbox-group">
+              <input
+                type="checkbox"
+                id="agreePrivacy"
+                name="agreePrivacy"
+                checked={formData.agreePrivacy}
+                onChange={handleInputChange}
+                required
+              />
+              <label htmlFor="agreePrivacy">
+                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}>
+                  개인정보처리방침
+                </button>
+                {' '}에 동의합니다
+              </label>
+            </div>
+            {errors.agreePrivacy && (
+              <span className="mg-v2-error-text" style={{ marginTop: '-20px', marginBottom: '20px' }}>
+                {errors.agreePrivacy}
+              </span>
+            )}
+
+            <button type="submit" className="mg-v2-button-primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="mg-v2-spinner" aria-hidden="true" />
+                  {' '}
+                  회원가입 중...
+                </>
+              ) : (
+                '회원가입'
+              )}
+            </button>
+          </form>
+
+          <Link to="/login" className="mg-v2-link-text">
+            이미 계정이 있으신가요? 로그인
+          </Link>
+        </div>
       </div>
-    </CommonPageTemplate>
+
+      <UnifiedModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        title="이용약관"
+        size="large"
+        showCloseButton
+      >
+        <div className="mg-modal-terms-body">
+          <TermsOfServiceContent />
+        </div>
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={privacyModalOpen}
+        onClose={() => setPrivacyModalOpen(false)}
+        title="개인정보처리방침"
+        size="large"
+        showCloseButton
+      >
+        <div className="mg-modal-terms-body">
+          <PrivacyPolicyContent />
+        </div>
+      </UnifiedModal>
+    </div>
   );
 };
 

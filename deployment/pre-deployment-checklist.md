@@ -1,129 +1,57 @@
-# 🚀 MindGarden 운영 배포 체크리스트
+# 배포 전 요약 (레거시 서버 작업용)
 
-## ✅ 배포 전 확인사항
+> **2026-02-12 갱신**: 운영 반영 **전체 기준**은 종합 문서로 이관되었습니다.  
+> ➜ **[docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** (도메인·서브도메인·보안·전 에이전트 회의 항목)
 
-### 1. **로컬 환경 준비**
-- [ ] 모든 기능 테스트 완료
-- [ ] 빌드 오류 없음 확인
-- [ ] 데이터베이스 스키마 최신 상태
-- [ ] OAuth2 콜백 URL 등록 완료
+본 파일은 **빠른 참조**와 과거 수동 배포 명령 예시 보존용입니다. **DNS IP·호스트명은 배포 전 실제 인프라와 반드시 대조**하세요.
 
-### 2. **서버 환경 준비**
-- [ ] SSH 접속 가능 확인
-- [ ] MySQL 서비스 실행 중
-- [ ] 도메인 DNS 설정 완료 (m-garden.co.kr → 211.37.179.204)
-- [ ] 방화벽 포트 8080 오픈
+---
 
-### 3. **배포 파일 준비**
-- [ ] JAR 파일 빌드 완료
-- [ ] 프론트엔드 빌드 완료
-- [ ] 설정 파일 운영용으로 수정
-- [ ] 관리 스크립트 준비
+## 필수: Go-Live 문서 점검 순서
 
-## 🔧 수동 배포 단계
+1. [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 전항목
+2. [DEPLOYMENT_STANDARD.md](../docs/standards/DEPLOYMENT_STANDARD.md)
+3. [PRODUCTION_DEPLOYMENT_READINESS_MEETING.md](../docs/운영반영/PRODUCTION_DEPLOYMENT_READINESS_MEETING.md)
 
-### 1단계: 로컬에서 배포 실행
+---
+
+## 레거시: 로컬/서버 수동 배포 개요 (예시)
+
+### 로컬에서 배포 스크립트 실행(환경에 존재할 경우)
+
 ```bash
 ./deployment/manual-deploy.sh
 ```
 
-### 2단계: 서버에서 수동 작업
+### 서버 예시(과거 기록 — 계정·경로는 현행화 필요)
+
 ```bash
-# SSH 접속
-ssh beta74@beta74.cafe24.com
+# SSH — 실제 호스트·사용자로 변경
+ssh user@your-production-host
 
-# 데이터베이스 설정
-mysql -u root -p < ~/mindgarden/production-db-setup.sql
+# DB 초기화 스크립트는 운영에서 이미 적용 여부 확인 후 실행
+# mysql -u root -p < ~/mindgarden/production-db-setup.sql
 
-# 환경변수 로드
 source ~/mindgarden/.env.production
-
-# 애플리케이션 시작
 cd ~/mindgarden
 nohup java -jar app.jar > app.log 2>&1 &
-
-# 상태 확인
-tail -f app.log  # Ctrl+C로 종료
-./oauth2-callback-test.sh
-./memory-management.sh check
 ```
 
-### 3단계: 배포 검증
-- [ ] http://m-garden.co.kr 접속 확인
-- [ ] http://m-garden.co.kr/api/actuator/health 상태 UP
-- [ ] 로그인 기능 테스트
-- [ ] 카카오/네이버 소셜 로그인 테스트
-- [ ] 관리자 대시보드 접속 확인
+### 배포 검증(경로는 환경 변수 기준으로 통일 권장)
 
-## 🔄 향후 자동 배포 설정
+- [ ] 공개 URL HTTPS 로딩
+- [ ] `/api/actuator/health` 또는 운영 정책에 맞는 헬스 경로
+- [ ] 로그인·소셜 로그인
+- [ ] 관리자 대시보드
 
-### GitHub Secrets 설정 필요
-```
-PRODUCTION_HOST=beta74.cafe24.com
-PRODUCTION_USER=beta74
-PRODUCTION_SSH_KEY=<SSH 개인키>
-```
+---
 
-### 자동 배포 트리거
-- `git push origin main` 시 자동 배포
-- 커밋 메시지에 `[deploy]` 포함 시에만 배포
-- 또는 GitHub Actions에서 수동 실행
+## 자동 배포 · GitHub Secrets (예시)
 
-### 배포 파이프라인
-1. **코드 체크아웃**
-2. **빌드 (백엔드 + 프론트엔드)**
-3. **서버 파일 업로드**
-4. **애플리케이션 재시작**
-5. **배포 검증**
-6. **롤백 준비**
+운영 호스트·키 등은 **저장소에 커밋 금지**. Secrets에만 보관.
 
-## 📊 모니터링 설정
+---
 
-### 메모리 관리
-- 자동 메모리 모니터링 (5분마다)
-- 메모리 임계치 초과 시 자동 조치
-- 웹 대시보드: http://m-garden.co.kr/admin/memory/
+## 모니터링·문제 조치
 
-### 로그 관리
-- 애플리케이션 로그: `/var/log/mindgarden/application.log`
-- 메모리 로그: `/var/log/mindgarden/memory-auto.log`
-- 일일 리포트: `/var/log/mindgarden/daily-memory-report-*.log`
-
-### 헬스체크
-- API 상태: http://m-garden.co.kr/api/actuator/health
-- 메트릭: http://m-garden.co.kr/api/actuator/metrics
-
-## 🆘 문제 해결
-
-### 애플리케이션 시작 실패
-```bash
-# 로그 확인
-tail -100 ~/mindgarden/app.log
-
-# 포트 사용 확인
-sudo netstat -tlnp | grep :8080
-
-# 프로세스 확인
-ps aux | grep java
-```
-
-### 메모리 부족
-```bash
-# 메모리 상태 확인
-./memory-management.sh check
-
-# 메모리 최적화
-./memory-management.sh optimize
-
-# 강제 재시작
-./memory-management.sh restart
-```
-
-### OAuth2 로그인 실패
-```bash
-# 콜백 URL 테스트
-./oauth2-callback-test.sh
-
-# 로그 확인
-grep -i oauth ~/mindgarden/app.log
-```
+애플리케이션 로그·메모리·OAuth 콜백은 [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 8절·디버거 의견서·표준 문서를 참고.

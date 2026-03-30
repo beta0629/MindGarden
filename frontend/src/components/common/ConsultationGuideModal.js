@@ -1,6 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Book, XCircle, Check, Info, Heart, Lightbulb, Phone, Wifi, Video, Battery, Headphones, Shield, Circle } from 'lucide-react';
+import { Book, Check, Info, Heart, Lightbulb, Phone, Wifi, Video, Battery, Headphones, Shield, Circle } from 'lucide-react';
+import UnifiedModal from './modals/UnifiedModal';
 
 const ConsultationGuideModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -96,22 +96,24 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
     }
   ];
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Book size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">상담 가이드</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-
-        <div className="mg-v2-modal-body">
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="상담 가이드"
+      size="large"
+      backdropClick={true}
+      showCloseButton={true}
+      actions={
+        <button
+          className="mg-v2-button mg-v2-button--primary"
+          onClick={onClose}
+        >
+          <Check size={20} className="mg-v2-icon-inline" />
+          확인했습니다
+        </button>
+      }
+    >
           {/* 상담 전 준비사항 */}
           <div className="mg-v2-form-section mg-v2-mb-lg">
             <h3 className="mg-v2-section-title mg-v2-mb-md">
@@ -194,22 +196,9 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               ))}
-            </div>
           </div>
         </div>
-
-        <div className="mg-v2-modal-footer">
-          <button 
-            className="mg-v2-button mg-v2-button--primary"
-            onClick={onClose}
-          >
-            <Check size={20} className="mg-v2-icon-inline" />
-            확인했습니다
-          </button>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

@@ -1,18 +1,19 @@
 /**
- * 대시보드 섹션 컴포넌트
- * Phase 3: 공통 레이아웃 컴포넌트
- * 
- * 모든 대시보드에서 일관된 섹션 스타일 제공
+ * 대시보드 섹션 컴포넌트 (Organism)
+ * 스펙: ADMIN_DASHBOARD_MONITORING_DESIGN_SPEC 2.3 — 헤더(아이콘·제목·서브타이틀·actions)
+ *
+ * @author CoreSolution
+ * @since 2025-02-24
  */
 
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import './DashboardSection.css';
 
-const DashboardSection = ({ 
-  title, 
-  icon, 
-  actions, 
+const DashboardSection = ({
+  title,
+  subtitle,
+  icon,
+  actions,
   children,
   collapsible = false,
   defaultCollapsed = false,
@@ -27,26 +28,29 @@ const DashboardSection = ({
   };
 
   return (
-    <section className={`dashboard-section ${className}`}>
-      <div className="dashboard-section-header">
-        <div className="dashboard-section-title-wrapper">
-          {icon && <span className="dashboard-section-icon">{icon}</span>}
-          <h2 className="dashboard-section-title">{title}</h2>
+    <section className={`mg-dashboard-section mg-dashboard-section--card ${className}`.trim()}>
+      <header className="mg-dashboard-section-header">
+        <div className="mg-dashboard-section-title-wrap">
+          {icon && <span className="mg-dashboard-section-icon" aria-hidden>{icon}</span>}
+          <div>
+            {title && <h2 className="mg-dashboard-section-title">{title}</h2>}
+            {subtitle && <p className="mg-dashboard-section-subtitle">{subtitle}</p>}
+          </div>
           {collapsible && (
-            <button 
-              className="dashboard-section-collapse-btn"
+            <button
+              type="button"
+              className="mg-dashboard-section-collapse-btn"
               onClick={toggleCollapse}
               aria-label={isCollapsed ? '펼치기' : '접기'}
             >
-              <i className={`bi bi-chevron-${isCollapsed ? 'down' : 'up'}`}></i>
+              <i className={`bi bi-chevron-${isCollapsed ? 'down' : 'up'}`} aria-hidden />
             </button>
           )}
         </div>
-        {actions && <div className="dashboard-section-actions">{actions}</div>}
-      </div>
-      
+        {actions && <div className="mg-dashboard-section-actions">{actions}</div>}
+      </header>
       {!isCollapsed && (
-        <div className="dashboard-section-content">
+        <div className="mg-dashboard-section-content">
           {children}
         </div>
       )}

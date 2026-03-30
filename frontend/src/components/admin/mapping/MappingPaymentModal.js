@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
-import MGButton from '../../common/MGButton';
-
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import BadgeSelect from '../../common/BadgeSelect';
 /**
  * 매칭 입금확인 모달 컴포넌트
+/**
  * - 결제 방법 선택 (계좌이체, 신용카드, 현금)
+/**
  * - 결제 참조번호 자동 생성 및 수정 가능
+/**
  * - 입금확인 처리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-16
  */
 const MappingPaymentModal = ({ 
@@ -74,13 +80,14 @@ const MappingPaymentModal = ({
 
         setLoading(true);
         try {
-            const response = await apiPost(`/api/admin/mappings/${mapping.id}/confirm-payment`, {
+            const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-payment`, {
                 paymentMethod: paymentData.paymentMethod,
                 paymentReference: paymentData.paymentMethod === 'CASH' ? null : paymentData.paymentReference,
                 paymentAmount: paymentData.paymentAmount
             });
 
-            if (response.success) {
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
                 notificationManager.success('✅ 결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
                 onPaymentConfirmed?.(mapping.id);
                 onClose();
@@ -89,7 +96,8 @@ const MappingPaymentModal = ({
             }
         } catch (error) {
             console.error('결제 확인 실패:', error);
-            notificationManager.error('결제 확인에 실패했습니다.');
+            const errorMessage = error.message || '결제 확인에 실패했습니다.';
+            notificationManager.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -102,34 +110,44 @@ const MappingPaymentModal = ({
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-    
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <CreditCard size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">
-                            결제 확인
-                        </h2>
-                    </div>
-                    <button 
-                        className="mg-v2-modal-close"
-                        onClick={onClose}
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="결제 확인"
+            size="medium"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+            actions={
+                <>
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-secondary"
+                        onClick={(e) => {
+                            e?.preventDefault();
+                            e?.stopPropagation();
+                            onClose();
+                        }}
                         disabled={loading}
-                        aria-label="닫기"
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </div>
-
-                {/* 본문 */}
-                <div className="mg-v2-modal-body">
-
-                <div className="mg-v2-mapping-info-box">
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleConfirmPayment}
+                        disabled={loading}
+                    >
+                        <CheckCircle size={18} />
+                        입금 확인
+                    </button>
+                </>
+            }
+        >
+            <div className="mg-v2-modal-body">
+                <div className="mg-v2-ad-b0kla__card mg-v2-mapping-info-box">
                     <div className="mg-v2-mapping-info-content">
                         <div className="mg-v2-mapping-info-label">
                             매칭 정보
@@ -147,15 +165,17 @@ const MappingPaymentModal = ({
                     <label className="mg-v2-form-label">
                         결제 방법
                     </label>
-                    <select
+                    <BadgeSelect
                         value={paymentData.paymentMethod}
-                        onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        className="mg-v2-form-select"
-                    >
-                        <option value="BANK_TRANSFER">계좌이체</option>
-                        <option value="CARD">신용카드</option>
-                        <option value="CASH">현금</option>
-                    </select>
+                        onChange={(val) => handlePaymentMethodChange(val)}
+                        options={[
+                            { value: 'BANK_TRANSFER', label: '계좌이체' },
+                            { value: 'CARD', label: '신용카드' },
+                            { value: 'CASH', label: '현금' }
+                        ]}
+                        className="mg-v2-form-badge-select"
+                        aria-label="결제 방법"
+                    />
                 </div>
 
                 {paymentData.paymentMethod !== 'CASH' && (
@@ -196,29 +216,8 @@ const MappingPaymentModal = ({
                         className="mg-v2-form-input"
                     />
                 </div>
-
-                </div>
-
-                {/* 푸터 */}
-                <div className="mg-v2-modal-footer">
-                    <MGButton
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={loading}
-                    >
-                        취소
-                    </MGButton>
-                    <MGButton
-                        variant="primary"
-                        onClick={handleConfirmPayment}
-                        disabled={loading}
-                    >
-                        {loading ? '처리 중...' : '확인'}
-                    </MGButton>
-                </div>
             </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

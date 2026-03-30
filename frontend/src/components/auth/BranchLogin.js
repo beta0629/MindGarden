@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedHeader from '../common/UnifiedHeader';
+import UnifiedHeader from "../common/UnifiedHeader";
+// 임시 비활성화
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
@@ -13,9 +14,13 @@ import './BranchLogin.css';
 
 /**
  * 지점별 로그인 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 const BranchLogin = () => {
@@ -27,6 +32,7 @@ const BranchLogin = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: ''
   });
   const [branches, setBranches] = useState([]);
@@ -40,7 +46,7 @@ const BranchLogin = () => {
 
   // === API 호출 함수들 ===
   
-  /**
+/**
    * 지점 목록 조회
    */
   const loadBranches = async () => {
@@ -64,7 +70,7 @@ const BranchLogin = () => {
     }
   };
 
-  /**
+/**
    * 지점별 로그인
    */
   const handleBranchLogin = async (e) => {
@@ -85,6 +91,7 @@ const BranchLogin = () => {
       const loginData = {
         email: formData.email,
         password: formData.password,
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: loginType === 'BRANCH' ? formData.branchCode : null,
         loginType: loginType
       };
@@ -140,6 +147,7 @@ const BranchLogin = () => {
     setLoginType(type);
     setFormData(prev => ({
       ...prev,
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchCode: ''
     }));
   };
@@ -156,12 +164,12 @@ const BranchLogin = () => {
       description="본사 또는 지점별로 로그인하세요"
       bodyClass="branch-login-page"
     >
-      <UnifiedHeader title="지점별 로그인" />
+      <UnifiedHeader />
       
       <div className="branch-login-container">
         <div className="login-card">
           <div className="login-header">
-            <h2>마인드가든 로그인</h2>
+            <h2>Core Solution 로그인</h2>
             <p>본사 또는 지점별로 로그인하세요</p>
           </div>
 

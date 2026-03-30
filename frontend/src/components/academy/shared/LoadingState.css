@@ -1,0 +1,19 @@
+/**
+ * 학원 시스템 - 로딩 상태 스타일
+ */
+
+.academy-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl, 2rem);
+  min-height: 200px;
+}
+
+.academy-loading-message {
+  margin-top: var(--spacing-md, 1rem);
+  color: var(--color-text-secondary, #666);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+

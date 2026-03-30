@@ -1,15 +1,18 @@
 import React from 'react';
 import SystemStatus from '../system/SystemStatus';
 import SystemTools from '../system/SystemTools';
-import PermissionManagement from '../PermissionManagement';
 import ConsultantRatingStatistics from '../ConsultantRatingStatistics';
 import SystemNotificationSection from '../../dashboard/SystemNotificationSection';
 
 /**
  * AdminDashboard 시스템 섹션 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const AdminDashboardSystem = ({
@@ -19,7 +22,6 @@ const AdminDashboardSystem = ({
     onNavigate
 }) => {
     const hasSystemPermission = userPermissions.includes('SYSTEM_CONFIG');
-    const hasPermissionManagement = userPermissions.includes('PERMISSION_MANAGEMENT');
     const hasNotificationPermission = userPermissions.includes('NOTIFICATION_MANAGEMENT');
     const hasStatisticsPermission = userPermissions.includes('STATISTICS_VIEW');
 
@@ -41,16 +43,6 @@ const AdminDashboardSystem = ({
                 {hasSystemPermission && (
                     <div className="mg-v2-admin-dashboard-system-section">
                         <SystemTools
-                            onNavigate={onNavigate}
-                            loading={loading}
-                        />
-                    </div>
-                )}
-
-                {/* 권한 관리 */}
-                {hasPermissionManagement && (
-                    <div className="mg-v2-admin-dashboard-system-section">
-                        <PermissionManagement
                             onNavigate={onNavigate}
                             loading={loading}
                         />

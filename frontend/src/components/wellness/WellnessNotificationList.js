@@ -4,17 +4,30 @@ import { Calendar, Heart, AlertCircle, TrendingUp, Bell } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import Badge from '../common/Badge';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationList.css';
 
 /**
  * 웰니스 알림 목록 페이지 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
+const stripHtmlToPreview = (raw) => {
+  const text = toDisplayString(raw, '');
+  return text.replace(/<[^>]*>/g, '');
+};
+
 const WellnessNotificationList = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSession();
@@ -45,7 +58,7 @@ const WellnessNotificationList = () => {
       setError(null);
 
       // 활성화된 웰니스 알림 가져오기
-      const response = await apiGet('/api/system-notifications/active');
+      const response = await apiGet('/api/v1/system-notifications/active');
       
       if (response && response.success) {
         // 웰니스 타입만 필터링
@@ -80,35 +93,33 @@ const WellnessNotificationList = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="웰니스 알림">
-        <div className="wellness-notification-list">
-          <UnifiedLoading message="알림을 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="웰니스 알림">
+        <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout title="웰니스 알림">
+      <AdminCommonLayout title="웰니스 알림">
         <div className="wellness-notification-list">
           <div className="wellness-notification-empty">
             <div className="empty-icon">
               <AlertCircle size={48} />
             </div>
             <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
-            <p className="empty-message">{error}</p>
+            <p className="empty-message"><SafeText>{error}</SafeText></p>
             <button className="mg-btn mg-btn--primary" onClick={loadNotifications}>
               다시 시도
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="웰니스 알림">
+    <AdminCommonLayout title="웰니스 알림">
       <div className="wellness-notification-list">
         {/* 헤더 */}
         <div className="wellness-list-header">
@@ -149,16 +160,13 @@ const WellnessNotificationList = () => {
                 {/* 배지 */}
                 <div className="card-badges">
                   {notification.isImportant && (
-                    <span className="badge badge-important">
-                      <Heart size={12} />
-                      <span>중요</span>
-                    </span>
+                    <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {notification.isUrgent && (
-                    <span className="badge badge-urgent">긴급</span>
+                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                   {!notification.isRead && (
-                    <span className="badge badge-new">NEW</span>
+                    <Badge variant="status" statusVariant="info" label="신규" size="sm" />
                   )}
                 </div>
 
@@ -169,14 +177,12 @@ const WellnessNotificationList = () => {
 
                 {/* 내용 */}
                 <div className="card-content">
-                  <h3 className="card-title">{notification.title}</h3>
-                  <div 
+                  <h3 className="card-title"><SafeText>{notification.title}</SafeText></h3>
+                  <div
                     className="card-description"
-                    dangerouslySetInnerHTML={{ 
+                    dangerouslySetInnerHTML={{
                       __html: (() => {
-                        const content = notification.content || '';
-                        // HTML 태그 제거하여 미리보기만 표시
-                        const textOnly = content.replace(/<[^>]*>/g, '');
+                        const textOnly = stripHtmlToPreview(notification.content);
                         return textOnly.length > 100
                           ? `${textOnly.substring(0, 100)}...`
                           : textOnly;
@@ -187,9 +193,11 @@ const WellnessNotificationList = () => {
                     <div className="meta-item">
                       <Calendar size={14} />
                       <span>
-                        {new Date(
-                          notification.publishedAt || notification.createdAt
-                        ).toLocaleDateString('ko-KR')}
+                        {toDisplayString(
+                          new Date(
+                            notification.publishedAt || notification.createdAt
+                          ).toLocaleDateString('ko-KR')
+                        )}
                       </span>
                     </div>
                   </div>
@@ -204,7 +212,7 @@ const WellnessNotificationList = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

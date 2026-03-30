@@ -1,12 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { FaServer, FaDatabase, FaSync } from 'react-icons/fa';
+import Button from '../../ui/Button/Button';
 
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
-    const getStatusColor = (status) => {
+    const getStatusModifier = (status) => {
         switch (status) {
-            case 'healthy': return '#28a745';
-            case 'error': return '#dc3545';
-            default: return '#ffc107';
+            case 'healthy': return 'mg-status-dot--success';
+            case 'error': return 'mg-status-dot--error';
+            default: return 'mg-status-dot--warning';
         }
     };
 
@@ -22,24 +23,28 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
         <div className="system-status-display">
             <div className="system-status-header">
                 <h4>시스템 상태</h4>
-                <button 
-                    className="btn btn-sm btn-outline-primary"
+                <Button
+                    variant="outline"
+                    size="small"
                     onClick={onStatusCheck}
                     disabled={loading}
                 >
                     <FaSync className={loading ? 'spinning' : ''} />
+                    {' '}
                     상태 체크
-                </button>
+                </Button>
             </div>
             
             <div className="system-status-content">
                 <div className="status-item">
                     <div className="status-indicator">
-                        <FaServer />
-                        <span 
-                            className="status-dot"
+                        <span className="status-icon-wrap">
+                            <FaServer />
+                        </span>
+                        <span
+                            className={`mg-status-dot ${getStatusModifier(systemStatus.server)}`}
                             data-status={systemStatus.server}
-                        ></span>
+                        />
                     </div>
                     <div className="status-info">
                         <span className="status-label">서버</span>
@@ -49,11 +54,13 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                 
                 <div className="status-item">
                     <div className="status-indicator">
-                        <FaDatabase />
-                        <span 
-                            className="status-dot"
+                        <span className="status-icon-wrap">
+                            <FaDatabase />
+                        </span>
+                        <span
+                            className={`mg-status-dot ${getStatusModifier(systemStatus.database)}`}
                             data-status={systemStatus.database}
-                        ></span>
+                        />
                     </div>
                     <div className="status-info">
                         <span className="status-label">데이터베이스</span>

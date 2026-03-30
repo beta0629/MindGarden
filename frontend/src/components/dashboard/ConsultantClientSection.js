@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
-import '../../styles/mindgarden-design-system.css';
+import UnifiedLoading from '../common/UnifiedLoading';
+import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담사용 내담자 섹션 컴포넌트
+/**
  * 디자인 시스템 v2.0 적용
  */
 const ConsultantClientSection = ({ userId }) => {
@@ -20,7 +24,8 @@ const ConsultantClientSection = ({ userId }) => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiGet(`/api/admin/mappings/consultant/${userId}/clients`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const response = await apiGet(`/api/v1/admin/mappings/consultant/${userId}/clients`);
       const mappings = response.data || [];
       
       const clientMap = new Map();
@@ -34,6 +39,7 @@ const ConsultantClientSection = ({ userId }) => {
             id: clientId,
             name: mapping.client?.name || mapping.clientName,
             email: mapping.client?.email || '',
+            profileImageUrl: mapping.client?.profileImageUrl ?? null,
             mappingStatus: clientStatus,
             totalSessions: 0,
             usedSessions: 0,
@@ -88,16 +94,22 @@ const ConsultantClientSection = ({ userId }) => {
 
   const getStatusClass = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return 'mg-v2-badge-success';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return 'mg-v2-badge-warning';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return 'mg-v2-badge-secondary';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return 'mg-v2-badge-info';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return 'mg-v2-badge-danger';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return 'mg-v2-badge-secondary';
       default:
@@ -107,16 +119,22 @@ const ConsultantClientSection = ({ userId }) => {
 
   const getStatusText = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return '활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return '대기';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return '비활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return '완료';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return '일시정지';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return '삭제';
       default:
@@ -128,7 +146,7 @@ const ConsultantClientSection = ({ userId }) => {
     return (
       <div className="mg-v2-card">
         <div className="mg-v2-card-body">
-          <UnifiedLoading text="내담자 목록을 불러오는 중..." />
+          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
         </div>
       </div>
     );
@@ -186,17 +204,19 @@ const ConsultantClientSection = ({ userId }) => {
                 onClick={() => handleClientClick(client.id)}
               >
                 <div className="mg-v2-client-card-header">
-                  <div className="mg-v2-client-card-avatar">
-                    {client.name ? client.name.charAt(0) : '?'}
-                  </div>
+                  <Avatar
+                    profileImageUrl={client.profileImageUrl}
+                    displayName={toDisplayString(client.name, '내담자')}
+                    className="mg-v2-client-card-avatar"
+                  />
                   <div className="mg-v2-client-card-info">
-                    <h4 className="mg-v2-h4">{client.name || '이름 없음'}</h4>
+                    <SafeText tag="h4" className="mg-v2-h4" fallback="이름 없음">{client.name}</SafeText>
                     <p className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      {client.email || '이메일 없음'}
+                      <SafeText fallback="이메일 없음">{client.email}</SafeText>
                     </p>
                   </div>
                   <span className={`mg-v2-badge ${getStatusClass(client.mappingStatus)}`}>
-                    {getStatusText(client.mappingStatus)}
+                    <SafeText>{getStatusText(client.mappingStatus)}</SafeText>
                   </span>
                 </div>
 

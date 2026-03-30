@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import MGCard from '../common/MGCard';
+import Button from '../ui/Button/Button';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
@@ -8,12 +12,19 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 수퍼어드민 결제 관리 컴포넌트
+/**
  * - 결제 내역 조회 및 관리
+/**
  * - 결제 통계 및 분석
+/**
  * - 결제 상태 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 const PaymentManagement = () => {
@@ -48,12 +59,11 @@ const PaymentManagement = () => {
     loadStatistics();
   }, [filters, pagination.currentPage]);
 
-  // 결제 상태 코드 로드
   useEffect(() => {
     const loadPaymentStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/PAYMENT_STATUS');
+        const response = await apiGet('/api/v1/common-codes?codeGroup=PAYMENT_STATUS');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -66,16 +76,18 @@ const PaymentManagement = () => {
         }
       } catch (error) {
         console.error('결제 상태 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
         setPaymentStatusOptions([
-          { value: 'PENDING', label: '대기중', icon: '⏳', color: '#f59e0b', description: '결제 대기 중' },
-          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: '#3b82f6', description: '결제 처리 중' },
-          { value: 'APPROVED', label: '승인됨', icon: '✅', color: '#10b981', description: '결제 승인 완료' },
-          { value: 'FAILED', label: '실패', icon: '❌', color: '#ef4444', description: '결제 실패' },
-          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
-          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
-          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
-          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: '#f59e0b', description: '부분 환불' }
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '결제 대기 중' },
+          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
+          { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: 'var(--mg-gray-500)', description: '결제 취소' },
+          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: 'var(--mg-warning-500)', description: '결제 환불' },
+          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: 'var(--mg-gray-600)', description: '결제 만료' },
+          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -85,11 +97,11 @@ const PaymentManagement = () => {
     loadPaymentStatusCodes();
   }, []);
 
-  // 결제 게이트웨이 코드 로드
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
-      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
+      // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,
@@ -101,13 +113,12 @@ const PaymentManagement = () => {
       }
     } catch (error) {
       console.error('결제 게이트웨이 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPaymentGatewayOptions([
-        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: '#0064FF', description: '토스페이먼츠 결제' },
-        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: '#34495E', description: '아임포트 결제' },
-        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: '#FEE500', description: '카카오페이 결제' },
-        { value: 'NAVER', label: '네이버페이', icon: '💚', color: '#03C75A', description: '네이버페이 결제' },
-        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: '#0070BA', description: '페이팔 결제' }
+        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: 'var(--mg-primary-500)', description: '토스페이먼츠 결제' },
+        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: 'var(--mg-gray-700)', description: '아임포트 결제' },
+        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: 'var(--mg-yellow-500)', description: '카카오페이 결제' },
+        { value: 'NAVER', label: '네이버페이', icon: '💚', color: 'var(--mg-green-500)', description: '네이버페이 결제' },
+        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: 'var(--mg-blue-500)', description: '페이팔 결제' }
       ]);
     } finally {
       setLoadingGatewayCodes(false);
@@ -118,11 +129,11 @@ const PaymentManagement = () => {
     loadPaymentGatewayCodes();
   }, [loadPaymentGatewayCodes]);
 
-  // 결제 방법 코드 로드
   const loadPaymentMethodCodes = useCallback(async () => {
     try {
       setLoadingMethodCodes(true);
-      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
+      // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentMethodOptions(response.map(code => ({
           value: code.codeValue,
@@ -134,13 +145,12 @@ const PaymentManagement = () => {
       }
     } catch (error) {
       console.error('결제 방법 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPaymentMethodOptions([
-        { value: 'CARD', label: '카드', icon: '💳', color: '#3b82f6', description: '신용카드/체크카드 결제' },
-        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: '#10b981', description: '은행 계좌 이체' },
-        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: '#8b5cf6', description: '가상계좌 결제' },
-        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: '#f59e0b', description: '모바일 결제' },
-        { value: 'CASH', label: '현금', icon: '💵', color: '#f59e0b', description: '현금 결제' }
+        { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
+        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
+        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: 'var(--mg-purple-500)', description: '가상계좌 결제' },
+        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: 'var(--mg-warning-500)', description: '모바일 결제' },
+        { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' }
       ]);
     } finally {
       setLoadingMethodCodes(false);
@@ -284,7 +294,6 @@ const PaymentManagement = () => {
     }).format(amount);
   };
 
-  // 실제 서비스 기능들
   const exportPayments = async () => {
     try {
       const params = new URLSearchParams({
@@ -321,7 +330,6 @@ const PaymentManagement = () => {
   };
 
   const showPaymentAnalytics = () => {
-    // 결제 분석 모달 또는 페이지로 이동
     notificationManager.show('결제 분석 기능은 개발 중입니다.', 'info');
   };
 
@@ -348,6 +356,7 @@ const PaymentManagement = () => {
         
         const body = action === 'refund' 
           ? { amount: payments.find(p => p.id === paymentId)?.amount }
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           : { status: action === 'approve' ? 'APPROVED' : 'CANCELLED' };
 
         return fetch(endpoint, {
@@ -398,38 +407,30 @@ const PaymentManagement = () => {
     }
   };
 
+  const paymentStatusToVariant = (s) => {
+    const v = (s || '').toUpperCase();
+    if (v.includes('COMPLETE') || v.includes('CONFIRM') || v.includes('SUCCESS')) return 'success';
+    if (v.includes('PENDING') || v.includes('WAIT')) return 'warning';
+    if (v.includes('FAIL') || v.includes('CANCEL')) return 'danger';
+    return 'neutral';
+  };
+
   const getStatusBadge = (status) => {
-    // 동적으로 로드된 결제 상태 옵션에서 찾기
-    const statusOption = paymentStatusOptions.find(option => option.value === status);
-    
-    if (statusOption) {
-      return (
-        <span className="badge" data-badge-color={statusOption.color}>
-          {statusOption.icon} {statusOption.label}
-        </span>
-      );
-    }
-    
-    // 기본값
-    return (
-      <span className="badge badge-secondary">
-        ❓ {status}
-      </span>
-    );
+    const statusOption = paymentStatusOptions.find((option) => option.value === status);
+    const label = statusOption ? statusOption.label : status;
+    return <StatusBadge variant={paymentStatusToVariant(status)}>{label}</StatusBadge>;
   };
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="payment-management">
-          <div className="loading">로딩 중...</div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="결제 관리">
+        <UnifiedLoading type="page" text="결제 내역을 불러오는 중..." />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="결제 관리">
       <div className="payment-management">
         <div className="payment-header">
           <h1>결제 관리</h1>
@@ -466,12 +467,14 @@ const PaymentManagement = () => {
           <div className="stat-card">
             <div className="stat-title">승인된 결제</div>
             <div className="stat-value">
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.APPROVED || 0}건
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-title">대기 중인 결제</div>
             <div className="stat-value">
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.PENDING || 0}건
             </div>
           </div>
@@ -587,83 +590,126 @@ const PaymentManagement = () => {
           </div>
         )}
 
-        {/* 결제 목록 */}
+        {/* 결제 목록 카드 (표준화 원칙: 테이블 → 카드 전환) */}
         <div className="payment-list">
-          <div className="table-container">
-            <table className="payment-table">
-              <thead>
-                <tr>
-                  <th>
+          {/* 전체 선택 체크박스 */}
+          {payments.length > 0 && (
+            <div className="mg-payment-select-all">
+              <label className="mg-payment-select-all__label">
+                <input
+                  type="checkbox"
+                  checked={selectedPayments.length === payments.length && payments.length > 0}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="mg-payment-select-all__checkbox"
+                />
+                <span>전체 선택</span>
+              </label>
+            </div>
+          )}
+          
+          {/* 결제 카드 그리드 */}
+          <div className="mg-payment-cards-grid">
+            {payments.map((payment) => (
+              <MGCard 
+                key={payment.id}
+                variant="default"
+                className={`mg-payment-card ${selectedPayments.includes(payment.id) ? 'mg-payment-card--selected' : ''}`}
+              >
+                <div className="mg-payment-card__header">
+                  <label className="mg-payment-card__checkbox-label">
                     <input
                       type="checkbox"
-                      checked={selectedPayments.length === payments.length && payments.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      checked={selectedPayments.includes(payment.id)}
+                      onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
+                      className="mg-payment-card__checkbox"
                     />
-                  </th>
-                  <th>결제 ID</th>
-                  <th>주문 ID</th>
-                  <th>금액</th>
-                  <th>상태</th>
-                  <th>방법</th>
-                  <th>대행사</th>
-                  <th>결제자</th>
-                  <th>생성일</th>
-                  <th>승인일</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedPayments.includes(payment.id)}
-                        onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
-                      />
-                    </td>
-                    <td>{payment.paymentId}</td>
-                    <td>{payment.orderId}</td>
-                    <td>{formatCurrency(payment.amount)}</td>
-                    <td>{getStatusBadge(payment.status)}</td>
-                    <td>{payment.method}</td>
-                    <td>{payment.provider}</td>
-                    <td>{payment.payerId}</td>
-                    <td>{formatDate(payment.createdAt)}</td>
-                    <td>{payment.approvedAt ? formatDate(payment.approvedAt) : '-'}</td>
-                    <td>
-                      <div className="action-buttons">
-                        {payment.status === 'PENDING' && (
-                          <button
-                            className="btn btn-sm btn-success"
-                            onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
-                          >
-                            승인
-                          </button>
-                        )}
-                        {payment.status === 'PENDING' && (
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
-                          >
-                            취소
-                          </button>
-                        )}
-                        {payment.status === 'APPROVED' && (
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() => handleRefund(payment.paymentId, payment.amount)}
-                          >
-                            환불
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </label>
+                  <div className="mg-payment-card__id-section">
+                    <div className="mg-payment-card__payment-id">{payment.paymentId}</div>
+                    <div className="mg-payment-card__order-id">주문: {payment.orderId}</div>
+                  </div>
+                </div>
+                
+                <div className="mg-payment-card__body">
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">금액</span>
+                    <span className="mg-payment-card__value mg-payment-card__value--amount">
+                      {formatCurrency(payment.amount)}
+                    </span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">상태</span>
+                    <span className="mg-payment-card__value">
+                      {getStatusBadge(payment.status)}
+                    </span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">결제 방법</span>
+                    <span className="mg-payment-card__value">{payment.method || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">대행사</span>
+                    <span className="mg-payment-card__value">{payment.provider || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">결제자</span>
+                    <span className="mg-payment-card__value">{payment.payerId || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">생성일</span>
+                    <span className="mg-payment-card__value">{formatDate(payment.createdAt)}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">승인일</span>
+                    <span className="mg-payment-card__value">
+                      {payment.approvedAt ? formatDate(payment.approvedAt) : '-'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="mg-payment-card__footer">
+                  <div className="mg-payment-card__actions">
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    {payment.status === 'PENDING' && (
+                      <Button
+                        variant="success"
+                        size="small"
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                        onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
+                        preventDoubleClick={true}
+                      >
+                        승인
+                      </Button>
+                    )}
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    {payment.status === 'PENDING' && (
+                      <Button
+                        variant="danger"
+                        size="small"
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                        onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
+                        preventDoubleClick={true}
+                      >
+                        취소
+                      </Button>
+                    )}
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    {payment.status === 'APPROVED' && (
+                      <Button
+                        variant="warning"
+                        size="small"
+                        onClick={() => handleRefund(payment.paymentId, payment.amount)}
+                        preventDoubleClick={true}
+                      >
+                        환불
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </MGCard>
+            ))}
           </div>
+        </div>
 
           {/* 페이지네이션 */}
           <div className="pagination">
@@ -694,7 +740,7 @@ const PaymentManagement = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

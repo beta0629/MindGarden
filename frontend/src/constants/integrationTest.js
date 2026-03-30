@@ -1,9 +1,14 @@
 /**
  * 통합 테스트 관련 상수
+/**
  * CSS 클래스, JavaScript 변수, 메시지 등을 중앙에서 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 

@@ -1,9 +1,14 @@
 /**
  * 중복 로그인 관리 유틸리티
+/**
  * 중복 로그인 감지 및 알림 처리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-09
  */
 
@@ -18,7 +23,7 @@ class DuplicateLoginManager {
         this.lastCheckTime = null;
     }
 
-    /**
+/**
      * 중복 로그인 체크 시작
      */
     startChecking() {
@@ -40,7 +45,7 @@ class DuplicateLoginManager {
         }, this.checkIntervalMs);
     }
 
-    /**
+/**
      * 중복 로그인 체크 중지
      */
     stopChecking() {
@@ -52,7 +57,7 @@ class DuplicateLoginManager {
         this.isChecking = false;
     }
 
-    /**
+/**
      * 강제로 모든 체크 중지 (개발 환경용)
      */
     forceStop() {
@@ -61,7 +66,7 @@ class DuplicateLoginManager {
         console.log('🛑 강제 중복 로그인 체크 중지');
     }
 
-    /**
+/**
      * 중복 로그인 체크 실행
      */
     async checkDuplicateLogin() {
@@ -73,17 +78,19 @@ class DuplicateLoginManager {
             this.isChecking = true;
             this.lastCheckTime = new Date();
 
-            const response = await ajax.get('/api/auth/check-duplicate-login');
+            // ajax.get은 ApiResponse 래퍼에서 data를 추출해서 반환
+            // 따라서 response는 { hasDuplicateLogin: boolean, message: string } 형태
+            const response = await ajax.get('/api/v1/auth/check-duplicate-login');
             
-            if (response && response.success) {
-                if (response.hasDuplicateLogin) {
-                    console.warn('⚠️ 중복 로그인 감지됨');
+            if (response && typeof response === 'object') {
+                if (response.hasDuplicateLogin === true) {
+                    console.warn('⚠️ 중복 로그인 감지됨:', response.message);
                     this.handleDuplicateLogin();
                 } else {
                     console.debug('✅ 중복 로그인 없음');
                 }
             } else {
-                console.warn('중복 로그인 체크 실패:', response.message);
+                console.warn('중복 로그인 체크 실패: 응답 형식 오류', response);
                 // 체크 실패 시 다음 체크까지 대기 시간을 늘림 (서버 부하 방지)
                 if (this.checkInterval) {
                     clearInterval(this.checkInterval);
@@ -107,7 +114,7 @@ class DuplicateLoginManager {
         }
     }
 
-    /**
+/**
      * 중복 로그인 처리
      */
     handleDuplicateLogin() {
@@ -122,7 +129,7 @@ class DuplicateLoginManager {
         }, 5000);
     }
 
-    /**
+/**
      * 강제 로그아웃
      */
     forceLogout() {
@@ -137,12 +144,12 @@ class DuplicateLoginManager {
         window.location.href = '/login?reason=duplicate-login';
     }
 
-    /**
+/**
      * 세션 상태 확인
      */
     async checkSessionStatus() {
         try {
-            const response = await ajax.get('/api/auth/session-info');
+            const response = await ajax.get('/api/v1/auth/session-info');
             return response;
         } catch (error) {
             console.error('세션 상태 확인 실패:', error);
@@ -150,12 +157,12 @@ class DuplicateLoginManager {
         }
     }
 
-    /**
+/**
      * 사용자 세션 강제 종료 (관리자용)
      */
     async forceLogoutUser(email) {
         try {
-            const response = await ajax.post('/api/auth/force-logout', { email });
+            const response = await ajax.post('/api/v1/auth/force-logout', { email });
             
             if (response.success) {
                 notificationManager.success(`${email} 사용자의 세션이 강제 종료되었습니다.`);
@@ -171,7 +178,7 @@ class DuplicateLoginManager {
         }
     }
 
-    /**
+/**
      * 중복 로그인 체크 상태 반환
      */
     getStatus() {

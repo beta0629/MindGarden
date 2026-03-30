@@ -1,26 +1,54 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
-import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
+import Button from '../ui/Button/Button';
+import '../schedule/ScheduleB0KlA.css';
+import BadgeSelect from '../common/BadgeSelect';
+import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
+
+/** 심리검사 요약/권고 문장에서 "위험"·"주의"·"권고" 키워드를 굵은 텍스트+색상으로 강조 */
+function renderTextWithKeywordHighlight(text) {
+  if (!text || typeof text !== 'string') return null;
+  const parts = text.split(/(위험|주의|권고)/g);
+  return parts.map((part, i) => {
+    if (part === '위험') {
+      return <strong key={i} style={{ color: 'var(--mg-error-500)', fontWeight: 600 }}>위험</strong>;
+    }
+    if (part === '주의') {
+      return <strong key={i} style={{ color: 'var(--mg-warning-500)', fontWeight: 600 }}>주의</strong>;
+    }
+    if (part === '권고') {
+      return <strong key={i} style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>권고</strong>;
+    }
+    return part;
+  });
+}
 
 /**
  * 상담일지 작성 모달 컴포넌트
- * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 모달
+ * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 큰 모달(Large).
+ * 상단 고정: 내담자 프로필 요약 → 중요 코멘트 → 심리검사(있을 때) → 상담일지 폼.
  */
-const ConsultationLogModal = ({ 
-  isOpen, 
-  onClose, 
-  scheduleData, 
-  onSave 
+const ConsultationLogModal = ({
+  isOpen,
+  onClose,
+  scheduleData,
+  onSave,
+  recordId,
+  isAdmin = false
 }) => {
   const { user } = useSession();
-  
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [client, setClient] = useState(null);
+  /** with-stats 전체 응답(client, statistics, currentConsultants 등) — 권한 있을 때만 채워짐 */
+  const [clientWithStats, setClientWithStats] = useState(null);
   const [consultationRecord, setConsultationRecord] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [priorityOptions, setPriorityOptions] = useState([]);
@@ -28,14 +56,19 @@ const ConsultationLogModal = ({
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  /** 심리검사 문서 목록 — clientId 있을 때만 로드 */
+  const [psychDocuments, setPsychDocuments] = useState([]);
+  const [loadingPsych, setLoadingPsych] = useState(false);
+  /** 중요 코멘트 수집: 내담자 notes, 일정 notes, 이전 일지 특이사항 등 */
+  const [importantComments, setImportantComments] = useState([]);
 
-  // 우선순위 코드 로드
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/PRIORITY');
-      if (response && response.length > 0) {
-        const options = response.map(code => ({
+      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
+      const list = response?.codes ?? [];
+      if (list.length > 0) {
+        const options = list.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -46,12 +79,11 @@ const ConsultationLogModal = ({
       }
     } catch (error) {
       console.error('우선순위 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: '#28a745', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: '#ffc107', description: '보통 우선순위' },
+        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: '#dc3545', description: '긴급 우선순위' },
+        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -59,7 +91,6 @@ const ConsultationLogModal = ({
     }
   }, []);
   
-  // 상담일지 폼 데이터
   const [formData, setFormData] = useState({
     sessionDate: '',
     sessionNumber: 1,
@@ -93,23 +124,29 @@ const ConsultationLogModal = ({
     followUpDueDate: ''
   });
 
-  // 위험도 옵션 (우선순위 코드 사용)
+  /** 일정에 유효한 내담자 ID가 있는지 (빈 문자열/NaN 제외) */
+  const hasValidScheduleClientId = useMemo(() => {
+    const raw = scheduleData?.clientId;
+    if (raw == null || raw === '') return false;
+    const n = typeof raw === 'number' ? raw : parseInt(raw, 10);
+    return !Number.isNaN(n);
+  }, [scheduleData?.clientId]);
+
   const riskLevels = priorityOptions;
 
-  // 목표 달성도 옵션
   const goalAchievementLevels = [
-    { value: 'LOW', label: '낮음', color: '#dc3545' },
-    { value: 'MEDIUM', label: '보통', color: '#ffc107' },
-    { value: 'HIGH', label: '높음', color: '#28a745' }
+    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
+    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
+    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' }
   ];
 
-  // 완료 상태 코드 로드
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/common-codes/COMPLETION_STATUS');
-      if (response && response.length > 0) {
-        setCompletionStatusOptions(response.map((code, index) => ({
+      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
+      const list = response?.codes ?? [];
+      if (list.length > 0) {
+        setCompletionStatusOptions(list.map((code, index) => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon || '📋',
@@ -117,88 +154,244 @@ const ConsultationLogModal = ({
           description: code.codeDescription
         })));
       } else {
-        // 응답이 비어있을 때 기본값 설정
         setCompletionStatusOptions([
-          { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-          { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
         ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setCompletionStatusOptions([
-        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-        { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
-        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
-        { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
     }
   }, []);
 
-  // 데이터 로드
+  /** scheduleData에서 세션 일자(YYYY-MM-DD) 추출 — 클릭한 일정 날짜 우선 */
+  const getSessionDateFromSchedule = (data) => {
+    if (!data) return new Date().toISOString().split('T')[0];
+    if (data.sessionDate && typeof data.sessionDate === 'string') return data.sessionDate.split('T')[0];
+    if (data.date && typeof data.date === 'string') return data.date.split('T')[0];
+    const st = data.startTime;
+    if (typeof st === 'string' && st.includes('T')) return st.split('T')[0];
+    if (st instanceof Date) return st.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
+  };
+
   useEffect(() => {
-    if (isOpen && scheduleData) {
+    if (isOpen && recordId) {
+      loadDataByRecordId();
+      loadPriorityCodes();
+      loadCompletionStatusCodes();
+    }
+  }, [isOpen, recordId]);
+
+  useEffect(() => {
+    if (isOpen && scheduleData && !recordId) {
       loadData();
       loadPriorityCodes();
       loadCompletionStatusCodes();
-      // 스케줄에서 세션 정보 자동 설정
       setFormData(prev => ({
         ...prev,
-        sessionNumber: scheduleData.sessionNumber || 1, // 스케줄에서 세션 번호 가져오기
-        isSessionCompleted: scheduleData.isSessionCompleted || false, // 스케줄에서 완료 여부 가져오기
-        sessionDate: safeDateToString(scheduleData.startTime) // 스케줄 날짜로 설정
+        sessionNumber: scheduleData.sessionNumber || 1,
+        isSessionCompleted: scheduleData.isSessionCompleted || false,
+        sessionDate: getSessionDateFromSchedule(scheduleData)
       }));
     }
-  }, [isOpen, scheduleData]);
+  }, [isOpen, scheduleData, recordId]);
 
-  // 안전한 날짜 변환 함수
-  const safeDateToString = (dateValue) => {
-    if (!dateValue) return new Date().toISOString().split('T')[0];
-    
+  const loadDataByRecordId = async () => {
+    if (!recordId || !user?.id) return;
     try {
-      if (typeof dateValue === 'string') {
-        return dateValue.split('T')[0];
-      } else if (dateValue instanceof Date) {
-        return dateValue.toISOString().split('T')[0];
+      setLoading(true);
+      setClientWithStats(null);
+      setClient(null);
+      setConsultationRecord(null);
+      setImportantComments([]);
+      setPsychDocuments([]);
+
+      let record = null;
+      if (isAdmin) {
+        const res = await apiGet(`/api/v1/admin/consultation-records/${recordId}`);
+        record = res?.data ?? res;
       } else {
-        return new Date(dateValue).toISOString().split('T')[0];
+        const res = await apiGet(`/api/v1/admin/consultant-records/${user.id}/consultation-records/${recordId}`);
+        record = res?.data ?? res;
       }
+
+      if (!record) {
+        notificationManager.show('상담일지를 찾을 수 없습니다.', 'error');
+        return;
+      }
+
+      const cId = record.clientId != null ? Number(record.clientId) : null;
+      if (cId) {
+        try {
+          const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${cId}`);
+          const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
+          const rawClient = payload?.client ?? payload ?? withStatsRes?.client ?? withStatsRes;
+          const clientData = rawClient && typeof rawClient === 'object' && !Array.isArray(rawClient) ? rawClient : null;
+          if (clientData) {
+            setClientWithStats(payload && typeof payload === 'object' ? payload : { client: clientData });
+            setClient(clientData);
+          }
+        } catch (err) {
+          console.warn('내담자 통계 정보 로드 실패, 기본 정보만 사용:', err);
+          // 기본 정보만으로 설정
+          setClient({ 
+            id: cId, 
+            name: record.clientName || `내담자 #${cId}`,
+            email: record.clientEmail || '',
+            phone: record.clientPhone || ''
+          });
+          setClientWithStats({ 
+            client: { 
+              id: cId, 
+              name: record.clientName || `내담자 #${cId}`,
+              email: record.clientEmail || '',
+              phone: record.clientPhone || ''
+            } 
+          });
+        }
+        setLoadingPsych(true);
+        try {
+          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${cId}`);
+          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
+          setPsychDocuments(list);
+        } catch (e) {
+          setPsychDocuments([]);
+        } finally {
+          setLoadingPsych(false);
+        }
+      }
+
+      const sessionDateStr = record.sessionDate || record.consultationDate;
+      const sessionDate = typeof sessionDateStr === 'string' ? sessionDateStr.split('T')[0] : sessionDateStr;
+
+      setConsultationRecord(record);
+      setIsEditMode(true);
+      setFormData({
+        sessionDate: sessionDate || '',
+        sessionNumber: record.sessionNumber ?? 1,
+        clientCondition: record.clientCondition || '',
+        mainIssues: record.mainIssues || '',
+        interventionMethods: record.interventionMethods || '',
+        clientResponse: record.clientResponse || '',
+        nextSessionPlan: record.nextSessionPlan || '',
+        homeworkAssigned: record.homeworkAssigned || '',
+        homeworkDueDate: record.homeworkDueDate || '',
+        riskAssessment: record.riskAssessment || 'LOW',
+        riskFactors: record.riskFactors || '',
+        emergencyResponsePlan: record.emergencyResponsePlan || '',
+        progressEvaluation: record.progressEvaluation || '',
+        progressScore: record.progressScore ?? 50,
+        goalAchievement: record.goalAchievement || 'MEDIUM',
+        goalAchievementDetails: record.goalAchievementDetails || '',
+        consultantObservations: record.consultantObservations || '',
+        consultantAssessment: record.consultantAssessment || '',
+        specialConsiderations: record.specialConsiderations || '',
+        medicalInformation: record.medicalInformation || '',
+        medicationInfo: record.medicationInfo || '',
+        familyRelationships: record.familyRelationships || '',
+        socialSupport: record.socialSupport || '',
+        environmentalFactors: record.environmentalFactors || '',
+        sessionDurationMinutes: record.sessionDurationMinutes ?? 60,
+        isSessionCompleted: record.isSessionCompleted ?? false,
+        incompletionReason: record.incompletionReason || '',
+        nextSessionDate: record.nextSessionDate || '',
+        followUpActions: record.followUpActions || '',
+        followUpDueDate: record.followUpDueDate || ''
+      });
+
+      const comments = [];
+      if (record.specialConsiderations && String(record.specialConsiderations).trim()) {
+        comments.push({ source: '이전 상담일지 특이사항', text: record.specialConsiderations });
+      }
+      setImportantComments(comments);
     } catch (error) {
-      console.warn('날짜 변환 오류:', error);
-      return new Date().toISOString().split('T')[0];
+      console.error('상담일지 단건 로드 오류:', error);
+      notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // 내담자 정보 로드
-      if (scheduleData.clientId) {
-        const clientResponse = await apiGet(`/api/admin/users`);
-        if (clientResponse.success) {
-          const clientData = clientResponse.data.find(u => u.id === scheduleData.clientId);
+      setClientWithStats(null);
+      setClient(null);
+      setImportantComments([]);
+      setPsychDocuments([]);
+
+      const rawClientId = scheduleData?.clientId;
+      const clientId = (rawClientId != null && rawClientId !== '') ? (typeof rawClientId === 'number' ? (Number.isNaN(rawClientId) ? null : rawClientId) : (() => { const n = parseInt(rawClientId, 10); return Number.isNaN(n) ? null : n; })()) : null;
+      let withStatsData = null;
+      if (clientId) {
+        try {
+          const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
+          const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
+          const rawClient = payload?.client ?? payload ?? withStatsRes?.client ?? withStatsRes;
+          const clientData = rawClient && typeof rawClient === 'object' && !Array.isArray(rawClient) ? rawClient : null;
           if (clientData) {
+            withStatsData = payload && typeof payload === 'object' ? payload : { client: clientData };
+            setClientWithStats(withStatsData);
             setClient(clientData);
           }
+        } catch (err) {
+          if (err?.status === 403 || err?.message?.includes('권한')) {
+            try {
+              const usersRes = await apiGet('/api/admin/users');
+              const userList = Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? []);
+              const fallback = userList.find(u => Number(u.id) === Number(clientId));
+              if (fallback) {
+                setClient({ id: fallback.id, name: fallback.name, phone: fallback.phone, email: fallback.email, gender: fallback.gender });
+              }
+            } catch (e) {
+              console.warn('내담자 fallback 조회 실패:', e);
+            }
+          }
+        }
+
+        setLoadingPsych(true);
+        try {
+          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${clientId}`);
+          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
+          setPsychDocuments(list);
+        } catch (e) {
+          setPsychDocuments([]);
+        } finally {
+          setLoadingPsych(false);
         }
       }
-      
-      // 기존 상담일지 로드
+
+      let loadedRecord = null;
       try {
-        const recordResponse = await apiGet(`/api/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
-        if (recordResponse.success && recordResponse.data.length > 0) {
-          const record = recordResponse.data[0];
+        const recordResponse = await apiGet(`/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
+        const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
+        const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
+        if (hasRecord && recordList[0]) {
+          const record = recordList[0];
+          loadedRecord = record;
           setConsultationRecord(record);
           setIsEditMode(true);
-          
-          // 폼 데이터 설정
           setFormData({
-            sessionDate: record.sessionDate || safeDateToString(scheduleData.startTime),
+            sessionDate: record.sessionDate || getSessionDateFromSchedule(scheduleData),
             sessionNumber: record.sessionNumber || 1,
             clientCondition: record.clientCondition || '',
             mainIssues: record.mainIssues || '',
@@ -211,7 +404,7 @@ const ConsultationLogModal = ({
             riskFactors: record.riskFactors || '',
             emergencyResponsePlan: record.emergencyResponsePlan || '',
             progressEvaluation: record.progressEvaluation || '',
-            progressScore: record.progressScore || 50,
+            progressScore: record.progressScore ?? 50,
             goalAchievement: record.goalAchievement || 'MEDIUM',
             goalAchievementDetails: record.goalAchievementDetails || '',
             consultantObservations: record.consultantObservations || '',
@@ -222,25 +415,42 @@ const ConsultationLogModal = ({
             familyRelationships: record.familyRelationships || '',
             socialSupport: record.socialSupport || '',
             environmentalFactors: record.environmentalFactors || '',
-            sessionDurationMinutes: record.sessionDurationMinutes || 60,
-            isSessionCompleted: record.isSessionCompleted || false,
+            sessionDurationMinutes: record.sessionDurationMinutes ?? 60,
+            isSessionCompleted: record.isSessionCompleted ?? false,
             incompletionReason: record.incompletionReason || '',
             nextSessionDate: record.nextSessionDate || '',
             followUpActions: record.followUpActions || '',
             followUpDueDate: record.followUpDueDate || ''
           });
         } else {
-          // 새 상담일지인 경우 기본값 설정
           setFormData(prev => ({
             ...prev,
-            sessionDate: safeDateToString(scheduleData.startTime),
+            sessionDate: getSessionDateFromSchedule(scheduleData),
             sessionDurationMinutes: 60,
             isSessionCompleted: true
           }));
         }
       } catch (error) {
-        console.log('기존 상담일지 없음, 새로 작성');
+        setFormData(prev => ({
+          ...prev,
+          sessionDate: getSessionDateFromSchedule(scheduleData),
+          sessionDurationMinutes: 60,
+          isSessionCompleted: true
+        }));
       }
+
+      const comments = [];
+      const clientForNotes = withStatsData?.client || null;
+      if (clientForNotes?.notes && String(clientForNotes.notes).trim()) {
+        comments.push({ source: '내담자 메모', text: clientForNotes.notes });
+      }
+      if (scheduleData?.notes && String(scheduleData.notes).trim()) {
+        comments.push({ source: '일정 메모', text: scheduleData.notes });
+      }
+      if (loadedRecord?.specialConsiderations && String(loadedRecord.specialConsiderations).trim()) {
+        comments.push({ source: '이전 상담일지 특이사항', text: loadedRecord.specialConsiderations });
+      }
+      setImportantComments(comments);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
       notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -257,7 +467,6 @@ const ConsultationLogModal = ({
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // 입력 시 해당 필드의 검증 오류 제거
     if (validationErrors[name]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -266,41 +475,33 @@ const ConsultationLogModal = ({
     }
   };
 
-  // 필수값 검증 함수
   const validateForm = () => {
     const errors = {};
     
-    // 세션 시간 (분) - 필수
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
       errors.sessionDurationMinutes = '세션 시간을 입력해주세요 (최소 1분)';
     }
     
-    // 내담자 상태 - 필수
     if (!formData.clientCondition || formData.clientCondition.trim() === '') {
       errors.clientCondition = '내담자 상태를 입력해주세요';
     }
     
-    // 주요 이슈 - 필수
     if (!formData.mainIssues || formData.mainIssues.trim() === '') {
       errors.mainIssues = '주요 이슈를 입력해주세요';
     }
     
-    // 개입 방법 - 필수
     if (!formData.interventionMethods || formData.interventionMethods.trim() === '') {
       errors.interventionMethods = '개입 방법을 입력해주세요';
     }
     
-    // 내담자 반응 - 필수
     if (!formData.clientResponse || formData.clientResponse.trim() === '') {
       errors.clientResponse = '내담자 반응을 입력해주세요';
     }
     
-    // 위험도 평가 - 필수
     if (!formData.riskAssessment || formData.riskAssessment === '') {
       errors.riskAssessment = '위험도 평가를 선택해주세요';
     }
     
-    // 진행 평가 - 필수
     if (!formData.progressEvaluation || formData.progressEvaluation.trim() === '') {
       errors.progressEvaluation = '진행 평가를 입력해주세요';
     }
@@ -310,48 +511,51 @@ const ConsultationLogModal = ({
   };
 
   const handleSave = async () => {
-    // 필수값 검증
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
     }
-    
+
     try {
       setSaving(true);
-      
-      // consultationId 파싱 (schedule-30 형태 처리)
-      const consultationId = scheduleData.id ? 
-        (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
-          parseInt(scheduleData.id.replace('schedule-', '')) : 
-          parseInt(scheduleData.id)) : 
-        null;
+
+      const consultationId = scheduleData?.id
+        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
+            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
+            : parseInt(scheduleData.id, 10))
+        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
       const recordData = {
         ...formData,
         consultationId: consultationId,
-        clientId: client?.id,
-        consultantId: user.id,
-        isSessionCompleted: false
+        clientId: client?.id ?? consultationRecord?.clientId,
+        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
+        isSessionCompleted: formData.isSessionCompleted ?? false
       };
-
-      console.log('📝 상담일지 저장 데이터:', recordData);
 
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        if (isAdmin) {
+          response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
+        } else {
+          response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        }
       } else {
-        response = await apiPost(`/api/schedules/consultation-records`, recordData);
+        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response.success) {
+      const record = response?.data ?? response;
+      const isSuccess = response && (response.success === true || (record && record.id != null));
+      if (isSuccess && record) {
         notificationManager.show(
           isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
           'success'
         );
-        setConsultationRecord(response.data);
-        onSave && onSave(response.data);
+        setConsultationRecord(record);
+        onSave && onSave(record);
+        if (recordId) onClose && onClose();
       } else {
-        throw new Error(response.message || '저장에 실패했습니다.');
+        throw new Error(response?.message || '저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('저장 오류:', error);
@@ -362,47 +566,48 @@ const ConsultationLogModal = ({
   };
 
   const handleComplete = async () => {
-    // 필수값 검증
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
     }
-    
+
     try {
       setSaving(true);
-      
-      // consultationId 파싱 (schedule-30 형태 처리)
-      const consultationId = scheduleData.id ? 
-        (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
-          parseInt(scheduleData.id.replace('schedule-', '')) : 
-          parseInt(scheduleData.id)) : 
-        null;
+
+      const consultationId = scheduleData?.id
+        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
+            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
+            : parseInt(scheduleData.id, 10))
+        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
       const recordData = {
         ...formData,
         consultationId: consultationId,
-        clientId: client?.id,
-        consultantId: user.id,
+        clientId: client?.id ?? consultationRecord?.clientId,
+        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
         completionTime: new Date().toISOString()
       };
 
-      console.log('📝 상담일지 완료 데이터:', recordData);
-
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        if (isAdmin) {
+          response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
+        } else {
+          response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        }
       } else {
-        response = await apiPost(`/api/schedules/consultation-records`, recordData);
+        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response.success) {
+      const record = response?.data ?? response;
+      const isSuccess = response && (response.success === true || (record && record.id != null));
+      if (isSuccess && record) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
-        onSave && onSave(response.data);
-        // 상담일지 완료 후 바로 모달 닫기
+        onSave && onSave(record);
         onClose();
       } else {
-        throw new Error(response.message || '완료 처리에 실패했습니다.');
+        throw new Error(response?.message || '완료 처리에 실패했습니다.');
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);
@@ -414,139 +619,392 @@ const ConsultationLogModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
+  const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
-  if (loading) {
-    return ReactDOM.createPortal(
-      <div className="mg-v2-modal-overlay">
-        <div className="mg-v2-modal mg-v2-modal-large">
-          <div className="mg-v2-modal-body">
-            <div className="mg-v2-loading-overlay">
-              <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+  const modalFooter = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="medium"
+        onClick={onClose}
+        disabled={saving}
+        preventDoubleClick={false}
+      >
+        취소
+      </Button>
+      <Button
+        type="button"
+        variant="primary"
+        size="medium"
+        onClick={handleSave}
+        disabled={saving}
+        loading={saving}
+        loadingText="저장중..."
+        preventDoubleClick={false}
+      >
+        {saving ? '저장중...' : '💾 저장'}
+      </Button>
+      <Button
+        type="button"
+        variant="success"
+        size="medium"
+        onClick={handleComplete}
+        disabled={saving}
+        loading={saving}
+        loadingText="완료중..."
+        preventDoubleClick={false}
+      >
+        {saving ? '완료중...' : '✅ 완료'}
+      </Button>
+    </>
+  );
+
+  const modalSubtitle = scheduleData
+    ? [scheduleData.clientName, scheduleData.sessionDate || scheduleData.date].filter(Boolean).join(' · ')
+    : undefined;
+
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      subtitle={modalSubtitle}
+      size="fullscreen"
+      className="mg-v2-ad-b0kla"
+      showCloseButton={true}
+      backdropClick={true}
+      actions={modalFooter}
+    >
+      <div className="mg-v2-consultation-log-modal">
+        {saving && (
+          <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mb-md" role="status" aria-live="polite">
+            저장 중...
+          </p>
+        )}
+        <div
+          className="mg-v2-modal-body"
+          style={{
+            padding: 'var(--mg-spacing-lg, 24px)',
+            maxHeight: '85vh',
+            overflowY: 'auto'
+          }}
+        >
+          {/* 상단 고정(Sticky) 영역: 내담자 프로필 → 중요 코멘트 → 심리검사 */}
+          <div
+            className="mg-v2-consultation-log-sticky"
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              paddingBottom: 'var(--mg-spacing-lg, 24px)',
+              background: 'var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7))',
+              backgroundColor: '#FAF9F7'
+            }}
+          >
+            {/* (1) 내담자 프로필 요약 블록 — client 있으면 표시, 없으면 안내/로딩 */}
+            {client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main, var(--mg-gray-50))',
+                  border: '1px solid var(--mg-color-border-main, var(--mg-gray-200))',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-primary-main, var(--mg-primary-500))'
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main, var(--mg-gray-800))', marginBottom: 16 }}>
+                  내담자 프로필
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이름</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}><SafeText fallback="—">{client.name}</SafeText></div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>연락처(전화)</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—')}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이메일</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}><SafeText fallback="—">{client.email}</SafeText></div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>성별</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>등급/상태</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {(() => {
+                        const gradeLabel = client.grade === 'BRONZE' ? '브론즈' : client.grade === 'SILVER' ? '실버' : client.grade === 'GOLD' ? '골드' : client.grade === 'PLATINUM' ? '플래티넘' : client.grade || '';
+                        const statusLabel = client.status ? getUserStatusKoreanNameSync(client.status) : '';
+                        if (gradeLabel && statusLabel) return `${gradeLabel} / ${statusLabel}`;
+                        if (gradeLabel) return gradeLabel;
+                        if (statusLabel) return statusLabel;
+                        return '—';
+                      })()}
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>메모 요약</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                      {client.notes ? (client.notes.length > 80 ? client.notes.slice(0, 80) + '…' : client.notes) : '—'}
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>주소 요약</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '—'}
+                    </div>
+                  </div>
+                  {clientWithStats && (
+                    <div>
+                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>매칭·패키지 요약</span>
+                      <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                        연결 상담사 {clientWithStats.currentConsultants ?? 0}명
+                        {clientWithStats.statistics?.totalSessions != null && ` / 총 세션 ${clientWithStats.statistics.totalSessions}회`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : loading && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-primary-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보 로딩 중...
+                </p>
+              </div>
+            ) : !hasValidScheduleClientId ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다 (일정에 내담자가 연결되지 않았습니다).
+                </p>
+              </div>
+            ) : hasValidScheduleClientId && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다.
+                </p>
+              </div>
+            ) : null}
+
+            {/* (2) 중요 코멘트 블록 */}
+            <div
+              style={{
+                background: 'var(--mg-warning-50, var(--cs-warning-50))',
+                border: '1px solid var(--mg-color-border-main, var(--mg-gray-200))',
+                borderLeft: '4px solid var(--mg-color-accent-main, var(--mg-warning-500))',
+                borderRadius: 16,
+                padding: 24,
+                marginBottom: 16
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main, var(--mg-gray-800))', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={20} style={{ color: 'var(--mg-color-accent-main, var(--mg-warning-500))', flexShrink: 0 }} />
+                상담 시 주의사항
+              </h3>
+              {importantComments.length === 0 ? (
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))', margin: 0 }}>주의사항 없음</p>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                  {importantComments.map((item, idx) => (
+                    <li key={`${toDisplayString(item.source)}-${idx}`} style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>
+                        [<SafeText tag="span">{item.source}</SafeText>]
+                      </span>{' '}
+                      {typeof item.text === 'string'
+                        ? renderTextWithKeywordHighlight(item.text)
+                        : <SafeText>{item.text}</SafeText>}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </div>
-        </div>
-      </div>,
-      portalTarget
-    );
-  }
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <FileText size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">
-              상담일지 작성
-              {isEditMode && <span className="mg-v2-badge mg-v2-badge--info">수정 모드</span>}
-            </h2>
+            {/* (3) 심리검사 블록 — 있을 때만. 요약·위험도·핵심 해석 우선 노출, 뱃지·굵은 텍스트 강조 */}
+            {psychDocuments.length > 0 && (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-secondary-main)'
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main)', marginBottom: 16 }}>
+                  심리검사
+                </h3>
+                {loadingPsych ? (
+                  <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)' }}>로딩 중...</p>
+                ) : (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {psychDocuments.map((doc, idx) => {
+                      const summaryText = doc.summarySection || doc.reportSummary || null;
+                      const hasRisk = [summaryText, doc.keyFindings, doc.recommendationSection]
+                        .filter(Boolean).some(t => String(t).includes('위험'));
+                      const hasCaution = [summaryText, doc.keyFindings, doc.recommendationSection]
+                        .filter(Boolean).some(t => String(t).includes('주의'));
+                      const isLast = idx === psychDocuments.length - 1;
+                      return (
+                        <li
+                          key={doc.documentId}
+                          style={{
+                            padding: '12px 0',
+                            borderBottom: isLast ? 'none' : '1px solid var(--mg-color-border-main)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                            <a
+                              href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                              style={{ fontSize: 14, color: 'var(--mg-color-primary-main)', fontWeight: 600, textDecoration: 'none' }}
+                              onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                              onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                              onFocus={(e) => { e.target.style.textDecoration = 'underline'; }}
+                              onBlur={(e) => { e.target.style.textDecoration = 'none'; }}
+                            >
+                              {doc.originalFilename || `심리검사 문서 #${doc.documentId}`}
+                            </a>
+                            {hasRisk && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: 'var(--mg-error-500)',
+                                  background: 'var(--cs-error-50)',
+                                  padding: '2px 8px',
+                                  borderRadius: 6
+                                }}
+                              >
+                                위험
+                              </span>
+                            )}
+                            {hasCaution && !hasRisk && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: 'var(--mg-warning-500)',
+                                  background: 'var(--cs-warning-50)',
+                                  padding: '2px 8px',
+                                  borderRadius: 6
+                                }}
+                              >
+                                주의
+                              </span>
+                            )}
+                          </div>
+                          {summaryText && (
+                            <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: '0 0 8px', lineHeight: 1.5 }}>
+                              {renderTextWithKeywordHighlight(summaryText)}
+                            </p>
+                          )}
+                          {doc.keyFindings && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', fontWeight: 600 }}>핵심 해석</span>
+                              <p style={{ fontSize: 14, color: 'var(--mg-color-text-main)', fontWeight: 600, margin: '4px 0 0', lineHeight: 1.5 }}>
+                                {renderTextWithKeywordHighlight(doc.keyFindings)}
+                              </p>
+                            </div>
+                          )}
+                          {doc.recommendationSection && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', fontWeight: 600 }}>권고</span>
+                              <p style={{ fontSize: 14, color: 'var(--mg-color-text-main)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                                {renderTextWithKeywordHighlight(doc.recommendationSection)}
+                              </p>
+                            </div>
+                          )}
+                          <a
+                            href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                            style={{ fontSize: 13, color: 'var(--mg-color-primary-main)', textDecoration: 'none' }}
+                            onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                            onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                            onFocus={(e) => { e.target.style.textDecoration = 'underline'; }}
+                            onBlur={(e) => { e.target.style.textDecoration = 'none'; }}
+                          >
+                            상세 보기 →
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
 
-        <div className="mg-v2-modal-body">
           {/* 필수값 안내 */}
-          <div className="mg-v2-alert mg-v2-alert--warning mg-v2-mb-md">
-            <AlertTriangle size={20} className="mg-v2-section-title-icon" />
+          <div className="mg-v2-bg-yellow-50 mg-v2-p-md mg-v2-radius-md mg-v2-border mg-v2-border-yellow-200 mg-flex mg-v2-items-start mg-v2-gap-sm mg-v2-mb-lg">
+            <AlertTriangle size={20} className="mg-v2-text-warning mg-v2-mt-xs" />
             <div>
-              <strong>필수 입력 항목 안내</strong>
-              <p>
-                <span className="mg-v2-form-label-required">*</span> 표시된 항목은 반드시 입력해야 합니다.
+              <strong className="mg-v2-text-warning mg-v2-font-bold">필수 입력 항목 안내</strong>
+              <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mt-xs">
+                <span className="mg-v2-text-danger">*</span> 표시된 항목은 반드시 입력해야 합니다.<br/>
                 필수 항목: 세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가
               </p>
             </div>
           </div>
 
-          {/* 내담자 정보 */}
-          {client && (
-            <div className="mg-v2-info-box mg-v2-mb-lg">
-              <h3 className="mg-v2-info-box-title">
-                <User size={20} className="mg-v2-section-title-icon" />
-                내담자 정보
-              </h3>
-              <div className="mg-v2-info-grid">
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">이름</span>
-                  <span className="mg-v2-info-value">{client.name}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">나이</span>
-                  <span className="mg-v2-info-value">{client.age ? `${client.age}세` : '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">성별</span>
-                  <span className="mg-v2-info-value">
-                    {client.gender === 'MALE' ? '남성' : 
-                     client.gender === 'FEMALE' ? '여성' : 
-                     client.gender || '미입력'}
-                  </span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">연락처</span>
-                  <span className="mg-v2-info-value">{client.phone || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">주소</span>
-                  <span className="mg-v2-info-value">{client.address || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">이메일</span>
-                  <span className="mg-v2-info-value">{client.email || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">상담 목적</span>
-                  <span className="mg-v2-info-value">{client.consultationPurpose || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">상담 유형</span>
-                  <span className="mg-v2-info-value">
-                    {scheduleData.consultationType === 'INDIVIDUAL' ? '개인상담' :
-                     scheduleData.consultationType === 'GROUP' ? '그룹상담' :
-                     scheduleData.consultationType === 'COUPLE' ? '부부상담' :
-                     scheduleData.consultationType === 'FAMILY' ? '가족상담' :
-                     scheduleData.consultationType || '미입력'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 상담일지 작성 폼 */}
           <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">
-              <FileText size={20} className="mg-v2-section-title-icon" />
+            <h3 className="mg-v2-text-lg mg-v2-font-bold mg-flex mg-v2-items-center mg-v2-gap-sm mg-v2-mb-lg mg-v2-border-b mg-v2-pb-sm">
+              <FileText size={20} className="mg-v2-text-primary" />
               상담일지 작성
             </h3>
             
-            <div className="mg-v2-form-grid">
+            <div className="mg-v2-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               {/* 기본 정보 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 일자 *</label>
+                <label className="mg-v2-label">세션 일자 *</label>
                 <input
                   type="date"
                   name="sessionDate"
                   value={formData.sessionDate}
                   onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: '#f8f9fa',
-                    color: '#6c757d',
-                    cursor: 'not-allowed'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
                   required
                   disabled
                 />
-                <small className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-                  스케줄에서 선택한 날짜로 고정됩니다
-                </small>
               </div>
               
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 번호</label>
+                <label className="mg-v2-label">세션 번호</label>
                 <input
                   type="number"
                   name="sessionNumber"
@@ -554,22 +1012,13 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   disabled={true}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    color: '#666',
-                    cursor: 'not-allowed'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
                 />
-                <small className="mg-v2-text-xs mg-v2-text-secondary">
-                  스케줄에서 자동으로 설정됩니다
-                </small>
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  세션 시간 (분) <span className="mg-form-required">*</span>
-                </label>
+                <label className="mg-v2-label">세션 시간 (분) *</label>
                 <input
                   type="number"
                   name="sessionDurationMinutes"
@@ -577,242 +1026,171 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   max="180"
-                  className="mg-v2-form-input"
-                  style={{
-                    borderColor: validationErrors.sessionDurationMinutes ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ borderColor: validationErrors.sessionDurationMinutes ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.sessionDurationMinutes && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.sessionDurationMinutes}
-                  </small>
-                )}
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 완료 여부</label>
-                <select
-                  name="isSessionCompleted"
-                  value={formData.isSessionCompleted}
-                  onChange={handleInputChange}
+                <label className="mg-v2-label">세션 완료 여부</label>
+                <BadgeSelect
+                  options={completionStatusOptions.map(o => ({ value: o.value, label: o.label }))}
+                  value={formData.isSessionCompleted === true ? 'COMPLETED' : 'PENDING'}
+                  onChange={(v) => setFormData(prev => ({ ...prev, isSessionCompleted: v === 'COMPLETED' }))}
+                  placeholder="선택하세요"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
                   disabled={true}
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    color: '#666',
-                    cursor: 'not-allowed'
-                  }}
-                >
-                  {completionStatusOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.icon} {option.label}
-                    </option>
-                  ))}
-                </select>
-                <small className="mg-v2-text-xs mg-v2-text-secondary">
-                  스케줄에서 자동으로 설정됩니다
-                </small>
+                />
               </div>
 
               {/* 내담자 상태 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  내담자 상태 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">내담자 상태 *</label>
                 <textarea
                   name="clientCondition"
                   value={formData.clientCondition}
                   onChange={handleInputChange}
                   placeholder="내담자의 현재 상태를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.clientCondition ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.clientCondition ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.clientCondition && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.clientCondition}
-                  </small>
-                )}
               </div>
 
               {/* 주요 이슈 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  주요 이슈 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">주요 이슈 *</label>
                 <textarea
                   name="mainIssues"
                   value={formData.mainIssues}
                   onChange={handleInputChange}
                   placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.mainIssues ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.mainIssues ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.mainIssues && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.mainIssues}
-                  </small>
-                )}
               </div>
 
               {/* 개입 방법 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  개입 방법 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">개입 방법 *</label>
                 <textarea
                   name="interventionMethods"
                   value={formData.interventionMethods}
                   onChange={handleInputChange}
                   placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.interventionMethods ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.interventionMethods ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.interventionMethods && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.interventionMethods}
-                  </small>
-                )}
               </div>
 
               {/* 내담자 반응 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  내담자 반응 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">내담자 반응 *</label>
                 <textarea
                   name="clientResponse"
                   value={formData.clientResponse}
                   onChange={handleInputChange}
                   placeholder="내담자의 반응이나 변화를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.clientResponse ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.clientResponse ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.clientResponse && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.clientResponse}
-                  </small>
-                )}
               </div>
 
               {/* 다음 세션 계획 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">다음 세션 계획</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">다음 세션 계획</label>
                 <textarea
                   name="nextSessionPlan"
                   value={formData.nextSessionPlan}
                   onChange={handleInputChange}
                   placeholder="다음 세션에서 다룰 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 과제 부여 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">과제 부여</label>
+                <label className="mg-v2-label">과제 부여</label>
                 <textarea
                   name="homeworkAssigned"
                   value={formData.homeworkAssigned}
                   onChange={handleInputChange}
                   placeholder="부여한 과제나 숙제를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">과제 제출 기한</label>
+                <label className="mg-v2-label">과제 제출 기한</label>
                 <input
                   type="date"
                   name="homeworkDueDate"
                   value={formData.homeworkDueDate}
                   onChange={handleInputChange}
-                  className="mg-v2-form-input"
+                  className="mg-v2-input mg-v2-w-full"
                 />
               </div>
 
               {/* 위험도 평가 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  위험도 평가 <span className="mg-form-required">*</span>
-                </label>
-                <select
-                  name="riskAssessment"
+                <label className="mg-v2-label">위험도 평가 *</label>
+                <BadgeSelect
+                  options={[{ value: '', label: '위험도를 선택하세요' }, ...riskLevels.map(l => ({ value: l.value, label: l.label }))]}
                   value={formData.riskAssessment}
-                  onChange={handleInputChange}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    borderColor: validationErrors.riskAssessment ? '#dc3545' : '#ced4da'
-                  }}
+                  onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
+                  placeholder="위험도를 선택하세요"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
                   disabled={loadingCodes}
-                  required
-                >
-                  <option value="">위험도를 선택하세요</option>
-                  {riskLevels.map(level => (
-                    <option key={level.value} value={level.value} style={{color: level.color}}>
-                      {level.icon} {level.label}
-                    </option>
-                  ))}
-                </select>
-                {validationErrors.riskAssessment && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.riskAssessment}
-                  </small>
-                )}
+                  error={!!validationErrors.riskAssessment}
+                />
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">위험 요인</label>
+                <label className="mg-v2-label">위험 요인</label>
                 <textarea
                   name="riskFactors"
                   value={formData.riskFactors}
                   onChange={handleInputChange}
                   placeholder="발견된 위험 요인을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">응급 대응 계획</label>
+                <label className="mg-v2-label">응급 대응 계획</label>
                 <textarea
                   name="emergencyResponsePlan"
                   value={formData.emergencyResponsePlan}
                   onChange={handleInputChange}
                   placeholder="응급 상황 시 대응 계획을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 진행 평가 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  진행 평가 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">진행 평가 *</label>
                 <textarea
                   name="progressEvaluation"
                   value={formData.progressEvaluation}
                   onChange={handleInputChange}
                   placeholder="전반적인 진행 상황을 평가해주세요."
-                  style={{
-                    borderColor: validationErrors.progressEvaluation ? '#dc3545' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.progressEvaluation ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.progressEvaluation && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.progressEvaluation}
-                  </small>
-                )}
               </div>
 
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">진행 점수 (0-100)</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">진행 점수 ({formData.progressScore}점)</label>
                 <input
                   type="range"
                   name="progressScore"
@@ -820,225 +1198,126 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="0"
                   max="100"
-                  className="mg-v2-form-input"
+                  className="mg-v2-input mg-v2-w-full"
                 />
-                <span className="mg-v2-text-xs mg-v2-text-secondary">{formData.progressScore}점</span>
               </div>
 
               {/* 목표 달성도 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">목표 달성도</label>
-                <select
-                  name="goalAchievement"
+                <label className="mg-v2-label">목표 달성도</label>
+                <BadgeSelect
+                  options={goalAchievementLevels.map(l => ({ value: l.value, label: l.label }))}
                   value={formData.goalAchievement}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-select"
-                >
-                  {goalAchievementLevels.map(level => (
-                    <option key={level.value} value={level.value}>
-                      {level.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => handleInputChange({ target: { name: 'goalAchievement', value: v } })}
+                  placeholder="선택하세요"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
+                />
               </div>
 
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">목표 달성 세부사항</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">목표 달성 세부사항</label>
                 <textarea
                   name="goalAchievementDetails"
                   value={formData.goalAchievementDetails}
                   onChange={handleInputChange}
                   placeholder="목표 달성에 대한 구체적인 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 상담사 관찰 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담사 관찰</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">상담사 관찰</label>
                 <textarea
                   name="consultantObservations"
                   value={formData.consultantObservations}
                   onChange={handleInputChange}
                   placeholder="내담자에 대한 관찰 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 상담사 평가 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담사 평가</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">상담사 평가</label>
                 <textarea
                   name="consultantAssessment"
                   value={formData.consultantAssessment}
                   onChange={handleInputChange}
                   placeholder="전문적인 관점에서의 평가를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 특별 고려사항 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">특별 고려사항</label>
+              {/* 특별 고려사항 (다음 상담 시 주의사항으로 표시됨) */}
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">특별 고려사항 (다음 상담 시 주의사항)</label>
                 <textarea
                   name="specialConsiderations"
                   value={formData.specialConsiderations}
                   onChange={handleInputChange}
-                  placeholder="특별히 고려해야 할 사항을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  placeholder="다음 상담 시 참고할 특이사항, 주의사항을 기록해주세요. (내담자 메모·일정 메모와 함께 상단에 표시됩니다)"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 의료 정보 */}
+              {/* 환경/사회/가족 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">의료 정보</label>
-                <textarea
-                  name="medicalInformation"
-                  value={formData.medicalInformation}
-                  onChange={handleInputChange}
-                  placeholder="관련 의료 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">복용 약물</label>
-                <textarea
-                  name="medicationInfo"
-                  value={formData.medicationInfo}
-                  onChange={handleInputChange}
-                  placeholder="복용 중인 약물 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              {/* 가족 관계 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">가족 관계</label>
+                <label className="mg-v2-label">가족 관계</label>
                 <textarea
                   name="familyRelationships"
                   value={formData.familyRelationships}
                   onChange={handleInputChange}
-                  placeholder="가족 관계에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 사회적 지지 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">사회적 지지</label>
+                <label className="mg-v2-label">사회적 지지</label>
                 <textarea
                   name="socialSupport"
                   value={formData.socialSupport}
                   onChange={handleInputChange}
-                  placeholder="사회적 지지 체계에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 환경적 요인 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">환경적 요인</label>
+                <label className="mg-v2-label">의료/복용 약물</label>
                 <textarea
-                  name="environmentalFactors"
-                  value={formData.environmentalFactors}
+                  name="medicalInformation"
+                  value={formData.medicalInformation}
                   onChange={handleInputChange}
-                  placeholder="환경적 요인에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 미완료 사유 */}
               {!formData.isSessionCompleted && (
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">미완료 사유</label>
+                <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="mg-v2-label">미완료 사유</label>
                   <textarea
                     name="incompletionReason"
                     value={formData.incompletionReason}
                     onChange={handleInputChange}
                     placeholder="세션이 미완료된 사유를 기록해주세요."
-                    className="mg-v2-form-textarea"
+                    className="mg-v2-input mg-v2-w-full"
+                    style={{ minHeight: '80px' }}
                   />
                 </div>
               )}
-
-              {/* 다음 세션 일정 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">다음 세션 일정</label>
-                <input
-                  type="date"
-                  name="nextSessionDate"
-                  value={formData.nextSessionDate}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: '#f8f9fa',
-                    color: '#6c757d',
-                    cursor: 'not-allowed'
-                  }}
-                  disabled
-                />
-                <small className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-                  관리자가 스케줄에서 지정합니다
-                </small>
-              </div>
-
-              {/* 후속 조치사항 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">후속 조치사항</label>
-                <textarea
-                  name="followUpActions"
-                  value={formData.followUpActions}
-                  onChange={handleInputChange}
-                  placeholder="후속 조치가 필요한 사항을 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">후속 조치 기한</label>
-                <input
-                  type="date"
-                  name="followUpDueDate"
-                  value={formData.followUpDueDate}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                />
-              </div>
-            </div>
-
-            {/* 버튼 그룹 */}
-            <div className="mg-v2-modal-footer">
-              <button
-                type="button"
-                onClick={onClose}
-                className="mg-v2-button mg-v2-button--secondary"
-                disabled={saving}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                className="mg-v2-button mg-v2-button--primary"
-                disabled={saving}
-              >
-                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
-              </button>
-              <button
-                type="button"
-                onClick={handleComplete}
-                className="mg-v2-button mg-v2-button--success"
-                disabled={saving}
-              >
-                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

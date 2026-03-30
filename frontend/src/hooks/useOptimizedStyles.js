@@ -1,7 +1,10 @@
 /**
  * 최적화된 스타일 관리 훅
+/**
  * @description 동적 스타일 적용과 성능 최적화를 위한 커스텀 훅
- * @author MindGarden Team
+/**
+ * @author Core Solution Team
+/**
  * @version 1.0.0
  */
 
@@ -10,8 +13,11 @@ import { COMMON_COLORS, COMMON_SIZES, COMMON_ANIMATIONS } from '../constants/css
 
 /**
  * 동적 스타일 생성 훅
+/**
  * @param {Object} styleConfig - 스타일 설정 객체
+/**
  * @param {Array} dependencies - 의존성 배열
+/**
  * @returns {Object} 최적화된 스타일 객체
  */
 export const useDynamicStyles = (styleConfig, dependencies = []) => {
@@ -36,7 +42,9 @@ export const useDynamicStyles = (styleConfig, dependencies = []) => {
 
 /**
  * 테마 기반 스타일 훅
+/**
  * @param {string} theme - 테마 타입 ('light' | 'dark')
+/**
  * @returns {Object} 테마별 스타일 객체
  */
 export const useThemeStyles = (theme = 'light') => {
@@ -60,7 +68,9 @@ export const useThemeStyles = (theme = 'light') => {
 
 /**
  * 반응형 스타일 훅
+/**
  * @param {Object} breakpointStyles - 브레이크포인트별 스타일
+/**
  * @returns {Object} 현재 화면 크기에 맞는 스타일
  */
 export const useResponsiveStyles = (breakpointStyles) => {
@@ -100,8 +110,11 @@ export const useResponsiveStyles = (breakpointStyles) => {
 
 /**
  * 애니메이션 상태 훅
+/**
  * @param {boolean} isAnimating - 애니메이션 실행 여부
+/**
  * @param {Object} animationConfig - 애니메이션 설정
+/**
  * @returns {Object} 애니메이션 스타일과 제어 함수
  */
 export const useAnimationStyles = (isAnimating = false, animationConfig = {}) => {
@@ -170,7 +183,9 @@ export const useAnimationStyles = (isAnimating = false, animationConfig = {}) =>
 
 /**
  * CSS 변수 동적 설정 훅
+/**
  * @param {Object} cssVariables - CSS 변수 객체
+/**
  * @param {HTMLElement} target - 대상 요소 (기본: document.documentElement)
  */
 export const useCSSVariables = (cssVariables, target = null) => {
@@ -196,8 +211,11 @@ export const useCSSVariables = (cssVariables, target = null) => {
 
 /**
  * 조건부 스타일 훅
+/**
  * @param {Object} conditions - 조건별 스타일 매핑
+/**
  * @param {Array} dependencies - 의존성 배열
+/**
  * @returns {Object} 조건에 맞는 스타일
  */
 export const useConditionalStyles = (conditions, dependencies = []) => {
@@ -216,8 +234,11 @@ export const useConditionalStyles = (conditions, dependencies = []) => {
 
 /**
  * 성능 최적화된 스타일 캐싱 훅
+/**
  * @param {Function} styleGenerator - 스타일 생성 함수
+/**
  * @param {Array} dependencies - 의존성 배열
+/**
  * @returns {Object} 캐시된 스타일
  */
 export const useCachedStyles = (styleGenerator, dependencies = []) => {
@@ -232,8 +253,11 @@ export const useCachedStyles = (styleGenerator, dependencies = []) => {
 
 /**
  * 호버 상태 스타일 훅
+/**
  * @param {Object} normalStyles - 기본 스타일
+/**
  * @param {Object} hoverStyles - 호버 스타일
+/**
  * @returns {Object} 호버 상태 관리 객체
  */
 export const useHoverStyles = (normalStyles = {}, hoverStyles = {}) => {
@@ -257,8 +281,11 @@ export const useHoverStyles = (normalStyles = {}, hoverStyles = {}) => {
 
 /**
  * 포커스 상태 스타일 훅
+/**
  * @param {Object} normalStyles - 기본 스타일
+/**
  * @param {Object} focusStyles - 포커스 스타일
+/**
  * @returns {Object} 포커스 상태 관리 객체
  */
 export const useFocusStyles = (normalStyles = {}, focusStyles = {}) => {

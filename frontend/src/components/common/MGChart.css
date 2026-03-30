@@ -6,7 +6,7 @@
   background: var(--color-bg-surface);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px var(--mg-shadow-light);
   border: 1px solid rgba(226, 232, 240, 0.6);
   overflow: hidden;
 }
@@ -29,7 +29,7 @@
     rgba(102, 126, 234, 0.05) 0%, 
     rgba(118, 75, 162, 0.05) 100%);
   border: 1px solid rgba(102, 126, 234, 0.2);
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15), 0 4px 16px var(--mg-shadow-light);
 }
 
 /* ===== 로딩 상태 ===== */

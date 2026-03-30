@@ -1,5 +1,5 @@
 /* ============================================
-   급여 기산일 설정 모달 - MindGarden 디자인 시스템 v2.0
+   급여 기산일 설정 모달 - Core Solution 디자인 시스템 v2.0
    ============================================ */
 
 /* ==================== 모달 오버레이 ==================== */
@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--mg-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -85,6 +85,32 @@
 /* ==================== 모달 바디 ==================== */
 .salary-config-modal-body {
   padding: var(--spacing-xl);
+}
+
+.salary-config-modal-intro {
+  margin: 0 0 var(--spacing-lg) 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--light-cream, #f8f9fa);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--mint-green, #98fb98);
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray, #333);
+  line-height: 1.5;
+}
+
+.config-section-desc {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray, #555);
+  line-height: 1.5;
+}
+
+.config-item-hint {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.8125rem;
+  color: var(--dark-gray, #666);
+  line-height: 1.4;
 }
 
 /* ==================== 설정 섹션 ==================== */

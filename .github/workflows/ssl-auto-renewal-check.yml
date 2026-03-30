@@ -1,0 +1,66 @@
+# SSL 자동 갱신 설정 점검 (개발/운영)
+# 수동 실행: 운영 서버에서 ensure-auto-renewal.sh 실행
+
+name: 🔒 SSL 자동 갱신 설정 점검
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '점검 대상 서버'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - dev
+
+jobs:
+  check:
+    name: SSL 갱신 설정 점검
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 📤 스크립트 업로드 (개발)
+        if: inputs.target == 'dev'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
+          target: "/tmp/"
+
+      - name: 🔍 개발 서버 SSL 점검
+        if: inputs.target == 'dev'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          script: sudo bash /tmp/ensure-auto-renewal.sh dev
+
+      - name: 📤 스크립트 업로드 (운영)
+        if: inputs.target == 'prod'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
+          target: "/tmp/"
+
+      - name: 🔍 운영 서버 SSL 점검
+        if: inputs.target == 'prod'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          script: sudo bash /tmp/ensure-auto-renewal.sh prod

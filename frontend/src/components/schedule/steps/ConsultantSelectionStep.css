@@ -15,7 +15,7 @@
 .consultant-selection-title {
   font-size: var(--font-size-xl, 1.25rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, #1D1D1F);
+  color: var(--mg-text-primary);
   margin: 0 0 var(--spacing-sm, 0.75rem) 0;
   display: flex;
   align-items: center;
@@ -26,17 +26,17 @@
 .consultant-selection-description,
 .consultant-selection-subtitle {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
   margin: 0;
 }
 
 /* 필터 섹션 */
 .consultant-filter-section {
-  background: var(--color-bg-secondary, #F5F5F7);
+  background: var(--mg-gray-100);
   border-radius: var(--border-radius-md, 12px);
   padding: var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-secondary, #E8E8ED);
-  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--mg-gray-200);
+  box-shadow: var(--cs-shadow-soft);
   backdrop-filter: var(--ios-backdrop-blur-sm);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
@@ -44,20 +44,20 @@
 .consultant-search-input {
   width: 100%;
   padding: var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-md, 12px);
   font-size: var(--font-size-base, 1rem);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-primary, #1D1D1F);
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
   margin-bottom: var(--spacing-md, 1rem);
   transition: all 0.2s ease;
 }
 
 .consultant-search-input:focus {
   outline: none;
-  border-color: var(--color-primary, #007AFF);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-  background: var(--color-bg-primary, #FAFAFA);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px var(--mg-primary-100);
+  background: var(--mg-white);
 }
 
 .consultant-filter-row {
@@ -77,33 +77,33 @@
 .consultant-specialty-label {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
   white-space: nowrap;
 }
 
 .consultant-specialty-select {
   padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-md, 12px);
   font-size: var(--font-size-sm, 0.875rem);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-primary, #1D1D1F);
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .consultant-specialty-select:focus {
   outline: none;
-  border-color: var(--color-primary, #007AFF);
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 2px var(--mg-primary-100);
 }
 
 .consultant-reset-button {
   padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border: 1px solid var(--mg-gray-200);
   border-radius: var(--border-radius-md, 12px);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-secondary, #424245);
+  background: var(--mg-white);
+  color: var(--mg-text-secondary);
   font-size: var(--font-size-sm, 0.875rem);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -113,9 +113,9 @@
 }
 
 .consultant-reset-button:hover {
-  background: var(--color-bg-accent, #E8E8ED);
-  color: var(--color-text-primary, #1D1D1F);
-  border-color: var(--color-border-primary, #D1D1D6);
+  background: var(--mg-gray-200);
+  color: var(--mg-text-primary);
+  border-color: var(--mg-gray-300);
 }
 
 .consultant-availability-filter {
@@ -126,10 +126,10 @@
 
 .consultant-filter-button {
   padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-sm, 8px);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-secondary, #424245);
+  background: var(--mg-white);
+  color: var(--mg-text-secondary);
   font-size: var(--font-size-xs, 0.75rem);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -137,19 +137,19 @@
 }
 
 .consultant-filter-button:hover {
-  background: var(--color-bg-accent, #E8E8ED);
-  border-color: var(--color-border-accent, #A1A1A6);
+  background: var(--mg-gray-200);
+  border-color: var(--mg-gray-500);
 }
 
 .consultant-filter-button.active {
-  background: var(--color-primary, #007AFF);
-  color: var(--color-text-inverse, #FFFFFF);
-  border-color: var(--color-primary, #007AFF);
+  background: var(--mg-primary-500);
+  color: var(--color-text-inverse, var(--mg-white));
+  border-color: var(--mg-primary-500);
 }
 
 .consultant-count-info {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
   margin-bottom: var(--spacing-sm, 0.75rem);
   display: flex;
   align-items: center;
@@ -164,7 +164,7 @@
 
 .consultant-legend-item {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-muted, #8E8E93);
+  color: var(--mg-gray-500);
 }
 
 /* 상담사 그리드 */
@@ -175,41 +175,107 @@
   margin-bottom: var(--spacing-lg, 1.5rem);
 }
 
+/* mg-consultant-cards-grid--schedule-select (스케줄 모달 B0KlA용) */
+.mg-consultant-cards-grid--schedule-select {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* mg-consultant-card--schedule-select (48px 아바타, 전문분야 1줄, 선택하기/상세보기) */
+.mg-consultant-card--schedule-select {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.mg-consultant-card__avatar--schedule-select {
+  width: 48px;
+  height: 48px;
+  font-size: var(--font-size-base, 1rem);
+}
+
+.mg-consultant-card__info--schedule-select {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 0.5rem);
+}
+
+.mg-consultant-card__name--schedule-select {
+  font-size: var(--font-size-base, 1rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.mg-consultant-card__specialty-inline {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--mg-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mg-consultant-card__meta-brief {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 0.75rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--mg-text-secondary);
+}
+
+.mg-consultant-card__rating--brief {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+}
+
+.mg-consultant-card__actions--schedule-select {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  margin-top: auto;
+}
+
 /* 선택된 상담사 정보 */
 .selected-consultant-info {
-  background: var(--color-primary-light, #E3F2FD);
-  border: 1px solid var(--color-primary, #007AFF);
+  background: var(--mg-primary-50);
+  border: 1px solid var(--mg-primary-500);
   border-radius: var(--border-radius-md, 12px);
   padding: var(--spacing-md, 1rem);
   margin-bottom: var(--spacing-lg, 1.5rem);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+  box-shadow: 0 0 0 2px var(--mg-primary-100);
 }
 
 .selected-consultant-title {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-text-primary, #000000);
+  color: var(--mg-text-primary);
   font-weight: var(--font-weight-semibold, 600);
   margin: 0 0 var(--spacing-xs, 0.5rem) 0;
 }
 
 .selected-consultant-details {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-primary, #000000);
+  color: var(--mg-text-primary);
   margin: 0;
 }
 
 /* 선택된 상담사 텍스트 */
 .consultant-selection-selected {
-  background: var(--mint-green-light, rgba(152, 251, 152, 0.2));
+  background: var(--mg-success-50);
   border-radius: var(--border-radius-md, 12px);
   padding: var(--spacing-md, 1rem);
   margin-bottom: var(--spacing-lg, 1.5rem);
-  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--cs-shadow-soft);
 }
 
 .consultant-selection-selected-text {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-text-primary, #000000);
+  color: var(--mg-text-primary);
   font-weight: var(--font-weight-medium, 500);
   margin: 0;
 }
@@ -218,11 +284,11 @@
 .no-consultants {
   text-align: center;
   padding: var(--spacing-xl, 2rem);
-  color: var(--color-text-muted, #8E8E93);
+  color: var(--mg-gray-500);
   font-size: var(--font-size-base, 1rem);
-  background: var(--color-bg-secondary, #F5F5F7);
+  background: var(--mg-gray-100);
   border-radius: var(--border-radius-md, 12px);
-  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border: 1px solid var(--mg-gray-200);
 }
 
 /* 로딩 상태 */
@@ -231,7 +297,7 @@
   justify-content: center;
   align-items: center;
   padding: var(--spacing-xl, 2rem);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
 }
 
 /* 반응형 디자인 */

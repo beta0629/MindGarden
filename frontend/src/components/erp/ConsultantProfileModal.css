@@ -1,5 +1,5 @@
 /* ============================================
-   급여 프로필 모달 - MindGarden 디자인 시스템 v2.0
+   급여 프로필 모달 - Core Solution 디자인 시스템 v2.0
    ============================================ */
 
 /* ==================== 모달 오버레이 ==================== */
@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--mg-overlay);
   display: flex;
   justify-content: center;
   align-items: center;

@@ -1,19 +1,25 @@
 import React from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './ComingSoon.css';
 
 /**
  * 준비중 페이지 컴포넌트
+/**
  * - 아직 구현되지 않은 기능에 대한 안내 페이지
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 const ComingSoon = ({ title = "준비중", description = "해당 기능은 현재 개발 중입니다." }) => {
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="준비 중">
       <div className="coming-soon-container">
         <div className="coming-soon-content">
           <div className="coming-soon-icon">
@@ -44,7 +50,7 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
           </button>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

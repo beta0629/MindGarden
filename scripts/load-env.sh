@@ -2,7 +2,7 @@
 # 환경 변수 자동 로드 스크립트 (macOS/Linux)
 # Usage: source scripts/load-env.sh
 
-ENV_FILE=".env.local"
+ENV_FILE=".env-dev"
 
 # 프로젝트 루트 디렉토리로 이동
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

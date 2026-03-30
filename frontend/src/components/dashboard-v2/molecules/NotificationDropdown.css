@@ -1,0 +1,237 @@
+/**
+ * NotificationDropdown - 알림 센터 드롭다운 스타일
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+.mg-v2-notification-dropdown {
+  position: relative;
+}
+
+.mg-v2-notification-trigger-wrapper {
+  position: relative;
+}
+
+.mg-v2-notification-trigger {
+  position: relative;
+}
+
+.mg-v2-btn-text {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.mg-v2-btn-sm {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mg-color-primary-main, #3D5246);
+}
+
+.mg-v2-btn-text:hover {
+  text-decoration: underline;
+}
+
+.mg-v2-notification-dropdown__panel {
+  width: 360px;
+  min-height: 240px; /* flex 붕괴(2px) 방지: 헤더+빈 메시지+푸터 영역 보장 */
+  max-height: min(480px, calc(100vh - 80px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* §1.3 탭 바: 시스템 공지 | 메시지 */
+.mg-v2-notification-dropdown__tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  padding: 0;
+  min-height: 40px;
+}
+
+.mg-v2-notification-dropdown__tab {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 40px;
+}
+
+.mg-v2-notification-dropdown__tab:hover {
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-notification-dropdown__tab--active {
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  border-bottom-color: var(--mg-color-primary-main, #3D5246);
+  border-radius: 2px;
+}
+
+.mg-v2-notification-dropdown__panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-notification-dropdown__panel-content[hidden] {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-notification-dropdown__panel {
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 100px);
+  }
+}
+
+.mg-v2-notification-list {
+  overflow-y: auto;
+  max-height: 400px;
+  padding: 0;
+}
+
+.mg-v2-notification-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mg-v2-notification-list::-webkit-scrollbar-track {
+  background: var(--mg-color-border-main, #D4CFC8);
+}
+
+.mg-v2-notification-list::-webkit-scrollbar-thumb {
+  background: var(--mg-color-primary-main, #3D5246);
+  border-radius: 3px;
+}
+
+.mg-v2-notification-list::-webkit-scrollbar-thumb:hover {
+  background: var(--mg-color-primary-light, #4A6354);
+}
+
+.mg-v2-notification-item {
+  position: relative;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  transition: background-color 150ms;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-family: inherit;
+}
+
+.mg-v2-notification-item:hover {
+  background-color: var(--mg-color-background-main, #FAF9F7);
+}
+
+.mg-v2-notification-item--unread {
+  background-color: rgba(61, 82, 70, 0.05);
+}
+
+.mg-v2-notification-item__unread-dot {
+  position: absolute;
+  left: 8px;
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--mg-color-primary-main, #3D5246);
+  border-radius: 4px;
+}
+
+.mg-v2-notification-item__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background-color: var(--mg-color-primary-light, #4A6354);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.mg-v2-notification-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-notification-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.mg-v2-notification-item__title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.mg-v2-notification-item__time {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  white-space: nowrap;
+}
+
+.mg-v2-notification-item__message {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-v2-notification-empty {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+.mg-v2-dropdown-panel__footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--mg-color-border-main, #D4CFC8);
+  text-align: center;
+}
+
+.mg-v2-dropdown-panel__footer-link {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mg-color-primary-main, #3D5246);
+  text-decoration: none;
+}
+
+.mg-v2-dropdown-panel__footer-link:hover {
+  text-decoration: underline;
+}

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import ReactDOM from 'react-dom';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ConsultantMessages.css';
 
 /**
@@ -36,31 +39,28 @@ const ConsultantMessages = () => {
     isUrgent: false
   });
 
-  // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: '#6c757d' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: '#007bff' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: '#ffc107' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: '#dc3545' }
+    { value: 'GENERAL', label: '일반', icon: 'MessageCircle', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: 'ClipboardList', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: 'FileText', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: 'Bell', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: 'AlertTriangle', color: 'var(--mg-error-500)' }
   ];
 
   const loadMessages = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-      console.log('📨 상담사 메시지 목록 로드:', user.id);
-      
-      const response = await apiGet(`/api/consultation-messages/consultant/${user.id}`);
-      
-      if (response.success) {
-        console.log('✅ 메시지 목록 로드 성공:', response.data);
-        setMessages(response.data || []);
+      const response = await apiGet(`/api/v1/consultation-messages/consultant/${user.id}`);
+      if (response && response.success) {
+        const raw = response.data;
+        const list = Array.isArray(raw) ? raw : (raw?.messages ?? []);
+        setMessages(list);
       } else {
-        console.error('❌ 메시지 목록 로드 실패:', response.message);
-        notificationManager.show(response.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
+        notificationManager.show(response?.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
       }
     } catch (err) {
-      console.error('❌ 메시지 로드 중 오류:', err);
+      console.error('메시지 로드 중 오류:', err);
       notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
     } finally {
       setLoading(false);
@@ -68,21 +68,16 @@ const ConsultantMessages = () => {
   }, [user?.id]);
 
   const loadClients = useCallback(async () => {
+    if (!user?.id) return;
     try {
-      console.log('👥 연계된 내담자 목록 로드:', user.id);
-      
-      const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
-      
-      if (response.success) {
-        console.log('✅ 내담자 목록 로드 성공:', response.data);
+      const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
+      if (response && response.success) {
         const clientData = response.data || [];
-        const clients = clientData.map(item => item.client).filter(client => client);
-        setClients(clients);
-      } else {
-        console.error('❌ 내담자 목록 로드 실패:', response.message);
+        const list = clientData.map(item => item.client).filter(Boolean);
+        setClients(list);
       }
     } catch (err) {
-      console.error('❌ 내담자 로드 중 오류:', err);
+      console.error('내담자 목록 로드 오류:', err);
     }
   }, [user?.id]);
 
@@ -143,9 +138,9 @@ const ConsultantMessages = () => {
         return;
       }
 
-      const response = await apiPost('/api/consultation-messages', {
+      const response = await apiPost('/api/v1/consultation-messages', {
         ...newMessage,
-        consultantId: user.id
+        consultantId: user?.id
       });
 
       if (response.success) {
@@ -172,16 +167,15 @@ const ConsultantMessages = () => {
   // 메시지 상세 보기
   const handleMessageClick = async (message) => {
     setSelectedMessage(message);
-    
-    // 읽지 않은 메시지인 경우 읽음 처리
-    if (!message.isRead) {
-      await markMessageAsRead(message.id);
-      // 로컬 메시지 목록 업데이트
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === message.id ? { ...msg, isRead: true } : msg
-        )
-      );
+    if (!message.isRead && markMessageAsRead) {
+      try {
+        await markMessageAsRead(message.id);
+        setMessages(prev =>
+          prev.map(msg => (msg.id === message.id ? { ...msg, isRead: true } : msg))
+        );
+      } catch (e) {
+        console.error('읽음 처리 오류:', e);
+      }
     }
   };
 
@@ -205,24 +199,28 @@ const ConsultantMessages = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="메시지 관리">
-        <UnifiedLoading text="세션 정보를 불러오는 중..." size="medium" type="inline" />
-      </SimpleLayout>
+      <AdminCommonLayout title="메시지">
+        <UnifiedLoading 
+          type="page"
+          text="세션 정보를 불러오는 중..."
+          variant="pulse"
+        />
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="메시지 관리">
+      <AdminCommonLayout title="메시지">
         <div className="consultant-messages-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="메시지 관리">
+    <AdminCommonLayout title="메시지">
       <div className="consultant-messages-container">
         {/* 헤더 */}
         <div className="consultant-messages-header">
@@ -251,18 +249,19 @@ const ConsultantMessages = () => {
           </div>
           
           <div className="consultant-messages-filter-container">
-            <select
+            <BadgeSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="consultant-messages-filter-select"
-            >
-              <option value="ALL">전체 유형</option>
-              {messageTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setFilterStatus(val)}
+              options={[
+                { value: 'ALL', label: '전체 유형' },
+                ...messageTypes.map(type => ({
+                  value: type.value,
+                  label: `${type.icon} ${type.label}`
+                }))
+              ]}
+              placeholder="선택하세요"
+              className="mg-v2-form-badge-select consultant-messages-filter-select"
+            />
           </div>
 
           <button
@@ -275,10 +274,11 @@ const ConsultantMessages = () => {
 
         {/* 로딩 상태 */}
         {loading && (
-          <div className="consultant-messages-loading-container">
-            <UnifiedLoading text="메시지 목록을 불러오는 중..." size="medium" type="inline" />
-            <p className="consultant-messages-loading-text">잠시만 기다려주세요...</p>
-          </div>
+          <UnifiedLoading 
+            type="page"
+            text="메시지를 불러오는 중..."
+            variant="pulse"
+          />
         )}
 
         {/* 메시지 목록 */}
@@ -335,7 +335,7 @@ const ConsultantMessages = () => {
                       </h4>
                       
                       <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-md">
-                        {message.content.substring(0, 100)}{message.content.length > 100 && '...'}
+                        {(message.content || '').substring(0, 100)}{(message.content || '').length > 100 ? '...' : ''}
                       </p>
                       
                       <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">
@@ -355,113 +355,100 @@ const ConsultantMessages = () => {
         )}
 
         {/* 새 메시지 작성 모달 */}
-        {showSendModal && ReactDOM.createPortal(
-          <div className="mg-v2-modal-overlay" onClick={() => setShowSendModal(false)}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-v2-modal-header">
-                <h3 className="mg-h3 mg-mb-0">새 메시지 작성</h3>
-                <button
-                  className="mg-v2-modal-close"
-                  onClick={() => setShowSendModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="mg-v2-modal-body">
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">받는 사람 *</label>
-                  <select
-                    className="mg-v2-select"
-                    value={newMessage.clientId}
-                    onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
-                  >
-                    <option key="default-client" value="">내담자를 선택하세요</option>
-                    {clients.map((client, index) => (
-                      <option key={`client-${client.id}-${index}`} value={client.id}>
-                        {client.name} ({client.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">메시지 유형</label>
-                  <select
-                    className="mg-v2-select"
-                    value={newMessage.messageType}
-                    onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
-                  >
-                    {messageTypes.map((type, index) => (
-                      <option key={`message-type-${type.value}-${index}`} value={type.value}>
-                        {type.icon} {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">제목 *</label>
-                  <input
-                    type="text"
-                    className="mg-v2-input"
-                    value={newMessage.title}
-                    onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
-                    placeholder="메시지 제목을 입력하세요"
-                  />
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">내용 *</label>
-                  <textarea
-                    className="mg-v2-textarea"
-                    value={newMessage.content}
-                    onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-                    placeholder="메시지 내용을 입력하세요"
-                    rows={6}
-                  />
-                </div>
-                
-                <div className="mg-flex mg-gap-md">
-                  <label className="mg-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={newMessage.isImportant}
-                      onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
-                    />
-                    <span>중요</span>
-                  </label>
-                  <label className="mg-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={newMessage.isUrgent}
-                      onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
-                    />
-                    <span>긴급</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="mg-v2-modal-footer">
-                <button
-                  className="mg-v2-button mg-v2-button-secondary"
-                  onClick={() => setShowSendModal(false)}
-                >
-                  취소
-                </button>
-                <button
-                  className="mg-v2-button mg-v2-button-primary"
-                  onClick={handleSendMessage}
-                >
-                  전송
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+        <UnifiedModal
+          isOpen={showSendModal}
+          onClose={() => setShowSendModal(false)}
+          title="새 메시지 작성"
+          size="auto"
+          showCloseButton={true}
+          backdropClick={true}
+          actions={
+            <>
+              <button
+                className="mg-v2-button mg-v2-button-secondary"
+                onClick={() => setShowSendModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="mg-v2-button mg-v2-button-primary"
+                onClick={handleSendMessage}
+              >
+                전송
+              </button>
+            </>
+          }
+        >
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">받는 사람 *</label>
+            <CustomSelect
+              className="mg-v2-select"
+              value={newMessage.clientId ?? ''}
+              onChange={(val) => setNewMessage({ ...newMessage, clientId: val })}
+              options={[
+                { value: '', label: '내담자를 선택하세요' },
+                ...clients.map(client => ({
+                  value: client.id,
+                  label: `${client.name} (${client.email})`
+                }))
+              ]}
+              placeholder="내담자를 선택하세요"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">메시지 유형</label>
+            <BadgeSelect
+              className="mg-v2-form-badge-select"
+              value={newMessage.messageType}
+              onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
+              options={messageTypes.map(type => ({
+                value: type.value,
+                label: `${type.icon} ${type.label}`
+              }))}
+              placeholder="선택하세요"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">제목 *</label>
+            <input
+              type="text"
+              className="mg-v2-input"
+              value={newMessage.title}
+              onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
+              placeholder="메시지 제목을 입력하세요"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">내용 *</label>
+            <textarea
+              className="mg-v2-textarea"
+              value={newMessage.content}
+              onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+              placeholder="메시지 내용을 입력하세요"
+              rows={6}
+            />
+          </div>
+          <div className="mg-flex mg-gap-md">
+            <label className="mg-checkbox">
+              <input
+                type="checkbox"
+                checked={newMessage.isImportant}
+                onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
+              />
+              <span>중요</span>
+            </label>
+            <label className="mg-checkbox">
+              <input
+                type="checkbox"
+                checked={newMessage.isUrgent}
+                onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
+              />
+              <span>긴급</span>
+            </label>
+          </div>
+        </UnifiedModal>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

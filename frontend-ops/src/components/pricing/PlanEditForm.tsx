@@ -8,6 +8,7 @@ import {
   updatePricingPlan
 } from "@/services/pricingClient";
 import { PricingPlan } from "@/types/pricing";
+import MGButton from "@/components/ui/MGButton";
 
 interface Props {
   plan: PricingPlan;
@@ -126,8 +127,8 @@ export function PlanEditForm({ plan, onClose }: Props) {
 
   return (
     <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-footer" style={{ justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0 }}>요금제 수정</h2>
+      <div className="ops-form-footer">
+        <h2 className="ops-form-footer__title">요금제 수정</h2>
         <button
           type="button"
           className="ghost-button"
@@ -218,24 +219,28 @@ export function PlanEditForm({ plan, onClose }: Props) {
       </div>
 
       <div className="form-footer">
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
+        <div className="ops-form-footer__actions">
+          <MGButton
             type="button"
-            className="ghost-button"
+            variant="danger"
             onClick={handleDeactivate}
-            disabled={isPending}
+            loading={isPending}
+            loadingText="비활성화 중..."
+            preventDoubleClick={true}
+            clickDelay={2000}
           >
             비활성화
-          </button>
-        </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
+          </MGButton>
+          <MGButton
             type="submit"
-            className="primary-button"
-            disabled={isPending}
+            variant="primary"
+            loading={isPending}
+            loadingText="저장 중..."
+            preventDoubleClick={true}
+            clickDelay={1000}
           >
-            {isPending ? "저장 중..." : "변경 사항 저장"}
-          </button>
+            변경 사항 저장
+          </MGButton>
         </div>
       </div>
       {feedback && (

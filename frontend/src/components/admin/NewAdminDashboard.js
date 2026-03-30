@@ -1,5 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard } from '../../hooks';
 import { DashboardHeader } from '../common';
@@ -13,7 +13,6 @@ import SystemTools from './system/SystemTools';
 import ConsultationCompletionStats from './ConsultationCompletionStats';
 import VacationStatistics from './VacationStatistics';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
-import PermissionManagement from './PermissionManagement';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './AdminDashboard.css';
@@ -71,7 +70,7 @@ const NewAdminDashboard = ({ user: propUser }) => {
         return (
             <SimpleLayout>
                 <div className="loading-container">
-                    <UnifiedLoading type="inline" />
+                    <UnifiedLoading type="page" text="관리자 대시보드를 불러오는 중..." />
                     <p>관리자 대시보드를 불러오는 중...</p>
                 </div>
             </SimpleLayout>
@@ -151,11 +150,6 @@ const NewAdminDashboard = ({ user: propUser }) => {
                         <ConsultantRatingStatistics />
                     </section>
 
-                    {/* 권한 관리 */}
-                    <section className="dashboard-section">
-                        <h2 className="section-title">권한 관리</h2>
-                        <PermissionManagement />
-                    </section>
                 </div>
 
                 {/* 모달들 */}

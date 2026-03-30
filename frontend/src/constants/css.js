@@ -3,15 +3,12 @@
  * 컴포넌트별 CSS 클래스명을 중앙에서 관리
  */
 
-// 공통 CSS 클래스
 export const COMMON_CSS_CLASSES = {
-  // 레이아웃
   CONTAINER: 'container',
   HEADER: 'header',
   CONTENT: 'content',
   FOOTER: 'footer',
   
-  // 버튼
   BUTTON: 'btn',
   BUTTON_PRIMARY: 'btn-primary',
   BUTTON_SECONDARY: 'btn-secondary',
@@ -22,35 +19,32 @@ export const COMMON_CSS_CLASSES = {
   BUTTON_SMALL: 'btn-sm',
   BUTTON_LARGE: 'btn-lg',
   
-  // 폼
   FORM_GROUP: 'form-group',
   FORM_INPUT: 'form-input',
   FORM_LABEL: 'form-label',
   FORM_ACTIONS: 'form-actions',
   CHECKBOX_GROUP: 'checkbox-group',
   
-  // 테이블
   TABLE: 'table',
   TABLE_HEADER: 'table-header',
   TABLE_ROW: 'table-row',
   TABLE_CELL: 'table-cell',
   
-  // 상태
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'active',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   INACTIVE: 'inactive',
   LOADING: 'loading',
   ERROR: 'error',
   SUCCESS: 'success',
   WARNING: 'warning',
   
-  // 모달
   MODAL_OVERLAY: 'modal-overlay',
   MODAL_CONTENT: 'modal-content',
   MODAL_HEADER: 'modal-header',
   MODAL_BODY: 'modal-body',
   MODAL_FOOTER: 'modal-footer',
   
-  // 배지
   BADGE: 'badge',
   BADGE_PRIMARY: 'badge-primary',
   BADGE_SECONDARY: 'badge-secondary',
@@ -58,40 +52,32 @@ export const COMMON_CSS_CLASSES = {
   BADGE_WARNING: 'badge-warning',
   BADGE_DANGER: 'badge-danger',
   
-  // 액션
   ACTION_BUTTONS: 'action-buttons',
   PRIMARY_BADGE: 'primary-badge',
   
-  // 반응형
   RESPONSIVE: 'responsive',
   MOBILE_HIDDEN: 'mobile-hidden',
   DESKTOP_HIDDEN: 'desktop-hidden'
 };
 
-// 계좌 관리 전용 CSS 클래스
 export const ACCOUNT_CSS_CLASSES = {
-  // 메인 컨테이너
-  ACCOUNT_MANAGEMENT: 'account-management',
+  ACCOUNT_MANAGEMENT: 'mg-v2-account-management',
+  ACCOUNT_LIST_SECTION: 'mg-v2-account-management__list-section',
   ACCOUNT_HEADER: 'account-header',
   ACCOUNT_LIST: 'account-list',
   
-  // 폼
   ACCOUNT_FORM_OVERLAY: 'account-form-overlay',
   ACCOUNT_FORM: 'account-form',
   
-  // 테이블
   ACCOUNT_TABLE: 'account-table',
   
-  // 상태
   STATUS_ACTIVE: 'status active',
   STATUS_INACTIVE: 'status inactive',
   
-  // 액션
   ACTION_BUTTONS: 'action-buttons',
   PRIMARY_BADGE: 'primary-badge'
 };
 
-// 결제 테스트 전용 CSS 클래스
 export const PAYMENT_TEST_CSS_CLASSES = {
   PAYMENT_TEST: 'payment-test',
   TEST_CONFIG: 'test-config',
@@ -100,7 +86,6 @@ export const PAYMENT_TEST_CSS_CLASSES = {
   RESULT_ITEM: 'result-item'
 };
 
-// 통계 전용 CSS 클래스
 export const STATISTICS_CSS_CLASSES = {
   TODAY_STATISTICS: 'today-statistics',
   STAT_CARD: 'stat-card',
@@ -112,7 +97,6 @@ export const STATISTICS_CSS_CLASSES = {
   STAT_LABEL: 'stat-label'
 };
 
-// 상세 통계 카드 CSS 클래스
 export const DETAILED_STATS_CARD_CSS = {
   CONTAINER: 'detailed-stats-card',
   HEADER: 'detailed-stats-card-header',
@@ -131,7 +115,6 @@ export const DETAILED_STATS_CARD_CSS = {
   CHANGE_NEGATIVE: 'detailed-stats-card-change negative'
 };
 
-// 상세 통계 상수
 export const DETAILED_STATS = {
   CHANGE_TYPES: {
     POSITIVE: 'positive',
@@ -140,7 +123,6 @@ export const DETAILED_STATS = {
   }
 };
 
-// 상세 통계 그리드 CSS 클래스
 export const DETAILED_STATS_GRID_CSS = {
   CONTAINER: 'detailed-stats-grid',
   GRID: 'detailed-stats-grid-container',
@@ -155,7 +137,6 @@ export const DETAILED_STATS_GRID_CSS = {
   ICON: 'detailed-stats-grid-icon'
 };
 
-// 통계 카드 CSS 클래스
 export const STATS_CARD_CSS = {
   CONTAINER: 'stats-card',
   HEADER: 'stats-card-header',
@@ -168,7 +149,6 @@ export const STATS_CARD_CSS = {
   TREND: 'stats-card-trend'
 };
 
-// 통계 카드 그리드 CSS 클래스
 export const STATS_CARD_GRID_CSS = {
   CONTAINER: 'stats-card-grid',
   GRID: 'stats-card-grid-container',
@@ -184,7 +164,6 @@ export const STATS_CARD_GRID_CSS = {
   TREND: 'stats-card-grid-trend'
 };
 
-// 공통 대시보드 CSS 클래스
 export const COMMON_DASHBOARD_CSS = {
   CONTAINER: 'common-dashboard',
   HEADER: 'common-dashboard-header',
@@ -198,7 +177,6 @@ export const COMMON_DASHBOARD_CSS = {
   FOOTER: 'common-dashboard-footer'
 };
 
-// 빠른 액션 CSS 클래스
 export const QUICK_ACTIONS_CSS = {
   CONTAINER: 'quick-actions',
   SECTION_TITLE: 'section-title',
@@ -208,7 +186,6 @@ export const QUICK_ACTIONS_CSS = {
   ACTION_LABEL: 'quick-actions-action-label'
 };
 
-// 최근 활동 CSS 클래스
 export const RECENT_ACTIVITIES_CSS = {
   CONTAINER: 'recent-activities',
   SECTION_TITLE: 'section-title',
@@ -221,7 +198,6 @@ export const RECENT_ACTIVITIES_CSS = {
   NO_ACTIVITIES: 'no-activities'
 };
 
-// 환영 섹션 CSS 클래스
 export const WELCOME_SECTION_CSS = {
   CONTAINER: 'welcome-section',
   HEADER: 'welcome-section-header',
@@ -232,7 +208,6 @@ export const WELCOME_SECTION_CSS = {
   ICON: 'welcome-section-icon'
 };
 
-// 요약 패널 CSS 클래스
 export const SUMMARY_PANELS_CSS = {
   CONTAINER: 'summary-panels',
   GRID: 'summary-panels-grid',
@@ -255,7 +230,6 @@ export const SUMMARY_PANELS_CSS = {
   MAPPING_ACTIONS: 'summary-panels-mapping-actions'
 };
 
-// 결제 테스트 CSS 클래스
 export const PAYMENT_TEST_CSS = {
   CONTAINER: 'payment-test',
   HEADER: 'payment-test-header',
@@ -287,7 +261,6 @@ export const PAYMENT_TEST_CSS = {
   CLEAR_BUTTON: 'payment-test-clear-button'
 };
 
-// 태블릿 로그인 CSS 클래스
 export const TABLET_LOGIN_CSS = {
   CONTAINER: 'tablet-login',
   HEADER: 'tablet-login-header',
@@ -329,7 +302,6 @@ export const TABLET_LOGIN_CSS = {
   TEST_BUTTON: 'test-button'
 };
 
-// 재무 대시보드 CSS 클래스
 export const FINANCE_DASHBOARD_CSS = {
   CONTAINER: 'finance-dashboard',
   HEADER: 'finance-header',
@@ -367,7 +339,6 @@ export const FINANCE_DASHBOARD_CSS = {
   REFRESH_BUTTON: 'finance-refresh-button'
 };
 
-// 결제 확인 모달 CSS 클래스
 export const PAYMENT_CONFIRMATION_MODAL_CSS = {
   OVERLAY: 'payment-confirmation-modal-overlay',
   MODAL: 'payment-confirmation-modal',

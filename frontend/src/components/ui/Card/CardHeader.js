@@ -2,13 +2,21 @@ import './Card.css';
 
 /**
  * CardHeader 컴포넌트 - 카드 헤더
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {React.ReactNode} props.children - 헤더 내용
+/**
  * @param {React.ReactNode} props.icon - 아이콘 (선택)
+/**
  * @param {string} props.title - 제목 (선택)
+/**
  * @param {string} props.subtitle - 부제목 (선택)
+/**
  * @param {React.ReactNode} props.actions - 액션 버튼들 (선택)
+/**
  * @param {string} props.className - 추가 CSS 클래스
  */
 const CardHeader = ({children, 

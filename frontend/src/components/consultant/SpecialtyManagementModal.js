@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Briefcase, XCircle, Edit2, Save, Plus, Users, Target } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import BadgeSelect from '../common/BadgeSelect';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
+/**
  * - 상담사별 전문분야 설정
+/**
  * - 전문분야별 필터링
+/**
  * - 전문분야 통계
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const SpecialtyManagementModal = ({ isOpen, onClose }) => {
@@ -37,8 +46,8 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
-     * 상담사 목록 로드 (통합 API 사용, 지점별 + 삭제 제외)
+/**
+     * 상담사 목록 로드 (통합 API 사용, 삭제 제외)
      */
     const loadConsultants = async () => {
         try {
@@ -50,8 +59,8 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                 const consultantsData = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
                     
-                    // username 필드도 추가 (name이 없을 경우 대체)
-                    const consultantName = consultantEntity.name || consultantEntity.username || '이름 없음';
+                    // userId 필드도 추가 (name이 없을 경우 대체)
+                    const consultantName = consultantEntity.name || consultantEntity.userId || '이름 없음';
                     const consultantEmail = consultantEntity.email || '';
                     
                     // 전문분야 데이터 확인 (공통코드에서 동적으로 가져오기)
@@ -92,7 +101,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                     return {
                         id: consultantEntity.id,
                         name: consultantName,
-                        username: consultantEntity.username || consultantName,
+                        userId: consultantEntity.userId || consultantName,
                         email: consultantEmail,
                         phone: consultantEntity.phone || '',
                         role: consultantEntity.role || 'CONSULTANT',
@@ -133,12 +142,12 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 목록 로드
      */
     const loadSpecialties = async () => {
         try {
-            const response = await apiGet('/api/common-codes/SPECIALTY');
+            const response = await apiGet('/api/v1/common-codes?codeGroup=SPECIALTY');
             if (response && Array.isArray(response)) {
                 setSpecialties(response);
             } else if (response && response.success !== false) {
@@ -149,7 +158,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 통계 로드 (Deprecated - calculateStatistics로 대체됨)
      */
     // const loadStatistics = async () => {
@@ -163,7 +172,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     //     }
     // };
 
-    /**
+/**
      * 통계 자동 계산
      */
     const calculateStatistics = (consultantsList) => {
@@ -189,7 +198,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         });
     };
 
-    /**
+/**
      * 상담사 선택
      */
     const handleConsultantSelect = (consultant) => {
@@ -199,7 +208,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         setNewSpecialty(specialtyValue);
     };
 
-    /**
+/**
      * 전문분야 추가/수정
      */
     const handleSaveSpecialty = async () => {
@@ -240,7 +249,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 추가 (공통 코드)
      */
     const handleAddSpecialty = async () => {
@@ -252,7 +261,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiPost('/api/common-codes', {
+            const response = await apiPost('/api/v1/common-codes', {
                 codeGroup: 'CONSULTANT_SPECIALTY',
                 codeValue: newSpecialty.trim().toUpperCase().replace(/\s+/g, '_'),
                 codeLabel: newSpecialty.trim(),
@@ -277,7 +286,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 필터링된 상담사 목록
      */
     const filteredConsultants = consultants.filter(consultant => {
@@ -285,7 +294,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         return consultant.specialty && consultant.specialty.includes(filterSpecialty);
     });
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {
@@ -298,21 +307,16 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Target size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">상담사 전문분야 관리</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="상담사 전문분야 관리"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
@@ -347,19 +351,20 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                             </h3>
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">필터</label>
-                                <select
+                                <BadgeSelect
                                     value={filterSpecialty}
-                                    onChange={(e) => setFilterSpecialty(e.target.value)}
+                                    onChange={(val) => setFilterSpecialty(val)}
+                                    options={[
+                                        { value: '', label: '전체 전문분야' },
+                                        ...specialties.map(specialty => ({
+                                            value: specialty.codeLabel,
+                                            label: getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel
+                                        }))
+                                    ]}
+                                    placeholder="전체 전문분야"
                                     disabled={loading}
-                                    className="mg-v2-form-select"
-                                >
-                                    <option value="">전체 전문분야</option>
-                                    {specialties.map(specialty => (
-                                        <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                            {getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel}
-                                        </option>
-                                    ))}
-                                </select>
+                                    className="mg-v2-form-badge-select"
+                                />
                             </div>
 
                             <div className="mg-v2-list-container">
@@ -370,9 +375,9 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
                                         <div className="mg-v2-list-item-content">
-                                            <div className="mg-v2-list-item-title">{consultant.name || consultant.username}</div>
+                                            <div className="mg-v2-list-item-title"><SafeText fallback={toDisplayString(consultant.userId, '—')}>{consultant.name ?? consultant.userId}</SafeText></div>
                                             <div className="mg-v2-list-item-subtitle">
-                                                {consultant.specialtyDisplay || getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}
+                                                <SafeText>{consultant.specialtyDisplay ?? getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}</SafeText>
                                             </div>
                                         </div>
                                         <button 
@@ -402,7 +407,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         <label className="mg-v2-form-label">선택된 상담사</label>
                                         <div className="mg-v2-info-box">
                                             <div className="mg-v2-info-text">
-                                                {selectedConsultant.name || selectedConsultant.username}
+                                                <SafeText fallback={toDisplayString(selectedConsultant.userId, '—')}>{selectedConsultant.name ?? selectedConsultant.userId}</SafeText>
                                             </div>
                                         </div>
                                     </div>
@@ -410,20 +415,20 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                     <div className="mg-v2-form-group">
                                         <label className="mg-v2-form-label" htmlFor="specialty">전문분야</label>
                                         <div className="mg-v2-form-row">
-                                            <select
-                                                id="specialty"
+                                            <BadgeSelect
                                                 value={newSpecialty}
-                                                onChange={(e) => setNewSpecialty(e.target.value)}
+                                                onChange={(val) => setNewSpecialty(val)}
+                                                options={[
+                                                    { value: '', label: '전문분야를 선택하세요' },
+                                                    ...specialties.map(specialty => ({
+                                                        value: specialty.codeLabel,
+                                                        label: getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel
+                                                    }))
+                                                ]}
+                                                placeholder="전문분야를 선택하세요"
                                                 disabled={loading}
-                                                className="mg-v2-form-select mg-v2-form-select--flex-1"
-                                            >
-                                                <option value="">전문분야를 선택하세요</option>
-                                                {specialties.map(specialty => (
-                                                    <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                                        {getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                className="mg-v2-form-badge-select mg-v2-form-select--flex-1"
+                                            />
                                             <button 
                                                 className="mg-v2-button mg-v2-button--primary"
                                                 onClick={handleSaveSpecialty}
@@ -471,9 +476,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

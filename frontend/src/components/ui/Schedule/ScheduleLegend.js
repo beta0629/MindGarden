@@ -1,8 +1,14 @@
+import { toDisplayString } from '../../../utils/safeDisplay';
+
 /**
  * 스케줄 범례 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터를 받음
+/**
  * - 주요 상태만 간소화하여 표시
  */
 const ScheduleLegend = ({
@@ -25,7 +31,7 @@ const ScheduleLegend = ({
     ) || [];
     
     return (
-        <div className="mg-v2-schedule-legend">
+        <div className="mg-v2-schedule-legend mg-v2-ad-b0kla">
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
@@ -37,7 +43,7 @@ const ScheduleLegend = ({
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': getConsultantColor(consultant.id) }}
                                 ></span>
-                                <span className="mg-v2-legend-text">{consultant.name}</span>
+                                <span className="mg-v2-legend-text">{toDisplayString(consultant.name, '—')}</span>
                             </div>
                         ))}
                         {consultants.length > 5 && (
@@ -58,7 +64,7 @@ const ScheduleLegend = ({
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': option.color }}
                                 ></span>
-                                <span className="mg-v2-legend-text">{option.label}</span>
+                                <span className="mg-v2-legend-text">{toDisplayString(option.label, '—')}</span>
                             </div>
                         ))}
                     </div>

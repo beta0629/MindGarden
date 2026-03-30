@@ -1,6 +1,6 @@
 /**
  * Table 컴포넌트 CSS
- * MindGarden 디자인 시스템 v2.0
+ * Core Solution 디자인 시스템 v2.0
  */
 
 /* ============================================
@@ -13,7 +13,7 @@
   background-color: var(--color-white);
   border-radius: var(--mg-v2-spacing-xs);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .mg-v2-table-desktop {
@@ -214,13 +214,13 @@
     border-radius: var(--mg-v2-spacing-xs);
     margin-bottom: var(--mg-v2-spacing-sm);
     padding: var(--mg-v2-spacing-md);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px var(--mg-shadow-light);
     border: 1px solid var(--mg-v2-secondary-light);
     transition: all 0.2s ease-in-out;
   }
   
   .mg-v2-table-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--mg-shadow-medium);
     transform: translateY(-1px);
   }
   

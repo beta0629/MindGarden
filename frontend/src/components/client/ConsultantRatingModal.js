@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
+import PropTypes from 'prop-types';
 import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
-import { API_BASE_URL } from '../../constants/api';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
+/**
  * - 내담자가 상담 후 상담사에게 하트 점수 부여
+/**
  * - 1-5 하트 점수 시스템
+/**
  * - 평가 태그 및 코멘트 지원
+/**
  * - 디자인 시스템 v2.0 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-10-27
  */
 const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) => {
@@ -63,7 +71,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
 
         setIsSubmitting(true);
         try {
-            const response = await csrfTokenManager.post(`${API_BASE_URL}/api/ratings/create`, {
+            const response = await csrfTokenManager.post(`${API_BASE_URL}${RATING_API.CREATE}`, {
                 scheduleId: schedule.scheduleId,
                 clientId: user.id,
                 heartScore: heartScore,
@@ -95,27 +103,43 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
     }
 
     const isSubmitDisabled = heartScore === 0 || isSubmitting;
-    
-    const portalTarget = document.body || document.createElement('div');
 
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Heart size={28} className="mg-v2-modal-title-icon" />
-                        <div>
-                            <h2 className="mg-v2-modal-title">상담사 평가</h2>
-                            <p className="mg-v2-modal-subtitle">{schedule.consultantName}님과의 상담은 어떠셨나요?</p>
-                        </div>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-                        <XCircle size={24} />
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="상담사 평가"
+            subtitle={`${schedule.consultantName}님과의 상담은 어떠셨나요?`}
+            size="large"
+            backdropClick={true}
+            showCloseButton={true}
+            actions={
+                <>
+                    <button
+                        className="mg-v2-button mg-v2-button--secondary"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        <XCircle size={20} className="mg-v2-icon-inline" />
+                        취소
                     </button>
-                </div>
-
-                <div className="mg-v2-modal-body">
+                    <button
+                        className="mg-v2-button mg-v2-button--primary"
+                        onClick={handleSubmit}
+                        disabled={isSubmitDisabled}
+                    >
+                        {isSubmitting ? (
+                            <div className="mg-loading">로딩중...</div>
+                        ) : (
+                            <>
+                                <CheckCircle size={20} className="mg-v2-icon-inline" />
+                                평가 완료
+                            </>
+                        )}
+                    </button>
+                </>
+            }
+        >
                     {/* 상담 정보 */}
                     <div className="mg-v2-info-box mg-v2-mb-lg">
                         <div className="mg-v2-info-grid">
@@ -208,37 +232,21 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                             익명으로 평가하기
                         </label>
                     </div>
-                </div>
-
-                {/* 푸터 */}
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        className="mg-v2-button mg-v2-button--secondary" 
-                        onClick={onClose}
-                        disabled={isSubmitting}
-                    >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
-                        취소
-                    </button>
-                    <button 
-                        className="mg-v2-button mg-v2-button--primary" 
-                        onClick={handleSubmit}
-                        disabled={isSubmitDisabled}
-                    >
-                        {isSubmitting ? (
-                            <UnifiedLoading variant="dots" size="small" type="inline" />
-                        ) : (
-                            <>
-                                <CheckCircle size={20} className="mg-v2-icon-inline" />
-                                평가 완료
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
+};
+
+ConsultantRatingModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  schedule: PropTypes.shape({
+    scheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    consultantName: PropTypes.string,
+    consultationDate: PropTypes.string,
+    consultationTime: PropTypes.string,
+    consultationType: PropTypes.string
+  }),
+  onRatingComplete: PropTypes.func
 };
 
 export default ConsultantRatingModal;

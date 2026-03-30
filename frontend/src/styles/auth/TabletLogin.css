@@ -1,7 +1,7 @@
 /* 태블릿 전용 로그인 페이지 스타일 - 차분한 디자인 */
 .tablet-login {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, var(--cs-slate-50) 0%, var(--cs-slate-200) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,7 +12,7 @@
 }
 
 .tablet-login-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--cs-glass-strong);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
@@ -22,7 +22,7 @@
   position: relative;
   z-index: var(--z-index-modal);
   margin: 0 auto;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border: 1px solid var(--cs-glass-slate-border);
 }
 
 /* 로그인 헤더 */
@@ -42,7 +42,7 @@
 
 .login-subtitle {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--cs-slate-500);
   margin: 0;
   line-height: 1.5;
   font-weight: 400;
@@ -51,11 +51,11 @@
 /* 로그인 모드 스위치 */
 .tablet-login-mode-switch {
   display: flex;
-  background: #f1f5f9;
+  background: var(--cs-slate-100);
   border-radius: 12px;
   padding: var(--spacing-xs);
   margin-bottom: 32px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--cs-slate-200);
 }
 
 .tablet-login-mode-button {
@@ -63,7 +63,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--cs-slate-500);
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -76,14 +76,14 @@
 }
 
 .tablet-login-mode-button:hover {
-  background: rgba(255, 255, 255, 0.5);
-  color: #475569;
+  background: var(--cs-glass-medium);
+  color: var(--cs-slate-600);
 }
 
 .tablet-login-mode-button-active {
-  background: #ffffff;
-  color: #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--mg-white);
+  color: var(--cs-slate-800);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
   font-weight: 600;
 }
 
@@ -104,7 +104,7 @@
 .tablet-login-label {
   display: block;
   margin-bottom: 6px;
-  color: #374151;
+  color: var(--cs-slate-700);
   font-weight: 500;
   font-size: 0.9rem;
   display: flex;
@@ -114,7 +114,7 @@
 
 .tablet-login-label i {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--cs-gray-500);
 }
 
 .tablet-login-input-group {
@@ -126,18 +126,18 @@
 .tablet-login-input {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-xxl);
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--cs-slate-300);
   border-radius: 8px;
   font-size: 1rem;
-  color: #374151;
-  background: #ffffff;
+  color: var(--cs-slate-700);
+  background: var(--mg-white);
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tablet-login-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--mg-primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -150,7 +150,7 @@
   right: 12px;
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--cs-gray-500);
   cursor: pointer;
   padding: var(--spacing-xs);
   border-radius: 4px;
@@ -162,7 +162,7 @@
 
 .tablet-login-password-toggle:hover {
   background: #f3f4f6;
-  color: #374151;
+  color: var(--cs-slate-700);
 }
 
 .tablet-login-password-toggle i {
@@ -185,7 +185,7 @@
 
 .tablet-login-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .tablet-login-button:disabled {
@@ -195,7 +195,7 @@
 }
 
 .tablet-login-button-primary {
-  background: #3b82f6;
+  background: var(--mg-primary-500);
   color: white;
 }
 
@@ -204,7 +204,7 @@
 }
 
 .tablet-login-button-secondary {
-  background: #10b981;
+  background: var(--mg-success-500);
   color: white;
 }
 
@@ -218,7 +218,7 @@
 }
 
 .tablet-login-sms-button {
-  background: #6b7280;
+  background: var(--cs-gray-500);
   color: white;
   border: none;
   padding: var(--spacing-xs) var(--spacing-md);
@@ -236,7 +236,7 @@
 }
 
 .tablet-login-sms-button:disabled {
-  background: #d1d5db;
+  background: var(--cs-slate-300);
   color: #9ca3af;
   cursor: not-allowed;
   transform: none;
@@ -251,24 +251,24 @@
 .tablet-login-verification-input {
   flex: 1;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--cs-slate-300);
   border-radius: 8px;
   font-size: 1rem;
   text-align: center;
   letter-spacing: 1px;
-  color: #374151;
-  background: #ffffff;
+  color: var(--cs-slate-700);
+  background: var(--mg-white);
   transition: all 0.2s ease;
 }
 
 .tablet-login-verification-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--mg-primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tablet-login-verification-button {
-  background: #10b981;
+  background: var(--mg-success-500);
   color: white;
   border: none;
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -303,9 +303,9 @@
 }
 
 .login-divider span {
-  background: #ffffff;
+  background: var(--mg-white);
   padding: 0 16px;
-  color: #6b7280;
+  color: var(--cs-gray-500);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -329,12 +329,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #ffffff;
+  background: var(--mg-white);
 }
 
 .social-login-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
 }
 
 .social-login-button:disabled {
@@ -375,7 +375,7 @@
 }
 
 .login-footer p {
-  color: #6b7280;
+  color: var(--cs-gray-500);
   margin-bottom: 12px;
   font-size: 0.9rem;
   font-weight: 400;
@@ -384,7 +384,7 @@
 .link-button {
   background: none;
   border: none;
-  color: #3b82f6;
+  color: var(--mg-primary-500);
   cursor: pointer;
   font-size: inherit;
   font-weight: 500;
@@ -401,7 +401,7 @@
 }
 
 .test-button {
-  background: #ef4444;
+  background: var(--mg-error-500);
   color: white;
   border: none;
   padding: var(--spacing-xs) var(--spacing-md);
@@ -418,7 +418,7 @@
 }
 
 .test-button:disabled {
-  background: #d1d5db;
+  background: var(--cs-slate-300);
   color: #9ca3af;
   cursor: not-allowed;
   transform: none;

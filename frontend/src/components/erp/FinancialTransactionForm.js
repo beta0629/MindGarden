@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import axios from 'axios';
 import ErpModal from './common/ErpModal';
+import MGButton from '../common/MGButton';
+import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -20,6 +23,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [commonCodes, setCommonCodes] = useState({
     transactionTypes: [],
     incomeCategories: [],
@@ -38,7 +42,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   const loadCommonCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/erp/common-codes/financial', {
+      const response = await axios.get('/api/v1/erp/common-codes/financial', {
         withCredentials: true
       });
       
@@ -67,19 +71,28 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const response = await axios.post('/api/erp/finance/transactions', formData);
-      
-      if (response.data.success) {
-        notificationManager.show('거래가 성공적으로 등록되었습니다.', 'info');
-        onSuccess && onSuccess(response.data.data);
-        onClose && onClose();
+      const response = await axios.post('/api/v1/erp/finance/transactions', formData);
+      const ok = response?.data && (response.data.success === true || (response.data.success === undefined && response.status === 200));
+
+      if (ok) {
+        setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
+        notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
+        setTimeout(() => {
+          onSuccess?.(response?.data?.data ?? response?.data);
+          onClose?.();
+        }, 1200);
       } else {
-        setError(response.data.message);
+        const msg = response.data?.message || '등록에 실패했습니다.';
+        setError(msg);
+        notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || '거래 등록 중 오류가 발생했습니다.');
+      const msg = err.response?.data?.message || '거래 등록 중 오류가 발생했습니다.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
     } finally {
       setLoading(false);
     }
@@ -103,19 +116,34 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     <ErpModal
       isOpen={true}
       onClose={onClose}
-      title="💰 수입/지출 등록"
+      title="수입/지출 등록"
       size="medium"
     >
 
-        {error && (
-          <div className="mg-v2-form-error" style={{ 
-            padding: 'var(--spacing-sm)', 
+        {successMessage && (
+          <div className="mg-v2-form-success" role="alert" style={{
+            padding: 'var(--spacing-md)',
             marginBottom: 'var(--spacing-md)',
-            backgroundColor: 'var(--status-error-border)',
-            color: 'var(--status-error-dark)',
-            borderRadius: 'var(--radius-sm)'
+            backgroundColor: 'var(--mg-success-100, #dcfce7)',
+            color: 'var(--mg-success-800, #166534)',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 500
           }}>
-            {error}
+            ✓ {successMessage}
+          </div>
+        )}
+        {error && (
+          <div
+            className="mg-v2-form-error"
+            style={{
+              padding: 'var(--spacing-sm)',
+              marginBottom: 'var(--spacing-md)',
+              backgroundColor: 'var(--status-error-border)',
+              color: 'var(--status-error-dark)',
+              borderRadius: 'var(--radius-sm)'
+            }}
+          >
+            <SafeErrorDisplay error={error} variant="inline" />
           </div>
         )}
 
@@ -135,7 +163,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   style={{ cursor: 'pointer' }}
                 />
-                <span>💚 수입</span>
+                <span>수입</span>
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
                 <input
@@ -146,7 +174,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   style={{ cursor: 'pointer' }}
                 />
-                <span>❤️ 지출</span>
+                <span>지출</span>
               </label>
             </div>
           </div>
@@ -156,21 +184,24 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               카테고리
             </label>
-            <select
-              name="category"
+            <BadgeSelect
               value={formData.category}
-              onChange={handleInputChange}
-              required
+              onChange={(val) => setFormData(prev => ({
+                ...prev,
+                category: val,
+                subcategory: ''
+              }))}
+              options={[
+                { value: '', label: '카테고리를 선택하세요' },
+                ...currentCategories.map(category => ({
+                  value: category.codeValue,
+                  label: category.codeLabel
+                }))
+              ]}
+              placeholder="카테고리를 선택하세요"
               disabled={loadingCodes}
-              className="mg-v2-form-select"
-            >
-              <option key="category-default" value="">카테고리를 선택하세요</option>
-              {currentCategories.map(category => (
-                <option key={category.codeValue} value={category.codeValue}>
-                  {category.codeLabel}
-                </option>
-              ))}
-            </select>
+              className="mg-v2-form-badge-select"
+            />
             {loadingCodes && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 공통 코드 로딩 중...
@@ -183,21 +214,20 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               세부 카테고리
             </label>
-            <select
-              name="subcategory"
+            <BadgeSelect
               value={formData.subcategory}
-              onChange={handleInputChange}
-              required
+              onChange={(val) => setFormData(prev => ({ ...prev, subcategory: val }))}
+              options={[
+                { value: '', label: '세부 카테고리를 선택하세요' },
+                ...filteredSubcategories.map(subcategory => ({
+                  value: subcategory.codeValue,
+                  label: subcategory.codeLabel
+                }))
+              ]}
+              placeholder="세부 카테고리를 선택하세요"
               disabled={!formData.category || loadingCodes}
-              className="mg-v2-form-select"
-            >
-              <option key="subcategory-default" value="">세부 카테고리를 선택하세요</option>
-              {filteredSubcategories.map(subcategory => (
-                <option key={subcategory.codeValue} value={subcategory.codeValue}>
-                  {subcategory.codeLabel}
-                </option>
-              ))}
-            </select>
+              className="mg-v2-form-badge-select"
+            />
             {!formData.category && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 먼저 카테고리를 선택해주세요
@@ -283,13 +313,15 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             >
               취소
             </button>
-            <button
+            <MGButton
               type="submit"
-              disabled={loading}
-              className="mg-v2-button mg-v2-button--primary"
+              variant="primary"
+              loading={loading}
+              loadingText="등록 중..."
+              preventDoubleClick
             >
-              {loading ? '등록 중...' : '등록하기'}
-            </button>
+              등록하기
+            </MGButton>
           </div>
         </form>
     </ErpModal>

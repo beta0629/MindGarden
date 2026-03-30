@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import ReactDOM from 'react-dom';
-import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
+import BadgeSelect from '../common/BadgeSelect';
+import './PaymentConfirmationModal.css';
 
 /**
  * 결제 확인 모달 컴포넌트
+/**
  * - 매핑별 결제 확인/취소 기능
+/**
  * - 결제 방법 및 금액 입력
+/**
  * - 결제 상태 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 const PaymentConfirmationModal = ({ 
@@ -21,6 +31,11 @@ const PaymentConfirmationModal = ({
   mappings = [], 
   onPaymentConfirmed 
 }) => {
+  // notificationManager가 제대로 import되었는지 확인
+  if (typeof notificationManager === 'undefined') {
+    console.error('notificationManager가 정의되지 않았습니다. import를 확인해주세요.');
+  }
+  
   const [loading, setLoading] = useState(false);
   const [selectedMappings, setSelectedMappings] = useState([]);
   const [paymentData, setPaymentData] = useState({
@@ -32,15 +47,17 @@ const PaymentConfirmationModal = ({
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // Constants
   const API_ENDPOINTS = {
-    CONFIRM_PAYMENT: '/api/admin/payments/confirm',
-    CANCEL_PAYMENT: '/api/admin/payments/cancel'
+    CONFIRM_PAYMENT: '/api/v1/admin/payments/confirm',
+    CANCEL_PAYMENT: '/api/v1/admin/payments/cancel'
   };
   
   const PAYMENT_STATUS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'pending',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: 'completed',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'cancelled'
   };
   
@@ -69,13 +86,13 @@ const PaymentConfirmationModal = ({
 
   useEffect(() => {
     if (isOpen && mappings.length > 0) {
-      // 초기 선택된 매핑 설정
       setSelectedMappings(mappings.filter(mapping => 
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         mapping.status === PAYMENT_STATUS.PENDING
       ));
       
-      // 총 금액 계산
       const totalAmount = mappings
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
         .reduce((sum, mapping) => sum + (mapping.amount || 0), 0);
       
@@ -84,37 +101,41 @@ const PaymentConfirmationModal = ({
         amount: totalAmount
       }));
     }
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   }, [isOpen, mappings, PAYMENT_STATUS.PENDING]);
 
-  // 결제 방법 코드 로드
+  const PAYMENT_METHOD_FALLBACK = [
+    { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
+    { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
+    { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
+    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
+    { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
+    { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
+    { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
+    { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
+  ];
+
   useEffect(() => {
     const loadPaymentMethodCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
+        const codes = await getCommonCodes('PAYMENT_METHOD');
+        const list = Array.isArray(codes) ? codes : (codes?.codes || []);
+        if (list.length > 0) {
+          const options = list.map(code => ({
+            value: code.codeValue || code.code_value,
+            label: code.codeLabel || code.code_label || code.codeValue || code.code_value,
             icon: code.icon,
-            color: code.colorCode,
+            color: code.colorCode || code.color_code,
             description: code.description
           }));
           setPaymentMethodOptions(options);
+        } else {
+          setPaymentMethodOptions(PAYMENT_METHOD_FALLBACK);
         }
       } catch (error) {
         console.error('결제 방법 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
-        setPaymentMethodOptions([
-          { value: 'CARD', label: '카드', icon: '💳', color: '#3b82f6', description: '신용카드/체크카드 결제' },
-          { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: '#10b981', description: '은행 계좌 이체' },
-          { value: 'CASH', label: '현금', icon: '💵', color: '#f59e0b', description: '현금 결제' },
-          { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
-          { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
-          { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
-          { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
-          { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
-        ]);
+        setPaymentMethodOptions(PAYMENT_METHOD_FALLBACK);
       } finally {
         setLoadingCodes(false);
       }
@@ -148,7 +169,6 @@ const PaymentConfirmationModal = ({
       [field]: value
     }));
     
-    // 에러 초기화
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -180,7 +200,12 @@ const PaymentConfirmationModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!validateForm()) {
       notificationManager.error(MESSAGES.REQUIRED_FIELDS);
       return;
@@ -219,7 +244,12 @@ const PaymentConfirmationModal = ({
     }
   };
 
-  const handleCancelPayment = async () => {
+  const handleCancelPayment = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (selectedMappings.length === 0) {
       notificationManager.error('취소할 매핑을 선택해주세요.');
       return;
@@ -257,32 +287,64 @@ const PaymentConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <h2 className="mg-v2-modal-title">
-            <CreditCard size={24} />
-            결제 확인
-          </h2>
-          <button 
-            className="mg-v2-modal-close"
-            onClick={onClose}
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="결제 확인"
+      size="auto"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-secondary"
+            onClick={(e) => {
+              e?.preventDefault();
+              e?.stopPropagation();
+              onClose();
+            }}
             disabled={loading}
-            aria-label="닫기"
           >
-            <X size={24} />
+            취소
           </button>
-        </div>
-
-        {/* 본문 */}
-        <div className="mg-v2-modal-body">
+          <MGButton
+            type="button"
+            variant="danger"
+            onClick={handleCancelPayment}
+            loading={loading}
+            loadingText="취소 처리 중..."
+            disabled={selectedMappings.length === 0}
+            preventDoubleClick
+          >
+            <XCircle size={18} />
+            결제 취소
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="primary"
+            onClick={handleConfirmPayment}
+            loading={loading}
+            loadingText="확인 처리 중..."
+            disabled={selectedMappings.length === 0}
+            preventDoubleClick
+          >
+            <CheckCircle size={18} />
+            결제 확인
+          </MGButton>
+        </>
+      }
+    >
+      <div className="mg-v2-modal-body">
           {/* 매핑 목록 */}
-          <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">결제 대기 중인 매핑</h3>
+          <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
+            <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 매핑</h3>
             <div className="mg-v2-mapping-list">
               {mappings
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
                 .map(mapping => (
                   <label 
@@ -317,23 +379,25 @@ const PaymentConfirmationModal = ({
           </div>
 
           {/* 결제 정보 입력 */}
-          <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">결제 정보</h3>
+          <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
+            <h3 className="mg-v2-ad-b0kla__section-title">결제 정보</h3>
             
             <div className="mg-v2-form-group">
               <label className="mg-v2-label">결제 방법</label>
-              <select 
-                value={paymentData.method} 
-                onChange={(e) => handlePaymentDataChange('method', e.target.value)}
-                className="mg-v2-select"
+              <BadgeSelect
+                value={paymentData.method}
+                onChange={(val) => handlePaymentDataChange('method', val)}
+                options={paymentMethodOptions.map(option => ({
+                  value: option.value,
+                  label: `${option.icon != null ? option.icon + ' ' : ''}${option.label || option.value || ''}`,
+                  icon: option.icon
+                }))}
+                placeholder="선택하세요"
+                className="mg-v2-badge-select-wrap"
                 disabled={loadingCodes}
-              >
-                {paymentMethodOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.icon} {option.label}
-                  </option>
-                ))}
-              </select>
+                loading={loadingCodes}
+                aria-label="결제 방법"
+              />
             </div>
 
             <div className="mg-v2-form-group">
@@ -367,54 +431,7 @@ const PaymentConfirmationModal = ({
             </div>
           </div>
         </div>
-
-        {/* 푸터 */}
-        <div className="mg-v2-modal-footer">
-          <button
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
-            취소
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-danger"
-            onClick={handleCancelPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
-            ) : (
-              <>
-                <XCircle size={18} />
-                결제 취소
-              </>
-            )}
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-success"
-            onClick={handleConfirmPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={18} />
-                결제 확인
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
+    </UnifiedModal>
   );
 };
 

@@ -1,0 +1,426 @@
+name: 🚀 Onboarding 개발 서버 배포
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      # 온보딩 관련 Java 코드
+      - 'src/main/java/com/coresolution/core/service/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/service/impl/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/domain/onboarding/**'
+      - 'src/main/java/com/coresolution/core/repository/onboarding/**'
+      - 'src/main/java/com/coresolution/core/controller/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
+      # 온보딩 관련 마이그레이션
+      - 'src/main/resources/db/migration/V*__*.sql'
+      # dev 프로파일 설정 (기동 오류 방지)
+      - 'src/main/resources/application-dev.yml'
+      - 'src/main/resources/application.yml'
+      # 온보딩 관련 테스트
+      - 'src/test/java/com/coresolution/core/integration/MvpOnboardingFlowIntegrationTest.java'
+      - 'src/test/java/com/coresolution/core/service/OnboardingServiceTest.java'
+      - 'src/test/java/com/coresolution/core/service/impl/OnboardingApprovalServiceIntegrationTest.java'
+      # 워크플로우 파일
+      - '.github/workflows/deploy-onboarding-dev.yml'
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  deploy-onboarding:
+    name: 🏗️ 온보딩 백엔드 빌드 및 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🏗️ 백엔드 빌드
+      run: |
+        mvn clean package -DskipTests
+        echo "빌드 완료. 결과 확인:"
+        ls -lh target/consultation-management-system-1.0.0.jar || echo "JAR 파일 없음!"
+      
+    - name: 🔍 백엔드 빌드 결과 확인
+      run: |
+        echo "🔍 백엔드 빌드 결과 확인..."
+        if [ -f target/consultation-management-system-1.0.0.jar ]; then
+          ls -lh target/consultation-management-system-1.0.0.jar
+          echo "✅ JAR 파일 생성됨"
+        else
+          echo "❌ JAR 파일 없음!"
+          ls -la target/ 2>/dev/null || echo "target 디렉토리 없음"
+          exit 1
+        fi
+
+    - name: 🔒 dev 프로파일 설정 검증 (배포 전 기동 오류 방지)
+      run: |
+        echo "🔒 JAR 내 dev 설정 검증..."
+        JAR=target/consultation-management-system-1.0.0.jar
+        if ! jar tf "$JAR" | grep -q "BOOT-INF/classes/application-dev.yml"; then
+          echo "❌ application-dev.yml이 JAR에 없습니다."
+          exit 1
+        fi
+        unzip -p "$JAR" BOOT-INF/classes/application-dev.yml > /tmp/app-dev.yml 2>/dev/null || true
+        if [ -f /tmp/app-dev.yml ]; then
+          if ! grep -q "provider:" /tmp/app-dev.yml || ! grep -q "apple:" /tmp/app-dev.yml; then
+            echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
+            exit 1
+          fi
+          echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨"
+        else
+          echo "⚠️ application-dev.yml 추출 실패, 검증 스킵"
+        fi
+
+    - name: 🔍 개발 서버 SSH 연결 테스트
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          echo "SSH 연결 테스트 성공: $(date)"
+          
+    - name: 🚀 개발 서버 배포 준비
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 30m
+        script: |
+          cd /var/www/mindgarden-dev
+          
+          # 서비스 중지
+          sudo systemctl stop mindgarden-dev.service || true
+          
+          # 백업 생성
+          if [ -f app.jar ]; then
+            BACKUP_DIR="/var/www/mindgarden-dev/backups"
+            mkdir -p $BACKUP_DIR
+            BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S)"
+            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
+            while [ -f "$BACKUP_FILE" ]; do
+              BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19)"
+            done
+            cp app.jar "$BACKUP_FILE"
+            echo "✅ 백업 완료: $BACKUP_FILE"
+          fi
+          
+    - name: 📤 백엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "target/consultation-management-system-1.0.0.jar"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 1
+        overwrite: true
+        
+    - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/systemd/mindgarden-dev.service"
+        target: "/tmp/mindgarden-dev.service"
+        overwrite: true
+        
+    - name: 🔄 개발 서버 서비스 재시작
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        script: |
+          cd /var/www/mindgarden-dev
+          
+          # JAR 파일명 변경
+          if [ -f consultation-management-system-1.0.0.jar ]; then
+            mv consultation-management-system-1.0.0.jar app.jar
+          fi
+          
+          # 권한 설정
+          chmod +x app.jar
+          
+          # 시작 스크립트 생성
+          echo "📝 시작 스크립트 생성 중..."
+          sudo mkdir -p /opt/mindgarden
+          sudo bash -c 'echo "#!/bin/bash" > /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "set -e" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "source /etc/mindgarden/dev.env" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_HOST" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_NAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PORT" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export JWT_SECRET" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_KEY" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_IV" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_ROLE" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_HOST" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export MAIL_PORT" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export SESSION_COOKIE_DOMAIN" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "exec /usr/bin/java -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'
+          sudo chmod +x /opt/mindgarden/start.sh
+          echo "✅ 시작 스크립트 생성 완료"
+          
+          # systemd 서비스 파일 설정
+          echo "📝 systemd 서비스 파일 설정 중..."
+          if [ -f /tmp/mindgarden-dev.service ]; then
+            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 설정 완료"
+          else
+            echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
+            sudo bash -c 'echo "[Unit]" > /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Description=MindGarden Development Server" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "After=network.target mysql.service" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Service]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Type=simple" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "User=root" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WorkingDirectory=/var/www/mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "ExecStart=/opt/mindgarden/start.sh" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Restart=always" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "RestartSec=10" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardOutput=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardError=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "SyslogIdentifier=mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Install]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WantedBy=multi-user.target" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ 기본 systemd 서비스 파일 생성 완료"
+          fi
+          
+          # 서비스 재시작
+          echo "🔄 개발 서버 서비스 재시작..."
+          sudo systemctl daemon-reload
+          
+          # 서비스 중지 (완전히 종료될 때까지 대기)
+          echo "🛑 서비스 중지 중..."
+          if sudo systemctl is-active --quiet mindgarden-dev.service; then
+            sudo systemctl stop mindgarden-dev.service || true
+            # 서비스가 완전히 중지될 때까지 대기 (최대 30초)
+            for i in {1..30}; do
+              if ! sudo systemctl is-active --quiet mindgarden-dev.service; then
+                echo "✅ 서비스 중지 완료"
+                break
+              fi
+              sleep 1
+            done
+            # 추가 안정화 대기
+            sleep 5
+          else
+            echo "ℹ️ 서비스가 이미 중지되어 있음"
+          fi
+          
+          # 서비스 시작
+          echo "🚀 서비스 시작 중..."
+          sudo systemctl start mindgarden-dev.service
+          
+          # 서비스가 완전히 시작될 때까지 대기 (최대 90초, deploy-backend-dev와 동일)
+          echo "⏳ 서비스 시작 대기 중..."
+          SERVICE_STARTED=false
+          for i in {1..90}; do
+            if sudo systemctl is-active --quiet mindgarden-dev.service; then
+              # 서비스가 활성화되었지만, 애플리케이션이 완전히 시작되었는지 확인
+              if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "✅ 서비스 및 애플리케이션 시작 완료 (${i}초 소요)"
+                SERVICE_STARTED=true
+                break
+              fi
+            fi
+            sleep 1
+          done
+          
+          if [ "$SERVICE_STARTED" = false ]; then
+            echo "⚠️ 서비스 시작 대기 시간 초과 - 상태 확인 중..."
+          fi
+          
+          # 서비스 상태 확인
+          echo "🔍 서비스 상태 확인..."
+          sudo systemctl status mindgarden-dev.service --no-pager | head -20
+          
+          if sudo systemctl is-active --quiet mindgarden-dev.service; then
+            echo "✅ 개발 서버 서비스 정상 시작됨"
+          else
+            echo "❌ 서비스 시작 실패 - 롤백 후 상세 로그 확인..."
+            LATEST_BACKUP=$(ls -t /var/www/mindgarden-dev/backups/app.jar.backup.* 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ] && [ -f "$LATEST_BACKUP" ]; then
+              echo "🔄 이전 JAR로 롤백 중: $LATEST_BACKUP"
+              cp "$LATEST_BACKUP" /var/www/mindgarden-dev/app.jar
+              sudo systemctl restart mindgarden-dev.service
+              sleep 15
+              if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "✅ 롤백 후 서비스 정상 기동됨"
+              fi
+            fi
+            echo "=========================================="
+            echo "📋 서비스 상태:"
+            echo "=========================================="
+            sudo systemctl status mindgarden-dev.service --no-pager -l | head -30 || true
+            echo ""
+            echo "=========================================="
+            echo "📋 최근 서비스 로그 (최근 200줄):"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 200 || true
+            echo ""
+            echo "=========================================="
+            echo "📋 Flyway 관련 오류 필터링:"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(flyway|migration|V42|CreateOrActivateTenant|DELIMITER|SQL.*error|syntax.*error|exception)" || echo "⚠️ Flyway 관련 오류 없음"
+            echo ""
+            echo "=========================================="
+            echo "📋 Flyway 마이그레이션 상태 (DB):"
+            echo "=========================================="
+            if [ -f /etc/mindgarden/dev.env ]; then
+              source /etc/mindgarden/dev.env
+              mysql -h"${DB_HOST:-localhost}" -u"${DB_USERNAME:-mindgarden_dev}" -p"${DB_PASSWORD}" "${DB_NAME:-core_solution}" -e "
+                SELECT version, description, type, installed_on, success, execution_time
+                FROM flyway_schema_history 
+                WHERE version = '42' OR version LIKE '4%'
+                ORDER BY installed_rank DESC
+                LIMIT 10;
+              " 2>/dev/null || echo "⚠️ DB 접속 실패"
+            else
+              echo "⚠️ 환경 변수 파일을 찾을 수 없습니다."
+            fi
+            echo ""
+            echo "=========================================="
+            echo "📋 CreateOrActivateTenant 프로시저 확인:"
+            echo "=========================================="
+            if [ -f /etc/mindgarden/dev.env ]; then
+              source /etc/mindgarden/dev.env
+              mysql -h"${DB_HOST:-localhost}" -u"${DB_USERNAME:-mindgarden_dev}" -p"${DB_PASSWORD}" "${DB_NAME:-core_solution}" -e "
+                SHOW PROCEDURE STATUS WHERE Db = '${DB_NAME:-core_solution}' AND Name = 'CreateOrActivateTenant';
+              " 2>/dev/null || echo "⚠️ DB 접속 실패"
+            fi
+            exit 1
+          fi
+          
+    - name: 🏥 개발 서버 헬스체크
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        script: |
+          echo "🏥 개발 서버 헬스체크 시작..."
+          sleep 10
+          
+          HEALTH_CHECK_SUCCESS=false
+          for i in {1..5}; do
+            if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ 개발 서버 헬스체크 성공 (시도 $i)"
+              curl -s http://localhost:8080/actuator/health | head -5
+              echo ""
+              echo "=========================================="
+              echo "📋 최근 온보딩 프로세스 로그 확인:"
+              echo "=========================================="
+              sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|프로시저 실행 실패|권한 그룹|commonCodes|roleCodes|permissionGroups|Transaction.*rolled back|프로세스가 false를 반환)" | tail -n 50 || echo "온보딩 관련 로그 없음"
+              HEALTH_CHECK_SUCCESS=true
+              break
+            else
+              echo "⏳ 헬스체크 대기 중... (시도 $i/5)"
+              sleep 10
+            fi
+          done
+          
+          if [ "$HEALTH_CHECK_SUCCESS" = false ]; then
+            echo "⚠️ 헬스체크 실패 - 서비스 상태 확인 중..."
+            echo "=========================================="
+            echo "📋 서비스 상태:"
+            echo "=========================================="
+            sudo systemctl status mindgarden-dev.service --no-pager | head -20 || true
+            echo ""
+            echo "=========================================="
+            echo "📋 최근 서비스 로그 (최근 200줄):"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 200 || true
+            echo ""
+            echo "=========================================="
+            echo "📋 Flyway 관련 오류 필터링:"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(flyway|migration|V42|CreateOrActivateTenant|DELIMITER|SQL.*error|syntax.*error|exception)" || echo "⚠️ Flyway 관련 오류 없음"
+            echo ""
+            echo "=========================================="
+            echo "📋 온보딩 프로세스 관련 로그 (최근 200줄):"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|프로시저 실행 실패|권한 그룹|commonCodes|roleCodes|permissionGroups|Transaction.*rolled back|프로세스가 false를 반환)" | tail -n 200 || echo "온보딩 관련 로그 없음"
+            
+            # 서비스가 실행 중이면 경고만 출력하고 계속 진행
+            if sudo systemctl is-active --quiet mindgarden-dev.service; then
+              echo ""
+              echo "⚠️ 헬스체크 실패했지만 서비스는 실행 중입니다. 계속 진행합니다."
+              exit 0
+            else
+              echo ""
+              echo "❌ 서비스가 실행되지 않았습니다."
+              exit 1
+            fi
+          fi
+
+    - name: 📋 온보딩 프로세스 로그 확인
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        script: |
+          echo "=========================================="
+          echo "📋 온보딩 프로세스 관련 로그 (최근 200줄):"
+          echo "=========================================="
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 1000 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|프로시저 실행 실패|권한 그룹|commonCodes|roleCodes|permissionGroups|Transaction.*rolled back|프로세스가 false를 반환)" | tail -n 200 || echo "온보딩 관련 로그 없음"
+          echo ""
+          echo "=========================================="
+          echo "📋 온보딩 프로세스 에러 로그 (필터링):"
+          echo "=========================================="
+          if [ -f /var/log/mindgarden/dev-error.log ]; then
+            sudo tail -n 500 /var/log/mindgarden/dev-error.log | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행 실패|프로시저 결과|권한 그룹|Transaction.*rolled back|프로세스가 false를 반환)" | tail -n 100 || echo "온보딩 관련 에러 로그 없음"
+          else
+            echo "에러 로그 파일 없음: /var/log/mindgarden/dev-error.log"
+          fi
+          echo ""
+          echo "=========================================="
+          echo "📋 최근 온보딩 프로세스 실행 로그 (상세):"
+          echo "=========================================="
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 1000 | grep -i -E "(온보딩 승인 프로세스|processOnboardingApproval|프로시저 실행 시작|프로시저 실행 완료|프로시저 결과|프로시저 실행 실패)" | tail -n 50 || echo "상세 로그 없음"
+

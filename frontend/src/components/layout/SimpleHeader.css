@@ -1,66 +1,66 @@
 /* SimpleHeader 컴포넌트 최적화된 스타일 - CSS 변수 사용 */
 :root {
   /* Header 색상 변수 */
-  --header-bg: #ffffff;
-  --header-border: #e0e0e0;
-  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --header-primary: #6c5ce7;
-  --header-primary-light: rgba(108, 92, 231, 0.1);
-  --header-primary-hover: rgba(108, 92, 231, 0.2);
-  --header-text-primary: #333;
-  --header-text-secondary: #666;
-  --header-text-muted: #999;
-  --header-bg-light: #f5f5f5;
-  --header-bg-hover: rgba(0, 0, 0, 0.05);
-  --header-danger: #dc3545;
-  --header-danger-hover: #c82333;
-  --header-neutral: #f8f9fa;
-  --header-neutral-hover: #e9ecef;
-  --header-border-light: #dee2e6;
+  --header-bg: var(--mg-white);
+  --header-border: var(--mg-gray-300);
+  --header-shadow: var(--shadow-sm);
+  --header-primary: var(--mg-consultant-dark);
+  --header-primary-light: var(--cs-glass-primary-10);
+  --header-primary-hover: var(--cs-glass-primary-20);
+  --header-text-primary: var(--mg-gray-900);
+  --header-text-secondary: var(--mg-gray-600);
+  --header-text-muted: var(--mg-gray-400);
+  --header-bg-light: var(--mg-gray-100);
+  --header-bg-hover: var(--cs-glass-dark-subtle);
+  --header-danger: var(--mg-error-500);
+  --header-danger-hover: var(--mg-error-600);
+  --header-neutral: var(--mg-gray-100);
+  --header-neutral-hover: var(--mg-gray-200);
+  --header-border-light: var(--mg-gray-300);
   
   /* Header 크기 변수 */
-  --header-height: 60px;
-  --header-height-mobile: 56px;
-  --header-max-width: 1200px;
+  --header-height: var(--icon-size-xl);
+  --header-height-mobile: var(--icon-size-lg);
+  --header-max-width: var(--container-max-width);
   --header-padding: var(--spacing-lg);
-  --header-padding-mobile: 15px;
-  --header-button-size: 40px;
-  --header-button-size-mobile: 36px;
-  --header-avatar-size: 36px;
-  --header-avatar-size-mobile: 32px;
-  --header-border-radius: 8px;
-  --header-border-radius-large: 12px;
-  --header-border-radius-round: 50%;
-  --header-gap: 12px;
-  --header-gap-mobile: 8px;
+  --header-padding-mobile: var(--spacing-md);
+  --header-button-size: var(--icon-size-md);
+  --header-button-size-mobile: var(--icon-size-sm);
+  --header-avatar-size: var(--icon-size-sm);
+  --header-avatar-size-mobile: var(--icon-size-xs);
+  --header-border-radius: var(--border-radius-md);
+  --header-border-radius-large: var(--border-radius-lg);
+  --header-border-radius-round: var(--radius-full);
+  --header-gap: var(--spacing-sm);
+  --header-gap-mobile: var(--spacing-xs);
   
   /* Header 폰트 변수 */
   --header-logo-size: 1.2rem;
   --header-logo-size-mobile: 1.1rem;
   --header-logo-icon-size: 1.5rem;
   --header-logo-icon-size-mobile: 1.3rem;
-  --header-user-name-size: 14px;
-  --header-user-name-size-mobile: 13px;
-  --header-user-role-size: 12px;
-  --header-user-role-size-mobile: 11px;
-  --header-user-role-en-size: 10px;
-  --header-user-role-en-size-mobile: 9px;
-  --header-branch-size: 11px;
-  --header-branch-size-mobile: 10px;
-  --header-loading-size: 14px;
+  --header-user-name-size: var(--font-size-sm);
+  --header-user-name-size-mobile: var(--font-size-xs);
+  --header-user-role-size: var(--font-size-xs);
+  --header-user-role-size-mobile: var(--font-size-xs);
+  --header-user-role-en-size: var(--font-size-xs);
+  --header-user-role-en-size-mobile: var(--font-size-xs);
+  --header-branch-size: var(--font-size-xs);
+  --header-branch-size-mobile: var(--font-size-xs);
+  --header-loading-size: var(--font-size-sm);
   --header-button-font-size: var(--font-size-sm);
-  --header-button-font-size-mobile: 13px;
-  --header-icon-size: 16px;
-  --header-icon-size-large: 18px;
-  --header-icon-size-mobile: 14px;
-  --header-avatar-icon-size: 24px;
-  --header-avatar-icon-size-mobile: 20px;
+  --header-button-font-size-mobile: var(--font-size-xs);
+  --header-icon-size: var(--icon-size-xs);
+  --header-icon-size-large: var(--icon-size-sm);
+  --header-icon-size-mobile: var(--icon-size-xs);
+  --header-avatar-icon-size: var(--icon-size-sm);
+  --header-avatar-icon-size-mobile: var(--icon-size-xs);
   
   /* Header 애니메이션 변수 */
-  --header-transition: 0.2s ease;
-  --header-transition-slow: 0.3s ease;
-  --header-spin-duration: 1s;
-  --header-pulse-duration: 2s;
+  --header-transition: var(--transition-fast);
+  --header-transition-slow: var(--transition-normal);
+  --header-spin-duration: var(--animation-duration-default);
+  --header-pulse-duration: var(--animation-duration-slow);
   
   /* Header Z-index 변수 */
   --header-z-index: var(--z-header);
@@ -111,11 +111,11 @@
 
 .simple-back-button:hover {
   background: var(--header-primary-hover);
-  transform: translateX(-2px);
+  transform: translateX(calc(var(--spacing-xs) * -0.5));
 }
 
 .simple-back-button:active {
-  transform: translateX(-1px);
+  transform: translateX(calc(var(--spacing-xs) * -0.25));
 }
 
 /* 로고 스타일 */
@@ -225,17 +225,17 @@
   font-size: var(--header-user-role-en-size);
   color: var(--header-text-muted);
   font-style: italic;
-  margin-top: 1px;
+    margin-top: var(--spacing-xs, 0.0625rem);
 }
 
 .simple-user-branch {
   display: flex;
   align-items: center;
-  gap: 4px;
+    gap: var(--spacing-xs);
   font-size: var(--header-branch-size);
   color: var(--header-text-muted);
-  margin-top: 2px;
-  opacity: 0.7;
+    margin-top: var(--spacing-xs, 0.125rem);
+    opacity: var(--opacity-hover, 0.7);
 }
 
 .simple-user-branch i {
@@ -244,46 +244,44 @@
 
 /* 로그아웃 버튼 - 헤더 내 위치로 수정 */
 .simple-logout-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 3px solid var(--color-danger);
-  border-radius: 25px;
-  background: var(--color-danger);
-  color: white;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width-normal) solid var(--header-danger);
+  border-radius: var(--border-radius-md);
+  background: var(--header-danger);
+  color: var(--mg-white);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  margin-right: 10px;
-  position: relative; /* relative로 변경하여 헤더 내 위치 */
-  z-index: var(--z-header); /* 헤더 z-index 사용 */
-  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  animation: pulse 2s infinite;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-right: var(--spacing-xs);
+  position: relative;
+  z-index: var(--z-header);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: var(--button-min-width, 5rem);
+  height: var(--icon-size-sm);
 }
 
 .simple-logout-button:hover {
-  background: var(--color-danger-hover);
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+  background: var(--header-danger-hover);
+  border-color: var(--header-danger-hover);
+  transform: translateY(calc(var(--spacing-xs) * -0.25));
+  box-shadow: var(--shadow-md);
 }
 
-/* 로그아웃 버튼 애니메이션 */
-@keyframes pulse {
-  0% { 
-    transform: scale(1);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  }
-  50% { 
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
-  }
-  100% { 
-    transform: scale(1);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  }
+.simple-logout-button:active {
+  background: var(--header-danger);
+  border-color: var(--header-danger);
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
+
+/* 로그아웃 버튼 애니메이션 제거 - 안정성을 위해 */
 
 .simple-logout-button i {
   font-size: var(--font-size-base);
@@ -316,10 +314,10 @@
 .simple-login-button {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs);
   padding: var(--header-gap-mobile) var(--header-icon-size);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   font-size: var(--header-button-font-size);
   font-weight: 500;
@@ -339,12 +337,12 @@
 
 .simple-login-button {
   background: var(--header-primary);
-  color: white;
+  color: var(--mg-white);
 }
 
 .simple-login-button:hover {
-  background: #5a4fcf;
-  color: white;
+  background: var(--mg-primary-600);
+  color: var(--mg-white);
 }
 
 /* 반응형 디자인 - CSS 변수 사용 */
@@ -367,7 +365,7 @@
   .simple-logout-button {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--header-button-font-size-mobile);
-    margin-right: 6px;
+    margin-right: var(--spacing-xs);
   }
   
   .simple-logout-button span {

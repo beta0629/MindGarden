@@ -1,0 +1,377 @@
+/**
+ * 대시보드 위젯 편집기 컴포넌트
+/**
+ * 
+/**
+ * 위젯 추가, 삭제, 설정 기능 제공
+/**
+ * 
+/**
+ * @author CoreSolution
+/**
+ * @version 1.0.0
+/**
+ * @since 2025-11-24
+ */
+
+import React, { useState } from 'react';
+import { ReactSortable } from 'react-sortablejs';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { 
+  getSupportedWidgetTypes,
+  getCommonWidgetTypes,
+  getConsultationWidgetTypes,
+  getAcademyWidgetTypes,
+  getErpWidgetTypes
+} from '../dashboard/widgets/WidgetRegistry';
+import { FaPlus, FaTrash, FaCog, FaGripVertical } from 'react-icons/fa';
+import './DashboardWidgetEditor.css';
+
+// 위젯 타입 한글 이름 매핑
+const WIDGET_TYPE_NAMES = {
+  'welcome': '환영 위젯',
+  'statistics': '통계 위젯',
+  'summary-statistics': '요약 통계',
+  'chart': '차트 위젯',
+  'table': '테이블 위젯',
+  'calendar': '캘린더 위젯',
+  'form': '폼 위젯',
+  'activity-list': '활동 목록',
+  'quick-actions': '빠른 작업',
+  'navigation-menu': '네비게이션 메뉴',
+  'message': '메시지 위젯',
+  'notification': '알림 위젯',
+  'schedule': '일정 위젯',
+  'rating': '평점 위젯',
+  'payment': '결제 위젯',
+  'healing-card': '힐링 카드',
+  'purchase-request': '구매 요청',
+  'personalized-message': '개인화 메시지',
+  'header': '헤더 위젯',
+  'erp-card': 'ERP 카드',
+  'erp-stats-grid': 'ERP 통계 그리드',
+  'erp-management-grid': 'ERP 관리 그리드',
+  'system-status': '시스템 상태',
+  'system-tools': '시스템 도구',
+  'permission': '권한 관리',
+  'statistics-grid': '통계 그리드',
+  'management-grid': '관리 그리드',
+  // 상담소 특화
+  'consultation-summary': '상담 요약',
+  'consultation-schedule': '상담 일정',
+  'consultation-stats': '상담 통계',
+  'consultation-record': '상담 기록',
+  'consultant-client': '상담사-고객',
+  'mapping-management': '매핑 관리',
+  'session-management': '세션 관리',
+  'schedule-registration': '일정 등록',
+  'pending-deposit': '대기 입금',
+  'custom': '커스텀 위젯'
+};
+
+const DashboardWidgetEditor = ({ 
+  widgets = [], 
+  onWidgetsChange,
+  businessType = null,
+  onWidgetConfig 
+}) => {
+  const [selectedWidget, setSelectedWidget] = useState(null);
+  
+  // 기본 위젯과 특화 위젯 분리
+  const commonWidgetTypes = getCommonWidgetTypes();
+  
+  // 업종별 특화 위젯 필터링 (엄격한 제어)
+  const normalizedBusinessType = businessType?.toLowerCase()?.trim();
+  
+  // 상담소 특화 위젯: 상담소 업종에서만 표시
+  const consultationWidgetTypes = normalizedBusinessType === 'consultation' 
+    ? getConsultationWidgetTypes() 
+    : [];
+  
+  // 학원 특화 위젯: 학원 업종에서만 표시
+  const academyWidgetTypes = normalizedBusinessType === 'academy' 
+    ? getAcademyWidgetTypes() 
+    : [];
+  
+  // ERP 위젯: 모든 업종에서 사용 가능 (ERP 기능 활성화 여부는 위젯 내부에서 체크)
+  const erpWidgetTypes = getErpWidgetTypes();
+  
+  // 특화 위젯 통합 (업종에 맞는 위젯만 포함)
+  const specializedWidgetTypes = [
+    ...(normalizedBusinessType === 'consultation' ? consultationWidgetTypes : []),
+    ...(normalizedBusinessType === 'academy' ? academyWidgetTypes : []),
+    ...erpWidgetTypes
+  ];
+
+  // 위젯 추가
+  const handleAddWidget = (widgetType) => {
+    // 다음 사용 가능한 위치 계산
+    const maxRow = widgets.length > 0 
+      ? Math.max(...widgets.map(w => w.position?.row || 0))
+      : -1;
+    
+    // 그리드 컬럼 수 상수 (CSS 변수로 관리 가능하도록)
+    const GRID_COLUMNS = 3;
+    const widgetsInLastRow = widgets.filter(w => (w.position?.row || 0) === maxRow);
+    const nextCol = widgetsInLastRow.length % GRID_COLUMNS;
+    const nextRow = nextCol === 0 ? maxRow + 1 : maxRow;
+
+    const newWidget = {
+      id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: widgetType,
+      position: {
+        row: nextRow,
+        col: nextCol,
+        span: 1
+      },
+      config: {},
+      visibility: {
+        roles: [],
+        conditions: []
+      }
+    };
+
+    onWidgetsChange([...widgets, newWidget]);
+  };
+
+  // 위젯 삭제 (확인 없이 바로 삭제 - 간소화)
+  const handleDeleteWidget = (widgetId) => {
+    onWidgetsChange(widgets.filter(w => w.id !== widgetId));
+  };
+
+  // 위젯 설정 열기
+  const handleConfigWidget = (widget) => {
+    setSelectedWidget(widget);
+    if (onWidgetConfig) {
+      onWidgetConfig(widget);
+    }
+  };
+
+  // 위젯 타입 이름 가져오기
+  const getWidgetTypeName = (widgetType) => {
+    return WIDGET_TYPE_NAMES[widgetType] || widgetType;
+  };
+
+  return (
+    <div className="dashboard-widget-editor">
+      {/* 기본 위젯 목록 */}
+      <div className="widget-editor-section">
+        <h3 className="widget-editor-section-title">
+          기본 위젯
+          <span className="widget-section-badge" style={{
+            marginLeft: '8px',
+            padding: '2px 8px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
+            backgroundColor: '#e3f2fd',
+            color: 'var(--mg-secondary-600)',
+            borderRadius: '12px',
+            fontSize: '0.85em',
+            fontWeight: '500'
+          }}>
+            {commonWidgetTypes.length}개
+          </span>
+        </h3>
+        <ReactSortable
+          list={commonWidgetTypes.map(type => ({ type, id: type }))}
+          setList={() => {}} // 원본은 변경하지 않음
+          group={{
+            name: 'widgets',
+            pull: 'clone', // 복사본만 드래그
+            put: false // 여기로 드롭 불가
+          }}
+          sort={false} // 정렬 불가
+          clone={(item) => ({
+            type: item.type,
+            id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          })}
+          className="available-widgets-grid"
+        >
+          {commonWidgetTypes.map(widgetType => (
+            <div
+              key={widgetType}
+              className="available-widget-item"
+              data-widget-type={widgetType}
+              title={getWidgetTypeName(widgetType)}
+              onClick={() => handleAddWidget(widgetType)}
+              style={{ cursor: 'grab' }}
+            >
+              <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                position: 'absolute', 
+                top: '4px', 
+                right: '4px', 
+                fontSize: '12px',
+                color: 'var(--mg-text-tertiary, #9ca3af)'
+              }} />
+              <FaPlus className="widget-add-icon" />
+              <span className="widget-type-name">
+                {getWidgetTypeName(widgetType)}
+              </span>
+            </div>
+          ))}
+        </ReactSortable>
+      </div>
+
+      {/* 특화 위젯 목록 */}
+      {specializedWidgetTypes.length > 0 && (
+        <div className="widget-editor-section" style={{ marginTop: '24px' }}>
+          <h3 className="widget-editor-section-title">
+            {businessType?.toLowerCase() === 'consultation' && '상담소 특화 위젯'}
+            {businessType?.toLowerCase() === 'academy' && '학원 특화 위젯'}
+            {!businessType && '특화 위젯'}
+            <span className="widget-section-badge" style={{
+              marginLeft: '8px',
+              padding: '2px 8px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0 -> var(--mg-custom-fff3e0)
+              backgroundColor: '#fff3e0',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e65100 -> var(--mg-custom-e65100)
+              color: '#e65100',
+              borderRadius: '12px',
+              fontSize: '0.85em',
+              fontWeight: '500'
+            }}>
+              {specializedWidgetTypes.length}개
+            </span>
+          </h3>
+          <ReactSortable
+            list={specializedWidgetTypes.map(type => ({ type, id: type }))}
+            setList={() => {}} // 원본은 변경하지 않음
+            group={{
+              name: 'widgets',
+              pull: 'clone', // 복사본만 드래그
+              put: false // 여기로 드롭 불가
+            }}
+            sort={false} // 정렬 불가
+            clone={(item) => ({
+              type: item.type,
+              id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            })}
+            className="available-widgets-grid"
+          >
+            {specializedWidgetTypes.map(widgetType => (
+              <div
+                key={widgetType}
+                className="available-widget-item specialized-widget-item"
+                data-widget-type={widgetType}
+                onClick={() => handleAddWidget(widgetType)}
+                title={getWidgetTypeName(widgetType)}
+                style={{
+                  borderColor: 'var(--mg-warning-500)',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff8f0 -> var(--mg-custom-fff8f0)
+                  backgroundColor: '#fff8f0',
+                  cursor: 'grab',
+                  position: 'relative'
+                }}
+              >
+                <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                  position: 'absolute', 
+                  top: '4px', 
+                  right: '4px', 
+                  fontSize: '12px',
+                  color: 'var(--mg-text-tertiary, #9ca3af)'
+                }} />
+                <FaPlus className="widget-add-icon" />
+                <span className="widget-type-name">
+                  {getWidgetTypeName(widgetType)}
+                </span>
+                <span className="widget-specialized-badge" style={{
+                  marginLeft: '4px',
+                  padding: '1px 6px',
+                  backgroundColor: 'var(--mg-warning-500)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontSize: '0.75em',
+                  fontWeight: '600'
+                }}>
+                  특화
+                </span>
+              </div>
+            ))}
+          </ReactSortable>
+        </div>
+      )}
+
+      {/* 현재 위젯 목록 */}
+      <div className="widget-editor-section">
+        <h3 className="widget-editor-section-title">
+          현재 위젯 ({widgets.length}개)
+        </h3>
+        {widgets.length === 0 ? (
+          <div className="widget-empty-state">
+            <p>추가된 위젯이 없습니다. 위에서 위젯을 추가해주세요.</p>
+          </div>
+        ) : (
+          <div className="current-widgets-list">
+            {widgets.map((widget, index) => (
+              <div key={widget.id} className="current-widget-item">
+                <div className="widget-item-handle">
+                  <FaGripVertical className="widget-drag-handle" />
+                  <span className="widget-item-number">{index + 1}</span>
+                </div>
+                <div className="widget-item-info">
+                  <span className="widget-item-type">
+                    {getWidgetTypeName(widget.type)}
+                  </span>
+                  <span className="widget-item-position">
+                    위치: 행 {widget.position?.row || 0}, 열 {widget.position?.col || 0}
+                    {widget.position?.span && widget.position.span > 1 
+                      ? ` (${widget.position.span}칸)` 
+                      : ''}
+                  </span>
+                </div>
+                <div className="widget-item-actions">
+                  <button
+                    type="button"
+                    onClick={() => handleConfigWidget(widget)}
+                    className="widget-action-btn widget-config-btn"
+                    title="위젯 설정"
+                    style={{
+                      padding: '6px 12px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
+                      color: '#666'
+                    }}
+                  >
+                    <FaCog /> 설정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteWidget(widget.id)}
+                    className="widget-action-btn widget-delete-btn"
+                    title="위젯 삭제"
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid var(--mg-error-500)',
+                      borderRadius: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: 'var(--mg-error-500)'
+                    }}
+                  >
+                    <FaTrash /> 삭제
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DashboardWidgetEditor;
+

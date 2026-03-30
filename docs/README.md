@@ -1,250 +1,86 @@
-# MindGarden 프로젝트 문서
+# MindGarden 문서 인덱스 (진입점)
 
-**최종 업데이트**: 2025년 10월 14일
-
----
-
-## 📚 문서 구조
-
-MindGarden 프로젝트의 모든 문서는 목적에 따라 카테고리별로 구성되어 있습니다.
+**문서 찾기는 여기서 시작하세요.**  
+**문서 추가·이동·삭제·구조 변경은 문서관리 서브에이전트 전담입니다.** (규칙: `.cursor/skills/core-solution-documentation/SKILL.md`)
 
 ---
 
-## 🎨 디자인 시스템 v2.0 (Design System)
+## 문서 전담 안내
 
-### 필수 문서 ⭐
-
-모든 디자인 시스템 문서는 `design-system-v2/` 폴더에 있습니다.
-
-1. **[실전 적용 플랜](design-system-v2/IMPLEMENTATION_PLAN.md)** 🚀 **구현 시 필수**
-   - Phase 1-5 상세 실행 계획
-   - 공통 컴포넌트 라이브러리 구축
-   - 페이지 마이그레이션 전략
-   - 체크리스트 및 일정
-
-2. **[디자인 시스템 가이드](design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md)** ⭐ **최우선 참고**
-   - 18개 컴포넌트 사용법
-   - 색상, 타이포그래피, 레이아웃
-   - 대시보드 레이아웃 가이드
-   - 코드 예시 포함
-
-3. **[디자인 시스템 아키텍처](design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md)** ⭐ **개발자 필독**
-   - CSS 아키텍처
-   - 컴포넌트 패턴
-   - 테마 시스템
-   - 마이그레이션 가이드
-
-4. **[문서 구조 가이드](design-system-v2/DOCUMENT_STRUCTURE_GUIDE.md)**
-   - 문서 관리 및 구조
-   - 역할별 필수 문서
-   - 백업 정책
-
-5. **[문서 재구조화 리포트](design-system-v2/2025-10-14-DOCUMENTATION_RESTRUCTURE_REPORT.md)**
-   - 작업 완료 사항
-   - 백업 내역
-   - 다음 단계
-
-### 쇼케이스
-
-- **디자인 시스템 쇼케이스**: `http://localhost:3000/design-system`
-- **CSS 파일**: `/frontend/src/styles/mindgarden-design-system.css`
-- **컴포넌트**: `/frontend/src/components/mindgarden/`
-- **테마**: `/frontend/src/themes/defaultTheme.js`
+- **문서 작업 전담**: 새 문서 작성, 기존 문서 이동/이름 변경/삭제, docs 폴더 구조 정리, 이 인덱스(README) 갱신은 **문서관리 서브에이전트**에게 요청하세요.
+- **이유**: 문서가 분산되거나 예전 문서를 읽고 개발하면 혼선이 커지므로, 한 곳에서만 관리합니다.
+- **적용 스킬**: `core-solution-documentation` → 서브에이전트: **generalPurpose** (또는 먼저 **explore**로 조사 후 generalPurpose).
 
 ---
 
-## 🚀 시작하기 (Getting Started)
+## 문서 위치 체계 (docs/ 직하위)
 
-### 새 개발자 온보딩
-
-1. [환경 설정](setup/ENVIRONMENT_SETUP.md)
-2. [프로젝트 구조](setup/PROJECT_STRUCTURE.md)
-3. [개발 가이드](development/DEVELOPMENT_GUIDE.md)
-4. [코딩 표준](development/CODING_STANDARDS.md)
-
-### 빠른 시작
-
-```bash
-# 백엔드
-cd /Users/mind/mindGarden
-mvn spring-boot:run
-
-# 프론트엔드
-cd frontend
-npm install
-npm start
-```
-
----
-
-## 📖 개발 가이드 (Development)
-
-### 프론트엔드
-
-- [React 개발 가이드](development/REACT_GUIDE.md)
-- [컴포넌트 구조](development/COMPONENT_STRUCTURE.md)
-- [상태 관리](development/STATE_MANAGEMENT.md)
-- [라우팅](development/ROUTING.md)
-
-### 백엔드
-
-- [Spring Boot 가이드](development/BACKEND_GUIDE.md)
-- [API 설계](api/API_DESIGN.md)
-- [데이터베이스](database/DATABASE_GUIDE.md)
-- [보안](security/SECURITY_GUIDE.md)
+| 경로 | 용도 | 대표·요약 |
+|------|------|-----------|
+| **[standards/](./standards/)** | **표준·가이드** (API, 코드스타일, 테넌트, 테스트, 배포 등) | 최신 표준만 참조. 목차: [standards/README.md](./standards/README.md), 요약: [STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) |
+| **[planning/](./planning/)** | **기획·설계** (기능, 역할, 메뉴, ERP 섹션 점검·테스트 시나리오 등) | ERP 전방위 점검·레이아웃·테넌트 격리·테스트 시나리오 등. 목차: [planning/README.md](./planning/README.md) |
+| **[troubleshooting/](./troubleshooting/)** | **장애 대응·원인 분석** (개발 서버, OAuth, 심리검사 AI, 스케줄 등) | [DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md), [PSYCH_AI_*](./troubleshooting/) 시리즈, [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md) |
+| **[design-system/](./design-system/)** | 디자인 시스템·토큰·컴포넌트 스펙 | v2, B0KlA 등. [design-system/README.md](./design-system/README.md) |
+| **[project-management/](./project-management/)** | 프로젝트 관리·리포트·결정 사항·일별 체크리스트 | 연도·월별 또는 archive 하위 |
+| **[운영반영/](./운영반영/)** | **운영 반영(배포 준비)** | 회의 산출물·의견서. 목차: [운영반영/README.md](./운영반영/README.md) |
+| **[archive/](./archive/)** | 과거 버전·폐기 표준·레거시 백업 | **현재 설계 참조 시 사용 금지** |
+| **[guides/](./guides/)** | 환경 설정·개발·빠른 시작·배포·트러블슈팅 가이드 | quick-start, development, deployment 등 |
+| **[architecture/](./architecture/)** | 시스템 아키텍처·설계 문서 | [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), design 등 하위 |
+| **[layout/](./layout/)** | 레이아웃·메뉴 구조 관련 | [ADMIN_COMMON_LAYOUT](./layout/ADMIN_COMMON_LAYOUT.md) |
+| **[debug/](./debug/)** | **디버깅·원인 분석 문서** (core-debugger 산출물 등) | 목차: [debug/README.md](./debug/README.md) |
+| **[database/](./database/)** | DB 관련 가이드 | |
+| **[testing/](./testing/)** | 테스트 계획·가이드 | [MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md) 등 |
+| **[api/](./api/)** | API 레퍼런스·설계 문서 | guides·architecture에서 참조 |
+| **[issues/](./issues/)** | 이슈·결정 사항·트러블슈팅 기록 | |
+| **[consultation/](./consultation/)** | 상담·UI 스펙 | CONSULTATION_LOG_VIEW, CONSULTANT_CLIENT_REGISTRATION 등 |
+| **[psych-assessment/](./psych-assessment/)** | 심리검사 관련 기획·플랜 | [PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN](./psych-assessment/PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN.md) 등 |
+| **[temp/](./temp/)** | 임시·작업용 문서 (정리 후 이동·삭제 대상) | |
+| **[analysis/](./analysis/)** | 분석·조사 산출물 | 대시보드·기능 개선 분석 등 |
+| **[changes/](./changes/)** | 변경 이력·변경 제안 | 권한·정책 변경 등 |
+| **[design/](./design/)** | 설계 가이드(보조) | 컴포넌트 스펙·레이아웃 가이드 (design-system과 구분) |
+| **2026-prestartup/, 2026-startup-plan/, plans/** | 기획·사업 계획 등 | 필요 시 project-management로 통합 가능 |
 
 ---
 
-## 🏗️ 아키텍처 (Architecture)
+## 빠른 링크 (최근 정리 위주)
 
-### 시스템 설계
+### Planning (ERP·기획)
+- [ERP 섹션 전방위 점검 및 기획](./planning/ERP_SECTION_AUDIT_AND_PLANNING.md) — tenant 점검, 메뉴·라우트, 수정 우선순위
+- [ERP 레이아웃·UI 검토](./planning/ERP_LAYOUT_DESIGN_REVIEW.md) — AdminCommonLayout·본문 구조
+- [ERP 테넌트 격리 시나리오](./planning/ERP_TENANT_ISOLATION_SCENARIOS.md) — Phase 4 검증용 A/B 격리·400/403 시나리오
+- [ERP E2E·통합 테스트 시나리오](./planning/ERP_TEST_SCENARIOS.md) — API 통합·E2E 제안
+- **전체 목차**: [planning/README.md](./planning/README.md)
+- 리디자인·기획 문서는 [planning/README.md](./planning/README.md) 리디자인·기획 섹션 참조.
 
-- [시스템 아키텍처](architecture/SYSTEM_ARCHITECTURE.md)
-- [디자인 시스템 아키텍처](DESIGN_SYSTEM_ARCHITECTURE.md)
-- [데이터베이스 스키마](architecture/DATABASE_SCHEMA.md)
-- [인증 & 권한](architecture/AUTH_SYSTEM.md)
+### Standards (표준)
+- **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md)
+- **간단 표준 요약**: [STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) (핵심 4개 등)
+- **서브에이전트 활용**: [SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
 
-### 통합
+### Troubleshooting (장애·분석)
+- [개발 서버 기동 실패 분석](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md)
+- [심리검사 tenantId 이슈](./troubleshooting/PSYCH_PAGE_TENANT_ID_ISSUE.md)
+- [심리검사 AI 필수 섹션 누락·파싱 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_PRECISE_ANALYSIS.md), [서버 로그 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_SERVER_LOG_ANALYSIS.md)
+- [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
 
-- [ERP 통합](integration/ERP_INTEGRATION.md)
-- [OAuth2](integration/OAUTH2.md)
-- [결제 시스템](integration/PAYMENT_SYSTEM.md)
+### Project Management (프로젝트 관리)
+- [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
+- [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
+- [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)
 
----
-
-## 🎯 기능 명세 (Features)
-
-### 사용자 역할별
-
-- [관리자 기능](features/ADMIN_FEATURES.md)
-- [상담사 기능](features/CONSULTANT_FEATURES.md)
-- [내담자 기능](features/CLIENT_FEATURES.md)
-
-### 주요 기능
-
-- [상담 관리](features/CONSULTATION_MANAGEMENT.md)
-- [일정 관리](features/SCHEDULE_MANAGEMENT.md)
-- [재무 관리](features/FINANCE_MANAGEMENT.md)
-- [급여 관리](features/SALARY_MANAGEMENT.md)
-- [휴가 관리](features/VACATION_MANAGEMENT.md)
+### 기타
+- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
+- **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
+- **디버깅·원인 분석 문서 목록**: [docs/debug/README.md](./debug/README.md)
 
 ---
 
-## 🔐 보안 (Security)
+## 인덱스 유지
 
-- [보안 가이드](security/SECURITY_GUIDE.md)
-- [인증 시스템](security/AUTHENTICATION.md)
-- [권한 관리](security/AUTHORIZATION.md)
-- [데이터 보호](security/DATA_PROTECTION.md)
-
----
-
-## 🚢 배포 (Deployment)
-
-- [배포 가이드](deployment/DEPLOYMENT_GUIDE.md)
-- [CI/CD](deployment/CI_CD.md)
-- [환경 변수](deployment/ENVIRONMENT_VARIABLES.md)
-- [서버 설정](deployment/SERVER_SETUP.md)
+- 이 README에 새 상위 폴더를 추가하거나 위치 체계를 바꿀 때는 **문서관리 서브에이전트**로 요청해 반영하세요.
+- 표준 문서가 추가되면 [standards/README.md](./standards/README.md)에 항목을 추가하는 것도 문서관리 전담 범위입니다.
+- **운영반영**은 배포 준비 회의·의견서 전용이며, **planning**은 기획·설계 문서와 구분됩니다. 관련 계획서는 [planning/운영반영_문서정리_계획.md](./planning/운영반영_문서정리_계획.md) 참조.
 
 ---
 
-## 🧪 테스트 (Testing)
-
-- [테스트 가이드](testing/TESTING_GUIDE.md)
-- [단위 테스트](testing/UNIT_TESTS.md)
-- [통합 테스트](testing/INTEGRATION_TESTS.md)
-- [E2E 테스트](testing/E2E_TESTS.md)
-
----
-
-## 📊 API 문서 (API Documentation)
-
-- [API 레퍼런스](api/API_REFERENCE.md)
-- [REST API](api/REST_API.md)
-- [에러 코드](api/ERROR_CODES.md)
-- [예시 요청/응답](api/EXAMPLES.md)
-
----
-
-## 🔧 유지보수 (Maintenance)
-
-- [문제 해결](troubleshooting/TROUBLESHOOTING.md)
-- [성능 최적화](maintenance/PERFORMANCE.md)
-- [데이터베이스 백업](maintenance/BACKUP.md)
-- [로그 관리](maintenance/LOGGING.md)
-
----
-
-## 📝 변경 이력 (Changelog)
-
-- [변경 이력](CHANGELOG.md)
-- [릴리즈 노트](releases/RELEASE_NOTES.md)
-- [마이그레이션 가이드](migration/MIGRATION_GUIDE.md)
-
----
-
-## 🗄️ 아카이브 (Archive)
-
-이전 버전의 문서들은 `archive/` 폴더에 보관되어 있습니다:
-
-- `archive/design-backup-2025-10-14/` - 2025년 10월 14일 이전 디자인 문서
-- `archive/legacy-docs-backup-2025-10-14/` - 2025년 10월 14일 이전 레거시 문서
-
----
-
-## 🔍 빠른 참조 (Quick Reference)
-
-### 자주 찾는 문서
-
-| 목적 | 문서 |
-|------|------|
-| 디자인 시스템 구현 | [실전 적용 플랜](design-system-v2/IMPLEMENTATION_PLAN.md) |
-| 디자인 작업 시작 | [디자인 시스템 가이드](design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) |
-| 새 컴포넌트 생성 | [디자인 시스템 아키텍처](design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md) |
-| 문서 구조 이해 | [문서 구조 가이드](design-system-v2/DOCUMENT_STRUCTURE_GUIDE.md) |
-| API 개발 | [API 설계](api/API_DESIGN.md) |
-| 배포 | [배포 가이드](deployment/DEPLOYMENT_GUIDE.md) |
-| 문제 해결 | [문제 해결 가이드](troubleshooting/TROUBLESHOOTING.md) |
-
-### 디자인 시스템 체크리스트
-
-새 페이지/컴포넌트 작성 시:
-
-- [ ] [디자인 시스템 쇼케이스](http://localhost:3000/design-system) 확인
-- [ ] `mg-` 접두사 CSS 클래스 사용
-- [ ] CSS Variables 사용 (색상, 간격 등)
-- [ ] 반응형 고려 (모바일, 태블릿, 데스크탑)
-- [ ] 테이블에 `data-label` 속성 추가
-- [ ] 모달은 `ReactDOM.createPortal` 사용
-- [ ] 접근성 고려 (ARIA 속성)
-
----
-
-## 📞 문의 (Contact)
-
-- **개발팀 리드**: development@mindgarden.com
-- **디자인 관련**: design@mindgarden.com
-- **시스템 이슈**: support@mindgarden.com
-
----
-
-## 📌 중요 공지
-
-### 2025년 10월 14일
-
-**디자인 시스템 2.0 출시**
-
-- 모든 디자인 작업은 [디자인 시스템 가이드](MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) 참고
-- 기존 디자인 문서는 `archive/` 폴더로 이동
-- 18개 컴포넌트 완성 및 통일된 대시보드 레이아웃 제공
-- 모바일 반응형 완벽 지원
-
-**마이그레이션 진행 중**
-
-현재 Admin Dashboard 마이그레이션 준비 중입니다. 새로운 디자인 시스템을 적용하지 않은 페이지는 점진적으로 업데이트될 예정입니다.
-
----
-
-**문서 버전**: 2.0  
-**마지막 검토일**: 2025년 10월 14일
-
+*최종 업데이트: docs 직하위 구조 점검·누락 폴더(analysis, changes, design) 반영·planning 인덱스에 운영반영_문서정리_계획 추가*

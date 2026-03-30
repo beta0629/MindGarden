@@ -3,10 +3,15 @@ import './DuplicateLoginAlert.css';
 
 /**
  * 중복 로그인 알림 컴포넌트
+/**
  * 중복 로그인 감지 시 사용자에게 알림을 표시
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-09
  */
 const DuplicateLoginAlert = ({ 

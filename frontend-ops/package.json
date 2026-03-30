@@ -7,7 +7,9 @@
     "dev": "next dev -p 4300",
     "dev:ops": "npm run dev",
     "build": "next build",
-    "start": "next start",
+    "build:static": "BUILD_STANDALONE=true next build",
+    "preview": "npm run build:static && npx serve out -p 4300",
+    "start": "next start -p 4300",
     "lint": "next lint"
   },
   "dependencies": {

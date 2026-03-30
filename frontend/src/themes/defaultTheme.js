@@ -1,71 +1,82 @@
 /**
- * MindGarden 기본 테마
+ * Core Solution 기본 테마
+/**
  * 
- * 이 파일은 MindGarden의 기본 테마 토큰을 정의합니다.
+/**
+ * 이 파일은 Core Solution의 기본 테마 토큰을 정의합니다.
+/**
  * CSS Variables와 매핑되어 동적 테마 전환을 지원합니다.
  */
 
 export const defaultTheme = {
   name: 'default',
-  displayName: 'MindGarden 기본 테마',
+  displayName: 'Core Solution 기본 테마',
   
   colors: {
     // Primary Colors
     primary: {
-      main: '#98FB98',      // Mint Green
-      hover: '#808000',     // Olive Green
-      active: '#6B6B00',
-      light: '#B6E5D8',     // Soft Mint
+      main: 'var(--mg-mint-green)',      // Mint Green
+      hover: 'var(--mg-olive-green)',     // Olive Green
+      active: 'var(--cs-yellow-700)',
+      light: 'var(--mg-soft-mint)',     // Soft Mint
     },
     
     // Background Colors
     background: {
-      primary: '#FFFFFF',   // White
-      secondary: '#FAFAFA', // Light Gray
-      surface: '#FFFFFF',
-      overlay: 'rgba(0, 0, 0, 0.5)',
+      primary: 'var(--mg-white)',   // White
+      secondary: 'var(--cs-gray-50)', // Light Gray
+      surface: 'var(--mg-white)',
+      overlay: 'var(--mg-overlay)',
     },
     
     // Text Colors
     text: {
-      primary: '#2F2F2F',   // Dark Gray
-      secondary: '#6B6B6B', // Medium Gray
-      tertiary: '#9CA3AF',
-      inverse: '#FFFFFF',
-      link: '#808000',      // Olive Green
+      primary: 'var(--cs-gray-800)',   // Dark Gray
+      secondary: 'var(--cs-gray-600)', // Medium Gray
+      tertiary: 'var(--cs-gray-400)',
+      inverse: 'var(--mg-white)',
+      link: 'var(--mg-olive-green)',      // Olive Green
     },
     
     // Border Colors
     border: {
-      light: '#E5E5E7',
-      medium: '#D1D5DB',
-      dark: '#9CA3AF',
-      focus: '#808000',
+      light: 'var(--cs-gray-200)',
+      medium: 'var(--cs-gray-300)',
+      dark: 'var(--cs-gray-400)',
+      focus: 'var(--mg-olive-green)',
     },
     
     // Status Colors
     status: {
-      success: '#10b981',
-      successBg: '#d1fae5',
-      warning: '#f59e0b',
+      success: 'var(--mg-success-500)',
+      successBg: 'var(--cs-success-100)',
+      warning: 'var(--mg-warning-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef3c7 -> var(--mg-custom-fef3c7)
       warningBg: '#fef3c7',
-      error: '#ef4444',
+      error: 'var(--mg-error-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fee2e2 -> var(--mg-custom-fee2e2)
       errorBg: '#fee2e2',
-      info: '#3b82f6',
+      info: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dbeafe -> var(--mg-custom-dbeafe)
       infoBg: '#dbeafe',
     },
     
     // Interactive States
     interactive: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.05) -> var(--mg-custom-color)
       hover: 'rgba(0, 0, 0, 0.05)',
-      active: 'rgba(0, 0, 0, 0.1)',
+      active: 'var(--mg-shadow-light)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E5E5E7 -> var(--mg-custom-E5E5E7)
       disabled: '#E5E5E7',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CA3AF -> var(--mg-custom-9CA3AF)
       disabledText: '#9CA3AF',
     },
     
     // Glass Effect
     glass: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.6) -> var(--mg-custom-color)
       background: 'rgba(255, 255, 255, 0.6)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.5) -> var(--mg-custom-color)
       border: 'rgba(255, 255, 255, 0.5)',
       blur: '20px',
     },
@@ -125,11 +136,14 @@ export const defaultTheme = {
   
   shadows: {
     none: 'none',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.05) -> var(--mg-custom-color)
     sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-    md: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
-    xl: '0 20px 25px rgba(0, 0, 0, 0.15)',
+    md: '0 4px 6px var(--mg-shadow-light)',
+    lg: '0 10px 15px var(--mg-shadow-light)',
+    xl: '0 20px 25px var(--mg-shadow-medium)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.25) -> var(--mg-custom-color)
     '2xl': '0 25px 50px rgba(0, 0, 0, 0.25)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
     inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
   },
   

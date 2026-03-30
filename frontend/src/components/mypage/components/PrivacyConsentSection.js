@@ -6,9 +6,13 @@ import notificationManager from '../../../utils/notification';
 
 /**
  * 개인정보 동의 관리 섹션 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const PrivacyConsentSection = () => {
@@ -180,7 +184,7 @@ const PrivacyConsentSection = () => {
               <div className="consent-status-item">
                 <div className="consent-status-icon">
                   <i className={`bi bi-${consentStatus.marketingConsent ? 'check-circle-fill' : 'circle'}`} 
-                     data-consent-color={consentStatus.marketingConsent ? '#28a745' : '#6c757d'}></i>
+                     data-consent-color={consentStatus.marketingConsent ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)'}></i>
                 </div>
                 <div className="consent-status-info">
                   <span className="consent-status-label">마케팅 정보 수신</span>

@@ -1,0 +1,42 @@
+package com.coresolution.core.service;
+
+import java.util.Map;
+
+/**
+ * 온보딩 승인 서비스 인터페이스
+ * PL/SQL 프로시저를 호출하여 온보딩 승인 프로세스 처리
+ * 
+ * @author CoreSolution
+ * @version 1.0.0
+ * @since 2025-01-XX
+ */
+public interface OnboardingApprovalService {
+    
+    /**
+     * 온보딩 승인 처리
+     * PL/SQL 프로시저 ProcessOnboardingApproval 호출
+     * 
+     * @param requestId 온보딩 요청 ID (UUID)
+     * @param tenantId 테넌트 ID
+     * @param tenantName 테넌트 이름
+     * @param businessType 업종 타입
+     * @param approvedBy 승인자
+     * @param decisionNote 결정 노트
+     * @param contactEmail 연락 이메일 (관리자 계정 생성용)
+     * @param adminPasswordHash BCrypt 해시된 관리자 비밀번호 (관리자 계정 생성용)
+     * @param subdomain 서브도메인 (온보딩 요청에서 입력한 서브도메인, 없으면 NULL)
+     * @return 처리 결과 (success, message)
+     */
+    Map<String, Object> processOnboardingApproval(
+            java.util.UUID requestId,
+            String tenantId,
+            String tenantName,
+            String businessType,
+            String approvedBy,
+            String decisionNote,
+            String contactEmail,
+            String adminPasswordHash,
+            String subdomain
+    );
+}
+

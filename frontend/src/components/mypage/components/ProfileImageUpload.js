@@ -47,12 +47,13 @@ const ProfileImageUpload = ({
     console.log('✅ 기본 아이콘 반환: 인라인 SVG');
     return 'data:image/svg+xml;base64,' + btoa(`
       <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f0f0 -> var(--mg-custom-f0f0f0)
         <circle cx="60" cy="60" r="60" fill="#f0f0f0"/>
-        <g fill="#999999">
+        <g fill="var(--mg-gray-500)">
           <circle cx="60" cy="45" r="18"/>
           <path d="M30 100 C30 80, 45 70, 60 70 C75 70, 90 80, 90 100 L90 110 L30 110 Z"/>
         </g>
-        <circle cx="60" cy="60" r="60" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+        <circle cx="60" cy="60" r="60" fill="none" stroke="var(--mg-gray-300)" stroke-width="2"/>
       </svg>
     `);
   }, [profileImage, profileImageType, socialProfileImage, forceUpdate]);

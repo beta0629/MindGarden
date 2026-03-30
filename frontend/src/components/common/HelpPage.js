@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './HelpPage.css';
 
@@ -18,7 +19,7 @@ const HelpPage = () => {
       icon: 'bi-info-circle',
       content: (
         <div>
-          <h4 className="help-section__title">마인드가든 사용 방법</h4>
+          <h4 className="help-section__title">Core Solution 사용 방법</h4>
           <div className="help-section__card">
             <h5 className="help-section__card-title">
               <i className="bi bi-calendar-check help-section__card-icon"></i> 일정 관리
@@ -154,7 +155,7 @@ const HelpPage = () => {
   ];
 
   return (
-    <SimpleLayout title="도움말">
+    <AdminCommonLayout title="도움말">
       <div className="help-page">
         <div className="help-page__header">
           <h1 className="help-page__title">
@@ -162,7 +163,7 @@ const HelpPage = () => {
             도움말
           </h1>
           <p className="help-page__subtitle">
-            마인드가든 사용에 필요한 모든 정보를 확인하세요
+            Core Solution 사용에 필요한 모든 정보를 확인하세요
           </p>
         </div>
 
@@ -211,7 +212,7 @@ const HelpPage = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

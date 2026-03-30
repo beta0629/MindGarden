@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
+import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { Package, FileText, ShoppingCart, RefreshCw, Eye } from 'lucide-react';
 import './ErpCommon.css';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * ERP 구매 관리 페이지
+/**
  * 비품 구매 요청 및 주문 관리
  */
 const PurchaseManagement = () => {
@@ -53,7 +61,7 @@ const PurchaseManagement = () => {
 
   const loadItems = async () => {
     try {
-      const response = await apiGet('/api/erp/items');
+      const response = await apiGet('/api/v1/erp/items');
       if (response.success) {
         setItems(response.data || []);
       } else {
@@ -67,7 +75,7 @@ const PurchaseManagement = () => {
 
   const loadPurchaseRequests = async () => {
     try {
-      const response = await apiGet('/api/erp/purchase-requests');
+      const response = await apiGet('/api/v1/erp/purchase-requests');
       if (response.success) {
         setPurchaseRequests(response.data || []);
       } else {
@@ -81,7 +89,7 @@ const PurchaseManagement = () => {
 
   const loadPurchaseOrders = async () => {
     try {
-      const response = await apiGet('/api/erp/purchase-orders');
+      const response = await apiGet('/api/v1/erp/purchase-orders');
       if (response.success) {
         setPurchaseOrders(response.data || []);
       } else {
@@ -95,61 +103,52 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout 
-        title="구매 관리"
-        loading={true}
-        loadingText="세션 정보를 불러오는 중..."
-      />
+      <AdminCommonLayout title="구매 관리" loading={true} loadingText="세션 정보를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="구매 관리">
+      <AdminCommonLayout title="구매 관리">
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>구매 관리 기능을 사용하려면 로그인해주세요.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="구매 관리">
-      <div className="erp-system">
+    <AdminCommonLayout title="구매 관리">
+      <ContentArea className="erp-system mg-v2-content-area">
+        <ContentHeader
+          title="구매 관리"
+          subtitle="비품 구매 요청 및 주문을 관리할 수 있습니다."
+        />
         <div className="erp-container">
-        {/* 헤더 */}
-        <div className="erp-header">
-          <h1 className="erp-title">
-            <i className="bi bi-cart-check"></i>
-            구매 관리
-          </h1>
-          <p className="erp-subtitle">
-            비품 구매 요청 및 주문을 관리할 수 있습니다.
-          </p>
-        </div>
-
         {/* 탭 네비게이션 */}
         <div className="erp-tabs">
           <button
             className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
             onClick={() => setActiveTab('items')}
           >
-            <i className="bi bi-box"></i>
+            <Package size={18} aria-hidden />
             비품 목록
           </button>
           <button
             className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
             onClick={() => setActiveTab('requests')}
           >
-            <i className="bi bi-clipboard-check"></i>
+            <FileText size={18} aria-hidden />
             구매 요청
           </button>
           <button
             className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
           >
-            <i className="bi bi-truck"></i>
+            <ShoppingCart size={18} aria-hidden />
             구매 주문
           </button>
         </div>
@@ -158,23 +157,15 @@ const PurchaseManagement = () => {
         <div className="erp-content">
           {loading && (
             <div className="purchase-management-loading-container">
-              <UnifiedLoading 
-                text="데이터를 불러오는 중..."
-                size="medium"
-                variant="default"
-                inline={true}
-              />
+              <UnifiedLoading type="inline" text="로딩 중..." />
             </div>
           )}
 
           {error && (
             <div className="erp-error">
-              <div className="alert alert-danger" role="alert">
-                <i className="bi bi-exclamation-triangle-fill"></i>
-                {error}
-              </div>
+              <SafeErrorDisplay error={error} variant="banner" />
               <button className="btn btn-outline-primary" onClick={loadData}>
-                <i className="bi bi-arrow-clockwise"></i>
+                <RefreshCw size={18} aria-hidden />
                 다시 시도
               </button>
             </div>
@@ -189,35 +180,35 @@ const PurchaseManagement = () => {
                     {items.map((item) => (
                       <div key={item.id} className="erp-card">
                         <div className="erp-card-header">
-                          <h3>{item.name}</h3>
+                          <h3><SafeText>{item.name}</SafeText></h3>
                           <span className={`erp-status ${item.stockQuantity > 10 ? 'success' : 'warning'}`}>
                             {item.stockQuantity > 10 ? '충분' : '부족'}
                           </span>
                         </div>
                         <div className="erp-card-body">
-                          <p className="erp-description">{item.description}</p>
+                          <p className="erp-description"><SafeText>{item.description}</SafeText></p>
                           <div className="erp-details">
                             <div className="erp-detail">
                               <span className="erp-label">가격:</span>
-                              <span className="erp-value">{item.unitPrice?.toLocaleString()}원</span>
+                              <span className="erp-value">{toDisplayString(item.unitPrice != null ? `${item.unitPrice.toLocaleString()}원` : '—')}</span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">재고:</span>
-                              <span className="erp-value">{item.stockQuantity}개</span>
+                              <span className="erp-value">{toDisplayString(item.stockQuantity)}개</span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">카테고리:</span>
-                              <span className="erp-value">{item.category}</span>
+                              <span className="erp-value"><SafeText>{item.category}</SafeText></span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">공급업체:</span>
-                              <span className="erp-value">{item.supplier}</span>
+                              <span className="erp-value"><SafeText>{item.supplier}</SafeText></span>
                             </div>
                           </div>
                         </div>
                         <div className="erp-card-footer">
                           <button className="btn btn-primary btn-sm">
-                            <i className="bi bi-cart-plus"></i>
+                            <ShoppingCart size={16} aria-hidden />
                             구매 요청
                           </button>
                         </div>
@@ -230,40 +221,48 @@ const PurchaseManagement = () => {
               {activeTab === 'requests' && (
                 <div className="erp-section">
                   <h2>구매 요청</h2>
-                  <div className="erp-table-container">
-                    <table className="erp-table">
-                      <thead>
-                        <tr>
-                          <th>요청 번호</th>
-                          <th>아이템</th>
-                          <th>수량</th>
-                          <th>상태</th>
-                          <th>요청일</th>
-                          <th>액션</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {purchaseRequests.map((request) => (
-                          <tr key={request.id}>
-                            <td>#{request.id}</td>
-                            <td>{request.itemName}</td>
-                            <td>{request.quantity}개</td>
-                            <td>
-                              <span className={`erp-status ${request.status?.toLowerCase()}`}>
-                                {request.status}
-                              </span>
-                            </td>
-                            <td>{request.createdAt}</td>
-                            <td>
-                              <button className="btn btn-sm btn-outline-primary">
-                                <i className="bi bi-eye"></i>
-                                상세
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* 구매 요청 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
+                  <div className="mg-purchase-request-cards-grid">
+                    {purchaseRequests.map((request) => (
+                      <MGCard 
+                        key={request.id}
+                        variant="default"
+                        className="mg-purchase-request-card"
+                      >
+                        <div className="mg-purchase-request-card__header">
+                          <div className="mg-purchase-request-card__id">#{toDisplayString(request.id)}</div>
+                          <div className="mg-purchase-request-card__date"><SafeText>{request.createdAt}</SafeText></div>
+                        </div>
+                        
+                        <div className="mg-purchase-request-card__body">
+                          <div className="mg-purchase-request-card__field">
+                            <span className="mg-purchase-request-card__label">아이템</span>
+                            <span className="mg-purchase-request-card__value"><SafeText>{request.itemName}</SafeText></span>
+                          </div>
+                          <div className="mg-purchase-request-card__field">
+                            <span className="mg-purchase-request-card__label">수량</span>
+                            <span className="mg-purchase-request-card__value">{toDisplayString(request.quantity)}개</span>
+                          </div>
+                          <div className="mg-purchase-request-card__field">
+                            <span className="mg-purchase-request-card__label">상태</span>
+                            <span className={`erp-status ${toDisplayString(request.status, '').toLowerCase()}`}>
+                              <SafeText>{request.status}</SafeText>
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mg-purchase-request-card__footer">
+                          <Button
+                            variant="outline"
+                            size="small"
+                            onClick={() => {}}
+                            preventDoubleClick={true}
+                          >
+                            <Eye size={16} aria-hidden /> 상세
+                          </Button>
+                        </div>
+                      </MGCard>
+                    ))}
                   </div>
                 </div>
               )}
@@ -271,40 +270,50 @@ const PurchaseManagement = () => {
               {activeTab === 'orders' && (
                 <div className="erp-section">
                   <h2>구매 주문</h2>
-                  <div className="erp-table-container">
-                    <table className="erp-table">
-                      <thead>
-                        <tr>
-                          <th>주문 번호</th>
-                          <th>공급업체</th>
-                          <th>총 금액</th>
-                          <th>상태</th>
-                          <th>주문일</th>
-                          <th>액션</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {purchaseOrders.map((order) => (
-                          <tr key={order.id}>
-                            <td>#{order.orderNumber}</td>
-                            <td>{order.supplier}</td>
-                            <td>{order.totalAmount?.toLocaleString()}원</td>
-                            <td>
-                              <span className={`erp-status ${order.status?.toLowerCase()}`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td>{order.createdAt}</td>
-                            <td>
-                              <button className="btn btn-sm btn-outline-primary">
-                                <i className="bi bi-eye"></i>
-                                상세
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* 구매 주문 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
+                  <div className="mg-purchase-order-cards-grid">
+                    {purchaseOrders.map((order) => (
+                      <MGCard 
+                        key={order.id}
+                        variant="default"
+                        className="mg-purchase-order-card"
+                      >
+                        <div className="mg-purchase-order-card__header">
+                          <div className="mg-purchase-order-card__id">#{toDisplayString(order.orderNumber)}</div>
+                          <div className="mg-purchase-order-card__date"><SafeText>{order.createdAt}</SafeText></div>
+                        </div>
+                        
+                        <div className="mg-purchase-order-card__body">
+                          <div className="mg-purchase-order-card__field">
+                            <span className="mg-purchase-order-card__label">공급업체</span>
+                            <span className="mg-purchase-order-card__value"><SafeText>{order.supplier}</SafeText></span>
+                          </div>
+                          <div className="mg-purchase-order-card__field">
+                            <span className="mg-purchase-order-card__label">총 금액</span>
+                            <span className="mg-purchase-order-card__value mg-purchase-order-card__value--amount">
+                              {toDisplayString(order.totalAmount != null ? `${order.totalAmount.toLocaleString()}원` : '—')}
+                            </span>
+                          </div>
+                          <div className="mg-purchase-order-card__field">
+                            <span className="mg-purchase-order-card__label">상태</span>
+                            <span className={`erp-status ${toDisplayString(order.status, '').toLowerCase()}`}>
+                              <SafeText>{order.status}</SafeText>
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mg-purchase-order-card__footer">
+                          <Button
+                            variant="outline"
+                            size="small"
+                            onClick={() => {}}
+                            preventDoubleClick={true}
+                          >
+                            <Eye size={16} aria-hidden /> 상세
+                          </Button>
+                        </div>
+                      </MGCard>
+                    ))}
                   </div>
                 </div>
               )}
@@ -312,8 +321,8 @@ const PurchaseManagement = () => {
           )}
         </div>
       </div>
-      </div>
-    </SimpleLayout>
+      </ContentArea>
+    </AdminCommonLayout>
   );
 };
 

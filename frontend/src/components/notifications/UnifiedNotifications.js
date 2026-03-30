@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-// import { useNotification } from '../../contexts/NotificationContext'; // 이벤트 기반으로 카운트 갱신
 import { apiGet } from '../../utils/ajax';
+import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 통합 알림 페이지
+/**
  * 시스템 공지와 일반 메시지를 탭으로 구분하여 표시
  */
 const UnifiedNotifications = () => {
   const { user, isLoggedIn } = useSession();
-  
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('system'); // 'system' or 'messages'
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -30,10 +36,12 @@ const UnifiedNotifications = () => {
 
     try {
       setLoading(true);
-      const response = await apiGet('/api/system-notifications?page=0&size=50');
+      const response = await apiGet('/api/v1/system-notifications?page=0&size=50');
 
-      if (response.success) {
-        setSystemNotifications(response.data || []);
+      if (response) {
+        // 백엔드 응답이 { notifications: [...] } 형태일 수 있음
+        const notificationsData = response.notifications || (Array.isArray(response) ? response : []);
+        setSystemNotifications(notificationsData);
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
@@ -55,37 +63,18 @@ const UnifiedNotifications = () => {
     try {
       setLoading(true);
       
-      // 역할에 따라 다른 API 호출
-      let endpoint = '';
-      console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id);
-      
-      // 관리자 여부 확인 (role에 ADMIN이 포함되거나 특정 관리자 역할인 경우)
-      const userRole = String(user.role || '');
-      const isAdmin = userRole && (
-        userRole.includes('ADMIN') || 
-        userRole.includes('SUPER') || 
-        userRole.includes('HQ_MASTER') ||
-        userRole.includes('BRANCH_SUPER_ADMIN')
-      );
-      
-      if (userRole === 'CONSULTANT' || userRole === 'ROLE_CONSULTANT') {
-        endpoint = `/api/consultation-messages/consultant/${user.id}?page=0&size=50`;
-      } else if (userRole === 'CLIENT' || userRole === 'ROLE_CLIENT') {
-        endpoint = `/api/consultation-messages/client/${user.id}?page=0&size=50`;
-      } else if (isAdmin) {
-        // 관리자는 전체 메시지
-        endpoint = '/api/consultation-messages/all';
-      } else {
-        // 기본값: 내담자 API 호출
-        console.warn('⚠️ 알 수 없는 역할, 내담자 API 사용:', user.role);
-        endpoint = `/api/consultation-messages/client/${user.id}?page=0&size=50`;
+      const basePath = getConsultationMessagesListPath(user);
+      if (!basePath) {
+        setMessages([]);
+        return;
       }
+      console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id, '경로:', basePath);
+      const response = await apiGet(basePath, { page: 0, size: 50 });
 
-      console.log('🌐 API 호출:', endpoint);
-      const response = await apiGet(endpoint);
-
-      if (response.success) {
-        setMessages(response.data || []);
+      if (response) {
+        // 백엔드 응답이 { messages: [...] } 형태일 수 있음
+        const messagesData = response.messages || (Array.isArray(response) ? response : []);
+        setMessages(messagesData);
       }
     } catch (error) {
       console.error('메시지 로드 오류:', error);
@@ -109,10 +98,10 @@ const UnifiedNotifications = () => {
   const handleSystemNotificationClick = async (notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/system-notifications/${notification.id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
       
-      if (response.success) {
-        setSelectedItem({ type: 'system', data: response.data });
+      if (response) {
+        setSelectedItem({ type: 'system', data: response });
       } else {
         // 실패 시 기존 데이터 사용
         setSelectedItem({ type: 'system', data: notification });
@@ -128,10 +117,10 @@ const UnifiedNotifications = () => {
   const handleMessageClick = async (message) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/consultation-messages/${message.id}`);
+      const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
       
-      if (response.success) {
-        setSelectedItem({ type: 'message', data: response.data });
+      if (response) {
+        setSelectedItem({ type: 'message', data: response });
       } else {
         // 실패 시 기존 데이터 사용
         setSelectedItem({ type: 'message', data: message });
@@ -204,18 +193,69 @@ const UnifiedNotifications = () => {
     }
   }, [isLoggedIn, user?.id]);
 
+  /** GNB 알림 드롭다운 등에서 state로 전달된 공지/메시지 ID → 상세 모달 자동 오픈 */
+  useEffect(() => {
+    const openSystemId = location.state?.openSystemNotificationId;
+    const openMessageId = location.state?.openConsultationMessageId;
+    if (!isLoggedIn || (!openSystemId && !openMessageId)) {
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        if (openSystemId != null) {
+          setActiveTab('system');
+          const response = await apiGet(`/api/v1/system-notifications/${openSystemId}`);
+          if (!cancelled && response) {
+            setSelectedItem({ type: 'system', data: response });
+          }
+          if (!cancelled) {
+            window.dispatchEvent(new Event('notification-read'));
+          }
+        } else if (openMessageId != null) {
+          setActiveTab('messages');
+          const response = await apiGet(`/api/v1/consultation-messages/${openMessageId}`);
+          if (!cancelled && response) {
+            setSelectedItem({ type: 'message', data: response });
+          }
+          if (!cancelled) {
+            window.dispatchEvent(new Event('message-read'));
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('알림 딥링크 상세 로드 실패:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          navigate('/notifications', { replace: true, state: {} });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isLoggedIn,
+    location.state?.openSystemNotificationId,
+    location.state?.openConsultationMessageId,
+    navigate
+  ]);
+
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="알림">
+      <AdminCommonLayout title="알림">
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="알림">
+    <AdminCommonLayout title="알림">
       <div className="mg-dashboard-layout">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
@@ -249,7 +289,7 @@ const UnifiedNotifications = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && <UnifiedLoading message="불러오는 중..." />}
+        {loading && <UnifiedLoading type="inline" text="알림을 불러오는 중..." />}
 
         {/* 시스템 공지 목록 */}
         {!loading && activeTab === 'system' && (
@@ -361,8 +401,8 @@ const UnifiedNotifications = () => {
                             : message.content}
                         </p>
                         <div className="mg-v2-text-xs mg-v2-color-text-secondary">
-                          {message.senderType === 'CONSULTANT' ? '발신' : '수신'} · 
-                          {message.senderName || '알 수 없음'}
+                          {message.senderType === 'CONSULTANT' ? '발신' : '수신'} ·
+                          {message.senderType === 'SYSTEM' ? '시스템 메시지' : (message.senderName || '알 수 없음')}
                         </div>
                       </div>
                     </div>
@@ -375,62 +415,50 @@ const UnifiedNotifications = () => {
 
         {/* 상세 모달 */}
         {selectedItem && (
-          <div className="mg-modal-overlay" onClick={closeModal}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal__header">
-                <div>
-                  <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-                    <h3 className="mg-h3 mg-mb-0">{selectedItem.data.title}</h3>
-                    {selectedItem.data.isUrgent && (
-                      <span className="mg-badge mg-badge-danger">긴급</span>
-                    )}
-                    {selectedItem.data.isImportant && (
-                      <span className="mg-badge mg-badge-warning">중요</span>
-                    )}
-                  </div>
-                  <div className="mg-flex mg-gap-sm mg-align-center">
-                    {selectedItem.type === 'system' && (
-                      <span className="mg-badge mg-badge-secondary">
-                        {selectedItem.data.targetType === 'ALL' ? '전체' :
-                         selectedItem.data.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
-                      </span>
-                    )}
-                    {selectedItem.type === 'message' && (
-                      <span 
-                        className="mg-badge mg-badge-message-type"
-                        data-type={selectedItem.data.messageType}
-                      >
-                        {getMessageTypeLabel(selectedItem.data.messageType)}
-                      </span>
-                    )}
-                    <span className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      {selectedItem.data.authorName || selectedItem.data.senderName || '관리자'} · 
-                      {formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <button onClick={closeModal} className="mg-modal__close">
-                  ×
-                </button>
-              </div>
-              <div className="mg-modal__body">
-                <div 
-                  className="notification-content"
-                  dangerouslySetInnerHTML={{
-                    __html: selectedItem.data.content || ''
-                  }}
-                />
-              </div>
-              <div className="mg-modal__actions">
-                <button onClick={closeModal} className="mg-button mg-button-primary">
-                  확인
-                </button>
-              </div>
+          <UnifiedModal
+            isOpen={!!selectedItem}
+            onClose={closeModal}
+            title={selectedItem.data.title}
+            subtitle={`${selectedItem.data.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedItem.data.authorName || selectedItem.data.senderName || '관리자')} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
+            size="large"
+            actions={
+              <button onClick={closeModal} className="mg-button mg-button-primary">
+                확인
+              </button>
+            }
+          >
+            <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">
+              {selectedItem.data.isUrgent && (
+                <span className="mg-badge mg-badge-danger">긴급</span>
+              )}
+              {selectedItem.data.isImportant && (
+                <span className="mg-badge mg-badge-warning">중요</span>
+              )}
+              {selectedItem.type === 'system' && (
+                <span className="mg-badge mg-badge-secondary">
+                  {selectedItem.data.targetType === 'ALL' ? '전체' :
+                   selectedItem.data.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                </span>
+              )}
+              {selectedItem.type === 'message' && (
+                <span
+                  className="mg-badge mg-badge-message-type"
+                  data-type={selectedItem.data.messageType}
+                >
+                  {getMessageTypeLabel(selectedItem.data.messageType)}
+                </span>
+              )}
             </div>
-          </div>
+            <div
+              className="notification-content"
+              dangerouslySetInnerHTML={{
+                __html: selectedItem.data.content || ''
+              }}
+            />
+          </UnifiedModal>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

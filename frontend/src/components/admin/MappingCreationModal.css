@@ -1,678 +1,507 @@
-/* 매칭 생성 모달 내부 스타일 (UnifiedModal과 호환) */
-/* MindGarden Design System v2.0 */
+/**
+ * MappingCreationModal - B0KlA 토큰 기반 플로우형 UI
+ * UnifiedModal 사용, .mg-modal.mg-v2-ad-b0kla 컨테이너
+ * @author Core Solution
+ * @since 2025-02-22
+ */
 
-/* 단계 표시기 */
-.step-indicator {
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md) 0;
+/* ===== B0KlA 모달 오버레이 (UnifiedModal에 className 적용) ===== */
+.mg-modal-overlay.mg-v2-ad-b0kla {
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
+  background: var(--ad-b0kla-overlay-bg);
 }
 
-.step-indicator::before {
-    display: none;
+/* ===== B0KlA 모달 컨테이너 (UnifiedModal .mg-modal.mg-v2-ad-b0kla) ===== */
+.mg-modal.mg-v2-ad-b0kla {
+  display: flex;
+  flex-direction: column;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: 0 20px 40px var(--mg-shadow-light);
+  height: fit-content;
+  max-height: 90vh;
 }
 
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-    flex: 1;
-    max-width: 120px;
+.mg-modal.mg-v2-ad-b0kla .mg-modal__header {
+  border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
-.step-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    color: var(--medium-gray);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-xs);
-    border: 2px solid rgba(139, 69, 19, 0.2);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
+  border-top: 1px solid var(--ad-b0kla-border);
+  padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
 }
 
-.step.active .step-number {
-    background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
-    color: var(--dark-gray);
-    border-color: var(--mint-green);
+/* 아토믹 디자인·B0KlA 버튼 (모달 푸터) - Button 컴포넌트(mg-button--primary) 및 mg-v2-button-primary 모두 적용 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary:hover:not(:disabled),
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--primary:hover:not(:disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--outline {
+  background: transparent;
+  color: var(--ad-b0kla-green);
+  border: 2px solid var(--ad-b0kla-green);
+}
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline:hover:not(:disabled),
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--outline:hover:not(:disabled) {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
 }
 
-.step-label {
-    font-size: var(--font-size-xs);
-    color: var(--medium-gray);
-    text-align: center;
-    font-weight: 500;
-    transition: color 0.3s ease;
+/* 입금 확인 모달(compact): 바디 높이 제한 */
+.mg-modal.mg-v2-ad-b0kla.mg-v2-deposit-modal .mg-modal__body {
+  max-height: min(55vh, 420px);
 }
 
-.step.active .step-label {
-    color: var(--cocoa);
-    font-weight: 600;
+/* 모달 바디: 콘텐츠 양에 맞게 자동 조절, 내용 많을 때만 스크롤 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body {
+  min-height: 0; /* flexbox에서 스크롤 시 축소 허용 */
+  max-height: min(70vh, 600px);
+  overflow-y: auto;
+  padding: var(--mg-spacing-xl, 1.5rem);
+  padding-bottom: 6rem; /* 특별 고려사항·메모 입력 시 푸터에 가리지 않도록 여유 확보 */
+  flex: 0 1 auto;
 }
 
-/* 단계 콘텐츠 */
-.step-content h3 {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--dark-gray);
-    margin-bottom: var(--spacing-md);
-    text-align: center;
+/* 로딩 오버레이 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--cs-glass-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: inherit;
 }
 
-/* 필터 섹션 */
-.filter-section {
-    margin-bottom: var(--spacing-lg);
+/* B0KlA 컨텍스트 - 토큰은 dashboard-tokens-extension.css에 정의됨 */
+
+.mg-v2-mapping-creation-modal {
+  padding: 0;
 }
 
-/* 검색 컨테이너 */
-.search-container {
-    margin-top: var(--spacing-lg);
-    margin-bottom: var(--spacing-md);
-    max-width: 100%;
-    width: 100%;
+.mg-v2-mapping-creation-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 1.5rem 0;
 }
 
-.search-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: var(--color-bg-primary);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border-light);
-    transition: var(--transition-fast);
-    box-shadow: var(--shadow-sm);
-    min-height: 60px;
-    padding: 0 var(--spacing-md);
+.mg-v2-mapping-creation-modal__title svg {
+  color: var(--ad-b0kla-green);
 }
 
-/* 필터 컨트롤 */
-.filter-controls {
-    display: flex;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    flex-wrap: wrap;
+/* 스텝 콘텐츠: 단계별 콘텐츠 양에 맞게 자연스럽게 높이 조절 */
+.mg-v2-mapping-creation-modal__step-content {
+  min-height: 0;
 }
 
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+.mg-v2-mapping-creation-modal__step-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 1rem 0;
 }
 
-.filter-label {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    font-weight: var(--font-weight-medium);
-    white-space: nowrap;
+.mg-v2-mapping-creation-modal__search {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.filter-select {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--border-radius-sm);
-    background: var(--color-bg-primary);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    box-shadow: var(--shadow-sm);
+.mg-v2-mapping-creation-modal__search .mg-v2-search-input {
+  flex: 1;
+  max-width: 320px;
 }
 
-.filter-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
+.mg-v2-mapping-creation-modal__count {
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-text-secondary);
 }
 
-.filter-select:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
+.mg-v2-mapping-creation-modal__filters {
+  margin-bottom: 1rem;
 }
 
-.search-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: var(--color-bg-primary);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border-light);
-    transition: var(--transition-fast);
-    box-shadow: var(--shadow-sm);
-    max-width: 100%;
-    width: 100%;
+.mg-v2-mapping-creation-modal__filter-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-.search-input-wrapper:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
-    outline: none;
+.mg-v2-mapping-creation-modal__select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  background: var(--ad-b0kla-card-bg);
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
 }
 
-.search-icon {
-    position: absolute;
-    left: var(--spacing-md);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-base);
-    z-index: 2;
+/* 카드 그리드: 내용 많을 때만 그리드 내부 스크롤 */
+.mg-v2-mapping-creation-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  max-height: min(280px, 40vh);
+  overflow-y: auto;
 }
 
-.search-input {
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 40px;
-    border: none;
-    background: transparent;
-    font-size: var(--font-size-base);
-    color: var(--color-text-primary);
-    outline: none;
-    box-shadow: none;
+.mg-v2-mapping-creation-modal__card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.search-input::placeholder {
-    color: var(--color-text-secondary);
+.mg-v2-mapping-creation-modal__card:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--mg-shadow-sm);
 }
 
-.clear-search-btn {
-    position: absolute;
-    right: var(--spacing-md);
-    background: none;
-    border: none;
-    color: var(--medium-gray);
-    cursor: pointer;
-    padding: var(--spacing-xs);
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    z-index: 2;
+.mg-v2-mapping-creation-modal__card--selected {
+  border-color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
 }
 
-.clear-search-btn:hover {
-    background: rgba(139, 69, 19, 0.1);
-    color: var(--dark-gray);
+.mg-v2-mapping-creation-modal__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
 }
 
-.search-results-info {
-    margin-top: var(--spacing-sm);
-    text-align: center;
+.mg-v2-mapping-creation-modal__avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
-.search-count {
-    color: var(--color-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+.mg-v2-mapping-creation-modal__avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
+  font-weight: 600;
 }
 
-.total-count {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+.mg-v2-mapping-creation-modal__avatar .mg-v2-avatar-fallback--hidden {
+  display: none;
 }
 
-/* 선택 그리드 */
-.selection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+.mg-v2-mapping-creation-modal__card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-/* 선택 카드 - 디자인 시스템 */
-.selection-card {
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
+.mg-v2-mapping-creation-modal__card-info strong {
+  font-size: 0.9375rem;
+  color: var(--ad-b0kla-title-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.selection-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+.mg-v2-mapping-creation-modal__card-info span {
+  font-size: 0.8125rem;
+  color: var(--ad-b0kla-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.selection-card.selected {
-    border-color: var(--color-primary);
-    background: var(--color-primary-light);
-    box-shadow: var(--shadow-md);
+.mg-v2-mapping-creation-modal__empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--ad-b0kla-text-secondary);
 }
 
-/* 카드 아바타 */
-.card-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-inverse);
-    font-weight: var(--font-weight-semibold);
-    font-size: var(--font-size-lg);
-    flex-shrink: 0;
-    box-shadow: var(--shadow-sm);
+.mg-v2-mapping-creation-modal__empty svg {
+  opacity: 0.5;
 }
 
-/* 카드 정보 */
-.card-info {
-    flex: 1;
-    min-width: 0;
+/* 패키지 그리드 */
+.mg-v2-mapping-creation-modal__pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
 }
 
-.card-info h4 {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.mg-v2-mapping-creation-modal__pkg-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.card-info p {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.mg-v2-mapping-creation-modal__pkg-card:hover {
+  border-color: var(--ad-b0kla-green);
 }
 
-.role-badge {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--color-primary-light);
-    color: var(--color-primary);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.mg-v2-mapping-creation-modal__pkg-card--selected {
+  border-color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
 }
 
-/* 검색 결과 없음 */
-.no-results {
-    text-align: center;
-    padding: var(--spacing-xl) var(--spacing-lg);
-    color: var(--medium-gray);
+.mg-v2-mapping-creation-modal__pkg-card svg {
+  color: var(--ad-b0kla-green);
 }
 
-.no-results-icon {
-    font-size: 48px;
-    margin-bottom: var(--spacing-md);
-    opacity: 0.5;
+.mg-v2-mapping-creation-modal__pkg-card strong {
+  font-size: 0.9375rem;
+  color: var(--ad-b0kla-title-color);
 }
 
-.no-results h4 {
-    margin: 0 0 var(--spacing-sm) 0;
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--dark-gray);
+.mg-v2-mapping-creation-modal__pkg-card span {
+  font-size: 0.8125rem;
+  color: var(--ad-b0kla-text-secondary);
 }
 
-.no-results p {
-    margin: 0;
-    font-size: var(--font-size-base);
-    color: var(--medium-gray);
+.mg-v2-mapping-creation-modal__missing-pkg {
+  text-align: center;
+  padding: 2rem;
+  background: var(--ad-b0kla-orange-bg);
+  border: 1px dashed var(--ad-b0kla-orange);
+  border-radius: var(--ad-b0kla-radius-sm);
 }
 
-/* 폼 그룹 */
-.form-group {
-    margin-bottom: var(--spacing-lg);
+.mg-v2-mapping-creation-modal__missing-pkg svg {
+  color: var(--ad-b0kla-orange);
+  margin-bottom: 1rem;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-    font-weight: 500;
-    color: var(--dark-gray);
-    font-size: var(--font-size-sm);
+.mg-v2-mapping-creation-modal__missing-pkg h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--ad-b0kla-title-color);
 }
 
-/* 모든 입력 필드와 드롭다운 - 글래스모피즘 강제 적용 */
-.form-group input,
-.form-group select,
-.form-group textarea,
-input[type="text"],
-input[type="number"],
-input[type="email"],
-select,
-textarea {
-    width: 100%;
-    padding: var(--spacing-md);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-base);
-    color: var(--dark-gray) !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+.mg-v2-mapping-creation-modal__missing-pkg p {
+  margin: 0 0 1rem 0;
+  color: var(--ad-b0kla-text-secondary);
 }
 
-/* placeholder 텍스트 색상 */
-input::placeholder,
-select::placeholder,
-textarea::placeholder {
-    color: var(--medium-gray) !important;
-    opacity: 0.8;
+.mg-v2-mapping-creation-modal__loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--ad-b0kla-text-secondary);
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus,
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="email"]:focus,
-select:focus,
-textarea:focus {
-    outline: none;
-    border-color: var(--mint-green);
-    background: rgba(255, 255, 255, 0.3) !important;
-    box-shadow: 
-        0 8px 24px rgba(182, 229, 216, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 0 3px rgba(182, 229, 216, 0.2);
+/* 요약 바 */
+.mg-v2-mapping-creation-modal__summary-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--ad-b0kla-blue-bg);
+  border-radius: var(--ad-b0kla-radius-sm);
+  margin-bottom: 1rem;
 }
 
-.form-group textarea {
-    resize: vertical;
-    min-height: 100px;
+.mg-v2-mapping-creation-modal__summary-bar span {
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
 }
 
-/* 완료 메시지 */
-.completion-message {
-    text-align: center;
-    padding: var(--spacing-xl) var(--spacing-lg);
+.mg-v2-mapping-creation-modal__summary-bar svg {
+  color: var(--ad-b0kla-blue);
 }
 
-.completion-message h3 {
-    margin: 0 0 var(--spacing-md) 0;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--dark-gray);
+.mg-v2-mapping-creation-modal__summary-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
 }
 
-.completion-message p {
-    margin: 0 0 var(--spacing-lg) 0;
-    font-size: var(--font-size-base);
-    color: var(--medium-gray);
+.mg-v2-mapping-creation-modal__summary-segment--person {
+  /* 상담사·내담자: 기존 스타일 유지 */
 }
 
-/* 매칭 요약 */
-.mapping-summary {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+.mg-v2-mapping-creation-modal__summary-segment--product {
+  /* 상품 세그먼트: 패키지명·회기 */
 }
 
-.summary-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+.mg-v2-mapping-creation-modal__summary-segment--amount {
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
 }
 
-.summary-item:last-child {
-    border-bottom: none;
+.mg-v2-mapping-creation-modal__summary-separator {
+  color: var(--ad-b0kla-text-secondary);
+  padding: 0 var(--mg-spacing-xs, 0.25rem);
+  font-size: 0.75rem;
 }
 
-.summary-item strong {
-    color: var(--dark-gray);
-    font-weight: 600;
+.mg-v2-mapping-creation-modal__summary-divider {
+  display: inline-flex;
+  align-items: center;
 }
 
-.next-steps {
-    background: rgba(182, 229, 216, 0.2);
-    color: var(--cocoa);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    text-align: center;
-    margin-top: var(--spacing-lg);
-    border: 1px solid var(--mint-green);
+.mg-v2-mapping-creation-modal__summary-divider svg {
+  color: var(--ad-b0kla-blue);
 }
 
-/* 반응형 디자인 - 모바일 */
+.mg-v2-mapping-creation-modal__summary-pkg {
+  margin-left: auto;
+  font-weight: 600;
+}
+
+/* 폼 */
+.mg-v2-mapping-creation-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mg-v2-mapping-creation-modal__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.mg-v2-mapping-creation-modal__form-group {
+  margin-bottom: 0;
+}
+
+.mg-v2-mapping-creation-modal__form-group label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ad-b0kla-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.mg-v2-mapping-creation-modal__form-help {
+  font-size: 0.75rem;
+  color: var(--ad-b0kla-text-secondary);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.mg-v2-mapping-creation-modal__input,
+.mg-v2-mapping-creation-modal__select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  background: var(--ad-b0kla-card-bg);
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-creation-modal__input:focus,
+.mg-v2-mapping-creation-modal__select:focus {
+  outline: none;
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-mapping-creation-modal__readonly {
+  padding: 0.5rem 0.75rem;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
+}
+
+/* 완료 화면 */
+.mg-v2-mapping-creation-modal__completion {
+  text-align: center;
+}
+
+.mg-v2-mapping-creation-modal__success-icon {
+  color: var(--ad-b0kla-green);
+  margin-bottom: 1rem;
+}
+
+.mg-v2-mapping-creation-modal__completion h3 {
+  font-size: 1.25rem;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 1rem 0;
+}
+
+.mg-v2-mapping-creation-modal__completion-summary {
+  text-align: left;
+  padding: 1rem;
+  background: var(--ad-b0kla-green-bg);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-mapping-creation-modal__completion-summary p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
+}
+
+/* 액션 버튼 영역 */
+.mg-v2-mapping-creation-modal__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* 모바일: medium 크기 (데이터 양에 맞게) */
 @media (max-width: 768px) {
-    /* 단계 표시기 모바일 최적화 */
-    .step-indicator {
-        padding: var(--spacing-sm) 0;
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .step {
-        max-width: 60px;
-        min-width: 50px;
-    }
-    
-    .step-number {
-        width: 28px;
-        height: 28px;
-        font-size: var(--font-size-xs);
-    }
-    
-    .step-label {
-        font-size: 9px;
-        line-height: 1.2;
-        text-align: center;
-        word-break: keep-all;
-    }
-    
-    /* 단계 콘텐츠 모바일 최적화 */
-    .step-content h3 {
-        font-size: var(--font-size-base);
-        margin-bottom: var(--spacing-md);
-        text-align: center;
-    }
-    
-    /* 검색 컨테이너 모바일 최적화 */
-    .search-container {
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .search-input {
-        padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 36px;
-        font-size: var(--font-size-sm);
-    }
-    
-    .search-icon {
-        left: var(--spacing-sm);
-        font-size: var(--font-size-sm);
-    }
-    
-    .clear-search-btn {
-        right: var(--spacing-sm);
-        padding: var(--spacing-xs);
-    }
-    
-    .search-results-info {
-        margin-top: var(--spacing-xs);
-    }
-    
-    .search-count,
-    .total-count {
-        font-size: var(--font-size-xs);
-    }
-    
-    /* 선택 그리드 모바일 최적화 */
-    .selection-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-        margin-top: var(--spacing-md);
-    }
-    
-    /* 선택 카드 모바일 최적화 */
-    .selection-card {
-        padding: var(--spacing-md);
-        gap: var(--spacing-sm);
-        min-height: auto;
-    }
-    
-    .card-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: var(--font-size-base);
-    }
-    
-    .card-info h4 {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .card-info p {
-        font-size: var(--font-size-xs);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .role-badge {
-        padding: 2px var(--spacing-xs);
-        font-size: 9px;
-    }
-    
-    /* 검색 결과 없음 모바일 최적화 */
-    .no-results {
-        padding: var(--spacing-lg) var(--spacing-md);
-    }
-    
-    .no-results-icon {
-        font-size: 36px;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .no-results h4 {
-        font-size: var(--font-size-base);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .no-results p {
-        font-size: var(--font-size-sm);
-    }
-    
-    /* 폼 그룹 모바일 최적화 */
-    .form-group {
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .form-group label {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        padding: var(--spacing-sm);
-        font-size: var(--font-size-sm);
-    }
-    
-    .form-group textarea {
-        min-height: 80px;
-    }
-    
-    /* 완료 메시지 모바일 최적화 */
-    .completion-message {
-        padding: var(--spacing-lg) var(--spacing-md);
-    }
-    
-    .completion-message h3 {
-        font-size: var(--font-size-lg);
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .completion-message p {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--spacing-md);
-    }
-    
-    /* 매칭 요약 모바일 최적화 */
-    .mapping-summary {
-        padding: var(--spacing-md);
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .summary-item {
-        padding: var(--spacing-xs) 0;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-xs);
-    }
-    
-    .summary-item strong {
-        font-size: var(--font-size-sm);
-    }
-    
-    .next-steps {
-        padding: var(--spacing-sm);
-        font-size: var(--font-size-xs);
-        margin-top: var(--spacing-md);
-    }
-}
+  .mg-modal.mg-v2-ad-b0kla.mg-modal--medium {
+    max-width: 95vw;
+    width: 95vw;
+  }
 
-/* 모바일 초소형 화면 (320px 이하) */
-@media (max-width: 480px) {
-    .step {
-        max-width: 50px;
-        min-width: 45px;
-    }
-    
-    .step-number {
-        width: 24px;
-        height: 24px;
-        font-size: 10px;
-    }
-    
-    .step-label {
-        font-size: 8px;
-    }
-    
-    .selection-card {
-        padding: var(--spacing-sm);
-        flex-direction: column;
-        text-align: center;
-        gap: var(--spacing-xs);
-    }
-    
-    .card-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: var(--font-size-sm);
-        margin: 0 auto;
-    }
-    
-    .card-info {
-        text-align: center;
-    }
-    
-    .card-info h4,
-    .card-info p {
-        white-space: normal;
-        overflow: visible;
-        text-overflow: unset;
-    }
+  .mg-v2-mapping-creation-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mg-v2-mapping-creation-modal__form-row {
+    grid-template-columns: 1fr;
+  }
 }

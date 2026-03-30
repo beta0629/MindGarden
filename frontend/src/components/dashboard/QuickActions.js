@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { Zap, User, Calendar, MessageCircle, UserPlus, History, FileText, Link2, Code, BarChart3, HelpCircle, Settings } from 'lucide-react';
 import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
@@ -111,11 +111,11 @@ const QuickActions = ({ user }) => {
           </button>
           
           {/* 관리자 전용 액션 */}
-          {(RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
+          {RoleUtils.isAdmin(user) && (
             <>
               <button className="quick-action-btn" onClick={goToMappingManagement}>
                 <Link2 size={24} />
-                <span>매칭 관리</span>
+                <span>매칭 시스템</span>
               </button>
               <button className="quick-action-btn" onClick={goToCommonCodeManagement}>
                 <Code size={24} />
@@ -144,7 +144,7 @@ const QuickActions = ({ user }) => {
         isOpen={showConsultantApplicationModal}
         onClose={() => setShowConsultantApplicationModal(false)}
         userId={user?.id}
-        userRole={user?.role}
+        user={user}
         onSuccess={handleConsultantApplicationSuccess}
       />
     </div>

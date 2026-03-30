@@ -117,7 +117,7 @@
   transition: var(--glass-transition);
   backdrop-filter: var(--glass-blur-sm);
   -webkit-backdrop-filter: var(--glass-blur-sm);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
   position: relative;
   overflow: hidden;
   font-family: var(--ios-font-family);
@@ -156,13 +156,13 @@
   background: var(--glass-bg-tertiary);
   color: var(--ios-text-primary);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
 }
 
 .glass-btn--secondary:hover {
   background: var(--glass-bg-secondary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 /* 글래스 헤더 카드 */

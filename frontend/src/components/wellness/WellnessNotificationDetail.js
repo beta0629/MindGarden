@@ -4,15 +4,22 @@ import { Calendar, Clock, User, Tag, ArrowLeft, Heart } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationDetail.css';
 
 /**
  * 웰니스 알림 상세 페이지 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const WellnessNotificationDetail = () => {
@@ -45,7 +52,7 @@ const WellnessNotificationDetail = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiGet(`/api/system-notifications/${id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${id}`);
       
       if (response && response.success) {
         setNotification(response.data);
@@ -75,7 +82,7 @@ const WellnessNotificationDetail = () => {
       'UPDATE': '업데이트',
       'WELLNESS': '웰니스'
     };
-    return types[type] || type;
+    return toDisplayString(types[type] ?? type, '—');
   };
 
   const getNotificationTypeClass = (type) => {
@@ -90,19 +97,21 @@ const WellnessNotificationDetail = () => {
     return classes[type] || 'type-general';
   };
 
-  /**
+/**
    * AI 생성 웰니스 컨텐츠를 HTML로 렌더링
+/**
    * - HTML 태그를 그대로 렌더링
+/**
    * - 안전한 HTML 렌더링을 위해 dangerouslySetInnerHTML 사용
    */
   const formatWellnessContent = (content) => {
-    if (!content) return null;
+    if (content == null || content === '') return null;
 
-    // HTML을 그대로 렌더링
+    const html = typeof content === 'string' ? content : toDisplayString(content, '');
     return (
-      <div 
+      <div
         className="wellness-content-html"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   };
@@ -110,36 +119,34 @@ const WellnessNotificationDetail = () => {
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="wellness-notification-detail">
-          <UnifiedLoading message="알림을 불러오는 중..." />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="알림 상세">
+        <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
+      </AdminCommonLayout>
     );
   }
 
   if (error || !notification) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="알림 상세">
         <div className="wellness-notification-detail">
           <div className="wellness-notification-error">
             <div className="error-icon">
               <Heart size={48} />
             </div>
             <h2 className="error-title">알림을 찾을 수 없습니다</h2>
-            <p className="error-message">{error || '요청하신 알림을 찾을 수 없습니다.'}</p>
+            <p className="error-message"><SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText></p>
             <button className="mg-btn mg-btn--primary" onClick={handleBack}>
               <ArrowLeft size={16} />
               <span>돌아가기</span>
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="알림 상세">
       <div className="wellness-notification-detail">
         {/* 헤더 */}
         <div className="wellness-notification-header">
@@ -161,28 +168,28 @@ const WellnessNotificationDetail = () => {
               </span>
             )}
             <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>
-              {getNotificationTypeLabel(notification.notificationType)}
+              <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
             </span>
           </div>
         </div>
 
         {/* 제목 */}
         <div className="wellness-notification-title-section">
-          <h1 className="notification-title">{notification.title}</h1>
+          <h1 className="notification-title"><SafeText>{notification.title}</SafeText></h1>
           
           <div className="notification-meta">
             <div className="meta-item">
               <User size={16} />
-              <span>{notification.authorName || '관리자'}</span>
+              <span><SafeText fallback="관리자">{notification.authorName}</SafeText></span>
             </div>
             <div className="meta-item">
               <Calendar size={16} />
-              <span>{new Date(notification.publishedAt || notification.createdAt).toLocaleDateString('ko-KR')}</span>
+              <span>{toDisplayString(new Date(notification.publishedAt || notification.createdAt).toLocaleDateString('ko-KR'))}</span>
             </div>
             {notification.expiresAt && (
               <div className="meta-item">
                 <Clock size={16} />
-                <span>만료: {new Date(notification.expiresAt).toLocaleDateString('ko-KR')}</span>
+                <span>만료: {toDisplayString(new Date(notification.expiresAt).toLocaleDateString('ko-KR'))}</span>
               </div>
             )}
           </div>
@@ -203,7 +210,7 @@ const WellnessNotificationDetail = () => {
           </button>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

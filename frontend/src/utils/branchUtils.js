@@ -1,13 +1,32 @@
 /**
  * 지점 관련 유틸리티 함수들
- * @author MindGarden
- * @version 1.0.0
+/**
+ * 
+/**
+ * 브랜치 개념이 제거되었으며, 테넌트 기반 시스템으로 전환되었습니다.
+/**
+ * 이 파일의 모든 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
+ * 
+/**
+ * @author Core Solution
+/**
+ * @version 2.0.0
+/**
  * @since 2025-01-17
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념 제거, 테넌트 기반 시스템으로 전환
  */
 
 /**
  * 지점 코드를 한글명으로 변환
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {string} branchCode - 지점 코드
+/**
  * @returns {string} 한글 지점명
  */
 export const getBranchNameByCode = (branchCode) => {
@@ -27,16 +46,20 @@ export const getBranchNameByCode = (branchCode) => {
 
 /**
  * 지점 객체의 필드명을 통일된 형태로 변환
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {Object} branch - 지점 객체
+/**
  * @returns {Object} 변환된 지점 객체
  */
 export const normalizeBranchData = (branch) => {
     return {
         ...branch,
-        // 기존 필드명을 새로운 필드명으로 매핑
         name: branch.branchName || branch.name,
         code: branch.branchCode || branch.code,
-        // 기타 필드들도 필요시 매핑
         address: branch.address,
         phone: branch.phoneNumber || branch.phone,
         email: branch.email,
@@ -48,7 +71,13 @@ export const normalizeBranchData = (branch) => {
 
 /**
  * 지점 목록을 정규화
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {Array} branches - 지점 목록
+/**
  * @returns {Array} 정규화된 지점 목록
  */
 export const normalizeBranchList = (branches) => {
@@ -57,7 +86,13 @@ export const normalizeBranchList = (branches) => {
 
 /**
  * 지점 코드 유효성 검사
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {string} branchCode - 지점 코드
+/**
  * @returns {boolean} 유효성 여부
  */
 export const isValidBranchCode = (branchCode) => {
@@ -67,7 +102,13 @@ export const isValidBranchCode = (branchCode) => {
 
 /**
  * 지점 타입을 한글로 변환
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {string} branchType - 지점 타입
+/**
  * @returns {string} 한글 지점 타입
  */
 export const getBranchTypeName = (branchType) => {
@@ -83,15 +124,24 @@ export const getBranchTypeName = (branchType) => {
 
 /**
  * 지점 상태를 한글로 변환
+/**
+ * 
+/**
+ * @deprecated 2025-12-05 - 브랜치 개념이 제거되었습니다. 테넌트 기반 시스템을 사용하세요.
+/**
  * @param {string} branchStatus - 지점 상태
+/**
  * @returns {string} 한글 지점 상태
  */
 export const getBranchStatusName = (branchStatus) => {
     const statusMap = {
         'PLANNING': '계획',
         'PREPARING': '준비중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'ACTIVE': '활성',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'SUSPENDED': '중단',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'CLOSED': '폐점'
     };
     

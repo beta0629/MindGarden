@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
+import BadgeSelect from '../common/BadgeSelect';
+import ErpModal from './common/ErpModal';
 import './SalaryConfigModal.css';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -27,14 +30,31 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }
   }, [isOpen]);
 
+  /**
+   * 백엔드 GET /api/v1/admin/salary/configs 응답: data는 SALARY_CONFIG 그룹의 codeValue를 키로,
+   * codeDescription(없으면 codeLabel)을 값으로 하는 객체.
+   * 키: SALARY_BASE_DATE, SALARY_PAYMENT_DAY, SALARY_CUTOFF_DAY, SALARY_BATCH_CYCLE, SALARY_CALCULATION_METHOD
+   */
   const loadCurrentConfigs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/salary/configs');
+      const response = await fetch('/api/v1/admin/salary/configs');
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setConfigs(data.data);
+        if (data.success && data.data && typeof data.data === 'object') {
+          const raw = data.data;
+          const str = (v) => (v == null ? '' : String(v).trim());
+          const num = (v, fallback) => {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : fallback;
+          };
+          setConfigs({
+            monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
+            paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
+            cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
+            batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
+            calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
+          });
         }
       }
     } catch (error) {
@@ -46,7 +66,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
   const loadConfigOptions = async () => {
     try {
-      const response = await fetch('/api/admin/salary/config-options');
+      const response = await fetch('/api/v1/admin/salary/config-options');
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -96,7 +116,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
       // 모든 설정 저장
       const savePromises = configUpdates.map(config => 
-        fetch('/api/admin/salary/config', {
+        fetch('/api/v1/admin/salary/config', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -118,107 +138,93 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="salary-config-modal-overlay">
-      <div className="salary-config-modal">
-        <div className="salary-config-modal-header">
-          <h3>급여 기산일 설정</h3>
-          <button className="close-button" onClick={onClose}>×</button>
-        </div>
-
-        <div className="salary-config-modal-body">
+    <ErpModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="급여 기산일 설정"
+      size="medium"
+      className="mg-v2-ad-b0kla salary-config-modal"
+    >
+      <div className="salary-config-modal-body">
+          <p className="salary-config-modal-intro">
+            아래 설정은 급여 계산 기간과 지급·마감 일자를 정하는 데 사용됩니다. 저장 후 급여 계산·세금 조회 시 반영되므로, 한 번 설정해 두시면 됩니다.
+          </p>
           {error && (
-            <div className="error-message">
-              {error}
-            </div>
+            <SafeErrorDisplay error={error} variant="inline" className="error-message" />
           )}
 
           <div className="config-section">
-            <h4>📅 급여 기산일 설정</h4>
-            
+            <h4>급여 기산일 설정</h4>
+            <p className="config-section-desc">매월 급여를 몇 일 기준으로 계산할지 정합니다. 선택한 날짜가 해당 월의 계산 시작일이 됩니다.</p>
             <div className="config-item">
               <label>월급여 기산일</label>
-              <select 
-                value={configs.monthlyBaseDay} 
-                onChange={(e) => handleInputChange('monthlyBaseDay', e.target.value)}
-              >
-                {options.monthlyBaseDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <BadgeSelect
+                value={configs.monthlyBaseDay}
+                onChange={(val) => handleInputChange('monthlyBaseDay', val)}
+                options={options.monthlyBaseDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
+              />
             </div>
 
             <div className="config-item">
               <label>급여 지급일</label>
-              <select 
-                value={configs.paymentDay} 
-                onChange={(e) => handleInputChange('paymentDay', parseInt(e.target.value))}
-              >
-                {options.paymentDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <span className="config-item-hint">해당 월 급여를 다음 달 몇 일에 지급할지 선택합니다.</span>
+              <BadgeSelect
+                value={configs.paymentDay}
+                onChange={(val) => handleInputChange('paymentDay', Number(val))}
+                options={options.paymentDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
+              />
             </div>
 
             <div className="config-item">
               <label>급여 마감일</label>
-              <select 
-                value={configs.cutoffDay} 
-                onChange={(e) => handleInputChange('cutoffDay', e.target.value)}
-              >
-                {options.cutoffDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <span className="config-item-hint">해당 월에 포함할 상담·실적을 몇 일까지로 볼지(마감일) 정합니다.</span>
+              <BadgeSelect
+                value={configs.cutoffDay}
+                onChange={(val) => handleInputChange('cutoffDay', val)}
+                options={options.cutoffDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
+              />
             </div>
           </div>
 
           <div className="config-section">
-            <h4>⚙️ 배치 설정</h4>
+            <h4>배치 설정</h4>
             
             <div className="config-item">
               <label>배치 실행 주기</label>
-              <select 
-                value={configs.batchCycle} 
-                onChange={(e) => handleInputChange('batchCycle', e.target.value)}
-              >
-                {options.batchCycles.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <BadgeSelect
+                value={configs.batchCycle}
+                onChange={(val) => handleInputChange('batchCycle', val)}
+                options={options.batchCycles.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
+              />
             </div>
           </div>
 
           <div className="config-section">
-            <h4>💰 급여 계산 방식</h4>
-            
+            <h4>급여 계산 방식</h4>
+            <p className="config-section-desc">상담사 급여를 어떤 기준으로 계산할지(상담 건수·시간당·고정급 등) 선택합니다.</p>
             <div className="config-item">
               <label>계산 방식</label>
-              <select 
-                value={configs.calculationMethod} 
-                onChange={(e) => handleInputChange('calculationMethod', e.target.value)}
-              >
-                {options.calculationMethods.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <BadgeSelect
+                value={configs.calculationMethod}
+                onChange={(val) => handleInputChange('calculationMethod', val)}
+                options={options.calculationMethods.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
+              />
             </div>
           </div>
 
           <div className="config-preview">
-            <h4>📋 설정 미리보기</h4>
+            <h4>설정 미리보기</h4>
             <div className="preview-item">
               <span>급여 기산일:</span>
               <span>{configs.monthlyBaseDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.monthlyBaseDay}일`}</span>
@@ -238,24 +244,28 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
         </div>
 
-        <div className="salary-config-modal-footer">
-          <button 
-            className="cancel-button" 
-            onClick={onClose}
-            disabled={loading}
-          >
-            취소
-          </button>
-          <button 
-            className="save-button" 
-            onClick={handleSave}
-            disabled={loading}
-          >
-            {loading ? '저장 중...' : '저장'}
-          </button>
-        </div>
+      <div className="mg-modal__footer salary-config-modal-footer">
+        <MGButton
+          variant="outline"
+          size="medium"
+          onClick={onClose}
+          disabled={loading}
+          preventDoubleClick={false}
+        >
+          취소
+        </MGButton>
+        <MGButton
+          variant="primary"
+          size="medium"
+          onClick={handleSave}
+          loading={loading}
+          loadingText="저장 중..."
+          preventDoubleClick
+        >
+          저장
+        </MGButton>
       </div>
-    </div>
+    </ErpModal>
   );
 };
 

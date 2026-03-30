@@ -1,0 +1,170 @@
+/**
+ * MappingManagementPage - B0KlA 스타일 매칭 관리 페이지
+ *
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-mapping-header-btn--primary {
+  background: var(--ad-b0kla-green, #4b745c);
+  color: #fff;
+}
+
+.mg-v2-mapping-header-btn--primary:hover {
+  background: #3d5f4c;
+  transform: translateY(-1px);
+}
+
+/* Admin Dashboard V2 본문 영역과 동일 (레이아웃 main이 padding 제공) */
+.mg-v2-mapping-management.mg-v2-ad-b0kla {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.mg-v2-mapping-management .mg-v2-ad-b0kla__container {
+  max-width: var(--mg-container-max, 1400px);
+  margin: 0 auto;
+}
+
+/* 전체 폭 사용 (Admin Dashboard V2와 동일) */
+.mg-v2-mapping-management .mg-v2-ad-b0kla__container {
+  max-width: none;
+  width: 100%;
+}
+
+/* 환불 모달 (기존 mapping-refund-modal 호환) */
+.mapping-refund-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--mg-spacing-lg, 1.5rem);
+}
+
+.mapping-refund-modal {
+  background: var(--ad-b0kla-card-bg);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+  border: 1px solid var(--ad-b0kla-border);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.mapping-refund-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mapping-refund-modal-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mapping-refund-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mapping-refund-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--ad-b0kla-text-secondary);
+  padding: 0;
+  line-height: 1;
+}
+
+.mapping-refund-modal-close:hover {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mapping-refund-modal-body {
+  padding: 1.5rem;
+}
+
+.mapping-refund-info {
+  margin-bottom: 1.5rem;
+}
+
+.mapping-refund-info-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mapping-refund-info-content p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mapping-refund-info-sessions {
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color) !important;
+}
+
+.mapping-refund-reason-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mapping-refund-required {
+  color: var(--mg-error-500);
+}
+
+.mapping-refund-reason-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.mapping-refund-reason-input--error {
+  border-color: var(--mg-error-500);
+}
+
+.mapping-refund-reason-error {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--mg-error-500);
+}
+
+.mapping-refund-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--ad-b0kla-border);
+}

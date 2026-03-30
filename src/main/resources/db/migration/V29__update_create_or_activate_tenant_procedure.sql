@@ -1,0 +1,1 @@
+-- V29: CreateOrActivateTenant 프로시저는 V13에서 이미 VARCHAR(64)로 생성되었으므로 업데이트 불필요

@@ -1,0 +1,237 @@
+/**
+ * Consultant Client Widget Styles
+ * @version 2.0.0
+ * @since 2025-11-29
+ */
+
+.consultant-client-widget {
+  background: var(--cs-surface-primary);
+  border-radius: var(--cs-radius-md);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.client-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--cs-glass-primary-20);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--cs-primary-500);
+}
+
+.empty-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.empty-description {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-sm);
+}
+
+.client-content {
+  padding: var(--cs-spacing-lg);
+}
+
+.client-list {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-secondary);
+  border: 1px solid var(--cs-border-secondary);
+  border-radius: var(--cs-radius-sm);
+  margin-bottom: var(--cs-spacing-sm);
+  transition: all 0.2s ease;
+}
+
+.client-item:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-200);
+}
+
+.client-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--cs-glass-primary-20);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cs-primary-500);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.client-avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.client-avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-500);
+  font-weight: 600;
+}
+
+.client-avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}
+
+.avatar-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.client-info {
+  flex: 1;
+}
+
+.client-name {
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.client-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-status {
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-xs);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.status-active {
+  background: var(--cs-glass-success-light);
+  color: var(--cs-success-600);
+}
+
+.status-inactive {
+  background: var(--cs-glass-gray-light);
+  color: var(--cs-gray-600);
+}
+
+.status-pending {
+  background: var(--cs-glass-warning-light);
+  color: var(--cs-warning-600);
+}
+
+.status-completed {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-600);
+}
+
+.last-session {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-xs);
+}
+
+.detail-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.session-count {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-xs);
+}
+
+.client-actions {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--cs-radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.message-btn {
+  background: var(--cs-glass-success-light);
+  color: var(--cs-success-500);
+}
+
+.message-btn:hover {
+  background: var(--cs-success-500);
+  color: var(--cs-white);
+}
+
+.view-btn {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-500);
+}
+
+.view-btn:hover {
+  background: var(--cs-primary-500);
+  color: var(--cs-white);
+}
+
+.action-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.client-actions-footer {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--cs-border-secondary);
+  padding-top: var(--cs-spacing-md);
+}
+
+@media (max-width: 768px) {
+  .client-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .client-actions {
+    align-self: flex-end;
+  }
+}

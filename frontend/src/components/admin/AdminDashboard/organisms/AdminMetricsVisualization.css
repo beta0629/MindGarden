@@ -1,0 +1,135 @@
+/**
+ * AdminMetricsVisualization - 지표 시각화 Organism 스타일
+ * 디자인 토큰(mg-v2-*)만 사용.
+ *
+ * @author Core Solution
+ * @since 2025-03-15
+ */
+
+.admin-metrics-visualization {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-metrics-visualization__error {
+  padding: var(--mg-spacing-lg, 24px);
+  color: var(--mg-text-error, var(--ad-b0kla-red, #dc3545));
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.admin-metrics-visualization__placeholder {
+  padding: var(--mg-spacing-md, 12px) var(--mg-layout-page-padding, 24px);
+  color: var(--mg-text-secondary, #64748b);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.admin-metrics-visualization__loading {
+  padding: var(--mg-spacing-md, 12px);
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  margin: 0;
+}
+
+/* grid: 5단계 타일 그리드 (B0KlA 카드·악센트·radius 16px) */
+.admin-metrics-visualization__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 900px) {
+  .admin-metrics-visualization__grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.admin-metrics-visualization__grid-tile {
+  position: relative;
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: 16px;
+  padding: 1rem 1rem 1rem calc(1rem + 4px);
+  min-width: 0;
+  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  transition: box-shadow 0.2s;
+}
+
+.admin-metrics-visualization__grid-tile:hover {
+  box-shadow: var(--ad-b0kla-shadow-hover, 0 12px 32px rgba(0, 0, 0, 0.08));
+}
+
+.admin-metrics-visualization__grid-tile-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 16px 0 0 16px;
+}
+
+.admin-metrics-visualization__grid-tile--success .admin-metrics-visualization__grid-tile-accent {
+  background: var(--ad-b0kla-green, var(--mg-success-600));
+}
+
+.admin-metrics-visualization__grid-tile--warning .admin-metrics-visualization__grid-tile-accent {
+  background: var(--ad-b0kla-orange, var(--cs-orange-400));
+}
+
+.admin-metrics-visualization__grid-tile--info .admin-metrics-visualization__grid-tile-accent {
+  background: var(--ad-b0kla-blue, var(--mg-primary-400));
+}
+
+.admin-metrics-visualization__grid-tile--auto .admin-metrics-visualization__grid-tile-accent,
+.admin-metrics-visualization__grid-tile--neutral .admin-metrics-visualization__grid-tile-accent {
+  background: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+}
+
+.admin-metrics-visualization__grid-tile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.admin-metrics-visualization__grid-tile-icon {
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+  margin-bottom: 0.25rem;
+}
+
+.admin-metrics-visualization__grid-tile--success .admin-metrics-visualization__grid-tile-icon {
+  color: var(--ad-b0kla-green, var(--mg-success-600));
+}
+
+.admin-metrics-visualization__grid-tile--warning .admin-metrics-visualization__grid-tile-icon {
+  color: var(--ad-b0kla-orange, var(--cs-orange-400));
+}
+
+.admin-metrics-visualization__grid-tile--info .admin-metrics-visualization__grid-tile-icon {
+  color: var(--ad-b0kla-blue, var(--mg-primary-400));
+}
+
+.admin-metrics-visualization__grid-tile-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, var(--mg-gray-800));
+  margin: 0;
+  line-height: 1.3;
+}
+
+.admin-metrics-visualization__grid-tile-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, var(--mg-gray-800));
+}
+
+.admin-metrics-visualization__grid-tile-label {
+  font-size: 0.75rem;
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+}
+
+.admin-metrics-visualization__pipeline-wrap {
+  margin-top: var(--mg-spacing-xl, 1.5rem);
+}

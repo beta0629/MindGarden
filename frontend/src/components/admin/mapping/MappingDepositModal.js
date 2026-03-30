@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
+import { User, Link2, UserCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
-import csrfTokenManager from '../../../utils/csrfTokenManager';
+import { toDisplayString } from '../../../utils/safeDisplay';
+import SafeText from '../../common/SafeText';
+import { apiPost } from '../../../utils/ajax';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import '../MappingCreationModal.css';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
+/**
  * - 입금 확인 처리
+/**
  * - 입금 참조번호 입력
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const MappingDepositModal = ({ 
@@ -34,23 +43,14 @@ const MappingDepositModal = ({
         if (isOpen && mapping) {
             const referenceNumber = generateDepositReference();
             setDepositReference(referenceNumber);
-            
-            // 디버깅: 매칭 데이터 구조 확인
-            console.log('🔍 MappingDepositModal 매칭 데이터:', {
-                mapping,
-                consultantName: mapping.consultantName,
-                clientName: mapping.clientName,
-                consultant: mapping.consultant,
-                client: mapping.client,
-                packageName: mapping.packageName,
-                packagePrice: mapping.packagePrice,
-                paymentAmount: mapping.paymentAmount
-            });
         }
     }, [isOpen, mapping]);
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
         if (!depositReference.trim()) {
             notificationManager.error('입금 참조번호를 입력해주세요.');
@@ -60,22 +60,23 @@ const MappingDepositModal = ({
         setIsLoading(true);
         
         try {
-            const response = await csrfTokenManager.post(`/api/admin/mappings/${mapping.id}/confirm-deposit`, {
+            // 표준화 2025-12-08: API 경로 표준화 및 apiPost 사용
+            const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-deposit`, {
                 depositReference: depositReference.trim()
             });
 
-            const result = await response.json();
-
-            if (result.success) {
-                notificationManager.success('입금이 성공적으로 확인되었습니다.');
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
+                notificationManager.success('✅ 입금이 성공적으로 확인되었습니다.');
                 onDepositConfirmed?.(mapping.id);
                 handleClose();
             } else {
-                notificationManager.error(result.message || '입금 확인에 실패했습니다.');
+                notificationManager.error('입금 확인에 실패했습니다.');
             }
         } catch (error) {
             console.error('입금 확인 오류:', error);
-            notificationManager.error('입금 확인 중 오류가 발생했습니다.');
+            const errorMessage = error.message || '입금 확인 중 오류가 발생했습니다.';
+            notificationManager.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -89,102 +90,81 @@ const MappingDepositModal = ({
 
     if (!isOpen) return null;
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <h3 className="mg-v2-modal-title">
-                        <DollarSign size={24} />
-                        입금 확인
-                    </h3>
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="입금 확인"
+            size="medium"
+            className="mg-v2-ad-b0kla mg-v2-deposit-modal"
+            backdropClick
+            showCloseButton
+            loading={isLoading}
+            actions={
+                <>
                     <button
-                        onClick={handleClose}
-                        className="mg-v2-modal-close"
-                        aria-label="닫기"
+                        type="button"
+                        className="mg-v2-button mg-v2-button-secondary"
+                        onClick={(e) => {
+                            e?.preventDefault();
+                            e?.stopPropagation();
+                            handleClose();
+                        }}
+                        disabled={isLoading}
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </div>
-
-                <div className="mg-v2-modal-body">
-                    <div className="mg-v2-info-box">
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">상담사:</span>
-                            <span className="mg-v2-info-value">
-                                {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.username || 'N/A'}
-                            </span>
-                        </div>
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">내담자:</span>
-                            <span className="mg-v2-info-value">
-                                {mapping.clientName || mapping.client?.name || mapping.client?.username || 'N/A'}
-                            </span>
-                        </div>
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">패키지:</span>
-                            <span className="mg-v2-info-value">{mapping.packageName || 'N/A'}</span>
-                        </div>
-                        <div className="mg-v2-info-row mg-info-row-highlight">
-                            <span className="mg-v2-info-label">금액:</span>
-                            <span className="mg-v2-info-value">
-                                {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
-                            </span>
-                        </div>
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                    >
+                        <CheckCircle size={18} />
+                        입금 확인
+                    </button>
+                </>
+            }
+        >
+            <div className="mg-v2-mapping-creation-modal-wrapper">
+                <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
+                    <div className="mg-v2-mapping-creation-modal__summary-bar">
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                            <User size={16} /> <SafeText fallback="N/A">{mapping.consultantName ?? mapping.consultant?.name ?? mapping.consultant?.userId}</SafeText>
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
+                            <Link2 size={16} />
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                            <UserCircle size={16} /> <SafeText fallback="N/A">{mapping.clientName ?? mapping.client?.name ?? mapping.client?.userId}</SafeText>
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
+                            <SafeText fallback="N/A">{mapping.packageName}</SafeText>
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
+                            {(mapping.packagePrice != null || mapping.paymentAmount != null)
+                                ? `${Number(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원`
+                                : toDisplayString('N/A')}
+                        </span>
                     </div>
-
-                    <form onSubmit={handleSubmit}>
-                        <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">
-                                입금 참조번호 *
-                            </label>
-                            <input
-                                type="text"
-                                value={depositReference}
-                                onChange={(e) => setDepositReference(e.target.value)}
-                                placeholder="자동 생성됩니다 (수정 가능)"
-                                className="mg-v2-input"
-                                required
-                            />
-                            <small className="mg-v2-form-help">
-                                자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
-                            </small>
-                        </div>
-
-                        <div className="mg-v2-modal-footer">
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="mg-v2-button mg-v2-button-secondary"
-                                disabled={isLoading}
-                            >
-                                취소
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="mg-v2-button mg-v2-button-success"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <span className="mg-v2-spinner"></span>
-                                        처리 중...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle size={18} />
-                                        입금 확인
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </form>
+                    <div className="mg-v2-mapping-creation-modal__form-group">
+                        <label>입금 참조번호 *</label>
+                        <input
+                            type="text"
+                            value={depositReference}
+                            onChange={(e) => setDepositReference(e.target.value)}
+                            placeholder="자동 생성됩니다 (수정 가능)"
+                            className="mg-v2-mapping-creation-modal__input"
+                            required
+                        />
+                        <small className="mg-v2-mapping-creation-modal__form-help">
+                            자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
+                        </small>
+                    </div>
                 </div>
             </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

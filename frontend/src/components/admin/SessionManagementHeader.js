@@ -1,14 +1,20 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './SessionManagementHeader.css';
 
 /**
  * 세션 관리 페이지 헤더 컴포넌트
+/**
  * - 타이틀, 부제목, 액션 버튼들을 포함
+/**
  * - 아이폰 스타일과 글래스모피즘 효과 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SessionManagementHeader = ({ 

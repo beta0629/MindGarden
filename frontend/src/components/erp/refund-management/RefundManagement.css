@@ -1,0 +1,358 @@
+/**
+ * 환불 관리 시스템 — B0KlA·BEM 스타일
+ * docs/design-system/REFUND_MANAGEMENT_LAYOUT_DESIGN.md, REFUND_MANAGEMENT_ATOMIC_MARKUP.md
+ *
+ * @author CoreSolution
+ * @since 2025-03-16
+ */
+
+/* ===== 공통 섹션 블록 ===== */
+.refund-management__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.refund-management__section {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 var(--mg-spacing-md, 1rem);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
+}
+
+.refund-management__section-title::before {
+  content: '';
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main, var(--ad-b0kla-green));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ===== KPI 블록 ===== */
+.refund-management__kpi-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  min-width: 0;
+}
+
+.refund-management__stat-card {
+  background: var(--ad-b0kla-card-bg, #fff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: 16px;
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+.refund-management__stat-card--accent-primary {
+  border-left: 4px solid var(--mg-color-primary-main, var(--ad-b0kla-green));
+}
+
+.refund-management__stat-card--accent-accent {
+  border-left: 4px solid var(--mg-color-accent-main, var(--ad-b0kla-orange));
+}
+
+.refund-management__stat-card--accent-secondary {
+  border-left: 4px solid var(--mg-color-text-secondary, var(--ad-b0kla-blue));
+}
+
+.refund-management__stat-label {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.refund-management__stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
+  display: block;
+}
+
+/* ===== 필터 블록 ===== */
+.refund-management__filter-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.refund-management__filter-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.refund-management__filter-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refund-management__filter-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-left: auto;
+}
+
+.refund-management__filter-actions .mg-v2-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ===== 테이블 블록 ===== */
+.refund-management__table-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__table-wrapper {
+  overflow-x: auto;
+  margin-bottom: var(--mg-spacing-md, 1rem);
+}
+
+.refund-management__history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.refund-management__history-table th,
+.refund-management__history-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+}
+
+.refund-management__history-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+  background: var(--mg-color-surface-subtle, #f8fafc);
+}
+
+.refund-management__history-table tbody td {
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
+}
+
+.refund-management__th--action,
+.refund-management__td--action {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.refund-management__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-top: var(--mg-spacing-md, 1rem);
+  flex-wrap: wrap;
+}
+
+.refund-management__pagination-info {
+  font-size: var(--mg-font-sm, 0.875rem);
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+.refund-management__empty-message {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+  font-size: 14px;
+}
+
+/* ===== 배지 (Atom) ===== */
+.refund-management__status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.refund-management__status-badge--success {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.refund-management__status-badge--warning {
+  background: var(--ad-b0kla-orange-bg, #fcf3ed);
+  color: var(--ad-b0kla-orange, #e8a87c);
+}
+
+.refund-management__status-badge--danger {
+  background: var(--ad-b0kla-red-bg, #fef2f2);
+  color: var(--ad-b0kla-red, #dc3545);
+}
+
+.refund-management__status-badge--neutral {
+  background: #edf2f7;
+  color: var(--ad-b0kla-text-secondary, #4a5568);
+}
+
+/* ===== 사유별 통계 ===== */
+.refund-management__reason-stats-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__reason-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.refund-management__reason-stats-table th,
+.refund-management__reason-stats-table td {
+  padding: 0.5rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+}
+
+.refund-management__reason-stats-table thead th {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+}
+
+.refund-management__reason-stats-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+}
+
+/* ===== ERP 연동 상태 ===== */
+.refund-management__erp-sync-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__erp-sync-content {
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+}
+
+.refund-management__erp-sync-content p {
+  margin: 0 0 0.5rem;
+}
+
+/* ===== 회계 처리 현황 ===== */
+.refund-management__accounting-block {
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.refund-management__accounting-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-lg, 1.5rem);
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+}
+
+.refund-management__accounting-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refund-management__accounting-item--muted {
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 1280px) {
+  .refund-management__kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .refund-management__kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .refund-management__filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .refund-management__filter-actions {
+    margin-left: 0;
+  }
+
+  .refund-management__section {
+    padding: 16px;
+  }
+
+  .refund-management__stat-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* 헤더 백 버튼: 아이콘+텍스트 정렬 */
+.refund-management__nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 스크린 리더 전용 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

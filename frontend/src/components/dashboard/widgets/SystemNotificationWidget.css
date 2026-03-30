@@ -1,0 +1,330 @@
+/* SystemNotificationWidget.css - 시스템 알림 위젯 스타일 */
+
+/* ============================================================================
+   헤더 스타일
+   ============================================================================ */
+.system-notification-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+}
+
+.system-notification-header-title__count {
+  margin-left: var(--cs-spacing-xs);
+}
+
+.system-notification-view-all-btn {
+  background: transparent;
+  border: 1px solid var(--cs-border-primary);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.system-notification-view-all-btn:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-300);
+}
+
+/* ============================================================================
+   빈 상태 스타일
+   ============================================================================ */
+.system-notification-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-text-secondary);
+}
+
+.system-notification-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+}
+
+.system-notification-empty-text {
+  font-size: var(--cs-text-md);
+  color: var(--cs-text-primary);
+  margin: 0;
+}
+
+/* ============================================================================
+   알림 목록 스타일
+   ============================================================================ */
+.system-notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+}
+
+/* ============================================================================
+   알림 아이템 스타일
+   ============================================================================ */
+.system-notification-item {
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-lg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.system-notification-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--cs-shadow-md);
+  border-color: var(--cs-primary-200);
+}
+
+.system-notification-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cs-spacing-sm);
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.system-notification-item-icon {
+  font-size: var(--cs-text-xl);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.system-notification-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.system-notification-item-title {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.system-notification-item-badges {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+  margin-top: 4px;
+}
+
+/* 항목 중요/긴급 배지는 common Badge variant=status 사용 */
+
+.system-notification-item-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cs-primary-500);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.system-notification-item-preview {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  line-height: 1.4;
+  margin-bottom: var(--cs-spacing-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.system-notification-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cs-spacing-sm);
+}
+
+.system-notification-item-author {
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+}
+
+.system-notification-item-date {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+@media (max-width: 768px) {
+  .system-notification-item {
+    padding: var(--cs-spacing-sm);
+  }
+
+  .system-notification-item-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--cs-spacing-xs);
+  }
+
+  .system-notification-item-icon {
+    width: 28px;
+    height: 28px;
+    font-size: var(--cs-text-lg);
+  }
+
+  .system-notification-item-content {
+    text-align: center;
+    width: 100%;
+  }
+
+  .system-notification-item-badges {
+    justify-content: center;
+  }
+
+  .system-notification-item-footer {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--cs-spacing-xs);
+  }
+
+  .system-notification-view-all-btn {
+    font-size: var(--cs-text-xs);
+    padding: 4px 8px;
+  }
+}
+
+/* ============================================================================
+   다크 테마 지원
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  .system-notification-header-title {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .system-notification-view-all-btn {
+    color: var(--cs-text-primary-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .system-notification-view-all-btn:hover {
+    background: var(--cs-bg-hover-dark);
+  }
+
+  .system-notification-empty-text {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .system-notification-item {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .system-notification-item:hover {
+    border-color: var(--cs-primary-400);
+    box-shadow: var(--cs-shadow-dark);
+  }
+
+  .system-notification-item-title {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .system-notification-item-preview {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .system-notification-item-author,
+  .system-notification-item-date {
+    color: var(--cs-text-secondary-dark);
+  }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.system-notification-item {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.system-notification-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.system-notification-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.system-notification-item:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.system-notification-item:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+/* 호버 시 배지 애니메이션 */
+@keyframes badgeGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  }
+}
+
+.mg-common-badge--danger:hover {
+  animation: badgeGlow 1s ease-in-out;
+}
+
+/* 읽지 않음 표시 호버 효과 */
+.system-notification-item:hover .system-notification-item-unread-dot {
+  animation-duration: 1s;
+}
+
+/* 알림 카운트 배지 애니메이션 */
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.system-notification-header-title__count {
+  animation: bounceIn 0.4s ease-out;
+}

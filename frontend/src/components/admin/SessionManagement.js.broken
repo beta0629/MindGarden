@@ -15,7 +15,7 @@ import './SessionManagement.css';
  * - 회기 상태 관리
  * - 회기 사용 내역 조회
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2024-12-19
  */

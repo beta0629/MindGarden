@@ -40,7 +40,7 @@
     background: white;
     border-radius: 8px;
     padding: var(--spacing-md);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
     border: 1px solid var(--color-border);
     transition: all 0.2s;
     cursor: pointer;
@@ -51,7 +51,7 @@
 
 .consultant-comp-consultant-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .consultant-comp-consultant-card.selected {
@@ -149,12 +149,12 @@
     gap: 4px;
 }
 
-.consultant-comp-consultant-actions .btn-primary {
+.consultant-comp-consultant-actions .mg-btn--primary {
     background: var(--status-info);
     color: white;
 }
 
-.consultant-comp-consultant-actions .btn-primary:hover {
+.consultant-comp-consultant-actions .mg-btn--primary:hover {
     background: #2563eb;
     transform: translateY(-1px);
 }
@@ -252,7 +252,7 @@
     background: white;
     border-radius: 12px;
     padding: var(--spacing-lg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
     border: 1px solid var(--color-border);
 }
 
@@ -261,7 +261,7 @@
     background: white;
     border-radius: 12px;
     padding: var(--spacing-lg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
     border: 1px solid var(--color-border);
     margin-top: 20px;
 }
@@ -324,21 +324,21 @@
     gap: 6px;
 }
 
-.consultant-detail-actions .btn-primary {
+.consultant-detail-actions .mg-btn--primary {
     background: var(--status-info);
     color: white;
 }
 
-.consultant-detail-actions .btn-primary:hover {
+.consultant-detail-actions .mg-btn--primary:hover {
     background: #2563eb;
 }
 
-.consultant-detail-actions .btn-secondary {
+.consultant-detail-actions .mg-btn--secondary {
     background: #6b7280;
     color: white;
 }
 
-.consultant-detail-actions .btn-secondary:hover {
+.consultant-detail-actions .mg-btn--secondary:hover {
     background: #4b5563;
 }
 
@@ -363,7 +363,7 @@
     background: white;
     border-radius: 12px;
     padding: var(--spacing-lg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
     border: 1px solid var(--color-border);
     transition: all 0.2s;
     display: flex;
@@ -373,7 +373,7 @@
 
 .consultant-comp-stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .consultant-comp-stat-icon {
@@ -451,7 +451,7 @@
     border-radius: 12px;
     padding: var(--spacing-xl);
     margin-bottom: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .consultant-comp-title {
@@ -507,7 +507,7 @@
     background: white;
     border-radius: 12px;
     padding: var(--spacing-xl);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .basic-management-content h3 {
@@ -542,21 +542,21 @@
     gap: 6px;
 }
 
-.btn-primary {
+.mg-btn--primary {
     background: var(--status-info);
     color: white;
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
     background: #2563eb;
 }
 
-.btn-secondary {
+.mg-btn--secondary {
     background: #6b7280;
     color: white;
 }
 
-.btn-secondary:hover {
+.mg-btn--secondary:hover {
     background: #4b5563;
 }
 
@@ -577,7 +577,7 @@
     background: white;
     border-radius: 12px;
     padding: var(--spacing-lg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
     border: 1px solid var(--color-border);
     transition: all 0.2s;
     display: flex;
@@ -590,12 +590,12 @@
 
 .basic-management-tab .consultant-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .consultant-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 /* 카드 헤더 - 상담사 종합관리와 완전히 동일한 스타일 */
@@ -802,15 +802,15 @@ div[class*="consultant-specialty-display"] div,
     display: flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
-.basic-management-tab .btn-primary {
+.basic-management-tab .mg-btn--primary {
     background: var(--status-info);
     color: white;
 }
 
-.basic-management-tab .btn-primary:hover {
+.basic-management-tab .mg-btn--primary:hover {
     background: #2563eb;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
@@ -1128,4 +1128,39 @@ div[class*="consultant-specialty-display"] div,
     .consultant-comp-consultant-date {
         font-size: var(--font-size-xs);
     }
+}
+
+/* 수정 모달: 주소 검색 행·자격·경력 섹션 (CONSULTANT_CLIENT_EDIT_UI_SPEC) */
+.mg-v2-ad-b0kla .mg-v2-address-search-row {
+    display: flex;
+    gap: var(--mg-spacing-16, 16px);
+    align-items: center;
+    flex-wrap: wrap;
+}
+.mg-v2-ad-b0kla .mg-v2-address-search-row .mg-v2-form-input--readonly {
+    flex: 1;
+    min-width: 200px;
+}
+.mg-v2-ad-b0kla .mg-v2-section-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-16, 16px);
+    margin: var(--mg-spacing-24, 24px) 0 var(--mg-spacing-16, 16px);
+}
+.mg-v2-ad-b0kla .mg-v2-section-heading--accent .mg-v2-section-heading__bar {
+    width: 4px;
+    min-height: 20px;
+    background: var(--mg-color-primary-main, #3D5246);
+    border-radius: 2px;
+}
+.mg-v2-ad-b0kla .mg-v2-section-heading__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mg-color-text-main, #2C2C2C);
+    margin: 0;
+}
+.mg-v2-ad-b0kla .mg-v2-form-row--two {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--mg-spacing-16, 16px);
 }

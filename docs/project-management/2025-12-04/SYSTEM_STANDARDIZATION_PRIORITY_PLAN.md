@@ -1,0 +1,270 @@
+# 시스템 표준화 우선순위 계획
+
+**작성일**: 2025-12-03  
+**버전**: 1.0.0  
+**상태**: 실행 계획
+
+---
+
+## 📌 개요
+
+표준 문서(43개)를 기반으로 실제 코드베이스를 표준에 맞추는 우선순위별 실행 계획입니다.  
+발견된 표준 위반 사항을 우선순위에 따라 단계별로 해결합니다.
+
+### 참조 문서
+- [표준 문서 목록](../standards/README.md)
+- [시스템 표준화 실행 계획](./SYSTEM_STANDARDIZATION_PLAN.md)
+
+---
+
+## 🔍 발견된 표준 위반 사항
+
+### 📊 위반 현황 요약
+
+| 위반 유형 | Backend | Frontend | 총계 | 우선순위 |
+|----------|---------|----------|------|----------|
+| 브랜치 코드 사용 | 20개 파일 | 10개 파일 | 30개 | 🔴 최우선 |
+| 비표준 API 경로 | 15개 컨트롤러 | - | 15개 | 🔴 최우선 |
+| 역할 이름 하드코딩 | 5+ 파일 | 14 파일 | 19+ | 🔴 최우선 |
+| 색상 하드코딩 | - | 50+ 파일 | 50+ | 🟡 높음 |
+| 상태값 하드코딩 | 다수 | 다수 | 다수 | 🟡 높음 |
+| 에러 처리 불일치 | 다수 | - | 다수 | 🟡 높음 |
+
+---
+
+## 🎯 우선순위별 실행 계획
+
+### 🔴 Priority 1: 보안 및 핵심 아키텍처 (2주)
+
+#### 1.1 브랜치 코드 완전 제거 (5일) ⭐⭐⭐⭐⭐
+
+**목표**: 모든 `branchCode`, `branchId` 사용 제거
+
+**발견된 위치**:
+- Backend: 20개 파일
+  - `TenantContextFilter.java`: 브랜치 추출 로직
+  - `AdminServiceImpl.java`: 브랜치 필터링
+  - `UserRepository.java`: 브랜치 쿼리
+  - Entity: `Item.java`, `Account.java` 등
+- Frontend: 10개 파일
+  - `SessionContext.js`: 브랜치 세션
+  - `HQDashboard.js`: 브랜치 관련 로직
+
+**작업 계획**:
+1. **Day 1**: `TenantContextFilter` 브랜치 로직 제거
+2. **Day 2**: Repository 쿼리에서 브랜치 필터링 제거
+3. **Day 3**: Entity에서 브랜치 필드 검토 (레거시 호환)
+4. **Day 4**: Frontend 브랜치 코드 제거
+5. **Day 5**: 통합 테스트 및 검증
+
+**체크리스트**:
+- [ ] `TenantContextFilter.extractBranchId()` 제거
+- [ ] 세션에서 `branchCode` 속성 제거
+- [ ] Repository 쿼리에서 `branch_code` 조건 제거
+- [ ] Frontend에서 `branchCode` 참조 제거
+- [ ] 코드베이스 전체 검색: `branchCode`, `branchId` (0개 결과 확인)
+- [ ] 통합 테스트 실행
+
+**예상 결과**:
+- 브랜치 코드 사용: 30개 → 0개
+
+---
+
+#### 1.2 테넌트 격리 검증 및 강화 (3일) ⭐⭐⭐⭐⭐
+
+**목표**: 모든 데이터가 테넌트별로 완전 격리되도록 보장
+
+**작업 계획**:
+1. **Day 1**: 모든 SELECT 쿼리 검증
+   - `tenant_id` 조건 필수 확인
+   - 테넌트 구분 없이 조회하는 쿼리 수정
+2. **Day 2**: 모든 INSERT/UPDATE 검증
+   - `tenant_id` 필수 포함 확인
+   - 테넌트 컨텍스트에서 자동 주입 확인
+3. **Day 3**: 인덱스 및 성능 검증
+   - 인덱스에 `tenant_id` 포함 확인
+   - 복합 인덱스 최적화
+
+**체크리스트**:
+- [ ] 모든 SELECT 쿼리에 `WHERE tenant_id = ?` 조건 확인
+- [ ] 모든 INSERT에 `tenant_id` 포함 확인
+- [ ] 모든 UPDATE에 `tenant_id` 조건 확인
+- [ ] 인덱스에 `tenant_id` 포함 확인 (복합 인덱스)
+- [ ] 테넌트 간 데이터 접근 테스트 (차단 확인)
+
+---
+
+#### 1.3 보안 표준 적용 (2일) ⭐⭐⭐⭐⭐
+
+**목표**: 보안 표준 완전 준수
+
+**작업 계획**:
+1. **Day 1**: 환경 변수 보안 검토
+   - 민감한 정보 하드코딩 검사
+   - `.gitignore` 확인
+   - 환경 변수 문서화 확인
+2. **Day 2**: 보안 감사 로그 검증
+   - 보안 이벤트 로깅 확인
+   - 로그 레벨 검증
+
+---
+
+### 🔴 Priority 2: API 표준화 (1주)
+
+#### 2.1 API 경로 표준화 (5일) ⭐⭐⭐⭐
+
+**목표**: 모든 API를 `/api/v1/` 경로로 통일
+
+**발견된 위치**: 15개 컨트롤러
+
+**작업 계획**:
+1. **Day 1-2**: 핵심 컨트롤러 변경 (5개)
+   - `AuthController`
+   - `AdminController`
+   - `ConsultationMessageController`
+   - `OAuth2ConfigController`
+   - `CssThemeController`
+2. **Day 3-4**: 나머지 컨트롤러 변경 (10개)
+3. **Day 5**: 프론트엔드 API 호출 업데이트
+
+**체크리스트**:
+- [ ] 컨트롤러 경로 `/api/v1/`로 변경
+- [ ] 레거시 경로 유지 (`@Deprecated`)
+- [ ] 프론트엔드 API 호출 업데이트
+- [ ] API 문서화 업데이트
+- [ ] 통합 테스트 업데이트
+
+---
+
+### 🟡 Priority 3: 하드코딩 제거 (2주)
+
+#### 3.1 역할 이름 하드코딩 제거 (3일) ⭐⭐⭐⭐ ✅ 완료
+
+**목표**: 모든 역할 이름을 공통코드로 조회
+
+**발견된 위치**: Backend 5+ 파일, Frontend 14 파일
+
+**작업 계획**:
+1. **Day 1**: Backend 역할 문자열 제거 ✅
+2. **Day 2**: Frontend 역할 문자열 제거 ✅
+3. **Day 3**: 공통코드 조회 로직 적용 ✅
+
+---
+
+#### 3.2 색상 하드코딩 제거 (5일) ⭐⭐⭐ ✅ 완료
+
+**목표**: 모든 색상을 CSS 변수로 전환
+
+**발견된 위치**: Frontend 50+ 파일
+
+**작업 계획**:
+1. **Day 1-2**: CSS 파일 색상 정리 ✅
+2. **Day 3-4**: JavaScript 파일 인라인 스타일 제거 ✅
+3. **Day 5**: CSS 변수 시스템 적용 ✅
+
+---
+
+#### 3.2 색상 하드코딩 제거 (5일) ⭐⭐⭐
+
+**목표**: 모든 색상을 CSS 변수로 전환
+
+**발견된 위치**: Frontend 50+ 파일
+
+**작업 계획**:
+1. **Day 1-2**: CSS 파일 색상 정리
+2. **Day 3-4**: JavaScript 파일 인라인 스타일 제거
+3. **Day 5**: CSS 변수 시스템 적용
+
+---
+
+#### 3.3 상태값 공통코드 전환 (5일) ⭐⭐⭐⭐⭐
+
+**목표**: 모든 상태값을 공통코드에서 동적으로 조회하도록 전환
+
+**핵심 원칙**: [공통코드 시스템 표준](../standards/COMMON_CODE_SYSTEM_STANDARD.md)에 따라 **모든 코드값은 공통코드에서 조회** 필수
+
+**발견된 위치**: 
+- Backend: `AdminController.java`, `ConsultationServiceImpl.java`, `TestDataController.java`
+- Frontend: `UnifiedScheduleComponent.js`, `ScheduleDetailModal.js`
+
+**작업 계획**:
+1. **Day 1**: 공통코드 데이터 확인 및 추가
+   - `SCHEDULE_STATUS` 공통코드 확인/추가
+   - `MAPPING_STATUS` 공통코드 확인/추가
+   - `CONSULTATION_STATUS` 공통코드 확인
+   - `PAYMENT_STATUS` 공통코드 확인
+   - `USER_STATUS` 공통코드 확인
+
+2. **Day 2**: Backend 유틸리티 클래스 생성
+   - `StatusCodeHelper` 유틸리티 클래스 생성
+   - 캐싱 로직 구현
+   - 편의 메서드 구현
+
+3. **Day 3**: Backend 코드 수정
+   - `AdminController.java`: 상수 클래스 → `StatusCodeHelper` 사용
+   - `ConsultationServiceImpl.java`: 상수 클래스 → 공통코드 조회
+   - `TestDataController.java`: 상수 클래스 → 공통코드 조회
+
+4. **Day 4**: Frontend 코드 수정
+   - `UnifiedScheduleComponent.js`: 하드코딩 제거, 공통코드 API 사용
+   - `ScheduleDetailModal.js`: 하드코딩 제거, 공통코드 API 사용
+   - 상태 비교 로직 수정
+
+5. **Day 5**: 통합 테스트 및 검증
+   - 전체 시스템 테스트
+   - 성능 테스트 (캐싱 효과)
+   - 문서화 업데이트
+
+**체크리스트**:
+- [ ] 필요한 공통코드 그룹 확인 및 추가
+- [ ] `StatusCodeHelper` 유틸리티 클래스 생성
+- [ ] Backend 상수 클래스 사용 제거
+- [ ] Frontend 하드코딩 제거
+- [ ] 공통코드 API 통합
+- [ ] 캐싱 적용 및 성능 검증
+- [ ] 전체 기능 테스트
+
+**예상 결과**:
+- 상수 클래스 사용: 다수 → 0개
+- 하드코딩된 상태값: 다수 → 0개
+- 공통코드 기반 조회: 0개 → 100%
+
+**참조 문서**:
+- [상태값 공통코드 전환 계획](./STATUS_COMMON_CODE_MIGRATION_PLAN.md)
+- [공통코드 시스템 표준](../standards/COMMON_CODE_SYSTEM_STANDARD.md)
+
+---
+
+### 🟢 Priority 4: 프론트엔드 표준화 (2주)
+
+#### 4.1 컴포넌트 템플릿 적용 (5일)
+
+**목표**: 모든 컴포넌트를 표준 템플릿으로 전환
+
+**작업 계획**:
+- 페이지 컴포넌트 템플릿 적용
+- 리스트 컴포넌트 템플릿 적용
+- 폼 컴포넌트 템플릿 적용
+
+---
+
+## 📅 전체 일정
+
+### Phase 1: 보안 및 핵심 아키텍처 (2주)
+- Week 1: 브랜치 코드 제거 + 테넌트 격리 검증
+- Week 2: 보안 표준 적용
+
+### Phase 2: API 표준화 (1주)
+- Week 3: API 경로 표준화
+
+### Phase 3: 하드코딩 제거 (2주)
+- Week 4: 역할 이름, 색상 하드코딩 제거
+- Week 5: 상태값 하드코딩 제거 → 상태값 공통코드 전환
+
+### Phase 4: 프론트엔드 표준화 (2주)
+- Week 6-7: 컴포넌트 템플릿, 표준 컴포넌트 적용
+
+---
+
+**최종 업데이트**: 2025-12-03
+

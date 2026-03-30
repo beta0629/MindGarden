@@ -1,5 +1,6 @@
 /**
- * MindGarden Magic Numbers 상수 정의
+ * Core Solution Magic Numbers 상수 정의
+/**
  * 하드코딩된 숫자들을 의미있는 상수로 변환
  */
 
@@ -220,8 +221,8 @@ export const FORM_CONSTANTS = {
 // 차트 관련 상수
 export const CHART_CONSTANTS = {
   // 색상 팔레트
-  PRIMARY_COLORS: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
-  SECONDARY_COLORS: ['#6c757d', '#17a2b8', '#fd7e14', '#20c997', '#e83e8c'],
+  PRIMARY_COLORS: ['var(--mg-primary-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-error-500)', '#6f42c1'],
+  SECONDARY_COLORS: ['var(--mg-secondary-500)', 'var(--mg-info-500)', '#fd7e14', '#20c997', '#e83e8c'],
   
   // 차트 크기
   DEFAULT_CHART_HEIGHT: 400,

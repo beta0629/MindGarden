@@ -1,0 +1,169 @@
+/**
+ * MappingListRow - 테이블 행 스타일
+ * @author Core Solution
+ * @since 2025-02-22
+ */
+
+/* CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
+.mg-v2-mapping-list-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: var(--mg-spacing-16);
+  min-height: 140px;
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-list-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
+}
+
+.mg-v2-mapping-list-row:hover {
+  box-shadow: var(--mg-card-hover-shadow);
+}
+
+@media (min-width: 900px) {
+  .mg-v2-mapping-list-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+}
+
+.mg-v2-mapping-list-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-mapping-list-row__status-col {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* StatusBadge(common) 사용 - modifier용 */
+.mg-v2-mapping-list-row__status.mg-v2-status-badge {
+  font-size: 12px;
+}
+
+.mg-v2-mapping-list-row__erp {
+  font-size: 11px;
+  color: var(--ad-b0kla-blue, #6d9dc5);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mapping-list-row__participants {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mg-v2-mapping-list-row__party {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mapping-list-row__party svg {
+  flex-shrink: 0;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__arrow {
+  color: var(--ad-b0kla-placeholder, #a0aec0);
+  font-size: 12px;
+}
+
+.mg-v2-mapping-list-row__package {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mapping-list-row__sessions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__schedule-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ad-b0kla-green, #4b745c);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mg-v2-mapping-list-row__schedule-link:hover {
+  background: rgba(75, 116, 92, 0.1);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-mapping-list-row__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mg-v2-mapping-list-row__actions .mg-button {
+  white-space: nowrap;
+}
+
+/* 활성 상태 행: 환불 버튼 가시성 강화 (대비·시인성) */
+.mg-v2-mapping-list-row__actions .mg-v2-button--danger {
+  background: var(--mg-error-600, #dc2626);
+  color: var(--mg-white, #fff);
+  border: 1px solid var(--mg-error-700, #b91c1c);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.mg-v2-mapping-list-row__actions .mg-v2-button--danger:hover:not(:disabled) {
+  background: var(--mg-error-700, #b91c1c);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25);
+}

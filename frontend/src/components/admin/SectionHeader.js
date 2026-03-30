@@ -1,14 +1,21 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SafeText from '../common/SafeText';
 import './SectionHeader.css';
 
 /**
  * 섹션 헤더 컴포넌트
+/**
  * - 섹션 제목, 부제목, 통계 정보를 포함
+/**
  * - 아이폰 스타일과 글래스모피즘 효과 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SectionHeader = ({ 
@@ -24,19 +31,21 @@ const SectionHeader = ({
                 <div className="mg-v2-section-title-area">
                     <div className="mg-v2-flex mg-v2-items-center mg-v2-gap-sm">
                         {icon && <div className="mg-v2-section-icon">{icon}</div>}
-                        <h2 className="mg-v2-section-title">{title}</h2>
+                        <h2 className="mg-v2-section-title">
+                            <SafeText>{title}</SafeText>
+                        </h2>
                     </div>
                     {subtitle && (
                         <div className="mg-v2-section-subtitle">
-                            <span className="mg-v2-badge mg-v2-badge-info">{subtitle}</span>
+                            <SafeText className="mg-v2-badge mg-v2-badge-info">{subtitle}</SafeText>
                         </div>
                     )}
                     {stats && (
                         <div className="mg-v2-section-stats">
                             {stats.map((stat, index) => (
                                 <div key={`stat-${index}`} className="mg-v2-stat-item">
-                                    <span className="mg-v2-stat-label">{stat.label}</span>
-                                    <span className="mg-v2-stat-value">{stat.value}</span>
+                                    <SafeText className="mg-v2-stat-label">{stat.label}</SafeText>
+                                    <SafeText className="mg-v2-stat-value">{stat.value}</SafeText>
                                 </div>
                             ))}
                         </div>

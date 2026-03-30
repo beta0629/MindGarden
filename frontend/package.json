@@ -49,28 +49,32 @@
     "react-bootstrap": "^2.10.10",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^15.0.0",
     "react-helmet": "^6.1.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.8.2",
-    "react-scripts": "5.0.1",
     "react-sortablejs": "^6.1.4",
     "react-to-print": "^3.1.1",
     "sortablejs": "^1.15.6",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "zustand": "^5.0.11"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
-    "build:ci": "CI=false GENERATE_SOURCEMAP=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "prebuild": "npm install --no-save || true",
+    "start": "craco start",
+    "build": "GENERATE_SOURCEMAP=false craco build",
+    "build:ci": "CI=false GENERATE_SOURCEMAP=false craco build",
+    "test": "craco test",
+    "eject": "npx react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
     "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
     "format:check": "prettier --check src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
+    "verify:quick-action-routes": "node scripts/verify-quick-action-routes.mjs",
+    "verify:quick-action-labels": "node scripts/verify-quick-action-labels.mjs",
     "validate-css": "node scripts/validate-css-classes.js",
     "scan-css": "node scripts/scan-css-classes.js",
     "generate-css-docs": "node scripts/generate-css-docs.js",
@@ -93,6 +97,7 @@
     "@babel/eslint-parser": "^7.28.4",
     "@babel/preset-react": "^7.27.1",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6"
+    "postcss": "^8.5.6",
+    "react-scripts": "^5.0.1"
   }
 }

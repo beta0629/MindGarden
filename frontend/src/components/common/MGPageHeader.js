@@ -1,5 +1,6 @@
 /**
- * MindGarden 공통 페이지 헤더 컴포넌트
+ * Core Solution 공통 페이지 헤더 컴포넌트
+/**
  * 기존 CSS 변수를 활용한 일관성 있는 페이지 헤더 디자인
  */
 
@@ -25,8 +26,9 @@ const MGPageHeader = ({
     }
   };
 
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (header)
   return (
-    <div className={`mg-page-header ${className}`} {...props}>
+    <header className={`mg-page-header ${className}`} {...props}>
       <div className="mg-page-header__content">
         {showBackButton && (
           <button 
@@ -70,7 +72,7 @@ const MGPageHeader = ({
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 

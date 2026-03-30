@@ -3,13 +3,21 @@ import { getSpecialtyKoreanName, getSpecialtyKoreanNames, truncateSpecialtyText 
 
 /**
  * 전문분야 표시 공통 컴포넌트
+/**
  * - 다양한 형태로 전문분야 표시
+/**
  * - 일관된 스타일과 로직 적용
+/**
  * - 공통 함수 사용으로 백엔드와 동일한 로직 적용
+/**
  * - 디버깅 지원
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-15
  */
 const SpecialtyDisplay = ({ 
@@ -20,7 +28,7 @@ const SpecialtyDisplay = ({
     className = '',
     debug = false
 }) => {
-    /**
+/**
      * 전문분야 텍스트 추출 (공통 함수 사용)
      */
     const getSpecialties = () => {
@@ -102,7 +110,7 @@ const SpecialtyDisplay = ({
         return result;
     };
 
-    /**
+/**
      * 전문분야가 없는 경우 기본값 반환
      */
     const getDefaultSpecialty = () => {

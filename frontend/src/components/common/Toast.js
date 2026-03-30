@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './Toast.css';
 
 /**
  * 공통 Toast 알림 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const Toast = () => {
@@ -60,7 +65,7 @@ const Toast = () => {
                             {getIcon(notification.type)}
                         </div>
                         <div className="toast-message">
-                            {notification.message}
+                            {toDisplayString(notification.message)}
                         </div>
                         <button 
                             className="toast-close"

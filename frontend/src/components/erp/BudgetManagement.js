@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { PiggyBank, List, Tag, TrendingUp, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 /**
  * ERP 예산 관리 페이지
@@ -21,7 +27,6 @@ const BudgetManagement = () => {
   const [editingBudget, setEditingBudget] = useState(null);
   const [hasDataError, setHasDataError] = useState(false);
 
-  // 새 예산 폼 상태
   const [newBudget, setNewBudget] = useState({
     name: '',
     category: '',
@@ -32,7 +37,6 @@ const BudgetManagement = () => {
     department: ''
   });
 
-  // 데이터 로드
   useEffect(() => {
     if (!sessionLoading) {
       loadData();
@@ -69,22 +73,19 @@ const BudgetManagement = () => {
 
   const loadBudgets = async () => {
     try {
-      // 인증이 필요한 경우 빈 배열로 설정 (데이터 없음 상태)
       if (!isLoggedIn || !user?.id) {
         setBudgets([]);
         return;
       }
 
-      const response = await apiGet('/api/erp/budgets');
+      const response = await apiGet('/api/v1/erp/budgets');
       if (response.success) {
         setBudgets(response.data || []);
       } else {
-        // API 응답은 성공했지만 데이터가 없는 경우
         setBudgets([]);
       }
     } catch (err) {
       console.error('예산 로드 실패:', err);
-      // API 호출 실패 시 빈 배열로 설정 (데이터 없음 상태)
       setBudgets([]);
     }
   };
@@ -93,7 +94,6 @@ const BudgetManagement = () => {
     try {
       console.log('예산 카테고리 로드 시작 - 로그인 상태:', isLoggedIn, '사용자:', user?.id);
       
-      // 기본 카테고리 정의
       const defaultCategories = [
         { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
         { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -105,7 +105,6 @@ const BudgetManagement = () => {
         { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
       ];
 
-      // 인증이 필요한 경우 기본 카테고리 사용
       if (!isLoggedIn || !user?.id) {
         console.log('로그인 없이 기본 카테고리 사용');
         setBudgetCategories(defaultCategories);
@@ -115,7 +114,7 @@ const BudgetManagement = () => {
 
       console.log('로그인 상태에서 API 호출 시도');
       try {
-        const response = await apiGet('/api/common-codes/BUDGET_CATEGORY');
+        const response = await apiGet('/api/v1/common-codes?codeGroup=BUDGET_CATEGORY');
         console.log('API 응답:', response);
         
         if (response && response.success && response.data && response.data.length > 0) {
@@ -132,7 +131,6 @@ const BudgetManagement = () => {
       }
     } catch (err) {
       console.error('예산 카테고리 로드 전체 실패:', err);
-      // 전체 실패 시에도 기본 카테고리 사용
       const defaultCategories = [
         { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
         { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -150,7 +148,6 @@ const BudgetManagement = () => {
 
   const loadBudgetReports = async () => {
     try {
-      // 예산 보고서 데이터 로드 (향후 구현)
       console.log('예산 보고서 데이터 로드');
     } catch (err) {
       console.error('예산 보고서 로드 실패:', err);
@@ -161,7 +158,7 @@ const BudgetManagement = () => {
   const handleCreateBudget = async () => {
     try {
       setLoading(true);
-      const response = await apiPost('/api/erp/budgets', newBudget);
+      const response = await apiPost('/api/v1/erp/budgets', newBudget);
       if (response.success) {
         setShowCreateModal(false);
         setNewBudget({
@@ -188,7 +185,7 @@ const BudgetManagement = () => {
   const handleEditBudget = async (budget) => {
     try {
       setLoading(true);
-      const response = await apiPut(`/api/erp/budgets/${budget.id}`, budget);
+      const response = await apiPut(`/api/v1/erp/budgets/${budget.id}`, budget);
       if (response.success) {
         setEditingBudget(null);
         await loadBudgets();
@@ -213,7 +210,7 @@ const BudgetManagement = () => {
 
     try {
       setLoading(true);
-      const response = await apiDelete(`/api/erp/budgets/${budgetId}`);
+      const response = await apiDelete(`/api/v1/erp/budgets/${budgetId}`);
       if (response.success) {
         await loadBudgets();
       } else {
@@ -239,9 +236,13 @@ const BudgetManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE': return 'success';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING': return 'warning';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED': return 'info';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED': return 'danger';
       default: return 'secondary';
     }
@@ -249,17 +250,15 @@ const BudgetManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout 
-        title="예산 관리"
-        loading={true}
-        loadingText="세션 정보를 불러오는 중..."
-      />
+      <AdminCommonLayout title="예산 관리">
+        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="예산 관리">
+      <AdminCommonLayout title="예산 관리">
         <div className="erp-system">
           <div className="erp-container">
             <div className="erp-login-required">
@@ -267,7 +266,7 @@ const BudgetManagement = () => {
                 <div className="erp-login-header">
                   <div className="erp-logo">
                     <i className="bi bi-flower1"></i>
-                    <span>마인드가든</span>
+                    <span>Core Solution</span>
                   </div>
                   <div className="erp-login-actions">
                     <button className="btn btn-outline-primary">
@@ -288,46 +287,38 @@ const BudgetManagement = () => {
             </div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="예산 관리">
-      <div className="erp-system">
+    <AdminCommonLayout title="예산 관리">
+      <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
+        <ContentHeader
+          title="예산 관리"
+          subtitle="예산 계획 및 관리를 할 수 있습니다."
+        />
         <div className="erp-container">
-          {/* 헤더 */}
-          <div className="erp-header">
-            <h1 className="erp-title">
-              <i className="bi bi-piggy-bank"></i>
-              예산 관리
-            </h1>
-            <p className="erp-subtitle">
-              예산 계획 및 관리를 할 수 있습니다.
-            </p>
-          </div>
-
-          {/* 탭 네비게이션 */}
           <div className="erp-tabs">
             <button
               className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
               onClick={() => setActiveTab('budgets')}
             >
-              <i className="bi bi-list-ul"></i>
+              <List size={18} aria-hidden />
               예산 목록
             </button>
             <button
               className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
               onClick={() => setActiveTab('categories')}
             >
-              <i className="bi bi-tags"></i>
+              <Tag size={18} aria-hidden />
               카테고리
             </button>
             <button
               className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
               onClick={() => setActiveTab('reports')}
             >
-              <i className="bi bi-graph-up"></i>
+              <TrendingUp size={18} aria-hidden />
               보고서
             </button>
           </div>
@@ -336,23 +327,15 @@ const BudgetManagement = () => {
           <div className="erp-content">
           {loading && (
             <div className="budget-management-loading">
-              <UnifiedLoading 
-                text="데이터를 불러오는 중..."
-                size="medium"
-                variant="pulse"
-                inline={true}
-              />
+              <UnifiedLoading type="inline" text="로딩 중..." />
             </div>
           )}
 
             {error && hasDataError && (
               <div className="erp-error">
-                <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
-                  {error}
-                </div>
+                <SafeErrorDisplay error={error} variant="banner" iconSize={18} />
                 <button className="btn btn-outline-primary" onClick={loadData}>
-                  <i className="bi bi-arrow-clockwise"></i>
+                  <RefreshCw size={18} aria-hidden />
                   다시 시도
                 </button>
               </div>
@@ -362,48 +345,52 @@ const BudgetManagement = () => {
               <>
                 {activeTab === 'budgets' && (
                   <div className="erp-section">
-                    {/* 예산 통계 카드 */}
-                    <div className="erp-stats-grid mb-4">
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-piggy-bank"></i>
+                    {/* 예산 통계 카드: B0KlA 카드·토큰 */}
+                    <div className="erp-stats-grid mb-4 mg-v2-erp-dashboard-kpi-grid">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>총 예산</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산 합계</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-graph-up"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">사용 금액</h3>
+                          <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>사용 금액</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">사용된 금액</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-wallet2"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 금액</h3>
+                          <Wallet size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>잔여 금액</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.remainingBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-list-check"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">예산 개수</h3>
+                          <List size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>예산 개수</h3>
-                          <div className="erp-stat-value">{budgets.length}개</div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{toDisplayString(budgets.length)}개</div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">등록된 예산</span>
                         </div>
                       </div>
                     </div>
@@ -437,12 +424,12 @@ const BudgetManagement = () => {
                             const isOverBudget = (budget.usedBudget || 0) > budget.totalBudget;
                             
                             return (
-                              <div key={budget.id} className="erp-budget-card">
+                              <div key={budget.id} className="mg-v2-ad-b0kla__card erp-budget-card">
                                 <div className="erp-budget-header">
                                   <div className="erp-budget-title">
-                                    <h3>{budget.name}</h3>
+                                    <h3>{toDisplayString(budget.name)}</h3>
                                     <span className={`erp-budget-status ${getStatusColor(budget.status)}`}>
-                                      {budget.status === 'ACTIVE' ? '활성' : budget.status}
+                                      {budget.status === 'ACTIVE' ? '활성' : toDisplayString(budget.status)}
                                     </span>
                                   </div>
                                   <div className="erp-budget-actions">
@@ -466,11 +453,11 @@ const BudgetManagement = () => {
                                 <div className="erp-budget-body">
                                   <div className="erp-budget-category">
                                     <i className="bi bi-tag"></i>
-                                    {budget.category}
+                                    {toDisplayString(budget.category)}
                                   </div>
                                   
                                   {budget.description && (
-                                    <p className="erp-budget-description">{budget.description}</p>
+                                    <p className="erp-budget-description">{toDisplayString(budget.description)}</p>
                                   )}
                                   
                                   <div className="erp-budget-amounts">
@@ -507,7 +494,7 @@ const BudgetManagement = () => {
                                   
                                   <div className="erp-budget-period">
                                     <i className="bi bi-calendar"></i>
-                                    {budget.year}년 {budget.month}월
+                                    {toSafeNumber(budget.year)}년 {toSafeNumber(budget.month)}월
                                   </div>
                                 </div>
                               </div>
@@ -517,7 +504,7 @@ const BudgetManagement = () => {
                       ) : (
                         <div className="erp-empty-state">
                           <div className="erp-empty-icon">
-                            <i className="bi bi-piggy-bank"></i>
+                            <PiggyBank size={24} aria-hidden />
                           </div>
                           <h3>예산이 없습니다</h3>
                           <p>새로운 예산을 추가하여 시작해보세요.</p>
@@ -549,21 +536,21 @@ const BudgetManagement = () => {
                     {budgetCategories.length > 0 ? (
                       <div className="erp-grid">
                         {budgetCategories.map((category) => (
-                          <div key={category.id} className="erp-card">
+                          <div key={category.id} className="mg-v2-ad-b0kla__card erp-card">
                             <div className="erp-card-header">
-                              <h3>{category.codeLabel}</h3>
+                              <h3><SafeText>{category.codeLabel}</SafeText></h3>
                               <span className="erp-status success">활성</span>
                             </div>
                             <div className="erp-card-body">
-                              <p className="erp-description">{category.codeDescription}</p>
+                              <p className="erp-description"><SafeText>{category.codeDescription}</SafeText></p>
                               <div className="erp-details">
                                 <div className="erp-detail">
                                   <span className="erp-label">코드:</span>
-                                  <span className="erp-value">{category.codeValue}</span>
+                                  <span className="erp-value"><SafeText>{category.codeValue}</SafeText></span>
                                 </div>
                                 <div className="erp-detail">
                                   <span className="erp-label">정렬:</span>
-                                  <span className="erp-value">{category.sortOrder}</span>
+                                  <span className="erp-value"><SafeText>{category.sortOrder}</SafeText></span>
                                 </div>
                               </div>
                             </div>
@@ -600,54 +587,51 @@ const BudgetManagement = () => {
                       </div>
                     </div>
                     
-                    {/* 통계 카드 */}
-                    <div className="erp-stats-grid">
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-currency-dollar"></i>
+                    {/* 통계 카드: B0KlA */}
+                    <div className="erp-stats-grid mg-v2-erp-dashboard-kpi-grid">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>총 예산</h3>
-                          <div className="erp-stat-value text-primary">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">전체 예산</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-graph-up"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">사용된 예산</h3>
+                          <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>사용된 예산</h3>
-                          <div className="erp-stat-value text-warning">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">사용 금액</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">사용 금액</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-piggy-bank"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 예산</h3>
+                          <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>잔여 예산</h3>
-                          <div className="erp-stat-value text-success">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.remainingBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">잔액</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-percent"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">평균 사용률</h3>
+                          <Percent size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>평균 사용률</h3>
-                          <div className="erp-stat-value text-info">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">
                             {(() => {
                               const totalBudget = budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0);
                               const totalUsed = budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0);
@@ -655,7 +639,7 @@ const BudgetManagement = () => {
                               return `${usageRate.toFixed(1)}%`;
                             })()}
                           </div>
-                          <small className="text-muted">전체 사용률</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 사용률</span>
                         </div>
                       </div>
                     </div>
@@ -675,7 +659,6 @@ const BudgetManagement = () => {
                       {budgets.length > 0 ? (
                         <div className="erp-grid">
                           {(() => {
-                            // 카테고리별로 그룹화
                             const categoryStats = {};
                             budgets.forEach(budget => {
                               const category = budget.category || '기타';
@@ -698,9 +681,9 @@ const BudgetManagement = () => {
                               const isOverBudget = stats.usedBudget > stats.totalBudget;
                               
                               return (
-                                <div key={category} className="erp-card">
+                                <div key={category} className="mg-v2-ad-b0kla__card erp-card">
                                   <div className="erp-card-header">
-                                    <h4>{category}</h4>
+                                    <h4><SafeText>{category}</SafeText></h4>
                                     <span className={`erp-status ${isOverBudget ? 'danger' : 'success'}`}>
                                       {isOverBudget ? '예산 초과' : '정상'}
                                     </span>
@@ -740,7 +723,7 @@ const BudgetManagement = () => {
                                     
                                     <div className="erp-budget-count">
                                       <i className="bi bi-list-ul"></i>
-                                      {stats.count}개 예산
+                                      {toDisplayString(stats.count)}개 예산
                                     </div>
                                   </div>
                                 </div>
@@ -763,8 +746,10 @@ const BudgetManagement = () => {
               </>
             )}
           </div>
+        </div>
+      </ContentArea>
 
-          {/* 예산 생성 모달 */}
+      {/* 예산 생성 모달 */}
           {showCreateModal && (
             <div className="modal show d-block budget-management-modal-backdrop">
               <div className="modal-dialog">
@@ -797,7 +782,7 @@ const BudgetManagement = () => {
                         <option key="budget-category-default" value="">카테고리 선택</option>
                         {budgetCategories.map(category => (
                           <option key={category.id} value={category.codeValue}>
-                            {category.codeLabel}
+                            {toDisplayString(category.codeLabel)}
                           </option>
                         ))}
                       </select>
@@ -866,9 +851,7 @@ const BudgetManagement = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

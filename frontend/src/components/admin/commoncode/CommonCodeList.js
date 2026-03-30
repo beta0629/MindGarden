@@ -1,13 +1,20 @@
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import './CommonCodeList.css';
 
 /**
  * 공통코드 목록 컴포넌트
+/**
  * - 공통코드 목록을 테이블 형태로 표시
+/**
  * - 편집, 삭제, 상태 토글 기능 제공
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeList = ({ 
@@ -20,10 +27,11 @@ const CommonCodeList = ({
     if (loading) {
         return (
             <div className="common-code-list">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>공통코드를 불러오는 중...</p>
-                </div>
+                <UnifiedLoading 
+                    type="inline"
+                    text="공통코드를 불러오는 중..."
+                    variant="pulse"
+                />
             </div>
         );
     }
@@ -55,7 +63,8 @@ const CommonCodeList = ({
                                     {code.codeGroup}
                                 </span>
                                 <h4 className="code-label">
-                                    {code.icon && <span className="code-icon" style={{ color: code.colorCode || '#6b7280' }}>{code.icon}</span>}
+                                    {/* 표준화 2025-12-05: CSS 변수 사용 */}
+                                    {code.icon && <span className="code-icon" style={{ color: code.colorCode || 'var(--mg-gray-500)' }}>{code.icon}</span>}
                                     {code.codeLabel}
                                 </h4>
                             </div>
@@ -102,7 +111,8 @@ const CommonCodeList = ({
                                         {code.icon && (
                                             <div className="info-item">
                                                 <label>아이콘:</label>
-                                                <span className="code-icon-display" style={{ color: code.colorCode || '#6b7280' }}>
+                                                {/* 표준화 2025-12-05: CSS 변수 사용 */}
+                                                <span className="code-icon-display" style={{ color: code.colorCode || 'var(--mg-gray-500)' }}>
                                                     {code.icon}
                                                 </span>
                                             </div>

@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaSearch, FaFilter, FaPlus } from 'react-icons/fa';
 
 /**
@@ -17,12 +17,12 @@ const ClientFilters = ({
         <div className="mg-v2-filters-section">
             <div className="mg-v2-filters-header">
                 <h3>필터 및 검색</h3>
-                <MGButton
+                <button className="mg-button"
                     variant="primary"
                     onClick={onCreateClient}
                 >
                     <FaPlus /> 새 내담자 등록
-                </MGButton>
+                </button>
             </div>
             
             <div className="mg-v2-filters-content mg-v2-filters-horizontal">
@@ -45,15 +45,15 @@ const ClientFilters = ({
                         className="mg-v2-select mg-v2-filter-select mg-v2-w-full"
                     >
                         <option value="all">전체 상태</option>
-                        {userStatusOptions.map(option => (
+                        {userStatusOptions.map((option) => (
                             <option key={option.codeValue} value={option.codeValue}>
-                                {option.codeLabel}
+                                {option.codeLabel || option.code}
                             </option>
                         ))}
                     </select>
                 </div>
                 
-                <MGButton
+                <button className="mg-button"
                     variant="outline"
                     onClick={() => {
                         setSearchTerm('');
@@ -61,7 +61,7 @@ const ClientFilters = ({
                     }}
                 >
                     필터 초기화
-                </MGButton>
+                </button>
             </div>
         </div>
     );

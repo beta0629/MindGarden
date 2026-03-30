@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import SafeErrorDisplay from './SafeErrorDisplay';
 import './MGChart.css';
 
 /**
- * MindGarden 차트 컴포넌트
+ * Core Solution 차트 컴포넌트
+/**
  * Chart.js를 기반으로 한 통합 차트 컴포넌트
  */
 const MGChart = ({
@@ -50,10 +52,11 @@ const MGChart = ({
               }
             },
             tooltip: {
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: '#ffffff',
-              bodyColor: '#ffffff',
-              borderColor: '#ffffff',
+              titleColor: 'var(--mg-white)',
+              bodyColor: 'var(--mg-white)',
+              borderColor: 'var(--mg-white)',
               borderWidth: 1,
               cornerRadius: 8,
               displayColors: true
@@ -62,7 +65,7 @@ const MGChart = ({
           scales: {
             x: {
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)',
+                color: 'var(--mg-shadow-light)',
                 drawBorder: false
               },
               ticks: {
@@ -74,7 +77,7 @@ const MGChart = ({
             },
             y: {
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)',
+                color: 'var(--mg-shadow-light)',
                 drawBorder: false
               },
               ticks: {
@@ -125,7 +128,13 @@ const MGChart = ({
         <div className="mg-chart__error">
           <span className="mg-chart__error-icon">📊</span>
           <span className="mg-chart__error-message">차트를 불러올 수 없습니다</span>
-          <span className="mg-chart__error-detail">{error}</span>
+          <SafeErrorDisplay
+            error={error}
+            variant="inline"
+            icon={false}
+            as="span"
+            className="mg-chart__error-detail"
+          />
         </div>
       </div>
     );

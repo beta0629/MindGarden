@@ -1,21 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import SafeText from '../../common/SafeText';
 import './PasswordChangeModal.css';
 import notificationManager from '../../../utils/notification';
 
 /**
  * 비밀번호 변경 모달 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
-const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
+const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   const [formData, setFormData] = useState({
-    currentPassword: '',
+    currentPassword: tempPassword || '', // 임시 비밀번호가 있으면 자동 입력
     newPassword: '',
     confirmPassword: ''
   });
+  
+  // tempPassword가 변경되면 formData 업데이트
+  useEffect(() => {
+    if (tempPassword) {
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: tempPassword
+      }));
+    }
+  }, [tempPassword]);
   const [validation, setValidation] = useState({
     currentPassword: { isValid: true, message: '' },
     newPassword: { isValid: true, message: '' },
@@ -191,23 +207,22 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="password-change-modal-overlay">
-      <div className="password-change-modal">
-        <div className="password-change-modal-header">
-          <h3>
-            <i className="bi bi-shield-lock"></i>
-            비밀번호 변경
-          </h3>
-          <button 
-            className="close-btn" 
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            <i className="bi bi-x"></i>
-          </button>
-        </div>
-
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={tempPassword ? '임시 비밀번호 변경' : '비밀번호 변경'}
+      size="medium"
+      backdropClick={!tempPassword}
+      showCloseButton={!tempPassword}
+      loading={isLoading}
+    >
         <form onSubmit={handleSubmit} className="password-change-form">
+          {tempPassword && (
+            <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid var(--mg-warning-500)' }}>
+              <strong>⚠️ 임시 비밀번호로 로그인하셨습니다.</strong>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>보안을 위해 비밀번호를 변경해주세요.</p>
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="currentPassword">
               <i className="bi bi-key"></i>
@@ -222,7 +237,8 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 className={`form-control ${!validation.currentPassword.isValid ? 'is-invalid' : ''}`}
                 placeholder="현재 비밀번호를 입력하세요"
-                disabled={isLoading}
+                disabled={isLoading || !!tempPassword} // 임시 비밀번호인 경우 읽기 전용
+                readOnly={!!tempPassword} // 임시 비밀번호인 경우 읽기 전용
               />
               <button
                 type="button"
@@ -235,7 +251,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             {!validation.currentPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.currentPassword.message}
+                <SafeText>{validation.currentPassword.message}</SafeText>
               </div>
             )}
           </div>
@@ -267,7 +283,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             {!validation.newPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.newPassword.message}
+                <SafeText>{validation.newPassword.message}</SafeText>
               </div>
             )}
             <div className="password-requirements">
@@ -310,7 +326,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             {!validation.confirmPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.confirmPassword.message}
+                <SafeText>{validation.confirmPassword.message}</SafeText>
               </div>
             )}
           </div>
@@ -343,8 +359,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

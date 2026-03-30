@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import { API_BASE_URL } from '../../constants/api';
+import PropTypes from 'prop-types';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 
 /**
  * 상담사용 평가 표시 컴포넌트
+/**
  * - 상담사가 받은 하트 평가 통계 및 목록 표시
+/**
  * - 평균 점수, 점수별 분포, 최근 평가 등
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-17
  */
 const ConsultantRatingDisplay = ({ consultantId }) => {
@@ -27,7 +33,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
     const loadRatingStats = async (targetConsultantId) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/ratings/consultant/${targetConsultantId}/stats`, {
+            const response = await fetch(`${API_BASE_URL}${RATING_API.CONSULTANT_STATS(targetConsultantId)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -207,6 +213,10 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             </div>
         </div>
     );
+};
+
+ConsultantRatingDisplay.propTypes = {
+  consultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ConsultantRatingDisplay;

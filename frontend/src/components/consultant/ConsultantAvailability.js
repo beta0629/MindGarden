@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import StandardizedApi from '../../utils/standardizedApi';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
+import Button from '../ui/Button/Button';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
+
+const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 
 const ConsultantAvailability = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -21,9 +31,10 @@ const ConsultantAvailability = () => {
   const loadDurationCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/DURATION');
-      if (response && response.length > 0) {
-        setDurationOptions(response.map(code => ({
+      const response = await StandardizedApi.get('/api/v1/common-codes/groups/DURATION');
+      const data = response?.data || response;
+      if (data && data.length > 0) {
+        setDurationOptions(data.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -33,20 +44,20 @@ const ConsultantAvailability = () => {
       } else {
         // API 응답이 없을 때 기본값 설정
         setDurationOptions([
-          { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
-          { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
-          { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
-          { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+          { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
+          { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
+          { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
+          { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
         ]);
       }
     } catch (error) {
       console.error('시간 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setDurationOptions([
-        { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
-        { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
-        { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
-        { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+        { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
+        { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
+        { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
+        { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -64,23 +75,13 @@ const ConsultantAvailability = () => {
     userEmail: user?.email
   });
   
-  // 세션 매니저 상태도 확인
-  console.log('🔍 sessionManager 상태:', {
-    sessionManagerUser: sessionManager.getUser(),
-    sessionManagerIsLoggedIn: sessionManager.isLoggedIn(),
-    sessionManagerIsLoading: sessionManager.isLoading
-  });
-
   // 세션 상태 상세 분석
   console.log('🔍 세션 상태 분석:', {
     'user 존재': !!user,
     'user.id': user?.id,
     'user.role': user?.role,
     'isLoggedIn 값': isLoggedIn,
-    'sessionLoading 값': sessionLoading,
-    'sessionManager.user': sessionManager.getUser(),
-    'sessionManager.isLoggedIn()': sessionManager.isLoggedIn(),
-    'sessionManager.isLoading': sessionManager.isLoading
+    'sessionLoading 값': sessionLoading
   });
 
   // 요일 상수
@@ -126,18 +127,18 @@ const ConsultantAvailability = () => {
 
       console.log('👤 상담사 상담 가능 시간 로드:', user.id);
 
-      const response = await apiGet(`/api/consultant/${user.id}/availability`);
+      const response = await StandardizedApi.get(`/api/v1/consultants/${user.id}/availability`);
       
-      if (response.success) {
-        console.log('✅ 상담 가능 시간 로드 성공:', response.data);
-        setAvailability(response.data || []);
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
+        console.log('✅ 상담 가능 시간 로드 성공:', response);
+        setAvailability(Array.isArray(response) ? response : (response?.data || []));
       } else {
-        console.error('❌ 상담 가능 시간 로드 실패:', response.message);
-        setError(response.message || '상담 가능 시간을 불러오는데 실패했습니다.');
+        console.error('❌ 상담 가능 시간 로드 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간을 불러오는데 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 로드 중 오류:', err);
-      setError('상담 가능 시간을 불러오는 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -148,19 +149,19 @@ const ConsultantAvailability = () => {
     try {
       console.log('➕ 상담 가능 시간 추가:', formData);
 
-      const response = await apiPost(`/api/consultant/${user.id}/availability`, formData);
+      const response = await StandardizedApi.post(`/api/v1/consultants/${user.id}/availability`, formData);
       
-      if (response.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 추가 성공');
         await loadAvailability();
         setShowAddModal(false);
       } else {
-        console.error('❌ 상담 가능 시간 추가 실패:', response.message);
-        setError(response.message || '상담 가능 시간 추가에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 추가 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 추가에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 추가 중 오류:', err);
-      setError('상담 가능 시간 추가 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 추가 중 오류가 발생했습니다.');
     }
   };
 
@@ -169,19 +170,19 @@ const ConsultantAvailability = () => {
     try {
       console.log('✏️ 상담 가능 시간 수정:', id, formData);
 
-      const response = await apiPut(`/api/consultant/availability/${id}`, formData);
+      const response = await StandardizedApi.put(`/api/v1/consultants/availability/${id}`, formData);
       
-      if (response.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 수정 성공');
         await loadAvailability();
         setEditingSlot(null);
       } else {
-        console.error('❌ 상담 가능 시간 수정 실패:', response.message);
-        setError(response.message || '상담 가능 시간 수정에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 수정 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 수정에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 수정 중 오류:', err);
-      setError('상담 가능 시간 수정 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 수정 중 오류가 발생했습니다.');
     }
   };
 
@@ -190,18 +191,18 @@ const ConsultantAvailability = () => {
     try {
       console.log('🗑️ 상담 가능 시간 삭제:', id);
 
-      const response = await apiDelete(`/api/consultant/availability/${id}`);
+      const response = await StandardizedApi.delete(`/api/v1/consultants/availability/${id}`);
       
-      if (response.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 삭제 성공');
         await loadAvailability();
       } else {
-        console.error('❌ 상담 가능 시간 삭제 실패:', response.message);
-        setError(response.message || '상담 가능 시간 삭제에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 삭제 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 삭제에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 삭제 중 오류:', err);
-      setError('상담 가능 시간 삭제 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -215,120 +216,118 @@ const ConsultantAvailability = () => {
     return acc;
   }, {});
 
+  const pageShell = (body, options = {}) => {
+    const { title = '상담 가능 시간 관리', subtitle = '상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.', actions } = options;
+    return (
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="상담 가능 시간">
+            <ContentHeader
+              title={title}
+              subtitle={subtitle}
+              titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
+              actions={actions}
+            />
+            <main aria-labelledby={CONSULTANT_AVAILABILITY_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
+      </div>
+    );
+  };
+
   // 세션 로딩 중
   if (sessionLoading) {
     return (
-      <SimpleLayout>
-        <div className="loading-container">
-          <UnifiedLoading 
-            text="세션 확인 중..." 
-            size="medium"
-            className="loading-spinner-inline"
-          />
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="가능 시간" loading={true} loadingText="가용성을 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   // 세션 로딩이 완료된 후 권한 체크
   if (!sessionLoading) {
-    // 세션 매니저에서 직접 사용자 정보 확인
-    const sessionManagerUser = sessionManager.getUser();
-    const sessionManagerIsLoggedIn = sessionManager.isLoggedIn();
-    
     console.log('🔍 최종 세션 체크:', {
       'useSession user': user,
-      'useSession isLoggedIn': isLoggedIn,
-      'sessionManager user': sessionManagerUser,
-      'sessionManager isLoggedIn': sessionManagerIsLoggedIn
+      'useSession isLoggedIn': isLoggedIn
     });
 
-    // 로그인되지 않은 경우 (세션 매니저 기준으로 확인)
-    if (!sessionManagerIsLoggedIn || !sessionManagerUser) {
+    // 로그인되지 않은 경우
+    if (!isLoggedIn || !user) {
       return (
-        <SimpleLayout>
-          <div className="consultant-availability-error-container">
-            <div className="consultant-availability-error-box consultant-availability-error-box--login">
-              <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
-              <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
-              <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
-              <button 
-                className="btn btn-primary"
-                onClick={() => window.location.href = '/login'}
-              >
-                <i className="bi bi-box-arrow-in-right"></i>
-                로그인하기
-              </button>
-            </div>
-          </div>
-        </SimpleLayout>
+        <AdminCommonLayout title="가능 시간">
+          {pageShell(
+            <div className="consultant-availability-error-container">
+              <div className="consultant-availability-error-box consultant-availability-error-box--login">
+                <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
+                <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
+                <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
+                <MGButton
+                  variant="primary"
+                  onClick={() => { window.location.href = '/login'; }}
+                  preventDoubleClick={false}
+                >
+                  <i className="bi bi-box-arrow-in-right"></i>
+                  로그인하기
+                </MGButton>
+              </div>
+            </div>,
+            { subtitle: '로그인 후 상담 가능 시간을 관리할 수 있습니다.' }
+          )}
+        </AdminCommonLayout>
       );
     }
 
     // 권한 체크 (상담사 또는 관리자만 접근 가능)
-    const userRole = sessionManagerUser?.role;
+    const userRole = user?.role;
     const hasPermission = userRole === 'CONSULTANT' || userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
     
     if (!hasPermission) {
       return (
-        <SimpleLayout>
-          <div className="consultant-availability-error-container">
-            <div className="consultant-availability-error-box consultant-availability-error-box--permission">
-              <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
-              <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
-              <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
-              <p className="consultant-availability-error-detail">
-                현재 사용자 역할: {userRole || '없음'}
-              </p>
-              <button 
-                className="btn btn-warning"
-                onClick={() => window.history.back()}
-              >
-                <i className="bi bi-arrow-left"></i>
-                이전 페이지로
-              </button>
-            </div>
-          </div>
-        </SimpleLayout>
+        <AdminCommonLayout title="가능 시간">
+          {pageShell(
+            <div className="consultant-availability-error-container">
+              <div className="consultant-availability-error-box consultant-availability-error-box--permission">
+                <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
+                <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
+                <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
+                <p className="consultant-availability-error-detail">
+                  현재 사용자 역할: {userRole || '없음'}
+                </p>
+                <MGButton variant="warning" onClick={() => window.history.back()} preventDoubleClick={false}>
+                  <i className="bi bi-arrow-left"></i>
+                  이전 페이지로
+                </MGButton>
+              </div>
+            </div>,
+            { subtitle: '상담사 또는 관리자 계정으로 다시 시도해 주세요.' }
+          )}
+        </AdminCommonLayout>
       );
     }
   }
 
+  const headerActions = (
+    <>
+      <MGButton variant="primary" onClick={() => setShowAddModal(true)} preventDoubleClick={false}>
+        <i className="bi bi-plus-circle"></i>
+        상담 가능 시간 추가
+      </MGButton>
+      <MGButton variant="outline" onClick={loadAvailability} preventDoubleClick={false}>
+        <i className="bi bi-arrow-clockwise"></i>
+        새로고침
+      </MGButton>
+    </>
+  );
+
   return (
-    <SimpleLayout>
-      <div className="consultant-availability-container">
-      {/* 헤더 */}
-      <div className="availability-header">
-        <h1 className="availability-title">
-          <i className="bi bi-clock"></i>
-          상담 가능 시간 관리
-        </h1>
-        <p className="availability-subtitle">
-          상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.
-        </p>
-      </div>
-
-      {/* 액션 버튼 */}
-      <div className="availability-actions">
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowAddModal(true)}
-        >
-          <i className="bi bi-plus-circle"></i>
-          상담 가능 시간 추가
-        </button>
-        <button
-          className="btn btn-outline-secondary"
-          onClick={loadAvailability}
-        >
-          <i className="bi bi-arrow-clockwise"></i>
-          새로고침
-        </button>
-      </div>
-
+    <AdminCommonLayout title="가능 시간">
+      {pageShell(
+        <div className="consultant-availability-container">
       {/* 로딩 상태 */}
       {loading && (
-        <UnifiedLoading text="상담 가능 시간을 불러오는 중..." size="medium" type="inline" />
+        <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
       )}
 
       {/* 오류 상태 */}
@@ -355,7 +354,7 @@ const ConsultantAvailability = () => {
               {DAYS_OF_WEEK.map(day => (
                 <div key={day.key} className="day-card">
                   <div className="day-header">
-                    <h3 className="day-title">{day.label}</h3>
+                    <SafeText tag="h3" className="day-title">{day.label}</SafeText>
                     <span className="day-count">
                       {groupedAvailability[day.key]?.length || 0}개 시간
                     </span>
@@ -366,7 +365,7 @@ const ConsultantAvailability = () => {
                       <div key={slot.id} className="time-slot">
                         <div className="time-info">
                           <span className="time-range">
-                            {slot.startTime} - {slot.endTime}
+                            <SafeText>{slot.startTime}</SafeText> - <SafeText>{slot.endTime}</SafeText>
                           </span>
                           <span className="time-duration">
                             {slot.duration}분
@@ -419,8 +418,10 @@ const ConsultantAvailability = () => {
           durationOptions={durationOptions}
         />
       )}
-      </div>
-    </SimpleLayout>
+        </div>,
+        { actions: headerActions }
+      )}
+    </AdminCommonLayout>
   );
 };
 
@@ -513,7 +514,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             >
               {daysOfWeek.map(day => (
                 <option key={day.key} value={day.key}>
-                  {day.label}
+                  {toDisplayString(day.label, '—')}
                 </option>
               ))}
             </select>
@@ -531,7 +532,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               >
                 {timeSlots.map(slot => (
                   <option key={slot.value} value={slot.value}>
-                    {slot.label}
+                    {toDisplayString(slot.label, '—')}
                   </option>
                 ))}
               </select>
@@ -551,7 +552,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               >
                 {timeSlots.map(slot => (
                   <option key={slot.value} value={slot.value}>
-                    {slot.label}
+                    {toDisplayString(slot.label, '—')}
                   </option>
                 ))}
               </select>
@@ -573,7 +574,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               {durationOptions && durationOptions.length > 0 ? (
                 durationOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.icon} {option.label}
+                    {`${toDisplayString(option.icon, '')} ${toDisplayString(option.label, '—')}`.trim()}
                   </option>
                 ))
               ) : (
@@ -605,15 +606,15 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
           </div>
         </form>
         
-        <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <div className="mg-modal__footer modal-footer">
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <i className="bi bi-x-circle"></i>
             취소
-          </button>
-          <button type="submit" className="btn btn-primary" onClick={handleSubmit}>
+          </Button>
+          <Button type="button" variant="primary" size="medium" onClick={handleSubmit} preventDoubleClick={false}>
             <i className="bi bi-check-circle"></i>
             {initialData ? '수정' : '추가'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

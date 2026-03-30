@@ -302,12 +302,12 @@
   cursor: pointer;
 }
 
-.btn-primary {
+.mg-btn--primary {
   background: var(--color-primary);
   color: var(--color-white);
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
   background: var(--color-primary-dark);
   transform: translateY(var(--transform-hover-up));
 }

@@ -2,10 +2,15 @@ import { apiGet } from './ajax';
 
 /**
  * 메뉴 관련 유틸리티 함수들
+/**
  * 동적 메뉴 로딩 및 권한 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 
@@ -28,32 +33,59 @@ export const loadMenuStructure = async () => {
     
     try {
         console.log('🔄 서버에서 메뉴 구조 로드 중...');
-        const response = await apiGet('/api/menu/structure');
+        // 표준화 2025-12-08: API 경로 표준화 (/api/v1/menu/structure)
+        const response = await apiGet('/api/v1/menu/structure');
         
-        if (response.success && response.data) {
-            menuStructureCache = response.data;
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 구조 데이터입니다
+        if (response && response.menus !== undefined) {
+            menuStructureCache = response;
             lastMenuCacheTime = now;
             
             console.log('✅ 메뉴 구조 로드 성공:', {
-                role: response.data.userRole,
-                totalMenus: response.data.totalMenus
+                role: response.userRole,
+                totalMenus: response.totalMenus
             });
             
             return menuStructureCache;
         } else {
-            throw new Error(response.message || '메뉴 구조 로드 실패');
+            throw new Error('메뉴 구조 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
         console.error('❌ 메뉴 구조 로드 실패:', error);
         
-        // API 실패 시 기본 구조 반환
-        return {
-            menus: [],
-            totalMenus: 0,
-            userRole: 'CLIENT',
-            roleDisplayName: '내담자'
-        };
+        // API 실패 시 사용자 역할에 맞는 기본 구조 반환
+        // sessionManager에서 현재 사용자 정보 가져오기
+        try {
+            const { sessionManager } = await import('./sessionManager');
+            const user = sessionManager.getUser();
+            const userRole = user?.role || 'CLIENT';
+            
+            // 역할별 표시명 매핑 (4역할: ADMIN, STAFF, CONSULTANT, CLIENT)
+            const roleDisplayMap = {
+                'ADMIN': '관리자',
+                'STAFF': '사무원',
+                'CONSULTANT': '상담사',
+                'CLIENT': '내담자'
+            };
+            
+            return {
+                menus: [],
+                totalMenus: 0,
+                userRole: userRole,
+                roleDisplayName: roleDisplayMap[userRole] || userRole
+            };
+        } catch (importError) {
+            console.error('❌ sessionManager import 실패:', importError);
+            // 최후의 수단: 기본값 반환
+            return {
+                menus: [],
+                totalMenus: 0,
+                userRole: 'CLIENT',
+                roleDisplayName: '내담자'
+            };
+        }
     }
 };
 
@@ -65,11 +97,13 @@ export const loadCommonMenus = async () => {
         console.log('📋 공통 메뉴 로드 중...');
         const response = await apiGet('/api/menu/common');
         
-        if (response.success && response.data) {
-            console.log('✅ 공통 메뉴 로드 성공:', response.data.length + '개');
-            return response.data;
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 배열입니다
+        if (Array.isArray(response)) {
+            console.log('✅ 공통 메뉴 로드 성공:', response.length + '개');
+            return response;
         } else {
-            throw new Error(response.message || '공통 메뉴 로드 실패');
+            throw new Error('공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -86,14 +120,16 @@ export const loadRoleMenus = async () => {
         console.log('📋 역할별 메뉴 로드 중...');
         const response = await apiGet('/api/menu/by-role');
         
-        if (response.success && response.data) {
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 데이터입니다
+        if (response && response.menus && Array.isArray(response.menus)) {
             console.log('✅ 역할별 메뉴 로드 성공:', {
                 role: response.role,
-                menus: response.data.length + '개'
+                menus: response.menus.length + '개'
             });
-            return response.data;
+            return response.menus;
         } else {
-            throw new Error(response.message || '역할별 메뉴 로드 실패');
+            throw new Error('역할별 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -110,14 +146,16 @@ export const checkMenuPermission = async (menuId) => {
         console.log('🔒 메뉴 권한 확인:', menuId);
         const response = await apiGet(`/api/menu/check-permission?menuId=${menuId}`);
         
-        if (response.success) {
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 권한 데이터입니다
+        if (response && typeof response.hasPermission === 'boolean') {
             console.log('✅ 메뉴 권한 확인 완료:', {
                 menuId: response.menuId,
                 hasPermission: response.hasPermission
             });
             return response.hasPermission;
         } else {
-            throw new Error(response.message || '메뉴 권한 확인 실패');
+            throw new Error('메뉴 권한 확인 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -138,12 +176,13 @@ export const transformMenuStructure = (menuStructure) => {
     const subMenus = {};
     
     menuStructure.menus.forEach(menu => {
-        // 메인 메뉴 추가
+        // 메인 메뉴 추가 (표준화 2025-12-08: menuGroup 정보 포함)
         const mainMenu = {
             id: menu.id,
             label: menu.label,
             path: menu.path,
             icon: menu.icon,
+            menuGroup: menu.menuGroup || menu.menu_group || null, // 권한 기반 필터링용
             hasSubMenu: menu.hasSubMenu || (menu.subMenus && menu.subMenus.length > 0)
         };
         

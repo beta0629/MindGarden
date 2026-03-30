@@ -13,7 +13,7 @@
     background: white;
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px var(--mg-shadow-light);
     display: flex;
     align-items: center;
     gap: 16px;
@@ -22,7 +22,7 @@
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .stat-icon {
@@ -37,19 +37,19 @@
 }
 
 .stat-card.total .stat-icon {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
 }
 
 .stat-card.active .stat-icon {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, var(--mg-success-500), #059669);
 }
 
 .stat-card.inactive .stat-icon {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, var(--mg-error-500), #dc2626);
 }
 
 .stat-card.groups .stat-icon {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(135deg, var(--mg-purple-500), #7c3aed);
 }
 
 .stat-content {

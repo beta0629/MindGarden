@@ -1,7 +1,9 @@
 import React from 'react';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
- * MindGarden 폼 컴포넌트
+ * Core Solution 폼 컴포넌트
+/**
  * 통합 폼 입력 컴포넌트
  */
 const MGForm = ({
@@ -24,7 +26,7 @@ const MGForm = ({
   const getFormClasses = () => {
     const variantClasses = {
       default: "space-y-4",
-      card: "bg-[#F5F5DC] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
+      card: "bg-[var(--mg-cream)] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
       minimal: "space-y-2",
     };
 
@@ -51,6 +53,7 @@ const MGForm = ({
     >
       {loading && (
         <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-xl">
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
           <div className="animate-spin text-[#D2B48C]">⟳</div>
         </div>
       )}
@@ -74,6 +77,7 @@ export const MGFormGroup = ({
   return (
     <div className={`space-y-2 ${className}`} {...props}>
       {label && (
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
         <label className="block text-sm font-medium text-[#6B7C32]">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -83,6 +87,7 @@ export const MGFormGroup = ({
         {children}
       </div>
       {help && !error && (
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
         <div className="text-xs text-[#9CAF88]">
           {help}
         </div>
@@ -127,6 +132,7 @@ export const MGFormInput = ({
     >
       <div className="relative">
         {icon && (
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CAF88]">
             {icon}
           </div>
@@ -141,9 +147,12 @@ export const MGFormInput = ({
           disabled={disabled}
           required={required}
           className={`
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
             w-full px-3 py-2 rounded-lg border border-[#D2B48C] 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
             focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-            bg-[#F5F5DC] text-[#6B7C32] placeholder-[#9CAF88]
+            bg-[var(--mg-cream)] text-[#6B7C32] placeholder-[#9CAF88]
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-200
             ${icon ? 'pl-10' : ''}
@@ -154,6 +163,7 @@ export const MGFormInput = ({
           {...props}
         />
         {rightElement && (
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CAF88]">
             {rightElement}
           </div>
@@ -199,9 +209,12 @@ export const MGFormTextarea = ({
         required={required}
         rows={rows}
         className={`
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
           w-full px-3 py-2 rounded-lg border border-[#D2B48C] 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
           focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-          bg-[#F5F5DC] text-[#6B7C32] placeholder-[#9CAF88]
+          bg-[var(--mg-cream)] text-[#6B7C32] placeholder-[#9CAF88]
           disabled:opacity-50 disabled:cursor-not-allowed
           transition-all duration-200 resize-vertical
           ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
@@ -248,9 +261,12 @@ export const MGFormSelect = ({
           disabled={disabled}
           required={required}
           className={`
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
             w-full px-3 py-2 pr-10 rounded-lg border border-[#D2B48C] 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6B7C32 -> var(--mg-custom-6B7C32)
             focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-            bg-[#F5F5DC] text-[#6B7C32] 
+            bg-[var(--mg-cream)] text-[#6B7C32] 
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-200 appearance-none
             ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
@@ -261,10 +277,11 @@ export const MGFormSelect = ({
           <option value="">{placeholder}</option>
           {options.map((option, index) => (
             <option key={index} value={option.value}>
-              {option.label}
+              {toDisplayString(option.label)}
             </option>
           ))}
         </select>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CAF88] pointer-events-none">▼</div>
       </div>
     </MGFormGroup>

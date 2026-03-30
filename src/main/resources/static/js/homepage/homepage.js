@@ -1,8 +1,8 @@
 /**
- * MindGarden - 홈페이지 전용 JavaScript
+ * Core Solution - 홈페이지 전용 JavaScript
  * 홈페이지 화면에 최적화된 기능 제공
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2024-12-19
  */
@@ -10,9 +10,9 @@
 (function() {
     'use strict';
 
-    // ===== 전역 MindGarden 객체 확인 =====
+    // ===== 전역 Core Solution 객체 확인 =====
     if (!window.MindGarden) {
-        console.error('MindGarden 객체가 로드되지 않았습니다.');
+        console.error('Core Solution 객체가 로드되지 않았습니다.');
         return;
     }
 

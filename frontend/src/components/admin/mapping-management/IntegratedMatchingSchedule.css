@@ -1,0 +1,356 @@
+/* IntegratedMatchingSchedule - 매칭·스케줄 통합 화면 (디자인 토큰) */
+
+.integrated-schedule {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--mg-spacing-24);
+  gap: var(--mg-spacing-24);
+  background-color: var(--mg-color-background-main);
+}
+
+/* B0KlA 셸: 상위 레이아웃·컨테이너 패딩과 중복되지 않도록 */
+.integrated-schedule.integrated-schedule--b0kla {
+  padding: 0;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  background-color: transparent;
+}
+
+.integrated-schedule.integrated-schedule--b0kla .mg-v2-ad-b0kla__container,
+.integrated-schedule.integrated-schedule--b0kla .mg-v2-content-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.mg-v2-content-area > .integrated-schedule__content {
+  flex: 1;
+  min-height: 0;
+}
+
+.integrated-schedule__btn-new-mapping .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+.integrated-schedule__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--mg-spacing-16);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-schedule__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+/* 신규 매칭 버튼: 아토믹 디자인(B0KlA) primary 버튼 색상 적용 */
+.integrated-schedule__btn-new-mapping {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  min-height: 52px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--mg-color-white);
+  background-color: var(--ad-b0kla-green);
+  border: none;
+  border-radius: var(--mg-radius-md, 10px);
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: var(--cs-shadow-md);
+}
+
+.integrated-schedule__btn-new-mapping:hover {
+  background-color: var(--ad-b0kla-green);
+  color: var(--mg-color-white);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--cs-shadow-lg);
+}
+
+.integrated-schedule__btn-new-mapping:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
+.integrated-schedule__content {
+  display: flex;
+  flex: 1;
+  gap: var(--mg-spacing-24);
+  min-height: 0;
+  overflow: visible;
+}
+
+/* 좌측 매칭 목록 */
+.integrated-schedule__sidebar {
+  min-width: 320px;
+  width: 320px;
+  flex-shrink: 0;
+  min-height: 0;
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-24);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.integrated-schedule__sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-16);
+}
+
+.integrated-schedule__sidebar-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 2px;
+}
+
+/* 필터: 세그먼트 컨트롤(pill) 형태 */
+.integrated-schedule__filter {
+  margin: 0 0 var(--mg-spacing-20, 20px);
+  padding: var(--mg-spacing-2, 2px);
+  min-inline-size: unset;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-shrink: 0;
+  background-color: var(--mg-color-surface-sub, var(--mg-gray-100));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-md, 10px);
+  width: fit-content;
+}
+
+.integrated-schedule__filter-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.integrated-schedule__filter--status {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+.integrated-schedule__status-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-6, 6px);
+}
+
+.integrated-schedule__status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-6, 6px) var(--mg-spacing-10, 10px);
+  min-height: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  background-color: var(--mg-color-surface-main, var(--mg-white));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-sm, 8px);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.integrated-schedule__status-btn:hover {
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__status-btn:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main);
+}
+
+.integrated-schedule__status-btn--selected {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__status-btn--selected:hover {
+  background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+  border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+}
+
+.integrated-schedule__status-btn-text {
+  white-space: nowrap;
+}
+
+.integrated-schedule__status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--mg-radius-full, 9999px);
+  background-color: var(--mg-color-surface-sub, var(--mg-gray-200));
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+}
+
+.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
+  background-color: var(--mg-badge-on-primary-bg, rgba(255, 255, 255, 0.25));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+}
+
+.integrated-schedule__filter-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-14, 14px);
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--mg-radius-sm, 8px);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.integrated-schedule__filter-label:hover {
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+}
+
+.integrated-schedule__filter-label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.integrated-schedule__filter-label:has(input:checked),
+.integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
+  background-color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-inverse, #FAF9F7);
+  font-weight: 600;
+}
+
+.integrated-schedule__filter-label:has(input:checked):hover,
+.integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
+  background-color: var(--mg-color-primary-dark, #2d3d34);
+  color: var(--mg-color-primary-inverse, #FAF9F7);
+}
+
+.integrated-schedule__filter-text {
+  pointer-events: none;
+}
+
+.integrated-schedule__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-12, 12px);
+  padding-right: var(--mg-spacing-4, 4px);
+}
+
+.integrated-schedule__empty {
+  text-align: center;
+  padding: var(--mg-spacing-24);
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+}
+
+/* 매칭 카드 (사이드바 전용) - CardContainer가 시각 스타일 담당, li는 리스트 레이아웃만 */
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card,
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event {
+  flex-shrink: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-12);
+  min-height: 172px;
+  font-size: var(--mg-font-size-base, 1rem);
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions {
+  justify-content: center;
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-v2-button {
+  min-width: 100px;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+/* 우측 캘린더 */
+.integrated-schedule__calendar-wrapper {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-24);
+  overflow-y: auto;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+.integrated-schedule__calendar-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: var(--mg-breakpoint-lg, 1024px)) {
+  .integrated-schedule__sidebar {
+    display: none;
+  }
+}

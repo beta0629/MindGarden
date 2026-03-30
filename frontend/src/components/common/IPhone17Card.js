@@ -6,14 +6,23 @@ import './iPhone17Card.css';
  * 
  * @param {Object} props - 컴포넌트 props
  * @param {string} props.variant - 카드 변형 (default, glass, stat, feature, content)
+/**
  * @param {React.ReactNode} props.children - 카드 내용
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {function} props.onClick - 클릭 핸들러
+/**
  * @param {Object} props.style - 인라인 스타일
+/**
  * @param {string} props.title - 카드 제목 (feature, content 카드용)
+/**
  * @param {string} props.description - 카드 설명 (feature 카드용)
+/**
  * @param {string} props.icon - 아이콘 (stat, feature 카드용)
+/**
  * @param {string|number} props.value - 값 (stat 카드용)
+/**
  * @param {string} props.label - 라벨 (stat 카드용)
  */
 const IPhone17Card = ({

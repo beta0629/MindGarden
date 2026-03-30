@@ -7,18 +7,28 @@ import {useSession} from '../../contexts/SessionContext';
 import './NotificationBadge.css';
 
 /**
- * 알림 배지 컴포넌트
+ * 알림 배지 컴포넌트 (레거시 - 모달·컨텍스트 연동형)
+ * @deprecated 알림 개수만 표시할 경우 dashboard-v2/atoms/NotificationBadge (count prop) 단일 소스 사용 권장.
  * 헤더에서 알림 개수를 표시하는 공통 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {string} props.variant - 배지 스타일 (default, primary, success, warning, danger)
+/**
  * @param {string} props.size - 배지 크기 (small, medium, large)
+/**
  * @param {boolean} props.showZero - COLOR_CONSTANTS.ALPHA_TRANSPARENT일 때도 표시할지 여부
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {function} props.onClick - 클릭 핸들러
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version DEFAULT_VALUES.CURRENT_PAGE.COLOR_CONSTANTS.ALPHA_TRANSPARENT.COLOR_CONSTANTS.ALPHA_TRANSPARENT
+/**
  * @since 2025-01-23
  */
 const NotificationBadge = ({variant = 'default',
@@ -54,22 +64,13 @@ const NotificationBadge = ({variant = 'default',
     if (!user?.role) {console.warn('사용자 역할이 없습니다.');
       return;}
     
-    const routes = {'BRANCH_SUPER_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'HQ_MASTER': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'CONSULTANT': {'message': '/consultant/messages',
-        'system': '/notifications'},
-      'CLIENT': {'message': '/client/messages',
-        'system': '/notifications'},
-      'ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'BRANCH_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'SUPER_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'}};
-    
-    const userRoutes = routes[user.role];
+    const routes = {
+      ADMIN: { message: '/admin/messages', system: '/notifications' },
+      STAFF: { message: '/admin/messages', system: '/notifications' },
+      CONSULTANT: { message: '/consultant/messages', system: '/notifications' },
+      CLIENT: { message: '/client/messages', system: '/notifications' }
+    };
+    const userRoutes = routes[user.role] || routes.CLIENT;
     console.log(`🔔 사용자 역할: ${user.role}, 타입: ${type}`);
     console.log(`🔔 사용 가능한 라우트:`, userRoutes);
     

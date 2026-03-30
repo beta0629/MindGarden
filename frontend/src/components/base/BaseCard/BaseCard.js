@@ -1,45 +1,33 @@
 import React from 'react';
 import styles from './BaseCard.module.css';
 
-const BaseCard = ({ 
-  children, 
-  className = '', 
-  onClick, 
-  variant = 'default',
-  size = 'medium',
-  type = 'card',
-  ...props 
-}) => {
-  const baseClasses = type === 'card' ? 'card' : `card-${type}`;
-  const variantClasses = {
-    default: '',
-    glass: 'card-glass',
-    stat: 'stat-card',
-    management: 'management-card',
-    success: 'card-success',
-    warning: 'card-warning',
-    danger: 'card-danger',
-    info: 'card-info'
-  };
-  const sizeClasses = {
-    small: 'card-sm',
-    medium: 'card-md',
-    large: 'card-lg'
-  };
+const VARIANT_CLASS = {
+  default: 'mg-card',
+  management: 'mg-card mg-management-card',
+  stat: 'mg-card mg-stat-card'
+};
 
-  const cardClasses = [
-    baseClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    className
-  ].filter(Boolean).join(' ');
+/**
+ * 기본 카드 컴포넌트
+ * @param {Object} props
+ * @param {'default'|'management'|'stat'} props.variant - 카드 변형
+ * @param {string} [props.className] - 추가 클래스명
+ * @param {function} [props.onClick] - 클릭 핸들러 (있으면 button, 없으면 div)
+ * @param {React.ReactNode} props.children
+ */
+const BaseCard = ({ variant = 'default', className = '', onClick, children, ...rest }) => {
+  const baseClass = VARIANT_CLASS[variant] ?? VARIANT_CLASS.default;
+  const classNames = [baseClass, styles.card, className].filter(Boolean).join(' ');
 
+  if (onClick) {
+    return (
+      <button type="button" className={classNames} onClick={onClick} {...rest}>
+        {children}
+      </button>
+    );
+  }
   return (
-    <div 
-      className={cardClasses}
-      onClick={onClick}
-      {...props}
-    >
+    <div className={classNames} {...rest}>
       {children}
     </div>
   );

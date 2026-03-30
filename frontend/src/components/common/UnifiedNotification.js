@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
 
 /**
@@ -24,14 +25,23 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-notificati
  * @param {number} props.duration - 표시 시간 (ms)
  * @param {string} props.position - 토스트 위치 (top-right, top-center, bottom-right)
  * @param {Array} props.actions - 액션 버튼들
+/**
  * @param {boolean} props.autoClose - 자동 닫힘 여부
+/**
  * @param {function} props.onClose - 닫기 핸들러
+/**
  * @param {function} props.onAction - 액션 핸들러
+/**
  * @param {boolean} props.showCountdown - 카운트다운 표시 여부 (modal 타입)
+/**
  * @param {number} props.countdown - 카운트다운 시간 (초)
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.1.0
+/**
  * @since 2025-01-02
  */
 const UnifiedNotification = ({ 
@@ -53,40 +63,44 @@ const UnifiedNotification = ({
   const [countdowns, setCountdowns] = useState({});
 
   useEffect(() => {
-    console.log('UnifiedNotification 컴포넌트 마운트됨 - 리스너 등록');
     const unsubscribe = notificationManager.addListener((notification) => {
-      console.log('UnifiedNotification 렌더링:', notification);
-      
-      setNotifications(prev => {
-        const newNotifications = [...prev, notification];
-        console.log('UnifiedNotification - 알림 추가 후 상태:', newNotifications);
-        return newNotifications;
-      });
+      const payload = notification.message && typeof notification.message === 'object'
+        ? notification.message
+        : notification;
+      const isModalOnly = Boolean(
+        notification.modalOnly ||
+        notification.showCountdown ||
+        payload.modalOnly ||
+        payload.showCountdown
+      );
+      if (type === 'modal' && !isModalOnly) return;
+      if (type === 'toast' && isModalOnly) return;
 
-      // 카운트다운이 있는 경우 설정 (중복 로그인 알림 등)
-      if (notification.showCountdown && notification.countdown) {
+      const normalized = { ...notification };
+      if (notification.message && typeof notification.message === 'object') {
+        normalized.message = payload.message ?? payload.title ?? '알림';
+        Object.assign(normalized, payload);
+        normalized.id = notification.id;
+      }
+      setNotifications(prev => [...prev, normalized]);
+
+      if (normalized.showCountdown && normalized.countdown) {
         setCountdowns(prev => ({
           ...prev,
-          [notification.id]: notification.countdown
+          [normalized.id]: normalized.countdown
         }));
       }
 
-      // 자동 제거
       if (autoClose) {
-        const autoCloseTime = notification.showCountdown 
-          ? (notification.countdown * 1000) 
-          : (notification.duration || duration);
-          
+        const autoCloseTime = normalized.showCountdown
+          ? (normalized.countdown * 1000)
+          : (normalized.duration || duration);
+
         setTimeout(() => {
-          console.log('UnifiedNotification - 알림 자동 제거:', notification.id);
-          setNotifications(prev => {
-            const filtered = prev.filter(n => n.id !== notification.id);
-            console.log('UnifiedNotification - 알림 제거 후 상태:', filtered);
-            return filtered;
-          });
+          setNotifications(prev => prev.filter(n => n.id !== normalized.id));
           setCountdowns(prev => {
             const newCountdowns = { ...prev };
-            delete newCountdowns[notification.id];
+            delete newCountdowns[normalized.id];
             return newCountdowns;
           });
         }, autoCloseTime);
@@ -94,7 +108,7 @@ const UnifiedNotification = ({
     });
 
     return unsubscribe;
-  }, [duration, autoClose]);
+  }, [type, duration, autoClose]);
 
   // 카운트다운 타이머
   useEffect(() => {
@@ -163,7 +177,7 @@ const UnifiedNotification = ({
                 {getIcon(notification.type || variant)}
               </div>
               <div className="mg-notification-message">
-                {notification.message}
+                {toDisplayString(notification.message)}
               </div>
               <button 
                 className="mg-notification-close"
@@ -204,13 +218,13 @@ const UnifiedNotification = ({
                   {getIcon(notification.type || variant)}
                 </div>
                 <h3 className="mg-notification-title">
-                  {notification.title || '알림'}
+                  {toDisplayString(notification.title || '알림')}
                 </h3>
               </div>
               
               <div className="mg-notification-body">
                 <p className="mg-notification-message">
-                  {notification.message}
+                  {toDisplayString(notification.message)}
                 </p>
                 
                 {/* 카운트다운 표시 */}
@@ -221,40 +235,22 @@ const UnifiedNotification = ({
                 )}
               </div>
 
-              <div className="mg-notification-actions">
-                {notification.actions && notification.actions.length > 0 ? (
-                  notification.actions.map((action, index) => (
+              {/* 액션 버튼이 명시적으로 제공된 경우에만 표시 */}
+              {notification.actions && notification.actions.length > 0 && (
+                <div className="mg-notification-actions">
+                  {notification.actions.map((action, index) => (
                     <button
                       key={index}
                       className={`mg-btn mg-btn--${action.variant || 'secondary'}`}
                       onClick={() => handleAction(action, notification.id)}
                     >
-                      {countdowns[notification.id] && action.showCountdown 
-                        ? `${action.label} (${countdowns[notification.id]}초)`
-                        : action.label
-                      }
+                      {countdowns[notification.id] && action.showCountdown
+                        ? `${toDisplayString(action.label)} (${countdowns[notification.id]}초)`
+                        : toDisplayString(action.label)}
                     </button>
-                  ))
-                ) : (
-                  <>
-                    <button 
-                      className="mg-btn mg-btn--secondary"
-                      onClick={() => removeNotification(notification.id)}
-                    >
-                      취소
-                    </button>
-                    <button 
-                      className="mg-btn mg-btn--primary"
-                      onClick={() => handleAction({ id: 'confirm' }, notification.id)}
-                    >
-                      {countdowns[notification.id] 
-                        ? `확인 (${countdowns[notification.id]}초)`
-                        : '확인'
-                      }
-                    </button>
-                  </>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* 카운트다운 진행바 */}
               {notification.showCountdown && countdowns[notification.id] && (
@@ -288,7 +284,7 @@ const UnifiedNotification = ({
               {getIcon(notification.type || variant)}
             </div>
             <div className="mg-notification-banner-message">
-              {notification.message}
+              {toDisplayString(notification.message)}
             </div>
             <button 
               className="mg-notification-banner-close"

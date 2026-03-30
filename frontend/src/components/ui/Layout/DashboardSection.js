@@ -1,6 +1,8 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Dashboard Section Component
+ * Core Solution 디자인 시스템 v2.0 - Dashboard Section Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  */
 
@@ -13,14 +15,23 @@ import React from 'react';
  * @param {React.ReactNode} props.children - 섹션 내용
  * @param {string} [props.title] - 섹션 제목
  * @param {React.ReactNode} [props.headerRight] - 헤더 우측 요소 (예: "모두 보기" 링크)
+/**
  * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
  * 
+/**
  * @example
+/**
  * <DashboardSection
+/**
  *   title="최근 활동"
+/**
  *   headerRight={<Link to="/all">모두 보기</Link>}
+/**
  * >
+/**
  *   {content}
+/**
  * </DashboardSection>
  */
 const DashboardSection = ({
@@ -30,18 +41,19 @@ const DashboardSection = ({
   className = '',
   ...props
 }) => {
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (section, header)
   return (
-    <div className={`mg-dashboard-section ${className}`.trim()} {...props}>
+    <section className={`mg-dashboard-section ${className}`.trim()} {...props}>
       {(title || headerRight) && (
-        <div className="mg-dashboard-section-header">
+        <header className="mg-dashboard-section-header">
           {title && <h3 className="mg-dashboard-section-title">{title}</h3>}
           {headerRight}
-        </div>
+        </header>
       )}
       <div className="mg-dashboard-section-content">
         {children}
       </div>
-    </div>
+    </section>
   );
 };
 

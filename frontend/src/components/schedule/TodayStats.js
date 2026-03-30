@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
+import UnifiedLoading from '../common/UnifiedLoading';
+import { ContentKpiRow } from '../dashboard-v2/content';
+import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import './TodayStats.css';
 
 /**
- * 오늘의 통계 컴포넌트
- * - 실제 스케줄 데이터를 기반으로 오늘의 통계 계산
- * - 총 상담, 완료, 진행중, 취소 수치 표시
- * 
- * @author MindGarden
- * @version 1.0.0
+ * 오늘의 통계 컴포넌트 (아토믹 디자인 적용)
+ *
+ * @author Core Solution
+ * @version 2.0.0
  * @since 2024-12-19
  */
 const TodayStats = () => {
@@ -22,43 +22,25 @@ const TodayStats = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
-     * 오늘의 통계 데이터 로드
-     */
     const loadTodayStats = async () => {
         try {
             setLoading(true);
-            console.log('📊 오늘의 통계 로드 시작');
-            
-            // 오늘 날짜
             const today = new Date().toISOString().split('T')[0];
-            
-            // 관리자 권한으로 모든 스케줄 조회
             const response = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
             
             if (response && response.success && Array.isArray(response.data)) {
-                // 오늘의 스케줄 필터링
-                const todaySchedules = response.data.filter(schedule => 
-                    schedule.date === today
-                );
-                
-                console.log('📅 오늘의 스케줄:', todaySchedules);
-                
-                // 통계 계산 (영어 상태값으로 필터링)
+                const todaySchedules = response.data.filter(schedule => schedule.date === today);
                 const statsData = {
                     total: todaySchedules.length,
                     completed: todaySchedules.filter(s => s.status === 'COMPLETED' || s.status === '완료됨').length,
                     inProgress: todaySchedules.filter(s => s.status === 'IN_PROGRESS' || s.status === '진행중').length,
                     cancelled: todaySchedules.filter(s => s.status === 'CANCELLED' || s.status === '취소됨').length
                 };
-                
                 setStats(statsData);
-                console.log('📊 오늘의 통계 계산 완료:', statsData);
             } else {
                 throw new Error('스케줄 데이터를 가져올 수 없습니다.');
             }
         } catch (error) {
-            console.error('❌ 오늘의 통계 로드 실패:', error);
             setError(error.message);
         } finally {
             setLoading(false);
@@ -67,69 +49,57 @@ const TodayStats = () => {
 
     useEffect(() => {
         loadTodayStats();
-        
-        // 30초마다 자동 새로고침
-        const interval = setInterval(() => {
-            loadTodayStats();
-        }, 30000);
-        
+        const interval = setInterval(loadTodayStats, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    if (loading) {
-        return (
-            <div className="stats-grid">
-                <UnifiedLoading 
-                    text="오늘의 통계를 불러오는 중..." 
-                    size="medium" 
-                    variant="dots"
-                    className="loading-spinner-inline"
-                />
-            </div>
-        );
-    }
+    if (loading) return <UnifiedLoading type="inline" text="통계를 불러오는 중..." />;
+    if (error) return <div className="mg-v2-text-danger">❌ {error}</div>;
 
-    if (error) {
-        return (
-            <div className="stats-grid">
-                <div className="stat-item error">
-                    <div className="stat-value">❌</div>
-                    <div className="stat-label">오류 발생</div>
-                </div>
-            </div>
-        );
-    }
+    const kpiItems = [
+        {
+            id: 'total',
+            icon: <Calendar size={24} />,
+            label: '총 예약',
+            value: stats.total,
+            iconVariant: 'blue'
+        },
+        {
+            id: 'completed',
+            icon: <CheckCircle2 size={24} />,
+            label: '상담 완료',
+            value: stats.completed,
+            iconVariant: 'green'
+        },
+        {
+            id: 'inProgress',
+            icon: <Clock size={24} />,
+            label: '진행/대기중',
+            value: stats.inProgress,
+            iconVariant: 'orange'
+        },
+        {
+            id: 'cancelled',
+            icon: <XCircle size={24} />,
+            label: '취소',
+            value: stats.cancelled,
+            iconVariant: 'gray'
+        }
+    ];
 
     return (
-        <div className="today-stats-container">
-            <div className="stats-header">
-                <span>오늘의 통계</span>
+        <div className="today-stats-wrapper">
+            <div className="mg-v2-flex mg-v2-justify-end mg-v2-mb-md">
                 <button 
-                    className="refresh-btn" 
+                    className="mg-v2-btn-icon mg-v2-text-secondary" 
                     onClick={loadTodayStats}
                     title="새로고침"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                    🔄
+                    🔄 새로고침
                 </button>
             </div>
-            <div className="stats-grid">
-                <div className="stat-item">
-                    <div className="stat-value">{stats.total}</div>
-                    <div className="stat-label">총 상담</div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-value">{stats.completed}</div>
-                    <div className="stat-label">완료</div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-value">{stats.inProgress}</div>
-                    <div className="stat-label">진행중</div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-value">{stats.cancelled}</div>
-                    <div className="stat-label">취소</div>
-                </div>
-            </div>
+            <ContentKpiRow items={kpiItems} />
         </div>
     );
 };

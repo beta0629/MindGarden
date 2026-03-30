@@ -1,0 +1,130 @@
+<!--
+  관리자 통합 페이지 (알림·메시지 관리) — 아토믹 디자인 기반 HTML 마크업
+  참조: docs/design-system/GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md §2
+  AdminCommonLayout 내부 가정. JS/React·스타일 연동은 core-coder 담당.
+-->
+
+<!--
+  §2.2 메인 영역 순서:
+  1. ContentHeader (제목 + 부제 + 액션)
+  2. 탭 바 (시스템 공지 | 메시지)
+  3. 탭별 본문 (공지 목록 블록 또는 메시지 목록 블록)
+-->
+
+<!-- §2.3 ContentHeader -->
+<header class="mg-v2-content-header">
+  <div class="mg-v2-content-header__left">
+    <h1 class="mg-v2-content-header__title">알림·메시지 관리</h1>
+    <p class="mg-v2-content-header__subtitle">시스템 공지 N건 · 메시지 N건</p>
+  </div>
+  <div class="mg-v2-content-header__right">
+    <!-- 공지 탭 활성 시에만 노출, 권한 SYSTEM_NOTIFICATION_MANAGE 시 코더가 표시 -->
+    <button type="button" class="mg-v2-button mg-v2-button--primary" aria-label="공지 작성">
+      공지 작성
+    </button>
+  </div>
+</header>
+
+<!-- §2.4 상단 탭: 시스템 공지 | 메시지 -->
+<nav class="mg-v2-ad-b0kla__tabs" role="tablist" aria-label="알림·메시지 관리 탭">
+  <button
+    type="button"
+    role="tab"
+    id="admin-tab-system"
+    aria-selected="true"
+    aria-controls="admin-panel-system"
+    class="mg-v2-ad-b0kla__tab mg-v2-ad-b0kla__tab--active"
+  >
+    시스템 공지
+  </button>
+  <button
+    type="button"
+    role="tab"
+    id="admin-tab-messages"
+    aria-selected="false"
+    aria-controls="admin-panel-messages"
+    class="mg-v2-ad-b0kla__tab"
+  >
+    메시지
+  </button>
+</nav>
+
+<!-- §2.5 탭별 본문 — 공지 목록 블록 (탭=시스템 공지일 때 표시) -->
+<section
+  id="admin-panel-system"
+  role="tabpanel"
+  aria-labelledby="admin-tab-system"
+  class="mg-v2-ad-b0kla__section"
+  aria-label="시스템 공지 목록"
+>
+  <h2 class="mg-v2-ad-b0kla__section-title">공지 목록</h2>
+  <!-- 필터: 대상(전체/역할별)·상태(전체/게시중/만료 등). 코더가 BadgeSelect·드롭다운 연동 -->
+  <div class="mg-v2-ad-b0kla__section-filters" role="group" aria-label="공지 필터">
+    <label for="admin-notice-target" class="sr-only">대상</label>
+    <select id="admin-notice-target" class="mg-v2-ad-b0kla__filter-select" aria-label="대상 선택">
+      <option value="">전체</option>
+    </select>
+    <label for="admin-notice-status" class="sr-only">상태</label>
+    <select id="admin-notice-status" class="mg-v2-ad-b0kla__filter-select" aria-label="상태 선택">
+      <option value="">전체</option>
+    </select>
+  </div>
+  <!-- 목록: 테이블 또는 카드. 코더가 데이터 바인딩 -->
+  <div class="mg-v2-ad-b0kla__section-body">
+    <table class="mg-v2-ad-b0kla__table" role="table" aria-label="공지 목록">
+      <thead>
+        <tr>
+          <th scope="col">제목</th>
+          <th scope="col">대상</th>
+          <th scope="col">상태</th>
+          <th scope="col">등록일</th>
+          <th scope="col">액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="5" class="mg-v2-ad-b0kla__table-empty">등록된 공지가 없습니다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- §2.6 탭별 본문 — 메시지 목록 블록 (탭=메시지일 때 표시) -->
+<section
+  id="admin-panel-messages"
+  role="tabpanel"
+  aria-labelledby="admin-tab-messages"
+  class="mg-v2-ad-b0kla__section"
+  aria-label="메시지 목록"
+  hidden
+>
+  <h2 class="mg-v2-ad-b0kla__section-title">메시지 목록</h2>
+  <!-- 필터: 검색 + 유형/상태. 코더가 BadgeSelect·입력창 연동 -->
+  <div class="mg-v2-ad-b0kla__section-filters" role="group" aria-label="메시지 필터">
+    <label for="admin-message-search" class="sr-only">검색</label>
+    <input
+      type="search"
+      id="admin-message-search"
+      class="mg-v2-ad-b0kla__filter-input"
+      placeholder="제목, 내용, 발신·수신자 검색"
+      aria-label="메시지 검색"
+    />
+    <label for="admin-message-type" class="sr-only">유형</label>
+    <select id="admin-message-type" class="mg-v2-ad-b0kla__filter-select" aria-label="유형 선택">
+      <option value="">전체</option>
+    </select>
+  </div>
+  <!-- 목록: 카드 그리드. 코더가 MGCard·데이터 바인딩 -->
+  <div class="mg-v2-ad-b0kla__section-body mg-v2-ad-b0kla__card-grid">
+    <article class="mg-v2-card-container" aria-label="메시지 카드 플레이스홀더">
+      <div class="mg-v2-card-container__body">
+        <p class="mg-v2-ad-b0kla__card-meta">발신 → 수신</p>
+        <h3 class="mg-v2-ad-b0kla__card-title">메시지 제목</h3>
+        <p class="mg-v2-ad-b0kla__card-desc">일부 내용 미리보기…</p>
+        <span class="mg-v2-notification-badge">1</span>
+      </div>
+    </article>
+    <!-- 빈 상태: "등록된 메시지가 없습니다." 코더에서 조건부 렌더 -->
+  </div>
+</section>

@@ -1,0 +1,158 @@
+/**
+ * Header 컴포넌트 스타일
+ */
+
+.trinity-header {
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
+.trinity-header__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .trinity-header__container {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+}
+
+.trinity-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.trinity-header__brand-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: var(--color-primary);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .trinity-header__brand-logo {
+    width: 3rem;
+    height: 3rem;
+    font-size: var(--font-size-xxl);
+  }
+}
+
+.trinity-header__brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.trinity-header__brand-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.trinity-header__brand-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.trinity-header__nav {
+  display: none;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+/* 모바일 메뉴 버튼 */
+.trinity-header__menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+}
+
+@media (min-width: 768px) {
+  .trinity-header__menu-button {
+    display: none;
+  }
+  
+  .trinity-header__nav {
+    display: flex;
+  }
+}
+
+/* 모바일 메뉴 (열림 상태) */
+.trinity-header__nav--mobile {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.trinity-header__nav--mobile .trinity-header__link {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+.trinity-header__nav--mobile .trinity-header__link:hover {
+  background-color: var(--bg-secondary);
+}
+
+@media (min-width: 768px) {
+  .trinity-header__nav--mobile {
+    position: static;
+    flex-direction: row;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+.trinity-header__link {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.trinity-header__link:hover {
+  color: var(--color-primary);
+}
+
+.trinity-header__button {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: background-color var(--transition-fast);
+}
+
+.trinity-header__button:hover {
+  background-color: var(--color-primary-dark);
+}
+

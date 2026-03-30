@@ -24,12 +24,19 @@ import './PaymentTest.css';
 
 /**
  * 결제 테스트 컴포넌트
+/**
  * - 다양한 결제 시나리오 테스트
+/**
  * - 결제 상태 관리 테스트
+/**
  * - 통계 및 분석 테스트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 const PaymentTest = () => {
@@ -66,7 +73,6 @@ const PaymentTest = () => {
     }
   };
 
-  // 테스트 함수들
   const testCreatePayment = async () => {
     const paymentRequest = {
       orderId: `TEST_ORDER_${Date.now()}`,
@@ -117,6 +123,7 @@ const PaymentTest = () => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const status = prompt('상태를 입력하세요 (APPROVED, CANCELLED, REFUNDED):', PAYMENT_STATUSES[0].value);
     if (!status) return;
 
@@ -139,6 +146,7 @@ const PaymentTest = () => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const status = prompt('상태를 입력하세요 (APPROVED, FAILED, CANCELLED):', PAYMENT_STATUSES[0].value);
     if (!status) return;
 

@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../../components/common/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
-import SimpleLayout from '../layout/SimpleLayout';
+import { USER_ROLES } from '../../constants/roles';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
+import notificationManager from '../../utils/notification';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultationHistory.css';
+import SafeText from '../common/SafeText';
+
+const CONSULTATION_HISTORY_TITLE_ID = 'consultation-history-page-title';
 
 const ConsultationHistory = () => {
   const navigate = useNavigate();
@@ -30,34 +42,31 @@ const ConsultationHistory = () => {
     }
   }, [user, sessionLoading, isLoggedIn]);
 
-  // 상담 상태 코드 로드
+  // 상담 상태 코드 로드 (공통코드 기반)
   useEffect(() => {
     const loadStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/STATUS');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
+        // 공통코드 API 사용 (표준화된 방법)
+        const codes = await getCommonCodes('CONSULTATION_STATUS');
+        
+        if (codes && Array.isArray(codes) && codes.length > 0) {
+          const options = codes.map(code => ({
             value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode
+            label: code.koreanName || code.codeLabel,
+            icon: code.icon || '📋',
+            color: code.colorCode || 'var(--mg-gray-500)'
           }));
           setStatusOptions(options);
+        } else {
+          console.warn('📋 상담 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
+          setStatusOptions([]); // 하드코딩된 fallback 제거
         }
       } catch (error) {
         console.error('상담 상태 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
-        setStatusOptions([
-          { value: 'PENDING', label: '대기', icon: '⏳', color: '#f59e0b' },
-          { value: 'BOOKED', label: '예약', icon: '📅', color: '#3b82f6' },
-          { value: 'CONFIRMED', label: '확정', icon: '✅', color: '#10b981' },
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#8b5cf6' },
-          { value: 'COMPLETED', label: '완료', icon: '🎉', color: '#059669' },
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444' },
-          { value: 'NO_SHOW', label: '무단결석', icon: '🚫', color: '#dc2626' },
-          { value: 'RESCHEDULED', label: '재예약', icon: '🔄', color: '#f97316' }
-        ]);
+        // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+        setStatusOptions([]);
+        notificationManager.error('상담 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
       } finally {
         setLoadingCodes(false);
       }
@@ -73,21 +82,21 @@ const ConsultationHistory = () => {
 
       console.log('📊 상담 내역 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
 
-      // 사용자 역할에 따라 다른 API 호출
+      // 사용자 역할에 따라 다른 API 호출 (표준화 2025-12-05: 상수 활용)
       let response;
-      if (user.role === 'CLIENT') {
+      if (user.role === USER_ROLES.CLIENT) {
         response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CLIENT'
+          userRole: USER_ROLES.CLIENT
         });
-      } else if (user.role === 'CONSULTANT') {
+      } else if (user.role === USER_ROLES.CONSULTANT) {
         response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
-      } else if (user.role === 'ADMIN' || user.role === 'BRANCH_SUPER_ADMIN') {
+      } else if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF) {
         response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: 'ADMIN'
+          userRole: USER_ROLES.ADMIN
         });
       }
 
@@ -106,26 +115,21 @@ const ConsultationHistory = () => {
     }
   };
 
+  const statusToVariant = (s) => {
+    const v = (s || '').toUpperCase();
+    if (v.includes('COMPLETE') || v.includes('CONFIRMED')) return 'success';
+    if (v.includes('PENDING') || v.includes('WAIT')) return 'warning';
+    if (v.includes('CANCEL') || v.includes('REJECT')) return 'neutral';
+    return 'neutral';
+  };
+
   const getStatusBadge = (status) => {
-    // 동적으로 로드된 상태 옵션에서 찾기
-    const statusOption = statusOptions.find(option => option.value === status);
-    
-    if (statusOption) {
-      return (
-        <span 
-          className={`status-badge status-${status.toLowerCase()}`} 
-          data-color={statusOption.color}
-        >
-          {statusOption.icon} {statusOption.label}
-        </span>
-      );
-    }
-    
-    // 기본값
+    const statusOption = statusOptions.find((option) => option.value === status);
+    const label = statusOption ? statusOption.label : status;
     return (
-      <span className="status-badge status-default">
-        ❓ {status}
-      </span>
+      <StatusBadge variant={statusToVariant(status)}>
+        {label}
+      </StatusBadge>
     );
   };
 
@@ -161,48 +165,53 @@ const ConsultationHistory = () => {
     return statusMatch && dateMatch;
   });
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="상담 내역">
+          <ContentHeader
+            title="상담 내역"
+            subtitle="나의 상담 기록을 확인할 수 있습니다"
+            titleId={CONSULTATION_HISTORY_TITLE_ID}
+            actions={
+              <MGButton variant="outline" size="small" onClick={() => navigate(-1)} preventDoubleClick={false}>
+                <i className="bi bi-arrow-left"></i>
+                뒤로
+              </MGButton>
+            }
+          />
+          <main aria-labelledby={CONSULTATION_HISTORY_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (sessionLoading) {
     return (
-      <SimpleLayout>
-        <div className="consultation-history-page">
-          <div className="loading-container">
-            <UnifiedLoading text="세션 확인 중..." size="medium" type="inline" />
-          </div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="상담 내역">
+        {pageShell(
+          <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+        )}
+      </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="consultation-history-page">
-          <div className="loading-container">
-            <UnifiedLoading text="상담 내역을 불러오는 중..." size="medium" type="inline" />
-          </div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout title="상담 내역">
+        {pageShell(
+          <UnifiedLoading type="page" text="상담 내역을 불러오는 중..." />
+        )}
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
-      <div className="consultation-history-page">
-        <div className="page-header">
-          <div className="header-content">
-            <button 
-              className="back-button"
-              onClick={() => navigate(-1)}
-            >
-              <i className="bi bi-arrow-left"></i>
-            </button>
-            <div className="header-text">
-              <h1>📋 상담 내역</h1>
-              <p>나의 상담 기록을 확인할 수 있습니다</p>
-            </div>
-          </div>
-        </div>
-
+    <AdminCommonLayout title="상담 내역">
+      {pageShell(
+        <div className="consultation-history-page">
         <div className="page-content">
           {/* 필터 섹션 */}
           <div className="filter-section">
@@ -235,15 +244,18 @@ const ConsultationHistory = () => {
               />
             </div>
             
-            <button
+            <MGButton
+              variant="outline"
+              size="small"
               className="clear-filters-btn"
               onClick={() => {
                 setFilterStatus('ALL');
                 setFilterDate('');
               }}
+              preventDoubleClick={false}
             >
               필터 초기화
-            </button>
+            </MGButton>
           </div>
 
           {/* 상담 내역 목록 */}
@@ -252,9 +264,9 @@ const ConsultationHistory = () => {
               <div className="error-message">
                 <i className="bi bi-exclamation-triangle"></i>
                 <p>{error}</p>
-                <button onClick={loadConsultationHistory} className="retry-btn">
+                <MGButton variant="primary" onClick={loadConsultationHistory} className="retry-btn" preventDoubleClick={false}>
                   다시 시도
-                </button>
+                </MGButton>
               </div>
             ) : filteredConsultations.length === 0 ? (
               <div className="no-data">
@@ -288,14 +300,14 @@ const ConsultationHistory = () => {
                     {consultation.title && (
                       <div className="detail-item">
                         <i className="bi bi-chat-text"></i>
-                        <span>{consultation.title}</span>
+                        <span><SafeText>{consultation.title}</SafeText></span>
                       </div>
                     )}
                     
                     {consultation.description && (
                       <div className="detail-item description">
                         <i className="bi bi-file-text"></i>
-                        <span>{consultation.description}</span>
+                        <span><SafeText>{consultation.description}</SafeText></span>
                       </div>
                     )}
                   </div>
@@ -310,8 +322,9 @@ const ConsultationHistory = () => {
             )}
           </div>
         </div>
-      </div>
-    </SimpleLayout>
+        </div>
+      )}
+    </AdminCommonLayout>
   );
 };
 

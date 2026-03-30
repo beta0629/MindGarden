@@ -1,24 +1,187 @@
 {
-    "java.home": "/opt/homebrew/opt/openjdk@17",
-    "java.jdt.ls.java.home": "/opt/homebrew/opt/openjdk@17",
-    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx4g -Xms1g",
-    "java.import.maven.enabled": true,
-    "java.autobuild.enabled": true,
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.lombokSupport.enabled": true,
-    "java.trace.server": "verbose",
-    "problems.showCurrentInStatus": true,
-    "editor.renderValidationDecorations": "on",
-    "problems.decorations.enabled": true,
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.project.importOnFirstTimeStartup": "automatic",
-    "java.configuration.checkProjectSettingsExclusions": false,
-    "java.project.sourcePaths": [
-        "src/main/java"
-    ],
-    "java.project.outputPath": "target/classes",
-
-    // Windows에서 PowerShell 확장 임시 스크립트 인코딩 오류 피하기 위해
-    // 워크스페이스 기본 터미널을 cmd로 고정
-    "terminal.integrated.defaultProfile.windows": "Command Prompt"
+  // ============================================
+  // Java 언어 서버 최적화 (16GB RAM, 8코어 CPU)
+  // ============================================
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms512m",
+  "java.jdt.ls.lombokSupport.enabled": true,
+  
+  // Java 컴파일러 및 빌드 설정
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.autobuild.enabled": true,
+  "java.maxConcurrentBuilds": 8,
+  "java.compile.nullAnalysis.mode": "automatic",
+  
+  // Java 코드 품질 및 포맷팅
+  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+  "java.format.settings.profile": "GoogleStyle",
+  "java.format.enabled": true,
+  "java.saveActions.organizeImports": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  
+  // 인덱싱 최적화 (대규모 프로젝트)
+  "java.import.gradle.enabled": false,
+  "java.import.maven.enabled": true,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/target/**",
+    "**/build/**",
+    "**/.git/**",
+    "**/archive/**",
+    "**/docs/**",
+    "**/temp/**"
+  ],
+  
+  // Maven 설정
+  "maven.executable.path": "",
+  "maven.terminal.useJavaHome": true,
+  "maven.terminal.customEnv": [],
+  "maven.view": "hierarchical",
+  "maven.settingsFile": "",
+  "maven.pomfile.autoUpdateProjectConfig": true,
+  
+  // 인텔리센스 및 자동완성
+  "java.completion.enabled": true,
+  "java.completion.overwrite": true,
+  "java.completion.guessMethodArguments": true,
+  "java.completion.favoriteStaticMembers": [
+    "org.junit.Assert.*",
+    "org.junit.Assume.*",
+    "org.junit.jupiter.api.Assertions.*",
+    "org.junit.jupiter.api.Assumptions.*",
+    "org.mockito.Mockito.*",
+    "org.mockito.ArgumentMatchers.*",
+    "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*",
+    "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*"
+  ],
+  "java.completion.filteredTypes": [
+    "java.awt.*",
+    "com.sun.*",
+    "sun.*"
+  ],
+  
+  // Spring Boot 설정
+  "spring-boot.ls.checkJVM": false,
+  "spring.initializr.defaultLanguage": "Java",
+  "spring.initializr.defaultJavaVersion": "17",
+  
+  // 코드 네비게이션
+  "java.navigation.includeDecompiledSources": false,
+  "java.references.includeDecompiledSources": false,
+  "java.references.includeAccessors": true,
+  
+  // 템플릿 및 코드 생성
+  "java.templates.typeComment": "/**\n * ${type_name}\n * @author ${user}\n * @date ${date}\n */",
+  "java.generate.toStringCodeStyle": "STRING_BUILDER",
+  "java.generate.hashCodeEquals.useJava7Objects": true,
+  "java.generate.hashCodeEquals.useInstanceof": true,
+  
+  // 에디터 설정
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.wordWrap": "off",
+  "editor.minimap.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.suggestSelection": "first",
+  "editor.snippetSuggestions": "top",
+  
+  // 파일 검색 최적화
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/target": true,
+    "**/build": true,
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/build": true,
+    "**/archive": true,
+    "**/docs": true,
+    "**/temp": true,
+    "**/backup": true,
+    "**/*.class": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/target/**": true,
+    "**/build/**": true
+  },
+  
+  // 성능 최적화
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.parameterHints.enabled": true,
+  "editor.suggestOnTriggerCharacters": true,
+  
+  // 한글 인코딩 설정
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true,
+  
+  // 디버깅 설정
+  "debug.inlineValues": true,
+  "debug.showBreakpointsInOverviewRuler": true,
+  "debug.focusWindowOnBreak": true,
+  
+  // 터미널 설정
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  
+  // Git 설정
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  
+  // 확장 프로그램별 설정
+  "redhat.telemetry.enabled": false,
+  
+  // 워크스페이스별 설정
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[properties]": {
+    "editor.tabSize": 4,
+    "files.encoding": "utf8"
+  },
+  "[xml]": {
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": false,
+      "comments": false,
+      "strings": false
+    }
+  }
 }

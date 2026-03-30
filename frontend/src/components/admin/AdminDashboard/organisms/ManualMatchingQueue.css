@@ -1,0 +1,39 @@
+/**
+ * ManualMatchingQueue - 미배정 내담자 매칭 대기열 스타일
+ */
+.manual-matching-queue {
+  background: var(--mg-bg-surface, #fff);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: var(--mg-spacing-lg, 20px);
+  margin-bottom: var(--mg-spacing-lg, 24px);
+}
+
+.manual-matching-queue__header {
+  margin-bottom: var(--mg-spacing-md, 16px);
+}
+
+.manual-matching-queue__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--mg-text-primary, #2d3748);
+  margin: 0 0 4px 0;
+}
+
+.manual-matching-queue__subtitle {
+  font-size: 0.85rem;
+  color: var(--mg-text-secondary, #64748b);
+  margin: 0;
+}
+
+.manual-matching-queue__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.manual-matching-queue__empty {
+  padding: var(--mg-spacing-xl, 24px);
+  text-align: center;
+  color: var(--mg-text-secondary, #64748b);
+  font-size: 0.9rem;
+}

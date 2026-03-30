@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { TrendingUp, XCircle, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+import { TrendingUp, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
+import SafeText from '../common/SafeText';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
+/**
  * - 실시간 성과 지표 표시
+/**
  * - 지표 재계산 기능
+/**
  * - 기간별 필터링
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const PerformanceMetricsModal = ({ isOpen, onClose }) => {
@@ -43,12 +51,12 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 지점 목록 로드
      */
     const loadBranches = async () => {
         try {
-            const response = await apiGet('/api/branches');
+            const response = await apiGet('/api/v1/branches');
             if (response && response.success !== false) {
                 setBranches(response.data || []);
             }
@@ -57,7 +65,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 성과 지표 로드
      */
     const loadMetrics = async () => {
@@ -67,6 +75,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
 
@@ -87,16 +96,17 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 성과 지표 재계산
      */
     const handleRecalculate = async () => {
         try {
             setRecalculating(true);
             
-            const response = await apiPost('/api/statistics/recalculate', {
+            const response = await apiPost('/api/v1/statistics/recalculate', {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
             
@@ -115,14 +125,14 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 필터 변경 처리
      */
     const handleFilterChange = () => {
         loadMetrics();
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {
@@ -133,21 +143,16 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <TrendingUp size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">성과 지표 대시보드</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading || recalculating} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="성과 지표 대시보드"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 필터 설정 */}
                     <div className="mg-v2-form-section">
@@ -187,19 +192,20 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                     <Building size={16} className="mg-v2-form-label-icon" />
                                     지점
                                 </label>
-                                <select
+                                <CustomSelect
                                     value={branchCode}
-                                    onChange={(e) => setBranchCode(e.target.value)}
+                                    onChange={(val) => setBranchCode(val)}
+                                    options={[
+                                        { value: '', label: '전체 지점' },
+                                        ...branches.map(branch => ({
+                                            value: branch.code,
+                                            label: branch.name
+                                        }))
+                                    ]}
+                                    placeholder="전체 지점"
                                     disabled={loading || recalculating}
                                     className="mg-v2-form-select"
-                                >
-                                    <option value="">전체 지점</option>
-                                    {branches.map(branch => (
-                                        <option key={branch.code} value={branch.code}>
-                                            {branch.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                         </div>
                         <div className="mg-v2-modal-footer">
@@ -216,7 +222,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 onClick={handleRecalculate}
                                 disabled={loading || recalculating}
                             >
-                                {recalculating ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                {recalculating ? <div className="mg-loading">로딩중...</div> : (
                                     <>
                                         <RefreshCw size={20} className="mg-v2-icon-inline" />
                                         재계산
@@ -229,7 +235,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     {/* 성과 지표 표시 */}
                     {loading ? (
                         <div className="mg-v2-loading-overlay">
-                            <UnifiedLoading variant="pulse" size="large" text="성과 지표를 불러오는 중..." type="inline" />
+                            <div className="mg-loading">로딩중...</div>
                         </div>
                     ) : metrics ? (
                         <div className="mg-v2-form-section mg-v2-mt-lg">
@@ -267,7 +273,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                         {metrics.consultantPerformance?.map((consultant, index) => (
                                             <div key={index} className="mg-v2-list-item">
                                                 <div className="mg-v2-list-item-content">
-                                                    <div className="mg-v2-list-item-title">{consultant.name}</div>
+                                                    <SafeText tag="div" className="mg-v2-list-item-title">{consultant.name}</SafeText>
                                                     <div className="mg-v2-list-item-subtitle">
                                                         상담: {consultant.consultationCount}건 · 매출: {consultant.revenue?.toLocaleString()}원 · 만족도: {consultant.satisfaction}점
                                                     </div>
@@ -308,9 +314,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

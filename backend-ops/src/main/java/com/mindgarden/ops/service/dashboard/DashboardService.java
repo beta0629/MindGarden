@@ -37,6 +37,8 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardMetricsResponse getMetrics() {
         long pendingOnboarding = onboardingRequestRepository.countByStatus(OnboardingStatus.PENDING);
+        long activeOnboarding = onboardingRequestRepository.countByStatus(OnboardingStatus.APPROVED);
+        long onHoldOnboarding = onboardingRequestRepository.countByStatus(OnboardingStatus.ON_HOLD);
         long activePlans = pricingPlanRepository.countByActive(true);
         long activeAddons = pricingAddonRepository.countByActive(true);
         long activeFlags = featureFlagRepository.countByState(FeatureFlagState.ENABLED);
@@ -44,6 +46,8 @@ public class DashboardService {
 
         return new DashboardMetricsResponse(
             pendingOnboarding,
+            activeOnboarding,
+            onHoldOnboarding,
             activePlans,
             activeAddons,
             activeFlags,

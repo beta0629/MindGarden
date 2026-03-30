@@ -1,14 +1,22 @@
 import React from 'react';
+import { RotateCcw } from 'lucide-react';
 import './ConsultantFilter.css';
 
 /**
  * 새로운 디자인의 상담사 필터 컴포넌트
+/**
  * - CSS 클래스 상수 사용
+/**
  * - JavaScript 상수 사용
+/**
  * - 현대적인 디자인 적용
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-05
  */
 const ConsultantFilterNew = ({ 
@@ -32,26 +40,26 @@ const ConsultantFilterNew = ({
 
     // 가용성 필터 옵션
     const availabilityOptions = [
-        { value: 'all', label: '전체', color: 'var(--color-text-secondary, #424245)' },
-        { value: 'available', label: '여유', color: 'var(--color-success, #28A745)' },
-        { value: 'busy', label: '바쁨', color: 'var(--color-warning, #FFC107)' },
-        { value: 'unavailable', label: '휴무', color: 'var(--color-danger, #dc3545)' }
+        { value: 'all', label: '전체', color: 'var(--mg-text-secondary)' },
+        { value: 'available', label: '여유', color: 'var(--mg-success-500)' },
+        { value: 'busy', label: '바쁨', color: 'var(--mg-warning-500)' },
+        { value: 'unavailable', label: '휴무', color: 'var(--mg-error-500)' }
     ];
-    /**
+/**
      * 검색 입력 변경 핸들러
      */
     const handleSearchChange = (e) => {
         onFilterChange({ search: e.target.value });
     };
 
-    /**
+/**
      * 전문분야 선택 변경 핸들러
      */
     const handleSpecialtyChange = (e) => {
         onFilterChange({ specialty: e.target.value });
     };
 
-    /**
+/**
      * 가용성 필터 변경 핸들러
      */
     const handleAvailabilityChange = (availability) => {
@@ -97,7 +105,8 @@ const ConsultantFilterNew = ({
                         className="mg-btn mg-btn--sm mg-btn--secondary"
                         onClick={onResetFilters}
                     >
-                        🔄 초기화
+                        <RotateCcw size={16} />
+                        초기화
                     </button>
                 </div>
 

@@ -1,12 +1,13 @@
 /**
  * 사용자 설정 페이지
+/**
  * 테마 설정과 기타 사용자 설정을 관리하는 페이지
  */
 
 import {useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 
-import {useTheme, useThemeChange, useThemeColors} from '../../hooks/useTheme';
+import {useTheme} from '../../hooks/useTheme';
 import SimpleLayout from '../layout/SimpleLayout';
 import Button from '../ui/Button/Button';
 import Card from '../ui/Card/Card';
@@ -14,11 +15,17 @@ import CardContent from '../ui/Card/CardContent';
 import CardHeader from '../ui/Card/CardHeader';
 import Icon from '../ui/Icon/Icon';
 import ThemeSelector from '../ui/ThemeSelector/ThemeSelector';
+import SafeText from '../common/SafeText';
 import './UserSettings.css';
 
-const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availableThemes} = useTheme();
-  const {changeToTheme, applyCustomTheme, resetToDefault, isLoading, error} = useThemeChange();
-  const themeColors = useThemeColors();
+const UserSettings = ({user, onSettingsUpdate}) => {const {
+    currentTheme,
+    changeToTheme,
+    applyCustomTheme,
+    resetToDefault,
+    isLoading,
+    error,
+    themeColors} = useTheme();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('theme');
@@ -66,8 +73,12 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
                       data-theme-color={themeColors.primary}
                     />
                     <div>
-                      <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">{currentTheme.name}</h3>
-                      <p className="mg-v2-v2-v2-text-muted">{currentTheme.description}</p>
+                      <SafeText tag="h3" className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">
+                        {currentTheme?.name}
+                      </SafeText>
+                      <SafeText tag="p" className="mg-v2-v2-v2-text-muted">
+                        {currentTheme?.description}
+                      </SafeText>
                     </div>
                   </div>
                 </CardContent>
@@ -203,8 +214,8 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="USER" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">사용자명</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.username}</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">사용자 ID</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.userId}</p>
                     </div>
                   </div>
                 </div>
@@ -259,7 +270,7 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-DEFAULT_VALUES.CURRENT_PAGE)}
+              onClick={() => navigate(-1)}
               icon="ARROW_LEFT"
             >
               뒤로가기
@@ -310,7 +321,7 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
         {/* 에러 메시지 */}
         {error && (<div className="mg-v2-v2-v2-error-message">
             <Icon name="ALERT_TRIANGLE" size="SM" color="ERROR" />
-            <span>{error}</span>
+            <SafeText>{error}</SafeText>
           </div>)}
       </div>
     </SimpleLayout>);};

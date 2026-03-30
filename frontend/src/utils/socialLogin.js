@@ -1,9 +1,14 @@
 /**
  * 소셜 로그인 유틸리티
+/**
  * 다양한 소셜 플랫폼 로그인 처리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -29,7 +34,7 @@ let oauth2Config = null;
 export const initializeOAuth2 = async () => {
   try {
     const config = await cachedApiCall(
-      '/api/auth/config/oauth2',
+      '/api/v1/auth/config/oauth2',
       {},
       CACHE_CONFIG.OAUTH2_CONFIG.ttl
     );
@@ -108,26 +113,70 @@ export const kakaoLogin = async () => {
   try {
     console.log('=== 카카오 로그인 시작 ===');
     
+    // 서브도메인 확인 (로컬 환경에서는 스킵)
+    const host = window.location.hostname;
+    const isLocalEnv = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocalEnv) {
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+
+      if (!hasSubdomain) {
+        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+        notificationManager.show(friendlyMessage, 'error');
+        throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
+      }
+    }
+
     // 백엔드의 인증 URL 생성 엔드포인트 호출
     console.log('백엔드 API 호출 시작:', `${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
     const response = await fetch(`${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
     console.log('백엔드 응답 상태:', response.status, response.statusText);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('백엔드 응답 오류:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      let errorMessage = '카카오 로그인을 시작할 수 없습니다.';
+      try {
+        const errorData = await response.json();
+        // 백엔드 오류 메시지 추출
+        if (errorData.message) {
+          errorMessage = errorData.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
+        }
+      } catch (parseError) {
+        // JSON 파싱 실패 시 텍스트로 처리
+        const errorText = await response.text();
+        console.error('백엔드 응답 오류:', errorText);
+      }
+      // 공통 알림으로 오류 표시
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
     }
     
     const data = await response.json();
     console.log('백엔드에서 받은 카카오 인증 URL:', data);
     
-    if (data.success && data.authUrl) {
-      const state = generateRandomState();
-      sessionStorage.set('oauth_state', state);
+    // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    const state = (data.data && data.data.state) || data.state;
+    
+    if (data.success && authUrl) {
+      // 백엔드에서 이미 state를 포함한 URL을 반환하므로, 프론트엔드에서 추가하지 않음
+      // 백엔드에서 반환한 state를 sessionStorage에 저장
+      if (state) {
+        sessionStorage.set('oauth_state', state);
+      }
       
-      // state 파라미터 추가하여 리다이렉트
-      const authUrl = `${data.authUrl}&state=${state}`;
       console.log('최종 카카오 OAuth2 인증 URL:', authUrl);
       console.log('=== 카카오 로그인 완료 ===');
       
@@ -149,26 +198,72 @@ export const naverLogin = async () => {
   try {
     console.log('=== 네이버 로그인 시작 ===');
     
+    // 서브도메인 확인 (로컬 환경에서는 스킵)
+    const host = window.location.hostname;
+    const isLocalEnv = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocalEnv) {
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+
+      if (!hasSubdomain) {
+        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+        notificationManager.show(friendlyMessage, 'error');
+        throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
+      }
+    }
+
     // 백엔드의 인증 URL 생성 엔드포인트 호출
     const response = await fetch(`${API_BASE_URL}${AUTH_API.NAVER_AUTHORIZE}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      let errorMessage = '네이버 로그인을 시작할 수 없습니다.';
+      try {
+        const errorData = await response.json();
+        // 백엔드 오류 메시지 추출
+        if (errorData.message) {
+          errorMessage = errorData.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
+        }
+      } catch (parseError) {
+        // JSON 파싱 실패 시 기본 메시지 사용
+        console.error('네이버 로그인 오류:', parseError);
+      }
+      // 공통 알림으로 오류 표시
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
     }
     
     const data = await response.json();
     console.log('백엔드에서 받은 네이버 인증 URL:', data);
     
-    if (data.success && data.authUrl) {
-      const state = generateRandomState();
-      sessionStorage.set('oauth_state', state);
+    // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    const state = (data.data && data.data.state) || data.state;
+    
+    if (data.success && authUrl) {
+      // 백엔드에서 이미 state를 포함한 URL을 반환하므로, 프론트엔드에서 추가하지 않음
+      // 백엔드에서 반환한 state를 sessionStorage에 저장
+      if (state) {
+        sessionStorage.set('oauth_state', state);
+      }
       
-      // state 파라미터 추가하여 리다이렉트
-      const authUrl = `${data.authUrl}&state=${state}`;
       console.log('최종 네이버 OAuth2 인증 URL:', authUrl);
       console.log('=== 네이버 로그인 완료 ===');
       
       window.location.href = authUrl;
     } else {
+      console.error('백엔드 응답 데이터 구조 오류:', data);
       throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');
     }
   } catch (error) {

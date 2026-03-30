@@ -26,14 +26,14 @@
 
 .mg-v2-theme-option:hover {
   border-color: var(--mg-v2-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
   transform: translateY(-2px);
 }
 
 .mg-v2-theme-option--selected {
   border-color: var(--mg-v2-primary);
   background: var(--mg-v2-primary-light);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .mg-v2-theme-preview {
@@ -54,10 +54,10 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(45deg, 
-    rgba(255, 255, 255, 0.1) 25%, 
+    var(--cs-glass-light-subtle) 25%, 
     transparent 25%, 
     transparent 75%, 
-    rgba(255, 255, 255, 0.1) 75%
+    var(--cs-glass-light-subtle) 75%
   );
   background-size: 8px 8px;
 }

@@ -1,8 +1,12 @@
 /**
  * 스케줄 카드 컴포넌트
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 
@@ -18,6 +22,7 @@ import {
   TIME_FORMATS
 } from '../../constants/schedule';
 import './ScheduleCard.css';
+import SafeText from './SafeText';
 
 const ScheduleCard = ({ 
   schedule, 
@@ -29,7 +34,6 @@ const ScheduleCard = ({
   onComplete,
   showActions = true 
 }) => {
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -41,19 +45,16 @@ const ScheduleCard = ({
     });
   };
 
-  // 시간 포맷팅
   const formatTime = (timeString) => {
     if (!timeString) return '';
     return timeString.substring(0, 5); // HH:mm 형식으로 변환
   };
 
-  // 액션 버튼 렌더링
   const renderActionButtons = () => {
     if (!showActions) return null;
 
     const actions = [];
 
-    // 기본 액션들
     if (onView) {
       actions.push(
         <button
@@ -67,7 +68,7 @@ const ScheduleCard = ({
       );
     }
 
-    // 상태별 액션들
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'BOOKED' && onConfirm) {
       actions.push(
         <button
@@ -81,6 +82,7 @@ const ScheduleCard = ({
       );
     }
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'CONFIRMED' && onComplete) {
       actions.push(
         <button
@@ -94,6 +96,7 @@ const ScheduleCard = ({
       );
     }
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if ((schedule.status === 'BOOKED' || schedule.status === 'CONFIRMED') && onCancel) {
       actions.push(
         <button
@@ -140,12 +143,12 @@ const ScheduleCard = ({
     <div className="schedule-card">
       <div className="schedule-card-header">
         <div className="schedule-card-title">
-          <h3>{schedule.title || '제목 없음'}</h3>
+          <SafeText tag="h3" fallback="제목 없음">{schedule.title}</SafeText>
           <span 
             className="schedule-status-badge"
             data-status={schedule.status}
           >
-            {STATUS_LABELS[schedule.status] || schedule.status}
+            <SafeText>{STATUS_LABELS[schedule.status] ?? schedule.status}</SafeText>
           </span>
         </div>
         <div className="schedule-card-actions">
@@ -165,25 +168,25 @@ const ScheduleCard = ({
           </div>
           <div className="schedule-info-item">
             <i className="bi bi-person"></i>
-            <span>{schedule.consultantName || '상담사 정보 없음'}</span>
+            <SafeText tag="span" fallback="상담사 정보 없음">{schedule.consultantName}</SafeText>
           </div>
           {schedule.clientName && (
             <div className="schedule-info-item">
               <i className="bi bi-person-circle"></i>
-              <span>{schedule.clientName}</span>
+              <SafeText tag="span">{schedule.clientName}</SafeText>
             </div>
           )}
           {schedule.consultationType && (
             <div className="schedule-info-item">
               <i className="bi bi-tag"></i>
-              <span>{schedule.consultationType}</span>
+              <SafeText tag="span">{schedule.consultationType}</SafeText>
             </div>
           )}
         </div>
         
         {schedule.description && (
           <div className="schedule-card-description">
-            <p>{schedule.description}</p>
+            <SafeText tag="p">{schedule.description}</SafeText>
           </div>
         )}
       </div>

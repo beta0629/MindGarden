@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { FaTimes, FaEnvelope, FaKey, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './AccountIntegrationModal.css';
+import SafeText from '../common/SafeText';
 
 /**
  * 계정 통합 모달 컴포넌트
+/**
  * SNS 계정과 기존 계정을 통합하는 기능을 제공
  */
 const AccountIntegrationModal = ({ 
@@ -64,7 +66,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/account-integration/send-verification-code', null, {
+            const response = await apiPost('/api/v1/account-integration/send-verification-code', null, {
                 email: formData.existingEmail
             });
 
@@ -92,7 +94,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/account-integration/verify-code', null, {
+            const response = await apiPost('/api/v1/account-integration/verify-code', null, {
                 email: formData.existingEmail,
                 code: formData.verificationCode
             });
@@ -131,7 +133,7 @@ const AccountIntegrationModal = ({
                 finalNickname: formData.finalNickname
             };
 
-            const response = await apiPost('/api/account-integration/integrate', requestData);
+            const response = await apiPost('/api/v1/account-integration/integrate', requestData);
 
             if (response.success) {
                 notificationManager.showToast('계정 통합이 완료되었습니다!', 'success');
@@ -196,7 +198,7 @@ const AccountIntegrationModal = ({
                             <div className="step-description">
                                 <FaExclamationTriangle className="warning-icon" />
                                 <p>
-                                    <strong>{socialUserInfo?.provider}</strong> 계정으로 로그인하려고 하는데, 
+                                    <strong><SafeText>{socialUserInfo?.provider}</SafeText></strong> 계정으로 로그인하려고 하는데, 
                                     기존 계정과 연결하시겠습니까?
                                 </p>
                                 <p className="sub-description">
@@ -208,15 +210,15 @@ const AccountIntegrationModal = ({
                                 <h4>소셜 계정 정보</h4>
                                 <div className="info-item">
                                     <span className="label">이메일:</span>
-                                    <span className="value">{socialUserInfo?.email}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.email}</SafeText></span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">이름:</span>
-                                    <span className="value">{socialUserInfo?.name}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.name}</SafeText></span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">닉네임:</span>
-                                    <span className="value">{socialUserInfo?.nickname}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.nickname}</SafeText></span>
                                 </div>
                             </div>
 

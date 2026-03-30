@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { MessageSquare, XCircle, Send, User, Bell, AlertTriangle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button/Button';
+import BadgeSelect from '../common/BadgeSelect';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
+/**
  * 상담일지 작성 완료 후 내담자에게 메시지를 보낼 수 있는 모달
  */
 const MessageSendModal = ({ 
@@ -35,7 +38,7 @@ const MessageSendModal = ({
     const loadMessageTypeCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/MESSAGE_TYPE');
+        const response = await apiGet('/api/v1/common-codes?codeGroup=MESSAGE_TYPE');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -50,11 +53,11 @@ const MessageSendModal = ({
         console.error('메시지 유형 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setMessageTypeOptions([
-          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: '#6c757d', description: '일반적인 메시지' },
-          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: '#007bff', description: '후속 조치 안내 메시지' },
-          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745', description: '과제 및 숙제 안내 메시지' },
-          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: '#ffc107', description: '약속 및 일정 안내 메시지' },
-          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: '#dc3545', description: '긴급 상황 안내 메시지' }
+          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: 'var(--mg-secondary-500)', description: '일반적인 메시지' },
+          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: 'var(--mg-primary-500)', description: '후속 조치 안내 메시지' },
+          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)', description: '과제 및 숙제 안내 메시지' },
+          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: 'var(--mg-warning-500)', description: '약속 및 일정 안내 메시지' },
+          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: 'var(--mg-error-500)', description: '긴급 상황 안내 메시지' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -88,8 +91,8 @@ const MessageSendModal = ({
       const startTime = safeFormatDateTime(scheduleData.startTime);
 
       setFormData({
-        title: `상담 일지 작성 완료 - ${scheduleData.title || '상담'}`,
-        content: `안녕하세요 ${clientData.name}님,\n\n상담 일지가 작성되었습니다.\n\n상담 일시: ${startTime}\n\n추가 문의사항이 있으시면 언제든지 연락주세요.\n\n감사합니다.`,
+        title: `상담 일지 작성 완료 - ${toDisplayString(scheduleData.title, '상담')}`,
+        content: `안녕하세요 ${toDisplayString(clientData.name)}님,\n\n상담 일지가 작성되었습니다.\n\n상담 일시: ${startTime}\n\n추가 문의사항이 있으시면 언제든지 연락주세요.\n\n감사합니다.`,
         messageType: 'GENERAL',
         isImportant: false,
         isUrgent: false
@@ -133,7 +136,7 @@ const MessageSendModal = ({
         isUrgent: formData.isUrgent
       };
 
-      const response = await apiPost('/api/consultation-messages', messageData);
+      const response = await apiPost('/api/v1/consultation-messages', messageData);
 
       if (response.success) {
         notificationManager.show('메시지가 성공적으로 전송되었습니다.', 'success');
@@ -152,22 +155,44 @@ const MessageSendModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <MessageSquare size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">내담자에게 메시지 보내기</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="내담자에게 메시지 보내기"
+      size="medium"
+      backdropClick
+      showCloseButton
+      loading={sending}
+      actions={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={onClose}
+            disabled={sending}
+            preventDoubleClick={false}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={handleSend}
+            disabled={sending}
+            loading={sending}
+            loadingText="로딩중..."
+            preventDoubleClick={false}
+          >
+            <Send size={20} className="mg-v2-icon-inline" />
+            메시지 전송
+          </Button>
+        </>
+      }
+    >
         <div className="mg-v2-modal-body">
           {/* 내담자 정보 */}
           {clientData && (
@@ -177,7 +202,7 @@ const MessageSendModal = ({
                 수신자
               </h4>
               <div className="mg-v2-info-text">
-                {clientData.name} ({clientData.age}세, {clientData.gender})
+                {toDisplayString(clientData.name)} ({toSafeNumber(clientData.age)}세, {toDisplayString(clientData.gender)})
               </div>
             </div>
           )}
@@ -198,18 +223,17 @@ const MessageSendModal = ({
 
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">메시지 타입</label>
-            <select
-              name="messageType"
+            <BadgeSelect
               value={formData.messageType}
-              onChange={handleInputChange}
-              className="mg-v2-form-select"
-            >
-              {messageTypeOptions.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label} ({type.value})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setFormData(prev => ({ ...prev, messageType: val }))}
+              options={messageTypeOptions.map(type => ({
+                value: type.value,
+                label: `${toDisplayString(type.icon)} ${toDisplayString(type.label)} (${toDisplayString(type.value)})`
+              }))}
+              placeholder="선택하세요"
+              className="mg-v2-form-badge-select"
+              disabled={loadingCodes}
+            />
           </div>
 
           <div className="mg-v2-form-group">
@@ -250,42 +274,7 @@ const MessageSendModal = ({
             </div>
           </div>
         </div>
-
-        {/* 푸터 */}
-        <div className="mg-v2-modal-footer">
-          <button
-            type="button"
-            onClick={onClose}
-            className="mg-v2-button mg-v2-button--secondary"
-            disabled={sending}
-          >
-            <XCircle size={20} className="mg-v2-icon-inline" />
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            className="mg-v2-button mg-v2-button--primary"
-            disabled={sending}
-          >
-            {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
-              <>
-                <Send size={20} className="mg-v2-icon-inline" />
-                메시지 전송
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* 로딩 오버레이 */}
-        {sending && (
-          <div className="mg-v2-loading-overlay">
-            <UnifiedLoading variant="pulse" size="large" text="메시지 전송 중..." type="inline" />
-          </div>
-        )}
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

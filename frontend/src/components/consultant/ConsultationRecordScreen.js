@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
+import SafeText from '../common/SafeText';
 
 /**
  * 상담일지 작성 화면
+/**
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 종합 화면
  */
 const ConsultationRecordScreen = () => {
@@ -27,12 +29,13 @@ const ConsultationRecordScreen = () => {
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
+  const [psychReports, setPsychReports] = useState([]);
+  const [loadingPsychReports, setLoadingPsychReports] = useState(false);
 
-  // 우선순위 코드 로드
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/PRIORITY');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -45,20 +48,18 @@ const ConsultationRecordScreen = () => {
       }
     } catch (error) {
       console.error('우선순위 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: '#28a745', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: '#ffc107', description: '보통 우선순위' },
-        { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: '#dc3545', description: '긴급 우선순위' },
-        { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
+        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+        { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-500, #fd7e14)', description: '높은 우선순위' },
+        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+        { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-purple-500, #6f42c1)', description: '위험 우선순위' }
       ]);
     } finally {
       setLoadingCodes(false);
     }
   }, []);
   
-  // 상담일지 폼 데이터
   const [formData, setFormData] = useState({
     sessionDate: '',
     sessionNumber: 1,
@@ -92,36 +93,33 @@ const ConsultationRecordScreen = () => {
     followUpDueDate: ''
   });
 
-  // 위험도 옵션 (우선순위 코드 사용)
   const riskLevels = priorityOptions;
 
-  // 목표 달성도 옵션
   const goalAchievements = [
-    { value: 'LOW', label: '낮음', color: '#dc3545' },
-    { value: 'MEDIUM', label: '보통', color: '#ffc107' },
-    { value: 'HIGH', label: '높음', color: '#28a745' },
-    { value: 'EXCELLENT', label: '우수', color: '#007bff' }
+    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
+    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
+    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' },
+    { value: 'EXCELLENT', label: '우수', color: 'var(--mg-primary-500)' }
   ];
 
-  // 컴포넌트 스타일
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: 'var(--mg-gray-100)',
       padding: '20px'
     },
     header: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '8px',
       display: 'flex',
       alignItems: 'center',
@@ -129,21 +127,21 @@ const ConsultationRecordScreen = () => {
     },
     headerSubtitle: {
       fontSize: 'var(--font-size-base)',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       marginBottom: '20px'
     },
     clientInfoCard: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -162,26 +160,26 @@ const ConsultationRecordScreen = () => {
     clientInfoLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       fontWeight: '500'
     },
     formCard: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     formTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '20px',
       display: 'flex',
       alignItems: 'center',
@@ -227,12 +225,12 @@ const ConsultationRecordScreen = () => {
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },
     formInputFocus: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
       boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
     },
     buttonGroup: {
@@ -256,15 +254,15 @@ const ConsultationRecordScreen = () => {
       gap: '8px'
     },
     primaryButton: {
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
       color: '#fff'
     },
     secondaryButton: {
-      backgroundColor: '#6c757d',
+      backgroundColor: 'var(--mg-secondary-500)',
       color: '#fff'
     },
     dangerButton: {
-      backgroundColor: '#dc3545',
+      backgroundColor: 'var(--mg-error-500)',
       color: '#fff'
     },
     statusBadge: {
@@ -285,7 +283,7 @@ const ConsultationRecordScreen = () => {
     },
     progressFill: {
       height: '100%',
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
       transition: 'width 0.3s ease'
     },
     loadingOverlay: {
@@ -302,13 +300,13 @@ const ConsultationRecordScreen = () => {
     }
   };
 
-  // 완료 상태 코드 로드
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/common-codes/COMPLETION_STATUS');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map(code => ({
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           value: code.codeValue === 'COMPLETED',
           label: code.codeLabel,
           icon: code.icon,
@@ -318,17 +316,15 @@ const ConsultationRecordScreen = () => {
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setCompletionStatusOptions([
-        { value: true, label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-        { value: false, label: '미완료', icon: '❌', color: '#ef4444', description: '작업 미완료' }
+        { value: true, label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        { value: false, label: '미완료', icon: '❌', color: 'var(--mg-error-500)', description: '작업 미완료' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
     }
   }, []);
 
-  // 데이터 로드
   useEffect(() => {
     loadData();
     loadPriorityCodes();
@@ -339,10 +335,8 @@ const ConsultationRecordScreen = () => {
     try {
       setLoading(true);
       
-      // 스케줄 정보를 상담 정보로 사용 (임시)
-      const scheduleResponse = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
+      const scheduleResponse = await apiGet(`/api/v1/schedules?userId=0&userRole=ADMIN`);
       if (scheduleResponse.success && scheduleResponse.data.length > 0) {
-        // 첫 번째 스케줄을 상담 정보로 사용
         const scheduleData = scheduleResponse.data[0];
         const consultationData = {
           id: scheduleData.id,
@@ -357,18 +351,34 @@ const ConsultationRecordScreen = () => {
         };
         setConsultation(consultationData);
         
-        // 내담자 정보 로드
         if (consultationData.clientId) {
-          const clientResponse = await apiGet(`/api/admin/users`);
-          if (clientResponse.success) {
-            const clientData = clientResponse.data.find(u => u.id === consultationData.clientId);
-            if (clientData) {
-              setClient(clientData);
+          try {
+            const clientResponse = await apiGet(`/api/v1/admin/clients/with-stats/${consultationData.clientId}`);
+            if (clientResponse && clientResponse.data && clientResponse.data.client) {
+              setClient(clientResponse.data.client);
             }
+          } catch (err) {
+            const fallback = await apiGet(`/api/admin/users`);
+            if (fallback && fallback.success && fallback.data) {
+              const clientData = fallback.data.find(u => u.id === consultationData.clientId);
+              if (clientData) setClient(clientData);
+            }
+          }
+          try {
+            setLoadingPsychReports(true);
+            const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${consultationData.clientId}`);
+            if (psychRes && psychRes.data && Array.isArray(psychRes.data)) {
+              setPsychReports(psychRes.data);
+            } else {
+              setPsychReports([]);
+            }
+          } catch (e) {
+            setPsychReports([]);
+          } finally {
+            setLoadingPsychReports(false);
           }
         }
         
-        // 기존 상담일지 로드
         try {
           const recordResponse = await apiGet(`/api/consultants/${user.id}/consultation-records?consultationId=${scheduleId}`);
           if (recordResponse.success && recordResponse.data.length > 0) {
@@ -376,7 +386,6 @@ const ConsultationRecordScreen = () => {
             setConsultationRecord(record);
             setIsEditMode(true);
             
-            // 폼 데이터 설정
             setFormData({
               sessionDate: record.sessionDate || consultation?.startTime?.split('T')[0] || '',
               sessionNumber: record.sessionNumber || 1,
@@ -410,7 +419,6 @@ const ConsultationRecordScreen = () => {
               followUpDueDate: record.followUpDueDate || ''
             });
           } else {
-            // 새 상담일지인 경우 기본값 설정
             setFormData(prev => ({
               ...prev,
               sessionDate: consultation?.startTime?.split('T')[0] || new Date().toISOString().split('T')[0],
@@ -497,7 +505,6 @@ const ConsultationRecordScreen = () => {
       if (response.success) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
         
-        // 상담일지 완료 후 메시지 전송 화면으로 이동
         navigate(`/consultant/send-message/${scheduleId}`, {
           state: {
             client: client,
@@ -518,29 +525,29 @@ const ConsultationRecordScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담일지 작성">
+      <AdminCommonLayout title="상담일지 작성">
         <div className="consultation-record-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+          <div className="mg-loading">로딩중...</div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!consultation || !client) {
     return (
-      <SimpleLayout title="상담일지 작성">
+      <AdminCommonLayout title="상담일지 작성">
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">상담일지 작성</h1>
             <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담일지 작성">
+    <AdminCommonLayout title="상담일지 작성">
       <div className="mg-dashboard-layout">
 
       {/* 내담자 정보 카드 */}
@@ -551,29 +558,42 @@ const ConsultationRecordScreen = () => {
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
+          </div>
+          <div style={styles.clientInfoItem}>
+            <span style={styles.clientInfoLabel}>나이</span>
+            <span style={styles.clientInfoValue}>{client.age != null ? `${client.age}세` : '—'}</span>
+          </div>
+          <div style={styles.clientInfoItem}>
+            <span style={styles.clientInfoLabel}>성별</span>
+            <span style={styles.clientInfoValue}>
+              <SafeText>{client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender}</SafeText>
+            </span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>이메일</span>
-            <span style={styles.clientInfoValue}>{client.email || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>전화번호</span>
-            <span style={styles.clientInfoValue}>{client.phone || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>주소</span>
-            <span style={styles.clientInfoValue}>{client.address || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}>
+              <SafeText fallback="정보 없음">{[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ')}</SafeText>
+            </span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>상태</span>
             <span style={styles.clientInfoValue}>
               <span style={{
                 ...styles.statusBadge,
-                backgroundColor: client.status === 'ACTIVE' ? '#28a745' : '#6c757d',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
                 color: '#fff'
               }}>
-                {getUserStatusKoreanNameSync(client.status)}
+                <SafeText>{getUserStatusKoreanNameSync(client.status)}</SafeText>
               </span>
             </span>
           </div>
@@ -589,9 +609,41 @@ const ConsultationRecordScreen = () => {
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>가입일</span>
-            <span style={styles.clientInfoValue}>{client.createdAt?.split('T')[0] || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.createdAt?.split('T')[0]}</SafeText></span>
           </div>
         </div>
+      </div>
+
+      {/* 심리검사 리포트 영역 */}
+      <div className="mg-v2-card mg-mb-lg" style={{ borderLeft: '4px solid var(--mg-color-secondary-main, #5C6B61)' }}>
+        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
+          📋 심리검사 리포트
+        </h2>
+        {loadingPsychReports ? (
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary">로딩 중...</p>
+        ) : psychReports.length === 0 ? (
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary">등록된 심리검사 리포트가 없습니다.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {psychReports.map((doc) => (
+              <li key={doc.documentId}>
+                <a
+                  href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                  style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600, textDecoration: 'none' }}
+                  onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                  onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                >
+                  {doc.originalFilename || `심리검사 문서 #${doc.documentId}`}
+                </a>
+                {doc.reportSummary && (
+                  <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                    {doc.reportSummary}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* 상담일지 작성 폼 */}
@@ -992,7 +1044,7 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.primaryButton}}
             disabled={saving}
           >
-            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
+            {saving ? <div className="mg-loading">로딩중...</div> : '💾 저장'}
           </button>
           <button
             type="button"
@@ -1000,12 +1052,12 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.dangerButton}}
             disabled={saving}
           >
-            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
+            {saving ? <div className="mg-loading">로딩중...</div> : '✅ 완료'}
           </button>
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

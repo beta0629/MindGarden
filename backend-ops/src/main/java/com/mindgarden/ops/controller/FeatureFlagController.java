@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/feature-flags")
+@RequestMapping("/api/v1/ops/feature-flags")
 public class FeatureFlagController {
 
     private final FeatureFlagService featureFlagService;

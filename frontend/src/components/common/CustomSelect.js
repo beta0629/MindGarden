@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { ChevronDown } from 'lucide-react';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './CustomSelect.css';
 
 /**
@@ -7,7 +10,7 @@ import './CustomSelect.css';
  * - 완전한 CSS 제어 가능
  * - 접근성 지원
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-11
  */
@@ -18,7 +21,8 @@ const CustomSelect = ({
   placeholder = '선택하세요',
   className = '',
   disabled = false,
-  loading = false
+  loading = false,
+  error = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,22 +51,34 @@ const CustomSelect = ({
     };
   }, [isOpen]);
 
-  // 드롭다운 위치 조정 및 포커스 관리
+  // 스크롤 가능한 조상 요소 찾기 (scroll 이벤트는 버블링되지 않아 해당 요소에 직접 리스너 필요)
+  const getScrollParent = (el) => {
+    if (!el) return null;
+    let parent = el.parentElement;
+    while (parent && parent !== document.body) {
+      const { overflowY } = window.getComputedStyle(parent);
+      const scrollable = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+      if (scrollable && parent.scrollHeight > parent.clientHeight) return parent;
+      parent = parent.parentElement;
+    }
+    return null;
+  };
+
+  // 드롭다운 위치 조정 + 스크롤/리사이즈 시 갱신 (모달 내부 스크롤 포함)
   useEffect(() => {
-    if (isOpen && dropdownRef.current && selectRef.current) {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      if (!dropdownRef.current || !selectRef.current) return;
       const rect = selectRef.current.getBoundingClientRect();
       const dropdown = dropdownRef.current;
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
-      const dropdownHeight = 200; // 예상 드롭다운 높이
-
-      // CustomSelect는 자체 위치 계산을 사용 (dropdownPositionHelper와 충돌 방지)
+      const dropdownHeight = 200;
       dropdown.style.position = 'fixed';
-      dropdown.style.zIndex = '1000';
+      // z-index는 CSS .custom-select__dropdown(10100) 사용 - 모달 위에 표시되도록 인라인 제거
       dropdown.style.left = `${rect.left}px`;
-      dropdown.style.width = `${rect.width}px`;
-
-      // 화면 하단에 공간이 부족하면 위쪽으로 표시
+      dropdown.style.width = `${Math.max(rect.width, 120)}px`;
       if (rect.bottom + dropdownHeight > viewportHeight) {
         dropdown.style.top = 'auto';
         dropdown.style.bottom = `${viewportHeight - rect.top}px`;
@@ -72,24 +88,48 @@ const CustomSelect = ({
         dropdown.style.bottom = 'auto';
         dropdown.style.marginTop = '4px';
       }
-
-      // 화면 오른쪽으로 벗어나지 않도록 조정
       if (rect.left + rect.width > viewportWidth) {
         dropdown.style.left = `${viewportWidth - rect.width - 16}px`;
       }
+    };
 
-      // 드롭다운이 열릴 때 포커스 설정
-      selectRef.current.focus();
+    const t = requestAnimationFrame(() => {
+      updatePosition();
+      if (selectRef.current) selectRef.current.focus();
+    });
+    const onScrollOrResize = () => {
+      requestAnimationFrame(updatePosition);
+    };
+
+    document.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+
+    const scrollParent = getScrollParent(selectRef.current);
+    if (scrollParent) {
+      scrollParent.addEventListener('scroll', onScrollOrResize, true);
     }
+
+    return () => {
+      cancelAnimationFrame(t);
+      document.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+      if (scrollParent) {
+        scrollParent.removeEventListener('scroll', onScrollOrResize, true);
+      }
+    };
   }, [isOpen]);
 
   // 필터링된 옵션
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  const safeOptions = Array.isArray(options) ? options : [];
+  const optionLabelText = (option) => toDisplayString(option?.label, '');
+  const filteredOptions = safeOptions.filter(
+    (option) =>
+      option &&
+      optionLabelText(option).toLowerCase().includes((searchTerm || '').toLowerCase())
   );
 
   // 선택된 옵션 찾기
-  const selectedOption = options.find(option => option.value === value);
+  const selectedOption = safeOptions.find(option => option && option.value === value);
 
   // 옵션 선택 핸들러
   const handleOptionSelect = (optionValue) => {
@@ -139,7 +179,7 @@ const CustomSelect = ({
   return (
     <div 
       ref={selectRef}
-      className={`custom-select ${className} ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''}`}
+      className={`custom-select ${className} ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''} ${error ? 'error' : ''}`}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
@@ -155,18 +195,21 @@ const CustomSelect = ({
         }}
       >
         <span className="custom-select__value">
-          {loading ? '로딩 중...' : selectedOption ? selectedOption.label : placeholder}
+          {loading
+            ? '로딩 중...'
+            : selectedOption
+              ? toDisplayString(selectedOption.label, placeholder)
+              : placeholder}
         </span>
         <span className="custom-select__arrow">
-          {isOpen ? '▲' : '▼'}
+          <ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
         </span>
       </div>
 
-      {/* 드롭다운 메뉴 */}
-      {isOpen && (
-        <div ref={dropdownRef} className="custom-select__dropdown">
-          {/* 검색 입력 (옵션이 많을 때) */}
-          {options.length > 5 && (
+      {/* 드롭다운 메뉴: 포탈로 body에 렌더해 스크롤 시 옵션 패널이 모달과 함께 움직이지 않도록 함 */}
+      {isOpen && ReactDOM.createPortal(
+        <div ref={dropdownRef} className={`custom-select__dropdown ${isOpen ? 'custom-select__dropdown--open' : ''}`}>
+          {safeOptions.length > 5 && (
             <div className="custom-select__search">
               <input
                 type="text"
@@ -179,8 +222,6 @@ const CustomSelect = ({
               />
             </div>
           )}
-
-          {/* 옵션 목록 */}
           <div className="custom-select__options">
             {filteredOptions.length === 0 ? (
               <div className="custom-select__no-options">
@@ -196,12 +237,13 @@ const CustomSelect = ({
                     handleOptionSelect(option.value);
                   }}
                 >
-                  {option.label}
+                  {toDisplayString(option.label, '—')}
                 </div>
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

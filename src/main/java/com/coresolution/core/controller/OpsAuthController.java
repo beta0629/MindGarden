@@ -1,0 +1,128 @@
+package com.coresolution.core.controller;
+
+import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.consultation.service.JwtService;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Ops Portal 인증 컨트롤러
+ * Ops Portal 전용 로그인 API (JWT 기반)
+ * 
+ * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-01-XX
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/ops/auth")  // Ops Portal 전용 경로로 변경 (충돌 방지)
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class OpsAuthController extends BaseApiController {
+    
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    
+    @Value("${ops.admin.userId:ops_core}")
+    private String opsAdminUsername;
+    
+    @Value("${ops.admin.password:godgod826!}")
+    private String opsAdminPassword;
+    
+    @Value("${ops.admin.role:HQ_ADMIN}")
+    private String opsAdminRole;
+    
+    /**
+     * Ops Portal 로그인 요청 DTO
+     */
+    @Data
+    public static class LoginRequest {
+        private String userId;
+        private String password;
+    }
+    
+    /**
+     * Ops Portal 로그인
+     * POST /api/v1/ops/auth/login
+     * 
+     * @param request 로그인 요청 (userId, password)
+     * @return JWT 토큰 및 사용자 정보
+     * @since 2025-11-23
+     */
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody LoginRequest request) {
+        if (request == null) {
+            log.error("Ops Portal 로그인 요청: request가 null입니다.");
+            throw new IllegalArgumentException("요청 데이터가 없습니다.");
+        }
+        
+        String userId = request.getUserId();
+        String password = request.getPassword();
+        
+        // 입력값 trim 처리
+        if (userId != null) {
+            userId = userId.trim();
+        }
+        if (password != null) {
+            password = password.trim();
+        }
+        
+        log.debug("Ops Portal 로그인 요청: userId={}, password={}", userId, password != null ? "***" : null);
+        
+        if (userId == null || userId.isEmpty() || password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");
+        }
+        
+        log.info("Ops Portal 로그인 시도: userId={}", userId);
+        log.info("Ops Portal 관리자 계정 설정: opsAdminUsername={}, opsAdminPassword={}, opsAdminRole={}", 
+            opsAdminUsername, opsAdminPassword != null ? "***" : null, opsAdminRole);
+        
+        // 관리자 계정 확인 (환경 변수 또는 기본값)
+        boolean isAdminAccount = userId.equals(opsAdminUsername);
+        boolean passwordMatches = password.equals(opsAdminPassword);
+        
+        log.info("Ops Portal 로그인 검증: isAdminAccount={}, passwordMatches={}, passwordLength={}, opsAdminPasswordLength={}", 
+            isAdminAccount, passwordMatches, password != null ? password.length() : 0, opsAdminPassword != null ? opsAdminPassword.length() : 0);
+        
+        if (!isAdminAccount || !passwordMatches) {
+            log.warn("Ops Portal 로그인 실패: userId={}, expectedUsername={}, isAdminAccount={}, passwordMatches={}", 
+                userId, opsAdminUsername, isAdminAccount, passwordMatches);
+            throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+        
+        // JWT 토큰 생성
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("actorId", userId);
+        claims.put("actorRole", opsAdminRole);
+        
+        // Ops Portal 토큰은 24시간 유효 (기본 JWT 만료 시간 사용)
+        String token = jwtService.generateToken(claims, userId);
+        
+        // 만료 시간 계산 (24시간 = 86400초)
+        Instant expiresAt = Instant.now().plusSeconds(86400);
+        
+        log.info("Ops Portal 로그인 성공: userId={}, role={}", userId, opsAdminRole);
+        
+        // Ops Portal이 기대하는 형식으로 응답
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("actorId", userId);
+        response.put("actorRole", opsAdminRole);
+        response.put("expiresAt", expiresAt.toString());
+        
+        return success(response);
+    }
+}
+

@@ -13,21 +13,25 @@ import ThemeSelector from './ThemeSelector';
 jest.mock('../../../contexts/ThemeContext', () => ({useTheme: () => ({currentTheme: {type: 'ADMIN',
       name: '관리자 테마',
       description: '간결하고 깔끔한 분위기 (블루 계열)',
-      colors: {primary: '#87CEEB',
+      colors: {primary: 'var(--cs-blue-300)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #F0F8FF -> var(--mg-custom-F0F8FF)
         secondary: '#F0F8FF',
-        background: '#F8F9FA',
+        background: 'var(--mg-gray-100)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #191970 -> var(--mg-custom-191970)
         text: '#191970'}},
     availableThemes: [{id: 'CLIENT',
         name: '내담자 테마',
         description: '화사한 분위기 (핑크 계열)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFB6C1 -> var(--mg-custom-FFB6C1)
         preview: '#FFB6C1'},
       {id: 'CONSULTANT',
         name: '상담사 테마',
         description: '활력 충만 분위기 (민트 그린 계열)',
-        preview: '#98FB98'},
+        preview: 'var(--mg-mint-green)'},
       {id: 'ADMIN',
         name: '관리자 테마',
         description: '간결하고 깔끔한 분위기 (블루 계열)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #87CEEB -> var(--mg-custom-87CEEB)
         preview: '#87CEEB'}],
     changeTheme: jest.fn(),
     previewTheme: jest.fn(),

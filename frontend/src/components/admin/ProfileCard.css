@@ -1,0 +1,353 @@
+/* mg-v2-profile-card (통합 상담사/내담자 카드 스펙) */
+
+.mg-v2-profile-card {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--spacing-lg, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 16px);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.mg-v2-profile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-border-focus, #3b82f6);
+}
+
+.mg-v2-profile-card__header {
+  display: flex;
+  gap: var(--spacing-md, 16px);
+  align-items: flex-start;
+  position: relative;
+}
+
+.mg-v2-profile-card__avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--color-background-alt, #f3f4f6);
+  color: var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-bold, 700);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 프로필 이미지: 원형으로 표시, 폴백보다 위에 그리기 */
+.mg-v2-profile-card__avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.mg-v2-profile-card__avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+
+.mg-v2-profile-card__avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mg-v2-profile-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-v2-profile-card__name {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #111827);
+}
+
+.mg-v2-profile-card__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.mg-v2-profile-card__email,
+.mg-v2-profile-card__phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mg-v2-profile-card__badges {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+/* 상담사 레벨 배지 (주니어/매니어/시니어) - 경력 연차 기반 */
+.mg-v2-consultant-level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.mg-v2-consultant-level-badge--junior {
+  background: var(--mg-info-100);
+  color: var(--mg-info-600);
+}
+
+.mg-v2-consultant-level-badge--manier {
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-600);
+}
+
+.mg-v2-consultant-level-badge--senior {
+  background: var(--mg-success-100);
+  color: var(--mg-success-600);
+}
+
+.mg-v2-consultant-level-badge--expert {
+  background: var(--mg-primary-100);
+  color: var(--mg-primary-600);
+}
+
+.mg-v2-consultant-level-badge--master {
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-700);
+}
+
+.mg-v2-profile-card__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-profile-card__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm, 8px);
+}
+
+.mg-v2-profile-card__stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-v2-profile-card__stat-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.mg-v2-profile-card__stat-value {
+  font-size: var(--font-size-md, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #111827);
+}
+
+.mg-v2-profile-card__extra-info {
+  margin-top: var(--spacing-sm, 8px);
+  padding-top: var(--spacing-sm, 8px);
+  border-top: 1px dashed var(--color-border-light, #e5e7eb);
+  line-height: 1.5;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #4b5563);
+  display: flex;
+  gap: 8px;
+}
+
+.mg-v2-profile-card__extra-label {
+  font-weight: var(--font-weight-medium, 500);
+  white-space: nowrap;
+}
+
+.mg-v2-profile-card__extra-value {
+  word-break: break-word;
+}
+
+.mg-v2-profile-card__footer {
+  margin-top: auto;
+  padding-top: var(--spacing-md, 16px);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.mg-v2-profile-card__actions {
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* 프로필 카드 버튼: 어드민 B0KlA·mg 디자인 토큰 적용 (푸터·compact 인라인·테이블 작업 공통) */
+.mg-v2-profile-card__footer .mg-button,
+.mg-v2-profile-card__inline-actions .mg-button,
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.875rem;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-profile-card__footer .mg-button--primary,
+.mg-v2-profile-card__inline-actions .mg-button--primary,
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--primary {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+}
+
+.mg-v2-profile-card__footer .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled),
+.mg-v2-profile-card__inline-actions .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled),
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--ad-b0kla-green);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.mg-v2-profile-card__footer .mg-button--secondary,
+.mg-v2-profile-card__inline-actions .mg-button--secondary,
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--secondary {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-title-color);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-profile-card__footer .mg-button--secondary:hover:not(:disabled):not(.mg-button--disabled),
+.mg-v2-profile-card__inline-actions .mg-button--secondary:hover:not(:disabled):not(.mg-button--disabled),
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--secondary:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-profile-card__footer .mg-button--danger,
+.mg-v2-profile-card__inline-actions .mg-button--danger,
+.mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--danger {
+  background: var(--mg-error-500);
+  color: #fff;
+}
+
+.mg-v2-profile-card__footer .mg-button--danger:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--mg-error-600, #dc2626);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* 작은 카드용 compact 모드 (mg-v2-list-block__grid--small 내 사용) */
+.mg-v2-profile-card--compact {
+  padding: var(--mg-spacing-12, 0.75rem);
+  gap: var(--mg-spacing-8, 0.5rem);
+  min-width: 0;
+}
+
+/* compact: 헤더 줄바꿈 허용, 배지를 두 번째 줄로 내려도 됨 */
+.mg-v2-profile-card--compact .mg-v2-profile-card__header {
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+/* compact: info가 flex로 줄어들 수 있도록 (배지가 밀려 나가는 것 방지) */
+.mg-v2-profile-card--compact .mg-v2-profile-card__info {
+  min-width: 0;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__avatar {
+  width: 36px;
+  height: 36px;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__name {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__contact {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__body,
+.mg-v2-profile-card--compact .mg-v2-profile-card__footer {
+  display: none;
+}
+
+/* compact: 배지 영역을 100% 너비로 두어 두 번째 줄에 배치, 카드 안에서만 표시 */
+.mg-v2-profile-card--compact .mg-v2-profile-card__badges {
+  position: static;
+  flex-basis: 100%;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-4, 0.25rem);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* compact: 배지 폰트/패딩 소폭 축소 (가독성 유지) */
+.mg-v2-profile-card--compact .mg-v2-consultant-level-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__badges > * {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* compact: 본문·footer는 숨김 유지, 헤더 아래 인라인 작업만 표시 */
+.mg-v2-profile-card__inline-actions {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--mg-spacing-8, 0.5rem);
+  padding-top: var(--mg-spacing-8, 0.5rem);
+  border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+}
+
+.mg-v2-client-actions--compact.mg-v2-profile-card__actions {
+  justify-content: flex-start;
+  gap: var(--mg-spacing-4, 0.25rem);
+}
+
+.mg-v2-profile-card__inline-actions .mg-button {
+  padding: 0.35rem 0.5rem;
+  font-size: 11px;
+}
+
+.mg-v2-client-actions--table.mg-v2-profile-card__actions {
+  justify-content: flex-end;
+}

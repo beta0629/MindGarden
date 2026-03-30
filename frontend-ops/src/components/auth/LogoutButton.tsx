@@ -1,34 +1,44 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import MGButton from "@/components/ui/MGButton";
+import { logout } from "@/services/authApi";
 
 export function LogoutButton() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleLogout = () => {
-    startTransition(async () => {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-      router.replace("/auth/login");
-      router.refresh();
-    });
+  const handleLogout = async () => {
+    if (isPending) return;
+    
+    setIsPending(true);
+    
+    try {
+      // 표준화된 로그아웃 API 호출
+      await logout();
+    } catch (error) {
+      console.error("[LogoutButton] 로그아웃 실패:", error);
+      // API 실패해도 클라이언트 쿠키 삭제는 진행 (logout 함수 내부에서 처리)
+    }
+    
+    // 짧은 지연 후 전체 페이지 리로드를 통해 로그인 페이지로 이동
+    // 이렇게 하면 쿠키가 완전히 삭제되고 인증 상태가 초기화됨
+    setTimeout(() => {
+      window.location.href = "/auth/login";
+    }, 100);
   };
 
   return (
-    <button
+    <MGButton
       type="button"
-      className="ghost-button"
+      variant="outline"
       onClick={handleLogout}
-      disabled={isPending}
+      loading={isPending}
+      loadingText="로그아웃 중..."
+      preventDoubleClick={true}
+      clickDelay={1000}
     >
-      {isPending ? "로그아웃 중..." : "로그아웃"}
-    </button>
+      로그아웃
+    </MGButton>
   );
 }
 

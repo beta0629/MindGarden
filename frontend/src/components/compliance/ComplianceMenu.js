@@ -1,13 +1,17 @@
 import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { Link } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import SafeText from '../common/SafeText';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceMenu.css';
 
 /**
  * 컴플라이언스 메뉴 컴포넌트
- * 
- * @author MindGarden
+ *
+ * @author Core Solution
  * @version 1.0.0
  * @since 2024-12-19
  */
@@ -80,13 +84,17 @@ const ComplianceMenu = () => {
     ];
 
     return (
-        <SimpleLayout title="컴플라이언스 관리">
-            <div className="compliance-menu">
-            <div className="menu-header">
-                <h1>⚖️ 컴플라이언스 관리</h1>
-                <p>개인정보보호법 및 관련 법령 준수를 위한 통합 관리 시스템</p>
-            </div>
+        <AdminCommonLayout title="컴플라이언스 관리">
+            <div className="mg-v2-ad-b0kla compliance-menu-shell">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="컴플라이언스 관리 콘텐츠">
+                        <ContentHeader
+                            title="컴플라이언스 관리"
+                            subtitle="개인정보보호법 및 관련 법령 준수를 위한 통합 관리 허브입니다."
+                            titleId="compliance-menu-page-title"
+                        />
 
+            <div className="compliance-menu">
             <div className="menu-grid">
                 {complianceMenuItems.map((item) => (
                     <Link 
@@ -95,11 +103,11 @@ const ComplianceMenu = () => {
                         className={`menu-item ${item.color}`}
                     >
                         <div className="menu-item-icon">
-                            {item.icon}
+                            <SafeText>{item.icon}</SafeText>
                         </div>
                         <div className="menu-item-content">
-                            <h3>{item.title}</h3>
-                            <p>{item.description}</p>
+                            <h3><SafeText>{item.title}</SafeText></h3>
+                            <p><SafeText>{item.description}</SafeText></p>
                         </div>
                         <div className="menu-item-arrow">
                             →
@@ -141,7 +149,10 @@ const ComplianceMenu = () => {
                 </div>
             </div>
             </div>
-        </SimpleLayout>
+                    </ContentArea>
+                </div>
+            </div>
+        </AdminCommonLayout>
     );
 };
 

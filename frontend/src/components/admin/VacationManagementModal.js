@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
+import { X, Calendar, User } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
+/**
  * - 상담사별 휴가 등록/수정/삭제
+/**
  * - 휴가 유형별 세밀한 관리
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-09
  */
 const VacationManagementModal = ({ 
@@ -57,7 +67,7 @@ const VacationManagementModal = ({
         const loadVacationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/VACATION_TYPE');
+                const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
                 if (response && response.length > 0) {
                     // 원하는 휴가 유형만 필터링 (시간이 표시된 구체적인 옵션만)
                     const allowedTypes = [
@@ -94,14 +104,16 @@ const VacationManagementModal = ({
                 console.error('휴가 유형 코드 로드 실패:', error);
                 // 실패 시 기본값 설정 (시간이 표시된 구체적인 옵션만)
                 setVacationTypeOptions([
-                    { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: '#f59e0b', description: '오전반차 - 5시간' },
-                    { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: '#3b82f6', description: '오후반차 - 4시간' },
+                    { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: 'var(--mg-warning-500)', description: '오전반차 - 5시간' },
+                    { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: 'var(--mg-primary-500)', description: '오후반차 - 4시간' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fbbf24 -> var(--mg-custom-fbbf24)
                     { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
-                    { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: '#f59e0b', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: 'var(--mg-warning-500)', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #60a5fa -> var(--mg-custom-60a5fa)
                     { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
-                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: '#3b82f6', description: '오후 두 번째 반반차 (16:00-18:00)' },
-                    { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: '#8b5cf6', description: '사용자가 직접 시간을 설정하는 휴가' },
-                    { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: '#ef4444', description: '하루 종일 휴가' }
+                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: 'var(--mg-primary-500)', description: '오후 두 번째 반반차 (16:00-18:00)' },
+                    { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: 'var(--mg-purple-500)', description: '사용자가 직접 시간을 설정하는 휴가' },
+                    { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: 'var(--mg-error-500)', description: '하루 종일 휴가' }
                 ]);
             } finally {
                 setLoadingCodes(false);
@@ -111,7 +123,7 @@ const VacationManagementModal = ({
         loadVacationTypeCodes();
     }, []);
 
-    /**
+/**
      * 상담사 목록 로드 (활성 상담사만)
      */
     const loadConsultants = async () => {
@@ -132,6 +144,7 @@ const VacationManagementModal = ({
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode,
                         specialty: consultantEntity.specialty,
                         specialtyDetails: consultantEntity.specialtyDetails,
@@ -156,7 +169,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 목록 로드
      */
     const loadVacations = async (consultantId) => {
@@ -222,7 +235,7 @@ const VacationManagementModal = ({
         return null;
     }
 
-    /**
+/**
      * 휴가 등록/수정
      */
     const handleSubmit = async (e) => {
@@ -329,7 +342,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 삭제
      */
     const handleDeleteVacation = async (vacationId, date) => {
@@ -384,14 +397,14 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 유형별 시간 필드 표시 여부
      */
     const shouldShowTimeFields = () => {
         return vacationData.type === 'CUSTOM_TIME';
     };
 
-    /**
+/**
      * 휴가 유형별 기본 시간 설정
      */
     const handleVacationTypeChange = (type) => {
@@ -441,7 +454,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 유형명 변환
      */
     const getVacationTypeName = (type) => {
@@ -464,40 +477,35 @@ const VacationManagementModal = ({
     }
 
     return (
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-flex mg-gap-sm mg-align-center">
-                        <Calendar size={24} />
-                        <h3 className="mg-v2-modal-title">휴가 관리</h3>
-                    </div>
-                    <button 
-                        className="mg-v2-modal-close" 
-                        onClick={onClose}
-                        disabled={loading}
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="휴가 관리"
+            size="large"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 상담사 선택 (관리자만) */}
                     {userRole !== 'CONSULTANT' && (
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">상담사 선택</label>
-                            <select
+                            <CustomSelect
                                 className="mg-v2-select"
-                                value={selectedConsultantId || ''}
-                                onChange={(e) => setSelectedConsultantId(Number(e.target.value))}
+                                value={selectedConsultantId != null ? selectedConsultantId : ''}
+                                onChange={(val) => setSelectedConsultantId(val === '' ? null : Number(val))}
+                                options={[
+                                    { value: '', label: '상담사를 선택하세요' },
+                                    ...consultants.map(consultant => ({
+                                        value: consultant.id,
+                                        label: `${toDisplayString(consultant.name)} (${toDisplayString(consultant.email)})`
+                                    }))
+                                ]}
+                                placeholder="상담사를 선택하세요"
                                 disabled={loading}
-                            >
-                                <option value="">상담사를 선택하세요</option>
-                                {consultants.map(consultant => (
-                                    <option key={consultant.id} value={consultant.id}>
-                                        {consultant.name} ({consultant.email})
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
                     )}
                     
@@ -547,17 +555,17 @@ const VacationManagementModal = ({
 
                                     <div className="form-group">
                                         <label>휴가 유형</label>
-                                        <select 
-                                            value={vacationData.type} 
-                                            onChange={(e) => handleVacationTypeChange(e.target.value)}
+                                        <BadgeSelect
+                                            value={vacationData.type}
+                                            onChange={(val) => handleVacationTypeChange(val)}
+                                            options={vacationTypeOptions.map(option => ({
+                                                value: option.value,
+                                                label: `${option.icon} ${toDisplayString(option.label)} (${option.value})`
+                                            }))}
+                                            placeholder="선택하세요"
                                             disabled={loading || loadingCodes}
-                                        >
-                                            {vacationTypeOptions.map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.icon} {option.label} ({option.value})
-                                                </option>
-                                            ))}
-                                        </select>
+                                            className="mg-v2-form-badge-select"
+                                        />
                                     </div>
                                 </div>
 
@@ -618,17 +626,18 @@ const VacationManagementModal = ({
                                         {existingVacations.map(vacation => (
                                             <div key={vacation.id} className="vacation-item">
                                                 <div className="vacation-info">
-                                                    <div className="vacation-date">{vacation.date}</div>
+                                                    <div className="vacation-date"><SafeText>{vacation.date}</SafeText></div>
                                                     <div className="vacation-type">
-                                                        {getVacationTypeName(vacation.type)}
+                                                        <SafeText>{getVacationTypeName(vacation.type)}</SafeText>
                                                     </div>
                                                     <div className="vacation-time">
-                                                        {vacation.startTime && vacation.endTime 
-                                                            ? `${vacation.startTime} - ${vacation.endTime}`
-                                                            : '하루 종일'
-                                                        }
+                                                        <SafeText>
+                                                          {vacation.startTime && vacation.endTime
+                                                            ? `${toDisplayString(vacation.startTime)} - ${toDisplayString(vacation.endTime)}`
+                                                            : '하루 종일'}
+                                                        </SafeText>
                                                     </div>
-                                                    <div className="vacation-reason">{vacation.reason}</div>
+                                                    <div className="vacation-reason"><SafeText>{vacation.reason}</SafeText></div>
                                                 </div>
                                                 <button
                                                     className="delete-button"
@@ -650,12 +659,11 @@ const VacationManagementModal = ({
                     {/* 메시지 표시 */}
                     {message && (
                         <div className={`message ${message.includes('성공') ? 'success' : 'error'}`}>
-                            {message}
+                            <SafeText>{message}</SafeText>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

@@ -3,24 +3,24 @@
 /* CSS 변수 정의 - 새로운 디자인 시스템과 통합 */
 :root {
   /* 스케줄 모달 색상 변수 - 새로운 디자인 시스템 변수 사용 */
-  --schedule-modal-primary: var(--color-primary, #007AFF);
+  --schedule-modal-primary: var(--color-primary, var(--mg-primary-500));
   --schedule-modal-primary-dark: var(--color-primary-hover, #0056CC);
-  --schedule-modal-primary-gradient: linear-gradient(135deg, var(--color-primary, #007AFF) 0%, var(--color-primary-hover, #0056CC) 100%);
-  --schedule-modal-success: var(--color-success, #28A745);
-  --schedule-modal-warning: var(--color-warning, #FFC107);
-  --schedule-modal-danger: var(--color-danger, #DC3545);
-  --schedule-modal-info: var(--color-info, #17A2B8);
+  --schedule-modal-primary-gradient: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)) 0%, var(--color-primary-hover, #0056CC) 100%);
+  --schedule-modal-success: var(--color-success, var(--mg-success-500));
+  --schedule-modal-warning: var(--color-warning, var(--mg-warning-500));
+  --schedule-modal-danger: var(--color-danger, var(--mg-error-500));
+  --schedule-modal-info: var(--color-info, var(--mg-info-500));
   --schedule-modal-gray: var(--color-text-muted, #8E8E93);
   --schedule-modal-light-gray: var(--color-bg-secondary, #F5F5F7);
   --schedule-modal-border: var(--color-border-secondary, #E8E8ED);
   --schedule-modal-text: var(--color-text-primary, #1D1D1F);
   --schedule-modal-text-light: var(--color-text-secondary, #424245);
   --schedule-modal-white: var(--color-bg-primary, #FAFAFA);
-  --schedule-modal-shadow: var(--shadow-glass, 0 20px 40px rgba(0, 0, 0, 0.15));
+  --schedule-modal-shadow: var(--shadow-glass, 0 20px 40px var(--mg-shadow-medium));
   --schedule-modal-shadow-hover: var(--shadow-lg, 0 8px 25px rgba(0, 0, 0, 0.2));
   
   /* 스케줄 모달 크기 변수 - 새로운 디자인 시스템 변수 사용 */
-  --schedule-modal-width: 450px;
+  --schedule-modal-width: min(90vw, 900px);
   --schedule-modal-max-height: 60vh;
   --schedule-modal-min-height: 300px;
   --schedule-modal-border-radius: var(--border-radius-lg, 16px);
@@ -58,7 +58,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--modal-backdrop, rgba(0, 0, 0, 0.5));
+  background-color: var(--modal-backdrop, var(--mg-overlay));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -184,7 +184,7 @@
   text-align: center;
   margin-bottom: 20px;
   padding: var(--spacing-md) 0;
-  background: linear-gradient(135deg, var(--color-bg-secondary, #F5F5F7) 0%, var(--color-bg-tertiary, #F8F9FA) 100%);
+  background: linear-gradient(135deg, var(--color-bg-secondary, #F5F5F7) 0%, var(--color-bg-tertiary, var(--mg-gray-100)) 100%);
   border-radius: 12px;
   border: none;
 }
@@ -296,7 +296,7 @@
 
 .filter-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--shadow-md, 0 4px 12px var(--mg-shadow-light));
 }
 
 .filter-button.active {
@@ -321,10 +321,11 @@
   border-color: var(--schedule-modal-danger);
 }
 
+/* 가용 도트: 전역 mg-availability-dot 또는 mg-status-dot 사용 (mindgarden-design-system.css) */
 .availability-indicator {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full, 50%);
   background: currentColor;
 }
 
@@ -390,7 +391,7 @@
   text-align: left;
   position: relative;
   overflow: visible;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   margin: 0;
   gap: 16px;
 }
@@ -555,7 +556,7 @@
 .availability-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full, 50%);
   background: currentColor;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
@@ -611,14 +612,14 @@
 }
 
 /* 모달 푸터 */
-.modal-footer {
+.mg-modal__footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: var(--spacing-lg) var(--schedule-modal-padding);
   border-top: 1px solid var(--schedule-modal-border);
   background-color: var(--schedule-modal-light-gray);
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 /* 버튼 스타일 */
@@ -642,24 +643,24 @@
   cursor: not-allowed;
 }
 
-.btn-primary {
+.mg-btn--primary {
   background: var(--schedule-modal-primary-gradient);
   color: var(--schedule-modal-white);
   border: none;
 }
 
-.btn-primary:hover:not(:disabled) {
+.mg-btn--primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
-.btn-secondary {
+.mg-btn--secondary {
   background: var(--schedule-modal-gray);
   color: var(--schedule-modal-white);
   border: none;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.mg-btn--secondary:hover:not(:disabled) {
   background: var(--color-gray-dark, #5a6268);
   border-color: var(--color-gray-dark, #5a6268);
   transform: translateY(-2px);
@@ -679,21 +680,22 @@
   box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
-/* 선택 표시 */
-.selection-indicator {
+/* 선택 표시: 전역 mg-selection-indicator 사용 (mindgarden-design-system.css). 레이아웃만 유지 */
+.selection-indicator,
+.mg-selection-indicator {
   position: absolute;
   top: 8px;
   right: 8px;
   width: 24px;
   height: 24px;
-  background: var(--schedule-modal-success);
-  color: var(--schedule-modal-white);
-  border-radius: 50%;
+  background-color: var(--mg-success-500, var(--schedule-modal-success));
+  color: var(--mg-white, var(--schedule-modal-white));
+  border-radius: var(--border-radius-full, 50%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-sm);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold, 700);
   animation: selectionPulse 0.3s ease;
 }
 
@@ -750,7 +752,7 @@
     padding: var(--spacing-md);
   }
 
-  .modal-footer {
+  .mg-modal__footer {
     padding: var(--spacing-md);
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -802,7 +804,7 @@
     overflow-y: auto;
   }
 
-  .modal-footer {
+  .mg-modal__footer {
     padding: var(--spacing-sm);
     position: sticky;
     bottom: 0;
@@ -986,7 +988,7 @@
     font-size: var(--font-size-xs);
   }
   
-  .modal-footer {
+  .mg-modal__footer {
     padding: var(--spacing-md) var(--spacing-lg);
     flex-direction: column;
     gap: 8px;

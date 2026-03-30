@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * ERP 보고서 모달 컴포넌트
+/**
  * - 월별/분기별/연별 보고서 생성
+/**
  * - 보고서 다운로드 기능
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const ErpReportModal = ({ isOpen, onClose }) => {
@@ -31,12 +38,12 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 지점 목록 로드
      */
     const loadBranches = async () => {
         try {
-            const response = await apiGet('/api/branches');
+            const response = await apiGet('/api/v1/branches');
             if (response && response.success !== false) {
                 setBranches(response.data || []);
             }
@@ -45,7 +52,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 보고서 생성
      */
     const handleGenerateReport = async () => {
@@ -60,10 +67,11 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 type: reportType,
                 period: period,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
 
-            const response = await apiGet(`/api/erp/reports?${params}`);
+            const response = await apiGet(`/api/v1/erp/reports?${params}`);
             
             if (response && response.success !== false) {
                 setReportData(response.data);
@@ -73,14 +81,14 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             }
 
         } catch (error) {
-            console.error('❌ 보고서 생성 실패:', error);
+            console.error('보고서 생성 실패:', error);
             notificationManager.error(error.message || '보고서 생성 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
     };
 
-    /**
+/**
      * 보고서 다운로드
      */
     const handleDownloadReport = async () => {
@@ -93,11 +101,12 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 type: reportType,
                 period: period,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || '',
                 format: 'excel'
             });
 
-            const response = await fetch(`/api/erp/reports/download?${params}`, {
+            const response = await fetch(`/api/v1/erp/reports/download?${params}`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -118,12 +127,12 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             }
 
         } catch (error) {
-            console.error('❌ 보고서 다운로드 실패:', error);
+            console.error('보고서 다운로드 실패:', error);
             notificationManager.error(error.message || '다운로드 중 오류가 발생했습니다.');
         }
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {
@@ -134,21 +143,16 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <FileBarChart size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">ERP 보고서</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="운영 리포트"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 보고서 설정 */}
                     <div className="mg-v2-form-section">
@@ -206,33 +210,35 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 />
                             )}
                             {reportType === 'quarterly' && (
-                                <select
-                                    id="period"
+                                <BadgeSelect
                                     value={period}
-                                    onChange={(e) => setPeriod(e.target.value)}
+                                    onChange={(val) => setPeriod(val)}
+                                    options={[
+                                        { value: '', label: '분기를 선택하세요' },
+                                        { value: '2025-Q1', label: '2025년 1분기' },
+                                        { value: '2025-Q2', label: '2025년 2분기' },
+                                        { value: '2025-Q3', label: '2025년 3분기' },
+                                        { value: '2025-Q4', label: '2025년 4분기' }
+                                    ]}
+                                    placeholder="분기를 선택하세요"
                                     disabled={loading}
-                                    className="mg-v2-form-select"
-                                >
-                                    <option key="quarter-default" value="">분기를 선택하세요</option>
-                                    <option key="2025-Q1" value="2025-Q1">2025년 1분기</option>
-                                    <option key="2025-Q2" value="2025-Q2">2025년 2분기</option>
-                                    <option key="2025-Q3" value="2025-Q3">2025년 3분기</option>
-                                    <option key="2025-Q4" value="2025-Q4">2025년 4분기</option>
-                                </select>
+                                    className="mg-v2-form-badge-select"
+                                />
                             )}
                             {reportType === 'yearly' && (
-                                <select
-                                    id="period"
+                                <BadgeSelect
                                     value={period}
-                                    onChange={(e) => setPeriod(e.target.value)}
+                                    onChange={(val) => setPeriod(val)}
+                                    options={[
+                                        { value: '', label: '연도를 선택하세요' },
+                                        { value: '2025', label: '2025년' },
+                                        { value: '2024', label: '2024년' },
+                                        { value: '2023', label: '2023년' }
+                                    ]}
+                                    placeholder="연도를 선택하세요"
                                     disabled={loading}
-                                    className="mg-v2-form-select"
-                                >
-                                    <option key="year-default" value="">연도를 선택하세요</option>
-                                    <option key="2025" value="2025">2025년</option>
-                                    <option key="2024" value="2024">2024년</option>
-                                    <option key="2023" value="2023">2023년</option>
-                                </select>
+                                    className="mg-v2-form-badge-select"
+                                />
                             )}
                         </div>
 
@@ -241,20 +247,20 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 <Building size={20} className="mg-v2-form-label-icon" />
                                 지점 선택
                             </label>
-                            <select
-                                id="branch"
+                            <CustomSelect
                                 value={branchCode}
-                                onChange={(e) => setBranchCode(e.target.value)}
+                                onChange={(val) => setBranchCode(val)}
+                                options={[
+                                    { value: '', label: '전체 지점' },
+                                    ...branches.map(branch => ({
+                                        value: branch.code,
+                                        label: branch.name
+                                    }))
+                                ]}
+                                placeholder="전체 지점"
                                 disabled={loading}
                                 className="mg-v2-form-select"
-                            >
-                                <option key="branch-default" value="">전체 지점</option>
-                                {branches.map(branch => (
-                                    <option key={branch.code} value={branch.code}>
-                                        {branch.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         <div className="mg-v2-modal-footer">
@@ -271,7 +277,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 onClick={handleGenerateReport}
                                 disabled={loading || !period}
                             >
-                                {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                {loading ? <div className="mg-loading">로딩중...</div> : (
                                     <>
                                         <TrendingUp size={20} className="mg-v2-icon-inline" />
                                         보고서 생성
@@ -351,9 +357,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

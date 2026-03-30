@@ -1,28 +1,33 @@
 /**
  * 동적 권한 관리 유틸리티
+/**
  * 백엔드의 DynamicPermissionService와 연동하여 권한을 체크합니다.
  */
 
 import { apiGet } from './ajax';
+import { RoleUtils } from '../constants/roles';
 
 /**
  * 사용자의 권한 목록을 가져옵니다.
+/**
  * @param {Function} setUserPermissions - 권한 목록을 설정할 상태 함수 (선택사항)
  */
 export const fetchUserPermissions = async (setUserPermissions = null) => {
     try {
         console.log('🔍 사용자 권한 목록 조회 중...');
-        const response = await apiGet('/api/permissions/my-permissions');
+        const response = await apiGet('/api/v1/permissions/my-permissions');
         
-        if (response && response.success && response.data) {
-            const permissions = response.data.permissions || [];
+        // apiGet이 이미 ApiResponse 래퍼를 처리하므로, response는 직접 data입니다
+        if (response && typeof response === 'object') {
+            // response가 { permissions: [...], userRole: '...', permissionCount: ... } 형태
+            const permissions = response.permissions || [];
             console.log('✅ 사용자 권한 조회 완료:', permissions);
             if (setUserPermissions) {
                 setUserPermissions(permissions);
             }
             return permissions;
         } else {
-            console.warn('⚠️ 권한 조회 실패:', response?.message || 'Unknown error');
+            console.warn('⚠️ 권한 조회 실패: 응답 형식이 올바르지 않음', response);
             if (setUserPermissions) {
                 setUserPermissions([]);
             }
@@ -39,8 +44,11 @@ export const fetchUserPermissions = async (setUserPermissions = null) => {
 
 /**
  * 특정 권한을 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {string} permissionCode - 확인할 권한 코드
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasPermission = (userPermissions, permissionCode) => {
@@ -56,8 +64,11 @@ export const hasPermission = (userPermissions, permissionCode) => {
 
 /**
  * 여러 권한 중 하나라도 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {Array} permissionCodes - 확인할 권한 코드 목록
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasAnyPermission = (userPermissions, permissionCodes) => {
@@ -76,8 +87,11 @@ export const hasAnyPermission = (userPermissions, permissionCodes) => {
 
 /**
  * 모든 권한을 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {Array} permissionCodes - 확인할 권한 코드 목록
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasAllPermissions = (userPermissions, permissionCodes) => {
@@ -96,7 +110,9 @@ export const hasAllPermissions = (userPermissions, permissionCodes) => {
 
 /**
  * 권한 체크를 위한 React Hook
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @returns {Object} 권한 체크 함수들
  */
 export const usePermissions = (userPermissions) => {
@@ -109,6 +125,7 @@ export const usePermissions = (userPermissions) => {
 
 /**
  * 권한 코드 상수 정의
+/**
  * 백엔드의 PermissionInitializationService와 일치해야 합니다.
  */
 export const PERMISSIONS = {
@@ -155,7 +172,6 @@ export const PERMISSIONS = {
     TAX_MANAGE: 'TAX_MANAGE',
     SALARY_MANAGE: 'SALARY_MANAGE',
     REFUND_MANAGE: 'REFUND_MANAGE',
-    BRANCH_FINANCIAL_VIEW: 'BRANCH_FINANCIAL_VIEW',
     ANNUAL_FINANCIAL_REPORT_VIEW: 'ANNUAL_FINANCIAL_REPORT_VIEW',
     
     // 결제 관리
@@ -175,10 +191,6 @@ export const PERMISSIONS = {
     ITEM_MANAGE: 'ITEM_MANAGE',
     BUDGET_MANAGE: 'BUDGET_MANAGE',
     
-    // 지점 관리
-    BRANCH_VIEW: 'BRANCH_VIEW',
-    BRANCH_MANAGE: 'BRANCH_MANAGE',
-    
     // 시스템 관리
     PERMISSION_MANAGEMENT: 'PERMISSION_MANAGEMENT',
     SYSTEM_SETTINGS_MANAGE: 'SYSTEM_SETTINGS_MANAGE',
@@ -196,7 +208,6 @@ export const PERMISSIONS = {
     DATA_IMPORT: 'DATA_IMPORT',
     
     // 대시보드
-    HQ_DASHBOARD_VIEW: 'HQ_DASHBOARD_VIEW',
     INTEGRATED_FINANCE_VIEW: 'INTEGRATED_FINANCE_VIEW',
     
     // 소셜 계정 관리
@@ -214,10 +225,9 @@ export const PERMISSIONS = {
 
 /**
  * 권한별 역할 매핑 (백엔드와 일치)
- * 특정 권한이 필요한 기능에 접근할 수 있는 역할들을 정의합니다.
+ * 4역할: ADMIN, STAFF, CONSULTANT, CLIENT
  */
 export const PERMISSION_ROLES = {
-    // 관리자 권한 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN 등)
     ADMIN_PERMISSIONS: [
         PERMISSIONS.USER_MANAGE,
         PERMISSIONS.CONSULTANT_MANAGE,
@@ -228,23 +238,6 @@ export const PERMISSION_ROLES = {
         PERMISSIONS.PAYMENT_ACCESS,
         PERMISSIONS.SYSTEM_SETTINGS_MANAGE
     ],
-    
-    // 본사 관리자 권한 (HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER)
-    HQ_ADMIN_PERMISSIONS: [
-        PERMISSIONS.ERP_ACCESS,
-        PERMISSIONS.ERP_DASHBOARD_VIEW,
-        PERMISSIONS.BRANCH_VIEW,
-        PERMISSIONS.ANNUAL_FINANCIAL_REPORT_VIEW,
-        PERMISSIONS.HQ_DASHBOARD_VIEW
-    ],
-    
-    // 지점 관리자 권한 (BRANCH_SUPER_ADMIN, BRANCH_ADMIN, BRANCH_MANAGER)
-    BRANCH_ADMIN_PERMISSIONS: [
-        PERMISSIONS.BRANCH_FINANCIAL_VIEW,
-        PERMISSIONS.CONSULTANT_AVAILABILITY_MANAGE,
-        PERMISSIONS.VACATION_MANAGE
-    ],
-    
     // 상담사 권한 (CONSULTANT)
     CONSULTANT_PERMISSIONS: [
         PERMISSIONS.SCHEDULE_VIEW,
@@ -263,10 +256,14 @@ export const PERMISSION_ROLES = {
 
 /**
  * 권한 체크를 위한 편의 함수들
+ * ERP 관련 권한은 관리자 역할이면 항상 허용
  */
 export const PermissionChecks = {
     // 사용자 관리 권한
-    canManageUsers: (permissions) => hasPermission(permissions, PERMISSIONS.USER_MANAGE),
+    canManageUsers: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.USER_MANAGE);
+    },
     canViewUsers: (permissions) => hasPermission(permissions, PERMISSIONS.USER_VIEW),
     canChangeUserRoles: (permissions) => hasPermission(permissions, PERMISSIONS.USER_ROLE_CHANGE),
     
@@ -292,19 +289,49 @@ export const PermissionChecks = {
     canManageFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE),
     canViewFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW),
     
-    // ERP 접근 권한
-    canAccessERP: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_ACCESS),
-    canViewERPDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW),
+    // ERP 접근 권한 (관리자 허용)
+    canAccessERP: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ERP_ACCESS);
+    },
+    canViewERPDashboard: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW);
+    },
     
-    // ERP 하위 메뉴 권한
-    canManageSalary: (permissions) => hasPermission(permissions, PERMISSIONS.SALARY_MANAGE),
-    canManageTax: (permissions) => hasPermission(permissions, PERMISSIONS.TAX_MANAGE),
-    canManageRefund: (permissions) => hasPermission(permissions, PERMISSIONS.REFUND_MANAGE),
-    canViewPurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW),
-    canManagePurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE),
-    canManageApprovals: (permissions) => hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE),
-    canManageItems: (permissions) => hasPermission(permissions, PERMISSIONS.ITEM_MANAGE),
-    canManageBudget: (permissions) => hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE),
+    // ERP 하위 메뉴 권한 (관리자 허용)
+    canManageSalary: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.SALARY_MANAGE);
+    },
+    canManageTax: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.TAX_MANAGE);
+    },
+    canManageRefund: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.REFUND_MANAGE);
+    },
+    canViewPurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW);
+    },
+    canManagePurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE);
+    },
+    canManageApprovals: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE);
+    },
+    canManageItems: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ITEM_MANAGE);
+    },
+    canManageBudget: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE);
+    },
     
     // 결제 관리 권한
     canAccessPayment: (permissions) => hasPermission(permissions, PERMISSIONS.PAYMENT_ACCESS),
@@ -317,8 +344,10 @@ export const PermissionChecks = {
     // 보고서 및 대시보드 권한
     canViewReports: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW),
     canViewDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
-    canViewHQDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.HQ_DASHBOARD_VIEW),
-    canViewIntegratedFinance: (permissions) => hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW),
+    canViewIntegratedFinance: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW);
+    },
     canViewStatistics: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW) || hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     
     // 재무 접근 권한 (반복 지출 관리용)

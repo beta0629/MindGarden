@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎨 Core Solution 통합 디자인 토큰 (CI/BI 대응) */
+@import './styles/unified-design-tokens.css';
+@import './styles/dashboard-tokens-extension.css';
+
 body {
   margin: 0;
   padding: 0;
@@ -10,8 +14,8 @@ body {
     'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8f9fa;
-  color: #333;
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-800);
 }
 
 /* 전역 select 드롭다운 z-index 수정 */
@@ -71,11 +75,11 @@ select:focus option {
 }
 
 /* 모달과 오버레이의 z-index 설정 */
-.modal-overlay, .overlay {
+.mg-modal__overlay, .overlay {
   z-index: var(--z-index-modal-overlay);
 }
 
-.modal, .modal-content {
+.modal, .mg-modal__content {
   z-index: var(--z-index-modal);
 }
 
@@ -147,7 +151,7 @@ select {
 }
 
 /* 모달 내 select 완전 고정 */
-.modal select, .modal-content select {
+.modal select, .mg-modal__content select {
   position: relative;
   z-index: 1;
   transform: none;
@@ -180,8 +184,8 @@ body.modal-open > *:not(.recurring-expense-modal-overlay) {
 
 /* 모든 모달 내부 드롭다운 고정 */
 .modal select,
-.modal-content select,
-.modal-overlay select,
+.mg-modal__content select,
+.mg-modal__overlay select,
 .modal-backdrop select {
   position: relative;
   transform: none;
@@ -226,11 +230,11 @@ code {
 }
 
 /* 기본 카드 스타일 */
-/* .card 스타일은 glassmorphism.css에서 관리 */
+/* .card: mindgarden-design-system / 06-components 카드 레이어 */
 
 /* 기본 버튼 스타일 */
 .btn {
-  background: #007bff;
+  background: var(--mg-primary-500);
   color: white;
   border: none;
   border-radius: 4px;
@@ -240,5 +244,72 @@ code {
 }
 
 .btn:hover {
-  background: #0056b3;
+  background: var(--mg-primary-600);
+}
+
+/* ===== 대시보드 공통 스타일 ===== */
+.mg-dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.mg-dashboard-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.mg-dashboard-error__title {
+  color: var(--mg-error-500);
+  margin-bottom: 1rem;
+}
+
+.mg-dashboard-error__message {
+  color: var(--mg-secondary-500);
+  margin-bottom: 1rem;
+}
+
+.mg-dashboard-error__retry-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--mg-primary-500);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mg-dashboard-error__retry-button:hover {
+  background-color: var(--mg-primary-600);
+}
+
+/* 대시보드 레이아웃 스타일 */
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.dashboard-masonry {
+  column-gap: var(--spacing-md);
+}
+
+/* 위젯 컨테이너 스타일 (CSS 변수 사용) */
+.widget-container {
+  width: var(--widget-width, auto);
+  height: var(--widget-height, auto);
+  min-width: var(--widget-min-width, auto);
+  min-height: var(--widget-min-height, auto);
+  max-width: var(--widget-max-width, none);
+  max-height: var(--widget-max-height, none);
+}
+
+/* 아이콘 색상 유틸리티 */
+.mg-icon-primary {
+  color: var(--color-primary);
 }

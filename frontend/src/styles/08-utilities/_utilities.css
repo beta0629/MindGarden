@@ -15,7 +15,7 @@
 .mt-1 { margin-top: var(--spacing-xs); }
 .mt-2 { margin-top: var(--spacing-sm); }
 .mt-3 { margin-top: var(--spacing-md); }
-.mt-4 { margin-top: var(--spacing-lg); }
+.mg-mt--md { margin-top: var(--spacing-lg); }
 .mt-5 { margin-top: var(--spacing-xl); }
 .mt-6 { margin-top: var(--spacing-2xl); }
 
@@ -23,7 +23,7 @@
 .mb-1 { margin-bottom: var(--spacing-xs); }
 .mb-2 { margin-bottom: var(--spacing-sm); }
 .mb-3 { margin-bottom: var(--spacing-md); }
-.mb-4 { margin-bottom: var(--spacing-lg); }
+.mg-mb--md { margin-bottom: var(--spacing-lg); }
 .mb-5 { margin-bottom: var(--spacing-xl); }
 .mb-6 { margin-bottom: var(--spacing-2xl); }
 
@@ -48,7 +48,7 @@
 .p-1 { padding: var(--spacing-xs); }
 .p-2 { padding: var(--spacing-sm); }
 .p-3 { padding: var(--spacing-md); }
-.p-4 { padding: var(--spacing-lg); }
+.mg-p--md { padding: var(--spacing-lg); }
 .p-5 { padding: var(--spacing-xl); }
 .p-6 { padding: var(--spacing-2xl); }
 

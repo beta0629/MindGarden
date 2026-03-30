@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { createFeatureFlag } from "@/services/featureFlagClient";
+import MGButton from "@/components/ui/MGButton";
 
 export function FeatureFlagCreateForm() {
   const router = useRouter();
@@ -91,9 +92,16 @@ export function FeatureFlagCreateForm() {
         </label>
       </div>
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "생성 중..." : "Feature Flag 생성"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="생성 중..."
+          preventDoubleClick={true}
+          clickDelay={1000}
+        >
+          Feature Flag 생성
+        </MGButton>
         {feedback && (
           <p
             className={`form-feedback ${

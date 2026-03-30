@@ -1,25 +1,40 @@
-/* ============================================
-   내담자 대시보드 - 화사하고 산뜻한 디자인
-   ============================================ */
+/**
+ * 내담자 대시보드 CSS - 표준화 적용 버전
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 표준화 및 디자인 중앙화
+ * 모든 하드코딩된 값을 CSS 변수로 교체
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ * 네이밍: BEM 규칙 (mg-{component}-{element}--{modifier})
+ */
 
+/* ===== Import 공통 스타일 및 테마 ===== */
+@import '../../styles/dashboard-tokens-extension.css';
+@import '../../styles/themes/client-theme.css';
+
+/* ===== 내담자 대시보드 테마 변수 ===== */
 .client-dashboard {
-  --client-primary: #FFB6C1;      /* 연한 핑크 */
-  --client-secondary: #B6E5D8;    /* 민트 */
-  --client-success: #98E4D8;      /* 연한 청록 */
-  --client-info: #A8D8EA;         /* 연한 하늘색 */
-  --client-warning: #FFE5B4;      /* 연한 피치 */
-  --client-gradient-1: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
-  --client-gradient-2: linear-gradient(135deg, #E8F5E9 0%, #E1F5FE 100%);
-  --client-gradient-3: linear-gradient(135deg, #FFF3E0 0%, #FCE4EC 100%);
-  --client-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
-  --client-shadow-hover: 0 8px 30px rgba(255, 182, 193, 0.25);
+  --client-primary: var(--mg-client-primary, var(--mg-primary-400));
+  --client-secondary: var(--mg-success-300);
+  --client-success: var(--mg-success-400);
+  --client-info: var(--mg-primary-300);
+  --client-warning: var(--mg-warning-300);
+  --client-gradient-1: linear-gradient(135deg, var(--mg-pink-50) 0%, var(--mg-yellow-50) 100%);
+  --client-gradient-2: linear-gradient(135deg, var(--mg-success-50) 0%, var(--mg-primary-50) 100%);
+  --client-gradient-3: linear-gradient(135deg, var(--mg-orange-50) 0%, var(--mg-pink-50) 100%);
+  --client-shadow: var(--mg-shadow-md);
+  --client-shadow-hover: var(--mg-shadow-lg);
 }
 
-/* 대시보드 배경 패턴 및 애니메이션 */
+/* ===== 대시보드 배경 패턴 및 애니메이션 ===== */
 .mg-v2-dashboard-layout {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #FFF5F8 0%, #F0FDF4 50%, #F0F9FF 100%);
+  background: linear-gradient(135deg, 
+    var(--mg-pink-50) 0%, 
+    var(--mg-success-50) 50%, 
+    var(--mg-primary-50) 100%);
   overflow: hidden;
 }
 
@@ -31,11 +46,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  opacity: 0.03;
+  opacity: var(--pattern-opacity-subtle, 0.03);
   background-image: 
-    repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255, 182, 193, 0.5) 35px, rgba(255, 182, 193, 0.5) 70px),
-    repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(182, 229, 216, 0.5) 35px, rgba(182, 229, 216, 0.5) 70px);
-  animation: patternMove 20s linear infinite;
+    repeating-linear-gradient(45deg, transparent, transparent var(--pattern-size-base, 2.1875rem), 
+      rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-base, 2.1875rem), 
+      rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-double, 4.375rem)),
+    repeating-linear-gradient(-45deg, transparent, transparent var(--pattern-size-base, 2.1875rem), 
+      rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-base, 2.1875rem), 
+      rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-double, 4.375rem));
+  animation: patternMove var(--mg-animation-slow, 20s) linear infinite;
   pointer-events: none;
   z-index: 0;
 }
@@ -51,10 +70,10 @@
   pointer-events: none;
   z-index: 0;
   background: 
-    radial-gradient(circle at 20% 50%, rgba(255, 182, 193, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(182, 229, 216, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(168, 216, 234, 0.08) 0%, transparent 50%);
-  animation: backgroundFloat 15s ease-in-out infinite;
+    radial-gradient(circle at 20% 50%, rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(var(--mg-primary-400-rgb, var(--color-primary-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%);
+  animation: backgroundFloat var(--mg-animation-normal, 15s) ease-in-out infinite;
 }
 
 /* 패턴 이동 애니메이션 */
@@ -63,7 +82,7 @@
     transform: translate(0, 0);
   }
   100% {
-    transform: translate(70px, 70px);
+    transform: translate(var(--pattern-size-double, 4.375rem), var(--pattern-size-double, 4.375rem));
   }
 }
 
@@ -71,15 +90,15 @@
 @keyframes backgroundFloat {
   0%, 100% {
     transform: translate(0, 0) scale(1);
-    opacity: 1;
+    opacity: var(--opacity-full, 1);
   }
   33% {
-    transform: translate(30px, -30px) scale(1.1);
-    opacity: 0.8;
+    transform: translate(var(--mg-spacing-lg), calc(var(--mg-spacing-lg) * -1)) scale(1.1);
+    opacity: var(--opacity-hover, 0.8);
   }
   66% {
-    transform: translate(-30px, 30px) scale(0.9);
-    opacity: 0.9;
+    transform: translate(calc(var(--mg-spacing-lg) * -1), var(--mg-spacing-lg)) scale(0.9);
+    opacity: var(--opacity-hover, 0.9);
   }
 }
 
@@ -89,55 +108,52 @@
   z-index: 1;
 }
 
-/* ============================================
-   웰컴 헤더
-   ============================================ */
-
+/* ===== 웰컴 헤더 ===== */
 .client-dashboard__welcome {
   background: var(--client-gradient-1);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-xxl);
-  margin-bottom: var(--spacing-xl);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-xl);
+  margin-bottom: var(--mg-spacing-xl);
   box-shadow: var(--client-shadow);
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp var(--mg-animation-slow) var(--mg-easing);
 }
 
 .client-dashboard__welcome-content {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: var(--mg-spacing-lg);
   flex-wrap: wrap;
 }
 
 .client-dashboard__welcome-icon {
-  width: calc(var(--spacing-xl) * 4);
-  height: calc(var(--spacing-xl) * 4);
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  border-radius: var(--border-radius-full);
+  width: calc(var(--mg-spacing-xl) * 4);
+  height: calc(var(--mg-spacing-xl) * 4);
+  background: linear-gradient(135deg, var(--mg-grade-client-gold), var(--mg-warning-500));
+  border-radius: var(--mg-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-white);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-  animation: pulse 2s ease-in-out infinite;
+  color: var(--mg-white);
+  box-shadow: var(--mg-shadow-md);
+  animation: pulse var(--mg-animation-slow, 2s) ease-in-out infinite;
 }
 
 .client-dashboard__welcome-text {
   flex: 1;
-  min-width: calc(var(--spacing-lg) * 10);
+  min-width: calc(var(--mg-spacing-lg) * 10);
 }
 
 .client-dashboard__greeting {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
-  line-height: 1.2;
+  font-size: var(--mg-font-xxl);
+  font-weight: var(--mg-font-bold);
+  color: var(--mg-text-primary);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+  line-height: var(--mg-line-height-normal);
 }
 
 .client-dashboard__name {
-  color: #FF69B4;
-  background: linear-gradient(135deg, #FF69B4, #FFB6C1);
+  color: var(--mg-client-primary);
+  background: linear-gradient(135deg, var(--mg-client-primary), var(--mg-client-primary-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -146,49 +162,45 @@
 .client-dashboard__subtitle {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
+  gap: var(--mg-spacing-sm);
+  font-size: var(--mg-font-md);
+  color: var(--mg-text-secondary);
   margin: 0;
 }
 
 .client-dashboard__time {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-sm);
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  background: var(--cs-glass-light);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-md);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
+  box-shadow: var(--mg-shadow-sm);
 }
 
-/* ============================================
-   통계 카드 (Droplet Glass 적용)
-   ============================================ */
-
+/* ===== 통계 카드 ===== */
 .client-dashboard__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width), 1fr));
+  gap: var(--mg-spacing-lg);
+  margin-bottom: var(--mg-spacing-xl);
 }
 
 .client-dashboard__stat-card {
-  /* Droplet Glass 효과 */
-  background: var(--droplet-bg);
-  backdrop-filter: var(--droplet-backdrop-filter);
-  -webkit-backdrop-filter: var(--droplet-backdrop-filter);
-  border: 1px solid var(--droplet-border);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
+  background: var(--mg-bg-card);
+  backdrop-filter: blur(var(--mg-glass-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--mg-glass-blur, 10px));
+  border: var(--border-width) solid var(--mg-border-light);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-xl);
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
-  box-shadow: var(--droplet-shadow);
-  transition: all var(--transition-normal) ease;
+  gap: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  transition: all var(--mg-transition-normal) var(--mg-easing);
   position: relative;
   overflow: hidden;
 }
@@ -198,38 +210,13 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: calc(var(--spacing-xl) * 5);
-  height: calc(var(--spacing-xl) * 5);
-  border-radius: var(--border-radius-full);
-  opacity: 0.1;
+  width: calc(var(--mg-spacing-xl) * 5);
+  height: calc(var(--mg-spacing-xl) * 5);
+  border-radius: var(--mg-radius-full);
+  opacity: var(--pattern-opacity-light, 0.1);
   transform: translate(30%, -30%);
   pointer-events: none;
   z-index: 0;
-}
-
-/* Droplet Glass 배경 패턴 (은은한 애니메이션) */
-.client-dashboard__stat-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--droplet-pattern-background);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
-  animation: dropletPatternPulse 8s ease-in-out infinite;
-}
-
-/* 드롭렛 패턴 펄스 애니메이션 */
-@keyframes dropletPatternPulse {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }
 
 .client-dashboard__stat-card > * {
@@ -254,38 +241,36 @@
 }
 
 .client-dashboard__stat-card:hover {
-  background: rgba(255, 255, 255, var(--glass-hover-opacity));
-  backdrop-filter: saturate(200%) blur(var(--glass-hover-blur));
-  -webkit-backdrop-filter: saturate(200%) blur(var(--glass-hover-blur));
-  transform: translateY(var(--hover-lift));
-  box-shadow: var(--glass-hover-shadow);
+  background: var(--mg-bg-card-hover);
+  transform: translateY(calc(var(--spacing-xs) * -1));
+  box-shadow: var(--mg-shadow-xl);
 }
 
 .client-dashboard__stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--border-radius-lg);
+  width: calc(var(--mg-spacing-xl) * 2.5);
+  height: calc(var(--mg-spacing-xl) * 2.5);
+  border-radius: var(--mg-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-white);
+  color: var(--mg-white);
   flex-shrink: 0;
 }
 
 .client-dashboard__stat-card--primary .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, #FFB6C1, #FF69B4);
+  background: linear-gradient(135deg, var(--client-primary), var(--mg-primary-500));
 }
 
 .client-dashboard__stat-card--success .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, #98E4D8, #4DD0E1);
+  background: linear-gradient(135deg, var(--client-success), var(--mg-success-500));
 }
 
 .client-dashboard__stat-card--info .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, #A8D8EA, #64B5F6);
+  background: linear-gradient(135deg, var(--client-info), var(--mg-primary-400));
 }
 
 .client-dashboard__stat-card--warning .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, #FFE5B4, #FFD54F);
+  background: linear-gradient(135deg, var(--client-warning), var(--mg-warning-500));
 }
 
 .client-dashboard__stat-content {
@@ -293,99 +278,93 @@
 }
 
 .client-dashboard__stat-value {
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  font-size: var(--mg-font-xxxl);
+  font-weight: var(--mg-font-bold);
+  color: var(--mg-text-primary);
   line-height: 1;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--mg-spacing-xs);
 }
 
 .client-dashboard__stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+  font-weight: var(--mg-font-medium);
 }
 
-/* ============================================
-   섹션
-   ============================================ */
-
+/* ===== 섹션 ===== */
 .client-dashboard__section {
-  background: var(--color-white);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
+  background: var(--mg-bg-card);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-xl);
+  margin-bottom: var(--mg-spacing-xl);
   box-shadow: var(--client-shadow);
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp var(--mg-animation-slow) var(--mg-easing);
 }
 
 .client-dashboard__section-header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--mg-spacing-lg);
 }
 
 .client-dashboard__section-title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
+  gap: var(--mg-spacing-md);
+  font-size: var(--mg-font-xl);
+  font-weight: var(--mg-font-bold);
+  color: var(--mg-text-primary);
+  margin: 0 0 var(--mg-spacing-lg) 0;
 }
 
 .client-dashboard__section-title svg {
-  color: #FF69B4;
+  color: var(--mg-client-primary);
 }
 
-/* ============================================
-   스케줄 리스트
-   ============================================ */
-
+/* ===== 스케줄 리스트 ===== */
 .client-dashboard__schedule-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--mg-spacing-md);
 }
 
 .client-dashboard__schedule-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-lg);
   background: var(--client-gradient-2);
-  border-radius: var(--border-radius-lg);
-  transition: all var(--transition-normal) ease;
+  border-radius: var(--mg-radius-lg);
+  transition: all var(--mg-transition-normal) var(--mg-easing);
 }
 
 .client-dashboard__schedule-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-md);
+  transform: translateX(var(--mg-spacing-xs));
+  box-shadow: var(--mg-shadow-md);
 }
 
 .client-dashboard__schedule-date {
-  width: calc(var(--spacing-lg) * 5);
-  height: calc(var(--spacing-lg) * 5);
-  background: var(--color-white);
-  border-radius: var(--border-radius-md);
+  width: calc(var(--mg-spacing-lg) * 5);
+  height: calc(var(--mg-spacing-lg) * 5);
+  background: var(--mg-white);
+  border-radius: var(--mg-radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--mg-shadow-sm);
 }
 
 .client-dashboard__schedule-day {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: #FF69B4;
+  font-size: var(--mg-font-xl);
+  font-weight: var(--mg-font-bold);
+  color: var(--mg-client-primary);
   line-height: 1;
 }
 
 .client-dashboard__schedule-month {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  margin-top: var(--spacing-xs);
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-secondary);
+  margin-top: var(--mg-spacing-xs);
 }
 
 .client-dashboard__schedule-info {
@@ -393,18 +372,18 @@
 }
 
 .client-dashboard__schedule-title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--mg-font-md);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
+  margin: 0 0 var(--mg-spacing-xs) 0;
 }
 
 .client-dashboard__schedule-time {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  gap: var(--mg-spacing-xs);
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
   margin: 0;
 }
 
@@ -412,22 +391,19 @@
   flex-shrink: 0;
 }
 
-/* ============================================
-   빠른 액션
-   ============================================ */
-
+/* ===== 빠른 액션 ===== */
 .client-dashboard__quick-actions {
   background: var(--client-gradient-3);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-xl);
+  margin-bottom: var(--mg-spacing-xl);
   box-shadow: var(--client-shadow);
 }
 
 .client-dashboard__action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
+  gap: var(--mg-spacing-md);
 }
 
 .client-dashboard__action-btn {
@@ -435,55 +411,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xl);
-  background: var(--color-white);
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xl);
+  background: var(--mg-white);
   border: none;
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
   cursor: pointer;
-  transition: all var(--transition-normal) ease;
-  box-shadow: var(--shadow-sm);
+  transition: all var(--mg-transition-normal) var(--mg-easing);
+  box-shadow: var(--mg-shadow-sm);
 }
 
 .client-dashboard__action-btn:hover {
-  transform: translateY(-4px);
+  transform: translateY(calc(var(--spacing-xs) * -1));
   box-shadow: var(--client-shadow-hover);
 }
 
 .client-dashboard__action-btn svg {
-  transition: all var(--transition-normal) ease;
+  transition: all var(--mg-transition-normal) var(--mg-easing);
 }
 
 .client-dashboard__action-btn--primary:hover svg {
-  color: #FF69B4;
+  color: var(--mg-client-primary);
 }
 
 .client-dashboard__action-btn--success:hover svg {
-  color: #4DD0E1;
+  color: var(--mg-success-500);
 }
 
 .client-dashboard__action-btn--info:hover svg {
-  color: #64B5F6;
+  color: var(--mg-primary-400);
 }
 
 .client-dashboard__action-btn--warning:hover svg {
-  color: #FFD54F;
+  color: var(--mg-warning-500);
 }
 
-/* ============================================
-   애니메이션
-   ============================================ */
-
+/* ===== 애니메이션 ===== */
 @keyframes fadeInUp {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: var(--opacity-hidden, 0);
+    transform: translateY(var(--mg-spacing-xl));
   }
   to {
-    opacity: 1;
+    opacity: var(--opacity-full, 1);
     transform: translateY(0);
   }
 }
@@ -497,17 +470,10 @@
   }
 }
 
-
-
-/* 애니메이션 제거 - 정적 Droplet Glass 패턴만 유지 */
-
-/* ============================================
-   반응형 디자인
-   ============================================ */
-
+/* ===== 반응형 디자인 ===== */
 @media (max-width: 768px) {
   .client-dashboard__welcome {
-    padding: var(--spacing-lg);
+    padding: var(--mg-spacing-lg);
   }
 
   .client-dashboard__welcome-content {
@@ -516,12 +482,12 @@
   }
 
   .client-dashboard__welcome-icon {
-    width: calc(var(--spacing-lg) * 4);
-    height: calc(var(--spacing-lg) * 4);
+    width: calc(var(--mg-spacing-lg) * 4);
+    height: calc(var(--mg-spacing-lg) * 4);
   }
 
   .client-dashboard__greeting {
-    font-size: var(--font-size-xl);
+    font-size: var(--mg-font-xl);
   }
 
   .client-dashboard__time {
@@ -531,24 +497,24 @@
 
   .client-dashboard__stats {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--mg-spacing-md);
   }
 
   .client-dashboard__stat-card {
-    padding: var(--spacing-lg);
+    padding: var(--mg-spacing-lg);
   }
 
   .client-dashboard__stat-icon {
-    width: calc(var(--spacing-lg) * 4);
-    height: calc(var(--spacing-lg) * 4);
+    width: calc(var(--mg-spacing-lg) * 4);
+    height: calc(var(--mg-spacing-lg) * 4);
   }
 
   .client-dashboard__stat-value {
-    font-size: var(--font-size-xxl);
+    font-size: var(--mg-font-xxl);
   }
 
   .client-dashboard__section {
-    padding: var(--spacing-lg);
+    padding: var(--mg-spacing-lg);
   }
 
   .client-dashboard__schedule-item {
@@ -557,8 +523,8 @@
   }
 
   .client-dashboard__schedule-date {
-    width: calc(var(--spacing-lg) * 5);
-    height: calc(var(--spacing-lg) * 5);
+    width: calc(var(--mg-spacing-lg) * 5);
+    height: calc(var(--mg-spacing-lg) * 5);
   }
 
   .client-dashboard__action-grid {
@@ -575,4 +541,3 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-

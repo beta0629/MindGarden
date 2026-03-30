@@ -1,0 +1,13 @@
+/* CardMeta - integrated-schedule__card-meta */
+.integrated-schedule__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.integrated-schedule__card-meta .mg-v2-status-badge,
+.integrated-schedule__card-meta .mg-v2-count-badge {
+  min-height: 24px;
+}

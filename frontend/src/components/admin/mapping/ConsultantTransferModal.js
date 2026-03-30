@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
+import { XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
+import { toErrorMessage, toDisplayString } from '../../../utils/safeDisplay';
+import SafeText from '../../common/SafeText';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
-
+import CustomSelect from '../../common/CustomSelect';
 /**
  * 상담사 변경 모달 컴포넌트
+/**
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {Function} props.onClose - 모달 닫기 함수
+/**
  * @param {Object} props.currentMapping - 현재 매핑 정보
+/**
  * @param {Function} props.onTransfer - 상담사 변경 처리 함수
  */
 const ConsultantTransferModal = ({ 
@@ -139,7 +147,7 @@ const ConsultantTransferModal = ({
         packagePrice: formData.packagePrice ? parseInt(formData.packagePrice) : null
       };
       
-      const response = await fetch('/api/admin/mappings/transfer', {
+      const response = await fetch('/api/v1/admin/mappings/transfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +162,7 @@ const ConsultantTransferModal = ({
         onTransfer(result.data);
         onClose();
       } else {
-        notificationManager.show(`상담사 변경에 실패했습니다: ${result.message}`, 'info');
+        notificationManager.show(`상담사 변경에 실패했습니다: ${toErrorMessage(result)}`, 'info');
       }
     } catch (error) {
       console.error('상담사 변경 실패:', error);
@@ -181,30 +189,49 @@ const ConsultantTransferModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <UserCheck size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">상담사 변경</h2>
-          </div>
-          <button 
-            type="button" 
-            className="mg-v2-modal-close"
-            onClick={handleClose}
-            aria-label="닫기"
-          >
-            <XCircle size={24} />
-          </button>
-        </div>
+  return (
+        <UnifiedModal
+          isOpen={isOpen}
+          onClose={handleClose}
+          title="상담사 변경"
+          size="large"
+          className="mg-v2-ad-b0kla"
+          backdropClick
+          showCloseButton
+          loading={loading}
+          actions={
+            <>
+              <MGButton
+                type="button"
+                variant="outline"
+                size="medium"
+                onClick={handleClose}
+                disabled={loading}
+                preventDoubleClick={false}
+              >
+                <XCircle size={18} />
+                취소
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="primary"
+                size="medium"
+                onClick={handleSubmit}
+                disabled={loading}
+                loading={loading}
+                loadingText="변경 중..."
+                preventDoubleClick
+              >
+                상담사 변경
+              </MGButton>
+            </>
+          }
+        >
         
         <div className="mg-v2-modal-body">
           {/* 현재 매핑 정보 */}
           {currentMapping && (
-            <div className="mg-v2-info-box">
+            <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
               <h3 className="mg-v2-info-box-title">
                 <Users size={20} className="mg-v2-section-title-icon" />
                 현재 매핑 정보
@@ -212,19 +239,19 @@ const ConsultantTransferModal = ({
               <div className="mg-v2-info-grid">
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">내담자:</span>
-                  <span className="mg-v2-info-value">{currentMapping.clientName}</span>
+                  <span className="mg-v2-info-value"><SafeText>{currentMapping.clientName}</SafeText></span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">현재 상담사:</span>
-                  <span className="mg-v2-info-value">{currentMapping.consultantName}</span>
+                  <span className="mg-v2-info-value"><SafeText>{currentMapping.consultantName}</SafeText></span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">남은 회기수:</span>
-                  <span className="mg-v2-info-value"><Calendar size={16} className="mg-v2-icon-inline" />{currentMapping.remainingSessions}회</span>
+                  <span className="mg-v2-info-value"><Calendar size={16} className="mg-v2-icon-inline" /><SafeText>{currentMapping.remainingSessions}</SafeText>회</span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">패키지:</span>
-                  <span className="mg-v2-info-value"><Package size={16} className="mg-v2-icon-inline" />{currentMapping.packageName}</span>
+                  <span className="mg-v2-info-value"><Package size={16} className="mg-v2-icon-inline" /><SafeText>{currentMapping.packageName}</SafeText></span>
                 </div>
               </div>
             </div>
@@ -239,21 +266,25 @@ const ConsultantTransferModal = ({
               <label htmlFor="newConsultantId" className="mg-v2-form-label">
                 새 상담사 <span className="mg-v2-form-label-required">*</span>
               </label>
-              <select
-                id="newConsultantId"
-                name="newConsultantId"
-                value={formData.newConsultantId}
-                onChange={handleInputChange}
+              <CustomSelect
+                value={formData.newConsultantId ?? ''}
+                onChange={(val) => {
+                  setFormData(prev => ({ ...prev, newConsultantId: val }));
+                  if (errors.newConsultantId) {
+                    setErrors(prev => ({ ...prev, newConsultantId: '' }));
+                  }
+                }}
+                options={[
+                  { value: '', label: '상담사를 선택해주세요' },
+                  ...consultants.map(consultant => ({
+                    value: consultant.id,
+                    label: `${toDisplayString(consultant.name)} (${toDisplayString(consultant.email)})`
+                  }))
+                ]}
+                placeholder="상담사를 선택해주세요"
                 className={`mg-v2-form-select ${errors.newConsultantId ? 'mg-v2-form-input-error' : ''}`}
-                required
-              >
-                <option value="">상담사를 선택해주세요</option>
-                {consultants.map(consultant => (
-                  <option key={consultant.id} value={consultant.id}>
-                    {consultant.name} ({consultant.email})
-                  </option>
-                ))}
-              </select>
+                error={!!errors.newConsultantId}
+              />
               {errors.newConsultantId && (
                 <span className="mg-v2-form-error">{errors.newConsultantId}</span>
               )}
@@ -372,28 +403,7 @@ const ConsultantTransferModal = ({
             </div>
           </form>
         </div>
-        
-        <div className="mg-v2-modal-footer">
-          <MGButton
-            type="button"
-            variant="secondary"
-            onClick={handleClose}
-            disabled={loading}
-          >
-            취소
-          </MGButton>
-          <MGButton
-            type="submit"
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-{loading ? '변경 중...' : '상담사 변경'}
-          </MGButton>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+        </UnifiedModal>
   );
 };
 

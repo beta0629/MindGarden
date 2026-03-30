@@ -1,0 +1,31 @@
+/**
+ * Progress bar (Atom/Molecule) — 디자인 토큰 기반
+ * .mg-progress-bar__fill: width는 --progress-percentage 또는 인라인 width 사용
+ *
+ * @author CoreSolution
+ * @since 2025-02-24
+ */
+
+.mg-progress-bar__fill {
+  width: var(--progress-percentage, 0%);
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.mg-progress-bar__fill--success {
+  background: var(--mg-success-500);
+}
+
+.mg-progress-bar__fill--warning {
+  background: var(--mg-warning-500);
+}
+
+.mg-progress-bar__fill--error {
+  background: var(--mg-error-500);
+}
+
+.mg-progress-bar__fill--info {
+  background: var(--mg-info-500, var(--mg-primary-500));
+}

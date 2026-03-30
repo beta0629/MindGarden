@@ -4,10 +4,15 @@ import { apiGet } from '../../utils/ajax';
 
 /**
  * 상담 완료 통계 컨테이너 컴포넌트
+/**
  * - 비즈니스 로직만 담당
+/**
  * - 상태 관리, 데이터 로드
+/**
  * - Presentational 컴포넌트에 데이터와 핸들러 전달
+/**
  * 
+/**
  * @version 2.0.0 (Presentational/Container 분리)
  */
 const ConsultationCompletionStats = () => {
@@ -98,7 +103,7 @@ const ConsultationCompletionStats = () => {
             
             const url = period 
                 ? `/api/admin/statistics/consultation-completion?period=${period}`
-                : '/api/admin/statistics/consultation-completion';
+                : '/api/v1/admin/statistics/consultation-completion';
             
             const response = await apiGet(url);
             console.log('📊 상담 완료 통계 API 응답:', response);

@@ -1,0 +1,65 @@
+/**
+ * SystemOverviewWidget 전용 스타일
+ * 비즈니스 로직과 CSS 완전 분리
+ */
+
+.metric-icon.status-healthy,
+.metric-value.status-healthy {
+  color: var(--cs-success-500);
+}
+
+.metric-icon.status-warning,
+.metric-value.status-warning {
+  color: var(--cs-warning-500);
+}
+
+.metric-icon.status-error,
+.metric-value.status-error {
+  color: var(--cs-error-500);
+}
+
+.metric-icon.status-unknown,
+.metric-value.status-unknown {
+  color: var(--cs-gray-500);
+}
+
+.system-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.system-metric {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-white);
+  border-radius: var(--cs-radius-md);
+  border: 1px solid var(--cs-slate-200);
+  transition: all 0.2s ease;
+}
+
+.system-metric:hover {
+  border-color: var(--cs-primary-300);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.metric-icon {
+  flex-shrink: 0;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-600);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.metric-value {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+}

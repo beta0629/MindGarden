@@ -3,11 +3,17 @@ import { apiGet } from '../../utils/ajax';
 
 /**
  * 공통 패키지 선택 컴포넌트
+/**
  * - 매칭 생성, 회기 추가 등에서 재사용
+/**
  * - 스샷과 동일한 UI/UX 제공
+/**
  * 
- * @author MindGarden
+/**
+ * @author Core Solution
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const PackageSelector = ({ 
@@ -28,8 +34,17 @@ const PackageSelector = ({
     const loadPackageOptions = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/common-codes/PACKAGE');
-            const data = response?.data || response || [];
+            // 표준화된 API 사용 (하위 호환성 유지)
+            const { getCommonCodes } = await import('../../utils/commonCodeApi');
+            let data = [];
+            try {
+                const codes = await getCommonCodes('PACKAGE');
+                data = codes || [];
+            } catch (error) {
+                // 하위 호환성: 기존 API 사용
+                const response = await apiGet('/api/v1/common-codes?codeGroup=PACKAGE');
+                data = response?.data || response || [];
+            }
             
             if (Array.isArray(data)) {
                 const options = data.map(pkg => {

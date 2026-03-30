@@ -1,0 +1,2158 @@
+================================================================================
+브랜치 코드 제거 작업 리포트
+생성일: 2025-12-07
+================================================================================
+
+총 발견된 사용처: 1674개
+분석된 파일 수: 1146개
+
+파일별 상세 내역:
+--------------------------------------------------------------------------------
+
+[FILE] backup-role-hardcoding-removal-20251204-141812\src\main\java\com\coresolution\consultation\controller\TestDataController.java (1개)
+  라인 93 (parameter):                     .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 기본 지점코드 설
+
+[FILE] scripts\testing\test_service_standardization.java (4개)
+  라인 44 (parameter):     @DisplayName("FinancialTransactionService: branchCode 없이 tenantId로만 조회")
+  라인 110 (parameter):     @DisplayName("Service 메서드에 branchCode 파라미터 없음 확인")
+  라인 118 (comment):         // When: branchCode 파라미터를 가진 메서드 찾기
+  라인 126 (comment):         // Then: branchCode 파라미터를 가진 메서드가 없어야 함
+
+[FILE] src\main\java\com\coresolution\consultation\config\filter\JwtAuthenticationFilter.java (1개)
+  라인 28 (comment):  * Phase 3: JWT 토큰에서 tenantId, branchId 추출하여 TenantContextHolder 자동 설정
+
+[FILE] src\main\java\com\coresolution\consultation\controller\AccountController.java (6개)
+  라인 93 (parameter):     @GetMapping("/branch/{branchId}")
+  라인 94 (field):     public ResponseEntity<List<AccountResponse>> getAccountsByBranch(@PathVariab
+  라인 95 (parameter):         List<AccountResponse> response = accountService.getAccountsByBranch(bran
+  라인 132 (parameter):     @GetMapping("/primary/branch/{branchId}")
+  라인 133 (field):     public ResponseEntity<AccountResponse> getPrimaryAccountByBranch(@PathVariab
+  라인 134 (parameter):         AccountResponse response = accountService.getPrimaryAccountByBranch(bran
+
+[FILE] src\main\java\com\coresolution\consultation\controller\AdminController.java (11개)
+  라인 346 (comment):         // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+  라인 1338 (variable):         log.info("✅ 내담자 등록 완료: id={}, name={}, branchCode={}",
+  라인 1386 (parameter):             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode(
+  라인 1391 (parameter):                 log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCo
+  라인 1426 (parameter):             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode(
+  라인 1431 (parameter):                 log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCo
+  라인 2006 (parameter):             @RequestParam(value = "branchCode", required = false) String branchC
+  라인 2008 (parameter):         log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", incl
+  라인 2019 (parameter):         String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
+  라인 2032 (parameter):                 userData.put("branchCode", user.getBranchCode() != null ? user.g
+  라인 2112 (parameter):         userData.put("branchCode", user.getBranchCode() != null ? user.getBranch
+
+[FILE] src\main\java\com\coresolution\consultation\controller\AuthController.java (34개)
+  라인 129 (variable):         log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}",
+  라인 177 (parameter):         userInfo.put("branchId", user.getBranch() != null ? user.getBranch().get
+  라인 178 (parameter):         userInfo.put("branchCode", user.getBranchCode());
+  라인 1075 (variable):         log.info("🏢 지점별 로그인 시도: email={}, branchCode={}, loginType={}",
+  라인 1133 (parameter):             session.setAttribute("branchCode", request.getBranchCode());
+  라인 1135 (variable):             log.info("✅ 지점별 로그인 성공: email={}, branchCode={}, loginType={}",
+  라인 1146 (parameter):                 .branchId(user.getBranch() != null ? user.getBranch().getId() : 
+  라인 1148 (parameter):                 .branchCode(user.getBranch() != null ? user.getBranch().getBranc
+  라인 1157 (parameter):                         .branchCode(user.getBranch().getBranchCode())
+  라인 1216 (parameter):                 "branchCode", branch.getBranchCode(),
+  라인 1232 (comment):      * URL: /api/auth/branch/{branchCode}
+  라인 1234 (parameter):     @GetMapping("/branch/{branchCode}")
+  라인 1235 (field):     public ResponseEntity<ApiResponse<Map<String, Object>>> getBranchInfoForLogi
+  라인 1236 (parameter):         log.info("🏢 지점별 로그인 페이지용 지점 정보 조회: branchCode={}", branchCode);
+  라인 1239 (parameter):         var branch = branchService.getBranchByCode(branchCode);
+  라인 1241 (parameter):             throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + branchCode
+  라인 1249 (parameter):         branchInfo.put("branchCode", branch.getBranchCode());
+  라인 1269 (comment):      * URL: /api/auth/branch/{branchCode}/login
+  라인 1271 (parameter):     @PostMapping("/branch/{branchCode}/login")
+  라인 1272 (field):     public ResponseEntity<ApiResponse<Map<String, Object>>> branchLoginWithUrl(@
+  라인 1283 (parameter):         log.info("🏢 지점별 로그인 시도 (URL 방식): email={}, branchCode={}", email, branch
+  라인 1292 (parameter):             var branch = branchService.getBranchByCode(branchCode);
+  라인 1294 (parameter):                 throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + branch
+  라인 1297 (parameter):             throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + branchCode
+  라인 1314 (parameter):             if (user.getBranch() == null || !user.getBranch().getBranchCode().eq
+  라인 1322 (parameter):             session.setAttribute("branchCode", branchCode);
+  라인 1324 (parameter):             log.info("✅ 지점별 로그인 성공 (URL 방식): email={}, branchCode={}", email, br
+  라인 1334 (parameter):             userInfo.put("branchId", user.getBranch().getId());
+  라인 1336 (parameter):             userInfo.put("branchCode", user.getBranch().getBranchCode());
+  라인 1431 (parameter):             session.setAttribute("branchCode", null);
+  라인 1443 (parameter):             userInfo.put("branchId", null);
+  라인 1445 (parameter):             userInfo.put("branchCode", null);
+  라인 1478 (parameter):         String branchCode = request.get("branchCode");
+  라인 1486 (comment):         log.warn("⚠️ Deprecated API 호출: mapUserToBranch - branchCode는 더 이상 사용되지 
+
+[FILE] src\main\java\com\coresolution\consultation\controller\BranchController.java (68개)
+  라인 95 (parameter):     @GetMapping("/{branchId}")
+  라인 96 (field):     public ResponseEntity<ApiResponse<BranchResponse>> getBranch(@PathVariable L
+  라인 97 (parameter):         log.info("지점 조회 요청: ID={}", branchId);
+  라인 99 (parameter):         BranchResponse response = branchService.getBranchResponse(branchId);
+  라인 106 (parameter):     @PutMapping("/{branchId}")
+  라인 108 (variable):             @PathVariable Long branchId,
+  라인 110 (parameter):         log.info("지점 수정 요청: ID={}", branchId);
+  라인 112 (parameter):         BranchResponse response = branchService.updateBranch(branchId, request);
+  라인 119 (parameter):     @DeleteMapping("/{branchId}")
+  라인 120 (field):     public ResponseEntity<ApiResponse<Void>> deleteBranch(@PathVariable Long bra
+  라인 121 (parameter):         log.info("지점 삭제 요청: ID={}", branchId);
+  라인 123 (parameter):         branchService.softDeleteById(branchId);
+  라인 217 (parameter):     @GetMapping("/{branchId}/sub-branches")
+  라인 218 (field):     public ResponseEntity<ApiResponse<List<BranchResponse>>> getSubBranches(@Pat
+  라인 219 (parameter):         log.info("하위 지점 목록 조회 요청: 상위 지점 ID={}", branchId);
+  라인 221 (parameter):         List<BranchResponse> branches = branchService.getSubBranches(branchId);
+  라인 241 (parameter):     @PostMapping("/{branchId}/manager/{managerId}")
+  라인 243 (variable):             @PathVariable Long branchId,
+  라인 245 (parameter):         log.info("지점장 지정 요청: 지점 ID={}, 지점장 ID={}", branchId, managerId);
+  라인 247 (parameter):         branchService.assignManager(branchId, managerId);
+  라인 254 (parameter):     @DeleteMapping("/{branchId}/manager")
+  라인 255 (field):     public ResponseEntity<ApiResponse<Void>> removeManager(@PathVariable Long br
+  라인 256 (parameter):         log.info("지점장 해제 요청: 지점 ID={}", branchId);
+  라인 258 (parameter):         branchService.removeManager(branchId);
+  라인 265 (parameter):     @PutMapping("/{branchId}/status/{status}")
+  라인 267 (variable):             @PathVariable Long branchId,
+  라인 269 (parameter):         log.info("지점 상태 변경 요청: 지점 ID={}, 새 상태={}", branchId, status);
+  라인 271 (parameter):         branchService.changeBranchStatus(branchId, status);
+  라인 278 (parameter):     @PostMapping("/{branchId}/activate")
+  라인 279 (field):     public ResponseEntity<ApiResponse<Void>> activateBranch(@PathVariable Long b
+  라인 280 (parameter):         log.info("지점 활성화 요청: 지점 ID={}", branchId);
+  라인 282 (parameter):         branchService.activateBranch(branchId);
+  라인 289 (parameter):     @PostMapping("/{branchId}/deactivate")
+  라인 290 (field):     public ResponseEntity<ApiResponse<Void>> deactivateBranch(@PathVariable Long
+  라인 291 (parameter):         log.info("지점 비활성화 요청: 지점 ID={}", branchId);
+  라인 293 (parameter):         branchService.deactivateBranch(branchId);
+  라인 300 (parameter):     @PostMapping("/{branchId}/close")
+  라인 301 (field):     public ResponseEntity<ApiResponse<Void>> closeBranch(@PathVariable Long bran
+  라인 302 (parameter):         log.info("지점 폐점 요청: 지점 ID={}", branchId);
+  라인 304 (parameter):         branchService.closeBranch(branchId);
+  라인 313 (parameter):     @PostMapping("/{branchId}/consultants/{consultantId}")
+  라인 315 (variable):             @PathVariable Long branchId,
+  라인 317 (parameter):         log.info("상담사 지점 할당 요청: 지점 ID={}, 상담사 ID={}", branchId, consultantId);
+  라인 319 (parameter):         branchService.assignConsultantToBranch(branchId, consultantId);
+  라인 326 (parameter):     @PostMapping("/{branchId}/clients/{clientId}")
+  라인 328 (variable):             @PathVariable Long branchId,
+  라인 330 (parameter):         log.info("내담자 지점 할당 요청: 지점 ID={}, 내담자 ID={}", branchId, clientId);
+  라인 332 (parameter):         branchService.assignClientToBranch(branchId, clientId);
+  라인 364 (parameter):     @GetMapping("/{branchId}/consultants")
+  라인 365 (field):     public ResponseEntity<ApiResponse<List<User>>> getBranchConsultants(@PathVar
+  라인 366 (parameter):         log.info("지점 소속 상담사 목록 조회 요청: 지점 ID={}", branchId);
+  라인 368 (parameter):         List<User> consultants = branchService.getBranchConsultants(branchId);
+  라인 375 (parameter):     @GetMapping("/{branchId}/clients")
+  라인 376 (field):     public ResponseEntity<ApiResponse<List<User>>> getBranchClients(@PathVariabl
+  라인 377 (parameter):         log.info("지점 소속 내담자 목록 조회 요청: 지점 ID={}", branchId);
+  라인 379 (parameter):         List<User> clients = branchService.getBranchClients(branchId);
+  라인 388 (parameter):     @GetMapping("/{branchId}/statistics")
+  라인 389 (field):     public ResponseEntity<ApiResponse<Map<String, Object>>> getBranchStatistics(
+  라인 390 (parameter):         log.info("지점 통계 조회 요청: 지점 ID={}", branchId);
+  라인 392 (parameter):         Map<String, Object> statistics = branchService.getBranchStatistics(branc
+  라인 438 (parameter):             @RequestParam("branchCode") String branchCode,
+  라인 440 (comment):         log.warn("⚠️ Deprecated API 호출: validateBranchCode - branchCode는 더 이상 사용
+  라인 468 (parameter):     @GetMapping("/{branchId}/validate/capacity")
+  라인 469 (field):     public ResponseEntity<ApiResponse<Map<String, Boolean>>> validateCapacity(@P
+  라인 470 (parameter):         log.info("지점 수용 인원 확인 요청: 지점 ID={}", branchId);
+  라인 472 (parameter):         boolean isWithinCapacity = branchService.isWithinCapacity(branchId);
+  라인 473 (parameter):         boolean consultantCapacityAvailable = branchService.isConsultantCapacity
+  라인 474 (parameter):         boolean clientCapacityAvailable = branchService.isClientCapacityAvailabl
+
+[FILE] src\main\java\com\coresolution\consultation\controller\BranchManagementController.java (20개)
+  라인 98 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 100 (parameter):     @GetMapping("/branches/{branchCode}/statistics")
+  라인 101 (field):     public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable
+  라인 103 (parameter):             log.info("테넌트 통계 조회 요청: branchCode={} (무시됨)", branchCode);
+  라인 123 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
+  라인 133 (parameter):             List<User> allUsers = userService.findByBranchCode(null); // branchC
+  라인 163 (parameter):             log.error("테넌트 통계 조회 중 오류 발생: branchCode={}, error={}", branchCode, 
+  라인 173 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 175 (parameter):     @GetMapping("/branches/{branchCode}/users")
+  라인 177 (variable):             @PathVariable String branchCode,
+  라인 181 (parameter):             log.info("테넌트 사용자 목록 조회 요청: branchCode={} (무시됨), role={}, includeIna
+  라인 183 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
+  라인 193 (parameter):             List<User> users = userService.findByBranchCode(null); // branchCode
+  라인 224 (parameter):             log.error("테넌트 사용자 목록 조회 중 오류 발생: branchCode={}, error={}", branchCo
+  라인 258 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 동작
+  라인 267 (comment):             // 사용자 일괄 처리 (branchCode 변경 없이, tenantId만 확인)
+  라인 335 (parameter):         userMap.put("branchCode", user.getBranchCode() != null ? user.getBranchC
+  라인 348 (parameter):         branchMap.put("branchCode", branch.getBranchCode());
+  라인 363 (field):     private boolean isValidBranchCode(String branchCode) {
+  라인 365 (comment):         log.warn("⚠️ Deprecated 메서드 호출: isValidBranchCode - branchCode는 더 이상 사용되
+
+[FILE] src\main\java\com\coresolution\consultation\controller\ConsultationMenuController.java (1개)
+  라인 96 (parameter):             "branchCode", currentUser.getBranchCode() != null ? currentUser.getB
+
+[FILE] src\main\java\com\coresolution\consultation\controller\ConsultationRecordAlertController.java (9개)
+  라인 41 (parameter):             @RequestParam(required = false) String branchCode) {
+  라인 43 (parameter):         log.info("📝 상담일지 미작성 확인 API 호출: 날짜={}, 지점={}", checkDate, branchCode);
+  라인 46 (parameter):             Map<String, Object> result = consultationRecordAlertService.checkMis
+  라인 68 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 72 (parameter):         log.info("📝 상담일지 미작성 알림 조회 API 호출: 지점={}, 기간={}~{}", branchCode, startDa
+  라인 76 (variable):                 branchCode, startDate, endDate);
+  라인 125 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 129 (parameter):         log.info("📊 상담일지 미작성 통계 조회 API 호출: 지점={}, 기간={}~{}", branchCode, startDa
+  라인 133 (variable):                 branchCode, startDate, endDate);
+
+[FILE] src\main\java\com\coresolution\consultation\controller\ErpController.java (15개)
+  라인 135 (comment):             // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+  라인 141 (comment):             // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+  라인 1342 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 1346 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 1350 (parameter):             log.info("🔍 데이터 확인 API 호출: branchCode={} (무시됨)", branchCode);
+  라인 1352 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+  라인 1359 (comment):             // 표준화 2025-12-06: branchCode 필터링 제거
+  라인 1736 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 1747 (parameter):             String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
+  라인 1838 (parameter):                 request.setBranchCode(null); // branchCode 무시
+  라인 1867 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 1882 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+  라인 1885 (parameter):             log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tena
+  라인 1956 (parameter):                     .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않
+  라인 2012 (parameter):                     .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않
+
+[FILE] src\main\java\com\coresolution\consultation\controller\HQBranchController.java (3개)
+  라인 154 (parameter):             @RequestParam(required = false) Long branchId) {
+  라인 156 (parameter):             log.info("API 호출: 지점 트렌드 통계 조회 - 기간: {}, 지표: {}, 지점ID: {}", period, 
+  라인 157 (parameter):             List<Map<String, Object>> trend = branchService.getBranchTrendStatis
+
+[FILE] src\main\java\com\coresolution\consultation\controller\HQErpController.java (16개)
+  라인 46 (variable):             @RequestParam String branchCode,
+  라인 67 (parameter):             log.info("🏦 지점별 재무 현황 조회 요청: branchCode={}", branchCode);
+  라인 69 (variable):                     branchCode, startDate, endDate, category, transactionType);
+  라인 79 (parameter):                 .getBranchFinancialData(branchCode, start, end, category, transa
+  라인 81 (parameter):             log.info("✅ 지점별 재무 현황 조회 완료: 지점={}", branchCode);
+  라인 85 (variable):                 "branchCode", branchCode,
+  라인 93 (parameter):             log.error("❌ 지점별 재무 현황 조회 실패: 지점={}, 오류={}", branchCode, e.getMessag
+  라인 160 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 174 (parameter):             log.info("📊 PL/SQL 재무 보고서 조회: 유형={}, 기간={}, 지점={}", reportType, peri
+  라인 188 (parameter):                     reportData = plSqlFinancialService.generateMonthlyFinancialR
+  라인 194 (parameter):                     reportData = plSqlFinancialService.generateQuarterlyFinancia
+  라인 198 (parameter):                     reportData = plSqlFinancialService.generateYearlyFinancialRe
+  라인 204 (parameter):                     reportData = plSqlFinancialService.generateMonthlyFinancialR
+  라인 227 (field):     private Map<String, Object> generateMonthlyReport(String period, String bran
+  라인 246 (field):     private Map<String, Object> generateQuarterlyReport(String period, String br
+  라인 265 (field):     private Map<String, Object> generateYearlyReport(String period, String branc
+
+[FILE] src\main\java\com\coresolution\consultation\controller\LocalTestController.java (3개)
+  라인 147 (variable):             @RequestParam String branchCode) {
+  라인 149 (parameter):         log.info("🧪 [로컬테스트] 일괄 스케줄 완료 처리: 지점 코드={}", branchCode);
+  라인 152 (parameter):             Map<String, Object> result = plSqlScheduleValidationService.processB
+
+[FILE] src\main\java\com\coresolution\consultation\controller\OAuth2Controller.java (3개)
+  라인 530 (parameter):                                     .branchCode(existingUser.getBranchCode())
+  라인 956 (comment):                     // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포
+  라인 1457 (comment):             // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
+
+[FILE] src\main\java\com\coresolution\consultation\controller\PaymentController.java (8개)
+  라인 110 (parameter):     @GetMapping("/branch/{branchId}")
+  라인 112 (variable):             @PathVariable Long branchId,
+  라인 114 (parameter):         log.info("지점별 결제 목록 조회: {}", branchId);
+  라인 116 (parameter):         Page<PaymentResponse> payments = paymentService.getPaymentsByBranchId(br
+  라인 228 (parameter):     @GetMapping("/statistics/branch/{branchId}")
+  라인 230 (variable):             @PathVariable Long branchId,
+  라인 233 (parameter):         log.info("지점별 결제 통계 조회: {}, {} ~ {}", branchId, startDate, endDate);
+  라인 238 (parameter):         Map<String, Object> statistics = paymentService.getBranchPaymentStatisti
+
+[FILE] src\main\java\com\coresolution\consultation\controller\PaymentTestController.java (3개)
+  라인 85 (parameter):                 .branchId(1L) // 테스트 지점
+  라인 330 (parameter):                         .branchId((long) (random.nextInt(3) + 1))
+  라인 426 (parameter):                     .branchId(1L)
+
+[FILE] src\main\java\com\coresolution\consultation\controller\PlSqlAccountingController.java (3개)
+  라인 150 (parameter):             @RequestParam(required = false) String branchCode) {
+  라인 161 (variable):                 type, start, end, branchCode);
+  라인 164 (variable):                 type, start, end, branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\controller\PlSqlDiscountAccountingController.java (14개)
+  라인 75 (parameter):         String branchCode = (String) request.get("branchCode");
+  라인 82 (variable):                 mappingId, discountCode, originalAmount, discountAmount, finalAm
+  라인 170 (variable):             @RequestParam String branchCode,
+  라인 174 (parameter):         log.info("📊 PL/SQL 할인 통계 조회: BranchCode={}, Period={} ~ {}", branchCode,
+  라인 174 (parameter):         log.info("📊 PL/SQL 할인 통계 조회: BranchCode={}, Period={} ~ {}", branchCode,
+  라인 178 (variable):                 branchCode, startDate, endDate
+  라인 184 (parameter):             log.error("❌ PL/SQL 할인 통계 조회 실패: BranchCode={}, 오류={}", branchCode, 
+  라인 184 (parameter):             log.error("❌ PL/SQL 할인 통계 조회 실패: BranchCode={}, 오류={}", branchCode, 
+  라인 200 (variable):             @RequestParam String branchCode) {
+  라인 202 (parameter):         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
+  라인 202 (parameter):         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
+  라인 205 (parameter):             Map<String, Object> result = plSqlDiscountAccountingService.validate
+  라인 210 (parameter):             log.error("❌ PL/SQL 할인 무결성 검증 실패: BranchCode={}, 오류={}", branchCode,
+  라인 210 (parameter):             log.error("❌ PL/SQL 할인 무결성 검증 실패: BranchCode={}, 오류={}", branchCode,
+
+[FILE] src\main\java\com\coresolution\consultation\controller\PlSqlMappingSyncController.java (4개)
+  라인 173 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 177 (parameter):         log.info("📊 환불 통계 조회 요청: BranchCode={}, Period={} ~ {}", branchCode, sta
+  라인 177 (parameter):         log.info("📊 환불 통계 조회 요청: BranchCode={}, Period={} ~ {}", branchCode, sta
+  라인 180 (variable):             branchCode, startDate, endDate
+
+[FILE] src\main\java\com\coresolution\consultation\controller\SalaryBatchController.java (3개)
+  라인 57 (parameter):             String branchCode = currentUser.getBranchCode();
+  라인 65 (parameter):                 currentUser.getName(), targetMonth, branchCode);
+  라인 69 (variable):                 year, month, branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\controller\SalaryConfigController.java (3개)
+  라인 246 (parameter):             String branchCode = currentUser.getBranchCode();
+  라인 262 (variable):                 targetYear, targetMonthInt, branchCode);
+  라인 265 (parameter):                     currentUser.getName(), targetMonth, branchCode, result.isSuc
+
+[FILE] src\main\java\com\coresolution\consultation\controller\SalaryManagementController.java (3개)
+  라인 209 (parameter):                     dto.put("branchCode", calc.getBranchCode());
+  라인 481 (parameter):             String branchCode = currentUser.getBranchCode();
+  라인 485 (variable):                 branchCode, startDate, endDate
+
+[FILE] src\main\java\com\coresolution\consultation\controller\SocialAuthController.java (1개)
+  라인 55 (parameter):                     log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBran
+
+[FILE] src\main\java\com\coresolution\consultation\controller\StatisticsManagementController.java (18개)
+  라인 64 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 68 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 72 (parameter):         log.info("📊 일별 통계 수동 업데이트 요청: branchCode={} (무시됨), date={}", branchCode,
+  라인 77 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 동작
+  라인 89 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 통계 업데이트
+  라인 103 (parameter):             log.error("❌ 일별 통계 수동 업데이트 실패: branchCode={} (무시됨), date={}, 오류={}",
+  라인 104 (parameter):                      branchCode, date, e.getMessage(), e);
+  라인 194 (parameter):             @RequestParam(required = false) String branchCode,
+  라인 198 (parameter):         log.info("🔍 통계 일관성 검증 요청: branchCode={}, date={}", branchCode, date);
+  라인 208 (parameter):             if (branchCode == null || branchCode.isEmpty()) {
+  라인 209 (parameter):                 branchCode = (String) session.getAttribute("currentBranchCode");
+  라인 212 (parameter):             if (branchCode == null || branchCode.isEmpty()) {
+  라인 218 (parameter):             boolean isConsistent = plSqlStatisticsService.validateStatisticsCons
+  라인 225 (parameter):             response.put("branchCode", branchCode);
+  라인 228 (variable):             log.info("✅ 통계 일관성 검증 완료: branchCode={}, date={}, 일관성={}",
+  라인 229 (variable):                      branchCode, targetDate, isConsistent);
+  라인 233 (variable):             log.error("❌ 통계 일관성 검증 실패: branchCode={}, date={}, 오류={}",
+  라인 234 (parameter):                      branchCode, date, e.getMessage(), e);
+
+[FILE] src\main\java\com\coresolution\consultation\controller\TestDataController.java (1개)
+  라인 91 (parameter):                     .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않
+
+[FILE] src\main\java\com\coresolution\consultation\controller\UserController.java (1개)
+  라인 451 (parameter):                 log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", user.getBranchCode(
+
+[FILE] src\main\java\com\coresolution\consultation\dto\AccountRequest.java (1개)
+  라인 27 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\AccountResponse.java (2개)
+  라인 21 (field):     private Long branchId;
+  라인 35 (parameter):                 .branchId(account.getBranchId())
+
+[FILE] src\main\java\com\coresolution\consultation\dto\AuthResponse.java (1개)
+  라인 110 (field):         private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchCreateRequest.java (1개)
+  라인 32 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchLoginRequest.java (1개)
+  라인 30 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchLoginResponse.java (3개)
+  라인 41 (field):         private Long branchId;
+  라인 43 (field):         private String branchCode;
+  라인 52 (field):         private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchResponse.java (1개)
+  라인 28 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchStatisticsDto.java (2개)
+  라인 27 (field):     private Long branchId;
+  라인 28 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\BranchStatisticsResponse.java (4개)
+  라인 23 (field):     private Long branchId;
+  라인 24 (field):     private String branchCode;
+  라인 82 (parameter):             .branchId(dto.getBranchId())
+  라인 83 (parameter):             .branchCode(dto.getBranchCode())
+
+[FILE] src\main\java\com\coresolution\consultation\dto\ClientRegistrationDto.java (1개)
+  라인 39 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\ClientRegistrationRequest.java (2개)
+  라인 58 (field):     private String branchCode;
+  라인 93 (parameter):             .branchCode(dto.getBranchCode())
+
+[FILE] src\main\java\com\coresolution\consultation\dto\ConsultantRegistrationDto.java (1개)
+  라인 36 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\ConsultantRegistrationRequest.java (2개)
+  라인 52 (field):     private String branchCode;
+  라인 84 (parameter):             .branchCode(dto.getBranchCode())
+
+[FILE] src\main\java\com\coresolution\consultation\dto\FinancialTransactionRequest.java (1개)
+  라인 58 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\FinancialTransactionResponse.java (1개)
+  라인 41 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\PaymentCreateRequest.java (2개)
+  라인 80 (field):     private Long branchId;
+  라인 152 (parameter):             .branchId(this.branchId)
+
+[FILE] src\main\java\com\coresolution\consultation\dto\PaymentRequest.java (1개)
+  라인 81 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\PaymentResponse.java (1개)
+  라인 72 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\RegisterRequest.java (1개)
+  라인 70 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\SocialLoginResponse.java (1개)
+  라인 81 (field):         private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\dto\SocialSignupRequest.java (1개)
+  라인 99 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Account.java (2개)
+  라인 49 (parameter):     @Column(name = "branch_id")
+  라인 50 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Branch.java (2개)
+  라인 106 (parameter):     @Column(name = "branch_code", nullable = false, unique = true, length = 10)
+  라인 107 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Client.java (2개)
+  라인 75 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 76 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\ConsultantClientMapping.java (2개)
+  라인 138 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 139 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\DailyStatistics.java (5개)
+  라인 30 (parameter):         @Index(name = "idx_daily_stats_branch", columnList = "branchCode"),
+  라인 31 (parameter):         @Index(name = "idx_daily_stats_date_branch", columnList = "statDate, bra
+  라인 34 (parameter):         @UniqueConstraint(name = "uk_daily_stats_date_branch", columnNames = {"s
+  라인 57 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 58 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\DiscountAccountingTransaction.java (2개)
+  라인 91 (parameter):     @Column(name = "branch_code")
+  라인 92 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\FinancialTransaction.java (2개)
+  라인 198 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 199 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Item.java (2개)
+  라인 71 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 72 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Payment.java (2개)
+  라인 94 (parameter):     @Column(name = "branch_id")
+  라인 95 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\RefreshToken.java (2개)
+  라인 58 (parameter):     @Column(name = "branch_id")
+  라인 59 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\SalaryCalculation.java (2개)
+  라인 105 (comment):     // @Column(name = "branch_code", length = 20)
+  라인 106 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\SalaryProfile.java (2개)
+  라인 54 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 55 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\Schedule.java (5개)
+  라인 136 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 137 (field):     private String branchCode;
+  라인 140 (variable):         return branchCode;
+  라인 143 (field):     public void setBranchCode(String branchCode) {
+  라인 144 (variable):         this.branchCode = branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\entity\User.java (3개)
+  라인 192 (parameter):     @jakarta.persistence.JoinColumn(name = "branch_id")
+  라인 203 (parameter):     @Column(name = "branch_code", length = 20)
+  라인 204 (field):     private String branchCode;
+
+[FILE] src\main\java\com\coresolution\consultation\enums\BranchCode.java (11개)
+  라인 11 (method): public enum BranchCode {
+  라인 42 (parameter):     BranchCode(String code, String name, String description) {
+  라인 61 (comment):      * 코드로 BranchCode 찾기
+  라인 63 (field):     public static BranchCode fromCode(String code) {
+  라인 68 (parameter):         for (BranchCode branchCode : values()) {
+  라인 68 (parameter):         for (BranchCode branchCode : values()) {
+  라인 69 (parameter):             if (branchCode.getCode().equals(code)) {
+  라인 70 (variable):                 return branchCode;
+  라인 85 (parameter):         for (BranchCode branchCode : values()) {
+  라인 85 (parameter):         for (BranchCode branchCode : values()) {
+  라인 86 (parameter):             if (branchCode.getCode().equals(code)) {
+
+[FILE] src\main\java\com\coresolution\consultation\repository\AccountRepository.java (6개)
+  라인 27 (parameter):     @Query("SELECT a FROM Account a WHERE a.tenantId = :tenantId AND a.branchId 
+  라인 28 (parameter):     List<Account> findByTenantIdAndBranchIdAndIsActiveTrueAndIsDeletedFalse(@Par
+  라인 39 (parameter):     @Query("SELECT a FROM Account a WHERE a.tenantId = :tenantId AND a.branchId 
+  라인 40 (parameter):     Optional<Account> findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsActiveTrueAn
+  라인 90 (parameter):     List<Account> findByBranchIdAndIsActiveTrueAndIsDeletedFalse(Long branchId);
+  라인 102 (parameter):     Optional<Account> findByBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedF
+
+[FILE] src\main\java\com\coresolution\consultation\repository\AlertRepository.java (6개)
+  라인 417 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 423 (parameter):     @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted =
+  라인 424 (parameter):     List<Alert> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId,
+  라인 430 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 437 (parameter):     @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted =
+  라인 438 (parameter):     Page<Alert> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId,
+
+[FILE] src\main\java\com\coresolution\consultation\repository\BaseRepository.java (1개)
+  라인 191 (comment):     // branchId 필드가 있는 엔티티의 Repository에서만 구현하세요
+
+[FILE] src\main\java\com\coresolution\consultation\repository\BranchRepository.java (13개)
+  라인 28 (parameter):     Optional<Branch> findByBranchCodeAndIsDeletedFalse(String branchCode);
+  라인 151 (parameter):     boolean existsByBranchCodeAndIsDeletedFalse(String branchCode);
+  라인 156 (parameter):     boolean existsByBranchCodeAndIdNotAndIsDeletedFalse(String branchCode, Long 
+  라인 174 (parameter):     List<Branch> findByParentBranchIdAndIsDeletedFalseOrderByBranchName(@Param("
+  라인 179 (parameter):     @Query("SELECT b.parentBranch FROM Branch b WHERE b.id = :branchId AND b.par
+  라인 180 (parameter):     Optional<Branch> findParentBranch(@Param("branchId") Long branchId);
+  라인 201 (comment):     // Branch 엔티티는 자기 자신이므로 branchId 필드가 없음
+  라인 209 (comment):      * @param branchId 지점 ID (Branch의 경우 id와 동일)
+  라인 212 (parameter):     @Query("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :bran
+  라인 213 (parameter):     List<Branch> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId
+  라인 220 (comment):      * @param branchId 지점 ID (Branch의 경우 id와 동일)
+  라인 224 (parameter):     @Query("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :bran
+  라인 225 (parameter):     Page<Branch> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ClientRepository.java (6개)
+  라인 76 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 82 (parameter):     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted 
+  라인 83 (parameter):     List<Client> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId
+  라인 89 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 96 (parameter):     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted 
+  라인 97 (parameter):     org.springframework.data.domain.Page<Client> findAllByTenantIdAndBranchId(@P
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultantClientMappingRepository.java (2개)
+  라인 59 (parameter):     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant
+  라인 60 (parameter):     List<ConsultantClientMapping> findByConsultantIdAndBranchCodeAndStatusNot(@P
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultantPerformanceRepository.java (20개)
+  라인 46 (variable):            "AND cp.consultant.branchCode = :branchCode " +
+  라인 51 (parameter):                                                                       @Param("br
+  라인 79 (variable):            "AND cp.consultant.branchCode = :branchCode " +
+  라인 84 (parameter):                                                                           @Param
+  라인 92 (parameter):            "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) 
+  라인 98 (parameter):                                                    @Param("branchCode") String b
+  라인 118 (variable):     @Query("SELECT cp.consultant.branchCode, " +
+  라인 126 (variable):            "GROUP BY cp.consultant.branchCode " +
+  라인 142 (parameter):            "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) 
+  라인 148 (parameter):                                                              @Param("branchCode"
+  라인 171 (variable):            "AND cp.consultant.branchCode = :branchCode " +
+  라인 175 (parameter):                                                           @Param("branchCode") S
+  라인 202 (variable):            "AND cp.consultant.branchCode = :branchCode " +
+  라인 206 (parameter):                                                                @Param("branchCod
+  라인 214 (parameter):            "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) 
+  라인 219 (parameter):                                        @Param("branchCode") String branchCode);
+  라인 239 (variable):     @Query("SELECT cp.consultant.branchCode, " +
+  라인 246 (variable):            "GROUP BY cp.consultant.branchCode " +
+  라인 261 (parameter):            "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) 
+  라인 266 (parameter):                                                  @Param("branchCode") String bra
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultantRepository.java (6개)
+  라인 80 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 86 (parameter):     @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDele
+  라인 87 (parameter):     List<Consultant> findAllByTenantIdAndBranchId(@Param("tenantId") String tena
+  라인 93 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 100 (parameter):     @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDele
+  라인 101 (parameter):     org.springframework.data.domain.Page<Consultant> findAllByTenantIdAndBranchI
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultantSalaryProfileRepository.java (1개)
+  라인 118 (parameter):     List<ConsultantSalaryProfile> findByBranchCodeAndIsActiveTrue(@Param("branch
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultationMessageRepository.java (6개)
+  라인 176 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 182 (parameter):     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND
+  라인 183 (parameter):     List<ConsultationMessage> findAllByTenantIdAndBranchId(@Param("tenantId") St
+  라인 189 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 196 (parameter):     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND
+  라인 197 (parameter):     Page<ConsultationMessage> findAllByTenantIdAndBranchId(@Param("tenantId") St
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ConsultationRepository.java (6개)
+  라인 404 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 410 (parameter):     @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDe
+  라인 411 (parameter):     List<Consultation> findAllByTenantIdAndBranchId(@Param("tenantId") String te
+  라인 417 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 424 (parameter):     @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDe
+  라인 425 (parameter):     org.springframework.data.domain.Page<Consultation> findAllByTenantIdAndBranc
+
+[FILE] src\main\java\com\coresolution\consultation\repository\DailyStatisticsRepository.java (15개)
+  라인 27 (parameter):     Optional<DailyStatistics> findByStatDateAndBranchCode(LocalDate statDate, St
+  라인 40 (variable):             String branchCode, LocalDate startDate, LocalDate endDate);
+  라인 58 (parameter):            "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+  라인 61 (parameter):                                                @Param("branchCode") String branc
+  라인 66 (variable):     @Query("SELECT ds.branchCode, " +
+  라인 73 (parameter):            "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+  라인 74 (variable):            "GROUP BY ds.branchCode " +
+  라인 78 (parameter):                                                   @Param("branchCode") String br
+  라인 83 (variable):     @Query("SELECT ds.statDate, ds.branchCode, ds.totalConsultations, " +
+  라인 84 (parameter):            "LAG(ds.totalConsultations) OVER (PARTITION BY ds.branchCode ORDER BY
+  라인 87 (parameter):            "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+  라인 88 (variable):            "ORDER BY ds.branchCode, ds.statDate")
+  라인 91 (parameter):                                        @Param("branchCode") String branchCode);
+  라인 96 (variable):     @Query("SELECT ds.branchCode, " +
+  라인 102 (variable):            "GROUP BY ds.branchCode " +
+
+[FILE] src\main\java\com\coresolution\consultation\repository\DiscountAccountingTransactionRepository.java (10개)
+  라인 31 (parameter):     List<DiscountAccountingTransaction> findByBranchCode(String branchCode);
+  라인 34 (parameter):     List<DiscountAccountingTransaction> findByBranchCodeAndStatus(String branchC
+  라인 60 (parameter):     @Query("SELECT SUM(d.discountAmount) FROM DiscountAccountingTransaction d WH
+  라인 61 (parameter):     BigDecimal getTotalDiscountAmountByBranch(@Param("branchCode") String branch
+  라인 64 (parameter):     @Query("SELECT SUM(d.refundedAmount) FROM DiscountAccountingTransaction d WH
+  라인 65 (parameter):     BigDecimal getTotalRefundedAmountByBranch(@Param("branchCode") String branch
+  라인 68 (parameter):     @Query("SELECT SUM(d.discountAmount - COALESCE(d.refundedAmount, 0)) FROM Di
+  라인 69 (parameter):     BigDecimal getNetDiscountAmountByBranch(@Param("branchCode") String branchCo
+  라인 76 (parameter):     @Query("SELECT d.branchCode, SUM(d.discountAmount), SUM(COALESCE(d.refundedA
+  라인 80 (variable):            "GROUP BY d.branchCode")
+
+[FILE] src\main\java\com\coresolution\consultation\repository\PaymentRepository.java (13개)
+  라인 89 (parameter):     Page<Payment> findByBranchIdAndIsDeletedFalse(Long branchId, Pageable pageab
+  라인 144 (variable):             Long branchId, LocalDateTime startDate, LocalDateTime endDate, Pagea
+  라인 174 (parameter):     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.branchId = :branchId AND
+  라인 175 (parameter):     BigDecimal getTotalAmountByBranchId(@Param("branchId") Long branchId);
+  라인 239 (parameter):     @Query("SELECT p.branchId, YEAR(p.createdAt), MONTH(p.createdAt), COUNT(p), 
+  라인 242 (parameter):            "GROUP BY p.branchId, YEAR(p.createdAt), MONTH(p.createdAt) " +
+  라인 243 (parameter):            "ORDER BY p.branchId, YEAR(p.createdAt), MONTH(p.createdAt)")
+  라인 283 (comment):      * @param branchId 지점 ID
+  라인 289 (parameter):     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.branchId 
+  라인 290 (parameter):     List<Payment> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantI
+  라인 296 (comment):      * @param branchId 지점 ID
+  라인 303 (parameter):     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.branchId 
+  라인 304 (parameter):     Page<Payment> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantI
+
+[FILE] src\main\java\com\coresolution\consultation\repository\SalaryCalculationRepository.java (7개)
+  라인 20 (variable):             String branchCode, LocalDate startDate, LocalDate endDate);
+  라인 52 (variable):     @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.tenantId = :tenantId AN
+  라인 57 (parameter):             @Param("branchCode") String branchCode,
+  라인 65 (variable):     @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.branchCode = :branchCod
+  라인 69 (parameter):             @Param("branchCode") String branchCode,
+  라인 75 (variable):            "AND sc.consultant.branchCode = :branchCode " +
+  라인 79 (parameter):             @Param("branchCode") String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\repository\SalaryProfileRepository.java (6개)
+  라인 16 (parameter):     List<SalaryProfile> findByBranchCodeAndIsActiveTrue(String branchCode);
+  라인 18 (parameter):     Optional<SalaryProfile> findByProfileNameAndBranchCode(String profileName, S
+  라인 23 (parameter):     @Query("SELECT sp FROM SalaryProfile sp WHERE sp.tenantId = :tenantId AND sp
+  라인 24 (parameter):     List<SalaryProfile> findActiveProfilesForBranchByTenantId(@Param("tenantId")
+  라인 30 (parameter):     @Query("SELECT sp FROM SalaryProfile sp WHERE sp.isActive = true AND (sp.bra
+  라인 31 (parameter):     List<SalaryProfile> findActiveProfilesForBranch(@Param("branchCode") String 
+
+[FILE] src\main\java\com\coresolution\consultation\repository\SalaryTaxCalculationRepository.java (2개)
+  라인 67 (variable):            "AND sc.consultant.branchCode = :branchCode " +
+  라인 72 (parameter):             @Param("branchCode") String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\repository\ScheduleRepository.java (11개)
+  라인 125 (parameter):     List<Schedule> findByTenantIdAndDateAndBranchCode(String tenantId, LocalDate
+  라인 131 (parameter):     List<Schedule> findByDateAndBranchCode(LocalDate date, String branchCode);
+  라인 808 (comment):     // Schedule 엔티티는 branchId 필드가 없음 (branchCode만 있음)
+  라인 813 (comment):      * Schedule 엔티티는 branchId 필드가 없으므로 branchId를 무시
+  라인 816 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 819 (parameter):     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDelete
+  라인 820 (parameter):     List<Schedule> findAllByTenantIdAndBranchId(@Param("tenantId") String tenant
+  라인 824 (comment):      * Schedule 엔티티는 branchId 필드가 없으므로 branchId를 무시
+  라인 827 (comment):      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
+  라인 831 (parameter):     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDelete
+  라인 832 (parameter):     Page<Schedule> findAllByTenantIdAndBranchId(@Param("tenantId") String tenant
+
+[FILE] src\main\java\com\coresolution\consultation\repository\UserRepository.java (32개)
+  라인 348 (parameter):     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role
+  라인 349 (parameter):     List<User> findByRoleAndBranchCodeAndIsActive(@Param("tenantId") String tena
+  라인 366 (parameter):     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.branchCode = ?2 AND (?3
+  라인 367 (comment):     List<User> findByRoleAndBranchCodeAndIsActiveDeprecated(UserRole role, Strin
+  라인 779 (variable):            "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false AND
+  라인 780 (parameter):     Object[] getUserStatisticsByBranchCode(@Param("tenantId") String tenantId, @
+  라인 795 (variable):            "FROM User u WHERE u.isDeleted = false AND u.branchCode = :branchCode
+  라인 796 (comment):     Object[] getUserStatisticsByBranchCodeDeprecated(@Param("branchCode") String
+  라인 963 (parameter):     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode =
+  라인 964 (parameter):     List<User> findByBranchCode(@Param("tenantId") String tenantId, @Param("bran
+  라인 970 (parameter):     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.isDeleted = false
+  라인 971 (comment):     List<User> findByBranchCodeDeprecated(String branchCode);
+  라인 980 (parameter):     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode =
+  라인 981 (parameter):     List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(@Param("t
+  라인 997 (parameter):     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.role = ?2 AND u.i
+  라인 998 (comment):     List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsernameDeprecated
+  라인 1083 (parameter):     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branc
+  라인 1084 (parameter):     long countByBranchIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @P
+  라인 1091 (comment):     long countByBranchIdAndIsDeletedFalseDeprecated(Long branchId);
+  라인 1103 (parameter):     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branc
+  라인 1104 (parameter):     long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") Stri
+  라인 1111 (comment):     long countByBranchIdAndIsActiveTrueAndIsDeletedFalseDeprecated(Long branchId
+  라인 1123 (parameter):     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branc
+  라인 1124 (parameter):     long countByBranchIdAndRoleAndIsDeletedFalse(@Param("tenantId") String tenan
+  라인 1131 (comment):     long countByBranchIdAndRoleAndIsDeletedFalseDeprecated(Long branchId, UserRo
+  라인 1197 (comment):     // User 엔티티는 Branch와 @ManyToOne 관계이므로 branchId 필드가 없음
+  라인 1205 (comment):      * @param branchId 지점 ID (User의 경우 branch.id)
+  라인 1211 (parameter):     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = 
+  라인 1212 (parameter):     List<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, 
+  라인 1219 (comment):      * @param branchId 지점 ID (User의 경우 branch.id)
+  라인 1226 (parameter):     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = 
+  라인 1227 (parameter):     Page<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, 
+
+[FILE] src\main\java\com\coresolution\consultation\service\AccountService.java (2개)
+  라인 37 (parameter):     List<AccountResponse> getAccountsByBranch(Long branchId);
+  라인 52 (parameter):     AccountResponse getPrimaryAccountByBranch(Long branchId);
+
+[FILE] src\main\java\com\coresolution\consultation\service\AdminService.java (7개)
+  라인 135 (parameter):     Map<String, Object> getRefundStatistics(String period, String branchCode);
+  라인 145 (parameter):     Map<String, Object> getRefundHistory(int page, int size, String period, Stri
+  라인 162 (parameter):     Map<String, Object> getConsultantVacationStatsByBranch(String period, String
+  라인 167 (parameter):     List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String
+  라인 247 (parameter):     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, S
+  라인 299 (parameter):     Map<String, Object> getScheduleStatisticsByBranch(String branchCode);
+  라인 309 (parameter):     List<User> getUsers(boolean includeInactive, String role, String branchCode)
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchCodeInitService.java (2개)
+  라인 73 (comment):             log.warn("⚠️ Deprecated: branchCode 설정은 더 이상 사용하지 않음. tenantId 기반으로만
+  라인 75 (comment):             // 4. 본사 역할의 모든 사용자 확인 (branchCode 설정 제거)
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchDataFilterService.java (2개)
+  라인 67 (comment):      * @param branchId 지점 ID
+  라인 70 (parameter):     boolean hasBranchAccess(User user, Long branchId);
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchPermissionService.java (16개)
+  라인 35 (comment):      * @param branchId 지점 ID
+  라인 38 (parameter):     boolean canManageBranch(User user, Long branchId);
+  라인 43 (comment):      * @param branchId 지점 ID
+  라인 46 (parameter):     boolean canManageBranchConsultants(User user, Long branchId);
+  라인 51 (comment):      * @param branchId 지점 ID
+  라인 54 (parameter):     boolean canManageBranchClients(User user, Long branchId);
+  라인 59 (comment):      * @param branchId 지점 ID
+  라인 62 (parameter):     boolean canManageBranchSchedules(User user, Long branchId);
+  라인 67 (comment):      * @param branchId 지점 ID
+  라인 70 (parameter):     boolean canViewBranchStatistics(User user, Long branchId);
+  라인 75 (comment):      * @param branchId 지점 ID
+  라인 78 (parameter):     List<String> getBranchPermissions(User user, Long branchId);
+  라인 82 (comment):      * @param branchId 지점 ID
+  라인 85 (parameter):     Map<String, Object> getBranchPermissionMatrix(Long branchId);
+  라인 90 (comment):      * @param branchId 지점 ID
+  라인 93 (parameter):     List<Map<String, Object>> getBranchMenuPermissions(User user, Long branchId)
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchScheduleService.java (18개)
+  라인 22 (comment):      * @param branchId 지점 ID
+  라인 27 (parameter):     List<Schedule> getBranchSchedules(Long branchId, LocalDate startDate, LocalD
+  라인 31 (comment):      * @param branchId 지점 ID
+  라인 37 (parameter):     List<Schedule> getBranchConsultantSchedules(Long branchId, Long consultantId
+  라인 41 (comment):      * @param branchId 지점 ID
+  라인 46 (parameter):     Map<String, Object> getBranchScheduleStatistics(Long branchId, LocalDate sta
+  라인 50 (comment):      * @param branchId 지점 ID
+  라인 54 (parameter):     Map<String, Object> getBranchConsultantScheduleStatus(Long branchId, LocalDa
+  라인 58 (comment):      * @param branchId 지점 ID
+  라인 62 (parameter):     Schedule createBranchSchedule(Long branchId, Schedule schedule);
+  라인 66 (comment):      * @param branchId 지점 ID
+  라인 71 (parameter):     Schedule updateBranchSchedule(Long branchId, Long scheduleId, Schedule sched
+  라인 75 (comment):      * @param branchId 지점 ID
+  라인 78 (parameter):     void deleteBranchSchedule(Long branchId, Long scheduleId);
+  라인 82 (comment):      * @param branchId 지점 ID
+  라인 88 (parameter):     boolean isScheduleConflict(Long branchId, Long consultantId, LocalDateTime s
+  라인 92 (comment):      * @param branchId 지점 ID
+  라인 97 (parameter):     List<Map<String, Object>> getAvailableTimeSlots(Long branchId, Long consulta
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchService.java (28개)
+  라인 32 (parameter):     BranchResponse updateBranch(Long branchId, BranchUpdateRequest request);
+  라인 37 (parameter):     BranchResponse getBranchResponse(Long branchId);
+  라인 42 (parameter):     Branch getBranchByCode(String branchCode);
+  라인 91 (parameter):     void assignManager(Long branchId, Long managerId);
+  라인 96 (parameter):     void removeManager(Long branchId);
+  라인 101 (parameter):     void changeBranchStatus(Long branchId, Branch.BranchStatus newStatus);
+  라인 106 (parameter):     void activateBranch(Long branchId);
+  라인 111 (parameter):     void deactivateBranch(Long branchId);
+  라인 116 (parameter):     void closeBranch(Long branchId);
+  라인 123 (parameter):     void assignConsultantToBranch(Long branchId, Long consultantId);
+  라인 128 (parameter):     void assignClientToBranch(Long branchId, Long clientId);
+  라인 143 (parameter):     List<User> getBranchConsultants(Long branchId);
+  라인 148 (parameter):     List<User> getBranchClients(Long branchId);
+  라인 155 (parameter):     Map<String, Object> getBranchStatistics(Long branchId);
+  라인 187 (parameter):     boolean isBranchCodeDuplicate(String branchCode);
+  라인 199 (parameter):     List<Map<String, Object>> getBranchTrendStatistics(String period, String met
+  라인 204 (parameter):     boolean isBranchCodeDuplicate(String branchCode, Long excludeBranchId);
+  라인 219 (parameter):     boolean isWithinCapacity(Long branchId);
+  라인 224 (parameter):     boolean isConsultantCapacityAvailable(Long branchId);
+  라인 229 (parameter):     boolean isClientCapacityAvailable(Long branchId);
+  라인 236 (parameter):     void setParentBranch(Long branchId, Long parentBranchId);
+  라인 241 (parameter):     void removeParentBranch(Long branchId);
+  라인 251 (parameter):     List<BranchResponse> getAllSubBranches(Long branchId);
+  라인 256 (parameter):     List<BranchResponse> getAllParentBranches(Long branchId);
+  라인 263 (parameter):     void updateBranchSettings(Long branchId, String settings);
+  라인 268 (parameter):     void updateOperatingHours(Long branchId, String startTime, String endTime);
+  라인 273 (parameter):     void updateClosedDays(Long branchId, List<String> closedDays);
+  라인 278 (parameter):     void updateCapacity(Long branchId, Integer maxConsultants, Integer maxClient
+
+[FILE] src\main\java\com\coresolution\consultation\service\BranchStatisticsService.java (14개)
+  라인 19 (comment):      * @param branchId 지점 ID
+  라인 24 (parameter):     Map<String, Object> getConsultationStatistics(Long branchId, LocalDate start
+  라인 28 (comment):      * @param branchId 지점 ID
+  라인 33 (parameter):     Map<String, Object> getRevenueStatistics(Long branchId, LocalDate startDate,
+  라인 37 (comment):      * @param branchId 지점 ID
+  라인 42 (parameter):     Map<String, Object> getConsultantPerformanceStatistics(Long branchId, LocalD
+  라인 46 (comment):      * @param branchId 지점 ID
+  라인 51 (parameter):     Map<String, Object> getCustomerSatisfactionStatistics(Long branchId, LocalDa
+  라인 55 (comment):      * @param branchId 지점 ID
+  라인 59 (parameter):     Map<String, Object> getBranchDashboardData(Long branchId, String period);
+  라인 71 (comment):      * @param branchId 지점 ID
+  라인 75 (parameter):     Map<String, Object> getMonthlyTrendData(Long branchId, int year);
+  라인 79 (comment):      * @param branchId 지점 ID
+  라인 85 (parameter):     Map<String, Object> getConsultantDetailPerformance(Long branchId, Long consu
+
+[FILE] src\main\java\com\coresolution\consultation\service\ConsultantRatingService.java (2개)
+  라인 130 (comment):      * @param branchCode 지점코드
+  라인 133 (parameter):     Map<String, Object> getAdminRatingStatisticsByBranch(String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\DiscountAccountingService.java (4개)
+  라인 121 (comment):      * @param branchCode 지점 코드
+  라인 124 (parameter):     Map<String, Object> getRefundableDiscounts(String branchCode);
+  라인 129 (comment):      * @param branchCode 지점 코드
+  라인 134 (parameter):     Map<String, Object> getDiscountRefundStatistics(String branchCode, String st
+
+[FILE] src\main\java\com\coresolution\consultation\service\ErpDiscountIntegrationService.java (4개)
+  라인 36 (comment):      * @param branchCode 지점 코드
+  라인 41 (parameter):     Map<String, Object> getDiscountAccountingSummary(String branchCode, String s
+  라인 46 (comment):      * @param branchCode 지점 코드
+  라인 49 (parameter):     Map<String, Object> validateDiscountAccountingIntegrity(String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\ErpService.java (7개)
+  라인 277 (parameter):     Map<String, Object> getBranchFinanceDashboard(String branchCode);
+  라인 282 (parameter):     Map<String, Object> getBranchFinanceDashboard(String branchCode, java.time.L
+  라인 292 (parameter):     Map<String, Object> getBranchFinanceStatistics(String branchCode, String sta
+  라인 302 (parameter):     Map<String, Object> getBalanceSheet(String reportDate, String branchCode);
+  라인 307 (parameter):     Map<String, Object> getIncomeStatement(String startDate, String endDate, Str
+  라인 312 (parameter):     Map<String, Object> getDailyFinanceReport(String reportDate, String branchCo
+  라인 317 (parameter):     Map<String, Object> getMonthlyFinanceReport(String year, String month, Strin
+
+[FILE] src\main\java\com\coresolution\consultation\service\FinancialTransactionService.java (2개)
+  라인 135 (variable):     Map<String, Object> getBranchFinancialData(String branchCode, LocalDate star
+  라인 141 (variable):     Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode
+
+[FILE] src\main\java\com\coresolution\consultation\service\JwtService.java (16개)
+  라인 58 (comment):      * Phase 3: tenantId, branchId, permissions 포함
+  라인 80 (parameter):             claims.put("branchId", user.getBranch().getId());
+  라인 82 (comment):             // branch 엔티티가 로드되지 않은 경우 branchCode 사용
+  라인 83 (parameter):             claims.put("branchCode", user.getBranchCode());
+  라인 91 (variable):         log.debug("JWT 토큰 생성: userId={}, tenantId={}, branchId={}, permissions={
+  라인 302 (comment):      * Phase 3: 토큰에서 branchId 추출
+  라인 307 (parameter):             Object branchId = claims.get("branchId");
+  라인 308 (parameter):             if (branchId == null) {
+  라인 311 (parameter):             if (branchId instanceof Long) {
+  라인 312 (parameter):                 return (Long) branchId;
+  라인 313 (parameter):             } else if (branchId instanceof Integer) {
+  라인 314 (parameter):                 return ((Integer) branchId).longValue();
+  라인 315 (parameter):             } else if (branchId instanceof String) {
+  라인 317 (parameter):                     return Long.parseLong((String) branchId);
+  라인 319 (parameter):                     log.warn("JWT 토큰에서 branchId 파싱 실패: {}", branchId);
+  라인 325 (parameter):             log.warn("JWT 토큰에서 branchId 추출 실패: {}", e.getMessage());
+
+[FILE] src\main\java\com\coresolution\consultation\service\PaymentService.java (4개)
+  라인 51 (comment):      * @param branchId 지점 ID
+  라인 55 (parameter):     Page<PaymentResponse> getPaymentsByBranchId(Long branchId, Pageable pageable
+  라인 136 (comment):      * @param branchId 지점 ID
+  라인 141 (parameter):     Map<String, Object> getBranchPaymentStatistics(Long branchId, LocalDateTime 
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlAccountingService.java (2개)
+  라인 62 (comment):      * @param branchCode 지점 코드
+  라인 69 (variable):         String branchCode
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlConsultationRecordAlertService.java (6개)
+  라인 19 (comment):      * @param branchCode 지점 코드 (null이면 전체)
+  라인 22 (parameter):     Map<String, Object> checkMissingConsultationRecords(LocalDate checkDate, Str
+  라인 27 (comment):      * @param branchCode 지점 코드
+  라인 32 (parameter):     Map<String, Object> getMissingConsultationRecordAlerts(String branchCode, Lo
+  라인 46 (comment):      * @param branchCode 지점 코드
+  라인 51 (parameter):     Map<String, Object> getConsultationRecordMissingStatistics(String branchCode
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlDiscountAccountingService.java (6개)
+  라인 23 (comment):      * @param branchCode 지점 코드
+  라인 33 (variable):         String branchCode,
+  라인 72 (comment):      * @param branchCode 지점 코드
+  라인 78 (variable):         String branchCode,
+  라인 86 (comment):      * @param branchCode 지점 코드
+  라인 89 (parameter):     Map<String, Object> validateDiscountIntegrity(String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlFinancialService.java (8개)
+  라인 52 (comment):      * @param branchCode 지점 코드 (선택사항)
+  라인 55 (parameter):     Map<String, Object> generateMonthlyFinancialReport(int year, int month, Stri
+  라인 61 (comment):      * @param branchCode 지점 코드 (선택사항)
+  라인 64 (parameter):     Map<String, Object> generateQuarterlyFinancialReport(int year, int quarter, 
+  라인 69 (comment):      * @param branchCode 지점 코드 (선택사항)
+  라인 72 (parameter):     Map<String, Object> generateYearlyFinancialReport(int year, String branchCod
+  라인 78 (comment):      * @param branchCode 지점 코드 (선택사항)
+  라인 81 (parameter):     Map<String, Object> calculateFinancialKPIs(LocalDate startDate, LocalDate en
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlMappingSyncService.java (2개)
+  라인 90 (comment):      * @param branchCode 지점 코드
+  라인 95 (parameter):     Map<String, Object> getRefundStatistics(String branchCode, String startDate,
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlSalaryManagementService.java (1개)
+  라인 38 (variable):             String branchCode,
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlScheduleValidationService.java (1개)
+  라인 37 (parameter):     Map<String, Object> processBatchScheduleCompletion(String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\PlSqlStatisticsService.java (4개)
+  라인 18 (comment):      * @param branchCode 지점 코드 (특정 지점 처리시)
+  라인 22 (parameter):     String updateDailyStatistics(String branchCode, LocalDate statDate);
+  라인 69 (comment):      * @param branchCode 지점 코드
+  라인 73 (parameter):     boolean validateStatisticsConsistency(String branchCode, LocalDate statDate)
+
+[FILE] src\main\java\com\coresolution\consultation\service\RealTimeStatisticsService.java (8개)
+  라인 34 (comment):      * @param branchCode 지점 코드
+  라인 37 (parameter):     void updateDailyStatistics(String branchCode, LocalDate date);
+  라인 44 (comment):      * @param branchCode 지점 코드
+  라인 46 (parameter):     void updateStatisticsOnMappingChange(Long consultantId, Long clientId, Strin
+  라인 51 (comment):      * @param branchCode 지점 코드
+  라인 55 (parameter):     void updateFinancialStatisticsOnPayment(String branchCode, Long amount, Loca
+  라인 61 (comment):      * @param branchCode 지점 코드
+  라인 65 (parameter):     void updateStatisticsOnRefund(Long consultantId, String branchCode, Long ref
+
+[FILE] src\main\java\com\coresolution\consultation\service\SalaryBatchService.java (2개)
+  라인 18 (comment):      * @param branchCode 지점 코드 (null이면 전체)
+  라인 21 (parameter):     BatchResult executeMonthlySalaryBatch(int targetYear, int targetMonth, Strin
+
+[FILE] src\main\java\com\coresolution\consultation\service\ScheduleService.java (19개)
+  라인 67 (variable):                                     LocalTime startTime, LocalTime endTime, Stri
+  라인 213 (comment):      * @param branchId 지점 ID
+  라인 218 (parameter):     List<Schedule> getBranchSchedules(Long branchId, LocalDate startDate, LocalD
+  라인 222 (comment):      * @param branchId 지점 ID
+  라인 228 (parameter):     List<Schedule> getBranchConsultantSchedules(Long branchId, Long consultantId
+  라인 232 (comment):      * @param branchId 지점 ID
+  라인 237 (parameter):     Map<String, Object> getBranchScheduleStatistics(Long branchId, LocalDate sta
+  라인 241 (comment):      * @param branchId 지점 ID
+  라인 245 (parameter):     Map<String, Object> getBranchConsultantScheduleStatus(Long branchId, LocalDa
+  라인 249 (comment):      * @param branchId 지점 ID
+  라인 253 (parameter):     Schedule createBranchSchedule(Long branchId, Schedule schedule);
+  라인 257 (comment):      * @param branchId 지점 ID
+  라인 262 (parameter):     Schedule updateBranchSchedule(Long branchId, Long scheduleId, Schedule sched
+  라인 266 (comment):      * @param branchId 지점 ID
+  라인 269 (parameter):     void deleteBranchSchedule(Long branchId, Long scheduleId);
+  라인 273 (comment):      * @param branchId 지점 ID
+  라인 279 (parameter):     boolean isScheduleConflict(Long branchId, Long consultantId, LocalDateTime s
+  라인 283 (comment):      * @param branchId 지점 ID
+  라인 288 (parameter):     List<Map<String, Object>> getAvailableTimeSlots(Long branchId, Long consulta
+
+[FILE] src\main\java\com\coresolution\consultation\service\StatisticsService.java (10개)
+  라인 25 (parameter):     DailyStatistics updateDailyStatistics(LocalDate date, String branchCode);
+  라인 30 (parameter):     DailyStatistics getDailyStatistics(LocalDate date, String branchCode);
+  라인 35 (parameter):     List<DailyStatistics> getDailyStatistics(LocalDate startDate, LocalDate endD
+  라인 40 (parameter):     Map<String, Object> getMonthlyAggregatedStatistics(String yearMonth, String 
+  라인 57 (parameter):     List<ConsultantPerformance> getTopPerformers(LocalDate startDate, LocalDate 
+  라인 62 (parameter):     List<ConsultantPerformance> getUnderperformingConsultants(LocalDate date, St
+  라인 113 (parameter):     Map<String, Object> getDashboardStatistics(String branchCode);
+  라인 118 (parameter):     Map<String, Object> getRealTimePerformanceIndicators(String branchCode);
+  라인 123 (parameter):     Map<String, Object> getTrendAnalysisData(LocalDate startDate, LocalDate endD
+  라인 128 (parameter):     Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endD
+
+[FILE] src\main\java\com\coresolution\consultation\service\StatisticsTestDataService.java (14개)
+  라인 20 (comment):      * @param branchCode 지점 코드
+  라인 24 (parameter):     Map<String, Object> createTestSchedules(LocalDate targetDate, String branchC
+  라인 30 (comment):      * @param branchCode 지점 코드
+  라인 34 (parameter):     Map<String, Object> createCompletedConsultations(LocalDate targetDate, Strin
+  라인 40 (comment):      * @param branchCode 지점 코드
+  라인 44 (parameter):     Map<String, Object> createTestFinancialTransactions(LocalDate targetDate, St
+  라인 50 (comment):      * @param branchCode 지점 코드
+  라인 54 (parameter):     Map<String, Object> createTestRatings(LocalDate targetDate, String branchCod
+  라인 60 (comment):      * @param branchCode 지점 코드
+  라인 63 (parameter):     Map<String, Object> createCompleteTestDataSet(LocalDate targetDate, String b
+  라인 69 (comment):      * @param branchCode 지점 코드 (null이면 모든 지점)
+  라인 72 (parameter):     Map<String, Object> cleanupTestData(LocalDate targetDate, String branchCode)
+  라인 81 (comment):      * @param branchCode 지점 코드
+  라인 84 (parameter):     Map<String, Object> createDiverseTestScenarios(LocalDate targetDate, String 
+
+[FILE] src\main\java\com\coresolution\consultation\service\UserService.java (2개)
+  라인 193 (parameter):     Object[] getUserStatisticsByBranchCode(String branchCode);
+  라인 255 (parameter):     List<User> findByBranchCode(String branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\AbstractOAuth2Service.java (2개)
+  라인 126 (comment):             // 5. Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
+  라인 240 (parameter):                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\AccountServiceImpl.java (5개)
+  라인 60 (parameter):                 .branchId(request.getBranchId())
+  라인 222 (field):     public List<AccountResponse> getAccountsByBranch(Long branchId) {
+  라인 224 (parameter):         return accountRepository.findByTenantIdAndBranchIdAndIsActiveTrueAndIsDe
+  라인 285 (field):     public AccountResponse getPrimaryAccountByBranch(Long branchId) {
+  라인 287 (parameter):         return accountRepository.findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsA
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\AdminServiceImpl.java (54개)
+  라인 183 (parameter):                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
+  라인 216 (variable):         String branchCode = null;
+  라인 390 (parameter):                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
+  라인 562 (parameter):                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
+  라인 664 (parameter):                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
+  라인 1021 (parameter):                 consultantData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코
+  라인 1108 (parameter):                 consultantData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코
+  라인 1437 (parameter):                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용
+  라인 2425 (field):     public Map<String, Object> getRefundStatistics(String period, String branchC
+  라인 2426 (comment):         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode 파라미터는 무시하고 tenantId만 사용
+  라인 2427 (parameter):         if (branchCode != null && !branchCode.trim().isEmpty()) {
+  라인 2428 (parameter):             log.warn("⚠️ 브랜치 코드는 더 이상 사용하지 않습니다. branchCode={} 파라미터는 무시됩니다.", br
+  라인 2746 (parameter):                         refund.put("branchCode", transaction.getBranchCode());
+  라인 2764 (parameter):                         refund.put("branchCode", transaction.getBranchCode());
+  라인 2795 (parameter):                     refund.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용
+  라인 2856 (field):     public Map<String, Object> getRefundHistory(int page, int size, String perio
+  라인 2857 (parameter):         log.info("📋 환불 이력 조회 (지점별): page={}, size={}, period={}, status={}, bran
+  라인 2873 (parameter):                     if (branchCode == null || branchCode.trim().isEmpty()) {
+  라인 2876 (parameter):                     return branchCode.equals(mapping.getBranchCode());
+  라인 2886 (parameter):                     if (branchCode == null || branchCode.trim().isEmpty()) {
+  라인 2889 (parameter):                     return branchCode.equals(transaction.getBranchCode());
+  라인 2988 (parameter):         result.put("branchCode", branchCode);
+  라인 2991 (parameter):                 totalElements, partialRefundHistory.size(), terminatedRefundHist
+  라인 3232 (parameter):             erpData.put("branchCode", getCurrentUserBranchCode());
+  라인 3457 (field):     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consulta
+  라인 3458 (parameter):         log.info("🔍 상담사별 매칭 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCo
+  라인 3467 (variable):             tenantId, consultantId, branchCode, ConsultantClientMapping.MappingS
+  라인 3731 (field):     public List<Map<String, Object>> getConsultationCompletionStatisticsByBranch
+  라인 3733 (parameter):             log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, b
+  라인 3738 (parameter):             if (branchCode == null || branchCode.trim().isEmpty()) {
+  라인 3744 (parameter):                 Branch branch = branchService.getBranchByCode(branchCode);
+  라인 3750 (parameter):                 log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+  라인 3753 (parameter):             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, consultants.size());
+  라인 3782 (parameter):                     consultantStats.put("branchCode", consultant.getBranchCode()
+  라인 3804 (parameter):             log.info("✅ 지점별 상담 완료 건수 통계 조회 완료: 지점={}, {}명", branchCode, statisti
+  라인 3961 (field):     public Map<String, Object> getScheduleStatisticsByBranch(String branchCode) 
+  라인 3963 (parameter):             log.info("📊 스케줄 상태별 통계 조회 시작 (지점별): branchCode={}", branchCode);
+  라인 3970 (parameter):                     .filter(schedule -> branchCode.equals(schedule.getBranchCode
+  라인 3972 (parameter):             log.info("📋 조회된 스케줄 수: {} (전체: {}, 지점: {})", branchSchedules.size(),
+  라인 4013 (parameter):             statistics.put("branchCode", branchCode);
+  라인 4215 (field):     public List<User> getUsers(boolean includeInactive, String role, String bran
+  라인 4216 (comment):         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode 파라미터는 무시하고 tenantId만 사용
+  라인 4217 (parameter):         if (branchCode != null && !branchCode.isEmpty()) {
+  라인 4218 (parameter):             log.warn("⚠️ 브랜치 코드는 더 이상 사용하지 않습니다. branchCode={} 파라미터는 무시됩니다.", br
+  라인 4503 (field):     public Map<String, Object> getConsultantVacationStatsByBranch(String period,
+  라인 4504 (parameter):         log.info("📊 지점별 상담사 휴가 통계 조회: period={}, branchCode={}", period, branchC
+  라인 4521 (parameter):             if (branchCode == null || branchCode.trim().isEmpty()) {
+  라인 4525 (parameter):                     Branch branch = branchService.getBranchByCode(branchCode);
+  라인 4531 (parameter):                     log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+  라인 4535 (parameter):             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, activeConsultants.size
+  라인 4545 (parameter):                 consultantData.put("branchCode", consultant.getBranchCode());
+  라인 4573 (parameter):             summary.put("branchCode", branchCode);
+  라인 4581 (parameter):                 branchCode, activeConsultants.size(), totalVacationDays);
+  라인 4888 (parameter):                 .branchId(null)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\AlertServiceImpl.java (1개)
+  라인 47 (field):     protected List<Alert> findEntitiesByTenantAndBranch(String tenantId, Long br
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\AuthServiceImpl.java (5개)
+  라인 107 (comment):                 // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
+  라인 148 (variable):                     log.info("✅ JWT 토큰 기반 로그인 성공: userId={}, tenantId={}, branch
+  라인 185 (comment):             // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
+  라인 227 (variable):             log.info("✅ JWT 토큰 갱신 성공: userId={}, tenantId={}, branchId={}",
+  라인 591 (parameter):                 .branchId(assignment.getBranchId())
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\BranchDataFilterServiceImpl.java (2개)
+  라인 212 (field):     public boolean hasBranchAccess(User user, Long branchId) {
+  라인 213 (parameter):         return canAccessBranchData(user, branchId);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\BranchInitializationService.java (2개)
+  라인 50 (comment):             // 표준화 2025-12-06: branchCode 대신 지점 유형이 MAIN인 지점을 찾음
+  라인 72 (parameter):                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\BranchPermissionServiceImpl.java (22개)
+  라인 89 (field):     public boolean canManageBranch(User user, Long branchId) {
+  라인 90 (parameter):         if (user == null || branchId == null) {
+  라인 101 (parameter):             return canAccessBranchData(user, branchId);
+  라인 212 (field):     public boolean canManageBranchConsultants(User user, Long branchId) {
+  라인 213 (parameter):         return canManageBranch(user, branchId);
+  라인 217 (field):     public boolean canManageBranchClients(User user, Long branchId) {
+  라인 218 (parameter):         return canManageBranch(user, branchId);
+  라인 222 (field):     public boolean canManageBranchSchedules(User user, Long branchId) {
+  라인 223 (parameter):         return canManageBranch(user, branchId);
+  라인 227 (field):     public boolean canViewBranchStatistics(User user, Long branchId) {
+  라인 228 (parameter):         return canAccessBranchData(user, branchId);
+  라인 232 (field):     public List<String> getBranchPermissions(User user, Long branchId) {
+  라인 233 (parameter):         if (user == null || branchId == null) {
+  라인 239 (parameter):         if (canManageBranch(user, branchId)) {
+  라인 242 (parameter):         if (canManageBranchConsultants(user, branchId)) {
+  라인 245 (parameter):         if (canManageBranchClients(user, branchId)) {
+  라인 248 (parameter):         if (canManageBranchSchedules(user, branchId)) {
+  라인 251 (parameter):         if (canViewBranchStatistics(user, branchId)) {
+  라인 259 (field):     public Map<String, Object> getBranchPermissionMatrix(Long branchId) {
+  라인 261 (parameter):         matrix.put("branchId", branchId);
+  라인 267 (field):     public List<Map<String, Object>> getBranchMenuPermissions(User user, Long br
+  라인 268 (parameter):         if (user == null || branchId == null) {
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\BranchServiceImpl.java (88개)
+  라인 71 (field):     protected List<Branch> findEntitiesByTenantAndBranch(String tenantId, Long b
+  라인 72 (parameter):         if (branchId != null) {
+  라인 73 (parameter):             return branchRepository.findAllByTenantIdAndBranchId(tenantId, branc
+  라인 104 (parameter):                 .branchCode(request.getBranchCode())
+  라인 139 (field):     public BranchResponse updateBranch(Long branchId, BranchUpdateRequest reques
+  라인 140 (parameter):         log.info("지점 수정 요청: ID={}", branchId);
+  라인 142 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 214 (field):     public BranchResponse getBranchResponse(Long branchId) {
+  라인 215 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 227 (field):     public Branch getBranchByCode(String branchCode) {
+  라인 228 (comment):         log.warn("⚠️ Deprecated 메서드 호출: getBranchByCode - branchCode는 더 이상 사용하지 
+  라인 230 (parameter):         return branchRepository.findByBranchCodeAndIsDeletedFalse(branchCode)
+  라인 231 (parameter):                 .orElseThrow(() -> new EntityNotFoundException("지점을 찾을 수 없습니다: "
+  라인 306 (field):     public void assignManager(Long branchId, Long managerId) {
+  라인 307 (parameter):         log.info("지점장 지정: 지점 ID={}, 지점장 ID={}", branchId, managerId);
+  라인 309 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 325 (field):     public void removeManager(Long branchId) {
+  라인 326 (parameter):         log.info("지점장 해제: 지점 ID={}", branchId);
+  라인 328 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 336 (field):     public void changeBranchStatus(Long branchId, Branch.BranchStatus newStatus)
+  라인 337 (parameter):         log.info("지점 상태 변경: 지점 ID={}, 새 상태={}", branchId, newStatus);
+  라인 339 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 359 (field):     public void activateBranch(Long branchId) {
+  라인 361 (parameter):         changeBranchStatus(branchId, Branch.BranchStatus.ACTIVE);
+  라인 365 (field):     public void deactivateBranch(Long branchId) {
+  라인 367 (parameter):         changeBranchStatus(branchId, Branch.BranchStatus.SUSPENDED);
+  라인 371 (field):     public void closeBranch(Long branchId) {
+  라인 373 (parameter):         changeBranchStatus(branchId, Branch.BranchStatus.CLOSED);
+  라인 378 (field):     public void assignConsultantToBranch(Long branchId, Long consultantId) {
+  라인 379 (parameter):         log.info("상담사 지점 할당: 지점 ID={}, 상담사 ID={}", branchId, consultantId);
+  라인 381 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 385 (parameter):         if (!isConsultantCapacityAvailable(branchId)) {
+  라인 397 (field):     public void assignClientToBranch(Long branchId, Long clientId) {
+  라인 398 (parameter):         log.info("내담자 지점 할당: 지점 ID={}, 내담자 ID={}", branchId, clientId);
+  라인 400 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 404 (parameter):         if (!isClientCapacityAvailable(branchId)) {
+  라인 459 (field):     public List<User> getBranchConsultants(Long branchId) {
+  라인 465 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 472 (field):     public List<User> getBranchClients(Long branchId) {
+  라인 478 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 486 (field):     public Map<String, Object> getBranchStatistics(Long branchId) {
+  라인 487 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 490 (parameter):         statistics.put("branchId", branch.getId());
+  라인 492 (parameter):         statistics.put("branchCode", branch.getBranchCode());
+  라인 496 (parameter):         List<User> consultants = getBranchConsultants(branchId);
+  라인 497 (parameter):         List<User> clients = getBranchClients(branchId);
+  라인 586 (field):     public boolean isBranchCodeDuplicate(String branchCode) {
+  라인 587 (comment):         log.warn("⚠️ Deprecated 메서드 호출: isBranchCodeDuplicate - branchCode는 더 이상
+  라인 589 (parameter):         return branchRepository.existsByBranchCodeAndIsDeletedFalse(branchCode);
+  라인 599 (field):     public boolean isBranchCodeDuplicate(String branchCode, Long excludeBranchId
+  라인 600 (comment):         log.warn("⚠️ Deprecated 메서드 호출: isBranchCodeDuplicate - branchCode는 더 이상
+  라인 602 (parameter):         return branchRepository.existsByBranchCodeAndIdNotAndIsDeletedFalse(bran
+  라인 622 (field):     public boolean isWithinCapacity(Long branchId) {
+  라인 623 (parameter):         return isConsultantCapacityAvailable(branchId) && isClientCapacityAvaila
+  라인 628 (field):     public boolean isConsultantCapacityAvailable(Long branchId) {
+  라인 629 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 634 (parameter):         List<User> consultants = getBranchConsultants(branchId);
+  라인 640 (field):     public boolean isClientCapacityAvailable(Long branchId) {
+  라인 641 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 646 (parameter):         List<User> clients = getBranchClients(branchId);
+  라인 652 (field):     public void setParentBranch(Long branchId, Long parentBranchId) {
+  라인 653 (parameter):         log.info("상위 지점 설정: 지점 ID={}, 상위 지점 ID={}", branchId, parentBranchId);
+  라인 655 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 670 (field):     public void removeParentBranch(Long branchId) {
+  라인 671 (parameter):         log.info("상위 지점 해제: 지점 ID={}", branchId);
+  라인 673 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 691 (field):     public List<BranchResponse> getAllSubBranches(Long branchId) {
+  라인 692 (parameter):         List<Branch> subBranches = branchRepository.findByParentBranchIdAndIsDel
+  라인 700 (field):     public List<BranchResponse> getAllParentBranches(Long branchId) {
+  라인 701 (parameter):         Optional<Branch> parentBranch = branchRepository.findParentBranch(branch
+  라인 708 (field):     public void updateBranchSettings(Long branchId, String settings) {
+  라인 709 (parameter):         log.info("지점 설정 업데이트: 지점 ID={}", branchId);
+  라인 711 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 719 (field):     public void updateOperatingHours(Long branchId, String startTime, String end
+  라인 720 (parameter):         log.info("지점 운영시간 업데이트: 지점 ID={}, {}~{}", branchId, startTime, endTime);
+  라인 722 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 731 (field):     public void updateClosedDays(Long branchId, List<String> closedDays) {
+  라인 732 (parameter):         log.info("지점 휴무일 업데이트: 지점 ID={}", branchId);
+  라인 734 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 742 (field):     public void updateCapacity(Long branchId, Integer maxConsultants, Integer ma
+  라인 744 (variable):                 branchId, maxConsultants, maxClients);
+  라인 746 (parameter):         Branch branch = findActiveByIdOrThrow(branchId);
+  라인 796 (parameter):                 .branchCode(branch.getBranchCode())
+  라인 902 (parameter):                     branchStats.put("branchId", branch.getId());
+  라인 904 (parameter):                     branchStats.put("branchCode", branch.getBranchCode());
+  라인 932 (field):     public List<Map<String, Object>> getBranchTrendStatistics(String period, Str
+  라인 933 (parameter):         log.info("지점 추이 분석 통계 조회 - 기간: {}, 지표: {}, 지점ID: {}", period, metric, br
+  라인 971 (parameter):                 defaultData.put("branchId", branchId);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\BranchStatisticsServiceImpl.java (36개)
+  라인 44 (field):     public Map<String, Object> getConsultationStatistics(Long branchId, LocalDat
+  라인 45 (parameter):         log.info("지점별 상담 건수 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, e
+  라인 47 (parameter):         Branch branch = branchRepository.findById(branchId)
+  라인 48 (parameter):             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + 
+  라인 56 (parameter):         statistics.put("branchId", branchId);
+  라인 87 (field):     public Map<String, Object> getRevenueStatistics(Long branchId, LocalDate sta
+  라인 88 (parameter):         log.info("지점별 매출 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endD
+  라인 90 (parameter):         Branch branch = branchRepository.findById(branchId)
+  라인 91 (parameter):             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + 
+  라인 99 (parameter):         statistics.put("branchId", branchId);
+  라인 132 (field):     public Map<String, Object> getConsultantPerformanceStatistics(Long branchId,
+  라인 133 (parameter):         log.info("지점별 상담사 성과 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, 
+  라인 141 (parameter):         Branch branch = branchRepository.findById(branchId)
+  라인 142 (parameter):             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + 
+  라인 150 (parameter):         statistics.put("branchId", branchId);
+  라인 186 (field):     public Map<String, Object> getCustomerSatisfactionStatistics(Long branchId, 
+  라인 187 (parameter):         log.info("지점별 고객 만족도 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, 
+  라인 189 (parameter):         Branch branch = branchRepository.findById(branchId)
+  라인 190 (parameter):             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + 
+  라인 196 (parameter):         statistics.put("branchId", branchId);
+  라인 209 (field):     public Map<String, Object> getBranchDashboardData(Long branchId, String peri
+  라인 210 (parameter):         log.info("지점별 대시보드 데이터 조회: 지점 ID={}, 기간={}", branchId, period);
+  라인 218 (parameter):         Map<String, Object> consultationStats = getConsultationStatistics(branch
+  라인 222 (parameter):         Map<String, Object> revenueStats = getRevenueStatistics(branchId, startD
+  라인 226 (parameter):         Map<String, Object> consultantStats = getConsultantPerformanceStatistics
+  라인 230 (parameter):         Map<String, Object> satisfactionStats = getCustomerSatisfactionStatistic
+  라인 233 (parameter):         log.info("지점별 대시보드 데이터 완료: 지점 ID={}", branchId);
+  라인 252 (parameter):             branchData.put("branchId", branch.getId());
+  라인 276 (field):     public Map<String, Object> getMonthlyTrendData(Long branchId, int year) {
+  라인 277 (parameter):         log.info("지점별 월별 성과 트렌드 조회: 지점 ID={}, 연도={}", branchId, year);
+  라인 280 (parameter):         trend.put("branchId", branchId);
+  라인 289 (parameter):             Map<String, Object> monthStats = getConsultationStatistics(branchId,
+  라인 295 (parameter):         log.info("지점별 월별 성과 트렌드 완료: 지점 ID={}", branchId);
+  라인 301 (field):     public Map<String, Object> getConsultantDetailPerformance(Long branchId, Lon
+  라인 302 (parameter):         log.info("상담사 상세 성과 조회: 지점 ID={}, 상담사 ID={}, 기간={} ~ {}", branchId, cons
+  라인 316 (parameter):         performance.put("branchId", branchId);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ClientServiceImpl.java (1개)
+  라인 47 (field):     protected List<Client> findEntitiesByTenantAndBranch(String tenantId, Long b
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ConsultantRatingServiceImpl.java (6개)
+  라인 538 (field):     public Map<String, Object> getAdminRatingStatisticsByBranch(String branchCod
+  라인 615 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 617 (field):     private List<Map<String, Object>> getConsultantRankingByBranch(String branch
+  라인 618 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 619 (parameter):         if (branchCode != null) {
+  라인 620 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ConsultantServiceImpl.java (1개)
+  라인 67 (field):     protected List<Consultant> findEntitiesByTenantAndBranch(String tenantId, Lo
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ConsultationMessageServiceImpl.java (1개)
+  라인 50 (field):     protected List<ConsultationMessage> findEntitiesByTenantAndBranch(String ten
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ConsultationServiceImpl.java (1개)
+  라인 100 (field):     protected List<Consultation> findEntitiesByTenantAndBranch(String tenantId, 
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\DiscountAccountingServiceImpl.java (10개)
+  라인 409 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 412 (field):     public Map<String, Object> getRefundableDiscounts(String branchCode) {
+  라인 413 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 414 (parameter):         if (branchCode != null) {
+  라인 415 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 430 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 433 (field):     public Map<String, Object> getDiscountRefundStatistics(String branchCode, St
+  라인 434 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 435 (parameter):         if (branchCode != null) {
+  라인 436 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ErpDiscountIntegrationServiceImpl.java (8개)
+  라인 89 (field):     public Map<String, Object> getDiscountAccountingSummary(String branchCode, S
+  라인 90 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 98 (comment):             // 1. 할인 거래 조회 (테넌트 기반, branchCode 필터링 제거)
+  라인 107 (comment):             // 2. 매출 거래 조회 (테넌트 기반, branchCode 필터링 제거)
+  라인 144 (variable):             log.info("✅ 할인 회계 요약 조회 완료: BranchCode={}, NetRevenue={}, DiscountRa
+  라인 161 (field):     public Map<String, Object> validateDiscountAccountingIntegrity(String branch
+  라인 162 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 167 (comment):             // 1. 매출 거래와 할인 거래 매칭 검증 (테넌트 기반, branchCode 필터링 제거)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ErpServiceImpl.java (24개)
+  라인 807 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 810 (field):     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
+  라인 811 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 812 (parameter):         if (branchCode != null) {
+  라인 813 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 899 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 901 (field):     public Map<String, Object> getBranchFinanceDashboard(String branchCode, Loca
+  라인 902 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 903 (parameter):         if (branchCode != null) {
+  라인 904 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 941 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 943 (field):     public Map<String, Object> getBranchFinanceStatistics(String branchCode, Str
+  라인 944 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 945 (parameter):         if (branchCode != null) {
+  라인 946 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 1040 (comment):      * 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 1042 (field):     private Map<String, Object> getBranchErpStatisticsBySession(String branchCod
+  라인 1043 (comment):         // 표준화 2025-12-07: branchCode 무시
+  라인 1044 (parameter):         if (branchCode != null) {
+  라인 1045 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 1277 (field):     public Map<String, Object> getBalanceSheet(String reportDate, String branchC
+  라인 1471 (field):     public Map<String, Object> getIncomeStatement(String startDate, String endDa
+  라인 1565 (field):     public Map<String, Object> getDailyFinanceReport(String reportDate, String b
+  라인 1662 (field):     public Map<String, Object> getMonthlyFinanceReport(String year, String month
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\FinancialTransactionServiceImpl.java (12개)
+  라인 90 (parameter):                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+  라인 649 (parameter):                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+  라인 947 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 950 (field):     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDa
+  라인 952 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 953 (parameter):         if (branchCode != null) {
+  라인 954 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 1060 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 1064 (field):     public Page<FinancialTransactionResponse> getTransactionsByBranch(String bra
+  라인 1067 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 1068 (parameter):         if (branchCode != null) {
+  라인 1069 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PaymentServiceImpl.java (10개)
+  라인 88 (field):     protected List<Payment> findEntitiesByTenantAndBranch(String tenantId, Long 
+  라인 117 (parameter):                 .branchId(request.getBranchId())
+  라인 159 (field):     public Page<PaymentResponse> getPaymentsByBranchId(Long branchId, Pageable p
+  라인 160 (parameter):         log.info("지점별 결제 목록 조회: {}", branchId);
+  라인 162 (parameter):         Page<Payment> payments = paymentRepository.findByBranchIdAndIsDeletedFal
+  라인 479 (field):     public Map<String, Object> getBranchPaymentStatistics(Long branchId, LocalDa
+  라인 480 (parameter):         log.info("지점별 결제 통계 조회: {}, {} ~ {}", branchId, startDate, endDate);
+  라인 484 (parameter):         BigDecimal totalAmount = paymentRepository.getTotalAmountByBranchId(bran
+  라인 491 (parameter):                     monthData.put("branchId", row[0]);
+  라인 727 (parameter):                 .branchId(payment.getBranchId())
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PersonalDataRequestServiceImpl.java (1개)
+  라인 70 (comment):             // personalData.put("branchCode", user.getBranchCode());
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlAccountingServiceImpl.java (6개)
+  라인 214 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 220 (variable):         String branchCode
+  라인 222 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 223 (parameter):         if (branchCode != null) {
+  라인 224 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 226 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlConsultationRecordAlertServiceImpl.java (17개)
+  라인 34 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 37 (field):     public Map<String, Object> checkMissingConsultationRecords(LocalDate checkDa
+  라인 38 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 39 (parameter):         if (branchCode != null) {
+  라인 40 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 52 (comment):             // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록
+  라인 55 (parameter):                 .addValue("p_tenant_id", tenantId); // branchCode 대신 tenantId 사용
+  라인 85 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 88 (field):     public Map<String, Object> getMissingConsultationRecordAlerts(String branchC
+  라인 89 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 90 (parameter):         if (branchCode != null) {
+  라인 91 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 103 (comment):             // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록
+  라인 105 (parameter):                 .addValue("p_tenant_id", tenantId) // branchCode 대신 tenantId 사용
+  라인 171 (field):     public Map<String, Object> getConsultationRecordMissingStatistics(String bra
+  라인 172 (parameter):         log.info("📊 상담일지 미작성 통계 조회: 지점={}, 기간={}~{}", branchCode, startDate, end
+  라인 174 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlDiscountAccountingServiceImpl.java (25개)
+  라인 38 (variable):             String branchCode,
+  라인 41 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 42 (parameter):         if (branchCode != null) {
+  라인 43 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 45 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+  라인 186 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 190 (variable):             String branchCode,
+  라인 194 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 195 (parameter):         if (branchCode != null) {
+  라인 196 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 198 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+  라인 237 (field):     public Map<String, Object> validateDiscountIntegrity(String branchCode) {
+  라인 238 (parameter):         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
+  라인 238 (parameter):         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
+  라인 243 (parameter):             Map<String, Object> result = procedure.execute(branchCode);
+  라인 253 (parameter):             response.put("branchCode", branchCode);
+  라인 258 (parameter):                 log.info("✅ PL/SQL 할인 무결성 검증 통과: BranchCode={}", branchCode);
+  라인 258 (parameter):                 log.info("✅ PL/SQL 할인 무결성 검증 통과: BranchCode={}", branchCode);
+  라인 260 (variable):                 log.warn("⚠️ PL/SQL 할인 무결성 검증 실패: BranchCode={}, ErrorCount={}, 
+  라인 261 (variable):                          branchCode, errorCount, resultMessage);
+  라인 267 (parameter):             log.error("❌ PL/SQL 할인 무결성 검증 실패: BranchCode={}, 오류={}", branchCode,
+  라인 267 (parameter):             log.error("❌ PL/SQL 할인 무결성 검증 실패: BranchCode={}, 오류={}", branchCode,
+  라인 272 (parameter):             response.put("branchCode", branchCode);
+  라인 420 (field):         public Map<String, Object> execute(String branchCode) {
+  라인 422 (parameter):             params.put("p_branch_code", branchCode);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlFinancialServiceImpl.java (34개)
+  라인 49 (parameter):                     COUNT(DISTINCT branch_code) as branchCount
+  라인 207 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 211 (field):     public Map<String, Object> generateMonthlyFinancialReport(int year, int mont
+  라인 212 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 213 (parameter):         if (branchCode != null) {
+  라인 214 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 220 (comment):             // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+  라인 225 (variable):                     NULL AS branch_code,
+  라인 255 (parameter):             List<Map<String, Object>> categoryAnalysis = getCategoryExpenseAnaly
+  라인 274 (field):     public Map<String, Object> generateQuarterlyFinancialReport(int year, int qu
+  라인 275 (parameter):         log.info("📊 분기별 재무 보고서 생성: {}-Q{}, 지점={}", year, quarter, branchCode);
+  라인 277 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+  라인 318 (field):     public Map<String, Object> generateYearlyFinancialReport(int year, String br
+  라인 319 (parameter):         log.info("📊 연도별 재무 보고서 생성: {}, 지점={}", year, branchCode);
+  라인 326 (parameter):                     COALESCE(b.branch_code, 'ALL') AS branch_code,
+  라인 333 (parameter):                     COUNT(DISTINCT ft.branch_code) AS active_branches
+  라인 335 (variable):                 LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch
+  라인 340 (parameter):                 AND (? IS NULL OR b.branch_code = ?)
+  라인 341 (variable):                 GROUP BY b.branch_code
+  라인 346 (variable):                 new Object[]{year, year, branchCode, branchCode},
+  라인 350 (parameter):                     report.put("branchCode", rs.getString("branch_code"));
+  라인 350 (parameter):                     report.put("branchCode", rs.getString("branch_code"));
+  라인 376 (field):     public Map<String, Object> calculateFinancialKPIs(LocalDate startDate, Local
+  라인 377 (parameter):         log.info("📊 재무 성과 지표 계산: {} ~ {}, 지점={}", startDate, endDate, branchCode
+  라인 379 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+  라인 433 (variable):                 b.branch_code,
+  라인 441 (variable):             LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_cod
+  라인 446 (variable):             GROUP BY b.branch_code, b.branch_name
+  라인 454 (parameter):                 branch.put("branchCode", rs.getString("branch_code"));
+  라인 454 (parameter):                 branch.put("branchCode", rs.getString("branch_code"));
+  라인 466 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 468 (field):     private List<Map<String, Object>> getCategoryExpenseAnalysis(int year, int m
+  라인 469 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 474 (comment):             // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlMappingSyncServiceImpl.java (6개)
+  라인 388 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 392 (field):     public Map<String, Object> getRefundStatistics(String branchCode, String sta
+  라인 393 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 394 (parameter):         if (branchCode != null) {
+  라인 395 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 397 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlSalaryManagementServiceImpl.java (6개)
+  라인 170 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 174 (variable):             String branchCode,
+  라인 178 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 179 (parameter):         if (branchCode != null) {
+  라인 180 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 182 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlScheduleValidationServiceImpl.java (6개)
+  라인 160 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 163 (field):     public Map<String, Object> processBatchScheduleCompletion(String branchCode)
+  라인 164 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 165 (parameter):         if (branchCode != null) {
+  라인 166 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 168 (comment):         // 테넌트 ID 및 처리자 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\PlSqlStatisticsServiceImpl.java (19개)
+  라인 37 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 40 (field):     public String updateDailyStatistics(String branchCode, LocalDate statDate) {
+  라인 41 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 42 (parameter):         if (branchCode != null) {
+  라인 43 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 45 (comment):         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+  라인 275 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 278 (field):     public boolean validateStatisticsConsistency(String branchCode, LocalDate st
+  라인 279 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 280 (parameter):         if (branchCode != null) {
+  라인 281 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 298 (variable):                 WHERE s.date = ? AND s.branch_code = ? AND s.is_deleted = false
+  라인 302 (parameter):                 java.sql.Date.valueOf(statDate), branchCode);
+  라인 312 (variable):                 WHERE stat_date = ? AND branch_code = ?
+  라인 316 (parameter):                 java.sql.Date.valueOf(statDate), branchCode);
+  라인 334 (variable):             log.info("🔍 통계 일관성 검증 완료: branchCode={}, statDate={}, 일관성={}",
+  라인 335 (variable):                      branchCode, statDate, consistent);
+  라인 344 (variable):             log.error("❌ 통계 일관성 검증 실패: branchCode={}, statDate={}, 오류={}",
+  라인 345 (parameter):                      branchCode, statDate, e.getMessage(), e);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\RealTimeStatisticsServiceImpl.java (8개)
+  라인 123 (field):     public void updateDailyStatistics(String branchCode, LocalDate date) {
+  라인 124 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 153 (field):     public void updateStatisticsOnMappingChange(Long consultantId, Long clientId
+  라인 154 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 173 (field):     public void updateFinancialStatisticsOnPayment(String branchCode, Long amoun
+  라인 174 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 188 (field):     public void updateStatisticsOnRefund(Long consultantId, String branchCode, L
+  라인 189 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\RefreshTokenServiceImpl.java (1개)
+  라인 61 (parameter):             .branchId(user.getBranch() != null ? user.getBranch().getId() : null
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\SalaryBatchServiceImpl.java (6개)
+  라인 46 (field):     public BatchResult executeMonthlySalaryBatch(int targetYear, int targetMonth
+  라인 47 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 58 (comment):             // 2. 대상 상담사 조회 (branchCode 필터링 제거)
+  라인 159 (comment):         // 테넌트 기반으로 조회 (branchCode 필터링 제거)
+  라인 208 (field):     private List<User> getTargetConsultants(String branchCode) {
+  라인 209 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\ScheduleServiceImpl.java (70개)
+  라인 108 (field):     protected List<Schedule> findEntitiesByTenantAndBranch(String tenantId, Long
+  라인 303 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 307 (variable):                                           LocalTime startTime, LocalTime endTime
+  라인 308 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 309 (parameter):         if (branchCode != null) {
+  라인 310 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 1585 (field):     public List<Schedule> getBranchSchedules(Long branchId, LocalDate startDate,
+  라인 1586 (parameter):         log.info("🏢 지점별 스케줄 조회: branchId={}, startDate={}, endDate={}", branchId
+  라인 1589 (parameter):             Branch branch = branchRepository.findById(branchId)
+  라인 1590 (parameter):                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: 
+  라인 1600 (parameter):                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
+  라인 1611 (variable):             log.info("지점별 스케줄 조회 완료: branchId={}, 상담사 수={}, 스케줄 수={}",
+  라인 1612 (parameter):                     branchId, consultants.size(), allSchedules.size());
+  라인 1617 (parameter):             log.error("지점별 스케줄 조회 실패: branchId={}, error={}", branchId, e.getMes
+  라인 1623 (field):     public List<Schedule> getBranchConsultantSchedules(Long branchId, Long consu
+  라인 1624 (variable):         log.info("🏢 지점별 상담사 스케줄 조회: branchId={}, consultantId={}, startDate={}, 
+  라인 1625 (variable):                 branchId, consultantId, startDate, endDate);
+  라인 1631 (parameter):             if (consultant.getBranch() == null || !consultant.getBranch().getId(
+  라인 1632 (parameter):                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consul
+  라인 1637 (variable):             log.info("지점별 상담사 스케줄 조회 완료: branchId={}, consultantId={}, 스케줄 수={}"
+  라인 1638 (parameter):                     branchId, consultantId, schedules.size());
+  라인 1643 (variable):             log.error("지점별 상담사 스케줄 조회 실패: branchId={}, consultantId={}, error={}
+  라인 1644 (parameter):                     branchId, consultantId, e.getMessage(), e);
+  라인 1650 (field):     public Map<String, Object> getBranchScheduleStatistics(Long branchId, LocalD
+  라인 1651 (parameter):         log.info("📊 지점별 스케줄 통계 조회: branchId={}, startDate={}, endDate={}", branc
+  라인 1654 (parameter):             List<Schedule> schedules = getBranchSchedules(branchId, startDate, e
+  라인 1657 (parameter):             statistics.put("branchId", branchId);
+  라인 1683 (variable):             log.info("지점별 스케줄 통계 완료: branchId={}, 총 스케줄={}, 완료={}, 대기={}, 취소={}"
+  라인 1684 (parameter):                     branchId, schedules.size(), completedCount, pendingCount, ca
+  라인 1689 (parameter):             log.error("지점별 스케줄 통계 조회 실패: branchId={}, error={}", branchId, e.get
+  라인 1695 (field):     public Map<String, Object> getBranchConsultantScheduleStatus(Long branchId, 
+  라인 1696 (parameter):         log.info("📅 지점별 상담사 스케줄 현황 조회: branchId={}, date={}", branchId, date);
+  라인 1699 (parameter):             Branch branch = branchRepository.findById(branchId)
+  라인 1700 (parameter):                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: 
+  라인 1711 (parameter):             status.put("branchId", branchId);
+  라인 1730 (parameter):             log.info("지점별 상담사 스케줄 현황 완료: branchId={}, 상담사 수={}", branchId, consu
+  라인 1735 (parameter):             log.error("지점별 상담사 스케줄 현황 조회 실패: branchId={}, error={}", branchId, e
+  라인 1741 (field):     public Schedule createBranchSchedule(Long branchId, Schedule schedule) {
+  라인 1742 (parameter):         log.info("🏢 지점별 스케줄 생성: branchId={}, schedule={}", branchId, schedule.ge
+  라인 1749 (parameter):                 if (consultant.getBranch() == null || !consultant.getBranch().ge
+  라인 1750 (parameter):                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: co
+  라인 1756 (parameter):             log.info("지점별 스케줄 생성 완료: branchId={}, scheduleId={}", branchId, save
+  라인 1761 (parameter):             log.error("지점별 스케줄 생성 실패: branchId={}, error={}", branchId, e.getMes
+  라인 1767 (field):     public Schedule updateBranchSchedule(Long branchId, Long scheduleId, Schedul
+  라인 1768 (parameter):         log.info("🏢 지점별 스케줄 수정: branchId={}, scheduleId={}", branchId, scheduleI
+  라인 1778 (parameter):                 if (consultant.getBranch() == null || !consultant.getBranch().ge
+  라인 1779 (parameter):                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: co
+  라인 1785 (parameter):             log.info("지점별 스케줄 수정 완료: branchId={}, scheduleId={}", branchId, sche
+  라인 1790 (parameter):             log.error("지점별 스케줄 수정 실패: branchId={}, scheduleId={}, error={}", bra
+  라인 1796 (field):     public void deleteBranchSchedule(Long branchId, Long scheduleId) {
+  라인 1797 (parameter):         log.info("🏢 지점별 스케줄 삭제: branchId={}, scheduleId={}", branchId, scheduleI
+  라인 1807 (parameter):                 if (consultant.getBranch() == null || !consultant.getBranch().ge
+  라인 1808 (parameter):                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: co
+  라인 1814 (parameter):             log.info("지점별 스케줄 삭제 완료: branchId={}, scheduleId={}", branchId, sche
+  라인 1817 (parameter):             log.error("지점별 스케줄 삭제 실패: branchId={}, scheduleId={}, error={}", bra
+  라인 1823 (field):     public boolean isScheduleConflict(Long branchId, Long consultantId, LocalDat
+  라인 1824 (variable):         log.debug("🔍 지점별 스케줄 중복 확인: branchId={}, consultantId={}, startTime={}, 
+  라인 1825 (variable):                 branchId, consultantId, startTime, endTime);
+  라인 1831 (parameter):             if (consultant.getBranch() == null || !consultant.getBranch().getId(
+  라인 1832 (parameter):                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consul
+  라인 1849 (variable):             log.error("지점별 스케줄 중복 확인 실패: branchId={}, consultantId={}, error={}"
+  라인 1850 (parameter):                     branchId, consultantId, e.getMessage(), e);
+  라인 1856 (field):     public List<Map<String, Object>> getAvailableTimeSlots(Long branchId, Long c
+  라인 1857 (parameter):         log.info("⏰ 지점별 스케줄 가능 시간 조회: branchId={}, consultantId={}, date={}", br
+  라인 1863 (parameter):             if (consultant.getBranch() == null || !consultant.getBranch().getId(
+  라인 1864 (parameter):                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consul
+  라인 1897 (variable):             log.info("지점별 스케줄 가능 시간 조회 완료: branchId={}, consultantId={}, 가능한 시간대
+  라인 1898 (parameter):                     branchId, consultantId, availableSlots.size());
+  라인 1903 (variable):             log.error("지점별 스케줄 가능 시간 조회 실패: branchId={}, consultantId={}, error=
+  라인 1904 (parameter):                     branchId, consultantId, e.getMessage(), e);
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\SessionExtensionServiceImpl.java (1개)
+  라인 394 (parameter):             erpData.put("branchCode", mapping.getBranchCode());
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\SocialAuthServiceImpl.java (11개)
+  라인 144 (comment):                 // BranchCode enum으로 유효성 검사
+  라인 145 (parameter):            if (com.coresolution.consultation.enums.BranchCode.isValidCode(valida
+  라인 146 (parameter):                log.info("유효한 지점 코드 설정: branchCode={}", validatedBranchCode);
+  라인 148 (parameter):                log.warn("유효하지 않은 지점 코드, 기본값(MAIN001)으로 설정: branchCode={}", valid
+  라인 149 (parameter):                validatedBranchCode = com.coresolution.consultation.enums.BranchC
+  라인 153 (parameter):                 validatedBranchCode = com.coresolution.consultation.enums.Branch
+  라인 165 (parameter):                     .branchCode(validatedBranchCode) // 지점코드 (테넌트 시스템에서는 NULL)
+  라인 170 (variable):             log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}
+  라인 176 (variable):             log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}",
+  라인 176 (variable):             log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}",
+  라인 186 (parameter):                     .branchCode(user.getBranchCode())
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\StatisticsServiceImpl.java (57개)
+  라인 74 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 77 (field):     public DailyStatistics updateDailyStatistics(LocalDate date, String branchCo
+  라인 78 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 79 (parameter):         if (branchCode != null) {
+  라인 80 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 175 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 177 (field):     public DailyStatistics getDailyStatistics(LocalDate date, String branchCode)
+  라인 178 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 179 (parameter):         if (branchCode != null) {
+  라인 180 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 191 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 193 (field):     public List<DailyStatistics> getDailyStatistics(LocalDate startDate, LocalDa
+  라인 194 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 195 (parameter):         if (branchCode != null) {
+  라인 196 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 206 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 208 (field):     public Map<String, Object> getMonthlyAggregatedStatistics(String yearMonth, 
+  라인 209 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 210 (parameter):         if (branchCode != null) {
+  라인 211 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 362 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 364 (field):     public List<ConsultantPerformance> getTopPerformers(LocalDate startDate, Loc
+  라인 365 (comment):         // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+  라인 366 (parameter):         if (branchCode != null) {
+  라인 367 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 379 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 381 (field):     public List<ConsultantPerformance> getUnderperformingConsultants(LocalDate d
+  라인 382 (comment):         // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+  라인 383 (parameter):         if (branchCode != null) {
+  라인 384 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 475 (parameter):                 updateDailyStatistics(date, null); // branchCode 무시
+  라인 554 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 558 (field):     public Map<String, Object> getDashboardStatistics(String branchCode) {
+  라인 559 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 560 (parameter):         if (branchCode != null) {
+  라인 561 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 570 (parameter):             DailyStatistics todayStats = getDailyStatistics(today, null); // bra
+  라인 574 (parameter):             List<DailyStatistics> weekStats = getDailyStatistics(weekAgo, today,
+  라인 578 (parameter):             Map<String, Object> monthlyStats = getMonthlyAggregatedStatistics(th
+  라인 582 (parameter):             List<ConsultantPerformance> topPerformers = getTopPerformers(monthAg
+  라인 598 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 602 (field):     public Map<String, Object> getRealTimePerformanceIndicators(String branchCod
+  라인 603 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 604 (parameter):         if (branchCode != null) {
+  라인 605 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 615 (parameter):             DailyStatistics todayStats = getDailyStatistics(today, null); // bra
+  라인 617 (comment):             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+  라인 653 (parameter):             log.error("❌ 실시간 성과 지표 조회 실패: branchCode={}", branchCode, e);
+  라인 663 (field):     public Map<String, Object> getTrendAnalysisData(LocalDate startDate, LocalDa
+  라인 664 (parameter):         log.info("📊 트렌드 분석 데이터 조회: startDate={}, endDate={}, branchCode={}", sta
+  라인 669 (parameter):             List<DailyStatistics> dailyStats = getDailyStatistics(startDate, end
+  라인 736 (parameter):             log.error("❌ 트렌드 분석 데이터 조회 실패: startDate={}, endDate={}, branchCode=
+  라인 746 (field):     public Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDa
+  라인 747 (parameter):         log.info("📊 월간 통계 조회: startDate={}, endDate={}, branchCode={}", startDat
+  라인 751 (parameter):             List<DailyStatistics> dailyStats = getDailyStatistics(startDate, end
+  라인 776 (parameter):             monthlyStats.put("branchCode", branchCode);
+  라인 780 (parameter):             log.error("❌ 월간 통계 조회 실패: startDate={}, endDate={}, branchCode={}", 
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\StatisticsTestDataServiceImpl.java (30개)
+  라인 54 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 57 (field):     public Map<String, Object> createTestSchedules(LocalDate targetDate, String 
+  라인 58 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 59 (parameter):         if (branchCode != null) {
+  라인 60 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 139 (comment):      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+  라인 142 (field):     public Map<String, Object> createCompletedConsultations(LocalDate targetDate
+  라인 143 (comment):         // 표준화 2025-12-06: branchCode 무시
+  라인 144 (parameter):         if (branchCode != null) {
+  라인 145 (comment):             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={
+  라인 196 (field):     public Map<String, Object> createTestFinancialTransactions(LocalDate targetD
+  라인 198 (variable):                  targetDate, branchCode, transactionCount);
+  라인 260 (field):     public Map<String, Object> createTestRatings(LocalDate targetDate, String br
+  라인 262 (variable):                  targetDate, branchCode, ratingCount);
+  라인 343 (field):     public Map<String, Object> createCompleteTestDataSet(LocalDate targetDate, S
+  라인 344 (parameter):         log.info("🎯 종합 테스트 데이터 세트 생성 시작: date={}, branch={}", targetDate, branch
+  라인 349 (parameter):             Map<String, Object> scheduleResult = createTestSchedules(targetDate,
+  라인 351 (parameter):             Map<String, Object> completedResult = createCompletedConsultations(t
+  라인 353 (parameter):             Map<String, Object> transactionResult = createTestFinancialTransacti
+  라인 355 (parameter):             Map<String, Object> ratingResult = createTestRatings(targetDate, bra
+  라인 364 (parameter):             result.put("branchCode", branchCode);
+  라인 378 (field):     public Map<String, Object> cleanupTestData(LocalDate targetDate, String bran
+  라인 379 (parameter):         log.info("🧹 테스트 데이터 정리 시작: date={}, branch={}", targetDate, branchCode);
+  라인 437 (field):     public Map<String, Object> createDiverseTestScenarios(LocalDate targetDate, 
+  라인 444 (parameter):             createTestSchedules(targetDate, branchCode, 6);
+  라인 445 (parameter):             createCompletedConsultations(targetDate, branchCode, 6);
+  라인 446 (parameter):             createTestFinancialTransactions(targetDate, branchCode, 6);
+  라인 447 (parameter):             createTestRatings(targetDate, branchCode, 5);
+  라인 449 (parameter):             Map<String, Object> cancelledResult = createTestSchedules(targetDate
+  라인 464 (parameter):             Map<String, Object> noShowResult = createTestSchedules(targetDate, b
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\SuperAdminServiceImpl.java (2개)
+  라인 58 (comment):             log.warn("⚠️ Deprecated: branchCode 설정은 더 이상 사용하지 않음. tenantId 기반으로만
+  라인 69 (parameter):                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+
+[FILE] src\main\java\com\coresolution\consultation\service\impl\UserServiceImpl.java (6개)
+  라인 661 (field):     public Object[] getUserStatisticsByBranchCode(String branchCode) {
+  라인 662 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+  라인 695 (comment):             log.warn("⚠️ Deprecated: branchCode는 더 이상 사용하지 않음. branchCode={}", u
+  라인 701 (variable):             log.info("사용자 등록 시 지점 할당: userId={}, branchId={}, branchName={}",
+  라인 814 (field):     public List<User> findByBranchCode(String branchCode) {
+  라인 815 (comment):         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+
+[FILE] src\main\java\com\coresolution\consultation\util\BranchAccountCreator.java (23개)
+  라인 57 (parameter):             String branchCode = BRANCH_CODES.get(i);
+  라인 60 (parameter):             System.out.println("지점 계정 생성: " + branchName + " (" + branchCode + "
+  라인 63 (parameter):             createBranchAdminAccount(branchCode, branchName);
+  라인 72 (field):     private void createBranchAdminAccount(String branchCode, String branchName) 
+  라인 74 (parameter):         String email = branchCode.toLowerCase() + "_admin_" + timestamp + "@mind
+  라인 75 (parameter):         String username = branchCode.toLowerCase() + "_admin_" + timestamp;
+  라인 92 (parameter):         admin.setBranchCode(branchCode);
+  라인 107 (field):     private void createTestConsultantAccount(String branchCode, String branchNam
+  라인 109 (parameter):         String email = "consultant_" + branchCode.toLowerCase() + "_" + timestam
+  라인 110 (parameter):         String username = "consultant_" + branchCode.toLowerCase() + "_" + times
+  라인 128 (parameter):         user.setBranchCode(branchCode);
+  라인 147 (parameter):         consultant.setBranchCode(branchCode);
+  라인 172 (field):     private void createTestClientAccount(String branchCode, String branchName) {
+  라인 174 (parameter):         String email = "client_" + branchCode.toLowerCase() + "_" + timestamp + 
+  라인 175 (parameter):         String username = "client_" + branchCode.toLowerCase() + "_" + timestamp
+  라인 193 (parameter):         user.setBranchCode(branchCode);
+  라인 218 (field):     public void createBranchAccount(String branchCode) {
+  라인 219 (parameter):         int index = BRANCH_CODES.indexOf(branchCode);
+  라인 221 (parameter):             System.out.println("지원하지 않는 지점 코드: " + branchCode);
+  라인 226 (parameter):         System.out.println("지점 계정 생성: " + branchName + " (" + branchCode + ")");
+  라인 228 (parameter):         createBranchAdminAccount(branchCode, branchName);
+  라인 229 (parameter):         createTestConsultantAccount(branchCode, branchName);
+  라인 230 (parameter):         createTestClientAccount(branchCode, branchName);
+
+[FILE] src\main\java\com\coresolution\consultation\util\SecurityUtils.java (2개)
+  라인 437 (parameter):                 "branchCode", user.getBranchCode() != null ? user.getBranchCode(
+  라인 481 (parameter):                 "branchCode", user.getBranchCode() != null ? user.getBranchCode(
+
+[FILE] src\main\java\com\coresolution\core\config\TenantContextTaskDecorator.java (4개)
+  라인 47 (parameter):         String branchId = TenantContext.getBranchId();
+  라인 53 (variable):             log.debug("🔄 [TaskDecorator] Context 복사: tenantId={}, branchId={}, b
+  라인 54 (variable):                     tenantId, branchId, businessType);
+  라인 62 (parameter):                 TenantContext.setBranchId(branchId);
+
+[FILE] src\main\java\com\coresolution\core\context\TenantContext.java (13개)
+  라인 14 (field):     private static final ThreadLocal<String> branchId = new ThreadLocal<>();
+  라인 39 (comment):      * @param branchId 지점 ID
+  라인 43 (field):     public static void setBranchId(String branchId) {
+  라인 44 (parameter):         TenantContext.branchId.set(branchId);
+  라인 55 (parameter):         return branchId.get();
+  라인 75 (parameter):         return branchId.get() != null;
+  라인 135 (parameter):         branchId.remove();
+  라인 144 (comment):      * @param branchId 지점 ID
+  라인 149 (field):     public static void set(String tenantId, String branchId) {
+  라인 151 (parameter):         setBranchId(branchId);
+  라인 158 (comment):      * @param branchId 지점 ID
+  라인 164 (field):     public static void set(String tenantId, String branchId, String businessType
+  라인 166 (parameter):         setBranchId(branchId);
+
+[FILE] src\main\java\com\coresolution\core\context\TenantContextHolder.java (9개)
+  라인 48 (parameter):         String branchId = TenantContext.getBranchId();
+  라인 49 (parameter):         if (branchId == null || branchId.isEmpty()) {
+  라인 52 (variable):         return branchId;
+  라인 103 (comment):      * @param branchId 지점 ID
+  라인 107 (field):     public static void setBranchId(String branchId) {
+  라인 108 (parameter):         if (branchId != null && !branchId.isEmpty()) {
+  라인 109 (parameter):             TenantContext.setBranchId(branchId);
+  라인 110 (parameter):             log.debug("Branch context set: {}", branchId);
+  라인 178 (comment):             // 브랜치 개념 제거: BranchId 로깅 제거됨 (표준화 2025-12-05)
+
+[FILE] src\main\java\com\coresolution\core\controller\UserRoleAssignmentController.java (3개)
+  라인 101 (parameter):             @RequestParam(required = false) Long branchId) {
+  라인 102 (parameter):         log.info("🔍 현재 활성 역할 조회: userId={}, tenantId={}, branchId={}", userId, t
+  라인 104 (parameter):         UserRoleAssignmentResponse role = assignmentService.getCurrentActiveRole
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyAttendanceController.java (4개)
+  라인 56 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 61 (variable):         log.debug("출석 목록 조회 요청: branchId={}, enrollmentId={}, scheduleId={}, dat
+  라인 62 (variable):                 branchId, enrollmentId, scheduleId, date);
+  라인 80 (variable):             tenantId, branchId, enrollmentId, scheduleId, date
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyBillingController.java (14개)
+  라인 49 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 51 (parameter):         log.debug("청구 스케줄 목록 조회 요청: branchId={}", branchId);
+  라인 68 (parameter):         List<BillingScheduleResponse> schedules = billingService.getBillingSched
+  라인 253 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 258 (variable):         log.debug("청구서 목록 조회 요청: branchId={}, enrollmentId={}, consumerId={}, st
+  라인 259 (variable):             branchId, enrollmentId, consumerId, status);
+  라인 276 (parameter):         List<InvoiceResponse> invoices = billingService.getInvoices(tenantId, br
+  라인 445 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 447 (parameter):         log.debug("연체 청구서 조회 요청: branchId={}", branchId);
+  라인 464 (parameter):         List<InvoiceResponse> invoices = billingService.getOverdueInvoices(tenan
+  라인 477 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 482 (variable):         log.debug("결제 목록 조회 요청: branchId={}, invoiceId={}, enrollmentId={}, cons
+  라인 483 (variable):             branchId, invoiceId, enrollmentId, consumerId);
+  라인 500 (parameter):         List<TuitionPaymentResponse> payments = billingService.getPayments(tenan
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyClassController.java (6개)
+  라인 56 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 60 (parameter):         log.debug("반 목록 조회 요청: branchId={}, courseId={}, status={}", branchId, c
+  라인 77 (parameter):         List<ClassResponse> classes = classService.getClasses(tenantId, branchId
+  라인 265 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 267 (parameter):         log.debug("모집 중인 반 목록 조회 요청: branchId={}", branchId);
+  라인 284 (parameter):         List<ClassResponse> classes = classService.getRecruitingClasses(tenantId
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyClassScheduleController.java (3개)
+  라인 51 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 54 (parameter):         log.debug("시간표 목록 조회 요청: branchId={}, classId={}", branchId, classId);
+  라인 71 (parameter):         List<ClassScheduleResponse> schedules = scheduleService.getSchedules(ten
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyConsultationController.java (5개)
+  라인 72 (parameter):         log.info("학원 상담 예약 생성 요청: clientId={}, branchId={}", request.getClientId
+  라인 143 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 145 (variable):         log.debug("학원 상담 예약 목록 조회: clientId={}, consultantId={}, status={}, bran
+  라인 146 (variable):             clientId, consultantId, status, branchId);
+  라인 372 (parameter):                     .branchId(enrollmentInfo.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyCourseController.java (3개)
+  라인 53 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 57 (parameter):         log.debug("강좌 목록 조회 요청: branchId={}, category={}, subject={}", branchId,
+  라인 75 (parameter):         List<CourseResponse> courses = courseService.getCourses(tenantId, branch
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyEnrollmentController.java (4개)
+  라인 59 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 64 (variable):         log.debug("수강 등록 목록 조회 요청: branchId={}, classId={}, consumerId={}, statu
+  라인 65 (variable):                 branchId, classId, consumerId, status);
+  라인 82 (variable):             tenantId, branchId, classId, consumerId, status
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademyRegistrationController.java (3개)
+  라인 81 (parameter):                 branchInfo.put("branchCode", branch.getBranchCode());
+  라인 174 (parameter):                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBr
+  라인 283 (parameter):                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBr
+
+[FILE] src\main\java\com\coresolution\core\controller\academy\AcademySettlementController.java (4개)
+  라인 49 (parameter):             @RequestParam(required = false) Long branchId,
+  라인 53 (parameter):         log.debug("정산 목록 조회 요청: branchId={}, period={}, status={}", branchId, se
+  라인 70 (parameter):         List<SettlementResponse> settlements = settlementService.getSettlements(
+  라인 113 (parameter):         log.info("정산 계산 요청: period={}, branchId={}", request.getSettlementPeriod
+
+[FILE] src\main\java\com\coresolution\core\domain\RolePermission.java (1개)
+  라인 45 (comment):      * ABAC 정책 (JSON) - branch_id, tenant_id 등 조건 포함
+
+[FILE] src\main\java\com\coresolution\core\domain\UserRoleAssignment.java (7개)
+  라인 30 (parameter):            @Index(name = "idx_user_role_branch_id", columnList = "branch_id"),
+  라인 36 (variable):                            columnNames = {"user_id", "tenant_id", "tenant_role_i
+  라인 73 (parameter):     @Column(name = "branch_id")
+  라인 74 (field):     private Long branchId;
+  라인 126 (parameter):     @JoinColumn(name = "branch_id", referencedColumnName = "id", insertable = fa
+  라인 158 (variable):         return branchId == null;
+  라인 165 (variable):         return branchId != null;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\AcademyBillingSchedule.java (4개)
+  라인 30 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 31 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 96 (parameter):     @Column(name = "branch_id")
+  라인 97 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\AcademyInvoice.java (4개)
+  라인 36 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 44 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 91 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 92 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\AcademySettlement.java (4개)
+  라인 36 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 37 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 84 (parameter):     @Column(name = "branch_id")
+  라인 85 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\AcademySettlementItem.java (4개)
+  라인 30 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 33 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 85 (parameter):     @Column(name = "branch_id")
+  라인 86 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\AcademyTuitionPayment.java (4개)
+  라인 35 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 41 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 106 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 107 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\Attendance.java (4개)
+  라인 32 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 35 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 106 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 107 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\Class.java (4개)
+  라인 36 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 38 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 86 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 87 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\ClassEnrollment.java (4개)
+  라인 37 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 40 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 111 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 112 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\ClassSchedule.java (4개)
+  라인 31 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 33 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 73 (parameter):     @Column(name = "branch_id", nullable = false)
+  라인 74 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\domain\academy\Course.java (5개)
+  라인 33 (parameter):     @Index(name = "idx_branch_id", columnList = "branch_id"),
+  라인 34 (parameter):     @Index(name = "idx_tenant_branch", columnList = "tenant_id,branch_id"),
+  라인 80 (parameter):     @Column(name = "branch_id")
+  라인 81 (field):     private Long branchId;
+  라인 253 (variable):         return branchId == null;
+
+[FILE] src\main\java\com\coresolution\core\dto\UserRoleAssignmentRequest.java (1개)
+  라인 36 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\UserRoleAssignmentResponse.java (1개)
+  라인 61 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\AcademyConsultationCompleteRequest.java (1개)
+  라인 49 (field):         private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\AcademyConsultationRequest.java (2개)
+  라인 63 (field):     private String branchCode;
+  라인 66 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\AttendanceRequest.java (1개)
+  라인 32 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\AttendanceResponse.java (1개)
+  라인 28 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\BillingScheduleRequest.java (1개)
+  라인 30 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\BillingScheduleResponse.java (1개)
+  라인 28 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassEnrollmentRequest.java (1개)
+  라인 32 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassEnrollmentResponse.java (1개)
+  라인 28 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassRequest.java (1개)
+  라인 31 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassResponse.java (1개)
+  라인 27 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassScheduleRequest.java (1개)
+  라인 31 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\ClassScheduleResponse.java (1개)
+  라인 27 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\CourseRequest.java (1개)
+  라인 30 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\CourseResponse.java (1개)
+  라인 27 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\InvoiceRequest.java (1개)
+  라인 31 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\InvoiceResponse.java (1개)
+  라인 34 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\SettlementCalculateRequest.java (1개)
+  라인 30 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\SettlementItemResponse.java (1개)
+  라인 34 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\SettlementResponse.java (1개)
+  라인 34 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\TuitionPaymentRequest.java (1개)
+  라인 31 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\dto\academy\TuitionPaymentResponse.java (1개)
+  라인 27 (field):     private Long branchId;
+
+[FILE] src\main\java\com\coresolution\core\repository\UserRoleAssignmentRepository.java (12개)
+  라인 53 (parameter):            "AND (ura.branchId = ?3 OR ura.branchId IS NULL) " +
+  라인 57 (variable):            "ORDER BY ura.branchId NULLS LAST, ura.effectiveFrom DESC")
+  라인 59 (variable):         Long userId, String tenantId, Long branchId, LocalDate date);
+  라인 69 (variable):            "ORDER BY ura.branchId NULLS LAST, ura.effectiveFrom DESC")
+  라인 81 (variable):            "ORDER BY ura.tenantId, ura.branchId NULLS LAST, ura.effectiveFrom DE
+  라인 93 (parameter):            "AND (ura.branchId = ?3 OR ura.branchId IS NULL) " +
+  라인 94 (variable):            "ORDER BY CASE WHEN ura.branchId = ?3 THEN 0 ELSE 1 END, " +
+  라인 98 (variable):         Long userId, String tenantId, Long branchId, LocalDate date);
+  라인 128 (variable):            "WHERE ura.branchId = ?1 AND ura.isDeleted = false")
+  라인 129 (parameter):     List<UserRoleAssignment> findByBranchId(Long branchId);
+  라인 137 (parameter):            "AND (ura.branchId = ?4 OR (?4 IS NULL AND ura.branchId IS NULL)) " +
+  라인 140 (variable):         Long userId, String tenantId, String tenantRoleId, Long branchId);
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AcademyBillingScheduleRepository.java (1개)
+  라인 36 (parameter):     List<AcademyBillingSchedule> findByTenantIdAndBranchIdAndIsDeletedFalse(Stri
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AcademyInvoiceRepository.java (1개)
+  라인 36 (parameter):     List<AcademyInvoice> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenan
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AcademySettlementItemRepository.java (1개)
+  라인 40 (parameter):     List<AcademySettlementItem> findByTenantIdAndBranchIdAndIsDeletedFalse(Strin
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AcademySettlementRepository.java (2개)
+  라인 36 (parameter):     List<AcademySettlement> findByTenantIdAndBranchIdAndIsDeletedFalse(String te
+  라인 42 (variable):         String tenantId, Long branchId, String settlementPeriod);
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AcademyTuitionPaymentRepository.java (1개)
+  라인 36 (parameter):     List<AcademyTuitionPayment> findByTenantIdAndBranchIdAndIsDeletedFalse(Strin
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\AttendanceRepository.java (4개)
+  라인 38 (parameter):     List<Attendance> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId,
+  라인 59 (parameter):     @Query("SELECT a FROM Attendance a WHERE a.tenantId = :tenantId AND a.branch
+  라인 60 (parameter):     List<Attendance> findAttendancesByDate(@Param("tenantId") String tenantId, @
+  라인 71 (parameter):     List<Attendance> findByTenantIdAndBranchIdAndStatusAndIsDeletedFalse(String 
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\ClassEnrollmentRepository.java (6개)
+  라인 39 (parameter):     List<ClassEnrollment> findByTenantIdAndBranchIdAndIsDeletedFalse(String tena
+  라인 72 (parameter):     List<ClassEnrollment> findByTenantIdAndBranchIdAndStatusAndIsActiveTrueAndIs
+  라인 77 (parameter):     @Query("SELECT e FROM ClassEnrollment e WHERE e.tenantId = :tenantId AND e.b
+  라인 78 (parameter):     List<ClassEnrollment> findEnrollmentsByPaymentStatus(@Param("tenantId") Stri
+  라인 83 (parameter):     @Query("SELECT e FROM ClassEnrollment e WHERE e.tenantId = :tenantId AND e.b
+  라인 84 (parameter):     List<ClassEnrollment> findPendingPaymentEnrollments(@Param("tenantId") Strin
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\ClassRepository.java (10개)
+  라인 38 (parameter):     List<Class> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long
+  라인 48 (parameter):     List<Class> findByTenantIdAndBranchIdAndCourseIdAndIsDeletedFalse(String ten
+  라인 59 (parameter):     @Query("SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = 
+  라인 60 (parameter):     List<Class> findRecruitingClassesByTenantIdAndBranchId(@Param("tenantId") St
+  라인 65 (parameter):     List<Class> findByTenantIdAndBranchIdAndTeacherIdAndIsActiveTrueAndIsDeleted
+  라인 70 (parameter):     List<Class> findByTenantIdAndBranchIdAndStatusAndIsActiveTrueAndIsDeletedFal
+  라인 75 (parameter):     @Query("SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = 
+  라인 76 (parameter):     List<Class> findAvailableClassesByTenantIdAndBranchId(@Param("tenantId") Str
+  라인 81 (parameter):     @Query("SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = 
+  라인 82 (parameter):     List<Class> findClassesByDateRange(@Param("tenantId") String tenantId, @Para
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\ClassScheduleRepository.java (2개)
+  라인 37 (parameter):     List<ClassSchedule> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenant
+  라인 47 (parameter):     List<ClassSchedule> findByTenantIdAndBranchIdAndClassIdAndIsDeletedFalse(Str
+
+[FILE] src\main\java\com\coresolution\core\repository\academy\CourseRepository.java (4개)
+  라인 36 (parameter):     List<Course> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Lon
+  라인 41 (parameter):     @Query("SELECT c FROM Course c WHERE c.tenantId = :tenantId AND c.branchId I
+  라인 53 (parameter):     @Query("SELECT c FROM Course c WHERE c.tenantId = :tenantId AND (c.branchId 
+  라인 54 (parameter):     List<Course> findActiveCoursesByTenantIdAndBranchId(@Param("tenantId") Strin
+
+[FILE] src\main\java\com\coresolution\core\service\BaseTenantEntityService.java (2개)
+  라인 29 (comment):      * @param branchId 지점 ID (선택적, null이면 전체 지점)
+  라인 32 (parameter):     List<T> findAllByTenant(String tenantId, Long branchId);
+
+[FILE] src\main\java\com\coresolution\core\service\BaseTenantService.java (2개)
+  라인 30 (comment):      * @param branchId 지점 ID (선택적, null이면 전체 지점)
+  라인 33 (parameter):     List<RES> findAll(String tenantId, Long branchId);
+
+[FILE] src\main\java\com\coresolution\core\service\UserRoleAssignmentService.java (2개)
+  라인 50 (comment):      * @param branchId 브랜치 ID
+  라인 53 (parameter):     UserRoleAssignmentResponse getCurrentActiveRole(Long userId, String tenantId
+
+[FILE] src\main\java\com\coresolution\core\service\academy\AcademyBillingService.java (4개)
+  라인 23 (parameter):     List<BillingScheduleResponse> getBillingSchedules(String tenantId, Long bran
+  라인 55 (parameter):     List<InvoiceResponse> getInvoices(String tenantId, Long branchId, String enr
+  라인 85 (parameter):     List<InvoiceResponse> getOverdueInvoices(String tenantId, Long branchId);
+  라인 92 (parameter):     List<TuitionPaymentResponse> getPayments(String tenantId, Long branchId, Str
+
+[FILE] src\main\java\com\coresolution\core\service\academy\AcademySettlementService.java (1개)
+  라인 22 (parameter):     List<SettlementResponse> getSettlements(String tenantId, Long branchId, Stri
+
+[FILE] src\main\java\com\coresolution\core\service\academy\AttendanceService.java (2개)
+  라인 24 (parameter):     List<AttendanceResponse> getAttendances(String tenantId, Long branchId, Stri
+  라인 59 (parameter):     List<AttendanceResponse> getAttendancesByDate(String tenantId, Long branchId
+
+[FILE] src\main\java\com\coresolution\core\service\academy\ClassEnrollmentService.java (1개)
+  라인 22 (parameter):     List<ClassEnrollmentResponse> getEnrollments(String tenantId, Long branchId,
+
+[FILE] src\main\java\com\coresolution\core\service\academy\ClassScheduleService.java (1개)
+  라인 22 (parameter):     List<ClassScheduleResponse> getSchedules(String tenantId, Long branchId, Str
+
+[FILE] src\main\java\com\coresolution\core\service\academy\ClassService.java (2개)
+  라인 22 (parameter):     List<ClassResponse> getClasses(String tenantId, Long branchId, String course
+  라인 52 (parameter):     List<ClassResponse> getRecruitingClasses(String tenantId, Long branchId);
+
+[FILE] src\main\java\com\coresolution\core\service\academy\CourseService.java (1개)
+  라인 21 (parameter):     List<CourseResponse> getCourses(String tenantId, Long branchId, String categ
+
+[FILE] src\main\java\com\coresolution\core\service\academy\impl\AcademyBillingServiceImpl.java (21개)
+  라인 43 (field):     public List<BillingScheduleResponse> getBillingSchedules(String tenantId, Lo
+  라인 47 (parameter):         if (branchId != null) {
+  라인 48 (parameter):             schedules = billingScheduleRepository.findByTenantIdAndBranchIdAndIs
+  라인 79 (parameter):             .branchId(request.getBranchId())
+  라인 194 (parameter):                     .branchId(enrollment.getBranchId())
+  라인 227 (field):     public List<InvoiceResponse> getInvoices(String tenantId, Long branchId, Str
+  라인 236 (parameter):         } else if (branchId != null) {
+  라인 237 (parameter):             invoices = invoiceRepository.findByTenantIdAndBranchIdAndIsDeletedFa
+  라인 296 (parameter):             .branchId(request.getBranchId())
+  라인 404 (field):     public List<InvoiceResponse> getOverdueInvoices(String tenantId, Long branch
+  라인 409 (parameter):         if (branchId != null) {
+  라인 411 (parameter):                 .filter(i -> branchId.equals(i.getBranchId()))
+  라인 423 (field):     public List<TuitionPaymentResponse> getPayments(String tenantId, Long branch
+  라인 434 (parameter):         } else if (branchId != null) {
+  라인 435 (parameter):             payments = paymentRepository.findByTenantIdAndBranchIdAndIsDeletedFa
+  라인 477 (parameter):             .branchId(request.getBranchId())
+  라인 724 (parameter):             .branchId(schedule.getBranchId())
+  라인 750 (parameter):             .branchId(invoice.getBranchId())
+  라인 784 (parameter):             .branchId(payment.getBranchId())
+  라인 821 (field):     private String generateInvoiceNumber(String tenantId, Long branchId) {
+  라인 847 (field):     private String generateReceiptNumber(String tenantId, Long branchId) {
+
+[FILE] src\main\java\com\coresolution\core\service\academy\impl\AcademySettlementServiceImpl.java (15개)
+  라인 55 (field):     public List<SettlementResponse> getSettlements(String tenantId, Long branchI
+  라인 60 (parameter):         if (branchId != null) {
+  라인 61 (parameter):             settlements = settlementRepository.findByTenantIdAndBranchIdAndIsDel
+  라인 109 (variable):         log.info("정산 계산 시작: tenantId={}, branchId={}, period={}",
+  라인 131 (parameter):             .branchId(request.getBranchId())
+  라인 293 (parameter):         for (Long branchId : branchIds) {
+  라인 296 (variable):                     tenantId, branchId, settlementPeriod);
+  라인 299 (parameter):                     log.debug("이미 존재하는 정산: branchId={}, period={}", branchId, se
+  라인 304 (parameter):                     .branchId(branchId)
+  라인 314 (parameter):                 log.error("정산 계산 실패: branchId={}, period={}", branchId, settleme
+  라인 326 (field):     private SettlementCalculationResult calculateRevenue(String tenantId, Long b
+  라인 330 (parameter):             .filter(p -> branchId == null || branchId.equals(p.getBranchId()))
+  라인 358 (field):     private BigDecimal calculateTeacherSettlement(String tenantId, Long branchId
+  라인 375 (parameter):             .branchId(settlement.getBranchId())
+  라인 410 (parameter):             .branchId(item.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\academy\impl\AttendanceServiceImpl.java (12개)
+  라인 55 (field):     public List<AttendanceResponse> getAttendances(String tenantId, Long branchI
+  라인 56 (variable):         log.debug("출결 목록 조회: tenantId={}, branchId={}, enrollmentId={}, schedule
+  라인 57 (variable):             tenantId, branchId, enrollmentId, scheduleId, date);
+  라인 67 (parameter):         } else if (date != null && branchId != null) {
+  라인 68 (parameter):             attendances = attendanceRepository.findAttendancesByDate(tenantId, b
+  라인 69 (parameter):         } else if (branchId != null) {
+  라인 70 (parameter):             attendances = attendanceRepository.findByTenantIdAndBranchIdAndIsDel
+  라인 116 (parameter):             .branchId(request.getBranchId())
+  라인 234 (field):     public List<AttendanceResponse> getAttendancesByDate(String tenantId, Long b
+  라인 235 (parameter):         log.debug("날짜별 출결 조회: tenantId={}, branchId={}, date={}", tenantId, bran
+  라인 239 (parameter):         List<Attendance> attendances = attendanceRepository.findAttendancesByDat
+  라인 465 (parameter):             .branchId(attendance.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\academy\impl\ClassEnrollmentServiceImpl.java (7개)
+  라인 43 (field):     public List<ClassEnrollmentResponse> getEnrollments(String tenantId, Long br
+  라인 52 (parameter):         } else if (branchId != null && status != null) {
+  라인 53 (parameter):             enrollments = enrollmentRepository.findByTenantIdAndBranchIdAndStatu
+  라인 54 (parameter):         } else if (branchId != null) {
+  라인 55 (parameter):             enrollments = enrollmentRepository.findByTenantIdAndBranchIdAndIsDel
+  라인 93 (parameter):             .branchId(request.getBranchId())
+  라인 222 (parameter):             .branchId(enrollment.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\academy\impl\ClassScheduleServiceImpl.java (7개)
+  라인 40 (field):     public List<ClassScheduleResponse> getSchedules(String tenantId, Long branch
+  라인 44 (parameter):         if (classId != null && branchId != null) {
+  라인 45 (parameter):             schedules = scheduleRepository.findByTenantIdAndBranchIdAndClassIdAn
+  라인 48 (parameter):         } else if (branchId != null) {
+  라인 49 (parameter):             schedules = scheduleRepository.findByTenantIdAndBranchIdAndIsDeleted
+  라인 91 (parameter):             .branchId(request.getBranchId())
+  라인 246 (parameter):             .branchId(schedule.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\impl\BaseTenantEntityServiceImpl.java (6개)
+  라인 50 (comment):      * 목록 조회 (tenant_id, branch_id 필터링)
+  라인 53 (comment):      * @param branchId 지점 ID (선택적)
+  라인 56 (field):     protected abstract List<T> findEntitiesByTenantAndBranch(String tenantId, Lo
+  라인 62 (field):     public List<T> findAllByTenant(String tenantId, Long branchId) {
+  라인 63 (parameter):         log.debug("목록 조회: tenantId={}, branchId={}", tenantId, branchId);
+  라인 69 (parameter):         return findEntitiesByTenantAndBranch(tenantId, branchId);
+
+[FILE] src\main\java\com\coresolution\core\service\impl\BaseTenantServiceImpl.java (6개)
+  라인 84 (comment):      * 목록 조회 (tenant_id, branch_id 필터링)
+  라인 87 (comment):      * @param branchId 지점 ID (선택적)
+  라인 90 (field):     protected abstract List<T> findEntitiesByTenantAndBranch(String tenantId, Lo
+  라인 96 (field):     public List<RES> findAll(String tenantId, Long branchId) {
+  라인 97 (parameter):         log.debug("목록 조회: tenantId={}, branchId={}", tenantId, branchId);
+  라인 103 (parameter):         List<T> entities = findEntitiesByTenantAndBranch(tenantId, branchId);
+
+[FILE] src\main\java\com\coresolution\core\service\impl\UserRoleAssignmentServiceImpl.java (6개)
+  라인 58 (variable):         log.info("역할 할당: userId={}, tenantId={}, tenantRoleId={}, branchId={}",
+  라인 85 (parameter):                 .branchId(request.getBranchId())
+  라인 121 (field):     public UserRoleAssignmentResponse getCurrentActiveRole(Long userId, String t
+  라인 122 (parameter):         log.debug("현재 활성 역할 조회: userId={}, tenantId={}, branchId={}", userId, te
+  라인 127 (parameter):                 .findActiveRoleByUserAndTenantAndBranch(userId, tenantId, branch
+  라인 166 (parameter):                 .branchId(assignment.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\impl\academy\ClassServiceImpl.java (11개)
+  라인 40 (field):     public List<ClassResponse> getClasses(String tenantId, Long branchId, String
+  라인 41 (parameter):         log.debug("반 목록 조회: tenantId={}, branchId={}, courseId={}, status={}", t
+  라인 45 (parameter):         if (courseId != null && branchId != null) {
+  라인 46 (parameter):             classes = classRepository.findByTenantIdAndBranchIdAndCourseIdAndIsD
+  라인 47 (parameter):         } else if (branchId != null) {
+  라인 48 (parameter):             classes = classRepository.findByTenantIdAndBranchIdAndIsDeletedFalse
+  라인 98 (parameter):                 .branchId(request.getBranchId())
+  라인 239 (field):     public List<ClassResponse> getRecruitingClasses(String tenantId, Long branch
+  라인 240 (parameter):         log.debug("모집 중인 반 목록 조회: tenantId={}, branchId={}", tenantId, branchId)
+  라인 242 (parameter):         List<Class> classes = classRepository.findRecruitingClassesByTenantIdAnd
+  라인 272 (parameter):                 .branchId(classEntity.getBranchId())
+
+[FILE] src\main\java\com\coresolution\core\service\impl\academy\CourseServiceImpl.java (6개)
+  라인 37 (field):     public List<CourseResponse> getCourses(String tenantId, Long branchId, Strin
+  라인 38 (parameter):         log.debug("강좌 목록 조회: tenantId={}, branchId={}, category={}, subject={}",
+  라인 42 (parameter):         if (branchId != null) {
+  라인 43 (parameter):             courses = courseRepository.findActiveCoursesByTenantIdAndBranchId(te
+  라인 94 (parameter):                 .branchId(request.getBranchId())
+  라인 259 (parameter):                 .branchId(course.getBranchId())
+
+[FILE] src\test\java\com\coresolution\consultation\integration\MultiTenantIntegrationTest.java (1개)
+  라인 323 (parameter):                 .branchId(1L)
+
+[FILE] src\test\java\com\coresolution\consultation\integration\StoredProcedureStandardizationIntegrationTest.java (4개)
+  라인 209 (parameter):     @DisplayName("GetRefundStatistics 프로시저 - tenant_id 파라미터 검증 및 branchCode 제거 확
+  라인 213 (variable):         String branchCode = "BRANCH001";
+  라인 219 (variable):             branchCode, startDate, endDate
+  라인 234 (comment):         // branchCode 파라미터가 제거되었고 tenant_id가 사용되는지 확인
+
+[FILE] src\test\java\com\coresolution\consultation\integration\UnifiedLoginIntegrationTest.java (15개)
+  라인 157 (parameter):     @DisplayName("ID/PW 로그인 - JWT 토큰에 tenantId, branchId, permissions 포함 확인")
+  라인 167 (comment):         // JWT 토큰에서 tenantId, branchId, permissions 추출 확인
+  라인 170 (parameter):         Long branchId = jwtService.extractBranchId(token);
+  라인 174 (parameter):         assertThat(branchId).isEqualTo(testBranch1.getId());
+  라인 177 (variable):         log.info("✅ ID/PW 로그인 성공: tenantId={}, branchId={}, permissions={}",
+  라인 178 (variable):             tenantId, branchId, permissions);
+  라인 218 (comment):         // 새 JWT 토큰에 tenantId, branchId 포함 확인
+  라인 221 (parameter):         Long branchId = jwtService.extractBranchId(newToken);
+  라인 224 (parameter):         assertThat(branchId).isEqualTo(testBranch1.getId());
+  라인 226 (parameter):         log.info("✅ Refresh Token 갱신 성공: tenantId={}, branchId={}", tenantId, br
+  라인 348 (comment):         // When: JWT 토큰에서 tenantId, branchId 추출하여 TenantContextHolder 설정
+  라인 350 (parameter):         Long branchId = jwtService.extractBranchId(token);
+  라인 355 (parameter):         if (branchId != null) {
+  라인 356 (parameter):             TenantContextHolder.setBranchId(branchId.toString());
+  라인 363 (variable):         log.info("✅ TenantContextHolder 자동 설정: tenantId={}, branchId={}",
+
+[FILE] src\test\java\com\coresolution\core\system\FullSystemIntegrationTest.java (1개)
+  라인 187 (parameter):                 .branchId(1L)
+
+[FILE] src\test\java\com\mindgarden\consultation\service\impl\PaymentServiceIntegrationTest.java (1개)
+  라인 144 (parameter):                 .branchId(1L)
+
+[FILE] src\test\java\com\mindgarden\consultation\service\impl\PaymentServicePerformanceTest.java (1개)
+  라인 226 (parameter):                 .branchId(1L)

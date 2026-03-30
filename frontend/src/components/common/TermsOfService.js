@@ -1,18 +1,17 @@
 import React from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import './PrivacyPolicy.css';
 
 /**
  * 이용약관 컴포넌트
- * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-17
  */
-const TermsOfService = () => {
-  return (
-    <SimpleLayout>
-      <div className="privacy-policy-container">
+
+/** 레이아웃 없이 이용약관 본문만 렌더 (페이지·모달 공용) */
+export const TermsOfServiceContent = () => (
+  <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           이용약관
         </h1>
@@ -29,7 +28,7 @@ const TermsOfService = () => {
             제1조 (목적)
           </h2>
           <p className="mg-v2-terms-paragraph">
-            이 약관은 마인드가든(이하 "회사")이 제공하는 온라인 상담 서비스(이하 "서비스")를 이용함에 있어 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+            이 약관은 Core Solution(이하 "회사")이 제공하는 온라인 상담 서비스(이하 "서비스")를 이용함에 있어 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
           </p>
         </div>
 
@@ -226,9 +225,13 @@ const TermsOfService = () => {
             <strong>본 이용약관은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>
-      </div>
-    </SimpleLayout>
-  );
-};
+  </div>
+);
+
+const TermsOfService = () => (
+  <AdminCommonLayout title="이용약관">
+    <TermsOfServiceContent />
+  </AdminCommonLayout>
+);
 
 export default TermsOfService;

@@ -1,0 +1,213 @@
+/**
+ * Purchase Request Widget
+/**
+ * 구매 요청 목록을 표시하는 범용 위젯
+/**
+ * ErpPurchaseRequestPanel을 기반으로 범용화
+/**
+ * 
+/**
+ * @author CoreSolution
+/**
+ * @version 1.0.0
+/**
+ * @since 2025-11-22
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingCart, ChevronDown, ChevronUp, ShoppingBag, Plus, ChevronRight } from 'lucide-react';
+import { apiGet } from '../../../utils/ajax';
+import './Widget.css';
+import SafeText from '../../common/SafeText';
+
+const PurchaseRequestWidget = ({ widget, user }) => {
+  const navigate = useNavigate();
+  const [purchaseData, setPurchaseData] = useState({
+    pendingRequests: 0,
+    approvedRequests: 0,
+    totalRequests: 0
+  });
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const config = widget.config || {};
+  const dataSource = config.dataSource || {};
+  const userId = user?.id || config.userId;
+  const maxItems = config.maxItems || 5;
+  
+  useEffect(() => {
+    if (dataSource.type === 'api' && dataSource.url && userId) {
+      loadPurchaseData();
+      
+      if (dataSource.refreshInterval) {
+        const interval = setInterval(loadPurchaseData, dataSource.refreshInterval);
+        return () => clearInterval(interval);
+      }
+    } else if (config.purchaseData) {
+      setPurchaseData(config.purchaseData);
+      setRequests(config.requests || []);
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
+  
+  const loadPurchaseData = async () => {
+    try {
+      setLoading(true);
+      
+      const url = dataSource.url || `/api/v1/erp/purchase-requests/requester/${userId}`;
+      const response = await apiGet(url);
+      
+      if (response && response.data) {
+        const requestsList = Array.isArray(response.data) ? response.data : [];
+        
+        const pendingCount = requestsList.filter(req => 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          req.status === 'PENDING' || req.status === 'SUBMITTED'
+        ).length;
+        
+        const approvedCount = requestsList.filter(req => 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+          req.status === 'APPROVED' || req.status === 'COMPLETED'
+        ).length;
+        
+        setPurchaseData({
+          pendingRequests: pendingCount,
+          approvedRequests: approvedCount,
+          totalRequests: requestsList.length
+        });
+        
+        setRequests(requestsList.slice(0, maxItems));
+      }
+    } catch (err) {
+      console.error('PurchaseRequestWidget 데이터 로드 실패:', err);
+      setPurchaseData({ pendingRequests: 0, approvedRequests: 0, totalRequests: 0 });
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleRequestClick = (request) => {
+    if (config.requestUrl) {
+      navigate(config.requestUrl.replace('{requestId}', request.id));
+    } else {
+      navigate(`/erp/purchase-requests/${request.id}`);
+    }
+  };
+  
+  const handleViewAll = () => {
+    if (config.viewAllUrl) {
+      navigate(config.viewAllUrl);
+    } else {
+      navigate('/erp/purchase-requests');
+    }
+  };
+  
+  const handleCreateRequest = () => {
+    if (config.createUrl) {
+      navigate(config.createUrl);
+    } else {
+      navigate('/erp/purchase-requests/create');
+    }
+  };
+  
+  if (loading && purchaseData.totalRequests === 0) {
+    return (
+      <div className="widget widget-purchase-request">
+        <div className="mg-loading">로딩중...</div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="widget widget-purchase-request mg-card">
+      <div 
+        className="widget-header widget-header-clickable mg-card-header mg-cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="widget-title mg-flex mg-align-center mg-gap-sm">
+          <ShoppingCart size={18} aria-hidden />
+          {config.title || '구매 요청'}
+          {purchaseData.pendingRequests > 0 && (
+            <span className="widget-badge widget-badge-warning mg-badge mg-badge-warning">
+              {purchaseData.pendingRequests}
+            </span>
+          )}
+        </div>
+        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+      </div>
+      
+      {isExpanded && (
+        <div className="widget-body mg-card-body">
+          <div className="purchase-request-summary">
+            <div className="purchase-summary-item">
+              <div className="purchase-summary-label">대기</div>
+              <div className="purchase-summary-value">{purchaseData.pendingRequests}</div>
+            </div>
+            <div className="purchase-summary-item">
+              <div className="purchase-summary-label">승인</div>
+              <div className="purchase-summary-value">{purchaseData.approvedRequests}</div>
+            </div>
+            <div className="purchase-summary-item">
+              <div className="purchase-summary-label">전체</div>
+              <div className="purchase-summary-value">{purchaseData.totalRequests}</div>
+            </div>
+          </div>
+          
+          {requests.length > 0 ? (
+            <div className="purchase-request-list">
+              {requests.map((request, index) => (
+                <div
+                  key={request.id || index}
+                  className="purchase-request-item"
+                  onClick={() => handleRequestClick(request)}
+                >
+                  <div className="purchase-request-info">
+                    <div className="purchase-request-title"><SafeText>{request.title ?? request.itemName}</SafeText></div>
+                    <div className="purchase-request-details">
+                      {request.quantity && <span>수량: {request.quantity}</span>}
+                      {request.amount && <span>금액: ₩{request.amount.toLocaleString()}</span>}
+                    </div>
+                    {request.requestDate && (
+                      <div className="purchase-request-date">
+                        요청일: {new Date(request.requestDate).toLocaleDateString('ko-KR')}
+                      </div>
+                    )}
+                  </div>
+                  <div className={`purchase-request-status status-${request.status?.toLowerCase()}`}>
+                    <SafeText>{request.status}</SafeText>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="widget-empty">
+              <ShoppingBag size={32} className="widget-empty-icon" aria-hidden />
+              <p>{config.emptyMessage || '구매 요청이 없습니다'}</p>
+            </div>
+          )}
+          
+          <div className="purchase-request-actions">
+            <button className="widget-btn widget-btn-primary mg-btn mg-btn-primary" onClick={handleCreateRequest}>
+              <Plus size={16} aria-hidden />
+              새 요청
+            </button>
+            {config.viewAllUrl && (
+              <button className="widget-btn mg-btn mg-btn-ghost" onClick={handleViewAll}>
+                전체보기
+                <ChevronRight size={16} aria-hidden />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PurchaseRequestWidget;
+

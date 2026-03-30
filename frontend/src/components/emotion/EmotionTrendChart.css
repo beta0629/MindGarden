@@ -1,0 +1,68 @@
+.emotion-trend-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.trend-summary {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.latest-trend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+}
+
+.trend-badge {
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.trend-badge.trend-improving { color: var(--mg-success-500); background: #d1fae5; }
+.trend-badge.trend-stable { color: var(--mg-warning-500); background: #fef3c7; }
+.trend-badge.trend-worsening { color: #dc2626; background: #fee2e2; }
+
+.trend-chart-svg {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    padding: 20px;
+}
+
+.trend-table {
+    overflow-x: auto;
+}
+
+.trend-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trend-table thead {
+    background: #f3f4f6;
+}
+
+.trend-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.trend-table td {
+    padding: 12px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.trend-table tbody tr:hover {
+    background: #f9fafb;
+}

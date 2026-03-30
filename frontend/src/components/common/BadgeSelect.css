@@ -1,0 +1,110 @@
+/**
+ * BadgeSelect — 배지(칩) 기반 선택 컴포넌트
+ * BADGE_SELECT_SPEC.md, unified-design-tokens, responsive-layout-tokens 기준
+ *
+ * @author Core Solution
+ * @since 2026-03-05
+ */
+
+.mg-v2-badge-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cs-spacing-sm, 8px);
+  align-items: center;
+  min-height: 40px;
+  padding: 2px 0;
+}
+
+.mg-v2-badge-select--loading,
+.mg-v2-badge-select--empty {
+  color: var(--mg-color-text-secondary, var(--mg-layout-sidebar-text, #5C6B61));
+  font-size: 14px;
+}
+
+.mg-v2-badge-select__placeholder,
+.mg-v2-badge-select__loading-text {
+  font-size: 14px;
+}
+
+.mg-v2-badge-select__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 40px;
+  border: 1px solid var(--mg-color-border-main, var(--mg-layout-section-border));
+  border-radius: 10px;
+  background-color: var(--mg-color-surface-main, var(--mg-layout-section-bg));
+  color: var(--mg-color-text-main, #2C2C2C);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.mg-v2-badge-select__item:hover:not(.mg-v2-badge-select__item--disabled) {
+  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+}
+
+.mg-v2-badge-select__item--selected {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-background-main, #FAF9F7);
+  font-weight: 600;
+}
+
+.mg-v2-badge-select__item--selected:hover:not(.mg-v2-badge-select__item--disabled) {
+  background-color: var(--mg-color-primary-light, #4A6354);
+  border-color: var(--mg-color-primary-light, #4A6354);
+}
+
+.mg-v2-badge-select__item:focus {
+  outline: none;
+}
+
+.mg-v2-badge-select__item:focus-visible {
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+}
+
+.mg-v2-badge-select__item--disabled,
+.mg-v2-badge-select--disabled .mg-v2-badge-select__item {
+  cursor: not-allowed;
+  opacity: 0.7;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+.mg-v2-badge-select__item--disabled:hover,
+.mg-v2-badge-select--disabled .mg-v2-badge-select__item:hover {
+  border-color: var(--mg-color-border-main, var(--mg-layout-section-border));
+  background-color: var(--mg-color-surface-main, var(--mg-layout-section-bg));
+}
+
+.mg-v2-badge-select--disabled .mg-v2-badge-select__item--selected {
+  opacity: 0.8;
+}
+
+.mg-v2-badge-select--error .mg-v2-badge-select__item {
+  border-color: var(--mg-error-500, #dc2626);
+}
+
+.mg-v2-badge-select__item-icon {
+  font-style: normal;
+}
+
+.mg-v2-badge-select__item-label {
+  white-space: nowrap;
+}
+
+/* Small variant */
+.mg-v2-badge-select--small {
+  min-height: 28px;
+  gap: 6px;
+}
+
+.mg-v2-badge-select--small .mg-v2-badge-select__item {
+  padding: 6px 10px;
+  min-height: 28px;
+  font-size: 12px;
+  border-radius: 8px;
+}

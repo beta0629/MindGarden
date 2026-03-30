@@ -263,9 +263,10 @@ public class ConsultantAvailabilityController {
     
     /**
      * 모든 상담사의 휴무 정보 조회 (관리자용)
-     * GET /api/consultant/vacations?date=2024-01-15 (선택적)
+     * GET /api/v1/consultants/vacations 또는 /api/v1/consultants/availability/vacations?date= (선택)
+     * 스케줄 UI(TimeSlotGrid 등)는 표준화 경로 availability/vacations 를 사용합니다.
      */
-    @GetMapping("/vacations")
+    @GetMapping({ "/vacations", "/availability/vacations" })
     public ResponseEntity<Map<String, Object>> getAllConsultantsVacations(
             @RequestParam(required = false) String date) {
         

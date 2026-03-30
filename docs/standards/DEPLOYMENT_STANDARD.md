@@ -19,7 +19,8 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 구현 위치
 - **워크플로우 파일**: `.github/workflows/`
-- **재사용 워크플로**: Trinity·Ops 정적 SSH/SCP 배포는 [`reusable-static-site-ssh-deploy.yml`](../../.github/workflows/reusable-static-site-ssh-deploy.yml)를 `workflow_call`로 호출한다. 호출부·paths·시크릿 매핑 요약은 [`docs/deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md`](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md)를 본다.
+- **변경 절차**: 워크플로 추가·수정 시 담당·분배는 [위임 순서](../project-management/CORE_PLANNER_DELEGATION_ORDER.md)(core-planner 주관)를 따른다. 인덱스 문서의 동일 주제는 [`GITHUB_ACTIONS_WORKFLOW_INDEX.md` — 변경·운영 시 프로세스](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md#변경운영-시-프로세스)를 본다.
+- **재사용 워크플로**: Trinity·Ops·Core(개발) 정적 SSH/SCP 배포는 [`reusable-static-site-ssh-deploy.yml`](../../.github/workflows/reusable-static-site-ssh-deploy.yml)를 `workflow_call`로 호출한다. 호출부·paths·시크릿 매핑 요약은 [`docs/deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md`](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md)를 본다.
 - **배포 스크립트**: `scripts/deployment/`
 - **서비스 설정**: `config/systemd/`
 

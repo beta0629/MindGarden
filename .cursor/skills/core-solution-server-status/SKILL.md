@@ -71,8 +71,9 @@ ssh root@beta74.cafe24.com 'systemctl cat mindgarden.service'
 
 ### Flyway(마이그레이션) 현황 — 반드시 확인
 
-- `application-prod.yml`의 **`spring.flyway.enabled`** 는 저장소 기준으로 **현재 `false`로 두는 설정이 있다**(운영 Flyway 자동 적용이 꺼진 상태일 수 있음).
-- 따라서 **“앱만 기동했으니 마이그레이션 끝”이라고 단정하지 말 것.**
+- **운영 프로필**(`application-prod.yml`): **`spring.flyway`** 기본 **활성**, `classpath:db/migration`, `baseline-on-migrate: true`, `validate-on-migrate: true`. 비상 시에만 서비스에 **`SPRING_FLYWAY_ENABLED=false`** 로 끈다.
+- 배포 후 **`deploy-production.yml` 헬스 단계**에서 journalctl Flyway 로그 + `flyway_schema_history` 최신 행 확인을 시도한다.
+- 그래도 **“로그만으로 단정하지 말고”** 필요 시 MySQL에서 직접 이력·오류를 본다.
 - Flyway를 켠 환경이라면 이력 테이블은 보통 **`flyway_schema_history`**. 없거나 비어 있으면 **수동 SQL/별도 배포 파이프**로 스키마가 맞는지 확인한다.
 
 **실제 DB에 붙어서 이력 확인(서버에서, 환경 변수는 systemd와 동일하게 사용):**

@@ -49,15 +49,15 @@ spring:
       max-lifetime: ${HIKARI_MAX_LIFETIME_MS:1800000}
       leak-detection-threshold: ${HIKARI_LEAK_DETECTION_THRESHOLD_MS:60000}
   
-  # Flyway 설정 (운영 환경 - 개편 작업 중 임시 비활성화)
-  # TODO: Flyway 히스토리 테이블 생성 후 활성화 필요
+  # Flyway (운영): 기동 시 classpath:db/migration 적용. 기존 DB는 baseline-on-migrate 로 히스토리 정합.
+  # 비상 시에만 서비스 Environment: SPRING_FLYWAY_ENABLED=false
   flyway:
-    enabled: false  # 개편 작업 중 기존 DB 환경을 위해 임시 비활성화
-    # enabled: true
-    # locations: classpath:db/migration
-    # baseline-on-migrate: true  # 기존 DB를 baseline으로 인식
-    # validate-on-migrate: false  # 개편 작업 중 검증 완화
-    # clean-disabled: true
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
 
   # JPA 설정 (프로덕션)
   jpa:

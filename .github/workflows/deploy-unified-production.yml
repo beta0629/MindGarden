@@ -1,0 +1,136 @@
+# 운영 배포 단일 진입점: Core → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저 순차 실행 후 각 실행을 gh run watch 로 감시한다.
+# 온보딩 백엔드: 저장소에 deploy-onboarding-prod 가 없으므로 Core 운영 범위·수동 배포를 별도 확인한다.
+#
+# 필요 권한: GITHUB_TOKEN 에 actions: write (워크플로 디스패치)
+
+name: 🛰️ 운영 통합 배포 (단일 진입점)
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "배포 기준 Git ref (운영은 main만 허용)"
+        required: false
+        default: "main"
+        type: string
+      run_core:
+        description: "Core Solution 운영 통합 (deploy-production)"
+        type: boolean
+        default: true
+      run_trinity:
+        description: "Trinity 정적 프론트 운영 (deploy-trinity-prod)"
+        type: boolean
+        default: true
+      run_ops_frontend:
+        description: "Ops 정적 프론트 운영 (deploy-ops-prod)"
+        type: boolean
+        default: true
+      run_ops_backend:
+        description: "Ops 백엔드 JAR 운영 (deploy-ops-backend-prod)"
+        type: boolean
+        default: true
+      run_procedures:
+        description: "표준화 프로시저 운영 DB (deploy-procedures-prod)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: unified-production-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  orchestrate:
+    name: 운영 통합 오케스트레이션
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: 🛡️ 운영 ref 가드 (main만)
+        env:
+          REF: ${{ inputs.deploy_ref }}
+        run: |
+          set -euo pipefail
+          DREF="${REF:-main}"
+          if [ "$DREF" != "main" ]; then
+            echo "::error::운영 통합 배포는 ref=main 만 허용합니다. 입력값: $DREF"
+            exit 1
+          fi
+
+      - name: 최소 한 단계 선택 확인
+        if: ${{ !inputs.run_core && !inputs.run_trinity && !inputs.run_ops_frontend && !inputs.run_ops_backend && !inputs.run_procedures }}
+        run: |
+          echo "::error::run_* 입력 중 최소 하나는 true 여야 합니다."
+          exit 1
+
+      - name: 🚀 Core Solution 운영 (deploy-production)
+        if: inputs.run_core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          echo "Dispatching deploy-production.yml ..."
+          gh workflow run deploy-production.yml --repo "$REPO" --ref main -f deploy_ref=main
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-production.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching Core production run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-failure
+
+      - name: 🌟 Trinity 프론트 운영 (deploy-trinity-prod)
+        if: inputs.run_trinity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          gh workflow run deploy-trinity-prod.yml --repo "$REPO" --ref main -f deploy_ref=main
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-trinity-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching Trinity prod run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-failure
+
+      - name: 🔧 Ops 프론트 운영 (deploy-ops-prod)
+        if: inputs.run_ops_frontend
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          gh workflow run deploy-ops-prod.yml --repo "$REPO" --ref main -f deploy_ref=main
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-ops-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching Ops frontend prod run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-failure
+
+      - name: 🔧 Ops 백엔드 운영 (deploy-ops-backend-prod)
+        if: inputs.run_ops_backend
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          gh workflow run deploy-ops-backend-prod.yml --repo "$REPO" --ref main -f deploy_ref=main
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-ops-backend-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching Ops backend prod run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-failure
+
+      - name: 📦 표준 프로시저 운영 (deploy-procedures-prod)
+        if: inputs.run_procedures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          gh workflow run deploy-procedures-prod.yml --repo "$REPO" --ref main
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-procedures-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching procedures prod run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-failure
+
+      - name: ℹ️ 온보딩 운영 안내
+        run: |
+          echo "::notice::온보딩 백엔드 전용 운영 워크플로는 없습니다. Core 운영에 포함되는지·별도 수동 배포인지 팀 절차를 확인하세요."

@@ -6,6 +6,16 @@
 
 ---
 
+## 운영 통합 배포 (단일 진입점)
+
+| 파일 | 역할 | 트리거·비고 |
+|------|------|-------------|
+| [`deploy-unified-production.yml`](../../.github/workflows/deploy-unified-production.yml) | Core 운영(`deploy-production`) → Trinity 운영 → Ops 프론트 운영 → Ops 백엔드 운영 → 표준 프로시저 운영을 **순서대로** `workflow_dispatch` 후 **`gh run watch`로 완료·성공 여부 감시** | `workflow_dispatch`만. 입력: `deploy_ref`(main만), `run_core` / `run_trinity` / `run_ops_frontend` / `run_ops_backend` / `run_procedures`(각 boolean, 기본 true). `GITHUB_TOKEN`에 `actions: write` 필요. |
+
+온보딩 백엔드는 **운영 전용 자동 워크플로가 없음**; 통합 워크플로 마지막 안내 스텝에서도 동일 내용을 출력한다.
+
+---
+
 ## 정적 사이트 SSH 배포 쌍
 
 | 구분 | 워크플로 | 트리거 (브랜치) | paths (요약) | 시크릿 (SSH) | 헬스 URL |
@@ -22,7 +32,7 @@
 
 ---
 
-## 루트 워크플로 요약 (`.github/workflows/*.yml` 25개)
+## 루트 워크플로 요약 (`.github/workflows/*.yml` 26개)
 
 ### 정적 사이트 SSH / 재사용
 
@@ -39,6 +49,7 @@
 
 | 파일 | 역할 | 트리거 요약 | dev/prod 쌍 | reusable | 비고 |
 |------|------|-------------|-------------|----------|------|
+| `deploy-unified-production.yml` | 운영 통합 오케스트레이션 | `workflow_dispatch`(단계별 bool) | — | — | 하위 워크플로 순차 디스패치·watch |
 | `deploy-backend-dev.yml` | 코어 백엔드 개발 | `develop`+세분 paths | — / `deploy-production.yml` | — | 온보딩 경로 제외 |
 | `deploy-onboarding-dev.yml` | 온보딩 개발 | `develop`+paths | — | — | |
 | `deploy-nginx-dev.yml` | Nginx 설정 개발 | `develop`+`config/nginx/**` | — | — | |

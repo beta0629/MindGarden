@@ -70,6 +70,10 @@ deployment/*template*
 !src/**/*Template.java
 !src/**/*Template*.java
 
+# Exception: Flyway migration SQL (filenames may contain "template", e.g. role_templates)
+!src/main/resources/db/migration/
+!src/main/resources/db/migration/*.sql
+
 # Exception: dashboard-v2 templates folder (atomic design)
 !frontend/src/components/dashboard-v2/templates/
 

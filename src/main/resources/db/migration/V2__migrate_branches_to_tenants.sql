@@ -5,7 +5,30 @@
 -- 작성일: 2025-01-XX
 -- 표준: DATABASE_MIGRATION_STANDARD.md 준수
 -- 주의: 레거시 마이그레이션 파일 (이미 실행됨, branch_code 사용은 레거시 데이터 변환용)
+-- 그린필드: V1 직후에는 branches 테이블이 아직 없을 수 있음 → 없을 때만 최소 스키마 생성 후 이관(0행) 진행
 -- ============================================
+
+-- 0. branches 테이블이 없으면 생성 (기존 DB에 이미 있으면 건너뜀)
+CREATE TABLE IF NOT EXISTS branches (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    branch_code VARCHAR(100) NOT NULL,
+    branch_name VARCHAR(255) NULL,
+    branch_status VARCHAR(50) NULL,
+    email VARCHAR(255) NULL,
+    phone_number VARCHAR(100) NULL,
+    postal_code VARCHAR(20) NULL,
+    address VARCHAR(500) NULL,
+    address_detail VARCHAR(500) NULL,
+    created_at DATETIME(6) NULL,
+    updated_at DATETIME(6) NULL,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    version BIGINT NULL DEFAULT 0,
+    created_by VARCHAR(100) NULL,
+    updated_by VARCHAR(100) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_branches_branch_code (branch_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='레거시 지점(V2 이관용); 이미 존재하면 생성 생략';
 
 -- 1. 기존 Branch를 Tenant로 마이그레이션
 --    - branch_code를 tenant_id로 사용 (UUID 형식으로 변환 필요 시 별도 처리)

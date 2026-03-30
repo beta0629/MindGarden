@@ -411,8 +411,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
                 clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
 
-        User savedUser = userRepository.save(clientUser);
-        userRepository.flush();
+        User savedUser = userRepository.saveAndFlush(clientUser);
+        validateClientUserTenantIntegrity(savedUser, tenantId);
 
         log.info("✅ 내담자 등록 완료 - 저장된 User 정보: id={}, userId={}, tenantId={}, isActive={}, role={}", 
                 savedUser.getId(), savedUser.getUserId(), savedUser.getTenantId(), savedUser.getIsActive(), savedUser.getRole());
@@ -461,7 +461,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("🚗 내담자 등록: 차량번호 저장 (마스킹): {}", maskVehiclePlate(vehiclePlate));
         }
 
-        return clientRepository.save(client);
+        return clientRepository.saveAndFlush(client);
     }
 
     @Override
@@ -2216,8 +2216,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clientUser.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
         }
 
-        User savedUser = userRepository.save(clientUser);
-        userRepository.flush();
+        User savedUser = userRepository.saveAndFlush(clientUser);
+        validateClientUserTenantIntegrity(savedUser, tenantIdForClient);
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedUser.getTenantId() != null) {
@@ -6008,6 +6008,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (postalCode != null && !postalCode.trim().isEmpty()) {
             user.setPostalCode(postalCode.trim());
+        }
+    }
+
+    /**
+     * users -> clients 저장 직전 tenantId 정합성 방어.
+     */
+    private void validateClientUserTenantIntegrity(User savedUser, String expectedTenantId) {
+        if (savedUser == null || savedUser.getId() == null) {
+            throw new IllegalStateException("내담자 사용자 저장에 실패했습니다. users.id가 없습니다.");
+        }
+        if (expectedTenantId == null || expectedTenantId.isBlank()) {
+            throw new IllegalStateException("내담자 저장 tenantId가 비어 있습니다.");
+        }
+        if (savedUser.getTenantId() == null || savedUser.getTenantId().isBlank()) {
+            throw new IllegalStateException("users.tenant_id가 비어 있어 clients 저장을 중단합니다.");
+        }
+        if (!expectedTenantId.equals(savedUser.getTenantId())) {
+            throw new IllegalStateException(
+                "users.tenant_id 불일치로 clients 저장을 중단합니다. expected=" + expectedTenantId
+                    + ", actual=" + savedUser.getTenantId()
+            );
         }
     }
 

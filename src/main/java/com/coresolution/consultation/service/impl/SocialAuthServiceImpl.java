@@ -166,13 +166,14 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .branch(branch) // 지점 객체 (테넌트 시스템에서는 NULL)
                     .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                     .build();
+            user.setTenantId(tenantId);
             
             log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}, branch={}", 
                 user.getEmail(), request.getName(), request.getPhone(), 
                 user.getBranchCode(), branch != null ? branch.getId() : "null");
             
             log.info("User 엔티티 저장 시작");
-            user = userRepository.save(user);
+            user = userRepository.saveAndFlush(user);
             log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}", 
                 user.getId(), user.getBranch() != null ? user.getBranch().getId() : "null", user.getBranchCode());
             
@@ -180,16 +181,24 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             log.info("Client 엔티티 생성 시작");
             Client client = Client.builder()
                     .id(user.getId()) // User ID를 외래키로 설정
+                    .tenantId(tenantId)
                     .name(user.getName())
                     .email(user.getEmail())
                     .phone(user.getPhone())
                     .branchCode(user.getBranchCode())
                     .build();
+
+            if (user.getId() == null) {
+                throw new IllegalStateException("소셜 사용자 저장에 실패했습니다. users.id가 없습니다.");
+            }
+            if (user.getTenantId() == null || !tenantId.equals(user.getTenantId())) {
+                throw new IllegalStateException("소셜 회원가입 tenantId 정합성 오류: users.tenant_id 불일치");
+            }
             
             log.info("Client 엔티티 생성 완료: clientId={}", client.getId());
             
             log.info("Client 엔티티 저장 시작");
-            client = clientRepository.save(client);
+            client = clientRepository.saveAndFlush(client);
             log.info("Client 엔티티 저장 완료: clientId={}", client.getId());
             
             // 소셜 계정 정보 저장 (개인정보 암호화)

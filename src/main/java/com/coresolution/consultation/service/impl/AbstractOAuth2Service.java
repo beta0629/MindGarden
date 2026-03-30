@@ -20,6 +20,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -320,26 +321,31 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
-        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
-        // 1. Client 엔티티로 사용자 생성
-        Client client = Client.builder()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        // 표준화 원칙: users 선저장/flush 후 clients 저장 (FK 정합성 보장)
+        User user = User.builder()
+                .userId("social_" + socialUserInfo.getProviderUserId())
+                .password(new BCryptPasswordEncoder().encode(generateTemporaryPassword()))
                 .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
                 .email(encryptionUtil.safeEncrypt(socialUserInfo.getEmail()))
                 .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)
+                .role(UserRole.CLIENT)
+                .branchCode(null)
+                .build();
+        user.setTenantId(tenantId);
+        User savedUser = userRepository.saveAndFlush(user);
+        validateSavedUserTenantIntegrity(savedUser, tenantId);
+
+        Client client = Client.builder()
+                .id(savedUser.getId())
+                .tenantId(tenantId)
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .phone(savedUser.getPhone())
                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .isDeleted(false)
                 .build();
-        
-        // ClientRepository를 사용하여 저장
-        client = clientRepository.save(client);
-        
-        // 2. 소셜 계정 정보 생성 (Client를 User로 변환)
-        User user = new User();
-        user.setId(client.getId());
-        user.setEmail(client.getEmail()); // 이미 암호화됨
-        user.setName(client.getName()); // 이미 암호화됨
-        user.setRole(UserRole.CLIENT);
-        user.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+        client = clientRepository.saveAndFlush(client);
         
         UserSocialAccount socialAccount = UserSocialAccount.builder()
             .user(user)
@@ -355,7 +361,31 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         
         userSocialAccountRepository.save(socialAccount);
         
-        return client.getId();
+        return savedUser.getId();
+    }
+
+    /**
+     * 소셜 회원가입 users->clients 저장 직전 tenantId/PK 정합성 방어.
+     *
+     * @param savedUser users 저장 결과
+     * @param expectedTenantId 기대 tenantId
+     */
+    private void validateSavedUserTenantIntegrity(User savedUser, String expectedTenantId) {
+        if (savedUser == null || savedUser.getId() == null) {
+            throw new IllegalStateException("소셜 사용자 저장에 실패했습니다. users.id가 없습니다.");
+        }
+        if (expectedTenantId == null || expectedTenantId.isBlank()) {
+            throw new IllegalStateException("소셜 회원가입 tenantId가 비어 있습니다.");
+        }
+        if (savedUser.getTenantId() == null || savedUser.getTenantId().isBlank()) {
+            throw new IllegalStateException("users.tenant_id가 비어 있어 clients 저장을 중단합니다.");
+        }
+        if (!expectedTenantId.equals(savedUser.getTenantId())) {
+            throw new IllegalStateException(
+                "소셜 회원가입 tenantId 정합성 오류: users.tenant_id 불일치. expected="
+                    + expectedTenantId + ", actual=" + savedUser.getTenantId()
+            );
+        }
     }
 
     /**

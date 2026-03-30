@@ -109,21 +109,39 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional(readOnly = true)
     public CommonCode getCommonCodeByGroupAndValue(String codeGroup, String codeValue) {
         log.info("🔍 공통코드 그룹과 값으로 조회: {} - {}", codeGroup, codeValue);
-        // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
-            // 테넌트 코드 우선, 없으면 코어 코드 폴백 (SALARY_BASE_DATE 등)
-            // 단일 JPQL OR 쿼리는 테넌트·코어 행이 동시에 매칭되면 2건 → getSingleResult 예외이므로 분리 조회
-            return commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, codeValue)
-                    .or(() -> commonCodeRepository.findCoreCodeByGroupAndValue(codeGroup, codeValue))
-                    .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
-        } else {
-            // 코어 코드 조회 (tenantId가 null인 경우)
-            return commonCodeRepository.findCoreCodesByGroup(codeGroup).stream()
-                    .filter(code -> code.getCodeValue().equals(codeValue))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
+            List<CommonCode> tenantCandidates =
+                commonCodeRepository.findTenantCodeCandidatesByGroupAndValue(tenantId, codeGroup, codeValue);
+            if (!tenantCandidates.isEmpty()) {
+                if (tenantCandidates.size() > 1) {
+                    log.warn(
+                        "공통코드 중복 감지(테넌트): tenantId={}, group={}, value={}, count={} -> 결정적 첫 행 선택(id={})",
+                        tenantId,
+                        codeGroup,
+                        codeValue,
+                        tenantCandidates.size(),
+                        tenantCandidates.get(0).getId()
+                    );
+                }
+                return tenantCandidates.get(0);
+            }
         }
+        List<CommonCode> coreCandidates =
+            commonCodeRepository.findCoreCodeCandidatesByGroupAndValue(codeGroup, codeValue);
+        if (!coreCandidates.isEmpty()) {
+            if (coreCandidates.size() > 1) {
+                log.warn(
+                    "공통코드 중복 감지(코어): group={}, value={}, count={} -> 결정적 첫 행 선택(id={})",
+                    codeGroup,
+                    codeValue,
+                    coreCandidates.size(),
+                    coreCandidates.get(0).getId()
+                );
+            }
+            return coreCandidates.get(0);
+        }
+        throw new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue);
     }
 
     @Override

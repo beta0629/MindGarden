@@ -14,7 +14,7 @@ spring:
 
   # 데이터베이스 설정 (환경 변수로 설정 - 하드코딩 금지)
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=5000&socketTimeout=10000&autoReconnect=false&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&sessionVariables=wait_timeout=180,interactive_timeout=180
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=5000&socketTimeout=10000&autoReconnect=false&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&zeroDateTimeBehavior=CONVERT_TO_NULL&sessionVariables=wait_timeout=180,interactive_timeout=180
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver

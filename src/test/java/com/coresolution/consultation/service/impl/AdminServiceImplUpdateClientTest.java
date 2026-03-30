@@ -161,7 +161,7 @@ class AdminServiceImplUpdateClientTest {
         request.setVehiclePlate("  12가  3456  ");
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.findById(id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -204,7 +204,7 @@ class AdminServiceImplUpdateClientTest {
         ClientRegistrationRequest request = new ClientRegistrationRequest();
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.findById(id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -253,7 +253,7 @@ class AdminServiceImplUpdateClientTest {
         ClientRegistrationRequest request = new ClientRegistrationRequest();
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.of(existing));
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
@@ -298,7 +298,7 @@ class AdminServiceImplUpdateClientTest {
         ClientRegistrationRequest request = new ClientRegistrationRequest();
 
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.findById(id)).thenReturn(Optional.of(existing));
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -315,7 +315,6 @@ class AdminServiceImplUpdateClientTest {
     @Test
     @DisplayName("registerClient: 저장되는 Client의 id가 User와 동일(users FK 정합)")
     void registerClient_savedClientIdMatchesUserId() {
-        String tenantId = "tenant-ut-1";
         long assignedUserId = 94_001L;
 
         ClientRegistrationRequest request = new ClientRegistrationRequest();
@@ -329,8 +328,8 @@ class AdminServiceImplUpdateClientTest {
         when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
                 .thenReturn(Collections.emptyMap());
         doNothing().when(clientStatsService).evictAllClientStatsCache();
-        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(assignedUserId);
             return u;
@@ -339,9 +338,9 @@ class AdminServiceImplUpdateClientTest {
         Client result = adminService.registerClient(request);
 
         ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
-        verify(clientRepository).save(captor.capture());
+        verify(clientRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getId()).isEqualTo(assignedUserId);
         assertThat(result.getId()).isEqualTo(assignedUserId);
-        verify(userRepository).flush();
+        verify(userRepository).saveAndFlush(any(User.class));
     }
 }

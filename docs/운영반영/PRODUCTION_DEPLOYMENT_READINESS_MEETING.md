@@ -3,6 +3,7 @@
 **문서 유형**: 기획(플래너) 주관 — 운영 배포 준비 회의 산출물  
 **작성일**: 2025-03-17  
 **개정**: 2026-02-12 — Go-Live 종합 체크리스트 신설 및 전 에이전트 합의 반영  
+**추가 개정**: 2026-03-30 — 운영반영 오케스트레이션 회의안 링크 추가  
 **상태**: 준비 회의용 (실제 배포 실행 없음)  
 **참조**: `../standards/DEPLOYMENT_STANDARD.md`, `../guides/deployment/DEPLOYMENT_CHECKLIST.md`, `../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`, `../../.cursor/skills/core-solution-deployment/SKILL.md`
 
@@ -139,6 +140,12 @@
 
 - **제안 저장 위치**: `docs/운영반영/PRODUCTION_DEPLOYMENT_READINESS_MEETING.md`  
 - **이유**: 기획(planning) 산출물이며, 실제 배포 실행이 아닌 “준비 회의” 결론이므로 `docs/운영반영/` 에 두고, 배포 실행 시에는 **`PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`**, `../standards/DEPLOYMENT_STANDARD.md`, `../guides/deployment/DEPLOYMENT_CHECKLIST.md` 를 함께 참조하는 구조를 유지한다.
+
+## 8. 최신 오케스트레이션 회의안
+
+- `docs/운영반영/GO_LIVE_ORCHESTRATION_MEETING_20260330.md`
+- 목적: core-planner 주관 운영 반영 회의를 타임박스(90분), Phase 0~8, shell 런북, 테스트 게이트, RACI 서명표 기준으로 즉시 실행 가능하도록 표준화
+- 주의: 실제 프로세스 종료/재기동은 승인·백업·롤백 준비 완료 후 수행
 
 ---
 

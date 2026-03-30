@@ -43,7 +43,7 @@ public class SchedulerExecutionLog {
     @Column(name = "execution_id", nullable = false, length = 50)
     private String executionId;
     
-    @Column(name = "tenant_id", length = 64)
+    @Column(name = "tenant_id", length = 100)
     private String tenantId;
     
     @Column(name = "scheduler_name", nullable = false, length = 100)

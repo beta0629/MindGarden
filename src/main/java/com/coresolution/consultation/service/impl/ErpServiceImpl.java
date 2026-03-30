@@ -1861,6 +1861,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         monthlyStats.put("averageDailyExpense", 
             daysInMonth > 0 ? totalMonthlyExpenses.divide(BigDecimal.valueOf(daysInMonth), 0, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         monthlyReport.put("monthlyStats", monthlyStats);
+
+        // 일간 리포트와 동일 키: IntegratedFinanceDashboard 월간 탭이 transactionCount 를 사용함
+        Map<String, Object> transactionCount = new HashMap<>();
+        transactionCount.put("consultations", (int) totalConsultations);
+        transactionCount.put("purchases", (int) totalPurchases);
+        transactionCount.put("payments", (int) totalPayments);
+        monthlyReport.put("transactionCount", transactionCount);
         
         return monthlyReport;
     }

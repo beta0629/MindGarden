@@ -177,9 +177,12 @@ server:
   port: ${SERVER_PORT:8080}
   # ⚠️ 포트 충돌 방지: Graceful shutdown 설정
   shutdown: graceful  # Graceful shutdown 활성화 (자동 재시작 시 포트 충돌 방지)
-  # base64 프로필 사진 등 대용량 JSON body 수용 (기본 2MB 초과 시 400 방지)
+  # 대용량 POST 본문 수용 (기본 2MB 초과 시 400 방지)
+  # Spring Boot 3.2+: max-http-post-size 폐기 → max-http-form-post-size 사용.
+  # 구현상 Connector#setMaxPostSize에 연결되며(JSON 포함) 전체 POST 바이트 한도로 동작함.
   tomcat:
-    max-http-post-size: 10MB
+    max-http-form-post-size: 10MB
+    max-swallow-size: 10MB
   servlet:
     context-path: /
     encoding:

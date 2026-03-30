@@ -1,6 +1,10 @@
 # Core Solution 운영 환경 설정
-# 서버: beta74.cafe24.com (211.37.179.204)
-# 도메인: https://m-garden.co.kr
+# 서버 예시: beta74.cafe24.com
+# 도메인 단일 진실: dev(application-dev.yml) 공개 FQDN에서 `.dev`만 제거한 HTTPS URL과 일치
+#   예) server.base-url dev 기본값 https://mindgarden.dev.core-solution.co.kr
+#       → 운영 OAUTH2_BASE_URL/프론트 기본 예시 https://mindgarden.core-solution.co.kr
+# Nginx 실제 server_name: config/nginx/core-solution-prod.conf (테넌트 *.core-solution.co.kr 등)와 systemd/env 정합
+# 레거시: 과거 문서·인스턴스의 m-garden.co.kr — 신규 합의 도메인으로 통일
 #
 # 운영 필수 환경 변수 (미설정 시 기동 실패):
 #   - DB_PASSWORD, JWT_SECRET, PERSONAL_DATA_ENCRYPTION_KEY, PERSONAL_DATA_ENCRYPTION_IV
@@ -49,7 +53,7 @@ spring:
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:mindgarden1013@gmail.com}
+    username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
     properties:
       mail:
@@ -70,17 +74,17 @@ spring:
       client:
         registration:
           kakao:
-            client-id: ${KAKAO_CLIENT_ID:cbb457cfb5f9351fd495be4af2b11a34}
-            client-secret: ${KAKAO_CLIENT_SECRET:LH53SXuqZk7iEVeDkKfQuKxW0sdxYmEG}
-            redirect-uri: "${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/kakao/callback"
+            client-id: ${KAKAO_CLIENT_ID:}
+            client-secret: ${KAKAO_CLIENT_SECRET:}
+            redirect-uri: "${OAUTH2_BASE_URL:https://mindgarden.core-solution.co.kr}/api/auth/kakao/callback"
             client-authentication-method: post
             authorization-grant-type: authorization_code
             scope: profile_nickname,account_email
             client-name: Kakao
           naver:
-            client-id: ${NAVER_CLIENT_ID:vTKNlxYKIfo1uCCXaDfk}
-            client-secret: ${NAVER_CLIENT_SECRET:V_b3omW5pu}
-            redirect-uri: "${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/naver/callback"
+            client-id: ${NAVER_CLIENT_ID:}
+            client-secret: ${NAVER_CLIENT_SECRET:}
+            redirect-uri: "${OAUTH2_BASE_URL:https://mindgarden.core-solution.co.kr}/api/auth/naver/callback"
             client-authentication-method: post
             authorization-grant-type: authorization_code
             scope: name,email
@@ -111,7 +115,7 @@ server:
         secure: true  # HTTPS 환경에서는 true로 설정
         same-site: none  # 크로스 사이트 요청을 위해 none으로 설정
         max-age: 3600  # 1시간
-        domain: m-garden.co.kr
+        domain: ${SESSION_COOKIE_DOMAIN:core-solution.co.kr}
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
@@ -170,7 +174,7 @@ sms:
 # 프론트엔드 운영 설정
 app:
   frontend:
-    base-url: https://m-garden.co.kr
+    base-url: ${FRONTEND_BASE_URL:https://mindgarden.core-solution.co.kr}
   password-reset:
     token-expiry-hours: 24
 

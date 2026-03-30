@@ -2,6 +2,7 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,9 @@ public class HomeController {
     
     @Autowired
     private UserService userService;
+
+    @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
+    private String frontendBaseUrl;
     
     /**
      * 홈페이지 메인
@@ -29,7 +33,7 @@ public class HomeController {
         model.addAttribute("description", "전문적인 상담 관리와 내담자 관리를 위한 통합 시스템");
         model.addAttribute("keywords", "상담관리, 내담자관리, 상담사, 심리상담, 통합시스템");
         model.addAttribute("bodyClass", "homepage");
-        model.addAttribute("currentUrl", "http://m-garden.co.kr");
+        model.addAttribute("currentUrl", frontendBaseUrl);
         model.addAttribute("isTablet", false); // 기본값은 데스크톱
         
         // 브레드크럼 설정
@@ -69,7 +73,7 @@ public class HomeController {
         model.addAttribute("description", "전문적인 상담 관리와 내담자 관리를 위한 통합 시스템");
         model.addAttribute("keywords", "상담관리, 내담자관리, 상담사, 심리상담, 통합시스템");
         model.addAttribute("bodyClass", "homepage");
-        model.addAttribute("currentUrl", "http://m-garden.co.kr");
+        model.addAttribute("currentUrl", frontendBaseUrl);
         model.addAttribute("isTablet", false);
         
         // 통계 데이터 설정

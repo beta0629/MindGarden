@@ -255,7 +255,9 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       });
     }
 
-    const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname === 'm-garden.co.kr';
+    const hostname = globalThis?.window?.location?.hostname || '';
+    const isServiceDomain = /(^|\.)(dev\.)?(core-solution|e-trinity)\.co\.kr$/.test(hostname);
+    const isProduction = process.env.NODE_ENV === 'production' || isServiceDomain;
     
     if (isProduction) {
       if (status.hasRecentActivity) {

@@ -539,13 +539,11 @@ public class TenantContextFilter implements Filter {
 
         // 개발 환경: *.dev.core-solution.co.kr
         // 운영 환경: *.core-solution.co.kr
-        // 기존: *.m-garden.co.kr
+        // 지원 도메인: core-solution.co.kr 계열
 
         // 패턴 매칭
         String[] patterns = {"\\.dev\\.core-solution\\.co\\.kr$", // *.dev.core-solution.co.kr
-                "\\.core-solution\\.co\\.kr$", // *.core-solution.co.kr
-                "\\.dev\\.m-garden\\.co\\.kr$", // *.dev.m-garden.co.kr (기존)
-                "\\.m-garden\\.co\\.kr$" // *.m-garden.co.kr (기존)
+                "\\.core-solution\\.co\\.kr$" // *.core-solution.co.kr
         };
 
         for (String pattern : patterns) {

@@ -8,9 +8,7 @@
 /** 테넌트 도메인 접미사 목록 */
 export const SUBDOMAIN_SUFFIXES = [
   '.dev.core-solution.co.kr',
-  '.core-solution.co.kr',
-  '.dev.m-garden.co.kr',
-  '.m-garden.co.kr'
+  '.core-solution.co.kr'
 ];
 
 /** 기본 서브도메인(테넌트로 간주하지 않음) */

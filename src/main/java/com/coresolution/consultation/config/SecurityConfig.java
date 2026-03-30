@@ -260,11 +260,7 @@ public class SecurityConfig {
                 "https://apply.e-trinity.co.kr", 
                 "http://apply.e-trinity.co.kr",
                 "https://ops.e-trinity.co.kr", 
-                "http://ops.e-trinity.co.kr",
-                "https://*.m-garden.co.kr",
-                "http://*.m-garden.co.kr",
-                "https://m-garden.co.kr",
-                "http://m-garden.co.kr"
+                "http://ops.e-trinity.co.kr"
             ));
         } else if (isDev) {
             log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
@@ -281,10 +277,6 @@ public class SecurityConfig {
                 "http://apply.dev.e-trinity.co.kr",
                 "https://ops.dev.e-trinity.co.kr",
                 "http://ops.dev.e-trinity.co.kr",
-                "https://*.dev.m-garden.co.kr",
-                "http://*.dev.m-garden.co.kr",
-                "https://dev.m-garden.co.kr",
-                "http://dev.m-garden.co.kr",
                 "http://localhost:3000", 
                 "http://localhost:3001",
                 "http://localhost:4300"  // Ops Portal 프론트엔드

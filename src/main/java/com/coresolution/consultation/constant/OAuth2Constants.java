@@ -10,7 +10,7 @@ package com.coresolution.consultation.constant;
 public class OAuth2Constants {
     
     // 프론트엔드 기본 URL (환경별 동적 설정)
-    public static final String FRONTEND_BASE_URL = System.getProperty("frontend.base-url", "http://m-garden.co.kr");
+    public static final String FRONTEND_BASE_URL = resolveFrontendBaseUrl();
     
     // 역할별 대시보드 경로
     public static final String CLIENT_DASHBOARD_PATH = "/client/dashboard";
@@ -45,5 +45,19 @@ public class OAuth2Constants {
     
     private OAuth2Constants() {
         // 유틸리티 클래스이므로 인스턴스화 방지
+    }
+
+    private static String resolveFrontendBaseUrl() {
+        String systemPropertyUrl = System.getProperty("frontend.base-url");
+        if (systemPropertyUrl != null && !systemPropertyUrl.isBlank()) {
+            return systemPropertyUrl;
+        }
+
+        String envFrontendUrl = System.getenv("FRONTEND_BASE_URL");
+        if (envFrontendUrl != null && !envFrontendUrl.isBlank()) {
+            return envFrontendUrl;
+        }
+
+        return "http://localhost:3000";
     }
 }

@@ -27,7 +27,7 @@ public class KakaoOAuth2Config {
     @Value("${spring.security.oauth2.client.registration.kakao.client-secret:dummy}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${OAUTH2_BASE_URL:https://m-garden.co.kr}/login/oauth2/code/kakao}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${OAUTH2_BASE_URL:https://mindgarden.core-solution.co.kr}/login/oauth2/code/kakao}")
     private String redirectUri;
 
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,profile_image,account_email}")

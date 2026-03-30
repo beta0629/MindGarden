@@ -1,0 +1,48 @@
+# MindGarden systemd EnvironmentFile= 예시
+# 복사: sudo cp mindgarden.prod-env.example /etc/mindgarden/mindgarden.env && sudo chmod 600 ...
+# 서비스: EnvironmentFile=-/etc/mindgarden/mindgarden.env
+#
+# 도메인: application-dev.yml 공개 URL에서 `.dev`만 제거 → HTTPS (예 mindgarden.core-solution.co.kr)
+# 실제 host는 Nginx(config/nginx/core-solution-prod.conf)와 Kakao/Naver redirect와 일치시킬 것.
+# 저장소에는 실비밀·실키를 넣지 말고 값은 비우거나 배포 호스트에서만 채움.
+
+OAUTH2_BASE_URL=
+FRONTEND_BASE_URL=
+SERVER_BASE_URL=
+SESSION_COOKIE_DOMAIN=
+
+DB_USERNAME=
+DB_PASSWORD=
+
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+NAVER_CLIENT_ID=
+NAVER_CLIENT_SECRET=
+
+JWT_SECRET=
+PERSONAL_DATA_ENCRYPTION_KEY=
+PERSONAL_DATA_ENCRYPTION_IV=
+PSYCH_DOC_KEY_B64=
+
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USERNAME=
+SMTP_PASSWORD=
+
+PAYMENT_TOSS_SECRET_KEY=
+PAYMENT_IAMPORT_API_KEY=
+PAYMENT_IAMPORT_API_SECRET=
+
+KAKAO_ALIMTALK_API_KEY=
+KAKAO_ALIMTALK_SENDER_KEY=
+
+SMS_API_KEY=
+SMS_API_SECRET=
+SMS_SENDER_NUMBER=
+
+SERVER_PORT=
+SPRING_PROFILES_ACTIVE=
+
+SSL_KEYSTORE_PATH=
+SSL_KEYSTORE_PASSWORD=
+SSL_KEY_ALIAS=

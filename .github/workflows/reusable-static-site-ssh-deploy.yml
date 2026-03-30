@@ -1,0 +1,187 @@
+# 정적 사이트 SSH/SCP 배포 공통 단계 (Trinity·Ops 등)
+# 호출: workflow_call + secrets(ssh_host, ssh_user, ssh_key) 매핑
+
+on:
+  workflow_call:
+    secrets:
+      ssh_host:
+        description: "배포 대상 SSH 호스트"
+        required: true
+      ssh_user:
+        description: "SSH 사용자"
+        required: true
+      ssh_key:
+        description: "SSH 개인 키"
+        required: true
+    inputs:
+      site_label:
+        description: "로그·메시지용 사이트 라벨"
+        required: true
+        type: string
+      remote_html_dir:
+        description: "/var/www 아래 HTML 디렉터리명 (예 html-trinity)"
+        required: true
+        type: string
+      backup_subdir:
+        description: "/var/www/backups 아래 백업 하위 디렉터리명"
+        required: true
+        type: string
+      backup_tar_prefix:
+        description: "백업 tar 접두사 (예 html-trinity-backup)"
+        required: true
+        type: string
+      scp_source:
+        description: "워크스페이스 기준 SCP source glob (빌드 job에서 내려받은 산출물 경로)"
+        required: true
+        type: string
+      strip_components:
+        description: "appleboy/scp-action strip_components (워크스페이스 glob이 frontend-*/out/* 이면 2, 평탄 아티팩트는 1)"
+        required: false
+        default: 2
+        type: number
+      artifact_name:
+        description: "download-artifact 이름 (build job upload 와 동일)"
+        required: true
+        type: string
+      health_urls:
+        description: "헬스체크 URL 목록 (줄바꿈 구분, 빈 줄 무시)"
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: 📤 ${{ inputs.site_label }} 정적 배포 (SSH)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 빌드 아티팩트 다운로드
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: _static_site_upload
+
+      - name: 🔍 SSH 연결 테스트
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.ssh_host }}
+          username: ${{ secrets.ssh_user }}
+          key: ${{ secrets.ssh_key }}
+          port: 22
+          timeout: 30s
+          script: |
+            echo "SSH 연결 테스트 성공: $(date)"
+            echo "서버 정보: $(uname -a)"
+
+      - name: 💾 배포 전 기존 파일 백업
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.ssh_host }}
+          username: ${{ secrets.ssh_user }}
+          key: ${{ secrets.ssh_key }}
+          port: 22
+          timeout: 60s
+          script: |
+            sudo mkdir -p /var/www/backups/${{ inputs.backup_subdir }}
+
+            if [ -d /var/www/${{ inputs.remote_html_dir }} ] && [ "$(ls -A /var/www/${{ inputs.remote_html_dir }} 2>/dev/null)" ]; then
+              BACKUP_NAME="${{ inputs.backup_tar_prefix }}-$(date +%Y%m%d_%H%M%S).tar.gz"
+              echo "💾 기존 파일 백업 중: $BACKUP_NAME"
+              sudo tar -czf /var/www/backups/${{ inputs.backup_subdir }}/$BACKUP_NAME -C /var/www ${{ inputs.remote_html_dir }}
+              echo "✅ 백업 완료: $BACKUP_NAME"
+              ls -lh /var/www/backups/${{ inputs.backup_subdir }}/$BACKUP_NAME
+            else
+              echo "ℹ️ 백업할 기존 파일 없음 (신규 배포)"
+            fi
+
+            BACKUP_RETENTION_COUNT=5
+            BACKUP_DIR="/var/www/backups/${{ inputs.backup_subdir }}"
+            ls -1t "$BACKUP_DIR"/${{ inputs.backup_tar_prefix }}-*.tar.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | xargs -r sudo rm -f
+
+      - name: 📤 정적 파일 업로드 SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ssh_host }}
+          username: ${{ secrets.ssh_user }}
+          key: ${{ secrets.ssh_key }}
+          port: 22
+          timeout: 120s
+          source: ${{ inputs.scp_source }}
+          target: "/var/www/${{ inputs.remote_html_dir }}/"
+          strip_components: ${{ inputs.strip_components }}
+          overwrite: true
+
+      - name: 🔄 배포 완료 및 검증
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.ssh_host }}
+          username: ${{ secrets.ssh_user }}
+          key: ${{ secrets.ssh_key }}
+          port: 22
+          timeout: 60s
+          script: |
+            sudo mkdir -p /var/www/${{ inputs.remote_html_dir }}
+            sudo chown -R www-data:www-data /var/www/${{ inputs.remote_html_dir }}
+            sudo chmod -R 755 /var/www/${{ inputs.remote_html_dir }}
+
+            echo "🔍 배포된 파일 확인..."
+            if [ -d /var/www/${{ inputs.remote_html_dir }} ]; then
+              FILE_COUNT=$(find /var/www/${{ inputs.remote_html_dir }} -type f 2>/dev/null | wc -l)
+              if [ "$FILE_COUNT" -gt 0 ]; then
+                echo "✅ 배포 완료: $FILE_COUNT 개 파일"
+                ls -lh /var/www/${{ inputs.remote_html_dir }}/ | head -10
+                if [ -f /var/www/${{ inputs.remote_html_dir }}/index.html ]; then
+                  echo "✅ index.html 확인됨"
+                  echo "파일 크기: $(stat -c%s /var/www/${{ inputs.remote_html_dir }}/index.html) bytes"
+                else
+                  echo "⚠️ index.html 없음!"
+                  exit 1
+                fi
+              else
+                echo "❌ 배포된 파일 없음!"
+                exit 1
+              fi
+            else
+              echo "❌ 배포 디렉토리 없음!"
+              exit 1
+            fi
+
+            echo "✅ ${{ inputs.site_label }} 정적 배포 완료"
+
+      - name: 🏥 배포 후 헬스체크
+        env:
+          HEALTH_URLS_ECHO: ${{ inputs.health_urls }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.ssh_host }}
+          username: ${{ secrets.ssh_user }}
+          key: ${{ secrets.ssh_key }}
+          port: 22
+          timeout: 30s
+          envs: HEALTH_URLS_ECHO
+          script: |
+            echo "🏥 헬스체크 시작..."
+            sleep 3
+
+            if sudo nginx -t 2>/dev/null; then
+              echo "✅ Nginx 설정 정상"
+            else
+              echo "⚠️ Nginx 설정 오류 (계속 진행)"
+            fi
+
+            while IFS= read -r url || [ -n "$url" ]; do
+              url_trimmed=$(echo "$url" | xargs)
+              [ -z "$url_trimmed" ] && continue
+              for i in 1 2 3; do
+                if curl -f -s -o /dev/null -w "%{http_code}" "$url_trimmed" | grep -qE "200|301|302"; then
+                  echo "✅ 웹사이트 접근 성공: $url_trimmed (시도 $i)"
+                  curl -s -I "$url_trimmed" | head -5
+                  exit 0
+                fi
+                echo "⏳ 헬스체크 대기 중... (시도 $i/3)"
+                sleep 5
+              done
+            done <<< "$HEALTH_URLS_ECHO"
+
+            echo "⚠️ 헬스체크 실패 - 수동 확인 필요"
+            echo "확인 URL 목록:"
+            echo "$HEALTH_URLS_ECHO"
+            exit 0

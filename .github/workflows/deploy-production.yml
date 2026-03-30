@@ -157,9 +157,9 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 120s
-        # target은 원격 디렉터리여야 함(파일 경로 지정 시 mkdir 실패로 scp 오류 발생)
+        # 앱 배포 디렉터리에 두어 배포 계정이 쓰기 가능(/tmp 는 기존 루트 소유 파일과 충돌 가능)
         source: "config/nginx/core-solution-prod.conf"
-        target: "/tmp/"
+        target: "/var/www/mindgarden/"
         strip_components: 2
         overwrite: true
         
@@ -310,9 +310,9 @@ jobs:
           fi
           
           # Nginx 설정 업데이트 (통합 설정 파일)
-          if [ -f /tmp/core-solution-prod.conf ]; then
+          if [ -f /var/www/mindgarden/core-solution-prod.conf ]; then
             echo "🌐 Nginx 통합 설정 업데이트 중..."
-            sudo cp /tmp/core-solution-prod.conf /etc/nginx/sites-available/core-solution
+            sudo cp /var/www/mindgarden/core-solution-prod.conf /etc/nginx/sites-available/core-solution
             sudo ln -sf /etc/nginx/sites-available/core-solution /etc/nginx/sites-enabled/core-solution
             echo "✅ 통합 설정 파일 적용 완료"
             

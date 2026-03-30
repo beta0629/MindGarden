@@ -38,47 +38,78 @@ CREATE TABLE IF NOT EXISTS common_codes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='공통 코드';
 
--- 1. common_codes 테이블에 tenant_id 컬럼 추가 (NULL 허용)
-ALTER TABLE common_codes 
-ADD COLUMN tenant_id VARCHAR(36) NULL 
-AFTER id;
+SET @dbname = DATABASE();
+
+-- 1. common_codes.tenant_id (재실행·부분 적용 시 중복 컬럼 방지)
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'common_codes' AND COLUMN_NAME = 'tenant_id') > 0,
+    'SELECT 1',
+    'ALTER TABLE common_codes ADD COLUMN tenant_id VARCHAR(36) NULL AFTER id'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 1-1. korean_name 컬럼을 필수로 변경 (한국 사용 필수)
--- 기존 데이터에 한글명이 없으면 code_label을 한글명으로 사용
-UPDATE common_codes 
-SET korean_name = code_label 
+UPDATE common_codes
+SET korean_name = code_label
 WHERE korean_name IS NULL OR korean_name = '';
 
-ALTER TABLE common_codes 
+ALTER TABLE common_codes
 MODIFY COLUMN korean_name VARCHAR(100) NOT NULL;
 
--- 2. code_group_metadata 테이블에 code_type 컬럼 추가
-ALTER TABLE code_group_metadata
-ADD COLUMN code_type VARCHAR(20) NULL
-AFTER group_name;
+-- 2. code_group_metadata.code_type (재실행 시 중복 컬럼 방지)
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'code_group_metadata' AND COLUMN_NAME = 'code_type') > 0,
+    'SELECT 1',
+    'ALTER TABLE code_group_metadata ADD COLUMN code_type VARCHAR(20) NULL AFTER group_name'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- 3. 인덱스 추가
-CREATE INDEX idx_common_code_tenant ON common_codes(tenant_id);
-CREATE UNIQUE INDEX uk_tenant_code_group_value 
-ON common_codes(tenant_id, code_group, code_value);
+-- 3. 인덱스 (이미 있으면 스킵)
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'common_codes' AND INDEX_NAME = 'idx_common_code_tenant') > 0,
+    'SELECT 1',
+    'CREATE INDEX idx_common_code_tenant ON common_codes(tenant_id)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'common_codes' AND INDEX_NAME = 'uk_tenant_code_group_value') > 0,
+    'SELECT 1',
+    'CREATE UNIQUE INDEX uk_tenant_code_group_value ON common_codes(tenant_id, code_group, code_value)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 4. CODE_GROUP_TYPE 공통코드 그룹 생성 (코어솔루션 코드)
 -- 이 코드 그룹은 시스템 최소 코드로, tenant_id = NULL로 설정
 INSERT INTO common_codes (
-    code_group, 
-    code_value, 
-    code_label, 
-    code_description, 
-    sort_order, 
-    is_active, 
+    code_group,
+    code_value,
+    code_label,
+    korean_name,
+    code_description,
+    sort_order,
+    is_active,
     tenant_id,
     created_at,
     updated_at
-) VALUES 
-('CODE_GROUP_TYPE', 'CORE', '코어솔루션 코드', '시스템 전역에서 사용하는 코어솔루션 코드 그룹', 1, true, NULL, NOW(), NOW()),
-('CODE_GROUP_TYPE', 'TENANT', '테넌트별 코드', '각 테넌트가 자체적으로 관리하는 코드 그룹', 2, true, NULL, NOW(), NOW())
-ON DUPLICATE KEY UPDATE 
+) VALUES
+('CODE_GROUP_TYPE', 'CORE', '코어솔루션 코드', '코어솔루션 코드', '시스템 전역에서 사용하는 코어솔루션 코드 그룹', 1, true, NULL, NOW(), NOW()),
+('CODE_GROUP_TYPE', 'TENANT', '테넌트별 코드', '테넌트별 코드', '각 테넌트가 자체적으로 관리하는 코드 그룹', 2, true, NULL, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
     code_label = VALUES(code_label),
+    korean_name = VALUES(korean_name),
     code_description = VALUES(code_description),
     updated_at = NOW();
 

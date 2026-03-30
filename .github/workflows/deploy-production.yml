@@ -198,9 +198,9 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "sql/mapping_update_procedures_mysql.sql"
+        source: "database/schema/mapping_update_procedures_mysql.sql"
         target: "/tmp/"
-        strip_components: 1
+        strip_components: 2
         overwrite: true
         
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리

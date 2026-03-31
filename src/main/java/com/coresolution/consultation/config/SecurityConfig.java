@@ -92,7 +92,11 @@ public class SecurityConfig {
                     .ignoringRequestMatchers(
                         "/api/auth/**",                              // 인증 관련 API는 CSRF 제외
                         "/api/admin/mappings/**",                     // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
-                        "/api/erp/finance/transactions/**"           // 재무 거래 DELETE는 CSRF 제외 (권한 체크는 별도로 수행)
+                        "/api/erp/finance/transactions/**",          // 재무 거래 DELETE는 CSRF 제외 (권한 체크는 별도로 수행)
+                        // Trinity/공개 온보딩: 로그인 전·세션 없이 호출 → CSRF 토큰 없음. permitAll 과 쌍으로 제외하지 않으면 403(접근 권한) 발생.
+                        "/api/v1/accounts/integration/**",           // 이메일 인증 코드 발송/검증 등
+                        "/api/v1/onboarding/**",
+                        "/api/v1/ops/onboarding/**"
                     )
                 )
                 

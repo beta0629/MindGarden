@@ -55,7 +55,8 @@ spring:
     enabled: ${SPRING_FLYWAY_ENABLED:true}
     locations: classpath:db/migration
     baseline-on-migrate: true
-    validate-on-migrate: true
+    # 비상 시 systemd Environment 로 SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false 가능, 기본은 true.
+    validate-on-migrate: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE:true}
     clean-disabled: true
     out-of-order: false
 

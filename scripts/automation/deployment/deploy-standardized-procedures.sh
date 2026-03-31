@@ -8,16 +8,19 @@ set -e
 ENV="${1:-dev}"
 PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
+# dev/prod 공통: docs/standards DEPLOYMENT_STANDARD 개발 서버 예시와 동일한 폴백 비밀번호.
+# prod에서 PROD_DB_PASSWORD(또는 워크플로의 DEV_DB_PASSWORD 주입)가 비어 있으면 개발과 동일 기본값 사용.
+DEFAULT_DEV_DB_PASSWORD='MindGardenDev2025!@#'
+
 # 환경별 설정
-# prod: SSH 점프는 운영(PROD_SERVER_*, 기본 beta74). MySQL 대상은 워크플로가 DEV_DB_*와 동일 값을 PROD_DB_*로 주입하는 전제(로컬 기본은 개발 DB와 동일 호스트·계정).
+# prod: SSH 점프는 운영(PROD_SERVER_*, 기본 beta74). MySQL 대상은 개발 DB와 동일 호스트·계정·비밀번호 폴백을 쓰는 전제 가능.
 # deploy-procedures-prod-safe.sh(운영 DB 직접)와 경로가 다름 — 운영 DB에 직접 넣을 때는 해당 스크립트를 사용.
-# prod DB 비민번호는 환경 변수(PROD_DB_PASSWORD) 필수 — 평문 기본값 없음.
 if [ "$ENV" = "prod" ]; then
     SERVER="${PROD_SERVER_HOST:-beta74.cafe24.com}"
     SERVER_USER="${PROD_SERVER_USER:-root}"
     DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
     DB_USER="${PROD_DB_USER:-mindgarden_dev}"
-    DB_PASS="${PROD_DB_PASSWORD:-}"
+    DB_PASS="${PROD_DB_PASSWORD:-${DEFAULT_DEV_DB_PASSWORD}}"
     DB_NAME="${PROD_DB_NAME:-core_solution}"
     echo "🚀 운영 환경 프로시저 배포 시작..."
 else
@@ -25,7 +28,7 @@ else
     SERVER_USER="${DEV_SERVER_USER:-root}"
     DB_HOST="${DEV_DB_HOST:-beta0629.cafe24.com}"
     DB_USER="${DEV_DB_USER:-mindgarden_dev}"
-    DB_PASS="${DEV_DB_PASSWORD:-MindGardenDev2025!@#}"
+    DB_PASS="${DEV_DB_PASSWORD:-${DEFAULT_DEV_DB_PASSWORD}}"
     DB_NAME="${DEV_DB_NAME:-core_solution}"
     echo "🚀 개발 환경 프로시저 배포 시작..."
 fi
@@ -35,9 +38,6 @@ echo "MySQL 대상: host=$DB_HOST user=$DB_USER database=$DB_NAME"
 
 if [ -z "$DB_PASS" ]; then
     echo "❌ 오류: DB 비밀번호가 설정되지 않았습니다."
-    if [ "$ENV" = "prod" ]; then
-        echo "   운영(prod): PROD_DB_PASSWORD 환경 변수를 설정하세요. 운영 분기에는 기본 비밀번호가 없습니다."
-    fi
     exit 1
 fi
 

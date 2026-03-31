@@ -1,4 +1,4 @@
-# 운영 배포 단일 진입점: Core → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저 순차 실행 후 각 실행을 gh run watch 로 감시한다.
+# 운영 배포 단일 진입점: Core → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저(개발 DB) → 표준 프로시저(운영 MySQL) 순차 실행, gh run watch 로 감시.
 # 온보딩 백엔드: 저장소에 deploy-onboarding-prod 가 없으므로 Core 운영 범위·수동 배포를 별도 확인한다.
 #
 # 필요 권한: GITHUB_TOKEN 에 actions: write (워크플로 디스패치)
@@ -30,7 +30,11 @@ on:
         type: boolean
         default: true
       run_procedures:
-        description: "표준화 프로시저 배포 (deploy-procedures-prod; SSH 개발 서버·DEV_DB — 실제 운영 MySQL은 deploy-procedures-production-mysql.yml 별도 수동)"
+        description: "표준화 프로시저 — 개발 DB (deploy-procedures-prod, SSH 개발 서버·DEV_DB)"
+        type: boolean
+        default: true
+      run_procedures_production_mysql:
+        description: "표준화 프로시저 — 운영 MySQL (deploy-procedures-production-mysql, confirm=CONFIRM 자동 전달)"
         type: boolean
         default: true
 
@@ -60,7 +64,7 @@ jobs:
           fi
 
       - name: 최소 한 단계 선택 확인
-        if: ${{ !inputs.run_core && !inputs.run_trinity && !inputs.run_ops_frontend && !inputs.run_ops_backend && !inputs.run_procedures }}
+        if: ${{ !inputs.run_core && !inputs.run_trinity && !inputs.run_ops_frontend && !inputs.run_ops_backend && !inputs.run_procedures && !inputs.run_procedures_production_mysql }}
         run: |
           echo "::error::run_* 입력 중 최소 하나는 true 여야 합니다."
           exit 1
@@ -129,6 +133,19 @@ jobs:
           sleep 10
           run_id="$(gh run list --repo "$REPO" --workflow=deploy-procedures-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
           echo "Watching procedures prod run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-status
+
+      - name: 📦 표준 프로시저 운영 MySQL (deploy-procedures-production-mysql)
+        if: inputs.run_procedures_production_mysql
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          gh workflow run deploy-procedures-production-mysql.yml --repo "$REPO" --ref main -f confirm=CONFIRM
+          sleep 10
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-procedures-production-mysql.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching production MySQL procedures run id=$run_id"
           gh run watch "$run_id" --repo "$REPO" --exit-status
 
       - name: ℹ️ 온보딩 운영 안내

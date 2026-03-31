@@ -540,7 +540,8 @@ public class OnboardingController extends BaseApiController {
 
         OnboardingRequest onboardingRequest = onboardingService.getById(id);
         Map<String, Object> statusMap = new java.util.HashMap<>();
-        
+        boolean fallbackUsed = false;
+
         if (onboardingRequest.getInitializationStatusJson() != null 
                 && !onboardingRequest.getInitializationStatusJson().trim().isEmpty()) {
             try {
@@ -549,11 +550,29 @@ public class OnboardingController extends BaseApiController {
                 statusMap = objectMapper.readValue(
                         onboardingRequest.getInitializationStatusJson(),
                         new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                Object fallbackValue = statusMap.get("fallbackUsed");
+                if (fallbackValue instanceof Boolean fallbackValueBoolean) {
+                    fallbackUsed = fallbackValueBoolean;
+                }
             } catch (Exception e) {
                 log.warn("처리 상태 JSON 파싱 실패: id={}, error={}", id, e.getMessage());
             }
         }
-        
+
+        statusMap.put("status",
+                onboardingRequest.getStatus() != null ? onboardingRequest.getStatus().name() : null);
+        statusMap.put("decisionAt", onboardingRequest.getDecisionAt());
+        statusMap.put("decidedBy", onboardingRequest.getDecidedBy());
+        statusMap.put("tenantId", onboardingRequest.getTenantId());
+        statusMap.putIfAbsent("createdAt",
+                onboardingRequest.getCreatedAt() != null ? onboardingRequest.getCreatedAt().toString()
+                        : null);
+        statusMap.put("updatedAt",
+                onboardingRequest.getUpdatedAt() != null ? onboardingRequest.getUpdatedAt().toString()
+                        : null);
+        statusMap.putIfAbsent("phase", "PROCESSING_STATUS_FALLBACK");
+        statusMap.put("fallbackUsed", fallbackUsed);
+
         return success(statusMap);
     }
 

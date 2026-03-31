@@ -415,13 +415,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                         self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
                                 request.getBusinessType(), actorId, requestId);
 
-                // 초기화 작업 상태는 initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션으로 저장됨
-                // 메인 트랜잭션의 request 객체는 detached 상태이므로 여기서 설정하지 않음
-                // 최종 저장 시 다시 조회한 엔티티에서 가져옴
-                if (initializationStatusJson != null
-                        && !initializationStatusJson.trim().isEmpty()) {
-                    log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
-                }
+                persistInitializationStatusAfterDecision(requestId, existingTenantId,
+                        initializationStatusJson, "REAPPROVAL_INITIALIZATION", false);
+                log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
 
                 // 브랜드명 설정
                 try {
@@ -432,6 +428,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             } catch (Exception e) {
                 log.error("이미 승인된 테넌트 초기화 작업 실패: tenantId={}, error={}", existingTenantId,
                         e.getMessage(), e);
+                persistInitializationStatusAfterDecision(requestId, existingTenantId, null,
+                        "REAPPROVAL_INITIALIZATION_ERROR", false);
             }
 
             log.info("온보딩 요청 결정 완료: id={}, status={}", saved.getId(), saved.getStatus());
@@ -744,6 +742,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 // 상태는 initializationStatusJson에 저장되므로 별도 업데이트 불필요
 
+                boolean fallbackUsed = isFallbackUsed(approvalResult, message);
                 try {
                     updateSubscriptionTenantId(request);
                 } catch (Exception e) {
@@ -760,13 +759,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                             self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
                                     request.getBusinessType(), actorId, requestId);
 
-                    // 초기화 작업 상태는 initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션으로 저장됨
-                    // 메인 트랜잭션의 request 객체는 detached 상태이므로 여기서 설정하지 않음
-                    // 최종 저장 시 다시 조회한 엔티티에서 가져옴
-                    if (initializationStatusJson != null
-                            && !initializationStatusJson.trim().isEmpty()) {
-                        log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
-                    }
+                    persistInitializationStatusAfterDecision(requestId, tenantId,
+                            initializationStatusJson, "POST_APPROVAL_INITIALIZATION",
+                            fallbackUsed);
+                    log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
                     // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
@@ -781,6 +777,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 } catch (Exception e) {
                     log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", tenantId,
                             e.getMessage(), e);
+                    persistInitializationStatusAfterDecision(requestId, tenantId, null,
+                            "POST_APPROVAL_INITIALIZATION_ERROR", fallbackUsed);
                 }
             }
         }
@@ -1389,6 +1387,11 @@ public class OnboardingServiceImpl implements OnboardingService {
         statusMap.put("roleCodes", createInitializationStatus("PENDING", null));
         statusMap.put("permissionGroups", createInitializationStatus("PENDING", null));
         statusMap.put("erpAccounts", createInitializationStatus("PENDING", null));
+        String now = Instant.now().toString();
+        statusMap.put("createdAt", now);
+        statusMap.put("updatedAt", now);
+        statusMap.put("phase", "TENANT_INITIALIZATION");
+        statusMap.put("fallbackUsed", false);
 
         // 1. 공통코드 삽입 (별도 트랜잭션)
         try {
@@ -1436,6 +1439,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 상태 JSON 생성 (메인 트랜잭션에서 저장하기 위해 반환)
         try {
+            statusMap.put("updatedAt", Instant.now().toString());
             String statusJson = objectMapper.writeValueAsString(statusMap);
             log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
             log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
@@ -1458,6 +1462,76 @@ public class OnboardingServiceImpl implements OnboardingService {
             statusObj.put("errorMessage", errorMessage);
         }
         return statusObj;
+    }
+
+    private boolean isFallbackUsed(Map<String, Object> approvalResult, String message) {
+        if (approvalResult != null
+                && approvalResult.get("fallbackUsed") instanceof Boolean fallbackValue) {
+            return fallbackValue;
+        }
+
+        if (message == null || message.trim().isEmpty()) {
+            return false;
+        }
+
+        String normalizedMessage = message.toLowerCase();
+        return normalizedMessage.contains("fallback") || normalizedMessage.contains("폴백");
+    }
+
+    private void persistInitializationStatusAfterDecision(java.util.UUID requestId, String tenantId,
+            String statusJson, String phase, boolean fallbackUsed) {
+        String normalizedStatusJson =
+                buildDecisionStatusJson(statusJson, phase, fallbackUsed, requestId, tenantId);
+        if (normalizedStatusJson == null || normalizedStatusJson.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                self.saveInitializationStatusInNewTransaction(requestId, tenantId, normalizedStatusJson);
+                return;
+            }
+
+            OnboardingRequest request = repository.findActiveById(requestId).orElse(null);
+            if (request != null) {
+                request.setInitializationStatusJson(normalizedStatusJson);
+                repository.save(request);
+            }
+        } catch (Exception e) {
+            log.warn("결정 후 초기화 상태 저장 실패(무시): requestId={}, tenantId={}, error={}", requestId,
+                    tenantId, e.getMessage());
+        }
+    }
+
+    private String buildDecisionStatusJson(String existingStatusJson, String phase, boolean fallbackUsed,
+            java.util.UUID requestId, String tenantId) {
+        Map<String, Object> statusMap = new java.util.HashMap<>();
+        if (existingStatusJson != null && !existingStatusJson.trim().isEmpty()) {
+            try {
+                statusMap = objectMapper.readValue(existingStatusJson,
+                        new TypeReference<Map<String, Object>>() {});
+            } catch (Exception e) {
+                log.warn("기존 초기화 상태 JSON 파싱 실패, 최소 상태로 대체: requestId={}, error={}", requestId,
+                        e.getMessage());
+            }
+        }
+
+        String now = Instant.now().toString();
+        statusMap.putIfAbsent("createdAt", now);
+        statusMap.put("updatedAt", now);
+        statusMap.put("phase", phase);
+        statusMap.put("fallbackUsed", fallbackUsed);
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            statusMap.put("tenantId", tenantId);
+        }
+
+        try {
+            return objectMapper.writeValueAsString(statusMap);
+        } catch (Exception e) {
+            log.warn("초기화 상태 JSON 직렬화 실패: requestId={}, error={}", requestId, e.getMessage());
+            return null;
+        }
     }
 
     /**

@@ -104,21 +104,29 @@ COMMENT='구독 결제 내역 테이블';
 -- 3. tenant_subscriptions 테이블 상태 확장 (기존 테이블이 있으면 ALTER)
 -- DRAFT, PENDING_ACTIVATION, TERMINATED 상태 추가
 
--- MySQL 버전에 따라 CHECK 제약조건 삭제 방법이 다름
--- MySQL 8.0.16 이상: DROP CHECK 사용
--- 그 이전 버전: 제약조건 이름을 찾아서 삭제
-
 -- 먼저 컬럼 크기와 기본값 변경
 ALTER TABLE tenant_subscriptions 
 MODIFY COLUMN status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' 
 COMMENT '상태: DRAFT, PENDING_ACTIVATION, INACTIVE, ACTIVE, SUSPENDED, CANCELLED, TERMINATED';
 
--- 기존 제약조건 삭제 (MySQL 8.0.16 이상)
-SET @sql = IF(
-    (SELECT VERSION() >= '8.0.16'),
-    'ALTER TABLE tenant_subscriptions DROP CHECK IF EXISTS chk_subscription_status',
-    'SELECT "MySQL version < 8.0.16, skipping DROP CHECK" AS message'
+-- 운영 복구 시에는 flyway_schema_history의 실패한 V24 행 삭제 후 재기동으로 재적용
+-- 기존 제약조건 존재 시에만 DROP (MySQL 8 + Flyway 재실행 안전)
+SET @constraint_exists = (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tenant_subscriptions'
+      AND CONSTRAINT_NAME = 'chk_subscription_status'
+      AND CONSTRAINT_TYPE = 'CHECK'
 );
+
+SET @drop_constraint = IF(
+    @constraint_exists > 0,
+    'ALTER TABLE tenant_subscriptions DROP CHECK chk_subscription_status',
+    'SELECT 1'
+);
+
+SET @sql = @drop_constraint;
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

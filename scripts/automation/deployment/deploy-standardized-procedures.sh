@@ -13,11 +13,12 @@ PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 DEFAULT_DEV_DB_PASSWORD='MindGardenDev2025!@#'
 
 # 환경별 설정
-# prod: SSH 점프는 운영(PROD_SERVER_*, 기본 beta74). MySQL 대상은 개발 DB와 동일 호스트·계정·비밀번호 폴백을 쓰는 전제 가능.
-# deploy-procedures-prod-safe.sh(운영 DB 직접)와 경로가 다름 — 운영 DB에 직접 넣을 때는 해당 스크립트를 사용.
+# prod: MySQL이 개발 DB(beta0629 등)일 때 운영 서버에서 3306으로 붙으면 방화벽(2003)으로 실패하는 경우가 많음.
+# → PROD_SSH_JUMP_HOST(워크플로에서 DEV_SERVER_HOST 주입)가 있으면 SCP·SSH는 그 호스트로 한다. 없으면 PROD_SERVER_* (운영 점프).
+# deploy-procedures-prod-safe.sh(운영 DB 직접)와 경로가 다름.
 if [ "$ENV" = "prod" ]; then
-    SERVER="${PROD_SERVER_HOST:-beta74.cafe24.com}"
-    SERVER_USER="${PROD_SERVER_USER:-root}"
+    SERVER="${PROD_SSH_JUMP_HOST:-${PROD_SERVER_HOST:-beta74.cafe24.com}}"
+    SERVER_USER="${PROD_SSH_JUMP_USER:-${PROD_SERVER_USER:-root}}"
     DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
     DB_USER="${PROD_DB_USER:-mindgarden_dev}"
     DB_PASS="${PROD_DB_PASSWORD:-${DEFAULT_DEV_DB_PASSWORD}}"

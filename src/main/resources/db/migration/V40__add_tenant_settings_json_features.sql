@@ -3,15 +3,14 @@
 -- 원본 파일: V40__add_tenant_settings_json_features.sql.backup
 -- 변환일: 1766801923.9424293
 -- ============================================
--- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- 주의: Flyway + MySQL 8 호환을 위해 DELIMITER 블록 사용
 -- ============================================
 
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
--- 프로시저 본문 (세미콜론 포함)
--- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
---       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
---       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
+DELIMITER $$
+
+-- 프로시저 본문
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64),
@@ -86,36 +85,30 @@ BEGIN
             
             -- 중복 체크
             SET v_counter = 0;
-            WHILE v_counter < 100 DO
+            activation_subdomain_loop: WHILE v_counter < 100 DO
                 SELECT COUNT(*) > 0 INTO v_exists
                 FROM tenants
                 WHERE JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain
                 AND is_deleted = FALSE
                 AND tenant_id != p_tenant_id;
                 IF NOT v_exists THEN
-                    LEAVE;
+                    LEAVE activation_subdomain_loop;
                 END IF;
                 SET v_counter = v_counter + 1;
                 SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-            END WHILE;
+            END WHILE activation_subdomain_loop;
             
             SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
             
             UPDATE tenants
             SET status = 'ACTIVE',
                 settings_json = JSON_SET(
-                    JSON_SET(
-                        JSON_SET(
-                            JSON_SET(
-                                COALESCE(settings_json, '{}'),
-                                '$.subdomain', v_subdomain
-                            ),
-                            '$.domain', v_domain
-                        ),
-                        '$.features', JSON_OBJECT(
-                            'consultation', v_consultation_enabled,
-                            'academy', v_academy_enabled
-                        )
+                    COALESCE(settings_json, '{}'),
+                    '$.subdomain', v_subdomain,
+                    '$.domain', v_domain,
+                    '$.features', JSON_OBJECT(
+                        'consultation', v_consultation_enabled,
+                        'academy', v_academy_enabled
                     )
                 ),
                 updated_at = NOW(),
@@ -177,7 +170,7 @@ BEGIN
         
         -- 중복 체크 및 고유성 보장
         SET v_counter = 0;
-        WHILE v_counter < 100 DO
+        create_subdomain_loop: WHILE v_counter < 100 DO
             SELECT COUNT(*) > 0 INTO v_exists
             FROM tenants
             WHERE JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain
@@ -185,12 +178,12 @@ BEGIN
             AND tenant_id != p_tenant_id;
             
             IF NOT v_exists THEN
-                LEAVE;
+                LEAVE create_subdomain_loop;
             END IF;
             
             SET v_counter = v_counter + 1;
             SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-        END WHILE;
+        END WHILE create_subdomain_loop;
         
         -- 도메인 생성
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
@@ -240,11 +233,8 @@ BEGIN
     END IF;
     
     COMMIT;
-END;
+END$$
 
--- ============================================
--- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
--- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
--- 2. allowMultiQueries=true로 Connection을 설정하여 실행
--- 3. mysql 클라이언트에서 직접 실행
+DELIMITER ;
+
 -- ============================================

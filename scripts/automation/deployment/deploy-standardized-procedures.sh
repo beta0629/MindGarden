@@ -9,14 +9,14 @@ ENV="${1:-dev}"
 PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
 # 환경별 설정
-# 운영(prod) DB 기본값은 개발(dev) 분기와 동일 — DEPLOYMENT_STANDARD 개발 서버 DB 절과 정합.
-# SSH 대상(SERVER)은 운영 호스트(PROD_SERVER_*) 기본 유지; DB 접속 정보만 개발과 같은 기본값.
+# prod: SSH·DB 기본값은 운영 서버(beta74) 및 deploy-procedures-prod-safe.sh·DEPLOYMENT_STANDARD(DB_HOST=beta74)와 정합.
+# prod DB 비밀번호는 환경 변수(PROD_DB_PASSWORD) 필수 — 개발 DB 기본값·개발 비밀번호 폴백 없음.
 if [ "$ENV" = "prod" ]; then
     SERVER="${PROD_SERVER_HOST:-beta74.cafe24.com}"
     SERVER_USER="${PROD_SERVER_USER:-root}"
-    DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
-    DB_USER="${PROD_DB_USER:-mindgarden_dev}"
-    DB_PASS="${PROD_DB_PASSWORD:-MindGardenDev2025!@#}"
+    DB_HOST="${PROD_DB_HOST:-beta74.cafe24.com}"
+    DB_USER="${PROD_DB_USER:-mindgarden_prod}"
+    DB_PASS="${PROD_DB_PASSWORD:-}"
     DB_NAME="${PROD_DB_NAME:-core_solution}"
     echo "🚀 운영 환경 프로시저 배포 시작..."
 else
@@ -29,14 +29,17 @@ else
     echo "🚀 개발 환경 프로시저 배포 시작..."
 fi
 
+echo "SSH 배포 서버: $SERVER ($SERVER_USER)"
+echo "MySQL 대상: host=$DB_HOST user=$DB_USER database=$DB_NAME"
+
 if [ -z "$DB_PASS" ]; then
     echo "❌ 오류: DB 비밀번호가 설정되지 않았습니다."
-    echo "   prod: PROD_DB_PASSWORD 또는 개발과 동일한 기본값을 사용하려면 환경 변수를 비워 두세요."
+    if [ "$ENV" = "prod" ]; then
+        echo "   운영(prod): PROD_DB_PASSWORD 환경 변수를 설정하세요. 운영 분기에는 기본 비밀번호가 없습니다."
+    fi
     exit 1
 fi
 
-echo "서버: $SERVER"
-echo "DB: $DB_NAME"
 echo ""
 
 # 배포할 프로시저 목록

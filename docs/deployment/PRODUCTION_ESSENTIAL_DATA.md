@@ -35,7 +35,7 @@
 | 유형 | 예시 마이그레이션·영역 |
 |------|-------------------------|
 | 업종·카테고리 | `V9__insert_initial_data.sql` — `business_categories` 등 |
-| 공통 코드·역할 코드 | `V20251205_001__initialize_standard_role_codes.sql`, `V52__insert_user_status_grade_common_codes.sql`, `V36__insert_billing_common_codes.sql` 등 |
+| 공통 코드·역할 코드 | `V20251205_001__initialize_standard_role_codes.sql`, `V20260212_002__clean_global_role_common_codes.sql`(전역 ROLE 4종만 유지), `V20260331_002__ensure_global_four_role_common_codes.sql`(전역 4역할 idempotent 보정), `V52__insert_user_status_grade_common_codes.sql`, `V36__insert_billing_common_codes.sql` 등 |
 | 메뉴·권한 뼈대 | `V20251203_*` admin/dynamic menu, group permission |
 | 위젯·역할 템플릿 | `V46__add_default_widgets_to_role_templates.sql` 등 |
 | 과금·코드 연동 | `V24`, `V53`, `V55` 등 빌링 관련 |
@@ -79,7 +79,10 @@
 ```sql
 -- 마스터·참조 최소 행 수 (임계값은 환경마다 조정)
 SELECT COUNT(*) FROM business_categories;
-SELECT COUNT(*) FROM common_codes WHERE code_group = 'ROLE' AND tenant_id IS NULL;
+-- ROLE: 코어 API(/api/v1/common-codes/core/groups/ROLE)는 tenant_id IS NULL 행만 사용.
+-- 정상 시 최소 4건(ADMIN, STAFF, CONSULTANT, CLIENT). 0건이면 Flyway V20260331_002 등으로 보정.
+SELECT COUNT(*) FROM common_codes
+WHERE code_group = 'ROLE' AND tenant_id IS NULL AND IFNULL(is_deleted, 0) = 0 AND is_active = TRUE;
 
 -- 온보딩 테스트 데이터 잔존 여부 (0이 이상적, 마이그레이션 V20251227_* 와 동일 패턴)
 SELECT COUNT(*) FROM onboarding_request WHERE requested_by LIKE 'test-%@example.com';

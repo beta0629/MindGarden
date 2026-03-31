@@ -96,7 +96,8 @@ public class SecurityConfig {
                         // Trinity/공개 온보딩: 로그인 전·세션 없이 호출 → CSRF 토큰 없음. permitAll 과 쌍으로 제외하지 않으면 403(접근 권한) 발생.
                         "/api/v1/accounts/integration/**",           // 이메일 인증 코드 발송/검증 등
                         "/api/v1/onboarding/**",
-                        "/api/v1/ops/onboarding/**"
+                        "/api/v1/ops/onboarding/**",
+                        "/api/v1/ops/auth/**"                        // Ops 로그인 API: 인증 전 POST 요청은 CSRF 토큰이 없어 제외 필요
                     )
                 )
                 

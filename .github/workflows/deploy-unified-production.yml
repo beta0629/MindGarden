@@ -30,7 +30,7 @@ on:
         type: boolean
         default: true
       run_procedures:
-        description: "표준화 프로시저 운영 DB (deploy-procedures-prod)"
+        description: "표준화 프로시저 배포 (deploy-procedures-prod; SSH 개발 서버·DEV_DB — 운영 MySQL은 deploy-procedures-prod-safe 등 별도)"
         type: boolean
         default: true
 
@@ -118,7 +118,7 @@ jobs:
           echo "Watching Ops backend prod run id=$run_id"
           gh run watch "$run_id" --repo "$REPO" --exit-status
 
-      - name: 📦 표준 프로시저 운영 (deploy-procedures-prod)
+      - name: 📦 표준 프로시저 배포 (deploy-procedures-prod, 개발 DB)
         if: inputs.run_procedures
         env:
           GH_TOKEN: ${{ github.token }}

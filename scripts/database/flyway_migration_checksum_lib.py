@@ -164,6 +164,41 @@ def print_table(rows: Iterable[Tuple[str, str, int]]) -> None:
         print(f"{ver}\t{script}\t{chk}")
 
 
+def description_from_script_basename(script: str) -> str:
+    """V{ver}__{description}.sql → Flyway description (밑줄은 공백으로)."""
+    if not script.startswith("V") or not script.endswith(".sql"):
+        return script
+    body = script[1:-4]
+    if "__" not in body:
+        return body
+    _, rest = body.split("__", 1)
+    return rest.replace("_", " ")
+
+
+def print_sql_replace_history(rows: Iterable[Tuple[str, str, int]]) -> None:
+    """
+    flyway_schema_history 전체를 JAR/소스 목록과 동일한 순서·체크섬으로 교체하는 SQL.
+    스키마가 이미 해당 마이그레이션과 일치한다는 전제(개발 DB 덤프 반영 등)에서만 사용.
+    """
+    print(
+        "-- 위험: flyway_schema_history 전체 삭제 후 재삽입. 반드시 선행 백업·스키마 검증 후 적용."
+    )
+    print("START TRANSACTION;")
+    print("DELETE FROM flyway_schema_history;")
+    rows_list = list(rows)
+    for i, (ver, script, chk) in enumerate(rows_list, start=1):
+        desc = description_from_script_basename(script)[:200]
+        esc_script = mysql_escape_literal(script)
+        esc_desc = mysql_escape_literal(desc)
+        esc_ver = mysql_escape_literal(ver)
+        print(
+            "INSERT INTO flyway_schema_history "
+            "(installed_rank, version, description, type, script, checksum, installed_by, installed_on, execution_time, success) "
+            f"VALUES ({i}, '{esc_ver}', '{esc_desc}', 'SQL', '{esc_script}', {chk}, 'schema-sync', NOW(), 0, 1);"
+        )
+    print("COMMIT;")
+
+
 def print_sql_updates(rows: Iterable[Tuple[str, str, int]]) -> None:
     print(
         "-- 운영 DB에 적용하기 전에 반드시 백업(flyway_schema_history 포함) 후, "
@@ -224,6 +259,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         action="store_true",
         help="MySQL용 flyway_schema_history UPDATE 제안문을 추가로 출력",
     )
+    p.add_argument(
+        "--replace-history-sql",
+        action="store_true",
+        help="flyway_schema_history DELETE 후 JAR 순서대로 INSERT (스키마 일치 전제, 위험)",
+    )
     return p.parse_args(argv)
 
 
@@ -235,10 +275,13 @@ def main(argv: List[str]) -> int:
     else:
         mdir = args.dir if args.dir is not None else default_migration_dir()
         rows = collect_rows_from_dir(mdir)
-    print_table(rows)
-    if args.sql_update:
-        print("")
-        print_sql_updates(rows)
+    if args.replace_history_sql:
+        print_sql_replace_history(rows)
+    else:
+        print_table(rows)
+        if args.sql_update:
+            print("")
+            print_sql_updates(rows)
     return 0
 
 

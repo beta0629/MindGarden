@@ -14,6 +14,7 @@
 #   ./flyway_migration_checksum_report.sh
 #   ./flyway_migration_checksum_report.sh --jar
 #   ./flyway_migration_checksum_report.sh --dir /path/to/db/migration --sql-update
+#   ./flyway_migration_checksum_report.sh --jar target/...jar --replace-history-sql  # 이력 전체 교체 SQL (주의)
 #
 set -euo pipefail
 

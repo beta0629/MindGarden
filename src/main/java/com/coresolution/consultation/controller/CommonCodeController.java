@@ -2,6 +2,9 @@ package com.coresolution.consultation.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
@@ -367,14 +370,48 @@ public class CommonCodeController extends BaseApiController {
      */
     @GetMapping("/groups")
     public ResponseEntity<ApiResponse<Map<String, List<CommonCode>>>> getCommonCodesByGroups(
-            @RequestParam String groups) {
+            @RequestParam(required = false) String groups) {
         log.info("공통코드 그룹별 조회 요청: {}", groups);
-        
-        String[] groupArray = groups.split(",");
+
+        String[] groupArray = normalizeGroups(groups);
+        if (groupArray.length == 0) {
+            log.warn("⚠️ groups 파라미터 미전달/빈값 감지. 전체 그룹으로 조회합니다.");
+            List<String> allGroups = commonCodeService.getCommonCodeGroups();
+            groupArray = allGroups == null ? new String[0] : allGroups.toArray(new String[0]);
+        }
+
         Map<String, List<CommonCode>> result = commonCodeService.getCommonCodesByGroups(groupArray);
         
         log.info("공통코드 조회 완료: {} 그룹", result.size());
         return success(result);
+    }
+
+    private String[] normalizeGroups(String groups) {
+        if (groups == null || groups.trim().isEmpty()) {
+            return new String[0];
+        }
+
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String rawGroup : groups.split(",")) {
+            if (rawGroup == null) {
+                continue;
+            }
+            String cleaned = rawGroup.trim();
+            if (!cleaned.isEmpty()) {
+                normalized.add(cleaned);
+            }
+        }
+
+        if (normalized.isEmpty()) {
+            return new String[0];
+        }
+
+        String joined = normalized.stream().collect(Collectors.joining(","));
+        if (!joined.equals(groups)) {
+            log.warn("⚠️ 잘못된 groups 파라미터 형식 감지. 정제 후 사용: {}", joined);
+        }
+
+        return normalized.toArray(new String[0]);
     }
 
     /**

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
@@ -379,10 +381,31 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, List<CommonCode>> getCommonCodesByGroups(String[] groups) {
-        log.info("🔍 여러 그룹의 공통코드 조회: {}", String.join(", ", groups));
-        
-        Map<String, List<CommonCode>> result = new HashMap<>();
+        if (groups == null || groups.length == 0) {
+            log.warn("⚠️ 그룹 배열이 비어 있어 빈 결과를 반환합니다.");
+            return new HashMap<>();
+        }
+
+        Set<String> normalizedGroups = new LinkedHashSet<>();
         for (String group : groups) {
+            if (group == null) {
+                continue;
+            }
+            String cleaned = group.trim();
+            if (!cleaned.isEmpty()) {
+                normalizedGroups.add(cleaned);
+            }
+        }
+
+        if (normalizedGroups.isEmpty()) {
+            log.warn("⚠️ 정제 후 유효한 그룹이 없어 빈 결과를 반환합니다.");
+            return new HashMap<>();
+        }
+
+        log.info("🔍 여러 그룹의 공통코드 조회: {}", String.join(", ", normalizedGroups));
+
+        Map<String, List<CommonCode>> result = new HashMap<>();
+        for (String group : normalizedGroups) {
             List<CommonCode> codes = getCommonCodesByGroup(group);
             result.put(group, codes);
         }

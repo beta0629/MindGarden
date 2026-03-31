@@ -1,6 +1,6 @@
-# SSH: PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_SSH_KEY.
-# DB: PRODUCTION_DB_PASSWORD 필수. PRODUCTION_DB_HOST는 비어 있으면 PRODUCTION_HOST와 동일한 호스트로 간주(앱·DB 동일 Cafe24 호스트 등).
-# PRODUCTION_DB_USER·PRODUCTION_DB_NAME 선택 — 미설정 시 스크립트 운영 기본값(mindgarden_prod, core_solution). DEV_DB_* 폴백 없음.
+# SSH: PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_SSH_KEY (deploy-procedures-dev.yml의 점프 서버와 다를 수 있음).
+# DB: deploy-procedures-dev.yml과 동일 — DEV_DB_HOST, DEV_DB_PASSWORD 필수. DEV_DB_USER·DEV_DB_NAME은 선택(미설정 시 스크립트 개발과 동일 기본값).
+# 운영 호스트에서 mysql 클라이언트가 개발 DB로 접속 가능해야 함(방화벽·bind-address). 불가 시 배포 방식 재검토 필요.
 # refs: deploy-procedures-dev.yml, deploy-standardized-procedures.sh prod 분기
 
 name: 📦 표준화된 프로시저 배포 (운영)
@@ -29,27 +29,23 @@ jobs:
     
     - name: 📤 프로시저 배포
       run: |
-        if [ -z "${{ secrets.PRODUCTION_DB_PASSWORD }}" ]; then
-          echo "::error::PRODUCTION_DB_PASSWORD 시크릿이 필요합니다."
+        if [ -z "${{ secrets.DEV_DB_HOST }}" ]; then
+          echo "::error::DEV_DB_HOST 시크릿이 필요합니다. (개발 프로시저 배포와 동일한 DB 호스트)"
+          exit 1
+        fi
+        if [ -z "${{ secrets.DEV_DB_PASSWORD }}" ]; then
+          echo "::error::DEV_DB_PASSWORD 시크릿이 필요합니다. (개발과 동일한 DB 비밀번호)"
           exit 1
         fi
 
         export PROD_SERVER_HOST="${{ secrets.PRODUCTION_HOST }}"
         export PROD_SERVER_USER="${{ secrets.PRODUCTION_USER }}"
-        DB_HOST_RESOLVED="${{ secrets.PRODUCTION_DB_HOST }}"
-        if [ -z "$DB_HOST_RESOLVED" ]; then
-          DB_HOST_RESOLVED="${{ secrets.PRODUCTION_HOST }}"
-        fi
-        if [ -z "$DB_HOST_RESOLVED" ]; then
-          echo "::error::운영 DB 호스트를 결정할 수 없습니다. PRODUCTION_DB_HOST를 설정하거나 PRODUCTION_HOST를 설정하세요."
-          exit 1
-        fi
-        export PROD_DB_HOST="$DB_HOST_RESOLVED"
-        export PROD_DB_PASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
-        PROD_USER_SECRET="${{ secrets.PRODUCTION_DB_USER }}"
-        [ -n "$PROD_USER_SECRET" ] && export PROD_DB_USER="$PROD_USER_SECRET"
-        PROD_NAME_SECRET="${{ secrets.PRODUCTION_DB_NAME }}"
-        [ -n "$PROD_NAME_SECRET" ] && export PROD_DB_NAME="$PROD_NAME_SECRET"
+        export PROD_DB_HOST="${{ secrets.DEV_DB_HOST }}"
+        export PROD_DB_PASSWORD="${{ secrets.DEV_DB_PASSWORD }}"
+        U_SECRET="${{ secrets.DEV_DB_USER }}"
+        [ -n "$U_SECRET" ] && export PROD_DB_USER="$U_SECRET"
+        N_SECRET="${{ secrets.DEV_DB_NAME }}"
+        [ -n "$N_SECRET" ] && export PROD_DB_NAME="$N_SECRET"
 
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh

@@ -9,13 +9,14 @@ ENV="${1:-dev}"
 PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
 # 환경별 설정
-# prod: SSH·DB 기본값은 운영 서버(beta74) 및 deploy-procedures-prod-safe.sh·DEPLOYMENT_STANDARD(DB_HOST=beta74)와 정합.
-# prod DB 비밀번호는 환경 변수(PROD_DB_PASSWORD) 필수 — 개발 DB 기본값·개발 비밀번호 폴백 없음.
+# prod: SSH 점프는 운영(PROD_SERVER_*, 기본 beta74). MySQL 대상은 워크플로가 DEV_DB_*와 동일 값을 PROD_DB_*로 주입하는 전제(로컬 기본은 개발 DB와 동일 호스트·계정).
+# deploy-procedures-prod-safe.sh(운영 DB 직접)와 경로가 다름 — 운영 DB에 직접 넣을 때는 해당 스크립트를 사용.
+# prod DB 비민번호는 환경 변수(PROD_DB_PASSWORD) 필수 — 평문 기본값 없음.
 if [ "$ENV" = "prod" ]; then
     SERVER="${PROD_SERVER_HOST:-beta74.cafe24.com}"
     SERVER_USER="${PROD_SERVER_USER:-root}"
-    DB_HOST="${PROD_DB_HOST:-beta74.cafe24.com}"
-    DB_USER="${PROD_DB_USER:-mindgarden_prod}"
+    DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
+    DB_USER="${PROD_DB_USER:-mindgarden_dev}"
     DB_PASS="${PROD_DB_PASSWORD:-}"
     DB_NAME="${PROD_DB_NAME:-core_solution}"
     echo "🚀 운영 환경 프로시저 배포 시작..."

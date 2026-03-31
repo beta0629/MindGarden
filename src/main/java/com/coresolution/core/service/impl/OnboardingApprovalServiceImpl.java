@@ -1433,9 +1433,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         request = onboardingRequestRepository
                                 .findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestId)
                                 .orElse(null);
+                        if (request == null) {
+                            log.debug("온보딩 상태 업데이트 조회 fallback 실행: tenantId={}, requestId={}",
+                                    tenantId, requestId);
+                            request = onboardingRequestRepository.findActiveById(requestId).orElse(null);
+                        }
                     }
                     if (request == null) {
-                        log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
+                        log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: tenantId={}, requestId={}",
+                                tenantId, requestId);
                         return;
                     }
 

@@ -10,6 +10,7 @@ PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
 # dev/prod 공통: docs/standards DEPLOYMENT_STANDARD 개발 서버 예시와 동일한 폴백 비밀번호.
 # prod에서 PROD_DB_PASSWORD(또는 워크플로의 DEV_DB_PASSWORD 주입)가 비어 있으면 개발과 동일 기본값 사용.
+# 예외: DEPLOY_TARGET=production_mysql(GitHub Actions 운영 MySQL 전용)일 때는 폴백 없음 — PROD_DB_PASSWORD 필수.
 DEFAULT_DEV_DB_PASSWORD='MindGardenDev2025!@#'
 
 # 환경별 설정
@@ -19,9 +20,15 @@ DEFAULT_DEV_DB_PASSWORD='MindGardenDev2025!@#'
 if [ "$ENV" = "prod" ]; then
     SERVER="${PROD_SSH_JUMP_HOST:-${PROD_SERVER_HOST:-beta74.cafe24.com}}"
     SERVER_USER="${PROD_SSH_JUMP_USER:-${PROD_SERVER_USER:-root}}"
-    DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
-    DB_USER="${PROD_DB_USER:-mindgarden_dev}"
-    DB_PASS="${PROD_DB_PASSWORD:-${DEFAULT_DEV_DB_PASSWORD}}"
+    if [ "${DEPLOY_TARGET:-}" = "production_mysql" ]; then
+        DB_HOST="${PROD_DB_HOST:-beta74.cafe24.com}"
+        DB_USER="${PROD_DB_USER:-mindgarden_prod}"
+        DB_PASS="${PROD_DB_PASSWORD:-}"
+    else
+        DB_HOST="${PROD_DB_HOST:-beta0629.cafe24.com}"
+        DB_USER="${PROD_DB_USER:-mindgarden_dev}"
+        DB_PASS="${PROD_DB_PASSWORD:-${DEFAULT_DEV_DB_PASSWORD}}"
+    fi
     DB_NAME="${PROD_DB_NAME:-core_solution}"
     echo "🚀 운영 환경 프로시저 배포 시작..."
 else

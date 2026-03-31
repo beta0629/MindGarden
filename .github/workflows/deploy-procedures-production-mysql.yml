@@ -1,0 +1,83 @@
+# 대상: 실제 운영 MySQL(동일 10개 표준 프로시저, deploy-standardized-procedures.sh prod).
+# SSH/SCP는 secrets.PRODUCTION_HOST 직접 — PROD_SSH_JUMP_HOST 를 설정하지 않는다.
+#
+# deploy-procedures-prod.yml 은 개발 서버 SSH + DEV_DB(점프)용이므로 변경·혼동 금지.
+
+name: 📦 표준화 프로시저 배포 (운영 MySQL)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CONFIRM" to proceed'
+        required: true
+        default: ''
+
+jobs:
+  deploy-procedures-production-mysql:
+    if: github.event.inputs.confirm == 'CONFIRM'
+    name: 운영 MySQL 표준 프로시저 배포
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 배포용 프로시저 파일 생성
+        run: |
+          chmod +x database/schema/procedures_standardized/create_deployment_files.sh
+          bash database/schema/procedures_standardized/create_deployment_files.sh
+
+      - name: 필수 시크릿 검증
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.PRODUCTION_HOST }}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            exit 1
+          fi
+          if [ -z "${{ secrets.PRODUCTION_SSH_KEY }}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            exit 1
+          fi
+          if [ -z "${{ secrets.PRODUCTION_DB_HOST }}" ]; then
+            echo "::error::PRODUCTION_DB_HOST 시크릿이 비어 있습니다. 운영 DB 호스트는 필수입니다."
+            exit 1
+          fi
+          if [ -z "${{ secrets.PRODUCTION_DB_PASSWORD }}" ]; then
+            echo "::error::PRODUCTION_DB_PASSWORD 시크릿이 비어 있습니다. 개발 DB 비밀번호 폴백은 사용하지 않습니다."
+            exit 1
+          fi
+
+      - name: known_hosts 추가 (PRODUCTION_HOST)
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: SSH 키 및 표준 프로시저 배포
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/prod_ci_key
+          chmod 600 ~/.ssh/prod_ci_key
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/prod_ci_key
+
+          unset PROD_SSH_JUMP_HOST 2>/dev/null || true
+          unset PROD_SSH_JUMP_USER 2>/dev/null || true
+          export PROD_SERVER_HOST="${{ secrets.PRODUCTION_HOST }}"
+          U_SECRET="${{ secrets.PRODUCTION_USER }}"
+          if [ -n "$U_SECRET" ]; then
+            export PROD_SERVER_USER="$U_SECRET"
+          fi
+          export PROD_DB_HOST="${{ secrets.PRODUCTION_DB_HOST }}"
+          export PROD_DB_PASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+          DU="${{ secrets.PRODUCTION_DB_USER }}"
+          export PROD_DB_USER="${DU:-mindgarden_prod}"
+          DN="${{ secrets.PRODUCTION_DB_NAME }}"
+          export PROD_DB_NAME="${DN:-core_solution}"
+          export DEPLOY_TARGET=production_mysql
+
+          chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
+          bash scripts/automation/deployment/deploy-standardized-procedures.sh prod

@@ -30,7 +30,7 @@ on:
         type: boolean
         default: true
       run_procedures:
-        description: "표준화 프로시저 배포 (deploy-procedures-prod; SSH 개발 서버·DEV_DB — 운영 MySQL은 deploy-procedures-prod-safe 등 별도)"
+        description: "표준화 프로시저 배포 (deploy-procedures-prod; SSH 개발 서버·DEV_DB — 실제 운영 MySQL은 deploy-procedures-production-mysql.yml 별도 수동)"
         type: boolean
         default: true
 

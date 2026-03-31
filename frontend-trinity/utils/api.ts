@@ -9,6 +9,9 @@
 // 환경 변수가 없으면 상대 경로 사용 (프로덕션 환경에서 Nginx 프록시 사용)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
+const CSRF_TOKEN_PATH = '/api/v1/auth/csrf-token';
+const DEFAULT_CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -16,132 +19,250 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+type CsrfMeta =
+  | { active: false }
+  | { active: true; token: string; headerName: string };
+
+let csrfEpoch = 0;
+let csrfCache: CsrfMeta | null = null;
+let csrfLoading: Promise<CsrfMeta> | null = null;
+let csrfLoadingEpoch = -1;
+
+function buildApiUrl(endpoint: string): string {
+  return API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
+}
+
+function mergeJsonHeaders(
+  base: Record<string, string>,
+  extra?: HeadersInit
+): Record<string, string> {
+  const out = { ...base };
+  if (!extra) {
+    return out;
+  }
+  if (extra instanceof Headers) {
+    extra.forEach((value, key) => {
+      out[key] = value;
+    });
+    return out;
+  }
+  if (Array.isArray(extra)) {
+    for (const [key, value] of extra) {
+      out[key] = value;
+    }
+    return out;
+  }
+  return { ...out, ...(extra as Record<string, string>) };
+}
+
+function invalidateCsrfCache(): void {
+  csrfEpoch++;
+  csrfCache = null;
+}
+
+function csrfPayloadToMeta(data: Record<string, unknown> | null | undefined): CsrfMeta {
+  if (!data || data.disabled === true) {
+    return { active: false };
+  }
+  const token = data.token != null ? String(data.token).trim() : '';
+  if (!token) {
+    return { active: false };
+  }
+  const headerName =
+    data.headerName != null && String(data.headerName).trim() !== ''
+      ? String(data.headerName)
+      : DEFAULT_CSRF_HEADER_NAME;
+  return { active: true, token, headerName };
+}
+
+async function fetchCsrfMetaFromNetwork(): Promise<CsrfMeta> {
+  const url = buildApiUrl(CSRF_TOKEN_PATH);
+  const response = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const jsonData: unknown = await response.json();
+  if (!response.ok) {
+    const errBody = jsonData as ApiResponse<unknown> | undefined;
+    const msg =
+      errBody && typeof errBody === 'object' && 'message' in errBody
+        ? String((errBody as ApiResponse<unknown>).message)
+        : `CSRF 토큰 조회 실패: ${response.status}`;
+    throw new Error(msg);
+  }
+  let payload: unknown = jsonData;
+  if (
+    jsonData &&
+    typeof jsonData === 'object' &&
+    'success' in jsonData &&
+    'data' in jsonData
+  ) {
+    payload = (jsonData as ApiResponse<Record<string, unknown>>).data;
+  }
+  return csrfPayloadToMeta(payload as Record<string, unknown> | null | undefined);
+}
+
+async function ensureCsrfMeta(forceRefresh: boolean): Promise<CsrfMeta> {
+  if (forceRefresh) {
+    invalidateCsrfCache();
+  }
+  if (csrfCache !== null) {
+    return csrfCache;
+  }
+  if (!csrfLoading || csrfLoadingEpoch !== csrfEpoch) {
+    const epoch = csrfEpoch;
+    csrfLoading = fetchCsrfMetaFromNetwork()
+      .then((meta) => {
+        if (epoch === csrfEpoch) {
+          csrfCache = meta;
+        }
+        return meta;
+      })
+      .finally(() => {
+        if (csrfLoadingEpoch === epoch) {
+          csrfLoading = null;
+        }
+      });
+    csrfLoadingEpoch = epoch;
+  }
+  const meta = await csrfLoading;
+  if (csrfCache !== null) {
+    return csrfCache;
+  }
+  if (csrfLoadingEpoch !== csrfEpoch) {
+    return ensureCsrfMeta(false);
+  }
+  return meta;
+}
+
 /**
  * API 요청 기본 함수
  */
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  mutate = false
 ): Promise<T> {
-  // API_BASE_URL이 비어있으면 상대 경로 사용 (프로덕션)
-  // API_BASE_URL이 있으면 절대 경로 사용 (로컬 개발)
-  const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
-  
-  const defaultHeaders: HeadersInit = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  let response: Response;
-  let jsonData: any;
-  
-  try {
-    response = await fetch(url, {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-      credentials: 'include', // 세션 쿠키 포함
-    });
-    
-    jsonData = await response.json();
-  } catch (fetchError) {
-    // 네트워크 오류 (연결 실패 등)
-    const isOnboardingEndpoint = endpoint.includes('/auth/current-user') || 
-                                  endpoint.includes('/common-codes') ||
-                                  endpoint.includes('/business-categories') ||
-                                  endpoint.includes('/pricing-plans');
-    if (isOnboardingEndpoint) {
-      // 온보딩 관련 API는 조용히 처리 (에러 로그 출력 안 함)
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[DEBUG] Onboarding API connection failed:', endpoint, fetchError);
-      }
-      throw new Error('Connection failed');
-    }
-    throw fetchError;
-  }
-  
-  // 온보딩 관련 API의 인증 오류는 정상적인 상황 (로그인 불필요)
-  const isOnboardingEndpoint = endpoint.includes('/auth/current-user') || 
-                                endpoint.includes('/common-codes') ||
-                                endpoint.includes('/business-categories') ||
-                                endpoint.includes('/pricing-plans');
-  
-  if (!response.ok) {
-    // 개발 환경에서 에러 응답 로그
-    if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
-      console.error('[DEBUG] API Error Response:', {
-        endpoint,
-        status: response.status,
-        statusText: response.statusText,
-        jsonData,
-      });
-    }
-    
-    if (isOnboardingEndpoint && (response.status === 400 || response.status === 401 || response.status === 403)) {
-      // 온보딩 페이지는 로그인 없이도 접근 가능하므로 인증 오류는 정상적인 상황
-      // 배열을 반환하는 API의 경우 빈 배열 반환 (무한 루프 방지)
-      if (endpoint.includes('/business-categories') || endpoint.includes('/pricing-plans')) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[DEBUG] Returning empty array for business-categories/pricing-plans endpoint (status:', response.status, '):', endpoint);
-        }
-        // 400 에러도 조용히 빈 배열 반환 (무한 루프 방지)
-        return [] as T;
-      }
-      // /auth/current-user는 로그인되지 않은 경우 빈 객체 반환
-      if (endpoint.includes('/auth/current-user')) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[DEBUG] User not logged in, returning empty user object for:', endpoint);
-        }
-        return { success: false, data: {} } as T;
-      }
-      // 그 외에는 실패한 응답 객체 반환
-      return { success: false } as T;
-    }
-    
-    // ApiResponse 래퍼 처리
-    const errorData = (jsonData as ApiResponse<any>)?.error || jsonData;
-    const errorMessage = errorData.message || errorData.error || errorData.details || `API 요청 실패: ${response.status} ${response.statusText}`;
-    
-    if (!isOnboardingEndpoint) {
-      console.error('API Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        endpoint,
-        errorData,
-        fullError: JSON.stringify(jsonData, null, 2),
-      });
-    }
-    throw new Error(errorMessage);
-  }
+  let csrf403Retried = false;
 
-  // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-  if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-    const apiResponse = jsonData as ApiResponse<T>;
-    // 개발 환경에서 디버깅 로그
+  while (true) {
+    const url = buildApiUrl(endpoint);
+    let headers = mergeJsonHeaders(defaultHeaders, options.headers);
+    if (mutate) {
+      const csrfMeta = await ensureCsrfMeta(csrf403Retried);
+      if (csrfMeta.active) {
+        headers = { ...headers, [csrfMeta.headerName]: csrfMeta.token };
+      }
+    }
+
+    let response: Response;
+    let jsonData: any;
+
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+
+      jsonData = await response.json();
+    } catch (fetchError) {
+      const isOnboardingEndpoint =
+        endpoint.includes('/auth/current-user') ||
+        endpoint.includes('/common-codes') ||
+        endpoint.includes('/business-categories') ||
+        endpoint.includes('/pricing-plans');
+      if (isOnboardingEndpoint) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[DEBUG] Onboarding API connection failed:', endpoint, fetchError);
+        }
+        throw new Error('Connection failed');
+      }
+      throw fetchError;
+    }
+
+    const isOnboardingEndpoint =
+      endpoint.includes('/auth/current-user') ||
+      endpoint.includes('/common-codes') ||
+      endpoint.includes('/business-categories') ||
+      endpoint.includes('/pricing-plans');
+
+    if (!response.ok) {
+      if (mutate && response.status === 403 && !csrf403Retried) {
+        invalidateCsrfCache();
+        csrf403Retried = true;
+        continue;
+      }
+      if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
+        console.error('[DEBUG] API Error Response:', {
+          endpoint,
+          status: response.status,
+          statusText: response.statusText,
+          jsonData,
+        });
+      }
+
+      if (isOnboardingEndpoint && (response.status === 400 || response.status === 401 || response.status === 403)) {
+        if (endpoint.includes('/business-categories') || endpoint.includes('/pricing-plans')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[DEBUG] Returning empty array for business-categories/pricing-plans endpoint (status:', response.status, '):', endpoint);
+          }
+          return [] as T;
+        }
+        if (endpoint.includes('/auth/current-user')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[DEBUG] User not logged in, returning empty user object for:', endpoint);
+          }
+          return { success: false, data: {} } as T;
+        }
+        return { success: false } as T;
+      }
+
+      const errorData = (jsonData as ApiResponse<any>)?.error || jsonData;
+      const errorMessage = errorData.message || errorData.error || errorData.details || `API 요청 실패: ${response.status} ${response.statusText}`;
+
+      if (!isOnboardingEndpoint) {
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint,
+          errorData,
+          fullError: JSON.stringify(jsonData, null, 2),
+        });
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      const apiResponse = jsonData as ApiResponse<T>;
+      if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
+        console.log('[DEBUG] API Response:', {
+          endpoint,
+          success: apiResponse.success,
+          hasData: !!apiResponse.data,
+          dataType: typeof apiResponse.data,
+          isArray: Array.isArray(apiResponse.data),
+          data: apiResponse.data,
+        });
+      }
+      return apiResponse.data as T;
+    }
+
     if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
-      console.log('[DEBUG] API Response:', {
+      console.log('[DEBUG] No ApiResponse wrapper, returning jsonData as-is:', {
         endpoint,
-        success: apiResponse.success,
-        hasData: !!apiResponse.data,
-        dataType: typeof apiResponse.data,
-        isArray: Array.isArray(apiResponse.data),
-        data: apiResponse.data,
+        jsonData,
+        jsonDataType: typeof jsonData,
+        isArray: Array.isArray(jsonData),
       });
     }
-    return apiResponse.data as T;
+    return jsonData as T;
   }
-  
-  // ApiResponse 래퍼가 없으면 그대로 반환
-  if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
-    console.log('[DEBUG] No ApiResponse wrapper, returning jsonData as-is:', {
-      endpoint,
-      jsonData,
-      jsonDataType: typeof jsonData,
-      isArray: Array.isArray(jsonData),
-    });
-  }
-  return jsonData as T;
 }
 
 /**
@@ -158,10 +279,14 @@ export async function apiPost<T>(
   endpoint: string,
   data?: unknown
 ): Promise<T> {
-  return apiRequest<T>(endpoint, {
-    method: 'POST',
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  return apiRequest<T>(
+    endpoint,
+    {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    },
+    true
+  );
 }
 
 /**
@@ -171,17 +296,38 @@ export async function apiPut<T>(
   endpoint: string,
   data?: unknown
 ): Promise<T> {
-  return apiRequest<T>(endpoint, {
-    method: 'PUT',
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  return apiRequest<T>(
+    endpoint,
+    {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    },
+    true
+  );
+}
+
+/**
+ * PATCH 요청
+ */
+export async function apiPatch<T>(
+  endpoint: string,
+  data?: unknown
+): Promise<T> {
+  return apiRequest<T>(
+    endpoint,
+    {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    },
+    true
+  );
 }
 
 /**
  * DELETE 요청
  */
 export async function apiDelete<T>(endpoint: string): Promise<T> {
-  return apiRequest<T>(endpoint, { method: 'DELETE' });
+  return apiRequest<T>(endpoint, { method: 'DELETE' }, true);
 }
 
 // ============================================

@@ -1,4 +1,5 @@
 name: 🎨 Frontend (CoreSolution) 개발 서버 배포
+# 운영: deploy-frontend-prod.yml (main, /var/www/mindgarden/frontend)
 # 배포 트리거: 2025-12-10 (paths: frontend/**)
 
 on:

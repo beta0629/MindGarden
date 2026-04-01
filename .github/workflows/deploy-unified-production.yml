@@ -1,4 +1,5 @@
-# 운영 배포 단일 진입점: Core → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저(개발 DB) → 표준 프로시저(운영 MySQL) 순차 실행, gh run watch 로 감시.
+# 운영 배포 단일 진입점: Core → (선택) Core React만 → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저… (gh run watch)
+# Core React만 JAR 없이: inputs.run_core_frontend → deploy-frontend-prod.yml (run_core 와 동시 true 시 프론트 중복 배포)
 # 온보딩 백엔드: 저장소에 deploy-onboarding-prod 가 없으므로 Core 운영 범위·수동 배포를 별도 확인한다.
 #
 # 필요 권한: GITHUB_TOKEN 에 actions: write (워크플로 디스패치)
@@ -17,6 +18,10 @@ on:
         description: "Core Solution 운영 통합 (deploy-production)"
         type: boolean
         default: true
+      run_core_frontend:
+        description: "Core React만 운영 (deploy-frontend-prod). run_core 와 동시 true면 프론트가 중복 배포됨"
+        type: boolean
+        default: false
       run_trinity:
         description: "Trinity 정적 프론트 운영 (deploy-trinity-prod)"
         type: boolean
@@ -64,7 +69,7 @@ jobs:
           fi
 
       - name: 최소 한 단계 선택 확인
-        if: ${{ !inputs.run_core && !inputs.run_trinity && !inputs.run_ops_frontend && !inputs.run_ops_backend && !inputs.run_procedures && !inputs.run_procedures_production_mysql }}
+        if: ${{ !inputs.run_core && !inputs.run_core_frontend && !inputs.run_trinity && !inputs.run_ops_frontend && !inputs.run_ops_backend && !inputs.run_procedures && !inputs.run_procedures_production_mysql }}
         run: |
           echo "::error::run_* 입력 중 최소 하나는 true 여야 합니다."
           exit 1
@@ -81,6 +86,20 @@ jobs:
           sleep 10
           run_id="$(gh run list --repo "$REPO" --workflow=deploy-production.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
           echo "Watching Core production run id=$run_id"
+          gh run watch "$run_id" --repo "$REPO" --exit-status
+
+      - name: 🎨 Core 프론트만 운영 (deploy-frontend-prod)
+        if: inputs.run_core_frontend
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          echo "Dispatching deploy-frontend-prod.yml ..."
+          gh workflow run deploy-frontend-prod.yml --repo "$REPO" --ref main -f deploy_ref=main
+          sleep 8
+          run_id="$(gh run list --repo "$REPO" --workflow=deploy-frontend-prod.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Watching Core frontend prod run id=$run_id"
           gh run watch "$run_id" --repo "$REPO" --exit-status
 
       - name: 🌟 Trinity 프론트 운영 (deploy-trinity-prod)

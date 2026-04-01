@@ -31,6 +31,23 @@ public class OnboardingConstants {
     public static final String ERROR_INVALID_STATUS = "유효하지 않은 상태 코드입니다: {0}";
     public static final String ERROR_RETRY_ONLY_ON_HOLD = "재시도는 ON_HOLD 상태인 경우에만 가능합니다. 현재 상태: {0}";
     public static final String ERROR_ONBOARDING_REQUEST_NOT_FOUND = "온보딩 요청을 찾을 수 없습니다. ID와 이메일을 확인해주세요.";
+
+    /** 온보딩 요청 생성 시 checklist_json 병합 실패 */
+    public static final String ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED =
+            "checklist_json 병합 또는 직렬화에 실패했습니다. JSON 형식과 필드 값을 확인해주세요.";
+
+    /** 연락 이메일이 있는 승인 건에서 checklist_json 파싱 실패 */
+    public static final String ERROR_ONBOARDING_CHECKLIST_PARSE_FOR_APPROVAL =
+            "checklist_json 파싱에 실패하여 승인을 진행할 수 없습니다. 요청 데이터를 수정한 뒤 다시 시도해주세요.";
+
+    /** 승인 시 연락 이메일은 있는데 관리자 초기 비밀번호가 없음 */
+    public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_FOR_APPROVAL =
+            "연락 이메일이 등록된 온보딩은 승인 시 checklist_json에 유효한 adminPassword가 필요합니다. "
+                    + "요청을 수정하거나 비밀번호를 포함한 뒤 다시 승인해주세요.";
+
+    /** 온보딩 요청 생성 시 관리자 초기 비밀번호 누락 */
+    public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
+            "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";
     
     // 온보딩 프로세스 단계 상수
     public static final String STEP_TENANT_CREATE = "TENANT_CREATE";
@@ -58,11 +75,26 @@ public class OnboardingConstants {
     public static final String MSG_ADMIN_CREATE_COMPLETE = "관리자 계정 생성 완료";
     public static final String MSG_ADMIN_CREATE_FAILED = "관리자 계정 생성 실패";
     public static final String MSG_ADMIN_CREATE_SKIPPED = "관리자 계정 정보 없음";
+
+    /** 연락 이메일은 있으나 비밀번호 해시가 없어 관리자 생성 불가 (승인 중단) */
+    public static final String MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH =
+            "연락 이메일이 있으나 adminPassword 해시가 없어 관리자 계정을 생성할 수 없습니다.";
     public static final String MSG_DASHBOARD_CREATE_START = "대시보드 생성 시작...";
     public static final String MSG_DASHBOARD_CREATE_COMPLETE = "대시보드 생성 완료";
     public static final String MSG_DASHBOARD_CREATE_FAILED = "대시보드 생성 실패";
     public static final String MSG_ALL_STEPS_COMPLETE = "모든 단계 완료";
     public static final String MSG_PROCESS_COMPLETE = "온보딩 승인 프로세스 완료: 테넌트 생성, 역할 적용, 관리자 계정 생성, 대시보드 생성 완료";
+
+    /** 프로시저 성공 직후 Java에서 대시보드·관리자 tenant 역할 할당을 보강했을 때 */
+    public static final String MSG_POST_PROCEDURE_RECONCILE_COMPLETE =
+            "프로시저 이후 대시보드·관리자 역할 정합성 보강 완료";
+
+    /** 관리자 users 행은 있으나 원장(DIRECTOR) tenant_role 매핑·할당에 실패 */
+    public static final String MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED =
+            "관리자 계정에 원장(관리자) 테넌트 역할을 할당할 수 없습니다. tenant_roles·role_templates를 확인하세요.";
+
+    /** 온보딩 승인 시 user_role_assignments.assignment_reason 기본값 (DB 프로시저와 동일 문구) */
+    public static final String ASSIGNMENT_REASON_ONBOARDING_AUTO = "온보딩 승인 시 자동 할당";
     
     // 로그 구분선 상수
     public static final String LOG_SEPARATOR = "==========================================";

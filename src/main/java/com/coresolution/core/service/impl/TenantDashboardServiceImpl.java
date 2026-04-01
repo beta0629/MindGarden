@@ -428,6 +428,14 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             }
         }
         
+        if (createdDashboards.size() != templates.size()) {
+            String detail = String.format(
+                    "업종 기본 역할 템플릿 수(%d)와 생성·확인된 대시보드 수(%d)가 일치하지 않습니다. tenantId=%s",
+                    templates.size(), createdDashboards.size(), tenantId);
+            log.error(detail);
+            throw new IllegalStateException(detail);
+        }
+
         log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, createdDashboards.size());
         return createdDashboards;
         } finally {

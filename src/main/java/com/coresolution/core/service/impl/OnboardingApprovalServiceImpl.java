@@ -67,6 +67,17 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info("  - approvedBy: {}", approvedBy);
         log.info(OnboardingConstants.LOG_SEPARATOR);
 
+        boolean contactEmailPresent =
+                contactEmail != null && !contactEmail.trim().isEmpty();
+        boolean adminHashPresent =
+                adminPasswordHash != null && !adminPasswordHash.trim().isEmpty();
+        if (contactEmailPresent && !adminHashPresent) {
+            log.error("{} requestId={}", OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH,
+                    requestId);
+            throw new RuntimeException(
+                    OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
+        }
+
         // 1. 프로시저 먼저 시도
         try {
             log.info("📞 프로시저 호출 시도: ProcessOnboardingApproval");
@@ -77,8 +88,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String procedureMessage = (String) procedureResult.get("message");
 
             if (procedureSuccess != null && procedureSuccess) {
-                log.info("✅ 프로시저 실행 성공: {}", procedureMessage);
-                return procedureResult;
+                log.info("✅ 프로시저 실행 성공. 대시보드·관리자 테넌트 역할 정합성 보강 실행: {}", procedureMessage);
+                return completeApprovalWithDashboardAndRoles(requestId, tenantId, tenantName,
+                        businessType, approvedBy, contactEmail, adminPasswordHash, procedureMessage);
             } else {
                 log.warn("⚠️ 프로시저 실행 실패: {} - Java fallback으로 전환", procedureMessage);
             }
@@ -138,7 +150,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     && !adminPasswordHash.trim().isEmpty()) {
                 // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId,
-                        contactEmail, tenantName, adminPasswordHash, approvedBy);
+                        contactEmail, tenantName, adminPasswordHash, approvedBy, businessType);
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
 
                 if (!adminResult.isSuccess()) {
@@ -153,8 +165,17 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             + adminResult.getMessage());
                 }
                 // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
+            } else if (contactEmail != null && !contactEmail.trim().isEmpty()) {
+                log.error("❌ 관리자 계정 생성 불가: 연락 이메일은 있으나 adminPasswordHash가 없음");
+                markTransactionForRollback(
+                        OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
+                result.put("success", false);
+                result.put("message", OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
+                result.put("stepResults", stepResults);
+                throw new RuntimeException(
+                        OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
             } else {
-                log.warn("⚠️ 관리자 계정 생성 건너뜀: contactEmail 또는 adminPasswordHash가 없음");
+                log.warn("⚠️ 관리자 계정 생성 건너뜀: 연락 이메일 없음");
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE,
                         StepResult.skip(OnboardingConstants.MSG_ADMIN_CREATE_SKIPPED));
             }
@@ -231,6 +252,55 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         } catch (Exception e) {
             log.warn("트랜잭션 롤백 표시 실패 (무시): {}", e.getMessage());
         }
+    }
+
+    /**
+     * 프로시저(또는 레거시 폴백)가 success=true를 반환한 뒤, 관리자 tenant 역할 할당·대시보드 전량 생성을 Java에서 보장한다.
+     * (프로시저만 성공하고 Step 4가 생략되던 경로를 막음)
+     *
+     * @param priorMessage 프로시저 또는 폴백 메시지
+     * @return success=true 및 stepResults
+     */
+    private Map<String, Object> completeApprovalWithDashboardAndRoles(java.util.UUID requestId,
+            String tenantId, String tenantName, String businessType, String approvedBy,
+            String contactEmail, String adminPasswordHash, String priorMessage) {
+
+        Map<String, Object> stepResults = new HashMap<>();
+        if (contactEmail != null && !contactEmail.trim().isEmpty() && adminPasswordHash != null
+                && !adminPasswordHash.trim().isEmpty()) {
+            StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId, contactEmail,
+                    tenantName, adminPasswordHash, approvedBy, businessType);
+            stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
+            if (!adminResult.isSuccess()) {
+                throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
+                        + adminResult.getMessage());
+            }
+        } else if (contactEmail != null && !contactEmail.trim().isEmpty()) {
+            throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
+        } else {
+            stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE,
+                    StepResult.skip(OnboardingConstants.MSG_ADMIN_CREATE_SKIPPED));
+        }
+
+        entityManager.flush();
+        entityManager.clear();
+
+        StepResult dashboardResult =
+                executeStepDashboardCreation(requestId, tenantId, businessType, approvedBy);
+        stepResults.put(OnboardingConstants.STEP_DASHBOARD_CREATE, dashboardResult);
+        if (!dashboardResult.isSuccess()) {
+            throw new RuntimeException(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": "
+                    + dashboardResult.getMessage());
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        String combined = priorMessage != null && !priorMessage.isBlank()
+                ? priorMessage + " | " + OnboardingConstants.MSG_POST_PROCEDURE_RECONCILE_COMPLETE
+                : OnboardingConstants.MSG_POST_PROCEDURE_RECONCILE_COMPLETE;
+        result.put("message", combined);
+        result.put("stepResults", stepResults);
+        return result;
     }
 
     /**
@@ -374,14 +444,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * Step 3: 관리자 계정 생성
      */
     private StepResult executeStepAdminAccountCreation(java.util.UUID requestId, String tenantId,
-            String contactEmail, String tenantName, String adminPasswordHash, String approvedBy) {
+            String contactEmail, String tenantName, String adminPasswordHash, String approvedBy,
+            String businessType) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("📋 Step 3: 관리자 계정 생성");
         log.info(OnboardingConstants.LOG_SEPARATOR);
 
         try {
             createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash,
-                    approvedBy);
+                    approvedBy, businessType);
             log.info("✅ Step 3 성공: 관리자 계정 생성 완료 - tenantId={}, email={}", tenantId, contactEmail);
             return StepResult.success(OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
         } catch (Exception e) {
@@ -872,28 +943,45 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         }
                     }
 
-                    // 3. 관리자 계정 생성 (테넌트가 존재하는 경우에만)
-                    if (tenantCreated && contactEmail != null && !contactEmail.trim().isEmpty()
-                            && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
-                        // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
-                        try {
-                            createAdminAccountDirectly(tenantId, contactEmail, tenantName,
-                                    adminPasswordHash, approvedBy);
-                            fallbackMessage.append("관리자=OK");
-                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
-                        } catch (Exception e) {
-                            log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId,
-                                    e.getMessage());
-                            fallbackMessage.append("관리자=실패");
-                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
+                    // 3. 관리자 계정 생성 (연락 이메일이 있으면 비밀번호 해시 필수, 실패 시 전체 실패)
+                    boolean adminOk = true;
+                    boolean adminRequired =
+                            contactEmail != null && !contactEmail.trim().isEmpty();
+                    if (tenantCreated && adminRequired) {
+                        if (adminPasswordHash == null || adminPasswordHash.trim().isEmpty()) {
+                            adminOk = false;
+                            fallbackMessage.append("관리자=비밀번호해시없음, ");
+                        } else {
+                            try {
+                                createAdminAccountDirectly(tenantId, contactEmail, tenantName,
+                                        adminPasswordHash, approvedBy, businessType);
+                                fallbackMessage.append("관리자=OK");
+                            } catch (Exception e) {
+                                adminOk = false;
+                                log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId,
+                                        e.getMessage());
+                                fallbackMessage.append("관리자=실패");
+                            }
                         }
                     }
 
-                    // 최소한 테넌트가 생성되었으면 성공으로 처리
                     if (tenantCreated) {
-                        success = true;
-                        message = fallbackMessage.toString();
-                        log.info("✅ Java 재시도 성공: {}", message);
+                        if (!rolesApplied) {
+                            success = false;
+                            message = fallbackMessage.toString();
+                            log.error(
+                                    "❌ Java 재시도: 테넌트는 생성되었으나 역할 템플릿 미적용으로 승인 불가: {}",
+                                    message);
+                        } else if (adminRequired && !adminOk) {
+                            success = false;
+                            message = fallbackMessage.toString();
+                            log.error("❌ Java 재시도: 테넌트는 생성되었으나 관리자 계정 요건 미충족: {}",
+                                    message);
+                        } else {
+                            success = true;
+                            message = fallbackMessage.toString();
+                            log.info("✅ Java 재시도 성공: {}", message);
+                        }
                     } else {
                         success = false;
                         message = "프로시저 실패 및 Java 재시도 실패: "
@@ -906,7 +994,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
                         try {
                             createAdminAccountDirectly(tenantId, contactEmail, tenantName,
-                                    adminPasswordHash, approvedBy);
+                                    adminPasswordHash, approvedBy, businessType);
                             log.info("관리자 계정 생성 완료 (Java 직접 생성)");
                         } catch (Exception e) {
                             log.warn("관리자 계정 직접 생성 실패 (프로시저에서 이미 생성되었을 수 있음): {}", e.getMessage());
@@ -1000,10 +1088,110 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
+     * {@link #ensureRolesAppliedOnce} 와 동일한 업종→템플릿 접두사 규칙으로 원장(DIRECTOR) 템플릿 코드를 반환한다.
+     */
+    private String resolveDirectorTemplateCode(String businessType) {
+        return resolveRoleTemplatePrefixForBusinessType(businessType) + "_DIRECTOR";
+    }
+
+    private String resolveRoleTemplatePrefixForBusinessType(String businessType) {
+        if ("COUNSELING".equals(businessType)) {
+            return "COUNSELING";
+        }
+        if ("ACADEMY".equals(businessType)) {
+            return "ACADEMY";
+        }
+        return "CONSULTATION";
+    }
+
+    private boolean isBusinessTypeWithDefaultRoles(String businessType) {
+        return "CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)
+                || "ACADEMY".equals(businessType);
+    }
+
+    /**
+     * 관리자 users 행에 업종별 원장(DIRECTOR) {@code tenant_roles} 1건에 대응하는 {@code user_role_assignments}를
+     * idempotent 하게 맞춘다. 실패 시 RuntimeException (상위 트랜잭션 롤백·OnboardingServiceImpl ON_HOLD 정책과 정합).
+     */
+    private void ensureAdminDirectorRoleAssignment(String tenantId, String businessType,
+            String contactEmail, String approvedBy) {
+        if (!isBusinessTypeWithDefaultRoles(businessType)) {
+            log.error("원장 역할 할당: 지원하지 않는 업종 businessType={}", businessType);
+            throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED
+                    + " (지원하지 않는 업종: " + businessType + ")");
+        }
+        String email = contactEmail.toLowerCase().trim();
+        Long userPk;
+        try {
+            userPk = jdbcTemplate.queryForObject(
+                    "SELECT id FROM users WHERE tenant_id = ? AND LOWER(TRIM(email)) = ? AND role = 'ADMIN' "
+                            + "AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1",
+                    Long.class, tenantId, email);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            userPk = null;
+        }
+        if (userPk == null) {
+            log.error("원장 역할 할당: 관리자 users 행 없음 tenantId={}, email={}", tenantId, email);
+            throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED
+                    + " (관리자 사용자 없음)");
+        }
+
+        String directorTemplateCode = resolveDirectorTemplateCode(businessType);
+        String roleTemplateId = roleTemplateRepository
+                .findByTemplateCodeAndIsDeletedFalse(directorTemplateCode)
+                .map(rt -> rt.getRoleTemplateId())
+                .orElse(null);
+        if (roleTemplateId == null || roleTemplateId.isBlank()) {
+            log.error("원장 역할 할당: role_templates 에 템플릿 없음 code={}", directorTemplateCode);
+            throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED
+                    + " (role_template 없음: " + directorTemplateCode + ")");
+        }
+
+        String tenantRoleId;
+        try {
+            tenantRoleId = jdbcTemplate.queryForObject(
+                    "SELECT tenant_role_id FROM tenant_roles WHERE tenant_id = ? AND role_template_id = ? "
+                            + "AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1",
+                    String.class, tenantId, roleTemplateId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            tenantRoleId = null;
+        }
+        if (tenantRoleId == null || tenantRoleId.isBlank()) {
+            log.error("원장 역할 할당: tenant_roles 에 원장 역할 없음 tenantId={}, roleTemplateId={}", tenantId,
+                    roleTemplateId);
+            throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED);
+        }
+
+        Integer existing;
+        try {
+            existing = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM user_role_assignments WHERE user_id = ? AND tenant_id = ? "
+                            + "AND tenant_role_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                    Integer.class, userPk, tenantId, tenantRoleId);
+        } catch (Exception e) {
+            existing = 0;
+        }
+        if (existing != null && existing > 0) {
+            log.debug("원장 역할 이미 할당됨 userPk={}, tenantRoleId={}", userPk, tenantRoleId);
+            return;
+        }
+
+        jdbcTemplate.update(
+                "INSERT INTO user_role_assignments (assignment_id, user_id, tenant_id, tenant_role_id, "
+                        + "branch_id, effective_from, effective_to, is_active, assigned_by, assignment_reason, "
+                        + "created_at, updated_at, is_deleted, version) VALUES (UUID(), ?, ?, ?, NULL, "
+                        + "CURDATE(), NULL, TRUE, ?, ?, NOW(), NOW(), FALSE, 0)",
+                userPk, tenantId, tenantRoleId, approvedBy,
+                OnboardingConstants.ASSIGNMENT_REASON_ONBOARDING_AUTO);
+        log.info("원장(관리자) tenant 역할 할당 완료: tenantId={}, userPk={}, tenantRoleId={}", tenantId, userPk,
+                tenantRoleId);
+    }
+
+    /**
      * 관리자 계정을 직접 생성 (프로시저 실패 시 fallback)
      */
     private void createAdminAccountDirectly(String tenantId, String contactEmail, String tenantName,
-            String adminPasswordHash, String approvedBy) {
+            String adminPasswordHash, String approvedBy, String businessType) {
         log.info("관리자 계정 직접 생성 시작: tenantId={}, email={}", tenantId, contactEmail);
 
         // 이미 존재하는지 확인
@@ -1024,6 +1212,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         if (existingCount != null && existingCount > 0) {
             log.info("관리자 계정이 이미 존재합니다: {}", contactEmail);
+            ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
             return;
         }
 
@@ -1091,11 +1280,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             }
             if (finalCount != null && finalCount > 0) {
                 log.info("관리자 계정이 이미 존재합니다 (중복 키 오류 후 확인): {}", email);
+                ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
                 return;
             }
             throw e; // 다른 오류면 재발생
         }
 
+        ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
         log.info("관리자 계정 생성 완료: email={}, tenantId={}", email, tenantId);
     }
 
@@ -1240,15 +1431,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 || "ACADEMY".equals(businessType)) {
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
-                // 각 업종별 템플릿 사용
-                String templatePrefix;
-                if ("COUNSELING".equals(businessType)) {
-                    templatePrefix = "COUNSELING";
-                } else if ("ACADEMY".equals(businessType)) {
-                    templatePrefix = "ACADEMY";
-                } else {
-                    templatePrefix = "CONSULTATION";
-                }
+                String templatePrefix = resolveRoleTemplatePrefixForBusinessType(businessType);
 
                 String directorTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_DIRECTOR")

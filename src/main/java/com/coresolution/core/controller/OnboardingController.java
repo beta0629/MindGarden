@@ -14,6 +14,7 @@ import com.coresolution.core.controller.dto.OnboardingUpdateRequest;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.util.OpsPermissionUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -191,7 +192,6 @@ public class OnboardingController extends BaseApiController {
 
             String finalChecklistJson = payload.checklistJson();
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
                 Map<String, Object> checklist = new HashMap<>();
 
                 // 기존 checklistJson 파싱
@@ -221,14 +221,32 @@ public class OnboardingController extends BaseApiController {
                             payload.subdomain().trim().toLowerCase());
                 }
 
+                Object adminPwObj = checklist.get("adminPassword");
+                String adminPwStr = null;
+                if (adminPwObj instanceof String) {
+                    adminPwStr = ((String) adminPwObj).trim();
+                } else if (adminPwObj != null) {
+                    adminPwStr = String.valueOf(adminPwObj).trim();
+                }
+                if (adminPwStr == null || adminPwStr.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            OnboardingConstants.ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE);
+                }
+
                 finalChecklistJson = objectMapper.writeValueAsString(checklist);
                 log.info(
                         "checklistJson 병합 완료: hasAdminPassword={}, hasRegionCode={}, hasBrandName={}, hasSubdomain={}",
                         checklist.containsKey("adminPassword"), checklist.containsKey("regionCode"),
                         checklist.containsKey("brandName"),
                         checklist.containsKey(CHECKLIST_KEY_SUBDOMAIN));
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("checklistJson 병합 실패: {}", e.getMessage(), e);
+                throw new IllegalArgumentException(
+                        OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED + " 원인: "
+                                + e.getMessage(),
+                        e);
             }
 
             OnboardingRequest request = onboardingService.create(payload.tenantId(),

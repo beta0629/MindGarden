@@ -2,9 +2,11 @@ package com.coresolution.core.integration;
 
 import com.coresolution.consultation.ConsultationManagementApplication;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.TenantDashboard;
 import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantDashboardRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -43,6 +45,9 @@ class DynamicCardLayoutIntegrationTest {
     
     @Autowired
     private TenantRoleRepository tenantRoleRepository;
+
+    @Autowired
+    private RoleTemplateRepository roleTemplateRepository;
     
     @Autowired
     private TenantDashboardRepository dashboardRepository;
@@ -55,7 +60,6 @@ class DynamicCardLayoutIntegrationTest {
     
     private String tenantId;
     private Tenant testTenant;
-    private TenantRole testRole;
     
     @BeforeEach
     void setUp() {
@@ -73,17 +77,24 @@ class DynamicCardLayoutIntegrationTest {
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         
-        // 테스트용 역할 생성
-        String roleId = UUID.randomUUID().toString();
-        testRole = TenantRole.builder()
-                .tenantRoleId(roleId)
-                .tenantId(tenantId)
-                .name("테스트 역할") // name 필수
-                .nameKo("테스트 역할")
-                .nameEn("Test Role")
-                .isActive(true)
-                .build();
-        testRole = tenantRoleRepository.save(testRole);
+        java.util.List<RoleTemplate> templates =
+                roleTemplateRepository.findByBusinessTypeAndActive("CONSULTATION");
+        for (RoleTemplate template : templates) {
+            String roleId = UUID.randomUUID().toString();
+            String nameKo = template.getNameKo() != null ? template.getNameKo() : template.getName();
+            TenantRole role = TenantRole.builder()
+                    .tenantRoleId(roleId)
+                    .tenantId(tenantId)
+                    .roleTemplateId(template.getRoleTemplateId())
+                    .name(nameKo != null ? nameKo : template.getTemplateCode())
+                    .nameKo(nameKo)
+                    .nameEn(template.getNameEn() != null ? template.getNameEn() : template.getName())
+                    .isActive(true)
+                    .displayOrder(template.getDisplayOrder())
+                    .build();
+            role.setIsDeleted(false);
+            tenantRoleRepository.save(role);
+        }
     }
     
     @AfterEach
@@ -95,9 +106,6 @@ class DynamicCardLayoutIntegrationTest {
     @Test
     @DisplayName("대시보드 생성 시 cardLayout 설정 자동 추가 확인")
     void testDashboardCreation_WithCardLayout() throws Exception {
-        // Given: 대시보드 생성 요청
-        String dashboardName = "테스트 대시보드";
-        
         // When: 대시보드 생성
         var dashboardResponse = dashboardService.createDefaultDashboards(
                 tenantId, "CONSULTATION", "test-user");

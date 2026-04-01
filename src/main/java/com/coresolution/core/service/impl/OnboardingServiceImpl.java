@@ -537,6 +537,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             String adminPasswordHash = null;
             String subdomain = request.getSubdomain(); // 온보딩 요청의 서브도메인
             Map<String, String> dashboardTemplates = null;
+            final boolean contactEmailPresent =
+                    contactEmail != null && !contactEmail.trim().isEmpty();
 
             if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
                 try {
@@ -544,54 +546,94 @@ public class OnboardingServiceImpl implements OnboardingService {
                             objectMapper.readValue(request.getChecklistJson(),
                                     new TypeReference<Map<String, Object>>() {});
 
-                    String adminPassword = (String) checklist.get("adminPassword");
-                    if (adminPassword != null && !adminPassword.trim().isEmpty()) {
+                    String adminPassword = null;
+                    Object adminPwObj = checklist.get("adminPassword");
+                    if (adminPwObj instanceof String) {
+                        adminPassword = ((String) adminPwObj).trim();
+                        if (adminPassword.isEmpty()) {
+                            adminPassword = null;
+                        }
+                    } else if (adminPwObj != null) {
+                        String asText = String.valueOf(adminPwObj).trim();
+                        adminPassword = asText.isEmpty() ? null : asText;
+                    }
+                    if (adminPassword != null) {
                         adminPasswordHash = passwordEncoder.encode(adminPassword);
                         log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
-                    } else {
+                    } else if (contactEmailPresent) {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
                     }
 
                     // 서브도메인이 없으면 checklistJson에서 추출 시도
                     if (subdomain == null || subdomain.trim().isEmpty()) {
-                        String checklistSubdomain = (String) checklist.get("subdomain");
-                        if (checklistSubdomain != null && !checklistSubdomain.trim().isEmpty()) {
-                            subdomain = checklistSubdomain.trim().toLowerCase();
-                            log.info("checklistJson에서 서브도메인 추출: requestId={}, subdomain={}",
-                                    requestId, subdomain);
+                        Object sdObj = checklist.get("subdomain");
+                        if (sdObj instanceof String) {
+                            String checklistSubdomain = ((String) sdObj).trim();
+                            if (!checklistSubdomain.isEmpty()) {
+                                subdomain = checklistSubdomain.toLowerCase();
+                                log.info("checklistJson에서 서브도메인 추출: requestId={}, subdomain={}",
+                                        requestId, subdomain);
+                            }
                         }
                     }
 
-                    @SuppressWarnings("unchecked")
-                    Map<String, String> templates =
-                            (Map<String, String>) checklist.get("dashboardTemplates");
-                    if (templates != null && !templates.isEmpty()) {
-                        dashboardTemplates = templates;
-                        log.info("대시보드 템플릿 선택 정보 발견: requestId={}, templates={}", requestId,
-                                templates);
-                    } else {
-                        log.debug("checklistJson에 dashboardTemplates가 없음 (기본 템플릿 사용): requestId={}",
-                                requestId);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> templates =
+                                (Map<String, String>) checklist.get("dashboardTemplates");
+                        if (templates != null && !templates.isEmpty()) {
+                            dashboardTemplates = templates;
+                            log.info("대시보드 템플릿 선택 정보 발견: requestId={}, templates={}", requestId,
+                                    templates);
+                        } else {
+                            log.debug("checklistJson에 dashboardTemplates가 없음 (기본 템플릿 사용): requestId={}",
+                                    requestId);
+                        }
+                    } catch (ClassCastException e) {
+                        log.warn("dashboardTemplates 형식이 올바르지 않음: requestId={}, error={}", requestId,
+                                e.getMessage());
                     }
 
-                    @SuppressWarnings("unchecked")
-                    Map<String, java.util.List<String>> widgets =
-                            (Map<String, java.util.List<String>>) checklist.get("dashboardWidgets");
-                    if (widgets != null && !widgets.isEmpty()) {
-                        log.info("대시보드 위젯 편집 정보 발견: requestId={}, widgets={}", requestId, widgets);
-                    } else {
-                        log.debug(
-                                "checklistJson에 dashboardWidgets가 없음 (템플릿 기본 위젯 사용): requestId={}",
-                                requestId);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Map<String, java.util.List<String>> widgets =
+                                (Map<String, java.util.List<String>>) checklist
+                                        .get("dashboardWidgets");
+                        if (widgets != null && !widgets.isEmpty()) {
+                            log.info("대시보드 위젯 편집 정보 발견: requestId={}, widgets={}", requestId,
+                                    widgets);
+                        } else {
+                            log.debug(
+                                    "checklistJson에 dashboardWidgets가 없음 (템플릿 기본 위젯 사용): requestId={}",
+                                    requestId);
+                        }
+                    } catch (ClassCastException e) {
+                        log.warn("dashboardWidgets 형식이 올바르지 않음: requestId={}, error={}", requestId,
+                                e.getMessage());
                     }
                 } catch (JsonProcessingException e) {
-                    log.warn(
-                            "checklistJson 파싱 실패 (관리자 계정 생성 및 대시보드 템플릿 스킵): requestId={}, error={}",
-                            requestId, e.getMessage());
-                } catch (ClassCastException e) {
-                    log.warn("dashboardTemplates 형식이 올바르지 않음: requestId={}, error={}", requestId,
-                            e.getMessage());
+                    log.error("checklistJson 파싱 실패: requestId={}, error={}", requestId, e.getMessage());
+                    if (contactEmailPresent) {
+                        request.setStatus(OnboardingStatus.ON_HOLD);
+                        String detail = OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_PARSE_FOR_APPROVAL
+                                + " (" + e.getMessage() + ")";
+                        request.setDecisionNote(note != null ? note + "\n[승인 중단] " + detail
+                                : "[승인 중단] " + detail);
+                        return repository.save(request);
+                    }
                 }
+            }
+
+            if (contactEmailPresent
+                    && (adminPasswordHash == null || adminPasswordHash.trim().isEmpty())) {
+                log.error("연락 이메일은 있으나 관리자 비밀번호 해시를 만들 수 없음: requestId={}", requestId);
+                request.setStatus(OnboardingStatus.ON_HOLD);
+                request.setDecisionNote(note != null
+                        ? note + "\n[승인 중단] "
+                                + OnboardingConstants.ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_FOR_APPROVAL
+                        : "[승인 중단] "
+                                + OnboardingConstants.ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_FOR_APPROVAL);
+                return repository.save(request);
             }
 
             final String finalContactEmail = contactEmail;
@@ -783,11 +825,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
         }
 
-        // 최종 상태 결정
+        // 최종 상태 결정 (승인만 성공/보류로 정규화, 그 외 REJECTED 등은 요청 status 유지)
         final Boolean finalSuccess = success;
-        final OnboardingStatus finalStatus =
-                (finalSuccess != null && finalSuccess) ? OnboardingStatus.APPROVED
-                        : OnboardingStatus.ON_HOLD;
+        final OnboardingStatus finalStatus;
+        if (status == OnboardingStatus.APPROVED) {
+            finalStatus = (finalSuccess != null && finalSuccess) ? OnboardingStatus.APPROVED
+                    : OnboardingStatus.ON_HOLD;
+        } else {
+            finalStatus = status;
+        }
 
         // 엔티티를 다시 조회하여 최신 버전 사용 (OptimisticLockException 방지)
         // initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션을 사용하면서

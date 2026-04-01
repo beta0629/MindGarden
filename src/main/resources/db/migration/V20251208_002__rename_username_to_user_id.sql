@@ -1,16 +1,34 @@
--- 표준화 2025-12-08: username 컬럼을 user_id로 변경
--- Java 필드명과 DB 컬럼명 일치
+-- 표준화 2025-12-08: username → user_id (재실행·부분 적용)
+SET @dbname = DATABASE();
 
--- 1. users 테이블의 username 컬럼을 user_id로 변경
-ALTER TABLE users 
-CHANGE COLUMN username user_id VARCHAR(50) NOT NULL;
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'users' AND COLUMN_NAME = 'username') > 0
+    AND (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'users' AND COLUMN_NAME = 'user_id') = 0,
+    'ALTER TABLE users CHANGE COLUMN username user_id VARCHAR(50) NOT NULL',
+    'SELECT 1'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- 2. 인덱스 이름 변경 (UK_users_username -> UK_users_user_id)
-ALTER TABLE users 
-DROP INDEX UK_users_username;
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'users' AND INDEX_NAME = 'UK_users_username') > 0,
+    'ALTER TABLE users DROP INDEX UK_users_username',
+    'SELECT 1'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-ALTER TABLE users 
-ADD CONSTRAINT UK_users_user_id UNIQUE (user_id);
-
--- 3. 관련 외래키나 참조가 있다면 확인 필요 (현재는 없음)
-
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'users' AND INDEX_NAME = 'UK_users_user_id') > 0,
+    'SELECT 1',
+    'ALTER TABLE users ADD CONSTRAINT UK_users_user_id UNIQUE (user_id)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

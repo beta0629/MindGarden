@@ -33,8 +33,10 @@ public class SecurityAuditService {
     private final ConcurrentHashMap<String, SuspiciousActivity> suspiciousIPs = new ConcurrentHashMap<>();
     
     // SQL 인젝션 패턴
+    // 주의: URI·쿼리에 포함될 수 있는 단어(예: subscriptions → 부분문자열 "script")는 제외한다.
+    // script/javascript/vbscript 계열은 XSS_PATTERNS에서 별도 처리한다.
     private static final List<Pattern> SQL_INJECTION_PATTERNS = List.of(
-        Pattern.compile("(?i).*('|(\\-\\-)|(;)|(\\|)|(\\*)|(%)|(union)|(select)|(insert)|(delete)|(update)|(drop)|(create)|(alter)|(exec)|(execute)|(script)|(javascript)|(vbscript)).*"),
+        Pattern.compile("(?i).*('|(\\-\\-)|(;)|(\\|)|(\\*)|(%)|\\bunion\\b|\\bselect\\b|\\binsert\\b|\\bdelete\\b|\\bupdate\\b|\\bdrop\\b|\\bcreate\\b|\\balter\\b|\\bexec\\b|\\bexecute\\b).*"),
         Pattern.compile("(?i).*(or\\s+1=1|and\\s+1=1|'\\s*or\\s*'1'='1|'\\s*or\\s*1=1).*"),
         Pattern.compile("(?i).*(union\\s+select|union\\s+all\\s+select).*")
     );

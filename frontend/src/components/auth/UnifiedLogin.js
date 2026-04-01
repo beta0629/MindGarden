@@ -37,7 +37,6 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // @deprecated 레거시 함수는 하위 호환성을 위해 유지하되, 새로운 코드에서는 사용하지 않음
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
-import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import {
@@ -486,11 +485,6 @@ const UnifiedLogin = () => {
       password: passwordInput?.value || ''
     };
 
-    console.log('📋 DOM에서 가져온 실제 폼 데이터:', actualFormData);
-    console.log('📧 실제 이메일 값:', JSON.stringify(actualFormData.email), '길이:', actualFormData.email?.length);
-    console.log('🔒 실제 비밀번호 값:', JSON.stringify(actualFormData.password), '길이:', actualFormData.password?.length);
-    console.log('📋 React 상태 formData:', JSON.stringify(formData));
-
     if (!actualFormData.email || !actualFormData.password) {
       console.log('❌ 폼 데이터 유효성 검사 실패');
       showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
@@ -500,8 +494,6 @@ const UnifiedLogin = () => {
     console.log('✅ 폼 데이터 유효성 검사 통과');
     setIsLoading(true);
     try {
-      console.log('🔐 통합 로그인 요청:', actualFormData);
-
       const result = await authAPI.login(actualFormData);
       console.log('🔐 로그인 응답:', result);
 
@@ -510,61 +502,14 @@ const UnifiedLogin = () => {
 
       // 중복 로그인 확인 요청 체크 (성공 체크보다 먼저)
       if (loginData.requiresConfirmation || result.data?.requiresConfirmation || result.requiresConfirmation) {
-        // 중복 로그인 확인 요청
+        // 중복 로그인 확인 요청 — DuplicateLoginModal은 loginData만 사용(onConfirm/onCancel 미사용)
         setIsLoading(false);
         const modalData = {
           isOpen: true,
           message: (result.data?.message || result.message || loginData.message) || '다른 기기에서 로그인되어 있습니다. 계속하시겠습니까?',
-          onConfirm: async () => {
-            try {
-              const confirmResult = await csrfTokenManager.post('/api/v1/auth/confirm-duplicate-login', {
-                email: formData.email,
-                password: formData.password
-              });
-              const confirmResponse = await confirmResult.json();
-              console.log('🔔 중복 로그인 확인 응답:', confirmResponse);
-
-              // ApiResponse 래퍼 처리
-              const confirmData = confirmResponse.data || confirmResponse;
-
-              if (confirmResponse.success && confirmData.user) {
-                sessionManager.setUser(confirmData.user, {
-                  sessionId: confirmData.sessionId
-                });
-                // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-                await checkSession(true);
-
-                // 백엔드에서 반환한 멀티 테넌트 정보 확인
-                if (confirmData.isMultiTenant && confirmData.requiresTenantSelection && confirmData.accessibleTenants) {
-                  // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
-                  console.log('🔄 멀티 테넌트 사용자 감지:', confirmData.accessibleTenants);
-                  setAccessibleTenants(confirmData.accessibleTenants);
-                  setShowTenantSelection(true);
-                  setIsLoading(false);
-                  return;
-                }
-
-                // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
-                const searchParams = new URLSearchParams(location.search);
-                const redirectPath = searchParams.get('redirect');
-
-                if (redirectPath) {
-                  // redirect 파라미터가 있으면 해당 경로로 이동
-                  navigate(redirectPath, { replace: true });
-                } else {
-                  // redirect 파라미터가 없으면 동적 대시보드로 이동
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                  const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-                  await redirectToDynamicDashboard(confirmData, navigate);
-                }
-              }
-            } catch (error) {
-              console.error('중복 로그인 확인 오류:', error);
-              showTooltip('로그인 처리 중 오류가 발생했습니다.', 'error');
-            }
-          },
-          onCancel: () => {
-            setIsLoading(false);
+          loginData: {
+            email: actualFormData.email,
+            password: actualFormData.password
           }
         };
         setDuplicateLoginModal(modalData);
@@ -600,7 +545,7 @@ const UnifiedLogin = () => {
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
           console.log('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
           // 입력한 비밀번호를 임시 비밀번호로 저장 (비밀번호 변경 모달에서 현재 비밀번호로 사용)
-          setTempPassword(formData.password);
+          setTempPassword(actualFormData.password);
           setIsLoading(false);
           setShowPasswordChangeModal(true);
           return; // 비밀번호 변경 완료 전까지 리다이렉트하지 않음

@@ -384,7 +384,15 @@ export const SessionProvider = ({ children }) => {
       
       // 상태 초기화
       dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-      
+      dispatch({
+        type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL,
+        payload: {
+          isOpen: false,
+          message: '',
+          loginData: null
+        }
+      });
+
       console.log('✅ 중앙 세션 로그아웃 완료');
       
       // 로그인 페이지로 즉시 리다이렉트 (sessionManager에서 처리하므로 여기서는 스킵)

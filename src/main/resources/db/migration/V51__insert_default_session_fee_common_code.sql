@@ -18,7 +18,9 @@ INSERT INTO common_codes (
     is_active,
     extra_data,
     created_at,
-    updated_at
+    updated_at,
+    is_deleted,
+    version
 )
 VALUES (
     NULL, -- 코어 솔루션 코드 (모든 테넌트 공통)
@@ -31,7 +33,9 @@ VALUES (
     true,
     '{"value": 50000, "unit": "원", "description": "기본 세션비"}',
     NOW(),
-    NOW()
+    NOW(),
+    0,
+    0
 )
 ON DUPLICATE KEY UPDATE
     code_label = VALUES(code_label),

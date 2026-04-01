@@ -1,0 +1,44 @@
+# 운영 헬스·디스크·로그 디렉터리 스냅샷 (읽기 전용)
+# deploy-production.yml 과 트리거·책임 분리 — 배포 파이프라인에서 호출하지 않음.
+# 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
+# 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
+
+name: 🩺 운영 OPS 헬스 스냅샷
+
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC 하루 2회 (필요 시 cron 조정)
+    - cron: '0 0,12 * * *'
+
+concurrency:
+  group: ops-health-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: 원격 스냅샷
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 스냅샷 스크립트 업로드
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          source: scripts/ops/prod-health-snapshot.sh
+          target: /tmp/
+
+      - name: 원격에서 스냅샷 실행
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          script: bash /tmp/prod-health-snapshot.sh

@@ -1,15 +1,7 @@
--- ============================================
--- V20251212_001__fix_apply_default_role_templates_procedure.sql: Flyway 호환 형식으로 변환
--- 원본 파일: V20251212_001__fix_apply_default_role_templates_procedure.sql.backup
--- 변환일: 1766801923.9424293
--- ============================================
--- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
--- ============================================
+-- ApplyDefaultRoleTemplates 재생성 (Flyway + MySQL 8)
+DROP PROCEDURE IF EXISTS ApplyDefaultRoleTemplates;
 
--- 프로시저 본문 (세미콜론 포함)
--- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
---       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
---       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
+DELIMITER $$
 
 CREATE PROCEDURE ApplyDefaultRoleTemplates(
     IN p_tenant_id VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -102,9 +94,11 @@ proc_label: BEGIN
         SET p_success = TRUE;
         SET p_message = CONCAT('기본 역할 템플릿 적용 완료 (0개) - 업종 ', p_business_type, '에 대한 역할 템플릿이 없거나 이미 생성되었습니다.');
     END IF;
-    
+
     -- 주의: COMMIT 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
-END;
+END$$
+
+DELIMITER ;
 
 -- ============================================
 -- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:

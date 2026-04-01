@@ -8,10 +8,7 @@
 
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
--- 프로시저 본문 (세미콜론 포함)
--- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
---       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
---       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
+DELIMITER $$
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -516,7 +513,9 @@ proc_label: BEGIN
     END IF;
     
     -- 주의: COMMIT/ROLLBACK 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
-END;
+END$$
+
+DELIMITER ;
 
 -- ============================================
 -- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:

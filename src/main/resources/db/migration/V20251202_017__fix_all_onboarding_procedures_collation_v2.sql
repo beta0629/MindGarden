@@ -1,15 +1,7 @@
--- ============================================
--- V20251202_017__fix_all_onboarding_procedures_collation_v2.sql: Flyway 호환 형식으로 변환
--- 원본 파일: V20251202_017__fix_all_onboarding_procedures_collation_v2.sql.backup
--- 변환일: 1766801923.9424293
--- ============================================
--- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
--- ============================================
+-- CreateOrActivateTenant 재생성 v2 (Flyway + MySQL 8)
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
--- 프로시저 본문 (세미콜론 포함)
--- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
---       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
---       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
+DELIMITER $$
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -64,7 +56,9 @@ BEGIN
     END IF;
     
     COMMIT;
-END;
+END$$
+
+DELIMITER ;
 
 -- ============================================
 -- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:

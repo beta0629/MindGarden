@@ -5,7 +5,7 @@
 -- ====================================================================================
 -- 1. 상담 음성 파일 테이블
 -- ====================================================================================
-CREATE TABLE consultation_audio_files (
+CREATE TABLE IF NOT EXISTS consultation_audio_files (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '음성 파일 ID',
     tenant_id VARCHAR(100) COMMENT '테넌트 ID',
     consultation_id BIGINT NOT NULL COMMENT '상담 ID',
@@ -45,7 +45,7 @@ COMMENT='상담 음성 파일 메타데이터';
 -- ====================================================================================
 -- 2. 음성 전사 결과 테이블
 -- ====================================================================================
-CREATE TABLE audio_transcriptions (
+CREATE TABLE IF NOT EXISTS audio_transcriptions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '전사 결과 ID',
     audio_file_id BIGINT NOT NULL COMMENT '음성 파일 ID',
 
@@ -81,7 +81,7 @@ COMMENT='음성 전사 결과';
 -- ====================================================================================
 -- 3. 임상 보고서 테이블
 -- ====================================================================================
-CREATE TABLE clinical_reports (
+CREATE TABLE IF NOT EXISTS clinical_reports (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '보고서 ID',
     tenant_id VARCHAR(100) COMMENT '테넌트 ID',
     consultation_record_id BIGINT NOT NULL COMMENT '상담 기록 ID',
@@ -135,14 +135,66 @@ CREATE TABLE clinical_reports (
 COMMENT='임상 보고서 (SOAP/DAP)';
 
 -- ====================================================================================
--- 4. 기존 위험 징후 알림 테이블 확장
+-- 4. 기존 위험 징후 알림 테이블 확장 (운영 스키마에 alert_level 없음 → title 뒤에 추가)
 -- ====================================================================================
-ALTER TABLE consultation_record_alerts
-ADD COLUMN alert_source VARCHAR(50) DEFAULT 'MANUAL' COMMENT 'AI_DETECTED, MANUAL, KEYWORD_MATCH' AFTER alert_level,
-ADD COLUMN detected_keywords TEXT COMMENT 'JSON array of detected risk keywords' AFTER alert_source,
-ADD COLUMN confidence_score DECIMAL(5,2) COMMENT 'AI 위험도 신뢰도 (0-100)' AFTER detected_keywords,
-ADD COLUMN ai_analysis_text TEXT COMMENT 'AI의 위험도 분석 상세' AFTER confidence_score;
+SET @dbname = DATABASE();
 
--- 인덱스 추가
-CREATE INDEX idx_alert_source ON consultation_record_alerts(alert_source);
-CREATE INDEX idx_confidence_score ON consultation_record_alerts(confidence_score);
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND COLUMN_NAME = 'alert_source') > 0,
+    'SELECT 1',
+    'ALTER TABLE consultation_record_alerts ADD COLUMN alert_source VARCHAR(50) DEFAULT ''MANUAL'' COMMENT ''AI_DETECTED, MANUAL, KEYWORD_MATCH'' AFTER title'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND COLUMN_NAME = 'detected_keywords') > 0,
+    'SELECT 1',
+    'ALTER TABLE consultation_record_alerts ADD COLUMN detected_keywords TEXT COMMENT ''JSON array of detected risk keywords'' AFTER alert_source'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND COLUMN_NAME = 'confidence_score') > 0,
+    'SELECT 1',
+    'ALTER TABLE consultation_record_alerts ADD COLUMN confidence_score DECIMAL(5,2) COMMENT ''AI 위험도 신뢰도 (0-100)'' AFTER detected_keywords'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND COLUMN_NAME = 'ai_analysis_text') > 0,
+    'SELECT 1',
+    'ALTER TABLE consultation_record_alerts ADD COLUMN ai_analysis_text TEXT COMMENT ''AI의 위험도 분석 상세'' AFTER confidence_score'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND INDEX_NAME = 'idx_alert_source') > 0,
+    'SELECT 1',
+    'CREATE INDEX idx_alert_source ON consultation_record_alerts(alert_source)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultation_record_alerts' AND INDEX_NAME = 'idx_confidence_score') > 0,
+    'SELECT 1',
+    'CREATE INDEX idx_confidence_score ON consultation_record_alerts(confidence_score)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

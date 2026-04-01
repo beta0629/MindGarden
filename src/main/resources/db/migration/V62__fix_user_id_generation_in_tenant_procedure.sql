@@ -3,10 +3,12 @@
 -- 원본 파일: V62__fix_user_id_generation_in_tenant_procedure.sql.backup
 -- 변환일: 1766801923.9424293
 -- ============================================
--- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- Flyway + MySQL 8: 프로시저 본문은 DELIMITER로 묶어 세미콜론 분리 오류 방지
 -- ============================================
 
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
+
+DELIMITER $$
 
 -- 프로시저 본문 (세미콜론 포함)
 -- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
@@ -735,7 +737,9 @@ BEGIN
     END IF;
     
     COMMIT;
-END;
+END$$
+
+DELIMITER ;
 
 -- ============================================
 -- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:

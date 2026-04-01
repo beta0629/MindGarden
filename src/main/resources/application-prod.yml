@@ -180,14 +180,13 @@ production:
       allow-credentials: true
       exposed-headers: Set-Cookie
   
-  # 로깅 설정
+  # 로깅 설정 (운영 안정화 후 콘솔·파일 노이즈 축소: ERROR 중심)
   logging:
-    # 프로덕션용 로깅 레벨
     level:
-      root: WARN
-      com.mindgarden: INFO
-      org.springframework: WARN
-      org.hibernate: WARN
+      root: ERROR
+      com.mindgarden: ERROR
+      org.springframework: ERROR
+      org.hibernate: ERROR
 
 # JWT 설정 (프로덕션용)
 jwt:
@@ -207,19 +206,22 @@ encryption:
 frontend:
   base-url: ${FRONTEND_BASE_URL:}
 
-# 로깅 설정 (프로덕션용)
+# 로깅 설정 (프로덕션용, Spring Boot 표준 logging.*)
 logging:
   level:
-    com.mindgarden.consultation: INFO
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
-    org.springframework.web: WARN
-    org.springframework.security: WARN
-    org.springframework.boot.autoconfigure: WARN
-    org.hibernate: WARN
-    com.zaxxer.hikari: WARN
-    org.springframework.orm.jpa: WARN
-    org.springframework.transaction: WARN
+    root: ERROR
+    com.mindgarden: ERROR
+    com.coresolution: ERROR
+    com.mindgarden.consultation: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.type.descriptor.sql.BasicBinder: ERROR
+    org.springframework.web: ERROR
+    org.springframework.security: ERROR
+    org.springframework.boot.autoconfigure: ERROR
+    org.hibernate: ERROR
+    com.zaxxer.hikari: ERROR
+    org.springframework.orm.jpa: ERROR
+    org.springframework.transaction: ERROR
   
   # 로그 파일 설정
   file:

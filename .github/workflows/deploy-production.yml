@@ -193,6 +193,20 @@ jobs:
             echo "✅ 프론트엔드 백업 완료: $FRONTEND_BACKUP_FILE"
           fi
           
+          # 백업 보관: 유형별 최신 5개만 유지 (개발 배포와 동일·디스크 누적 방지)
+          BACKUP_DIR="/var/www/mindgarden/backups"
+          if [ -d "$BACKUP_DIR" ]; then
+            cd "$BACKUP_DIR"
+            ls -t app.jar.backup.* 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            ls -t frontend.backup.*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            shopt -s nullglob
+            extra=(app-before-*.jar app-flyway-*.jar)
+            if [ ${#extra[@]} -gt 0 ]; then
+              ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            fi
+            echo "✅ 백업 디렉터리 정리 완료 (각 패턴별 최대 5개 유지)"
+          fi
+          
           # /tmp/ 디렉토리의 기존 SQL 파일 및 디렉토리 정리
           echo "🧹 /tmp/ 디렉토리 정리 중..."
           rm -rf /tmp/production_all_missing_procedures.sql
@@ -818,9 +832,18 @@ jobs:
         script: |
           echo "🧹 메모리 정리 시작..."
           
-          # 7일 이상 된 백업 파일 삭제
-          cd /var/www/mindgarden
-          find . -name "*.backup.*" -type f -mtime +7 -delete || true
+          # 백업: 유형별 최신 5개만 유지 (7일 규칙 대신 개발 서버와 동일 정책)
+          BACKUP_DIR="/var/www/mindgarden/backups"
+          if [ -d "$BACKUP_DIR" ]; then
+            cd "$BACKUP_DIR"
+            ls -t app.jar.backup.* 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            ls -t frontend.backup.*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            shopt -s nullglob
+            extra=(app-before-*.jar app-flyway-*.jar)
+            if [ ${#extra[@]} -gt 0 ]; then
+              ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            fi
+          fi
           
           # 시스템 메모리 정리
           sync

@@ -90,7 +90,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
                     .ignoringRequestMatchers(
-                        "/api/auth/**",                              // 인증 관련 API는 CSRF 제외
+                        "/api/auth/**",                              // 인증 관련 API는 CSRF 제외 (레거시 경로)
+                        "/api/v1/auth/**",                           // v1 인증 API: SPA가 로그인/로그아웃 시 토큰 없이 POST (레거시 /api/auth/** 와 동일 정책)
                         "/api/admin/mappings/**",                     // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
                         "/api/erp/finance/transactions/**",          // 재무 거래 DELETE는 CSRF 제외 (권한 체크는 별도로 수행)
                         // Trinity/공개 온보딩: 로그인 전·세션 없이 호출 → CSRF 토큰 없음. permitAll 과 쌍으로 제외하지 않으면 403(접근 권한) 발생.

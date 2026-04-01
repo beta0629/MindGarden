@@ -59,9 +59,18 @@ class SessionManager {
       // fetch 요청 감지 (AJAX 폼 제출)
       const originalFetch = window.fetch;
       window.fetch = async (...args) => {
-        // POST, PUT, DELETE 요청인 경우 폼 제출로 간주
-        const method = args[1]?.method || 'GET';
-        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        const method = (args[1]?.method || args[0]?.method || 'GET').toUpperCase();
+        const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+        // 로그아웃·세션 무효화는 폼 훅에서 제외 — endFormSubmit → checkSession(true) 가
+        // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지
+        const skipFormSessionHook =
+          typeof reqUrl === 'string' &&
+          (reqUrl.includes('/api/v1/auth/logout') ||
+            reqUrl.includes('/api/auth/logout') ||
+            reqUrl.includes('/api/v1/auth/clear-session') ||
+            reqUrl.includes('/api/auth/clear-session'));
+
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !skipFormSessionHook) {
           this.startFormSubmit();
         }
 
@@ -69,8 +78,7 @@ class SessionManager {
           const result = await originalFetch(...args);
           return result;
         } finally {
-          // 요청 완료 후 폼 제출 종료
-          if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+          if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !skipFormSessionHook) {
             this.endFormSubmit();
           }
         }

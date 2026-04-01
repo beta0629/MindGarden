@@ -565,14 +565,17 @@ const UnifiedLogin = () => {
         const searchParams = new URLSearchParams(location.search);
         const redirectPath = searchParams.get('redirect');
 
-        if (redirectPath) {
-          // redirect 파라미터가 있으면 해당 경로로 이동
-          navigate(redirectPath, { replace: true });
-        } else {
-          // redirect 파라미터가 없으면 동적 대시보드로 이동
-          await new Promise(resolve => setTimeout(resolve, 300));
-          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-          await redirectToDynamicDashboard(loginData, navigate);
+        try {
+          if (redirectPath) {
+            navigate(redirectPath, { replace: true });
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+            await redirectToDynamicDashboard(loginData, navigate);
+          }
+        } finally {
+          // navigate 직후에도 로딩 스피너가 남는 경우(세션·라우팅 지연) 방지
+          setIsLoading(false);
         }
       } else {
         console.log('❌ 로그인 실패:', result.message);

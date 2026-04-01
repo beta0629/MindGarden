@@ -1,10 +1,12 @@
--- ============================================
--- 온보딩 요청 테이블에 서브도메인 필드 추가
--- 목적: 와일드카드 도메인 테스트를 위한 서브도메인 저장
--- 작성일: 2025-12-11
--- ============================================
+-- onboarding_request.subdomain (재실행·부분 적용)
+SET @dbname = DATABASE();
 
--- onboarding_request 테이블에 subdomain 필드 추가
-ALTER TABLE onboarding_request 
-ADD COLUMN subdomain VARCHAR(100) NULL COMMENT '서브도메인 (예: mycompany.dev.core-solution.co.kr의 mycompany 부분)' AFTER tenant_id;
-
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'onboarding_request' AND COLUMN_NAME = 'subdomain') > 0,
+    'SELECT 1',
+    'ALTER TABLE onboarding_request ADD COLUMN subdomain VARCHAR(100) NULL COMMENT ''서브도메인 (예: mycompany.dev.core-solution.co.kr의 mycompany 부분)'' AFTER tenant_id'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

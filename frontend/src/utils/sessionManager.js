@@ -4,7 +4,7 @@ import {
   SESSION_CHECK_TIMEOUT,
   SESSION_CHECK_COOLDOWN_MS
 } from '../constants/session';
-import { getDefaultApiHeaders } from './apiHeaders';
+import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
   buildTenantAuthBaseUrl,
   getTenantSubdomainFromHost,
@@ -323,16 +323,10 @@ class SessionManager {
       const csrfToken = this.getCsrfToken();
       console.log('🔑 CSRF 토큰:', csrfToken ? '발견됨' : '없음');
 
-      // 헤더 구성
-      const headers = {
-        'Content-Type': 'application/json',
+      // 운영 Spring Security: HttpSessionCsrfTokenRepository headerName = X-XSRF-TOKEN (X-CSRF-TOKEN 아님)
+      const headers = getDefaultApiHeadersWithCsrf(csrfToken, {
         'X-Requested-With': 'XMLHttpRequest'
-      };
-
-      // CSRF 토큰이 있으면 추가
-      if (csrfToken) {
-        headers['X-CSRF-TOKEN'] = csrfToken;
-      }
+      });
 
       // 서버에 로그아웃 요청
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {

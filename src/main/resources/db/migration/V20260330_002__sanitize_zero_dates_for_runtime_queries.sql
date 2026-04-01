@@ -5,6 +5,17 @@
 -- 주의: NULL 허용 컬럼만 대상으로 제한
 -- =====================================================
 
+SET @__v20260330_002_prev_sql_mode = @@SESSION.sql_mode;
+SET SESSION sql_mode = REPLACE(
+    REPLACE(
+        REPLACE(REPLACE(@@SESSION.sql_mode, 'NO_ZERO_DATE', ''), 'NO_ZERO_IN_DATE', ''),
+        ',,',
+        ','
+    ),
+    ',,',
+    ','
+);
+
 SET @users_birth_date_nullable = (
     SELECT IS_NULLABLE
     FROM information_schema.COLUMNS
@@ -89,3 +100,5 @@ SET @clients_birth_date_sql = IF(
 PREPARE clients_birth_date_stmt FROM @clients_birth_date_sql;
 EXECUTE clients_birth_date_stmt;
 DEALLOCATE PREPARE clients_birth_date_stmt;
+
+SET SESSION sql_mode = @__v20260330_002_prev_sql_mode;

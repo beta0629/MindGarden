@@ -10,11 +10,10 @@ DELETE FROM onboarding_request WHERE requested_by LIKE 'test-%@example.com';
 
 -- 1. PENDING 상태 - 상담소 (LOW 위험도, 기본)
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')), 
     NULL, 
     '서울 강남 상담소', 
     '강남 상담소', 
@@ -32,11 +31,10 @@ INSERT INTO onboarding_request (
 
 -- 2. PENDING 상태 - 상담소 (MEDIUM 위험도)
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '부산 해운대 상담소', 
     '해운대 상담소', 
@@ -54,11 +52,10 @@ INSERT INTO onboarding_request (
 
 -- 3. PENDING 상태 - 상담소 (HIGH 위험도)
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '서울 영등포 상담소', 
     '영등포 상담소', 
@@ -76,11 +73,10 @@ INSERT INTO onboarding_request (
 
 -- 4. PENDING 상태 - 카운셀링 (COUNSELING)
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '서울 강북 카운셀링 센터', 
     '강북 카운셀링', 
@@ -98,11 +94,10 @@ INSERT INTO onboarding_request (
 
 -- 5. PENDING 상태 - 아카데미 (ACADEMY)
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '경기 성남 아카데미', 
     '성남 아카데미', 
@@ -120,11 +115,10 @@ INSERT INTO onboarding_request (
 
 -- 6. PENDING 상태 - 서브도메인 포함
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, subdomain, requested_by, 
+    tenant_id, tenant_name, brand_name, region, subdomain, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '서울 마포 상담소', 
     '마포 상담소', 
@@ -143,11 +137,10 @@ INSERT INTO onboarding_request (
 
 -- 7. PENDING 상태 - 추가 상담소 1
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '서울 서초 상담소', 
     '서초 상담소', 
@@ -165,11 +158,10 @@ INSERT INTO onboarding_request (
 
 -- 8. PENDING 상태 - 추가 상담소 2
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '경기 수원 상담소', 
     '수원 상담소', 
@@ -187,11 +179,10 @@ INSERT INTO onboarding_request (
 
 -- 9. IN_REVIEW 상태 - 검토 중
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '인천 송도 상담소', 
     '송도 상담소', 
@@ -209,12 +200,11 @@ INSERT INTO onboarding_request (
 
 -- 10. ON_HOLD 상태 - 보류
 INSERT INTO onboarding_request (
-    id, tenant_id, tenant_name, brand_name, region, requested_by, 
+    tenant_id, tenant_name, brand_name, region, requested_by, 
     status, risk_level, business_type, checklist_json,
     decided_by, decision_at, decision_note,
     created_at, updated_at, is_deleted, version
 ) VALUES (
-    UNHEX(REPLACE(UUID(), '-', '')),
     NULL, 
     '대구 수성 상담소', 
     '수성 상담소', 

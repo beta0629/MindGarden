@@ -10,6 +10,7 @@
  * 실행: cd tests/e2e && BASE_URL=http://localhost:3000 TEST_USERNAME=... TEST_PASSWORD=... \
  *   npx playwright test tests/admin/tenant-profile.spec.ts --project=chromium
  * (ADMIN 계정 권장 — 표시명 변경 E2E는 PUT /api/v1/tenants/{id}/name 및 tenant-profile-rename-* testid 사용)
+ * STAFF 비표시 검증: TEST_STAFF_USERNAME·TEST_STAFF_PASSWORD 가 둘 다 있을 때만 실행
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
@@ -158,6 +159,38 @@ test.describe('테넌트 프로필 페이지 — ADMIN/STAFF 접근·탭 스모�
     expect(
       reactHits,
       `표시명 저장 후 React #130 또는 invalid child 패턴이 감지됨:\n${reactHits.join('\n---\n')}`
+    ).toEqual([]);
+  });
+});
+
+test.describe('테넌트 프로필 — STAFF (이름 변경 UI 비표시)', () => {
+  test('STAFF: /tenant/profile 에서 표시명 변경 진입 버튼 미노출', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const staffUser = ((process as any).env.TEST_STAFF_USERNAME as string) || '';
+    const staffPass = ((process as any).env.TEST_STAFF_PASSWORD as string) || '';
+    test.skip(
+      !staffUser || !staffPass,
+      'TEST_STAFF_USERNAME·TEST_STAFF_PASSWORD가 모두 설정된 경우에만 실행'
+    );
+
+    const staffErrors: string[] = [];
+    attachRuntimeErrorCollectors(page, staffErrors);
+
+    await adminLogin(page, staffUser, staffPass);
+    await page.goto('/tenant/profile', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
+    const renameOpen = page.getByTestId('tenant-profile-rename-open');
+    await expect(renameOpen).not.toBeVisible({ timeout: 10000 });
+
+    const reactHits = staffErrors.filter((line) => REACT_130_OR_INVALID_CHILD.test(line));
+    expect(
+      reactHits,
+      `STAFF 프로필에서 React #130 또는 invalid child 패턴이 감지됨:\n${reactHits.join('\n---\n')}`
     ).toEqual([]);
   });
 });

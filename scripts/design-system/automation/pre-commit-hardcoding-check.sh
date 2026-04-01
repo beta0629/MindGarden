@@ -8,6 +8,9 @@
 # @author MindGarden
 # @version 1.0.0
 # @since 2025-11-28
+#
+# 참고: tests/e2e/ 아래 *.spec.ts 는 색상 하드코딩 grep을 건너뛴다.
+# E2E 정규식·에러 코드 리터럴(예: React minified error #130)이 3자리 #xxx HEX 패턴과 충돌해 오탐이 나기 때문이다.
 
 set -e
 
@@ -108,6 +111,12 @@ TOTAL_VIOLATIONS=0
 for FILE in $STAGED_FILES; do
     if [ ! -f "$FILE" ]; then
         log_warning "파일을 찾을 수 없습니다: $FILE (건너뜀)"
+        continue
+    fi
+
+    # E2E 스펙: 정규식·에러 코드 리터럴과 3자리 HEX 색상 패턴 충돌 → 색상 스캔만 생략
+    if [[ "$FILE" =~ ^tests/e2e/.*\.spec\.ts$ ]]; then
+        log_info "색상 스캔 생략 (E2E 스펙): $FILE"
         continue
     fi
     

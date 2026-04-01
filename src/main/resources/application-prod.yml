@@ -80,6 +80,10 @@ spring:
   # 보안 설정 (프로덕션용)
   security:
     oauth2:
+      # OAuth 콜백 redirect_uri용 apex: 요청 Host가 어느 패턴에 매칭되느냐에 따라 분기 (OAuth2DomainUtil)
+      domain:
+        main-domains: core-solution.co.kr,dev.core-solution.co.kr
+        subdomain-patterns: "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr"
       client:
         registration:
           kakao:
@@ -202,6 +206,11 @@ encryption:
 
 # 세션 관리 설정은 위에서 이미 정의됨 (중복 제거)
 
+# OAuth2 동적 redirectUri(OAuth2ConfigController) 및 SERVER_BASE_URL 미설정 시 보강
+# 네이버·카카오 개발자 센터에 등록한 콜백 FQDN과 동일하게 유지 (예: https://core-solution.co.kr/...)
+oauth2:
+  base-url: ${OAUTH2_BASE_URL:https://core-solution.co.kr}
+
 # 프론트엔드 설정 (프로덕션용)
 frontend:
   base-url: ${FRONTEND_BASE_URL:}
@@ -246,8 +255,8 @@ logging:
 
 # 프로덕션 환경 전용 서버 설정
 server:
-  # 서버 기본 URL (프로덕션용, 환경 변수로만 관리)
-  base-url: ${SERVER_BASE_URL:}
+  # Spring OAuth2 registration redirect-uri 등에 사용. 미설정 시 OAuth 콜백 상대 경로/불일치 방지
+  base-url: ${SERVER_BASE_URL:https://core-solution.co.kr}
   port: ${SERVER_PORT:8080}
   servlet:
     context-path: /

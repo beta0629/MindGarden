@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -26,7 +27,7 @@ public class OAuth2DomainUtil {
     @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr}")
     private String mainDomainsConfig;
 
-    @Value("${spring.security.oauth2.domain.subdomain-patterns:.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr}")
+    @Value("${spring.security.oauth2.domain.subdomain-patterns:^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr}")
     private String subdomainPatternsConfig;
 
     @Value("${spring.security.oauth2.domain.remove-regex-pattern:true}")
@@ -83,12 +84,14 @@ public class OAuth2DomainUtil {
             }
         }
 
-        // 서브도메인 패턴 매칭 및 메인 도메인 변환
+        // 서브도메인 패턴 매칭 및 메인 도메인 변환 (프로필별 spring.security.oauth2.domain.* 로 분기)
         for (Pattern pattern : subdomainPatterns) {
             if (pattern.matcher(hostWithoutPort).matches()) {
-                // 패턴에 매칭되는 경우, 해당 패턴의 메인 도메인 찾기
-                String mainDomain = findMainDomainForPattern(hostWithoutPort, pattern);
-                if (mainDomain != null && !mainDomain.equals(hostWithoutPort)) {
+                String mainDomain = resolveOAuthApexHost(hostWithoutPort, pattern);
+                if (mainDomain != null) {
+                    if (mainDomain.equals(hostWithoutPort)) {
+                        return hostWithoutPort;
+                    }
                     log.info("OAuth2 도메인 변환 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
                     return mainDomain;
                 }
@@ -119,17 +122,56 @@ public class OAuth2DomainUtil {
     }
 
     /**
-     * 패턴에 매칭되는 메인 도메인 찾기
+     * 매칭된 패턴이 "개발 파이프라인"(호스트에 .dev. 세그먼트를 요구하는 정규식)인지에 따라
+     * {@code main-domains} 목록에서 OAuth 콜백용 apex 호스트를 고른다.
+     * 운영: 보통 첫 패턴은 {@code .*\\.dev\\.core-solution\\.co\\.kr}, 둘째는 {@code .*\\.core-solution\\.co\\.kr}.
      */
-    private String findMainDomainForPattern(String host, Pattern pattern) {
+    private String resolveOAuthApexHost(String hostWithoutPort, Pattern pattern) {
+        if (pattern == null || mainDomains.isEmpty()) {
+            return hostWithoutPort;
+        }
+        final String patternStr = pattern.pattern();
+        boolean devPipelinePattern = patternStr.contains("\\.dev\\.") || patternStr.contains("dev\\.core-solution");
+
+        if (devPipelinePattern) {
+            Optional<String> devApex = mainDomains.stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty() && s.contains("dev.core-solution"))
+                    .findFirst();
+            if (devApex.isPresent()) {
+                return devApex.get();
+            }
+        } else {
+            Optional<String> prodApex = mainDomains.stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty() && isCoreSolutionProdApexCandidate(s))
+                    .findFirst();
+            if (prodApex.isPresent()) {
+                return prodApex.get();
+            }
+        }
+
+        return findMainDomainForPatternLegacy(hostWithoutPort, pattern);
+    }
+
+    /** {@code dev.core-solution.co.kr} 같은 개발용 apex 은 제외한 core-solution 운영 apex 후보 */
+    private static boolean isCoreSolutionProdApexCandidate(String domain) {
+        if (!domain.contains("core-solution")) {
+            return false;
+        }
+        return !domain.contains("dev.core-solution");
+    }
+
+    /**
+     * 레거시·다른 TLD(m-garden 등): 패턴 문자열과 main-domains 문자열 매칭
+     */
+    private String findMainDomainForPatternLegacy(String host, Pattern pattern) {
         if (pattern == null) {
-            return mainDomains.isEmpty() ? host : mainDomains.get(0);
+            return mainDomains.isEmpty() ? host : mainDomains.get(0).trim();
         }
 
         final String patternStr = pattern.pattern();
 
-        // 1) 패턴 문자열에 메인 도메인이 직접 포함된 경우(또는 \.로 escape된 경우) 우선 매핑
-        // 예) ".*\\.dev\\.m-garden\\.co\\.kr" 에서 "dev.m-garden.co.kr" 을 찾음
         for (String mainDomain : mainDomains) {
             if (mainDomain == null) {
                 continue;
@@ -138,15 +180,12 @@ public class OAuth2DomainUtil {
             if (trimmed.isEmpty()) {
                 continue;
             }
-            // 정규식 문자열에는 '.'이 '\\.'로 들어갈 수 있으므로 둘 다 대응
             String escaped = trimmed.replace(".", "\\.");
             if (patternStr.contains(trimmed) || patternStr.contains(escaped)) {
                 return trimmed;
             }
         }
 
-        // 2) 패턴 문자열이 "m-garden.co.kr" 또는 "core-solution.co.kr" 같은 상위 도메인만 포함하는 케이스 대응
-        // (예: ".*\\.m-garden\\.co\\.kr" 은 "dev.m-garden.co.kr" 을 직접 포함하지 않음)
         if (patternStr.contains("m-garden") || patternStr.contains("m\\-garden")) {
             for (String mainDomain : mainDomains) {
                 if (mainDomain != null && mainDomain.contains("m-garden")) {
@@ -162,7 +201,6 @@ public class OAuth2DomainUtil {
             }
         }
 
-        // 기본값: 첫 번째 메인 도메인
         return mainDomains.isEmpty() ? host : mainDomains.get(0).trim();
     }
 }

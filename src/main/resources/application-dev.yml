@@ -28,6 +28,10 @@ encryption:
 spring:
   security:
     oauth2:
+      # 개발 파이프라인: *.dev.core-solution.co.kr 우선 매칭 → dev apex / 그 외 *.core-solution.co.kr → 운영 apex(폴백)
+      domain:
+        main-domains: dev.core-solution.co.kr,core-solution.co.kr
+        subdomain-patterns: "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr"
       client:
         registration:
           google:

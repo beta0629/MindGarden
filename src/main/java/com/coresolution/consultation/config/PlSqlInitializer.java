@@ -3,6 +3,8 @@ package com.coresolution.consultation.config;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -29,6 +31,78 @@ public class PlSqlInitializer {
 
     @Autowired
     private DataSource dataSource;
+
+    /**
+     * 마이그레이션 SQL에서 JDBC용 단일 CREATE PROCEDURE … DDL을 추출한다. 내부 핸들러의 {@code END;}는 외곽 종료가 아니므로
+     * {@code lastIndexOf("END;")}로는 잘리면 안 된다.
+     * <p>
+     * 우선순위: (1) {@code createStart} 이후 마지막 {@code END &lt;label&gt;} 줄(핸들러의 {@code END IF} 등은 제외),
+     * (2) 마지막 {@code END$$}, (3) 마지막 {@code END //}, (4) 레거시로 마지막 {@code END;} (내부 {@code END;}만 있는 스크립트에서는 부정확할 수 있음).
+     * </p>
+     *
+     * @param sqlContent 마이그레이션 본문(주석 제거 등 사전 처리된 문자열)
+     * @param createStart {@code CREATE PROCEDURE} 시작 인덱스
+     * @return trim된 DDL(줄 끝 {@code $$} 제거, 필요 시 끝에 {@code ;} 보강), 실패 시 {@code null}
+     * @author MindGarden
+     * @since 2026-04-01
+     */
+    private String extractJdbcProcedureDdlFromContent(String sqlContent, int createStart) {
+        if (sqlContent == null || createStart < 0 || createStart >= sqlContent.length()) {
+            return null;
+        }
+        // Labeled outer block: END proc_label$$ — inner handlers use END; only
+        Pattern labeledEndLine = Pattern.compile("(?m)^\\s*END\\s+(?!IF\\b|LOOP\\b|REPEAT\\b|WHILE\\b|CASE\\b)"
+                + "([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\$\\$)?\\s*$");
+        Matcher labeledMatcher = labeledEndLine.matcher(sqlContent);
+        int labeledEndExclusive = -1;
+        while (labeledMatcher.find()) {
+            if (labeledMatcher.start() >= createStart) {
+                labeledEndExclusive = labeledMatcher.end();
+            }
+        }
+        if (labeledEndExclusive > createStart) {
+            String ddl = sqlContent.substring(createStart, labeledEndExclusive).trim();
+            ddl = ddl.replaceAll("\\$\\$\\s*$", "").trim();
+            return ensureJdbcProcedureDdlEndsWithSemicolon(ddl);
+        }
+        int endDollar = sqlContent.lastIndexOf("END$$");
+        if (endDollar >= createStart) {
+            String ddl = sqlContent.substring(createStart, endDollar + 3).trim();
+            return ensureJdbcProcedureDdlEndsWithSemicolon(ddl);
+        }
+        int endSlash = sqlContent.lastIndexOf("END //");
+        if (endSlash >= createStart) {
+            String ddl = sqlContent.substring(createStart, endSlash + 3).trim();
+            return ensureJdbcProcedureDdlEndsWithSemicolon(ddl);
+        }
+        // Legacy: outer-only scripts; wrong if inner END; exists and no END$$ / labeled END
+        int endSemi = sqlContent.lastIndexOf("END;");
+        if (endSemi >= createStart) {
+            return sqlContent.substring(createStart, endSemi + 4).trim();
+        }
+        return null;
+    }
+
+    /**
+     * 단일 JDBC 실행문으로서 끝이 세미콜론으로 끝나도록 맞춘다.
+     *
+     * @param ddl 프로시저 DDL
+     * @return 세미콜론으로 끝나는 DDL
+     */
+    private String ensureJdbcProcedureDdlEndsWithSemicolon(String ddl) {
+        if (ddl == null || ddl.isEmpty()) {
+            return ddl;
+        }
+        int len = ddl.length();
+        int i = len - 1;
+        while (i >= 0 && Character.isWhitespace(ddl.charAt(i))) {
+            i--;
+        }
+        if (i >= 0 && ddl.charAt(i) == ';') {
+            return ddl.trim();
+        }
+        return ddl.trim() + ";";
+    }
 
     /**
      * 애플리케이션이 완전히 시작된 후 프로시저 초기화 ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행 연결 누수 방지를
@@ -73,7 +147,7 @@ public class PlSqlInitializer {
             // 블록 주석 제거
             sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            // CREATE PROCEDURE부터 END;까지 추출
+            // CREATE PROCEDURE부터 외곽 END까지 추출 (내부 핸들러 END; 오인 방지)
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
@@ -81,18 +155,9 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // END; 찾기 (마지막 END;)
-            int endIndex = sqlContent.lastIndexOf("END;");
-            if (endIndex == -1 || endIndex < createStart) {
-                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
-            }
-
-            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
-
+            String procedureSQL = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
             if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
-                String errorMsg = "❌ CreateOrActivateTenant 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                String errorMsg = "❌ CreateOrActivateTenant 프로시저 SQL을 추출할 수 없습니다(외곽 END 미탐지). 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
             }
@@ -176,34 +241,19 @@ public class PlSqlInitializer {
             sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
             sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
 
-            // 3단계: CREATE PROCEDURE부터 END까지 추출
+            // 3단계: CREATE PROCEDURE부터 외곽 END까지 추출 (마이그레이션 경로와 동일 규칙)
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 log.warn("⚠️ CREATE PROCEDURE를 찾을 수 없습니다");
                 return null;
             }
 
-            // END // 또는 END; 찾기
-            int endIndex = sqlContent.indexOf("END //", createStart);
-            if (endIndex == -1) {
-                endIndex = sqlContent.indexOf("END;", createStart);
-                if (endIndex == -1) {
-                    log.warn("⚠️ END를 찾을 수 없습니다");
-                    return null;
-                }
-                // END;로 끝나는 경우
-                return sqlContent.substring(createStart, endIndex + 4).trim();
+            String procedure = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
+            if (procedure == null || procedure.isEmpty()) {
+                log.warn("⚠️ END를 찾을 수 없습니다");
+                return null;
             }
-
-            // END // 로 끝나는 경우 -> END;로 변경
-            String procedure = sqlContent.substring(createStart, endIndex + 6).trim();
-            procedure = procedure.replace("END //", "END;");
-            
-            // 프로시저 본문 내부의 // 제거 (주석이 아닌 경우)
-            // 단, 문자열 내부의 //는 유지해야 하므로 주의
-            // DROP PROCEDURE IF EXISTS ... // 형태의 // 제거
             procedure = procedure.replaceAll("DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*//", "");
-            
             return procedure;
 
         } catch (Exception e) {
@@ -275,23 +325,10 @@ public class PlSqlInitializer {
                 }
             }
 
-            // CREATE 문 추출 (CREATE PROCEDURE부터 END;까지)
+            // CREATE 문 추출 (CREATE PROCEDURE부터 외곽 END까지, 내부 핸들러 END; 오인 방지)
             if (sqlContent.contains("CREATE PROCEDURE")) {
                 int createStart = sqlContent.indexOf("CREATE PROCEDURE");
-                // END; 까지 찾기
-                int endIndex = sqlContent.lastIndexOf("END;");
-                if (endIndex > createStart) {
-                    createStatement = sqlContent.substring(createStart, endIndex + 4).trim();
-                } else {
-                    // END;가 없으면 END 까지
-                    int endIndex2 = sqlContent.lastIndexOf("END");
-                    if (endIndex2 > createStart) {
-                        createStatement = sqlContent.substring(createStart, endIndex2 + 3).trim();
-                        if (!createStatement.endsWith(";")) {
-                            createStatement += ";";
-                        }
-                    }
-                }
+                createStatement = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
             }
 
             // DROP 실행
@@ -683,7 +720,7 @@ public class PlSqlInitializer {
             // 블록 주석 제거
             sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            // CREATE PROCEDURE부터 END;까지 추출
+            // CREATE PROCEDURE부터 외곽 END까지 추출 (내부 핸들러 END; 오인 방지)
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
@@ -691,18 +728,9 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // END; 찾기 (마지막 END;)
-            int endIndex = sqlContent.lastIndexOf("END;");
-            if (endIndex == -1 || endIndex < createStart) {
-                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
-            }
-
-            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
-
+            String procedureSQL = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
             if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
-                String errorMsg = "❌ ProcessOnboardingApproval 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                String errorMsg = "❌ ProcessOnboardingApproval 프로시저 SQL을 추출할 수 없습니다(외곽 END 미탐지). 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
             }
@@ -797,7 +825,7 @@ public class PlSqlInitializer {
             // 블록 주석 제거
             sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            // CREATE PROCEDURE부터 END;까지 추출
+            // CREATE PROCEDURE부터 외곽 END까지 추출 (내부 핸들러 END; 오인 방지)
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
@@ -805,18 +833,9 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // END; 찾기 (마지막 END;)
-            int endIndex = sqlContent.lastIndexOf("END;");
-            if (endIndex == -1 || endIndex < createStart) {
-                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
-            }
-
-            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
-
+            String procedureSQL = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
             if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
-                String errorMsg = "❌ ApplyDefaultRoleTemplates 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                String errorMsg = "❌ ApplyDefaultRoleTemplates 프로시저 SQL을 추출할 수 없습니다(외곽 END 미탐지). 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
             }
@@ -889,7 +908,7 @@ public class PlSqlInitializer {
             // 블록 주석 제거
             sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            // CREATE PROCEDURE부터 END;까지 추출
+            // CREATE PROCEDURE부터 외곽 END까지 추출 (내부 핸들러 END; 오인 방지)
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
@@ -897,18 +916,9 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // END; 찾기 (마지막 END;)
-            int endIndex = sqlContent.lastIndexOf("END;");
-            if (endIndex == -1 || endIndex < createStart) {
-                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
-            }
-
-            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
-
+            String procedureSQL = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
             if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
-                String errorMsg = "❌ CreateTenantAdminAccount 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                String errorMsg = "❌ CreateTenantAdminAccount 프로시저 SQL을 추출할 수 없습니다(외곽 END 미탐지). 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
             }

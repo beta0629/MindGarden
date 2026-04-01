@@ -113,18 +113,18 @@ BEGIN
             
             -- 중복 체크
             SET v_counter = 0;
-            WHILE v_counter < 100 DO
+            subdomain_dup: WHILE v_counter < 100 DO
                 SELECT COUNT(*) > 0 INTO v_exists
                 FROM tenants
                 WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                 AND is_deleted = FALSE
                 AND tenant_id != p_tenant_id;
                 IF NOT v_exists THEN
-                    LEAVE;
+                    LEAVE subdomain_dup;
                 END IF;
                 SET v_counter = v_counter + 1;
                 SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-            END WHILE;
+            END WHILE subdomain_dup;
         ELSE
             -- 기존 서브도메인 유지
             SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));

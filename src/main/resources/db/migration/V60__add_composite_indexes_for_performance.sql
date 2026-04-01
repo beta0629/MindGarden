@@ -6,8 +6,11 @@
 -- ============================================================================
 
 
--- 인덱스 생성 프로시저
-DROP PROCEDURE IF EXISTS CreateIndexIfNotExists$$
+-- 인덱스 생성 프로시저 (Flyway + MySQL 8: DELIMITER로 세미콜론 분리 오류 방지)
+DROP PROCEDURE IF EXISTS CreateIndexIfNotExists;
+
+DELIMITER $$
+
 CREATE PROCEDURE CreateIndexIfNotExists(
     IN tableName VARCHAR(255),
     IN indexName VARCHAR(255),
@@ -15,13 +18,13 @@ CREATE PROCEDURE CreateIndexIfNotExists(
 )
 BEGIN
     DECLARE indexExists INT DEFAULT 0;
-    
+
     SELECT COUNT(*) INTO indexExists
     FROM information_schema.statistics
     WHERE table_schema = DATABASE()
       AND table_name = tableName
       AND index_name = indexName;
-    
+
     IF indexExists = 0 THEN
         SET @sql = CONCAT('CREATE INDEX ', indexName, ' ON ', tableName, '(', indexColumns, ')');
         PREPARE stmt FROM @sql;
@@ -30,6 +33,7 @@ BEGIN
     END IF;
 END$$
 
+DELIMITER ;
 
 -- ============================================================================
 -- 1. schedules 테이블

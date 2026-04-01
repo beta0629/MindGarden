@@ -12,7 +12,7 @@
  * @since 2025-11-28
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useBranding } from './useBranding';
 import { sessionManager } from '../utils/sessionManager';
 
@@ -35,6 +35,11 @@ export const useTenantBranding = (options = {}) => {
   // 브랜딩 정보 Hook
   const { brandingInfo, isLoading, error, refreshBranding } = useBranding();
   
+  const brandingInfoRef = useRef(brandingInfo);
+  useEffect(() => {
+    brandingInfoRef.current = brandingInfo;
+  }, [brandingInfo]);
+
 /**
    * 테넌트별 CSS 변수 적용
    */
@@ -57,7 +62,7 @@ export const useTenantBranding = (options = {}) => {
       companyName: 'CoreSolution'
     };
     
-    const activeBranding = branding || brandingInfo || defaultBranding;
+    const activeBranding = branding || brandingInfoRef.current || defaultBranding;
     
     // 테넌트 ID 속성 설정 (CSS 선택자용)
     if (tenantId) {
@@ -115,7 +120,7 @@ export const useTenantBranding = (options = {}) => {
     
     console.debug('✅ 테넌트 브랜딩 CSS 변수 적용 완료:', tenantVariables);
     
-  }, [brandingInfo, target]);
+  }, [target]);
   
 /**
    * 파비콘 동적 변경
@@ -181,28 +186,16 @@ export const useTenantBranding = (options = {}) => {
     console.debug('🔄 테넌트 브랜딩 초기화 완료');
   }, [target]);
   
-  // 자동 적용
+  // 자동 적용 (브랜딩 로드 완료 시에만; applyTenantBranding은 ref로 최신 brandingInfo 사용)
   useEffect(() => {
     if (autoApply && brandingInfo && !isLoading) {
       applyTenantBranding(brandingInfo);
     }
   }, [autoApply, brandingInfo, isLoading, applyTenantBranding]);
-  
-  // 사용자 변경 시 브랜딩 재적용
-  useEffect(() => {
-    const user = sessionManager.getUser();
-    if (user && autoApply) {
-      // 약간의 지연 후 적용 (세션 안정화 대기)
-      const timer = setTimeout(() => {
-        refreshBranding().then(() => {
-          applyTenantBranding();
-        });
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [autoApply, refreshBranding, applyTenantBranding]); // tenantId 의존성 제거하여 무한 루프 방지
-  
+
+  // 테넌트/사용자 전환 시 브랜딩 재조회는 내부 useBranding()의 세션 리스너에서 처리됨(중복 refresh 방지).
+  // 로드 완료 후 CSS 적용은 위 effect가 담당.
+
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {

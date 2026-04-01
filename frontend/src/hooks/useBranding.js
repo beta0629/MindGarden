@@ -12,7 +12,7 @@
  * @since 2025-11-26
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getBrandingInfo, brandingToHeaderProps, clearBrandingCache } from '../utils/brandingUtils';
 import { sessionManager } from '../utils/sessionManager';
 
@@ -131,16 +131,53 @@ export const useBranding = (options = {}) => {
     }
   }, [autoLoad, loadBrandingInfo]);
 
-  // 사용자 변경 감지 (테넌트 전환 등)
+  const sessionKeyRef = useRef(null);
+  const isSessionEffectInitRef = useRef(true);
+
+  // 테넌트/사용자 식별자 변경 시에만 로드/새로고침 (마운트 시 autoLoad와 중복 refresh 방지, 세션 알림으로 전환 감지)
   useEffect(() => {
-    const user = sessionManager.getUser();
-    const tenantId = user?.tenantId;
-    
-    if (tenantId) {
-      // console.log('테넌트 변경 감지, 브랜딩 정보 새로고침:', tenantId); // 로그 출력 줄임
+    const runIdentityCheck = () => {
+      const user = sessionManager.getUser();
+      const tenantId = user?.tenantId || user?.tenant?.tenantId;
+      const userId = user?.id;
+      const key = tenantId != null ? `${String(tenantId)}:${String(userId ?? '')}` : null;
+      const prevKey = sessionKeyRef.current;
+
+      if (isSessionEffectInitRef.current) {
+        isSessionEffectInitRef.current = false;
+        sessionKeyRef.current = key;
+        return;
+      }
+
+      if (key === prevKey) {
+        return;
+      }
+
+      sessionKeyRef.current = key;
+
+      if (key == null) {
+        return;
+      }
+
+      if (prevKey == null) {
+        loadBrandingInfo(false);
+        return;
+      }
+
       refreshBranding();
-    }
-  }, [refreshBranding]); // tenantId 의존성 제거하여 무한 루프 방지
+    };
+
+    runIdentityCheck();
+
+    const listener = () => {
+      runIdentityCheck();
+    };
+    sessionManager.addListener(listener);
+
+    return () => {
+      sessionManager.removeListener(listener);
+    };
+  }, [refreshBranding, loadBrandingInfo]);
 
   return {
     // 상태

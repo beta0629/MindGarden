@@ -147,3 +147,4 @@
 - `scripts/ops/prod-log-cleanup.sh` — 기본 DRY_RUN, 실삭제는 `EXECUTE=1` / `--execute`
 - `scripts/ops/README.md` — 사용법·환경변수·`deploy-production`과 분리 안내
 - `.github/workflows/ops-health-snapshot.yml` — **스케줄·dispatch job은 스냅샷만** 실행; 로그 cleanup 미호출
+- (갱신) 스냅샷: **코어 솔루션**(로컬 actuator + 공개 엣지) + **OPS 포털**(공개 URL) + 선택 `ops-backend` systemd — `scripts/ops/README.md` 참조

@@ -236,6 +236,8 @@ jobs:
       if: steps.changed-files.outputs.backend_changed != 'true'
       run: echo "⏭️ 백엔드 변경 없음 - 업로드 스킵됨"
         
+    # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
+    # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
     - name: 📤 프론트엔드 파일 업로드
       if: steps.changed-files.outputs.frontend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
@@ -246,7 +248,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "frontend/build/*"
-        target: "/var/www/html/"
+        target: "/var/www/mindgarden/frontend/"
         strip_components: 2
         overwrite: true
         
@@ -420,14 +422,17 @@ jobs:
         timeout: 120s
         command_timeout: 10m
         script: |
-          # 프론트엔드 파일 권한 설정
-          sudo chown -R www-data:www-data /var/www/html/
-          sudo chmod -R 755 /var/www/html/
-          
-          # CSS 파일 권한 특별 설정
-          sudo find /var/www/html/ -name "*.css" -exec chmod 644 {} \;
-          sudo find /var/www/html/ -name "*.js" -exec chmod 644 {} \;
-          
+          # Core Solution SPA (Nginx root)
+          sudo mkdir -p /var/www/mindgarden/frontend
+          sudo chown -R www-data:www-data /var/www/mindgarden/frontend/
+          sudo chmod -R 755 /var/www/mindgarden/frontend/
+          sudo find /var/www/mindgarden/frontend/ -name "*.css" -exec chmod 644 {} \;
+          sudo find /var/www/mindgarden/frontend/ -name "*.js" -exec chmod 644 {} \;
+          # 레거시: 다른 vhost가 /var/www/html 을 쓰는 경우 유지
+          if [ -d /var/www/html ]; then
+            sudo chown -R www-data:www-data /var/www/html/ 2>/dev/null || true
+            sudo chmod -R 755 /var/www/html/ 2>/dev/null || true
+          fi
           echo "✅ 프론트엔드 파일 권한 설정 완료"
         
     # 참고: 메뉴 구조 업데이트는 필요할 때만 수동으로 실행

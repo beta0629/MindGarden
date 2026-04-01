@@ -132,9 +132,27 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행');
+      const postLogoutGate = sessionManager.consumePostLogoutGate();
+      console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행', {
+        postLogoutGate
+      });
       const ok = await sessionManager.checkSession(true);
       if (cancelled) return;
+
+      // 로그아웃 직후에도 JSESSIONID 등이 남으면 current-user 200 → UnifiedLogin이 대시보드로내던 문제 방지
+      if (postLogoutGate) {
+        if (ok && sessionManager.getUser()) {
+          console.warn(
+            '⚠️ 로그아웃 직후 서버 세션이 여전히 유효합니다. 재무효화 시도 후 로그아웃 상태를 유지합니다.'
+          );
+          await sessionManager.postLogoutInvalidateServerSession();
+        }
+        sessionManager.applyClientLogoutCleanupPreserveSubdomain();
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+        dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+        return;
+      }
+
       if (ok) {
         const user = sessionManager.getUser();
         const sessionInfo = sessionManager.getSessionInfo();

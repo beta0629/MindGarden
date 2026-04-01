@@ -314,8 +314,96 @@ class SessionManager {
     }
   }
 
+  /**
+   * 로그아웃 직후 /login 로드 시에도 서버 세션 쿠키가 남으면 current-user 200으로
+   * SessionProvider가 사용자를 복원해 대시보드로 튕기는 문제를 막기 위한 일회성 플래그.
+   */
+  setPostLogoutGateBeforeRedirect() {
+    try {
+      sessionStorage.setItem('mg_post_logout', '1');
+    } catch {
+      /* private mode 등 */
+    }
+  }
+
+  /**
+   * @returns {boolean} 플래그가 있었으면 true(동시에 제거)
+   */
+  consumePostLogoutGate() {
+    try {
+      if (sessionStorage.getItem('mg_post_logout') !== '1') {
+        return false;
+      }
+      sessionStorage.removeItem('mg_post_logout');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 네비게이션 없이 클라이언트 인증 상태만 정리. 테넌트 서브도메인 힌트는 유지.
+   */
+  applyClientLogoutCleanupPreserveSubdomain() {
+    this.user = null;
+    this.sessionInfo = null;
+    this.lastCheckTime = 0;
+    this.checkInProgress = false;
+
+    localStorage.removeItem('user');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('sessionInfo');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+
+    const preserved = {
+      subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
+      subdomain: sessionStorage.getItem('subdomain')
+    };
+    sessionStorage.clear();
+    if (preserved.subdomain_tenant_id) {
+      sessionStorage.setItem('subdomain_tenant_id', preserved.subdomain_tenant_id);
+    }
+    if (preserved.subdomain) {
+      sessionStorage.setItem('subdomain', preserved.subdomain);
+    }
+
+    document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = '_csrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+    this.notifyListeners();
+  }
+
+  /** 로그아웃 게이트: 남은 서버 세션 한 번 더 무효화 시도(리다이렉트 없음) */
+  async postLogoutInvalidateServerSession() {
+    try {
+      const csrfToken = this.getCsrfToken();
+      const headers = getDefaultApiHeadersWithCsrf(csrfToken, {
+        'X-Requested-With': 'XMLHttpRequest'
+      });
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers
+      });
+      if (response.ok) {
+        console.log('✅ 로그아웃 게이트: 서버 세션 재무효화 성공');
+      } else {
+        console.warn('⚠️ 로그아웃 게이트: 서버 응답', response.status);
+      }
+    } catch (e) {
+      console.warn('⚠️ 로그아웃 게이트: 서버 무효화 요청 실패(무시)', e);
+    }
+  }
+
   // 로그아웃
   async logout() {
+    const preservedForRedirect = {
+      subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
+      subdomain: sessionStorage.getItem('subdomain')
+    };
     try {
       console.log('🔓 로그아웃 시작...');
 
@@ -344,46 +432,13 @@ class SessionManager {
       console.error('❌ 서버 로그아웃 실패:', error);
       // 서버 로그아웃 실패해도 클라이언트 로그아웃은 진행
     } finally {
-      // 클라이언트 상태 강제 초기화
-      this.user = null;
-      this.sessionInfo = null;
-      this.lastCheckTime = 0;
-      this.checkInProgress = false;
-
-      // 로컬 저장소 정리
-      localStorage.removeItem('user');
-      localStorage.removeItem('userInfo');
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('sessionInfo');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-
-      // ⚠️ 표준화/멀티테넌트: 로그아웃 후에도 "현재 접속 서브도메인" 컨텍스트는 유지해야 함
-      // (subdomain → tenantId 자동 매핑을 위해 subdomain 관련 값은 보존)
-      const preserved = {
-        subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
-        subdomain: sessionStorage.getItem('subdomain')
-      };
-      sessionStorage.clear();
-      if (preserved.subdomain_tenant_id) {
-        sessionStorage.setItem('subdomain_tenant_id', preserved.subdomain_tenant_id);
-      }
-      if (preserved.subdomain) {
-        sessionStorage.setItem('subdomain', preserved.subdomain);
-      }
-
-      // 쿠키 정리 (가능한 범위에서)
-      document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = '_csrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-      // 리스너들에게 알림
-      this.notifyListeners();
+      this.applyClientLogoutCleanupPreserveSubdomain();
 
       console.log('✅ 클라이언트 로그아웃 완료');
 
       // 로그인 페이지로 리다이렉트 (서브도메인별로 이동 - 서브도메인 필수)
       console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인별 이동)');
+      this.setPostLogoutGateBeforeRedirect();
 
       // 로컬 환경: 현재 origin 유지 (subdomainUtils와 동일 기준)
       if (isLocalhost()) {
@@ -393,8 +448,8 @@ class SessionManager {
         let targetSubdomain = getTenantSubdomainFromHost();
         if (targetSubdomain) {
           console.log('✅ 현재 호스트에서 테넌트 서브도메인 추출:', targetSubdomain);
-        } else if (preserved.subdomain) {
-          targetSubdomain = preserved.subdomain;
+        } else if (preservedForRedirect.subdomain) {
+          targetSubdomain = preservedForRedirect.subdomain;
           console.log('✅ 보존된 서브도메인 사용:', targetSubdomain);
         }
 

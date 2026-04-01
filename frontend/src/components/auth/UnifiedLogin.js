@@ -199,6 +199,10 @@ const UnifiedLogin = () => {
 
   // useSession에서 사용자 정보가 감지되면, 실제 세션(200) 검증 후에만 리다이렉트
   useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.get('logout') === 'success' || q.get('logout') === 'error') {
+      return;
+    }
     if (!user?.id || isLoading || tooltip.show) return;
     let cancelled = false;
     (async () => {
@@ -212,7 +216,7 @@ const UnifiedLogin = () => {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isLoading, tooltip.show]);
+  }, [user, isLoading, tooltip.show, location.search]);
 
   // OAuth2 설정 가져오기
   const getOAuth2Config = async () => {

@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
@@ -225,19 +226,25 @@ public class AuthController extends BaseApiController {
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());
         
-        // 테넌트의 businessType 추가 (동적 조회)
+        // 테넌트 표시명·업종 (동적 조회)
         if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
             try {
-                Optional<Tenant> tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId());
-                if (tenant.isPresent()) {
-                    userInfo.put("businessType", tenant.get().getBusinessType());
-                    log.debug("테넌트 업종 정보 추가: tenantId={}, businessType={}", 
-                        user.getTenantId(), tenant.get().getBusinessType());
+                Optional<Tenant> tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId());
+                if (tenantOpt.isPresent()) {
+                    Tenant tenantEntity = tenantOpt.get();
+                    userInfo.put("businessType", tenantEntity.getBusinessType());
+                    Map<String, Object> tenantPayload = new HashMap<>();
+                    tenantPayload.put("tenantId", tenantEntity.getTenantId());
+                    tenantPayload.put("name", tenantEntity.getName());
+                    userInfo.put("tenant", tenantPayload);
+                    log.debug("테넌트 정보 추가: tenantId={}, businessType={}, namePresent={}",
+                        user.getTenantId(), tenantEntity.getBusinessType(),
+                        tenantEntity.getName() != null && !tenantEntity.getName().isEmpty());
                 } else {
                     log.warn("테넌트를 찾을 수 없습니다: tenantId={}", user.getTenantId());
                 }
             } catch (Exception e) {
-                log.warn("테넌트 업종 정보 조회 실패: tenantId={}, error={}", user.getTenantId(), e.getMessage());
+                log.warn("테넌트 정보 조회 실패: tenantId={}, error={}", user.getTenantId(), e.getMessage());
             }
         }
         
@@ -457,6 +464,16 @@ public class AuthController extends BaseApiController {
         log.info("🔓 로그아웃 요청: sessionId={}", sessionId);
         
         try {
+            User logoutUser = SessionUtils.getCurrentUser(session);
+            if (logoutUser != null && StringUtils.hasText(logoutUser.getTenantId()) && logoutUser.getId() != null) {
+                int deactivated = userSessionService.deactivateAllSessionsForTenantUser(
+                    logoutUser.getTenantId(), logoutUser.getId(), SessionManagementConstants.END_REASON_LOGOUT);
+                log.info("로그아웃: 테넌트·사용자 단위 활성 세션 비활성화 tenantId={}, userId={}, count={}",
+                    logoutUser.getTenantId(), logoutUser.getId(), deactivated);
+            } else if (logoutUser != null) {
+                log.debug("로그아웃: 테넌트 일괄 비활성화 스킵 (tenantId 또는 userId 없음) userId={}",
+                    logoutUser.getId());
+            }
             // 세션 기반 로그아웃 (중복로그인 방지 포함)
             authService.logoutSession(sessionId);
             

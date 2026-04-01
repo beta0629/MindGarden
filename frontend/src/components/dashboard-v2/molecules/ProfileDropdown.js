@@ -6,13 +6,15 @@
  * @since 2026-03-09
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
-import { sessionManager } from '../../../utils/sessionManager';
+import { useSession } from '../../../contexts/SessionContext';
+import { useBranding } from '../../../hooks/useBranding';
+import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
@@ -26,17 +28,24 @@ const ROLE_LABELS = {
 
 const ProfileDropdown = ({ onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
   const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
+  const { user } = useSession();
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
 
-  useEffect(() => {
-    const currentUser = sessionManager.getUser();
-    setUser(currentUser);
-  }, []);
+  const userName = useMemo(() => {
+    if (!user) {
+      return '사용자';
+    }
+    const label = getTenantGnbLabel(user, brandingInfo);
+    if (label === DEFAULT_GNB_LOGO_LABEL) {
+      return user.name || user.username || '사용자';
+    }
+    return label;
+  }, [user, brandingInfo]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -84,7 +93,6 @@ const ProfileDropdown = ({ onLogout }) => {
     return null;
   }
 
-  const userName = user.name || user.username || '사용자';
   const userEmail = user.email || '';
   const userRole = user.role || '';
   const roleLabel = ROLE_LABELS[userRole] || userRole;

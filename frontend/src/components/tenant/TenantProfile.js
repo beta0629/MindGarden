@@ -37,7 +37,7 @@ import './TenantProfile.css';
 
 const TenantProfile = () => {
   const navigate = useNavigate();
-  const { user, sessionInfo, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user, sessionInfo, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const [loading, setLoading] = useState(true);
   const [tenantInfo, setTenantInfo] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -153,6 +153,11 @@ const TenantProfile = () => {
       notificationManager.success('테넌트명이 변경되었습니다.');
       setShowTenantNameModal(false);
       await loadTenantInfo({ silent: true });
+      try {
+        await checkSession(true);
+      } catch (syncErr) {
+        console.debug('세션 사용자 정보 동기화 실패(무시):', syncErr);
+      }
     } catch (err) {
       const serverMsg = err?.message || '테넌트명 변경에 실패했습니다.';
       setTenantNameServerError(serverMsg);

@@ -13,12 +13,11 @@ import { Menu } from 'lucide-react';
 import { NavIcon } from '../atoms';
 import { NotificationDropdown, ProfileDropdown } from '../molecules';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
+import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './MobileGnb.css';
 
-const DEFAULT_LOGO_LABEL = 'Core Solution';
-
 const MobileGnb = ({
-  logoLabel = DEFAULT_LOGO_LABEL,
+  logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
   onMenuClick,
   onLogout

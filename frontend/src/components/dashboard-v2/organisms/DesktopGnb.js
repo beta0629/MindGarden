@@ -11,12 +11,11 @@ import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { GnbRight } from '../molecules';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
+import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './DesktopGnb.css';
 
-const DEFAULT_LOGO_LABEL = 'Core Solution';
-
 const DesktopGnb = ({
-  logoLabel = DEFAULT_LOGO_LABEL,
+  logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
   searchValue = '',
   onSearchChange,

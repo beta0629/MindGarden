@@ -129,6 +129,12 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Transactional(readOnly = true)
     public long getActiveSessionCount(User user) {
         try {
+            String tenantId = user.getTenantId();
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                return userSessionRepository.countActiveSessionsByTenantIdAndUser(
+                    tenantId.trim(), user.getId(), LocalDateTime.now());
+            }
+            log.warn("⚠️ getActiveSessionCount: tenantId 없음 — 전역(deprecated) 카운트 사용 userId={}", user.getId());
             return userSessionRepository.countActiveSessionsByUser(user.getId(), LocalDateTime.now());
         } catch (Exception e) {
             log.error("❌ 활성 세션 수 조회 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
@@ -231,6 +237,27 @@ public class UserSessionServiceImpl implements UserSessionService {
         } catch (Exception e) {
             log.error("❌ 사용자 모든 세션 비활성화 실패: userId={}, reason={}, error={}", 
                      user.getId(), reason, e.getMessage(), e);
+            return 0;
+        }
+    }
+    
+    @Override
+    public int deactivateAllSessionsForTenantUser(String tenantId, Long userId, String reason) {
+        if (tenantId == null || tenantId.isBlank() || userId == null) {
+            log.warn("⚠️ deactivateAllSessionsForTenantUser 스킵: tenantId 또는 userId 없음 tenantId={}, userId={}",
+                tenantId, userId);
+            return 0;
+        }
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            int updatedCount = userSessionRepository.deactivateAllUserSessionsByTenantId(
+                tenantId.trim(), userId, now, reason);
+            log.info("✅ 테넌트·사용자 세션 일괄 비활성화: tenantId={}, userId={}, reason={}, count={}",
+                tenantId, userId, reason, updatedCount);
+            return updatedCount;
+        } catch (Exception e) {
+            log.error("❌ 테넌트·사용자 세션 일괄 비활성화 실패: tenantId={}, userId={}, reason={}, error={}",
+                tenantId, userId, reason, e.getMessage(), e);
             return 0;
         }
     }

@@ -88,6 +88,16 @@ public interface UserSessionService {
     int deactivateAllUserSessions(User user, String reason);
     
     /**
+     * 특정 테넌트·사용자에 속한 활성 세션을 모두 비활성화 (멀티테넌트 스코프)
+     *
+     * @param tenantId 테넌트 ID
+     * @param userId 사용자 PK
+     * @param reason 종료 사유 (예: SessionManagementConstants.END_REASON_LOGOUT)
+     * @return 비활성화된 행 수
+     */
+    int deactivateAllSessionsForTenantUser(String tenantId, Long userId, String reason);
+    
+    /**
      * 세션 활동 시간 업데이트
      * 
      * @param sessionId HTTP 세션 ID

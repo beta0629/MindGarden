@@ -7,7 +7,7 @@
  * @since 2025-02-22
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getLnbMenus } from '../../utils/menuApi';
 import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +55,8 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useBranding } from '../../hooks/useBranding';
+import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
 import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -162,9 +164,15 @@ function getEmptyWeeklyChartData(weeks = 6) {
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
+  const dashboardUser = propUser || sessionUser;
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(dashboardUser) });
+  const logoLabel = useMemo(
+    () => getTenantGnbLabel(dashboardUser, brandingInfo),
+    [dashboardUser, brandingInfo]
+  );
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
-  
+
   const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
@@ -884,7 +892,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const layoutProps = {
     menuItems: lnbMenuItems ?? DEFAULT_MENU_ITEMS,
     headerTitle: '시스템 관리',
-    logoLabel: 'Core Solution',
+    logoLabel,
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),

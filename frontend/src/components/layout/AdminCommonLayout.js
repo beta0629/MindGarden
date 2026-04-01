@@ -7,10 +7,12 @@
  * @since 2025-02-22
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { useBranding } from '../../hooks/useBranding';
 import { useResponsive } from '../../hooks/useResponsive';
+import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
 import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
 import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -31,6 +33,11 @@ const AdminCommonLayout = ({
 }) => {
   const navigate = useNavigate();
   const { user, logout } = useSession();
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
+  const logoLabel = useMemo(
+    () => getTenantGnbLabel(user, brandingInfo),
+    [user, brandingInfo]
+  );
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
@@ -85,6 +92,7 @@ const AdminCommonLayout = ({
   const layoutProps = {
     menuItems,
     headerTitle: title,
+    logoLabel,
     searchValue,
     onSearchChange,
     onBellClick: handleBellClick,

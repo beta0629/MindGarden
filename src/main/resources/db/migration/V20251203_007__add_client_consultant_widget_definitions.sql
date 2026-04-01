@@ -10,7 +10,7 @@
 -- 상담소 - CLIENT (내담자) 위젯 정의
 -- =====================================================
 
-INSERT INTO widget_definitions (
+INSERT IGNORE INTO widget_definitions (
     widget_id, tenant_id, widget_type, widget_name, widget_name_ko, widget_name_en,
     group_id, business_type, role_code, default_config, display_order,
     is_system_managed, is_required, is_deletable, is_movable, is_configurable,
@@ -67,7 +67,7 @@ INSERT INTO widget_definitions (
 -- 상담소 - CONSULTANT (상담사) 위젯 정의
 -- =====================================================
 
-INSERT INTO widget_definitions (
+INSERT IGNORE INTO widget_definitions (
     widget_id, tenant_id, widget_type, widget_name, widget_name_ko, widget_name_en,
     group_id, business_type, role_code, default_config, display_order,
     is_system_managed, is_required, is_deletable, is_movable, is_configurable,
@@ -125,7 +125,7 @@ INSERT INTO widget_definitions (
 -- 상담소 - STAFF (스텝) 위젯 그룹 추가
 -- =====================================================
 
-INSERT INTO widget_groups (
+INSERT IGNORE INTO widget_groups (
     group_id, tenant_id, group_name, group_name_ko, group_name_en,
     business_type, role_code, display_order, description, icon_name,
     is_active, created_by
@@ -150,7 +150,7 @@ INSERT INTO widget_groups (
 -- 상담소 - STAFF (스텝) 위젯 정의 (관리자와 동일)
 -- =====================================================
 
-INSERT INTO widget_definitions (
+INSERT IGNORE INTO widget_definitions (
     widget_id, tenant_id, widget_type, widget_name, widget_name_ko, widget_name_en,
     group_id, business_type, role_code, default_config, display_order,
     is_system_managed, is_required, is_deletable, is_movable, is_configurable,

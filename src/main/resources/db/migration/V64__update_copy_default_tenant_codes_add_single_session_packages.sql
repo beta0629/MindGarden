@@ -10,11 +10,6 @@ DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes;
 
 DELIMITER $$
 
--- 프로시저 본문 (세미콜론 포함)
--- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
---       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
---       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
-
 CREATE PROCEDURE CopyDefaultTenantCodes(
     IN p_tenant_id VARCHAR(64),
     IN p_source_tenant_id VARCHAR(64),

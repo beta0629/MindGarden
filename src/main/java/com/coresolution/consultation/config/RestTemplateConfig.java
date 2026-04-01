@@ -1,4 +1,4 @@
-package com.mindgarden.consultation.config;
+package com.coresolution.consultation.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

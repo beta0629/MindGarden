@@ -8,6 +8,9 @@
  */
 package com.coresolution.core.service;
 
+import com.coresolution.core.dto.TenantNameUpdateRequest;
+import com.coresolution.core.dto.TenantNameUpdateResponse;
+
 public interface TenantService {
     
     /**
@@ -36,4 +39,13 @@ public interface TenantService {
      * @return 활성 테넌트 ID 목록
      */
     java.util.List<String> getAllActiveTenantIds();
+
+    /**
+     * 테넌트 표시명({@code tenants.name})을 변경합니다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param request  새 이름 요청
+     * @return 갱신 후 스냅샷
+     */
+    TenantNameUpdateResponse updateTenantDisplayName(String tenantId, TenantNameUpdateRequest request);
 }

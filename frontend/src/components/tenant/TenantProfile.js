@@ -7,7 +7,7 @@
  * @since 2025-11-22
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { CreditCard, DollarSign, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { getPaymentMethods, getSubscriptions } from '../../utils/billingService'
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import SubscriptionManagement from '../billing/SubscriptionManagement';
 import notificationManager from '../../utils/notification';
+import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -23,7 +24,13 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import {
+  TENANT_API_PATHS,
+  TENANT_DISPLAY_NAME_MAX_LENGTH,
+  canEditTenantDisplayName
+} from '../../constants/tenantApi';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
@@ -37,8 +44,16 @@ const TenantProfile = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showPaymentMethodRegistration, setShowPaymentMethodRegistration] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview, subscription, payment
+  const [showTenantNameModal, setShowTenantNameModal] = useState(false);
+  const [tenantNameDraft, setTenantNameDraft] = useState('');
+  const [tenantNameSaving, setTenantNameSaving] = useState(false);
+  const [tenantNameFieldError, setTenantNameFieldError] = useState('');
+  const [tenantNameServerError, setTenantNameServerError] = useState('');
+  const tenantNameErrorId = useId();
+  const tenantNameInputId = useId();
 
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
+  const canRenameTenant = canEditTenantDisplayName(user);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -69,29 +84,80 @@ const TenantProfile = () => {
 /**
    * 테넌트 정보 로드
    */
-  const loadTenantInfo = async () => {
+  const loadTenantInfo = async (options = {}) => {
+    const silent = options.silent === true;
     if (!tenantId) return;
 
     try {
-      setLoading(true);
-      const response = await fetch('/api/v1/auth/tenant/current', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('테넌트 정보 조회 실패');
+      if (!silent) {
+        setLoading(true);
       }
-
-      const data = await response.json();
-      const tenant = data.data?.tenant ?? data.tenant;
-      if (data.success && tenant) {
+      const data = await StandardizedApi.get(TENANT_API_PATHS.CURRENT_TENANT);
+      const tenant = data?.tenant;
+      if (tenant) {
         setTenantInfo(tenant);
       }
     } catch (err) {
       console.error('테넌트 정보 로드 실패:', err);
       notificationManager.error('테넌트 정보를 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const openTenantNameModal = () => {
+    setTenantNameDraft(toDisplayString(tenantInfo?.name, ''));
+    setTenantNameFieldError('');
+    setTenantNameServerError('');
+    setShowTenantNameModal(true);
+  };
+
+  const closeTenantNameModal = () => {
+    if (tenantNameSaving) {
+      return;
+    }
+    setShowTenantNameModal(false);
+    setTenantNameFieldError('');
+    setTenantNameServerError('');
+  };
+
+  const validateTenantNameDraft = (value) => {
+    const t = value != null ? String(value).trim() : '';
+    if (!t) {
+      return '테넌트명을 입력해 주세요.';
+    }
+    if (t.length > TENANT_DISPLAY_NAME_MAX_LENGTH) {
+      return `테넌트명은 ${TENANT_DISPLAY_NAME_MAX_LENGTH}자 이하여야 합니다.`;
+    }
+    return '';
+  };
+
+  const handleTenantNameSave = async (e) => {
+    e.preventDefault();
+    const msg = validateTenantNameDraft(tenantNameDraft);
+    setTenantNameFieldError(msg);
+    setTenantNameServerError('');
+    if (msg) {
+      return;
+    }
+    if (!tenantId) {
+      return;
+    }
+    setTenantNameSaving(true);
+    try {
+      await StandardizedApi.put(TENANT_API_PATHS.tenantDisplayName(tenantId), {
+        name: tenantNameDraft.trim()
+      });
+      notificationManager.success('테넌트명이 변경되었습니다.');
+      setShowTenantNameModal(false);
+      await loadTenantInfo({ silent: true });
+    } catch (err) {
+      const serverMsg = err?.message || '테넌트명 변경에 실패했습니다.';
+      setTenantNameServerError(serverMsg);
+    } finally {
+      setTenantNameSaving(false);
     }
   };
 
@@ -284,7 +350,21 @@ const TenantProfile = () => {
             <div className="mg-v2-tenant-profile__panel" role="tabpanel">
               {activeTab === 'overview' && (
                 <div className="mg-v2-tenant-profile__overview">
-                  <ContentSection title="테넌트 정보">
+                  <ContentSection
+                    title="테넌트 정보"
+                    actions={
+                      canRenameTenant ? (
+                        <button
+                          type="button"
+                          className="mg-v2-button mg-v2-button--outline mg-v2-button--medium"
+                          onClick={openTenantNameModal}
+                          data-testid="tenant-profile-rename-open"
+                        >
+                          이름 변경
+                        </button>
+                      ) : null
+                    }
+                  >
                     <div className="mg-v2-tenant-profile__grid">
                       <div className="mg-v2-tenant-profile__field">
                         <label>테넌트 ID</label>
@@ -448,6 +528,82 @@ const TenantProfile = () => {
               )}
             </div>
           </ContentArea>
+
+          <UnifiedModal
+            isOpen={showTenantNameModal}
+            onClose={closeTenantNameModal}
+            title="테넌트명 변경"
+            size="small"
+            variant="form"
+            backdropClick={!tenantNameSaving}
+            showCloseButton
+            loading={tenantNameSaving}
+            aria-describedby={
+              tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
+            }
+            actions={
+              <>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button--outline mg-v2-button--medium"
+                  onClick={closeTenantNameModal}
+                  disabled={tenantNameSaving}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  form="tenant-profile-rename-form"
+                  className="mg-v2-button mg-v2-button--primary mg-v2-button--medium"
+                  disabled={tenantNameSaving}
+                  data-testid="tenant-profile-rename-save"
+                >
+                  저장
+                </button>
+              </>
+            }
+          >
+            <form id="tenant-profile-rename-form" onSubmit={handleTenantNameSave} noValidate>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label" htmlFor={tenantNameInputId}>
+                  테넌트명
+                </label>
+                <input
+                  id={tenantNameInputId}
+                  name="tenantDisplayName"
+                  type="text"
+                  className="mg-v2-input"
+                  value={tenantNameDraft}
+                  onChange={(ev) => {
+                    setTenantNameDraft(ev.target.value);
+                    if (tenantNameFieldError) {
+                      setTenantNameFieldError('');
+                    }
+                    if (tenantNameServerError) {
+                      setTenantNameServerError('');
+                    }
+                  }}
+                  maxLength={TENANT_DISPLAY_NAME_MAX_LENGTH}
+                  disabled={tenantNameSaving}
+                  autoComplete="organization"
+                  aria-invalid={!!(tenantNameFieldError || tenantNameServerError)}
+                  aria-describedby={
+                    tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
+                  }
+                  data-testid="tenant-profile-rename-input"
+                />
+                {(tenantNameFieldError || tenantNameServerError) && (
+                  <p
+                    id={tenantNameErrorId}
+                    className="mg-v2-form-error"
+                    role="alert"
+                  >
+                    {tenantNameFieldError || tenantNameServerError}
+                  </p>
+                )}
+              </div>
+            </form>
+          </UnifiedModal>
         </div>
       </div>
     </AdminCommonLayout>

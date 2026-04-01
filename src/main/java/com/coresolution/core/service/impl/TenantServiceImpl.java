@@ -1,8 +1,12 @@
 package com.coresolution.core.service.impl;
 
+import com.coresolution.core.constants.TenantDisplayNameMessages;
 import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.dto.TenantNameUpdateRequest;
+import com.coresolution.core.dto.TenantNameUpdateResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.TenantService;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -87,6 +91,35 @@ public class TenantServiceImpl implements TenantService {
         log.debug("활성 테넌트 수: {}", tenantIds.size());
         
         return tenantIds;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public TenantNameUpdateResponse updateTenantDisplayName(String tenantId, TenantNameUpdateRequest request) {
+        log.info("테넌트 표시명 변경 처리: tenantId={}", tenantId);
+
+        Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+                .orElseThrow(() -> new EntityNotFoundException(TenantDisplayNameMessages.TENANT_NOT_FOUND));
+
+        String trimmed = request.getName() != null ? request.getName().trim() : "";
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException(TenantDisplayNameMessages.NAME_EMPTY_AFTER_TRIM);
+        }
+
+        tenantRepository.findByNameAndIsDeletedFalse(trimmed).ifPresent(other -> {
+            if (!other.getTenantId().equals(tenantId)) {
+                throw new IllegalArgumentException(TenantDisplayNameMessages.DUPLICATE_NAME_IN_USE);
+            }
+        });
+
+        tenant.setName(trimmed);
+        Tenant saved = tenantRepository.save(tenant);
+        log.info("테넌트 표시명 변경 완료: tenantId={}", tenantId);
+
+        return TenantNameUpdateResponse.fromEntity(saved);
     }
 }
 

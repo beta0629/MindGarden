@@ -9,6 +9,7 @@
  *
  * 실행: cd tests/e2e && BASE_URL=http://localhost:3000 TEST_USERNAME=... TEST_PASSWORD=... \
  *   npx playwright test tests/admin/tenant-profile.spec.ts --project=chromium
+ * (ADMIN 계정 권장 — 표시명 변경 E2E는 PUT /api/v1/tenants/{id}/name 및 tenant-profile-rename-* testid 사용)
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
@@ -119,6 +120,44 @@ test.describe('테넌트 프로필 페이지 — ADMIN/STAFF 접근·탭 스모�
     expect(
       reactHits,
       `탭 전환 후 React #130 또는 invalid child 패턴이 감지됨:\n${reactHits.join('\n---\n')}`
+    ).toEqual([]);
+  });
+
+  test('ADMIN: 테넌트 표시명 변경 모달 → PUT name 200', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    await page.goto('/tenant/profile', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
+    const errorDiv = page.locator('.tenant-profile-error');
+    await expect(errorDiv).toHaveCount(0);
+
+    const openBtn = page.getByTestId('tenant-profile-rename-open');
+    await expect(openBtn).toBeVisible({ timeout: 15000 });
+    await openBtn.click();
+
+    const uniqueName = `E2E Rename ${Date.now()}`;
+    const input = page.getByTestId('tenant-profile-rename-input');
+    await expect(input).toBeVisible({ timeout: 5000 });
+    await input.fill(uniqueName);
+
+    const renameResponse = page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' &&
+        res.url().includes('/api/v1/tenants/') &&
+        res.url().includes('/name') &&
+        res.status() === 200
+    );
+    await page.getByTestId('tenant-profile-rename-save').click();
+    await renameResponse;
+
+    const reactHits = collectedErrors.filter((line) => REACT_130_OR_INVALID_CHILD.test(line));
+    expect(
+      reactHits,
+      `표시명 저장 후 React #130 또는 invalid child 패턴이 감지됨:\n${reactHits.join('\n---\n')}`
     ).toEqual([]);
   });
 });

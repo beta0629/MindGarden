@@ -146,7 +146,7 @@ public class OnboardingController extends BaseApiController {
      */
     @GetMapping("/requests/{id}")
     public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(
-            @PathVariable java.util.UUID id, HttpServletRequest request) {
+            @PathVariable Long id, HttpServletRequest request) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
         if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
             OpsPermissionUtils.requireAdminOrOps();
@@ -276,7 +276,7 @@ public class OnboardingController extends BaseApiController {
      * 가능 /** 서브도메인 수정 시 중복 확인 수행
      */
     @PutMapping("/requests/{id}")
-    public ResponseEntity<ApiResponse<OnboardingRequest>> update(@PathVariable java.util.UUID id,
+    public ResponseEntity<ApiResponse<OnboardingRequest>> update(@PathVariable Long id,
             @RequestBody @Valid OnboardingUpdateRequest payload, HttpSession session) {
         validateOnboardingAccess(session);
         log.info(
@@ -381,7 +381,7 @@ public class OnboardingController extends BaseApiController {
      */
     @GetMapping("/requests/public/{id}")
     public ResponseEntity<ApiResponse<OnboardingRequest>> getPublicRequest(
-            @PathVariable java.util.UUID id, @RequestParam String email, HttpSession session) {
+            @PathVariable Long id, @RequestParam String email, HttpSession session) {
         validateOnboardingAccess(session);
         log.debug("공개 온보딩 요청 상세 조회: id={}, email={}", id, email);
 
@@ -395,7 +395,7 @@ public class OnboardingController extends BaseApiController {
      * 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/decision")
-    public ResponseEntity<ApiResponse<OnboardingDecisionResponse>> decide(@PathVariable java.util.UUID id,
+    public ResponseEntity<ApiResponse<OnboardingDecisionResponse>> decide(@PathVariable Long id,
             @RequestBody @Valid OnboardingDecisionRequest payload, HttpServletRequest httpRequest) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
         if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
@@ -550,7 +550,7 @@ public class OnboardingController extends BaseApiController {
      */
     @GetMapping("/requests/{id}/processing-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getProcessingStatus(
-            @PathVariable java.util.UUID id, HttpServletRequest request) {
+            @PathVariable Long id, HttpServletRequest request) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
         if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
             OpsPermissionUtils.requireAdminOrOps();
@@ -622,7 +622,7 @@ public class OnboardingController extends BaseApiController {
      */
     @PostMapping("/requests/{id}/retry")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryApproval(
-            @PathVariable java.util.UUID id,
+            @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> payload,
             HttpServletRequest request) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
@@ -647,7 +647,7 @@ public class OnboardingController extends BaseApiController {
      */
     @PostMapping("/requests/{id}/retry-initialization")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryInitialization(
-            @PathVariable java.util.UUID id, @RequestBody Map<String, String> payload,
+            @PathVariable Long id, @RequestBody Map<String, String> payload,
             HttpServletRequest httpRequest) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
         if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {

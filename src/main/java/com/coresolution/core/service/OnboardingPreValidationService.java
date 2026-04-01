@@ -25,7 +25,7 @@ public interface OnboardingPreValidationService {
      * @param requestId 온보딩 요청 ID
      * @return 검증 결과
      */
-    ValidationResult validateBeforeApproval(java.util.UUID requestId);
+    ValidationResult validateBeforeApproval(Long requestId);
     
     /**
      * 시스템 메타데이터 검증

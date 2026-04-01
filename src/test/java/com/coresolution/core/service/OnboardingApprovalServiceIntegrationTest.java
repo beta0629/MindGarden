@@ -2,7 +2,6 @@ package com.coresolution.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,7 @@ class OnboardingApprovalServiceIntegrationTest {
     @Autowired
     private OnboardingApprovalService onboardingApprovalService;
 
-    private UUID testRequestId;
+    private Long testRequestId;
     private String testTenantId;
     private String testTenantName;
     private String testBusinessType;
@@ -35,7 +34,7 @@ class OnboardingApprovalServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        testRequestId = UUID.randomUUID();
+        testRequestId = 1L;
         testTenantId = "test-tenant-" + System.currentTimeMillis();
         testTenantName = "테스트 테넌트";
         testBusinessType = "ACADEMY";
@@ -75,7 +74,7 @@ class OnboardingApprovalServiceIntegrationTest {
     @DisplayName("온보딩 승인 프로세스 - 잘못된 요청 ID")
     void testProcessOnboardingApproval_InvalidRequestId() {
         // Given
-        UUID invalidRequestId = UUID.randomUUID();
+        Long invalidRequestId = 9_999_999L;
 
         // When
         Map<String, Object> result =

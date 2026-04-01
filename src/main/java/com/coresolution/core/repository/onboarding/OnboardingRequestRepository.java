@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 온보딩 요청 Repository
@@ -21,7 +20,7 @@ import java.util.UUID;
  * @since 2025-01-XX
  */
 @Repository
-public interface OnboardingRequestRepository extends JpaRepository<OnboardingRequest, UUID> {
+public interface OnboardingRequestRepository extends JpaRepository<OnboardingRequest, Long> {
     
     /**
      * 상태별 온보딩 요청 목록 조회 (생성일 내림차순)
@@ -51,7 +50,7 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
      * @param id 요청 PK
      * @return 매칭 엔티티
      */
-    Optional<OnboardingRequest> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, UUID id);
+    Optional<OnboardingRequest> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
 
     /**
      * PK만 알 때 사용 (온보딩/ops 전역 조회). {@link JpaRepository#findById(Object)} 대신 삭제 제외를 명시한다.
@@ -60,7 +59,7 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
      * @return 삭제되지 않은 요청
      */
     @Query("SELECT o FROM OnboardingRequest o WHERE o.id = :id AND o.isDeleted = false")
-    Optional<OnboardingRequest> findActiveById(@Param("id") UUID id);
+    Optional<OnboardingRequest> findActiveById(@Param("id") Long id);
     
     /**
      * 상태별 온보딩 요청 페이지 조회
@@ -86,7 +85,7 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
     /**
      * ID와 이메일로 온보딩 요청 조회 (본인 확인용)
      */
-    OnboardingRequest findByIdAndRequestedByAndIsDeletedFalse(UUID id, String requestedBy);
+    OnboardingRequest findByIdAndRequestedByAndIsDeletedFalse(Long id, String requestedBy);
     
     /**
      * 이메일로 승인된 온보딩 요청 존재 여부 확인
@@ -138,6 +137,6 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
         "AND o.id != :excludeId")
     boolean existsBySubdomainAndPendingStatusExcludingId(
         @org.springframework.data.repository.query.Param("subdomain") String subdomain,
-        @org.springframework.data.repository.query.Param("excludeId") UUID excludeId);
+        @org.springframework.data.repository.query.Param("excludeId") Long excludeId);
 }
 

@@ -51,7 +51,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      */
     @Override
     @Transactional(rollbackFor = Exception.class, timeout = 600) // 10분 타임아웃 (안전 마진)
-    public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
+    public Map<String, Object> processOnboardingApproval(Long requestId, String tenantId,
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
 
@@ -261,7 +261,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * @param priorMessage 프로시저 또는 폴백 메시지
      * @return success=true 및 stepResults
      */
-    private Map<String, Object> completeApprovalWithDashboardAndRoles(java.util.UUID requestId,
+    private Map<String, Object> completeApprovalWithDashboardAndRoles(Long requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
             String contactEmail, String adminPasswordHash, String priorMessage) {
 
@@ -306,7 +306,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * Step 1: 테넌트 생성/활성화
      */
-    private StepResult executeStepTenantCreation(java.util.UUID requestId, String tenantId,
+    private StepResult executeStepTenantCreation(Long requestId, String tenantId,
             String tenantName, String businessType, String subdomain, String approvedBy) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("📋 Step 1: 테넌트 생성/활성화");
@@ -333,7 +333,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * Step 2: 역할 템플릿 적용
      */
-    private StepResult executeStepRoleApplication(java.util.UUID requestId, String tenantId,
+    private StepResult executeStepRoleApplication(Long requestId, String tenantId,
             String businessType, String approvedBy) {
         log.info("==========================================");
         log.info("📋 Step 2: 역할 템플릿 적용");
@@ -443,7 +443,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * Step 3: 관리자 계정 생성
      */
-    private StepResult executeStepAdminAccountCreation(java.util.UUID requestId, String tenantId,
+    private StepResult executeStepAdminAccountCreation(Long requestId, String tenantId,
             String contactEmail, String tenantName, String adminPasswordHash, String approvedBy,
             String businessType) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -466,7 +466,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * Step 4: 대시보드 생성
      */
-    private StepResult executeStepDashboardCreation(java.util.UUID requestId, String tenantId,
+    private StepResult executeStepDashboardCreation(Long requestId, String tenantId,
             String businessType, String approvedBy) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("📋 Step 4: 대시보드 생성");
@@ -563,7 +563,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * 프로시저 호출 방식 (프로시저 먼저 시도, 실패 시 Java fallback 사용)
      */
-    private Map<String, Object> processOnboardingApprovalLegacy(java.util.UUID requestId,
+    private Map<String, Object> processOnboardingApprovalLegacy(Long requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
             String decisionNote, String contactEmail, String adminPasswordHash, String subdomain) {
 
@@ -604,11 +604,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 프로시저 실행 타임아웃 설정 (초 단위)
                 cs.setQueryTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전 마진)
 
-                // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
-                byte[] uuidBytes = convertUuidToBytes(requestId);
                 log.info("프로시저 파라미터 설정:");
-                log.info("  [1] requestId (BINARY): {}",
-                        java.util.Base64.getEncoder().encodeToString(uuidBytes));
+                log.info("  [1] requestId: {}", requestId);
                 log.info("  [2] tenantId: {}", tenantId);
                 log.info("  [3] tenantName: {}", tenantName);
                 log.info("  [4] businessType: {}", businessType);
@@ -624,7 +621,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 : adminPasswordHash) : "null");
                 log.info("  [9] subdomain: {}", subdomain);
 
-                cs.setBytes(1, uuidBytes);
+                cs.setLong(1, requestId);
                 cs.setString(2, tenantId);
                 cs.setString(3, tenantName);
                 cs.setString(4, businessType);
@@ -1075,16 +1072,6 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
 
         return result;
-    }
-
-    /**
-     * UUID를 BINARY(16) 바이트 배열로 변환
-     */
-    private byte[] convertUuidToBytes(java.util.UUID uuid) {
-        java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(new byte[16]);
-        bb.putLong(uuid.getMostSignificantBits());
-        bb.putLong(uuid.getLeastSignificantBits());
-        return bb.array();
     }
 
     /**
@@ -1593,7 +1580,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용) 별도 트랜잭션으로 분리하여 메인 트랜잭션의 version 충돌 방지
      */
-    private void updateProcessingStatus(java.util.UUID requestId, String tenantId, String step,
+    private void updateProcessingStatus(Long requestId, String tenantId, String step,
             String status, String message) {
         try {
             // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지

@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
@@ -89,7 +88,7 @@ class OnboardingServiceTest {
     private String testTenantId;
     private String testTenantName;
     private String testBusinessType;
-    private UUID testId;
+    private Long testId;
 
     @BeforeEach
     void setUp() {
@@ -100,7 +99,7 @@ class OnboardingServiceTest {
         testTenantId = "test-tenant-123";
         testTenantName = "테스트 테넌트";
         testBusinessType = "ACADEMY";
-        testId = UUID.randomUUID();
+        testId = 42L;
 
         testRequest = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
                 .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
@@ -116,7 +115,7 @@ class OnboardingServiceTest {
         lenient().when(autoApprovalService.checkAutoApprovalConditions(any(OnboardingRequest.class)))
                 .thenReturn(new AutoApprovalService.AutoApprovalResult(false, "unit-test",
                         RiskLevel.LOW, false, false, true));
-        lenient().when(preValidationService.validateBeforeApproval(any(UUID.class))).thenReturn(ok);
+        lenient().when(preValidationService.validateBeforeApproval(any(Long.class))).thenReturn(ok);
         lenient().when(preValidationService.validateSystemMetadata(anyString())).thenReturn(ok);
         lenient().when(tenantRepository.findDeletedByContactEmailIgnoreCase(anyString()))
                 .thenReturn(Collections.emptyList());
@@ -127,11 +126,11 @@ class OnboardingServiceTest {
                 .doReturn("{}")
                 .when(onboardingWorkflowBean)
                 .initializeTenantAfterOnboardingInNewTransaction(anyString(), anyString(), anyString(),
-                        any(UUID.class));
+                        any(Long.class));
         lenient()
                 .doNothing()
                 .when(onboardingWorkflowBean)
-                .saveInitializationStatusInNewTransaction(any(UUID.class), anyString(), anyString());
+                .saveInitializationStatusInNewTransaction(any(Long.class), anyString(), anyString());
 
         lenient().when(errorHandlingService.executeWithRetry(any(), anyInt(), anyLong()))
                 .thenAnswer(invocation -> {
@@ -183,7 +182,7 @@ class OnboardingServiceTest {
     @Test
     @DisplayName("온보딩 요청 ID로 조회 - 없음")
     void testGetById_NotFound() {
-        UUID nonExistentId = UUID.randomUUID();
+        Long nonExistentId = 999_999L;
         when(repository.findActiveById(nonExistentId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> onboardingService.getById(nonExistentId))
@@ -220,7 +219,7 @@ class OnboardingServiceTest {
         java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
         approvalResult.put("success", true);
         approvalResult.put("message", "온보딩 승인 완료");
-        when(approvalService.processOnboardingApproval(any(UUID.class), anyString(), anyString(),
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
                         .thenReturn(approvalResult);
 
@@ -232,7 +231,7 @@ class OnboardingServiceTest {
         assertThat(result.getDecidedBy()).isEqualTo("test-admin");
         assertThat(result.getDecisionNote()).isEqualTo("테스트 승인");
         verify(repository, atLeastOnce()).save(any(OnboardingRequest.class));
-        verify(approvalService, times(1)).processOnboardingApproval(any(UUID.class), anyString(),
+        verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
                 nullable(String.class));
     }

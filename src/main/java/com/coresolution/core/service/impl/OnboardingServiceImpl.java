@@ -88,7 +88,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(readOnly = true)
-    public OnboardingRequest getById(java.util.UUID id) {
+    public OnboardingRequest getById(Long id) {
         log.debug("온보딩 요청 조회: id={}", id);
         return repository.findActiveById(id).orElseThrow(() -> new IllegalArgumentException(
                 OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, id)));
@@ -189,7 +189,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public OnboardingRequest update(java.util.UUID requestId, String tenantName, String subdomain,
+    public OnboardingRequest update(Long requestId, String tenantName, String subdomain,
             String brandName, String regionCode, String businessType) {
 
         log.info(
@@ -326,7 +326,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      * 주의: decideInternal을 호출하여 트랜잭션 전파 문제를 피함 예외가 발생해도 원래 트랜잭션에 영향을 주지 않도록 예외를 catch하고 null 반환
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
-    public OnboardingRequest decideInNewTransaction(java.util.UUID requestId,
+    public OnboardingRequest decideInNewTransaction(Long requestId,
             OnboardingStatus status, String actorId, String note) {
         try {
             return decideInternal(requestId, status, actorId, note);
@@ -340,7 +340,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     /**
      * decide 메서드의 실제 로직 (트랜잭션 없음) decide와 decideInNewTransaction에서 공통으로 사용
      */
-    private OnboardingRequest decideInternal(java.util.UUID requestId, OnboardingStatus status,
+    private OnboardingRequest decideInternal(Long requestId, OnboardingStatus status,
             String actorId, String note) {
 
         log.info("온보딩 요청 결정 (내부): requestId={}, status={}, actorId={}", requestId, status, actorId);
@@ -906,7 +906,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public OnboardingRequest decide(java.util.UUID requestId, OnboardingStatus status,
+    public OnboardingRequest decide(Long requestId, OnboardingStatus status,
             String actorId, String note) {
         try {
             return decideInternal(requestId, status, actorId, note);
@@ -965,7 +965,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     @Override
-    public OnboardingRequest retryApproval(java.util.UUID requestId, String actorId, String note) {
+    public OnboardingRequest retryApproval(Long requestId, String actorId, String note) {
         log.info("온보딩 승인 프로세스 재시도: requestId={}, actorId={}", requestId, actorId);
 
         OnboardingRequest request = repository.findActiveById(requestId)
@@ -998,7 +998,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(readOnly = true)
-    public OnboardingRequest findByIdAndEmail(java.util.UUID id, String email) {
+    public OnboardingRequest findByIdAndEmail(Long id, String email) {
         log.debug("ID와 이메일로 온보딩 요청 조회: id={}, email={}", id, email);
         OnboardingRequest request = repository.findByIdAndRequestedByAndIsDeletedFalse(id, email);
         if (request == null) {
@@ -1423,7 +1423,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public String initializeTenantAfterOnboardingInNewTransaction(String tenantId,
-            String businessType, String actorId, java.util.UUID requestId) {
+            String businessType, String actorId, Long requestId) {
         // 각 작업을 별도 트랜잭션으로 분리하여 하나가 실패해도 다른 것들은 성공하도록 처리
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
 
@@ -1524,7 +1524,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return normalizedMessage.contains("fallback") || normalizedMessage.contains("폴백");
     }
 
-    private void persistInitializationStatusAfterDecision(java.util.UUID requestId, String tenantId,
+    private void persistInitializationStatusAfterDecision(Long requestId, String tenantId,
             String statusJson, String phase, boolean fallbackUsed) {
         String normalizedStatusJson =
                 buildDecisionStatusJson(statusJson, phase, fallbackUsed, requestId, tenantId);
@@ -1551,7 +1551,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     private String buildDecisionStatusJson(String existingStatusJson, String phase, boolean fallbackUsed,
-            java.util.UUID requestId, String tenantId) {
+            Long requestId, String tenantId) {
         Map<String, Object> statusMap = new java.util.HashMap<>();
         if (existingStatusJson != null && !existingStatusJson.trim().isEmpty()) {
             try {
@@ -2250,7 +2250,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(readOnly = true)
     public OnboardingService.SubdomainCheckResult checkSubdomainDuplicate(String subdomain,
-            java.util.UUID excludeRequestId) {
+            Long excludeRequestId) {
         log.info("서브도메인 중복 확인: subdomain={}, excludeRequestId={}", subdomain, excludeRequestId);
 
         // 1. 유효성 검증
@@ -2324,7 +2324,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType,
+    public OnboardingRequest retryInitializationTask(Long requestId, String taskType,
             String actorId) {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
 
@@ -2496,7 +2496,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      * 별도 트랜잭션에서 초기화 작업 상태 저장 롤백 방지를 위해 별도 트랜잭션으로 처리
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId, String tenantId,
+    public void saveInitializationStatusInNewTransaction(Long requestId, String tenantId,
             String statusJson) {
         try {
             OnboardingRequest request =
@@ -2524,7 +2524,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param status 단계 상태 (PENDING, IN_PROGRESS, SUCCESS, FAILED)
      * @param message 상태 메시지
      */
-    private void updateProcessingStatus(java.util.UUID requestId, String step, String status,
+    private void updateProcessingStatus(Long requestId, String step, String status,
             String message) {
         try {
             // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지

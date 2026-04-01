@@ -83,7 +83,7 @@ public class OnboardingPreValidationServiceImpl implements OnboardingPreValidati
     }
 
     @Override
-    public ValidationResult validateBeforeApproval(java.util.UUID requestId) {
+    public ValidationResult validateBeforeApproval(Long requestId) {
         log.debug("온보딩 승인 전 사전 검증 시작: requestId={}", requestId);
 
         Map<String, String> errors = new HashMap<>();

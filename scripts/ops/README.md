@@ -1,6 +1,6 @@
 # 운영 OPS 스크립트 (`scripts/ops`)
 
-헬스·디스크·로그 디렉터리 **읽기 전용 스냅샷**과, 로그 **보수적 glob + DRY_RUN 기본** 정리 스크립트입니다.  
+**코어 솔루션(MindGarden 백엔드)** 과 **OPS 포털(`ops.e-trinity.co.kr` 등)** 을 한 번에 점검하는 **읽기 전용 스냅샷**, plus 로그 **보수적 glob + DRY_RUN 기본** 정리 스크립트입니다.  
 **`deploy-production.yml`과 트리거·책임이 분리**되어 있습니다. 배포 워크플로에서 이 스크립트를 호출하지 않습니다.
 
 서버 점검·복구 절차는 `.cursor/skills/core-solution-server-status/SKILL.md`와 정렬합니다 (SSH·로그 경로·systemd·actuator).
@@ -9,7 +9,7 @@
 
 | 파일 | 설명 |
 |------|------|
-| `prod-health-snapshot.sh` | `systemctl`, `df`, 로그 디렉터리 `du`, HTTP actuator 헬스 |
+| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du` |
 | `prod-log-cleanup.sh` | `MG_LOG_ROOT` 하위만, `*.log.*` / `*.gz` / `*.hprof`, `-mtime +N`. 기본 DRY_RUN |
 
 ## 환경변수
@@ -18,9 +18,13 @@
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `MG_SERVICE_NAME` | `mindgarden.service` | `systemctl is-active` 대상 |
-| `MG_HEALTH_URL` | `http://127.0.0.1:8080/actuator/health` | 로컬 헬스 URL |
-| `MG_LOG_DIRS` | `/var/log/mindgarden` | 콜론(`:`)으로 복수 경로 |
+| `MG_SERVICE_NAME` | `mindgarden.service` | 코어 **MindGarden** `systemctl is-active` 대상 |
+| `MG_HEALTH_URL` | `http://127.0.0.1:8080/actuator/health` | 코어 JVM **직접** actuator |
+| `OPS_PORTAL_HEALTH_URL` | `https://ops.e-trinity.co.kr/api/v1/health/server` | **OPS 포털** 공개 경로(nginx·TLS 포함). 끄려면 빈 문자열 |
+| `CORE_EDGE_HEALTH_URL` | `https://mindgarden.core-solution.co.kr/api/v1/health/server` | **코어 솔루션** 공개 엣지. 끄려면 빈 문자열 |
+| `MG_SKIP_PUBLIC_EDGE_CHECKS` | (미설정) | `1`이면 공개 URL 두 개 검사 생략(로컬 actuator만) |
+| `OPS_BACKEND_SERVICE` | (미설정) | 예: `ops-backend.service`. 설정 시에만 `systemctl is-active` 추가 |
+| `MG_LOG_DIRS` | `/var/log/mindgarden:/var/log/nginx` | 콜론(`:`)으로 복수 경로(OPS nginx access 등) |
 | `MG_HEALTH_CONNECT_TIMEOUT` | `10` | `curl` 연결 타임아웃(초) |
 
 ### `prod-log-cleanup.sh`

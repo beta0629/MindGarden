@@ -3,7 +3,7 @@
 # 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
 # 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
 
-name: 🩺 운영 OPS 헬스 스냅샷
+name: 🩺 운영 코어·OPS 헬스 스냅샷
 
 on:
   workflow_dispatch:

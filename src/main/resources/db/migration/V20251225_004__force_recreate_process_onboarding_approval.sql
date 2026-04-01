@@ -140,7 +140,7 @@ proc_label: BEGIN
             -- 프로시저 내부에서 COMMIT을 하면 Java 트랜잭션과 충돌
         END IF;
     END IF;
-END$$
+END proc_label$$
 
 DELIMITER ;
 

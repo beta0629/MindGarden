@@ -145,7 +145,7 @@ proc_label: BEGIN
             COMMIT;
         END IF;
     END IF;
-END$$
+END proc_label$$
 
 DELIMITER ;
 

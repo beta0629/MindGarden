@@ -50,7 +50,6 @@ proc_label: BEGIN
         SET p_message = CONCAT('테넌트 생성/활성화 중 치명적 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'));
         -- 트랜잭션 롤백은 호출 프로시저(ProcessOnboardingApproval)에서 처리
         -- RESIGNAL 제거: 예외를 상위로 전파하지 않고 p_success = FALSE로 처리
-        LEAVE proc_label;
     END;
     
     -- 초기값 설정
@@ -516,7 +515,7 @@ proc_label: BEGIN
     
     -- 트랜잭션 커밋/롤백은 호출 프로시저(ProcessOnboardingApproval)에서 처리
     -- COMMIT/ROLLBACK 제거
-END$$
+END proc_label$$
 
 DELIMITER ;
 

@@ -230,6 +230,11 @@ public class TenantContextFilter implements Filter {
      * <li>보안 표준: SecurityConfig와 일치하는 공개 API 목록</li>
      * </ul>
      *
+     * <p>
+     * {@code isPublicApi} 분기와 {@link com.coresolution.consultation.config.SecurityConfig}의 permitAll·
+     * 비-API(HTML·정적·SPA) 서빙 정책을 함께 바꿀 때는 반드시 동기화할 것.
+     * </p>
+     *
      * @param requestURI 요청 URI (쿼리 파라미터 포함)
      * @return 공개 API이면 true, 그렇지 않으면 false
      * @see com.coresolution.consultation.config.SecurityConfig
@@ -241,27 +246,11 @@ public class TenantContextFilter implements Filter {
             path = path.substring(0, path.indexOf("?"));
         }
 
-        // 프론트엔드 공개 경로 (React Router 경로)
-        // 이 경로들은 API가 아니므로 tenantId 검증 불필요
-        String[] frontendPublicPaths = {
-            "/admin-dashboard-sample",
-            "/design-system",
-            "/design-system-v2",
-            "/landing",
-            "/test/notifications",
-            "/test/payment",
-            "/test/integration",
-            "/test/ios-cards",
-            "/test/design-sample",
-            "/test/premium-sample",
-            "/test/advanced-sample"
-        };
-        
-        for (String frontendPath : frontendPublicPaths) {
-            if (path.equals(frontendPath) || path.startsWith(frontendPath + "/")) {
-                log.debug("프론트엔드 공개 경로 매칭: {} -> {}", requestURI, frontendPath);
-                return true;
-            }
+        // HTML·정적 리소스·SPA 라우트(/, /login, /register, /tablet/** 등)는 /api 가 아니므로 테넌트 강제 검증 제외
+        // (SessionBasedAuthenticationFilter·JwtAuthenticationFilter의 정적 경로 제외와 동일한 취지)
+        if (!path.startsWith("/api/") && !"/api".equals(path)) {
+            log.debug("비-API 경로 - tenantId 검증 생략: {}", path);
+            return true;
         }
 
         // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치해야 함)
@@ -277,9 +266,12 @@ public class TenantContextFilter implements Filter {
                 "/api/auth", // 인증 API (레거시 경로, OAuth 콜백 포함)
                 "/api/v1/accounts/integration", // 계정 통합 API (온보딩 이메일 인증 등)
                 "/api/v1/common-codes", // 공통코드 API
+                "/api/common-codes", // 공통코드 API (레거시, SecurityConfig permitAll과 정합)
                 "/api/v1/business-categories", // 업종 카테고리 API (온보딩에서 사용)
                 "/api/business-categories", // 레거시 업종 카테고리 API (하위 호환성)
                 "/api/v1/admin/css-themes", // CSS 테마 API
+                "/api/v1/health", // 애플리케이션 헬스 (모니터링, /server·/database 등 하위 포함)
+                "/api/health", // 레거시 헬스 경로 (SessionBasedAuthenticationFilter 제외와 정합)
                 "/api/v1/test", // 테스트 API (개발 환경 전용, 비밀번호 재설정 등)
                 "/actuator/health", // 헬스체크
                 "/actuator/info" // 정보 조회

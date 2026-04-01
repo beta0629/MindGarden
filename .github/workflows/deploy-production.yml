@@ -742,11 +742,13 @@ jobs:
             fi
           done
           
-          # 프론트엔드 확인
-          if curl -f -s http://localhost/login > /dev/null 2>&1; then
-            echo "✅ 프론트엔드 정상 접근"
+          # 프론트엔드(SPA 엔트리) 확인 — 백엔드 8080 직접 (localhost:80은 vhost에 따라 오탐)
+          # curl -f 는 4xx 시 실패라 TENANT_ID_REQUIRED 400 등에서 오탐됨 → HTTP 코드로 판정
+          fe_code=$(curl -sS -o /dev/null -w '%{http_code}' -m 15 http://127.0.0.1:8080/login 2>/dev/null || echo "000")
+          if echo "$fe_code" | grep -qE '^(200|301|302|303|304)$'; then
+            echo "✅ 프론트엔드 엔트리(/login) 응답 정상 (HTTP $fe_code)"
           else
-            echo "❌ 프론트엔드 접근 실패"
+            echo "❌ 프론트엔드 접근 실패 (HTTP $fe_code, 기대: 2xx/3xx)"
           fi
           
           echo "🎉 배포 완료!"

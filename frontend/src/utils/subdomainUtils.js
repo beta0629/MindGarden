@@ -63,3 +63,39 @@ export function isLocalhost() {
 export function shouldRedirectWrongPath() {
   return !isLocalhost() && isOnTenantCapableDomain() && getTenantSubdomainFromHost() === '';
 }
+
+/**
+ * 호스트명이 테넌트 도메인 접미사 중 무엇으로 끝나는지 반환.
+ * @param {string} hostname 포트 제외 호스트명
+ * @returns {string|undefined} SUBDOMAIN_SUFFIXES의 항목 또는 없으면 undefined
+ */
+export function getMatchedSubdomainSuffixFromHostname(hostname) {
+  if (!hostname) return undefined;
+  const host = hostname.split(':')[0];
+  return SUBDOMAIN_SUFFIXES.find((suffix) => host.endsWith(suffix));
+}
+
+/**
+ * 로그아웃 등 테넌트 라벨 기준 로그인 페이지용 origin(scheme + host + port) 생성.
+ * 현재 창과 동일한 프로토콜·포트·도메인 패밀리(dev.core-solution / core-solution)를 유지한다.
+ * 호스트가 접미사와 맞지 않으면 목록의 마지막 항목(운영 .core-solution.co.kr)을 사용한다.
+ *
+ * @param {string} tenantSubdomain 테넌트 서브도메인 라벨 (예: mindgarden)
+ * @returns {string|null} origin 또는 null
+ * @author CoreSolution
+ * @since 2026-04-01
+ */
+export function buildTenantAuthBaseUrl(tenantSubdomain) {
+  if (!tenantSubdomain || typeof tenantSubdomain !== 'string') {
+    return null;
+  }
+  if (typeof globalThis === 'undefined' || !globalThis.window?.location) {
+    return null;
+  }
+  const { protocol, hostname, port } = globalThis.window.location;
+  const host = hostname.split(':')[0];
+  const matchedSuffix =
+    getMatchedSubdomainSuffixFromHostname(host) ?? SUBDOMAIN_SUFFIXES.at(-1);
+  const portPart = port ? `:${port}` : '';
+  return `${protocol}//${tenantSubdomain}${matchedSuffix}${portPart}`;
+}

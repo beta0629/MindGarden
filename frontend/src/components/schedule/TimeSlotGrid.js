@@ -33,7 +33,8 @@ const TimeSlotGrid = ({
     duration = DEFAULT_CONSULTATION_DURATION, 
     onTimeSlotSelect, 
     selectedTimeSlot,
-    variant = 'default' // 'default' | 'b0kla' — B0KlA 모달용 아토믹 클래스
+    variant = 'default', // 'default' | 'b0kla' — B0KlA 모달용 아토믹 클래스
+    excludeScheduleId = null
 }) => {
     // date prop을 selectedDate로 사용
     const selectedDate = date;
@@ -51,13 +52,13 @@ const TimeSlotGrid = ({
             loadExistingSchedules();
             loadVacationInfo();
         }
-    }, [date, consultantId, duration]);
+    }, [date, consultantId, duration, excludeScheduleId]);
 
     useEffect(() => {
         if (consultantInfo) {
             generateTimeSlots();
         }
-    }, [consultantInfo, duration, vacationInfo, existingSchedules]);
+    }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId]);
 
     // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
     useEffect(() => {
@@ -498,13 +499,18 @@ const TimeSlotGrid = ({
     };
 
 /**
-     * 시간 충돌 검사
+     * 시간 충돌 검사 (재예약 시 excludeScheduleId 해당 일정은 제외)
      */
     const checkTimeConflict = (slot, schedules) => {
         const slotStart = slot.time;
         const slotEnd = slot.endTime;
+
+        const filtered =
+            excludeScheduleId == null || excludeScheduleId === ''
+                ? schedules
+                : schedules.filter((s) => String(s.id) !== String(excludeScheduleId));
         
-        return schedules.some(schedule => {
+        return filtered.some(schedule => {
             const scheduleStart = schedule.startTime;
             const scheduleEnd = schedule.endTime;
             

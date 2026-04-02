@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserSquare, Users, Clock, FileText, Check } from 'lucide-react';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
-import TimeSlotGrid from './TimeSlotGrid';
+import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
-import BadgeSelect from '../common/BadgeSelect';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -50,7 +49,11 @@ const ScheduleModalNew = ({
     const [step, setStep] = useState(1); // 1: 상담사 선택, 2: 내담자 선택, 3: 시간 선택, 4: 세부사항
     const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
     const [durationOptions, setDurationOptions] = useState([]);
-    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    const handleCodeOptionsLoaded = useCallback(({ consultationTypeOptions: c, durationOptions: d }) => {
+        setConsultationTypeOptions(c);
+        setDurationOptions(d);
+    }, []);
 
     // 세션 컨텍스트에서 모달 상태 관리 함수 가져오기
     const { setModalOpen } = useSession();
@@ -94,112 +97,6 @@ const ScheduleModalNew = ({
             setStep(1);
         }
     }, [isOpen, preFilledMapping?.consultantId, preFilledMapping?.clientId]);
-
-    // 상담 유형 코드 로드
-    useEffect(() => {
-        const loadConsultationTypeCodes = async () => {
-            try {
-                setLoadingCodes(true);
-                const response = await StandardizedApi.get('/api/v1/common-codes/groups/CONSULTATION_TYPE');
-                if (response && response.length > 0) {
-                    const options = response.map(code => {
-                        let durationMinutes = 50;
-                        if (code.extraData) {
-                            try {
-                                const extraData = JSON.parse(code.extraData);
-                                durationMinutes = extraData.durationMinutes || 50;
-                            } catch (e) {
-                                console.warn('extraData 파싱 실패:', code.extraData);
-                            }
-                        }
-                        return {
-                            value: code.codeValue,
-                            label: code.codeLabel,
-                            icon: null,
-                            color: code.colorCode || 'var(--mg-primary-500)',
-                            durationMinutes: durationMinutes
-                        };
-                    });
-                    setConsultationTypeOptions(options);
-                }
-            } catch (error) {
-                console.error('상담 유형 코드 로드 실패:', error);
-                setConsultationTypeOptions([
-                    { value: 'INDIVIDUAL', label: '개인상담', icon: null, color: 'var(--mg-primary-500)', durationMinutes: 50 },
-                    { value: 'FAMILY', label: '가족상담', icon: null, color: 'var(--mg-success-500)', durationMinutes: 100 },
-                    { value: 'INITIAL', label: '초기상담', icon: null, color: 'var(--mg-warning-500)', durationMinutes: 60 },
-                    { value: 'COUPLE', label: '부부상담', icon: null, color: 'var(--mg-pink-500)', durationMinutes: 80 },
-                    { value: 'GROUP', label: '집단상담', icon: null, color: 'var(--mg-purple-500)', durationMinutes: 90 }
-                ]);
-            } finally {
-                setLoadingCodes(false);
-            }
-        };
-
-        if (isOpen) {
-            loadConsultationTypeCodes();
-        }
-    }, [isOpen]);
-
-    // 상담 시간 코드 로드
-    useEffect(() => {
-        const loadDurationCodes = async () => {
-            try {
-                setLoadingCodes(true);
-                const response = await StandardizedApi.get('/api/v1/common-codes/groups/DURATION');
-                if (response && response.length > 0) {
-                    const options = response.map(code => {
-                        let durationMinutes = 60;
-                        if (code.extraData) {
-                            try {
-                                const extraData = JSON.parse(code.extraData);
-                                durationMinutes = extraData.durationMinutes || parseInt(code.codeValue.replace('_MIN', '')) || 60;
-                            } catch (e) {
-                                console.warn('extraData 파싱 실패:', code.extraData);
-                                durationMinutes = parseInt(code.codeValue.replace('_MIN', '')) || 60;
-                            }
-                        } else {
-                            durationMinutes = parseInt(code.codeValue.replace('_MIN', '')) || 60;
-                        }
-                        return {
-                            value: code.codeValue,
-                            label: code.codeLabel,
-                            icon: null,
-                            color: code.colorCode || 'var(--mg-primary-500)',
-                            durationMinutes: durationMinutes,
-                            description: code.codeDescription
-                        };
-                    });
-                    setDurationOptions(options);
-                    if (!selectedDuration && options.length > 0) {
-                        setSelectedDuration(options[0].value);
-                    }
-                }
-            } catch (error) {
-                console.error('상담 시간 코드 로드 실패:', error);
-                const defaultOptions = [
-                    { value: '30_MIN', label: '30분', icon: null, color: 'var(--mg-warning-500)', durationMinutes: 30, description: '30분 상담' },
-                    { value: '50_MIN', label: '50분', icon: null, color: 'var(--mg-primary-500)', durationMinutes: 50, description: '50분 상담' },
-                    { value: '60_MIN', label: '60분', icon: null, color: 'var(--mg-success-500)', durationMinutes: 60, description: '60분 상담' },
-                    { value: '80_MIN', label: '80분', icon: null, color: 'var(--mg-pink-500)', durationMinutes: 80, description: '80분 상담' },
-                    { value: '90_MIN', label: '90분', icon: null, color: 'var(--mg-purple-500)', durationMinutes: 90, description: '90분 상담' },
-                    { value: '100_MIN', label: '100분', icon: null, color: 'var(--mg-warning-500)', durationMinutes: 100, description: '100분 상담' },
-                    { value: '120_MIN', label: '120분', icon: null, color: 'var(--mg-error-500)', durationMinutes: 120, description: '120분 상담' },
-                    { value: 'CUSTOM', label: '사용자 정의', icon: null, color: 'var(--mg-gray-500)', durationMinutes: 0, description: '사용자가 직접 설정하는 상담 시간' }
-                ];
-                setDurationOptions(defaultOptions);
-                if (!selectedDuration) {
-                    setSelectedDuration('60_MIN');
-                }
-            } finally {
-                setLoadingCodes(false);
-            }
-        };
-
-        if (isOpen) {
-            loadDurationCodes();
-        }
-    }, [isOpen, selectedDuration]);
 
     const getDurationFromCode = (durationCode) => {
         if (!durationCode) return 60;
@@ -449,50 +346,18 @@ const ScheduleModalNew = ({
                                 <h3 className="mg-v2-ad-section-block__title">시간 선택</h3>
                             </div>
                             <div className="mg-v2-ad-section-block__content">
-                                <div className="mg-v2-ad-time-step">
-                                    <div className="mg-v2-ad-time-step__intro">
-                                        <p className="mg-v2-ad-time-step__subtitle">상담 유형과 시간을 선택한 뒤 시간대를 골라주세요.</p>
-                                        <p className="mg-v2-ad-time-step__note">휴가·기존 일정과 겹치지 않는 시간만 표시됩니다.</p>
-                                    </div>
-                                    <div className="mg-v2-ad-time-step__form-row">
-                                        <div className="mg-v2-ad-time-step__form-group">
-                                            <label className="mg-v2-ad-time-step__label" htmlFor="schedule-consultation-type">상담 유형</label>
-                                            <BadgeSelect
-                                                value={consultationType}
-                                                onChange={(val) => setConsultationType(val)}
-                                                options={consultationTypeOptions.map(option => ({
-                                                    value: option.value,
-                                                    label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.value, '')})`
-                                                }))}
-                                                placeholder="선택하세요"
-                                                disabled={loadingCodes}
-                                                className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
-                                            />
-                                        </div>
-                                        <div className="mg-v2-ad-time-step__form-group">
-                                            <label className="mg-v2-ad-time-step__label" htmlFor="schedule-duration">상담 시간</label>
-                                            <BadgeSelect
-                                                value={selectedDuration}
-                                                onChange={(val) => setSelectedDuration(val)}
-                                                options={durationOptions.map(option => ({
-                                                    value: option.value,
-                                                    label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.durationMinutes, '0')}분)`
-                                                }))}
-                                                placeholder="선택하세요"
-                                                disabled={loadingCodes}
-                                                className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
-                                            />
-                                        </div>
-                                    </div>
-                                    <TimeSlotGrid
-                                        date={effectiveSelectedDate}
-                                        consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
-                                        duration={getDurationFromCode(selectedDuration)}
-                                        onTimeSlotSelect={handleTimeSlotSelect}
-                                        selectedTimeSlot={selectedTimeSlot}
-                                        variant="b0kla"
-                                    />
-                                </div>
+                                <ScheduleTimeSelectionPanel
+                                    isActive={isOpen && step === 3}
+                                    date={effectiveSelectedDate}
+                                    consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
+                                    consultationType={consultationType}
+                                    onConsultationTypeChange={setConsultationType}
+                                    selectedDuration={selectedDuration}
+                                    onDurationChange={setSelectedDuration}
+                                    selectedTimeSlot={selectedTimeSlot}
+                                    onTimeSlotSelect={handleTimeSlotSelect}
+                                    onCodeOptionsLoaded={handleCodeOptionsLoaded}
+                                />
                             </div>
                         </div>
                     )}

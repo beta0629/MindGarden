@@ -732,6 +732,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             consultantName: consultantName,
             clientName: clientName,
             consultationType: koreanConsultationType,
+            consultationTypeCode: event.extendedProps.consultationType,
             startTime: formatTime(event.start),
             endTime: formatTime(event.end),
             status: koreanStatus,

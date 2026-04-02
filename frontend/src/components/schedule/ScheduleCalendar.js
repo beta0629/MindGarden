@@ -419,6 +419,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 statusKorean: event.extendedProps.statusKorean,
                 type: event.extendedProps.type,
                 consultationType: event.extendedProps.consultationType || event.extendedProps.type,
+                consultationTypeCode: event.extendedProps.consultationType,
                 description: event.extendedProps.description,
                 title: event.title,
                 date: eventStart.toISOString().split('T')[0],

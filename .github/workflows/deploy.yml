@@ -51,8 +51,22 @@ jobs:
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD || secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DEV_DB_NAME || secrets.DB_NAME }}
 
-      # 개발 서버 반영: GitHub Actions는 여기까지(CI만). 실제 배포는 SSH 수동 또는 서버 웹훅.
-      # 이 워크플로는 로컬 ~/.ssh 나 기존 SSH 키·config를 변경하지 않는다.
+      # 개발 자동 배포: CI 성공 후 SSH로 서버에서 deploy-from-webhook.sh (pm2 restart 포함)
+      # 켜기: Repository Variable HOMEPAGE_DEV_SSH_DEPLOY=true + Secrets (아래 이름 그대로)
+      # 로컬 PC의 ~/.ssh 는 건드리지 않음. GitHub Actions 러너만 아래 Secret으로 접속.
+      # 상세: docs/DEV_DEPLOY_CI_SSH.md
+      - name: Deploy to dev server (SSH, after CI)
+        if: github.event_name == 'push' && vars.HOMEPAGE_DEV_SSH_DEPLOY == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /var/www/homepage
+            bash deploy-from-webhook.sh
 
   # 프로덕션 브랜치 빌드 및 테스트
   build-and-test:

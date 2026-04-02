@@ -1,7 +1,7 @@
 # 마인드가든 홈페이지 — 배포·운영·개발 (Deploy & Ops)
 
 ## 사용 시기
-- **개발 서버** 반영: `homepage/develop` 푸시 후 **SSH 수동** 또는 **웹훅**. Actions는 CI만 하며 **로컬 SSH 설정을 바꾸지 않음**.
+- **개발 서버** 반영: `homepage/develop` 푸시 후 **Actions SSH 자동**(Variable+Secrets, `docs/DEV_DEPLOY_CI_SSH.md`) / **SSH 수동** / **웹훅**. Actions용 키는 GitHub Secrets만 쓰고 **로컬 `~/.ssh`는 그대로**.
 - 웹훅·포트·시크릿 **점검**
 - 배포 후 **검증**까지 한 번에 요청받을 때
 

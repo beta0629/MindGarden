@@ -22,8 +22,13 @@
 
 ### `DEV_SSH_KEY` 붙여넣기 형식
 
-- `-----BEGIN OPENSSH PRIVATE KEY-----` 부터 `-----END OPENSSH PRIVATE KEY-----` 까지 **줄바꿈 포함 전부**.
-- 또는 `-----BEGIN RSA PRIVATE KEY-----` … `-----END RSA PRIVATE KEY-----` 형식도 동일하게 전체 복사.
+- **열어야 하는 파일**: `github-actions-homepage-deploy` (**확장자 없음**, `.pub` 아님).  
+  `.pub` 파일은 공개키만 한 줄 들어 있고 **`BEGIN` 줄이 없다.**
+- **첫 줄**이 바로 이 형태로 시작한다:  
+  `-----BEGIN OPENSSH PRIVATE KEY-----`  
+  마지막 줄은 `-----END OPENSSH PRIVATE KEY-----`.
+- 그 **첫 줄부터 마지막 줄까지** **줄바꿈 포함 전부**를 `DEV_SSH_KEY`에 붙여넣는다.
+- (다른 키라면) `-----BEGIN RSA PRIVATE KEY-----` … `-----END RSA PRIVATE KEY-----` 형식도 동일하게 **비밀키 파일 전체** 복사.
 - 앞뒤에 따옴표나 공백 줄을 추가하지 말 것.
 
 **비밀키는 절대 커밋·채팅에 올리지 말 것.** GitHub Secrets UI에만 붙여넣는다.

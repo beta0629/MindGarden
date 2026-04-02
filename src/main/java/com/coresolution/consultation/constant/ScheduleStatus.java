@@ -61,4 +61,15 @@ public enum ScheduleStatus {
     public boolean isVacation() {
         return this == VACATION;
     }
+
+    /**
+     * 신규 예약 시 동일 상담사·날짜·시간대 충돌 검사에 포함할 상태인지 여부.
+     * 취소·가용·완료·휴가 등은 제외한다.
+     * ScheduleRepository findOverlappingSchedules 계열 JPQL의 status 조건과 맞출 것.
+     *
+     * @return 예약 점유로 간주하면 true
+     */
+    public boolean occupiesTimeForConflictCheck() {
+        return this == BOOKED || this == CONFIRMED;
+    }
 }

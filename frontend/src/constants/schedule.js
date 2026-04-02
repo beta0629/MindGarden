@@ -75,6 +75,20 @@ export const STATUS_TEXT_COLORS = {
   [STATUS.CANCELLED]: 'var(--mg-white)'
 };
 
+/** 시간 슬롯 충돌 검사에 포함할 스케줄 상태(백엔드 ScheduleStatus·JPQL 점유 집합과 정합, 레거시 IN_PROGRESS 포함) */
+export const SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT = new Set([
+  STATUS.BOOKED,
+  STATUS.CONFIRMED,
+  'IN_PROGRESS'
+]);
+
+export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
+  if (status == null || status === '') {
+    return false;
+  }
+  return SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has(String(status).toUpperCase());
+}
+
 export const SCHEDULE_TYPES = {
   CONSULTATION: 'CONSULTATION',
   MEETING: 'MEETING',

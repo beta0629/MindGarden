@@ -7,7 +7,8 @@ import './TimeSlotGrid.css';
 import { 
   BUSINESS_HOURS, 
   TIME_SLOT_INTERVAL, 
-  DEFAULT_CONSULTATION_DURATION 
+  DEFAULT_CONSULTATION_DURATION,
+  isScheduleStatusOccupyingTimeSlotForConflict
 } from '../../constants/schedule';
 
 /**
@@ -509,8 +510,10 @@ const TimeSlotGrid = ({
             excludeScheduleId == null || excludeScheduleId === ''
                 ? schedules
                 : schedules.filter((s) => String(s.id) !== String(excludeScheduleId));
+
+        const occupying = filtered.filter((s) => isScheduleStatusOccupyingTimeSlotForConflict(s.status));
         
-        return filtered.some(schedule => {
+        return occupying.some(schedule => {
             const scheduleStart = schedule.startTime;
             const scheduleEnd = schedule.endTime;
             

@@ -684,6 +684,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             if (excludeScheduleId != null && existing.getId().equals(excludeScheduleId)) {
                 continue; // 자기 자신은 제외
             }
+            if (!isScheduleOccupyingTimeSlot(existing)) {
+                continue;
+            }
             
             if (isTimeOverlapping(startTime, endTime, existing.getStartTime(), existing.getEndTime())) {
                 log.debug("시간 충돌 발견: 기존 스케줄 {} ({} - {})", existing.getId(), existing.getStartTime(), existing.getEndTime());
@@ -717,6 +720,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             if (excludeScheduleId != null && existing.getId().equals(excludeScheduleId)) {
                 continue; // 자기 자신은 제외
             }
+            if (!isScheduleOccupyingTimeSlot(existing)) {
+                continue;
+            }
             
             if (isTimeTooClose(startTime, endTime, existing.getStartTime(), existing.getEndTime())) {
                 log.debug("시간 간격 부족 발견: 기존 스케줄 {} ({} - {})", existing.getId(), existing.getStartTime(), existing.getEndTime());
@@ -725,6 +731,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         
         return false;
+    }
+
+    /**
+     * 예약 점유로 간주하는 스케줄만 충돌 후보에 포함한다.
+     * {@link com.coresolution.consultation.repository.ScheduleRepository#findOverlappingSchedules} JPQL status 집합과 동일 정책.
+     *
+     * @param schedule 검사 대상
+     * @return 점유(충돌 검사 대상)이면 true
+     */
+    private boolean isScheduleOccupyingTimeSlot(Schedule schedule) {
+        if (schedule == null || schedule.getStatus() == null) {
+            return false;
+        }
+        return schedule.getStatus().occupiesTimeForConflictCheck();
     }
 
     @Override

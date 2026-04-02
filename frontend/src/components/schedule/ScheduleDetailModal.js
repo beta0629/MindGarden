@@ -72,7 +72,32 @@ const ScheduleDetailModal = ({
         const targetCode = getStatusCodeValue(targetStatus);
         return currentCode === targetCode || currentStatus === targetStatus;
     };
-    
+
+    /**
+     * 액션 분기·배지용 상태 해석: API 코드(statusCode) 우선, 표시용 status는 유효할 때만 사용.
+     * @param {object} data 스케줄 표시 데이터
+     * @returns {string|null}
+     */
+    const resolveStatusForActions = (data) => {
+        if (!data) return null;
+        const codeStr =
+            data.statusCode != null && String(data.statusCode).trim() !== ''
+                ? String(data.statusCode).trim()
+                : null;
+        if (codeStr) return codeStr;
+
+        const st = data.status;
+        const statusInvalid =
+            st == null ||
+            st === '' ||
+            (typeof st === 'string' && st.trim() === '') ||
+            st === '알 수 없음';
+        if (!statusInvalid) {
+            return st;
+        }
+
+        return codeStr;
+    };
 
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
@@ -344,8 +369,8 @@ const ScheduleDetailModal = ({
         const vacationStatus = scheduleStatusOptions.find(opt => 
             opt.value === 'VACATION' || opt.label?.includes('휴가')
         );
-        
-return isStatus(displayData.status, vacationStatus) ||
+
+        return isStatus(resolveStatusForActions(displayData), vacationStatus) ||
                displayData.consultationType === 'VACATION' ||
                displayData.scheduleType === 'VACATION';
     };
@@ -394,7 +419,8 @@ return isStatus(displayData.status, vacationStatus) ||
                 const merged = {
                     ...scheduleData,
                     ...(typeof response === 'object' && response !== null ? response : {}),
-                    status: (response && response.status) || newStatus
+                    status: (response && response.status) || newStatus,
+                    statusCode: (response && response.status) || newStatus
                 };
                 setLocalScheduleOverride(merged);
             } else {
@@ -444,6 +470,7 @@ return isStatus(displayData.status, vacationStatus) ||
     if (!isOpen) return null;
 
     const displayData = localScheduleOverride ?? scheduleData;
+    const statusForDisplay = resolveStatusForActions(displayData) ?? displayData.status;
 
     const renderMainActions = () => {
         if (isVacationEvent()) {
@@ -472,7 +499,7 @@ return isStatus(displayData.status, vacationStatus) ||
         }
         return (
             <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
-                {isStatus(displayData.status, 'BOOKED') && (
+                {isStatus(resolveStatusForActions(displayData), 'BOOKED') && (
                     <>
                         {canRescheduleByRole && (
                             <button
@@ -500,7 +527,7 @@ return isStatus(displayData.status, vacationStatus) ||
                         </button>
                     </>
                 )}
-                {isStatus(displayData.status, 'CONFIRMED') && (() => {
+                {isStatus(resolveStatusForActions(displayData), 'CONFIRMED') && (() => {
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes('완료')
                     )?.value || 'COMPLETED';
@@ -531,7 +558,7 @@ return isStatus(displayData.status, vacationStatus) ||
                         </>
                     );
                 })()}
-                {isStatus(displayData.status, 'COMPLETED') && (() => {
+                {isStatus(resolveStatusForActions(displayData), 'COMPLETED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
@@ -545,7 +572,7 @@ return isStatus(displayData.status, vacationStatus) ||
                         </button>
                     );
                 })()}
-                {isStatus(displayData.status, 'CANCELLED') && (() => {
+                {isStatus(resolveStatusForActions(displayData), 'CANCELLED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
@@ -642,8 +669,8 @@ return isStatus(displayData.status, vacationStatus) ||
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상태</span>
-                        <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(displayData.status))}`}>
-                            <SafeText>{convertStatusToKorean(displayData.status)}</SafeText>
+                        <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(statusForDisplay))}`}>
+                            <SafeText>{convertStatusToKorean(statusForDisplay)}</SafeText>
                         </span>
                     </div>
                             </div>

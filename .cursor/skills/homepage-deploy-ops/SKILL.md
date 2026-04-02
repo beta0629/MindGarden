@@ -1,7 +1,7 @@
 # 마인드가든 홈페이지 — 배포·운영·개발 (Deploy & Ops)
 
 ## 사용 시기
-- **개발 서버** 반영: `homepage/develop` 푸시 → (설정 시) **Actions CI 후 SSH 자동 배포** 또는 웹훅·SSH 수동 (`docs/DEV_DEPLOY_CI_SSH.md`)
+- **개발 서버** 반영: `homepage/develop` 푸시 후 **SSH 수동** 또는 **웹훅**. Actions는 CI만 하며 **로컬 SSH 설정을 바꾸지 않음**.
 - 웹훅·포트·시크릿 **점검**
 - 배포 후 **검증**까지 한 번에 요청받을 때
 

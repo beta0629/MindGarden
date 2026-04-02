@@ -42,7 +42,13 @@
 
 ## 4. 서버 측: 공개키 등록 (배포 전용 키 권장)
 
-로컬(또는 임시 폴더)에서 **새 키** 생성 예시:
+### `ssh-keygen`은 어디서 실행하나?
+
+- **본인 PC(맥·리눅스 터미널, WSL 등)** 에서 실행한다.  
+- **GitHub 웹이나 Actions 안에서는 실행하지 않는다.**  
+- **개발 서버에 SSH로 들어가서 할 필요도 없다.** (키 파일만 만들고, 공개키 내용을 서버에 붙여 넣으면 된다.)
+
+### 키 생성 예시 (PC에서, 레포 밖 임의 폴더에서 해도 됨)
 
 ```bash
 ssh-keygen -t ed25519 -f ./github-actions-homepage-deploy -N "" -C "github-actions homepage develop"

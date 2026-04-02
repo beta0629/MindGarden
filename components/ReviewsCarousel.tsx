@@ -6,6 +6,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
 import KakaoIcon from './KakaoIcon';
 import { HeartGlyph } from '@/components/icons/ReviewHearts';
 import { StarGlyph } from '@/components/icons/UiGlyphs';
+import { SITE_SHARE_PREVIEW_IMAGE_URL } from '@/lib/site-fallback-visuals';
 
 interface Review {
   id: number;
@@ -151,7 +152,7 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
             content: {
               title: shareText,
               description: shareContent,
-              imageUrl: `${url}/assets/images/gallery_1.png`,
+              imageUrl: SITE_SHARE_PREVIEW_IMAGE_URL,
               link: {
                 mobileWebUrl: shareUrl,
                 webUrl: shareUrl,

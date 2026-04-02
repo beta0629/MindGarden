@@ -4,6 +4,7 @@
  */
 
 import { CONFIG } from './config';
+import { FALLBACK_GALLERY_IMAGES } from './site-fallback-visuals';
 
 class ApiService {
   private baseURL: string;
@@ -392,12 +393,7 @@ class ApiService {
         main: 'ADHD 전문.심리상담센터'
       },
       videoUrl: null, // 로컬 비디오 또는 기본 비디오 사용
-      gallery: [
-        { url: '/assets/images/gallery_1.png', alt: '따뜻한 상담 공간' },
-        { url: '/assets/images/gallery_2.png', alt: '편안한 치료실' },
-        { url: '/assets/images/gallery_3.png', alt: '평화로운 공간' },
-        { url: '/assets/images/gallery_4.png', alt: '따뜻한 조명의 공간' }
-      ]
+      gallery: [...FALLBACK_GALLERY_IMAGES]
     };
   }
 }

@@ -9,6 +9,7 @@ import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
 import { homeSectionImages } from '@/lib/home-section-images';
+import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
 
 // 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
 export const dynamic = 'force-dynamic';
@@ -146,13 +147,7 @@ async function getHomeData() {
     const reviews = await getReviews();
     console.log('getHomeData - reviews:', reviews.length);
     
-    // 기본 이미지 (갤러리 이미지가 없을 때 사용)
-    const defaultGallery = [
-      { url: '/assets/images/gallery_1.png', alt: '따뜻한 상담 공간' },
-      { url: '/assets/images/gallery_2.png', alt: '편안한 치료실' },
-      { url: '/assets/images/gallery_3.png', alt: '평화로운 공간' },
-      { url: '/assets/images/gallery_4.png', alt: '따뜻한 조명의 공간' },
-    ];
+    const defaultGallery = [...FALLBACK_GALLERY_IMAGES];
     
     const finalGallery = galleryImages || defaultGallery;
     console.log('getHomeData - finalGallery:', finalGallery.length, finalGallery);
@@ -174,12 +169,7 @@ async function getHomeData() {
         main: 'ADHD 전문.심리상담센터'
       },
       videoUrl: '/assets/videos/hero-video.mp4', // 기본 비디오 경로
-      gallery: [
-        { url: '/assets/images/gallery_1.png', alt: '따뜻한 상담 공간' },
-        { url: '/assets/images/gallery_2.png', alt: '편안한 치료실' },
-        { url: '/assets/images/gallery_3.png', alt: '평화로운 공간' },
-        { url: '/assets/images/gallery_4.png', alt: '따뜻한 조명의 공간' },
-      ],
+      gallery: [...FALLBACK_GALLERY_IMAGES],
       reviews: [],
     };
   }

@@ -127,10 +127,10 @@ class ApiService {
                 main: '당신의 하루가\n더 맑아지도록'
             },
             gallery: [
-                { url: 'assets/images/gallery_1.png', alt: 'Gallery Image 1' },
-                { url: 'assets/images/gallery_2.png', alt: 'Gallery Image 2' },
-                { url: 'assets/images/gallery_3.png', alt: 'Gallery Image 3' },
-                { url: 'assets/images/gallery_4.png', alt: 'Gallery Image 4' }
+                { url: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1400&h=1050&fit=crop&q=80', alt: 'Gallery Image 1' },
+                { url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1400&h=1050&fit=crop&q=80', alt: 'Gallery Image 2' },
+                { url: 'https://images.unsplash.com/photo-1497215842964-222b430dc094?w=1400&h=1050&fit=crop&q=80', alt: 'Gallery Image 3' },
+                { url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1400&h=1050&fit=crop&q=80', alt: 'Gallery Image 4' }
             ]
         };
     }

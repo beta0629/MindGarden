@@ -12,6 +12,7 @@ import {
   ChartBarsGlyph,
   TagGlyph,
 } from '@/components/icons/UiGlyphs';
+import { SITE_SHARE_PREVIEW_IMAGE_URL } from '@/lib/site-fallback-visuals';
 
 interface Review {
   id: number;
@@ -235,7 +236,7 @@ export default function ReviewsPage() {
             content: {
               title: shareText,
               description: shareContent,
-              imageUrl: `${url}/assets/images/gallery_1.png`,
+              imageUrl: SITE_SHARE_PREVIEW_IMAGE_URL,
               link: {
                 mobileWebUrl: shareUrl,
                 webUrl: shareUrl,

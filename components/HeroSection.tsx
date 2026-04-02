@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { HERO_VIDEO_POSTER_URL } from '@/lib/site-fallback-visuals';
 
 interface HeroSectionProps {
   slogan?: {
@@ -162,7 +163,7 @@ export default function HeroSection({ slogan, videoUrl }: HeroSectionProps) {
           loop 
           playsInline 
           className="bg-video"
-          poster="/assets/images/hero.png"
+          poster={HERO_VIDEO_POSTER_URL}
           preload="auto"
           webkit-playsinline="true"
           x-webkit-airplay="allow"

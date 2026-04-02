@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
+import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
 
 interface GalleryImage {
   id?: number;
@@ -27,25 +28,10 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
   const touchEndX = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
 
-  // 로컬 무료 이미지 사용 (public/assets/images/ 폴더)
-  const defaultImages: GalleryImage[] = [
-    { 
-      url: '/assets/images/gallery_1.png', 
-      alt: '따뜻한 상담 공간' 
-    },
-    { 
-      url: '/assets/images/gallery_2.png', 
-      alt: '편안한 치료실' 
-    },
-    { 
-      url: '/assets/images/gallery_3.png', 
-      alt: '평화로운 공간' 
-    },
-    { 
-      url: '/assets/images/gallery_4.png', 
-      alt: '따뜻한 조명의 공간' 
-    },
-  ];
+  const defaultImages: GalleryImage[] = FALLBACK_GALLERY_IMAGES.map((g) => ({
+    url: g.url,
+    alt: g.alt,
+  }));
 
   const displayImages = images && images.length > 0 ? images : defaultImages;
   const imageCount = displayImages.length;

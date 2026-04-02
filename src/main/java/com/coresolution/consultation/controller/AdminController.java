@@ -3447,17 +3447,6 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 운영 환경 여부 확인
-     */
-    private boolean isProductionEnvironment() {
-        String activeProfile = System.getProperty("spring.profiles.active");
-        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
-
-        return "prod".equals(activeProfile) || "prod".equals(envProfile)
-                || "production".equals(activeProfile) || "production".equals(envProfile);
-    }
-
-    /**
      * 상담 이력 조회
      */
     @GetMapping("/consultations")

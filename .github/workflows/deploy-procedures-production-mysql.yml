@@ -1,8 +1,7 @@
 # 대상: 실제 운영 MySQL(동일 10개 표준 프로시저, deploy-standardized-procedures.sh prod).
 # SSH/SCP는 secrets.PRODUCTION_HOST 직접 — PROD_SSH_JUMP_HOST 를 설정하지 않는다.
 #
-# DB 호스트: PRODUCTION_DB_HOST 가 비어 있으면 deploy-procedures-prod.yml 의 DEV_DB_HOST 폴백과
-# 동일 패턴으로 PRODUCTION_HOST 를 사용(DB가 앱 서버와 동일 호스트인 일반 케이스).
+# DB 호스트: PRODUCTION_DB_HOST 가 비어 있으면 PRODUCTION_HOST 를 사용(DB가 앱 서버와 동일 호스트인 일반 케이스).
 #
 # deploy-procedures-prod.yml 은 개발 서버 SSH + DEV_DB(점프)용이므로 변경·혼동 금지.
 

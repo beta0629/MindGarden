@@ -2,6 +2,7 @@ package com.coresolution.core.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.*;
@@ -25,6 +26,7 @@ import java.util.List;
 public class SecurityFilter implements Filter {
 
     private final SecurityAuditService securityAuditService;
+    private final Environment environment;
 
     // 보안 검사에서 제외할 경로
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
@@ -219,11 +221,11 @@ public class SecurityFilter implements Filter {
     }
 
     /**
-     * 프로덕션 환경 확인
+     * 프로덕션 환경 확인 ({@code prod} / {@code production} 활성 프로파일).
      */
     private boolean isProductionEnvironment() {
-        String profile = System.getProperty("spring.profiles.active", "dev");
-        return "prod".equals(profile) || "production".equals(profile);
+        return Arrays.stream(environment.getActiveProfiles())
+                .anyMatch(p -> "prod".equals(p) || "production".equals(p));
     }
 
     @Override

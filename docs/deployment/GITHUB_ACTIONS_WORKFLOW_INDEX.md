@@ -56,7 +56,7 @@
 | `deploy-production.yml` | 코어 운영 통합 | `workflow_dispatch` | — | — | `deploy_ref` 가드 |
 | `deploy-ops-backend-prod.yml` | Ops 백엔드 운영 | `main`+paths, dispatch | — | — | |
 | `deploy-procedures-dev.yml` | 표준 프로시저 개발 | `develop`+DB paths | [`deploy-procedures-prod.yml`](../../.github/workflows/deploy-procedures-prod.yml) | — | |
-| `deploy-procedures-prod.yml` | 표준 프로시저 운영 | `workflow_dispatch` | 상위와 쌍 | — | |
+| `deploy-procedures-prod.yml` | 표준 프로시저 운영 | `workflow_dispatch` | 상위와 쌍 | — | **개발 서버 SSH → 그 서버에서 mysql로 개발 DB(`DEV_DB_*`) 적용** — 운영 앱→개발 DB 3306 직접 연결 아님. |
 | `deploy-dev.yml` | 통합 개발 배포 | `workflow_dispatch`만 | — | — | **DEPRECATED** (주석·푸시 비활성) |
 | `deploy-mobile.yml` | 모바일 빌드 | `main`+`mobile/**`, dispatch | — | — | |
 

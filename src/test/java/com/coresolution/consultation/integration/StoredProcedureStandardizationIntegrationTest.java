@@ -36,8 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-// 개발 DB 사용 (application-test.yml에서 설정)
-// 프로시저 테스트는 실제 MySQL DB가 필요하므로 H2 사용 불가
+// MySQL 통합 테스트: application-test.yml + SPRING_DATASOURCE_PASSWORD(및 필요 시 SPRING_DATASOURCE_URL) 필수. 저장소에 원격 호스트·비밀번호 없음.
 @TestPropertySource(properties = {
     // Ops Portal 관리자 설정 (테스트용)
     "ops.admin.username=test-admin@mindgarden.com",

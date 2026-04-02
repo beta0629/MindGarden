@@ -53,6 +53,8 @@ mobile/android/local.properties
 # Environment variables - 보안상 중요
 .env
 .env.*
+# 예시만 커밋 (실제 비밀은 .env.local 등)
+!frontend/.env.example
 .env.local
 .env.production
 .env.staging

@@ -215,21 +215,13 @@ public class SecurityConfig {
     }
     
     /**
-     * 운영 환경 여부 확인
+     * 운영 환경 여부 확인. 활성 Spring 프로파일({@code prod} / {@code production})만 단일 기준으로 사용한다.
+     *
+     * @return {@code prod} 또는 {@code production} 프로파일이 활성이면 true
      */
     private boolean isProductionEnvironment() {
-        String activeProfile = System.getProperty("spring.profiles.active");
-        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
-        
-        // 운영 환경 판단: prod, production 프로필 또는 운영 서버 도메인
-        boolean isProdProfile = "prod".equals(activeProfile) || "prod".equals(envProfile) || 
-                               "production".equals(activeProfile) || "production".equals(envProfile);
-        
-        // 추가: 운영 서버 도메인 체크 (배포 서버만 명시적으로 prod로 인식)
-        String serverDomain = System.getenv("SERVER_DOMAIN");
-        boolean isProdDomain = "beta74.cafe24.com".equalsIgnoreCase(serverDomain);
-        
-        return isProdProfile || isProdDomain;
+        return Arrays.stream(environment.getActiveProfiles())
+                .anyMatch(p -> "prod".equals(p) || "production".equals(p));
     }
     
     

@@ -270,6 +270,30 @@ journalctl -u "${SERVICE_NAME}" -n 200 --no-pager
 
 ---
 
+## 7) 사례: `20260402.002` (align consultation type) 검증 실패 / 기동 불가
+
+### 증상 (journal / 기동 로그)
+
+- `FlywayValidateException: Validate failed: Migrations have failed validation`
+- `Detected failed migration to version 20260402.002 (align consultation type with schedule codes).`
+- 이어서 `entityManagerFactory` / `jpaSharedEM_entityManagerFactory` 빈 생성 실패 및 `mindgarden.service` exit-code 1
+
+### 원인(저장소 측 조치 완료)
+
+- `V20260402_002__align_consultation_type_with_schedule_codes.sql` 하단 `CopyDefaultTenantCodes` 재정의 시 **MySQL + Flyway에서 필수인 `DELIMITER $$` … `END$$` 블록이 빠져**, 프로시저 본문의 세미콜론이 문장 단위로 잘리며 마이그레이션이 실패할 수 있음.
+- 동일 유형은 `V64__update_copy_default_tenant_codes_add_single_session_packages.sql` 등에서 `DELIMITER`로 처리함.
+
+### 운영 복구 순서(요약)
+
+1. **DB 백업** 및 `flyway_schema_history` 증적 저장(본 문서 3-1 참고).
+2. **수정된 앱 JAR 배포**(위 SQL이 패치된 빌드).
+3. 실패 이력 정리: Flyway **repair**(또는 운영에서 허용하는 동등 절차)로 `success=0` 인 `20260402.002` 행을 정리해 **재적용 가능** 상태로 만든다.
+4. 서비스 기동 → 마이그레이션 재실행 → `validate`·헬스·핵심 API 확인.
+
+> 수동으로 `flyway_schema_history`만 삭제하는 것은 체크섬·순서 오류 위험이 있으므로, **공식 `repair` 또는 Runbook 3장 절차**를 우선한다.
+
+---
+
 ## 부록: 점검 결과 기록 템플릿
 
 - 점검 일시:

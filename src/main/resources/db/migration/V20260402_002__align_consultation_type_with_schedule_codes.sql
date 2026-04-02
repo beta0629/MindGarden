@@ -155,7 +155,10 @@ SET consultation_type = 'INDIVIDUAL',
 WHERE consultation_type IN ('FACE_TO_FACE', 'ONLINE', 'PHONE');
 
 -- 4) CopyDefaultTenantCodes 기본 삽입 분기: 신규 테넌트에도 동일 5종
+-- Flyway + MySQL 8: 프로시저 본문은 DELIMITER로 묶어야 세미콜론 분리 오류·마이그레이션 실패를 방지 (V64 등과 동일)
 DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes;
+
+DELIMITER $$
 
 CREATE PROCEDURE CopyDefaultTenantCodes(
     IN p_target_tenant_id VARCHAR(64),
@@ -398,4 +401,6 @@ BEGIN
 
     SET p_success = TRUE;
     COMMIT;
-END;
+END$$
+
+DELIMITER ;

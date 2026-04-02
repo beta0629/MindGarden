@@ -59,6 +59,15 @@
 ssh-keygen -t ed25519 -f ./github-actions-homepage-deploy -N "" -C "github-actions homepage develop"
 ```
 
+**주의**: `ssh-keygen`이 끝난 뒤 터미널에 나오는 것은 **저장 위치·지문·randomart**뿐이다.  
+`-----BEGIN OPENSSH PRIVATE KEY-----` 줄은 **터미널에 출력되지 않는다.** 반드시 비밀키 **파일**을 연다:
+
+```bash
+cat ./github-actions-homepage-deploy
+```
+
+첫 줄이 `-----BEGIN OPENSSH PRIVATE KEY-----`이면 정상이다.
+
 - **`github-actions-homepage-deploy.pub`** 내용 한 줄을 서버 `~/.ssh/authorized_keys`에 추가.
 - **`github-actions-homepage-deploy`** (비밀키) 내용 전체를 GitHub Secret **`DEV_SSH_KEY`**에 붙여넣기.
 - 로컬 비밀키 파일은 안전한 곳에 보관하거나, Secrets 등록 후 삭제해도 됨(GitHub에만 있으면 Actions는 동작).

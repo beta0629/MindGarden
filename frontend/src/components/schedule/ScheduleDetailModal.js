@@ -424,24 +424,22 @@ return isStatus(displayData.status, vacationStatus) ||
 
 
 /**
-     * 예약 변경 처리 - 드래그 앤 드롭 모드로 전환
+     * 예약 변경 — 부모에서 재예약 모달 오픈
      */
     const handleEditSchedule = () => {
         if (!scheduleData?.id) {
             notificationManager.error('스케줄 정보가 올바르지 않습니다.');
             return;
         }
-        
-        console.log('✏️ 예약 변경 요청 - 드래그 앤 드롭 모드:', scheduleData.id);
-        
+
         if (onScheduleUpdated) {
             onScheduleUpdated('edit', scheduleData);
         }
-        
+
         onClose();
-        
-        notificationManager.info('드래그 앤 드롭으로 예약을 변경할 수 있습니다.');
     };
+
+    const canRescheduleByRole = user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN';
 
     if (!isOpen) return null;
 
@@ -476,13 +474,15 @@ return isStatus(displayData.status, vacationStatus) ||
             <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
                 {isStatus(displayData.status, 'BOOKED') && (
                     <>
-                        <button
-                            className="mg-v2-btn--outline"
-                            onClick={handleEditSchedule}
-                            disabled={loading}
-                        >
-                            예약 변경
-                        </button>
+                        {canRescheduleByRole && (
+                            <button
+                                className="mg-v2-btn--outline"
+                                onClick={handleEditSchedule}
+                                disabled={loading}
+                            >
+                                예약 변경
+                            </button>
+                        )}
                         <button
                             className="mg-v2-btn--primary"
                             onClick={() => setShowConfirmModal(true)}

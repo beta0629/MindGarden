@@ -1445,4 +1445,12 @@ textarea.mg-v2-textarea {
   resize: vertical;
 }
 
+/* 예약 변경 모달 — 에러 요약 */
+.mg-v2-reschedule-modal__errors {
+  color: var(--mg-error-500);
+  margin: 0 0 var(--spacing-md) 0;
+  padding-left: var(--spacing-lg);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
 

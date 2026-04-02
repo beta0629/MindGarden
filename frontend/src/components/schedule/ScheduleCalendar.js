@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ScheduleDetailModal from './ScheduleDetailModal';
+import RescheduleScheduleModal from './RescheduleScheduleModal';
 import ScheduleModal from './ScheduleModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
@@ -25,6 +26,7 @@ import {
     isTimeSlotBooked
 } from './ScheduleCalendar/ScheduleCalendarUtils';
 import './ScheduleCalendar.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)
@@ -49,6 +51,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
     const [isDateActionModalOpen, setIsDateActionModalOpen] = useState(false);
     const [showTimeSelectionModal, setShowTimeSelectionModal] = useState(false);
+    const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+    const [reschedulePayload, setReschedulePayload] = useState(null);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [bookedTimes, setBookedTimes] = useState([]);
     const [loadingAvailableTimes, setLoadingAvailableTimes] = useState(false);
@@ -411,6 +415,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 clientId: event.extendedProps.clientId,
                 clientName: event.extendedProps.clientName,
                 status: event.extendedProps.status,
+                statusCode: event.extendedProps.status,
                 statusKorean: event.extendedProps.statusKorean,
                 type: event.extendedProps.type,
                 consultationType: event.extendedProps.consultationType || event.extendedProps.type,
@@ -418,7 +423,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 title: event.title,
                 date: eventStart.toISOString().split('T')[0],
                 startTime: eventStart.toTimeString().split(' ')[0].substring(0, 5),
-                endTime: eventEnd ? eventEnd.toTimeString().split(' ')[0].substring(0, 5) : ''
+                endTime: eventEnd ? eventEnd.toTimeString().split(' ')[0].substring(0, 5) : '',
+                apiDate: eventStart.toISOString().split('T')[0],
+                apiStartTime: eventStart.toTimeString().split(' ')[0].substring(0, 5),
+                apiEndTime: eventEnd ? eventEnd.toTimeString().split(' ')[0].substring(0, 5) : ''
             };
         }
         
@@ -483,11 +491,25 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedSchedule(null);
     };
 
-    const handleScheduleUpdated = () => {
+    const handleScheduleUpdated = (action, payload) => {
+        if (action === 'edit' && payload && payload.id) {
+            setReschedulePayload(payload);
+            setIsRescheduleModalOpen(true);
+            return;
+        }
         console.log('📅 일정 업데이트됨');
         loadSchedules();
         setIsDetailModalOpen(false);
         setSelectedSchedule(null);
+    };
+
+    const handleRescheduleModalClose = () => {
+        setIsRescheduleModalOpen(false);
+        setReschedulePayload(null);
+    };
+
+    const handleRescheduleSuccess = async () => {
+        await loadSchedules();
     };
 
     const handleTimeSelectionConfirm = async () => {
@@ -613,6 +635,16 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 isTimeSlotBooked={(startTime, endTime) => isTimeSlotBooked(startTime, endTime, bookedTimes)}
                 onConfirm={handleTimeSelectionConfirm}
             />
+
+            {(currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') && (
+                <RescheduleScheduleModal
+                    isOpen={isRescheduleModalOpen}
+                    onClose={handleRescheduleModalClose}
+                    schedulePayload={reschedulePayload}
+                    events={events}
+                    onSuccess={handleRescheduleSuccess}
+                />
+            )}
         </div>
     );
 };

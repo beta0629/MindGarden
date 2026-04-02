@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
+import RescheduleScheduleModal from './RescheduleScheduleModal';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import ConsultantVacationModal from '../consultant/ConsultantVacationModal';
@@ -10,7 +11,13 @@ import DateActionModal from './DateActionModal';
 import ScheduleHeader from '../ui/Schedule/ScheduleHeader';
 import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
-import { apiGet, apiPut } from '../../utils/ajax';
+import { apiGet } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import {
+  buildScheduleDatetimeUpdateBody,
+  hasConsultantScheduleTimeOverlap,
+  isPastDateOnly
+} from '../../utils/scheduleRescheduleUtils';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -48,6 +55,8 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
     const [isConsultationLogModalOpen, setIsConsultationLogModalOpen] = useState(false);
     const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
     const [isDateActionModalOpen, setIsDateActionModalOpen] = useState(false);
+    const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+    const [reschedulePayload, setReschedulePayload] = useState(null);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [loading, setLoading] = useState(false);
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
@@ -304,8 +313,8 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
     }, []);
 
     const loadSchedules = useCallback(async () => {
-        // 관리자는 userId 없이도 전체 조회 가능
-        const isAdmin = userRole === 'ADMIN';
+        // 관리자·지점수퍼관리자는 userId 없이도 전체 조회 가능
+        const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
         
         // 관리자가 아니면서 userId가 없으면 로드하지 않음
         if (!isAdmin && !userId) {
@@ -326,7 +335,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
             // 관리자는 관리자 API 사용
-            else if (userRole === 'ADMIN') {
+            else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
                 url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -554,7 +563,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
 
     // 부모에서 refetchTrigger 변경 시 스케줄만 재로드 (통합 스케줄 화면에서 저장 후 캘린더 갱신)
     useEffect(() => {
-        if (refetchTrigger != null && refetchTrigger > 0 && (userRole === 'ADMIN' || userId)) {
+        if (refetchTrigger != null && refetchTrigger > 0 && (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userId)) {
             loadSchedules();
         }
     }, [refetchTrigger, userRole, userId, loadSchedules]);
@@ -565,7 +574,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
         const loadData = async () => {
             const promises = [];
-            const isAdmin = userRole === 'ADMIN';
+            const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
 
             // 스케줄 로드 (필수)
             // 관리자는 userId 없이도 로드 가능
@@ -614,7 +623,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         }
         
         // 관리자는 스케줄/휴가 선택 모달 표시
-        if (userRole === 'ADMIN') {
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             if (isPastDate) {
                 notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -693,6 +702,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         const clientName = event.extendedProps.clientName || '내담자 정보 없음';
 
         const startDate = event.start;
+        const endDate = event.end;
         const sessionDateStr = (() => {
             if (!startDate) return '';
             if (startDate instanceof Date) {
@@ -707,6 +717,15 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             return '';
         })();
 
+        const startAsDate = startDate instanceof Date ? startDate : new Date(startDate);
+        const endAsDate = endDate instanceof Date ? endDate : new Date(endDate);
+        const apiStartHm = Number.isNaN(startAsDate.getTime())
+            ? '09:00'
+            : startAsDate.toTimeString().split(' ')[0].slice(0, 5);
+        const apiEndHm = Number.isNaN(endAsDate.getTime())
+            ? '10:00'
+            : endAsDate.toTimeString().split(' ')[0].slice(0, 5);
+
         const scheduleData = {
             id: event.extendedProps.id,
             title: event.title,
@@ -716,10 +735,14 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             startTime: formatTime(event.start),
             endTime: formatTime(event.end),
             status: koreanStatus,
+            statusCode: event.extendedProps.status,
             clientId: event.extendedProps.clientId ?? undefined,
             consultantId: event.extendedProps.consultantId ?? undefined,
             sessionDate: sessionDateStr || undefined,
-            date: sessionDateStr || undefined
+            date: sessionDateStr || undefined,
+            apiDate: sessionDateStr || undefined,
+            apiStartTime: apiStartHm,
+            apiEndTime: apiEndHm
         };
 
         setSelectedSchedule(scheduleData);
@@ -742,45 +765,24 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         const newStart = event.start;
         const newEnd = event.end;
 
-        // 과거 날짜로 이동 불가: 날짜만 비교(자정 기준)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dropDate = new Date(newStart);
-        dropDate.setHours(0, 0, 0, 0);
-        if (dropDate.getTime() < today.getTime()) {
+        if (isPastDateOnly(newStart)) {
             info.revert();
             notificationManager.warning('과거 날짜로는 스케줄을 이동할 수 없습니다.');
             return;
         }
 
-        // 같은 시간대에 이미 예약/휴가가 있으면 이동 불가 (같은 상담사 기준)
         const movedConsultantId = event.extendedProps?.consultantId;
-        if (movedConsultantId != null) {
-            const newStartMs = newStart.getTime();
-            const newEndMs = newEnd.getTime();
-            const hasConflict = events.some((e) => {
-                if (e.id === event.id) return false;
-                const otherConsultantId = e.extendedProps?.consultantId;
-                if (otherConsultantId == null || String(otherConsultantId) !== String(movedConsultantId)) return false;
-                const otherStart = e.start instanceof Date ? e.start : new Date(e.start);
-                const otherEnd = e.end instanceof Date ? e.end : new Date(e.end);
-                const otherStartMs = otherStart.getTime();
-                const otherEndMs = otherEnd.getTime();
-                return newStartMs < otherEndMs && newEndMs > otherStartMs;
-            });
-            if (hasConflict) {
-                info.revert();
-                notificationManager.warning('해당 시간대에 이미 예약 또는 휴가가 있어 이동할 수 없습니다.');
-                return;
-            }
+        if (
+            hasConsultantScheduleTimeOverlap(events, event.id, movedConsultantId, newStart, newEnd)
+        ) {
+            info.revert();
+            notificationManager.warning('해당 시간대에 이미 예약 또는 휴가가 있어 이동할 수 없습니다.');
+            return;
         }
 
         try {
-            await apiPut(`/api/v1/schedules/${event.id}`, {
-                date: newStart.toISOString().split('T')[0],
-                startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
-                endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
-            });
+            const body = buildScheduleDatetimeUpdateBody(newStart, newEnd);
+            await StandardizedApi.put(`/api/v1/schedules/${event.id}`, body);
 
             console.log('✅ 스케줄 이동 완료');
             notificationManager.success('스케줄 이동이 완료되었습니다.');
@@ -810,8 +812,22 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         setSelectedSchedule(null);
     };
 
-    const handleScheduleUpdated = () => {
+    const handleScheduleUpdated = (action, payload) => {
+        if (action === 'edit' && payload && payload.id) {
+            setReschedulePayload(payload);
+            setIsRescheduleModalOpen(true);
+            return;
+        }
         loadSchedules();
+    };
+
+    const handleRescheduleModalClose = () => {
+        setIsRescheduleModalOpen(false);
+        setReschedulePayload(null);
+    };
+
+    const handleRescheduleSuccess = async () => {
+        await loadSchedules();
     };
 
     // 상담일지 모달 핸들러
@@ -946,6 +962,16 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                     onClose={handleConsultationLogModalClose}
                     scheduleData={selectedSchedule}
                     onSave={handleConsultationLogSaved}
+                />
+            )}
+
+            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+                <RescheduleScheduleModal
+                    isOpen={isRescheduleModalOpen}
+                    onClose={handleRescheduleModalClose}
+                    schedulePayload={reschedulePayload}
+                    events={events}
+                    onSuccess={handleRescheduleSuccess}
                 />
             )}
         </div>

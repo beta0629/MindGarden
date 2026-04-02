@@ -150,14 +150,16 @@ const ScheduleTimeSelectionPanel = ({
       } catch (error) {
         console.error('공통코드 로드 실패:', error);
       } finally {
-        if (cancelled) return;
-        setConsultationTypeOptions(nextConsultation);
-        setDurationOptions(nextDuration);
-        if (onCodeOptionsLoadedRef.current) {
-          onCodeOptionsLoadedRef.current({
-            consultationTypeOptions: nextConsultation,
-            durationOptions: nextDuration
-          });
+        // no-unsafe-finally: finally 안에서는 return 금지 — 언마운트 시 상태 갱신만 생략
+        if (!cancelled) {
+          setConsultationTypeOptions(nextConsultation);
+          setDurationOptions(nextDuration);
+          if (onCodeOptionsLoadedRef.current) {
+            onCodeOptionsLoadedRef.current({
+              consultationTypeOptions: nextConsultation,
+              durationOptions: nextDuration
+            });
+          }
         }
         setLoadingCodes(false);
       }

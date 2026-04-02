@@ -44,7 +44,11 @@ if [ "$ENV" = "prod" ]; then
     echo "🚀 운영 환경 프로시저 배포 시작..."
 else
     [ -n "${DEV_SERVER_HOST:-}" ] || fail "DEV_SERVER_HOST 필수"
-    [ -n "${DEV_DB_HOST:-}" ] || fail "DEV_DB_HOST 필수"
+    # GitHub dev 워크플로: 시크릿 생략 시 흔한 케이스(앱·DB 동일 서버) — 원격 전용 DB면 DEV_DB_HOST 필수
+    if [ -z "${DEV_DB_HOST:-}" ]; then
+        echo "ℹ️  DEV_DB_HOST 미설정 → 127.0.0.1 사용 (SSH 대상 서버의 로컬 MySQL). 별도 DB 호스트면 환경변수 DEV_DB_HOST를 설정하세요."
+        DEV_DB_HOST="127.0.0.1"
+    fi
     [ -n "${DEV_DB_USER:-}" ] || fail "DEV_DB_USER 필수"
     [ -n "${DEV_DB_PASSWORD:-}" ] || fail "DEV_DB_PASSWORD 필수 (폴백 없음)"
     [ -n "${DEV_DB_NAME:-}" ] || fail "DEV_DB_NAME 필수"

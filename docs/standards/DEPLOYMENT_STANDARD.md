@@ -538,6 +538,27 @@ git push origin develop
 bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
 ```
 
+#### 개발 DB 호스트(`DEV_DB_HOST`) — SSH로 확인 (권장)
+
+GitHub Actions의 `DEV_DB_HOST` 시크릿은 **SSH 배포 서버에서 `mysql` 클라이언트가 접속할 호스트**와 같아야 한다. 저장소에 시크릿이 없을 때 워크플로는 `127.0.0.1`로 폴백하지만, **실제 값은 개발 서버에 접속해 확인한 뒤 시크릿에 넣는 것**이 안전하다.
+
+**팀 표준 개발 SSH**는 스킬 `core-solution-server-status`와 동일: `ssh root@beta0629.cafe24.com` — GitHub 시크릿 `DEV_SERVER_HOST`는 보통 `beta0629.cafe24.com`, 사용자는 `root`(또는 `DEV_SERVER_USER`).
+
+```bash
+# 1) 개발 서버 접속
+ssh root@beta0629.cafe24.com
+
+# 2) 앱이 쓰는 DB 호스트·DB명·유저 (운영과 동일 패턴 — systemd 단위에서 확인)
+systemctl cat mindgarden-dev.service
+# Environment= 또는 EnvironmentFile= 안의 DB_HOST, DB_PORT, DB_NAME, DB_USERNAME 등
+
+# 3) 보조: MySQL 리스닝 위치
+ss -lntp | grep 3306 || true
+```
+
+- `DB_HOST`가 **루프백/127.0.0.1/localhost**이면 GitHub `DEV_DB_HOST`도 **`127.0.0.1`**(SSH 대상 서버에서의 mysql `-h`와 동일).
+- **별도 DB 호스트**이면 systemd에 적힌 값을 그대로 `DEV_DB_HOST` 시크릿에 넣는다.
+
 #### 운영 환경 배포
 ```bash
 # GitHub Actions에서 수동 실행

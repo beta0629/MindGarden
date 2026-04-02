@@ -1,5 +1,10 @@
 name: 📦 표준화된 프로시저 배포 (개발)
 
+# 필수 시크릿: DEV_SERVER_HOST, DEV_SERVER_SSH_KEY(또는 호스트 접속용), DEV_DB_USER, DEV_DB_PASSWORD, DEV_DB_NAME
+# DEV_DB_HOST: 비어 있으면 127.0.0.1 폴백. 실제 값은 개발 서버 SSH 후 systemctl cat mindgarden-dev.service 의 DB_HOST 권장.
+# DEV_SERVER_HOST: 팀 표준은 beta0629.cafe24.com (스킬 core-solution-server-status §SSH 접속 정보).
+# 절차: docs/standards/DEPLOYMENT_STANDARD.md → 「개발 DB 호스트(DEV_DB_HOST) — SSH로 확인」
+
 on:
   push:
     branches: [ develop ]
@@ -33,7 +38,7 @@ jobs:
       env:
         DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
         DEV_SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
-        DEV_DB_HOST: ${{ secrets.DEV_DB_HOST }}
+        DEV_DB_HOST: ${{ secrets.DEV_DB_HOST || '127.0.0.1' }}
         DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
         DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
         DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}

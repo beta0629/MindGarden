@@ -460,7 +460,7 @@ const MyPage = () => {
 
   return (
     <AdminCommonLayout title="마이페이지">
-      <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
+      <div className="mypage-container">
         <div className="mg-v2-ad-b0kla">
           <div className="mg-v2-ad-b0kla__container">
             <ContentArea ariaLabel="마이페이지 본문">
@@ -525,7 +525,10 @@ const MyPage = () => {
                 </button>
               </nav>
 
-              <main aria-labelledby={MYPAGE_TITLE_ID} className="mypage-main-content">
+              <main
+                aria-labelledby={MYPAGE_TITLE_ID}
+                className={`mypage-main-content${isProfileEditing ? ' mypage-main-content--profile-editing' : ''}`}
+              >
           {activeTab === 'profile' && (
                     <ProfileSection
           user={user}
@@ -547,8 +550,9 @@ const MyPage = () => {
                     <h3>알림 설정</h3>
                     <p>이메일 및 푸시 알림을 관리합니다</p>
                   </div>
-                  <button 
-                    className="setting-btn" 
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
                     onClick={() => notificationManager.show('알림 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
                   >
                     설정
@@ -559,8 +563,9 @@ const MyPage = () => {
                     <h3>언어 설정</h3>
                     <p>사용 언어를 변경합니다</p>
                   </div>
-                  <button 
-                    className="setting-btn" 
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
                     onClick={() => notificationManager.show('언어 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
                   >
                     설정
@@ -571,8 +576,9 @@ const MyPage = () => {
                     <h3>테마 설정</h3>
                     <p>화면 테마를 변경합니다</p>
                   </div>
-                  <button 
-                    className="setting-btn" 
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
                     onClick={() => notificationManager.show('테마 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
                   >
                     설정
@@ -591,14 +597,24 @@ const MyPage = () => {
                     <h3>비밀번호 변경</h3>
                     <p>현재 비밀번호를 변경합니다</p>
                   </div>
-                  <button className="security-btn" onClick={handlePasswordChange}>변경</button>
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
+                    onClick={handlePasswordChange}
+                  >
+                    변경
+                  </button>
                 </div>
                 <div className="security-item">
                   <div className="security-info">
                     <h3>비밀번호 찾기</h3>
                     <p>비밀번호를 잊어버린 경우 재설정합니다</p>
                   </div>
-                  <button className="security-btn" onClick={handlePasswordReset}>
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
+                    onClick={handlePasswordReset}
+                  >
                     재설정
                   </button>
                 </div>
@@ -607,8 +623,9 @@ const MyPage = () => {
                     <h3>2단계 인증</h3>
                     <p>추가 보안을 위해 2단계 인증을 설정합니다</p>
                   </div>
-                  <button 
-                    className="security-btn" 
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-primary mg-v2-mypage__row-action"
                     onClick={() => notificationManager.show('2단계 인증 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
                   >
                     설정
@@ -652,8 +669,9 @@ const MyPage = () => {
                         </div>
                       </div>
                       <div className="social-account-actions">
-                        <button 
-                          className="unlink-btn"
+                        <button
+                          type="button"
+                          className="mg-v2-button mg-v2-button-danger mg-v2-mypage__row-action"
                           onClick={() => handleUnlinkSocialAccount(account.provider, account.id)}
                         >
                           연동 해제
@@ -670,15 +688,17 @@ const MyPage = () => {
                 <div className="link-new-account">
                   <h3>새로운 소셜 계정 연동</h3>
                   <div className="link-options">
-                    <button 
-                      className="link-btn kakao"
+                    <button
+                      type="button"
+                      className="link-btn link-btn--kakao mg-v2-mypage__social-link"
                       onClick={() => handleLinkSocialAccount('KAKAO')}
                     >
                       <MessageCircle size={20} />
                       카카오 계정 연동
                     </button>
-                    <button 
-                      className="link-btn naver"
+                    <button
+                      type="button"
+                      className="link-btn link-btn--naver mg-v2-mypage__social-link"
                       onClick={() => handleLinkSocialAccount('NAVER')}
                     >
                       <Hash size={20} />

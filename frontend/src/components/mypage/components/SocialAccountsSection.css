@@ -1,40 +1,40 @@
-/* SocialAccountsSection 컴포넌트 스타일 */
+/* SocialAccountsSection 컴포넌트 스타일 (레거시 페이지용 보조) */
 
 .social-accounts-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--spacing-lg);
 }
 
 .social-account-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  background: var(--mg-gray-100);
+  padding: var(--spacing-md);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--border-radius-md);
+  background: var(--ad-b0kla-card-bg);
 }
 
 .social-account-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--spacing-md);
 }
 
 .social-provider-icon {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
 }
 
 .social-account-details h3 {
-  margin: 0 0 5px 0;
-  color: #333;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--ad-b0kla-title-color);
 }
 
 .social-account-details p {
   margin: 0;
-  color: var(--mg-secondary-500);
-  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .social-profile-image {
@@ -52,44 +52,44 @@
 
 .social-account-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .unlink-btn {
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--mg-error-500);
-  color: white;
+  color: var(--mg-white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
 
 .unlink-btn:hover {
-  background: #c82333;
+  background: var(--mg-error-600);
 }
 
 .no-social-accounts {
   text-align: center;
-  padding: 40px;
-  color: var(--mg-secondary-500);
+  padding: var(--spacing-xxl);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .link-new-account {
-  margin-top: 20px;
-  padding: 20px;
-  border: 2px dashed #dee2e6;
-  border-radius: 6px;
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border: 2px dashed var(--ad-b0kla-border);
+  border-radius: var(--border-radius-md);
   text-align: center;
 }
 
 .link-new-account h3 {
-  margin: 0 0 15px 0;
-  color: #333;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--ad-b0kla-title-color);
 }
 
 .link-options {
   display: flex;
-  gap: 15px;
+  gap: var(--spacing-md);
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -97,14 +97,14 @@
 .link-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: transform 0.2s;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: transform var(--transition-normal);
 }
 
 .link-btn:hover {
@@ -112,11 +112,11 @@
 }
 
 .link-btn.kakao {
-  background: #FEE500;
-  color: #000;
+  background: var(--mypage-kakao-bg);
+  color: var(--mypage-kakao-color);
 }
 
 .link-btn.naver {
-  background: #03C75A;
-  color: white;
+  background: var(--mypage-naver-bg);
+  color: var(--mypage-naver-color);
 }

@@ -93,6 +93,7 @@ import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -372,6 +373,8 @@ function AppContent() {
             <Route path="/super_admin/mypage" element={<MyPage />} />
             <Route path="/branch_super_admin/mypage" element={<Navigate to="/admin/mypage" replace />} />
             <Route path="/branch_manager/mypage" element={<Navigate to="/admin/mypage" replace />} />
+            <Route path="/mypage" element={<MypageRedirect />} />
+            <Route path="/settings" element={<SettingsRedirect />} />
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />

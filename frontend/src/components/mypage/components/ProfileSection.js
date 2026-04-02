@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileImageUpload from './ProfileImageUpload';
 import AddressInput from './AddressInput';
-import { apiGet } from '../../../utils/ajax';
+import StandardizedApi from '../../../utils/standardizedApi';
 import './ProfileSection.css';
 
 const ProfileSection = ({ 
@@ -22,7 +22,7 @@ const ProfileSection = ({
     const loadGenderCodes = async () => {
       try {
         setLoading(true);
-        const response = await apiGet('/api/v1/common-codes?codeGroup=GENDER');
+        const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'GENDER' });
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -37,10 +37,8 @@ const ProfileSection = ({
         // 실패 시 기본값 설정
         setGenderOptions([
           { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
-          { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-          { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
+          { value: 'FEMALE', label: '여성', icon: '♀️', color: 'var(--mg-pink-600)' },
+          { value: 'OTHER', label: '기타', icon: '⚧', color: 'var(--mg-gray-500)' }
         ]);
       } finally {
         setLoading(false);
@@ -191,7 +189,7 @@ const ProfileSection = ({
           isEditing={isEditing}
         />
 
-        <div className="form-group">
+        <div className="mg-form__group">
           <label>이름</label>
           <input
             type="text"
@@ -202,7 +200,7 @@ const ProfileSection = ({
           />
         </div>
 
-        <div className="form-group">
+        <div className="mg-form__group">
           <label>닉네임</label>
           <input
             type="text"
@@ -213,7 +211,7 @@ const ProfileSection = ({
           />
         </div>
 
-        <div className="form-group">
+        <div className="mg-form__group">
           <label>이메일</label>
           <input
             type="email"
@@ -224,7 +222,7 @@ const ProfileSection = ({
           />
         </div>
 
-        <div className="form-group">
+        <div className="mg-form__group">
           <label>휴대폰 번호</label>
           <input
             type="tel"
@@ -237,7 +235,7 @@ const ProfileSection = ({
           />
         </div>
 
-        <div className="form-group">
+        <div className="mg-form__group">
           <label>성별</label>
           <select
             name="gender"

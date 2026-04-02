@@ -1783,13 +1783,22 @@ public class OnboardingServiceImpl implements OnboardingService {
                         Integer.parseInt(specialty[3]), createdByValue);
             }
 
-            // 상담 유형 코드
+            // 상담 유형 코드 (스케줄·공통코드 API CONSULTATION_TYPE = 회기 유형; 대면/비대면/전화는 consultation_method 등 별도)
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "FACE_TO_FACE", "대면상담", "대면상담", "대면 상담", null, 1, createdByValue);
+                    "INDIVIDUAL", "개인상담", "개인상담", "1:1 개인 심리상담", "{\"durationMinutes\":50}", 1,
+                    createdByValue);
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "ONLINE", "비대면상담", "비대면상담", "비대면 상담", null, 2, createdByValue);
+                    "FAMILY", "가족상담", "가족상담", "가족 단위 상담", "{\"durationMinutes\":100}", 2,
+                    createdByValue);
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "PHONE", "전화상담", "전화상담", "전화 상담", null, 3, createdByValue);
+                    "COUPLE", "부부상담", "부부상담", "부부 상담", "{\"durationMinutes\":80}", 3,
+                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
+                    "INITIAL", "초기상담", "초기상담", "초기 상담", "{\"durationMinutes\":60}", 4,
+                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
+                    "GROUP", "집단상담", "집단상담", "집단·그룹 상담", "{\"durationMinutes\":90}", 5,
+                    createdByValue);
 
             // 담당 업무 코드
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",

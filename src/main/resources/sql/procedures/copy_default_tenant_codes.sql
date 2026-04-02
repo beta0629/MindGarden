@@ -136,9 +136,17 @@ BEGIN
         ('SPECIALTY', 'GENERAL', '일반 상담', '일반 상담', '일반적인 심리 상담', NULL, 1, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
         ('SPECIALTY', 'FAMILY', '가족 상담', '가족 상담', '가족 관계 상담', NULL, 2, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
         
-        -- 기본 상담 유형 코드 생성
-        ('CONSULTATION_TYPE', 'FACE_TO_FACE', '대면상담', '대면상담', '대면 상담', NULL, 1, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
-        ('CONSULTATION_TYPE', 'ONLINE', '비대면상담', '비대면상담', '비대면 상담', NULL, 2, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0);
+        -- 기본 상담 유형 코드 생성 (회기 유형; 대면/비대면/전화는 consultation_method)
+        ('CONSULTATION_TYPE', 'INDIVIDUAL', '개인상담', '개인상담', '1:1 개인 심리상담',
+         JSON_OBJECT('durationMinutes', 50), 1, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
+        ('CONSULTATION_TYPE', 'FAMILY', '가족상담', '가족상담', '가족 단위 상담',
+         JSON_OBJECT('durationMinutes', 100), 2, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
+        ('CONSULTATION_TYPE', 'COUPLE', '부부상담', '부부상담', '부부 상담',
+         JSON_OBJECT('durationMinutes', 80), 3, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
+        ('CONSULTATION_TYPE', 'INITIAL', '초기상담', '초기상담', '초기 상담',
+         JSON_OBJECT('durationMinutes', 60), 4, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
+        ('CONSULTATION_TYPE', 'GROUP', '집단상담', '집단상담', '집단·그룹 상담',
+         JSON_OBJECT('durationMinutes', 90), 5, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0);
         
         SET v_copied_count = ROW_COUNT();
         SET p_message = CONCAT('기본 테넌트 코드 생성 완료: ', v_copied_count, '개 (단회기 패키지 포함)');

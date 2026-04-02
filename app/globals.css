@@ -909,6 +909,284 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     margin-bottom: 26px;
 }
 
+/* 상담의 종류 상세 (/counseling/[slug]) */
+.counseling-type-page {
+    padding-top: 120px;
+}
+
+.counseling-type-hero {
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto 48px;
+}
+
+.counseling-type-h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+}
+
+.counseling-type-lead {
+    font-size: 1.125rem;
+    line-height: 1.9;
+    color: var(--text-sub);
+    max-width: 56ch;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* 상담 유형 페이지 이미지 슬롯 (COUNSELING_TYPE_PAGES_IMAGE_DESIGN.md) */
+.counseling-type-visual {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.counseling-type-visual--hero {
+    margin-top: 0;
+    margin-bottom: 40px;
+}
+
+.counseling-type-visual--section {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.counseling-type-visual-frame {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-soft);
+    background: var(--surface-2);
+}
+
+.counseling-type-visual-frame--16-9 {
+    aspect-ratio: 16 / 9;
+}
+
+.counseling-type-visual-frame--3-2 {
+    aspect-ratio: 3 / 2;
+}
+
+.counseling-type-visual-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.counseling-type-stack {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+.counseling-type-card {
+    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
+    border-radius: var(--radius-lg);
+    padding: 40px 32px;
+    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 212, 184, 0.35);
+}
+
+.counseling-type-card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(255, 212, 184, 0.3);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    word-break: keep-all;
+}
+
+.counseling-type-card-body p {
+    font-size: 1.0625rem;
+    line-height: 2;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+}
+
+.counseling-type-card-body p:last-of-type {
+    margin-bottom: 0;
+}
+
+.counseling-type-links {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+}
+
+.counseling-type-links a {
+    color: var(--accent-sky);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.counseling-type-links a:hover {
+    color: var(--text-main);
+}
+
+.counseling-type-cta {
+    max-width: 1000px;
+    margin: 48px auto 64px;
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
+    border: 1px solid rgba(255, 212, 184, 0.35);
+    box-shadow: 0 4px 20px rgba(255, 212, 184, 0.2);
+}
+
+.counseling-type-cta-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    word-break: keep-all;
+}
+
+.counseling-type-cta p {
+    font-size: 1.0625rem;
+    line-height: 1.95;
+    color: var(--text-sub);
+    margin-bottom: 12px;
+}
+
+.counseling-type-cta p:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .counseling-type-h1 {
+        font-size: 1.75rem;
+    }
+
+    .counseling-type-lead {
+        font-size: 1.0625rem;
+    }
+
+    .counseling-type-visual--hero {
+        margin-bottom: 28px;
+    }
+
+    .counseling-type-card {
+        padding: 32px 20px;
+    }
+
+    .counseling-type-card-title {
+        font-size: 1.25rem;
+    }
+
+    .counseling-type-cta {
+        padding: 24px 20px;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .counseling-type-h1 {
+        font-size: 1.5rem;
+    }
+
+    .counseling-type-card {
+        padding: 24px 16px;
+    }
+
+    .counseling-type-card-title {
+        font-size: 1.125rem;
+    }
+}
+
+/* 메인 섹션: 텍스트 + 보조 이미지 */
+.section-intro-row {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+/* 모바일: 프로그램 블록도 제목이 먼저 오도록 */
+@media (max-width: 899px) {
+    .section-intro-row--media-first .section-intro-copy {
+        order: -1;
+    }
+}
+
+@media (min-width: 900px) {
+    .section-intro-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .section-intro-row--media-first {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 'media copy';
+    }
+
+    .section-intro-row--media-first .section-intro-copy {
+        grid-area: copy;
+    }
+
+    .section-intro-row--media-first .home-section-visual {
+        grid-area: media;
+    }
+
+    .section-intro-row:not(.section-intro-row--media-first) {
+        grid-template-areas: 'copy media';
+    }
+
+    .section-intro-row:not(.section-intro-row--media-first) .section-intro-copy {
+        grid-area: copy;
+    }
+
+    .section-intro-row:not(.section-intro-row--media-first) .home-section-visual {
+        grid-area: media;
+    }
+}
+
+.section-intro-copy .section-title {
+    margin-bottom: 12px;
+}
+
+.section-intro-copy .section-desc {
+    margin-bottom: 0;
+}
+
+.home-section-visual {
+    margin: 0;
+}
+
+.home-section-visual-frame {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-soft);
+    aspect-ratio: 4 / 3;
+    background: var(--surface-2);
+}
+
+.home-section-visual-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 .feature-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

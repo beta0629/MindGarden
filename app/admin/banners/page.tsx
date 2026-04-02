@@ -327,12 +327,12 @@ export default function BannersAdminPage() {
                     fontSize: '14px',
                     color: '#0369a1'
                   }}>
-                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>📐 배너 이미지 권장 사이즈</div>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>배너 이미지 권장 사이즈</div>
                     <div>• 권장 사이즈: <strong>1920px × 300px</strong> (가로형 배너)</div>
                     <div>• 비율: 약 <strong>6.4:1</strong> (가로가 세로보다 훨씬 긴 형태)</div>
                     <div>• 최대 사이즈: 1920px × 300px (자동 리사이징됨)</div>
                     <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
-                      💡 가로형 배너 이미지를 사용하면 더 나은 표시 효과를 얻을 수 있습니다.
+                      가로형 배너 이미지를 사용하면 더 나은 표시 효과를 얻을 수 있습니다.
                     </div>
                   </div>
                   <ImageUploader

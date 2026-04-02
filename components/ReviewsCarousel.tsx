@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
 import KakaoIcon from './KakaoIcon';
+import { HeartGlyph } from '@/components/icons/ReviewHearts';
+import { StarGlyph } from '@/components/icons/UiGlyphs';
 
 interface Review {
   id: number;
@@ -382,8 +384,9 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
             <div style={{
               fontSize: '1.5rem',
               color: 'var(--accent-sky)',
+              display: 'flex',
             }}>
-              ⭐
+              <StarGlyph size={22} />
             </div>
           </div>
 
@@ -449,8 +452,14 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
                 }
               }}
             >
-              <span style={{ fontSize: '1.2rem' }}>
-                {likedReviews.has(currentReview.id) ? '❤️' : '🤍'}
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <HeartGlyph
+                  filled={likedReviews.has(currentReview.id)}
+                  size={20}
+                  style={{
+                    color: likedReviews.has(currentReview.id) ? '#ef4444' : 'var(--text-sub)',
+                  }}
+                />
               </span>
               <span>{likeCounts[currentReview.id] || currentReview.likeCount || 0}</span>
             </button>

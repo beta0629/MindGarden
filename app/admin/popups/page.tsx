@@ -395,12 +395,12 @@ export default function PopupsAdminPage() {
                     fontSize: '14px',
                     color: '#0369a1'
                   }}>
-                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 팝업 내용 작성 방법</div>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>팝업 내용 작성 방법</div>
                     <div>• HTML 편집기에서 자유롭게 텍스트, 이미지, 링크 등을 추가할 수 있습니다</div>
                     <div>• 이미지는 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가하세요</div>
                     <div>• 이미지는 자동으로 base64로 변환되어 content에 저장됩니다</div>
                     <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
-                      💡 팝업은 모달로 표시되므로 큰 이미지도 사용할 수 있습니다. 권장 사이즈: 1920px × 1080px (16:9)
+                      팝업은 모달로 표시되므로 큰 이미지도 사용할 수 있습니다. 권장 사이즈: 1920px × 1080px (16:9)
                     </div>
                   </div>
                   <BlogEditor

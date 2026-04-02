@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import BlogAdminActions from '@/components/BlogAdminActions';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 export interface BlogPostViewPost {
   id: number;
@@ -25,6 +26,7 @@ interface BlogPostViewProps {
 }
 
 export default function BlogPostView({ post }: BlogPostViewProps) {
+  const thumb = resolveMediaUrl(post.thumbnailImageUrl);
   const sortedImages = post.images
     ? [...post.images].sort((a, b) => a.displayOrder - b.displayOrder)
     : [];
@@ -73,7 +75,7 @@ export default function BlogPostView({ post }: BlogPostViewProps) {
         )}
       </header>
 
-      {post.thumbnailImageUrl && (
+      {thumb && (
         <div
           className="blog-post-thumbnail"
           style={{
@@ -83,7 +85,7 @@ export default function BlogPostView({ post }: BlogPostViewProps) {
           }}
         >
           <img
-            src={post.thumbnailImageUrl}
+            src={thumb}
             alt={post.title}
             style={{ width: '100%', height: 'auto', display: 'block' }}
           />
@@ -112,7 +114,7 @@ export default function BlogPostView({ post }: BlogPostViewProps) {
               }}
             >
               <img
-                src={image.imageUrl}
+                src={resolveMediaUrl(image.imageUrl) ?? image.imageUrl}
                 alt={image.altText || post.title}
                 style={{ width: '100%', height: 'auto', display: 'block' }}
               />

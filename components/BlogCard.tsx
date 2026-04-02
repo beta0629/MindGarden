@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 export interface BlogCardPost {
   id: number;
@@ -17,6 +18,7 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
+  const thumb = resolveMediaUrl(post.thumbnailImageUrl);
   const dateLabel = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('ko-KR', {
         year: 'numeric',
@@ -27,10 +29,10 @@ export default function BlogCard({ post }: BlogCardProps) {
 
   return (
     <Link href={`/blog/${post.id}`} className="blog-card">
-      {post.thumbnailImageUrl && (
+      {thumb && (
         <div className="blog-card-image">
           <img
-            src={post.thumbnailImageUrl}
+            src={thumb}
             alt={post.title}
             loading="lazy"
           />

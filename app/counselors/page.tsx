@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 interface Counselor {
   id: number;
@@ -215,7 +216,7 @@ export default function CounselorsPage() {
                     {/* 프로필 이미지 */}
                     {counselor.profileImageUrl ? (
                       <img
-                        src={counselor.profileImageUrl}
+                        src={resolveMediaUrl(counselor.profileImageUrl) ?? counselor.profileImageUrl}
                         alt={counselor.name}
                         style={{
                           width: '180px',

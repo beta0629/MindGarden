@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 interface GalleryImage {
   id?: number;
@@ -251,7 +252,7 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
             
             const imageElement = (
               <img
-                src={image.url}
+                src={resolveMediaUrl(image.url) ?? image.url}
                 alt={image.alt}
                 style={{
                   width: '100%',

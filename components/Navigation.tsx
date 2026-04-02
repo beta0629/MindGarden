@@ -1,13 +1,17 @@
 'use client';
 
 import type { MouseEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [logoSrc, setLogoSrc] = useState('/assets/images/logo/logo_new.png');
+  const onLogoError = useCallback(() => {
+    setLogoSrc('/assets/images/logo/logo-mark.svg');
+  }, []);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isWhite, setIsWhite] = useState(false); // 초기값을 false로 변경하여 어두운 색상으로 시작
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -131,10 +135,10 @@ export default function Navigation() {
       label: '상담의 종류', 
       href: '#counseling-types',
       submenu: [
-        { label: '아동.청소년ADHD', href: '#' },
-        { label: '성인 ADHD', href: '#' },
-        { label: '동반질환', href: '#' },
-        { label: '상담과목', href: '#' }
+        { label: '아동.청소년ADHD', href: '/counseling/child-adolescent-adhd' },
+        { label: '성인 ADHD', href: '/counseling/adult-adhd' },
+        { label: '동반질환', href: '/counseling/comorbidity' },
+        { label: '상담과목', href: '/counseling/counseling-areas' },
       ]
     },
     { 
@@ -210,7 +214,7 @@ export default function Navigation() {
             }}
           >
             <Image
-              src="/assets/images/logo/logo_new.png"
+              src={logoSrc}
               alt="마인드가든 심리상담센터"
               width={120}
               height={120}
@@ -222,6 +226,7 @@ export default function Navigation() {
                 width: 'auto',
               }}
               priority
+              onError={onLogoError}
             />
             <span style={{ 
               fontSize: '1.125rem',

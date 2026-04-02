@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { CameraGlyph } from '@/components/icons/UiGlyphs';
 
 interface ImageUploaderProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -468,7 +469,9 @@ export default function ImageUploader({
             </div>
           ) : (
             <>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
+              <div style={{ marginBottom: '16px', color: 'var(--text-sub)', display: 'flex', justifyContent: 'center' }}>
+                <CameraGlyph size={48} />
+              </div>
               <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-main)' }}>
                 이미지를 드래그 앤 드롭하거나 클릭하여 선택
               </div>

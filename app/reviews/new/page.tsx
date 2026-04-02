@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import BlogEditor from '@/components/BlogEditor';
+import { HeartGlyph } from '@/components/icons/ReviewHearts';
 
 // BlogEditor에서 이미지 업로드 시 base64로 변환하는 헬퍼 함수
 const convertImageToBase64 = (file: File, maxWidth: number = 1200, maxHeight: number = 675, quality: number = 0.75): Promise<string> => {
@@ -319,7 +320,20 @@ export default function NewReviewPage() {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
                           >
-                            {heart <= formData.ratings[category.key as keyof typeof formData.ratings] ? '❤️' : '🤍'}
+                            <HeartGlyph
+                              filled={
+                                heart <=
+                                formData.ratings[category.key as keyof typeof formData.ratings]
+                              }
+                              size={22}
+                              style={{
+                                color:
+                                  heart <=
+                                  formData.ratings[category.key as keyof typeof formData.ratings]
+                                    ? '#ef4444'
+                                    : '#cbd5e1',
+                              }}
+                            />
                           </button>
                         ))}
                         {formData.ratings[category.key as keyof typeof formData.ratings] > 0 && (

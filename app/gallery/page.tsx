@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 interface GalleryImage {
   id: number;
@@ -184,7 +185,7 @@ export default function GalleryPage() {
                           }}
                           >
                             <img
-                              src={image.url}
+                              src={resolveMediaUrl(image.url) ?? image.url}
                               alt={image.alt}
                               style={{
                                 width: '100%',

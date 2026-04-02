@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 // 모바일 감지 훅
 function useIsMobile() {
@@ -423,8 +424,12 @@ export default function Banner({ banners }: BannerProps) {
 }
 
 function BannerContent({ banner }: { banner: BannerItem }) {
+  const resolvedBannerSrc =
+    banner.imageUrl != null && banner.imageUrl !== ''
+      ? resolveMediaUrl(banner.imageUrl) ?? banner.imageUrl
+      : '';
   // 이미지가 있으면 기본 디자인 없이 이미지만 표시
-  const hasImage = !!banner.imageUrl;
+  const hasImage = !!resolvedBannerSrc;
   // 텍스트만 있으면 기본 디자인 적용
   const hasTextOnly = !hasImage && (banner.title || banner.content);
   const isMobile = useIsMobile();
@@ -444,7 +449,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
         }}
       >
         <img
-          src={banner.imageUrl || ''}
+          src={resolvedBannerSrc}
           alt={banner.title || '배너'}
           style={{
             maxHeight: '136px', // 152px - 16px (상하 패딩)
@@ -455,7 +460,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
             display: 'block',
           }}
           onError={(e) => {
-            console.error('Banner image load error:', banner.imageUrl, e);
+            console.error('Banner image load error:', resolvedBannerSrc, e);
             // 이미지 로드 실패 시 숨김 처리
             e.currentTarget.style.display = 'none';
           }}
@@ -493,7 +498,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           }}
         >
           <img
-            src={banner.imageUrl || ''}
+            src={resolvedBannerSrc}
             alt={banner.title || '배너'}
             style={{
               maxHeight: '136px',
@@ -504,12 +509,12 @@ function BannerContent({ banner }: { banner: BannerItem }) {
               display: 'block',
             }}
             onError={(e) => {
-              console.error('Banner image load error (with text):', banner.imageUrl, e);
+              console.error('Banner image load error (with text):', resolvedBannerSrc, e);
               // 이미지 로드 실패 시 숨김 처리
               e.currentTarget.style.display = 'none';
             }}
             onLoad={() => {
-              console.log('Banner image loaded successfully:', banner.imageUrl);
+              console.log('Banner image loaded successfully:', resolvedBannerSrc);
             }}
           />
         </div>

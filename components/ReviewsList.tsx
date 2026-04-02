@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { HeartGlyph } from '@/components/icons/ReviewHearts';
 
 interface Review {
   id: number;
@@ -577,7 +578,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     marginBottom: '1.5rem',
                   }}>
-                    🏆 이달의 베스트 후기
+                    이달의 베스트 후기
                   </div>
                   <h2 style={{
                     fontSize: '1.875rem',
@@ -909,15 +910,21 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           }}>
                             <div style={{
                               display: 'flex',
-                              color: '#EF4444',
+                              gap: '0.125rem',
+                              alignItems: 'center',
                             }}>
                               {[...Array(5)].map((_, i) => (
-                                <span key={i} style={{
-                                  fontSize: '1.125rem',
-                                  color: i < review.ratings!.overall! ? '#EF4444' : 'rgba(239, 68, 68, 0.3)',
-                                }}>
-                                  ❤️
-                                </span>
+                                <HeartGlyph
+                                  key={i}
+                                  filled={i < review.ratings!.overall!}
+                                  size={18}
+                                  style={{
+                                    color:
+                                      i < review.ratings!.overall!
+                                        ? '#EF4444'
+                                        : 'rgba(239, 68, 68, 0.35)',
+                                  }}
+                                />
                               ))}
                             </div>
                             <span style={{
@@ -996,7 +1003,9 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         fontSize: '0.875rem',
                         fontWeight: '500',
                       }}>
-                        <span style={{ marginRight: '0.25rem' }}>❤️</span>
+                        <span style={{ marginRight: '0.25rem', display: 'inline-flex', verticalAlign: 'middle' }}>
+                          <HeartGlyph filled size={16} style={{ color: '#EF4444' }} />
+                        </span>
                         {review.likeCount || 0}
                       </div>
                       <div style={{

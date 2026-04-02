@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminMenuArt, { type AdminMenuArtKind } from '@/components/admin/AdminMenuArt';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -90,19 +91,26 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const menuItems = [
+  const menuItems: Array<{
+    title: string;
+    description: string;
+    href: string;
+    art: AdminMenuArtKind;
+    color: string;
+    badge?: number;
+  }> = [
     {
       title: '블로그 관리',
       description: '블로그 글 작성, 수정, 삭제',
       href: '/admin/blog',
-      icon: '📝',
+      art: 'blog',
       color: '#3b82f6',
     },
     {
       title: '상담 문의 관리',
       description: '상담 예약 확인 및 관리',
       href: '/admin/consultation',
-      icon: '💬',
+      art: 'consultation',
       color: '#10b981',
       badge: stats.pendingConsultations > 0 ? stats.pendingConsultations : undefined,
     },
@@ -110,35 +118,35 @@ export default function AdminDashboard() {
       title: '팝업 관리',
       description: '팝업 창 설정 및 관리',
       href: '/admin/popups',
-      icon: '🔔',
+      art: 'popup',
       color: '#f59e0b',
     },
     {
       title: '배너 관리',
       description: '배너 설정 및 관리',
       href: '/admin/banners',
-      icon: '📢',
+      art: 'banner',
       color: '#8b5cf6',
     },
     {
       title: '갤러리 관리',
       description: '갤러리 이미지 관리',
       href: '/admin/gallery',
-      icon: '🖼️',
+      art: 'gallery',
       color: '#ec4899',
     },
     {
       title: '히어로 비디오 관리',
       description: '메인 페이지 비디오 관리',
       href: '/admin/videos',
-      icon: '🎬',
+      art: 'video',
       color: '#06b6d4',
     },
     {
       title: '후기 관리',
       description: '고객 후기 관리 및 삭제',
       href: '/admin/reviews',
-      icon: '⭐',
+      art: 'reviews',
       color: '#f97316',
     },
   ];
@@ -236,7 +244,9 @@ export default function AdminDashboard() {
                   {item.badge}
                 </span>
               )}
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{item.icon}</div>
+              <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                <AdminMenuArt kind={item.art} color={item.color} />
+              </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.5rem' }}>
                 {item.title}
               </h3>

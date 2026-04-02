@@ -327,9 +327,9 @@ export default function ConsultationAdminPage() {
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                      <span>📞 {inquiry.phone}</span>
+                      <span>전화 {inquiry.phone}</span>
                       {inquiry.email && <span>✉️ {inquiry.email}</span>}
-                      <span>📅 {new Date(inquiry.createdAt).toLocaleString('ko-KR')}</span>
+                      <span>접수 {new Date(inquiry.createdAt).toLocaleString('ko-KR')}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>

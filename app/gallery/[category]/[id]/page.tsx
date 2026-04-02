@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 interface GalleryImage {
   id: number;
@@ -213,7 +214,7 @@ export default function GalleryDetailPage() {
                 backgroundColor: '#f1f5f9',
               }}>
                 <img
-                  src={image.url}
+                  src={resolveMediaUrl(image.url) ?? image.url}
                   alt={image.alt}
                   style={{
                     width: '100%',
@@ -376,7 +377,7 @@ export default function GalleryDetailPage() {
                         }}
                         >
                           <img
-                            src={img.url}
+                            src={resolveMediaUrl(img.url) ?? img.url}
                             alt={img.alt}
                             style={{
                               width: '100%',

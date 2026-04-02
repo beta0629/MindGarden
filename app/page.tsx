@@ -1,5 +1,6 @@
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
+import HomeSectionVisual from '@/components/HomeSectionVisual';
 import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsList from '@/components/ReviewsList';
 import Footer from '@/components/Footer';
@@ -7,6 +8,7 @@ import SectionTabs from '@/components/SectionTabs';
 import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
+import { homeSectionImages } from '@/lib/home-section-images';
 
 // 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
 export const dynamic = 'force-dynamic';
@@ -197,12 +199,21 @@ export default async function Home() {
       <div className="content-shell">
         <div className="content-main">
           <section id="about" className="content-section">
-            <h2 className="section-title">마인드 가든 소개</h2>
-            <p className="section-desc">
-              내담자의 주호소 문제에 대해 풍부한 임상경력의 전문가가 객관화 된 검사와 내담자의 기질, 성격적 특성, 자라나온 양육환경 등을 고려해서 핵심문제를 찾습니다.<br /><br />
-              내담자와 함께 치료계획과 합의된 목표 세우고 최우선적으로<br />
-              증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
-            </p>
+            <div className="section-intro-row">
+              <div className="section-intro-copy">
+                <h2 className="section-title">마인드 가든 소개</h2>
+                <p className="section-desc">
+                  내담자의 주호소 문제에 대해 풍부한 임상경력의 전문가가 객관화 된 검사와 내담자의 기질, 성격적 특성, 자라나온 양육환경 등을 고려해서 핵심문제를 찾습니다.<br /><br />
+                  내담자와 함께 치료계획과 합의된 목표 세우고 최우선적으로<br />
+                  증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
+                </p>
+              </div>
+              <HomeSectionVisual
+                src={homeSectionImages.about.src}
+                alt={homeSectionImages.about.alt}
+                priority
+              />
+            </div>
             <div className="feature-grid">
               <a href="/about/mindgarden" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                 <div className="feature-title">전문특화</div>
@@ -220,8 +231,16 @@ export default async function Home() {
           </section>
 
           <section id="programs" className="content-section">
-            <h2 className="section-title">프로그램</h2>
-            <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
+            <div className="section-intro-row section-intro-row--media-first">
+              <HomeSectionVisual
+                src={homeSectionImages.programs.src}
+                alt={homeSectionImages.programs.alt}
+              />
+              <div className="section-intro-copy">
+                <h2 className="section-title">프로그램</h2>
+                <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
+              </div>
+            </div>
             <div className="program-grid">
               <div className="program-card">
                 <div className="program-title">대상</div>

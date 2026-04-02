@@ -5,6 +5,13 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import KakaoIcon from '@/components/KakaoIcon';
+import { RatingHeartsRow, HeartGlyph } from '@/components/icons/ReviewHearts';
+import {
+  SearchGlyph,
+  LinkGlyph,
+  ChartBarsGlyph,
+  TagGlyph,
+} from '@/components/icons/UiGlyphs';
 
 interface Review {
   id: number;
@@ -65,24 +72,9 @@ const getRandomName = (reviewId: number) => {
   return names[index];
 };
 
-// 하트 렌더링
-const renderHearts = (rating: number) => {
-  const fullHearts = Math.floor(rating);
-  const hasHalfHeart = rating % 1 >= 0.5;
-  const emptyHearts = 5 - fullHearts - (hasHalfHeart ? 1 : 0);
-  
-  return (
-    <div style={{ display: 'flex', gap: '0.125rem' }}>
-      {Array.from({ length: fullHearts }).map((_, i) => (
-        <span key={i} style={{ fontSize: '0.875rem', color: '#ef4444' }}>❤️</span>
-      ))}
-      {hasHalfHeart && <span style={{ fontSize: '0.875rem', color: '#ef4444', opacity: 0.5 }}>❤️</span>}
-      {Array.from({ length: emptyHearts }).map((_, i) => (
-        <span key={i} style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>🤍</span>
-      ))}
-    </div>
-  );
-};
+const renderHearts = (rating: number) => (
+  <RatingHeartsRow rating={rating} size={14} />
+);
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -452,16 +444,7 @@ export default function ReviewsPage() {
                     gap: '0.25rem',
                     marginBottom: '1rem',
                   }}>
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      const rating = stats.ratingStats.overall.average;
-                      if (i < Math.floor(rating)) {
-                        return <span key={i} style={{ fontSize: '1.25rem', color: '#ef4444' }}>❤️</span>;
-                      } else if (i === Math.floor(rating) && rating % 1 >= 0.5) {
-                        return <span key={i} style={{ fontSize: '1.25rem', color: '#ef4444', opacity: 0.5 }}>❤️</span>;
-                      } else {
-                        return <span key={i} style={{ fontSize: '1.25rem', color: '#cbd5e1' }}>🤍</span>;
-                      }
-                    })}
+                    <RatingHeartsRow rating={stats.ratingStats.overall.average} size={20} />
                   </div>
                   <div style={{
                     height: '1px',
@@ -501,7 +484,9 @@ export default function ReviewsPage() {
                   alignItems: 'center',
                   gap: '0.5rem',
                 }}>
-                  <span style={{ fontSize: '1rem' }}>📊</span>
+                  <span style={{ fontSize: '1rem', color: '#64748b', display: 'flex' }}>
+                    <ChartBarsGlyph size={18} />
+                  </span>
                   평가 상세
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -597,7 +582,9 @@ export default function ReviewsPage() {
                   alignItems: 'center',
                   gap: '0.5rem',
                 }}>
-                  <span style={{ fontSize: '1rem' }}>🏷️</span>
+                  <span style={{ fontSize: '1rem', color: '#64748b', display: 'flex' }}>
+                    <TagGlyph size={18} />
+                  </span>
                   인기 키워드
                 </h3>
                 <div style={{
@@ -727,7 +714,7 @@ export default function ReviewsPage() {
                   color: '#94a3b8',
                   pointerEvents: 'none',
                 }}>
-                  🔍
+                  <SearchGlyph size={18} />
                 </span>
                 <input
                   type="text"
@@ -1046,8 +1033,14 @@ export default function ReviewsPage() {
                             }
                           }}
                         >
-                          <span style={{ fontSize: '1.25rem' }}>
-                            {likedReviews.has(review.id) ? '❤️' : '🤍'}
+                          <span style={{ display: 'flex', alignItems: 'center' }}>
+                            <HeartGlyph
+                              filled={likedReviews.has(review.id)}
+                              size={20}
+                              style={{
+                                color: likedReviews.has(review.id) ? '#ef4444' : '#94a3b8',
+                              }}
+                            />
                           </span>
                           <span>
                             좋아요 <span style={{ fontSize: '0.75rem', fontWeight: '400', marginLeft: '0.125rem' }}>
@@ -1082,7 +1075,9 @@ export default function ReviewsPage() {
                             e.currentTarget.style.color = '#64748b';
                           }}
                         >
-                          <span style={{ fontSize: '1.25rem' }}>🔗</span>
+                          <span style={{ display: 'flex', color: '#64748b' }}>
+                            <LinkGlyph size={20} />
+                          </span>
                           <span>공유</span>
                         </button>
                       </div>

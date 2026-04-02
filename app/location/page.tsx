@@ -90,7 +90,7 @@ export default function LocationPage() {
                   alignItems: 'center',
                   gap: '12px'
                 }}>
-                  📍 주소
+                  주소
                 </h2>
                 <div style={{
                   fontSize: '1.125rem',
@@ -135,7 +135,7 @@ export default function LocationPage() {
                   alignItems: 'center',
                   gap: '12px'
                 }}>
-                  🚇 교통 안내
+                  교통 안내
                 </h2>
                 <div style={{
                   fontSize: '1.0625rem',
@@ -189,7 +189,7 @@ export default function LocationPage() {
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                🗺️ 지도
+                지도
               </h2>
               <div style={{
                 width: '100%',

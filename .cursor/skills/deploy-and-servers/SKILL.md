@@ -11,7 +11,7 @@
 |------|-----|
 | **호스트** | `beta0629.cafe24.com` |
 | **접속** | `ssh beta0629.cafe24.com` (로컬 SSH 키 사용, 별도 키 등록 없음) |
-| **비고** | GitHub Actions에서는 SSH 키 없이 **웹훅 배포**만 사용함 |
+| **비고** | GitHub Actions는 **CI 후 SSH 배포**(`HOMEPAGE_DEV_SSH_DEPLOY`) 또는 **웹훅만** 등 팀 설정에 따름 |
 
 ---
 
@@ -27,14 +27,28 @@
 
 ---
 
-## 3. 웹훅 자동 배포 (키 없이 사용)
+## 3. 개발 배포 워크플로 (권장 정리)
+
+1. **CI 후 SSH (권장·재현성)**  
+   - `homepage/develop` **푸시** → GitHub Actions `deploy-dev`에서 **빌드 성공 후** SSH로 서버에서 `deploy-from-webhook.sh` 실행 → **`pm2 restart homepage-dev`**.  
+   - 설정: 저장소 **Variable** `HOMEPAGE_DEV_SSH_DEPLOY=true`, **Secrets** `DEV_SSH_HOST`, `DEV_SSH_USER`, `DEV_SSH_KEY`.  
+   - 상세: `docs/DEV_DEPLOY_CI_SSH.md`  
+   - 레포의 배포 로직 단일 소스: `scripts/deploy-from-webhook.sh`, 루트 `deploy-from-webhook.sh`는 위임만 함.
+
+2. **GitHub Webhook (푸시 즉시, CI와 별개)**  
+   - 아래 Payload URL로 푸시 이벤트 시 서버가 곧바로 배포 스크립트 실행. CI 성공 여부와 무관할 수 있음.  
+   - Webhook만 쓸 때는 `HOMEPAGE_DEV_SSH_DEPLOY`를 켜지 않거나, 이중 빌드를 감수·한쪽만 사용 권장.
+
+---
+
+## 4. 웹훅 자동 배포 (키 없이 사용)
 
 - **Payload URL**: `http://114.202.247.246:3001/webhook`
 - **서버 IP**: `114.202.247.246` (beta0629.cafe24.com)
 - **동작**: `homepage/develop` 푸시 → GitHub이 서버로 POST → `deploy-from-webhook.sh` 실행 → git pull, build, **pm2 restart homepage-dev** 자동
 - **재기동**: 웹훅이 정상 동작하면 **수동 재기동 불필요** (스크립트에 포함됨)
 
-**자동 배포가 되는지 확인**: 푸시 후에도 사이트에 오류가 나거나 예전 버전이 보이면 웹훅이 동작하지 않는 것이다. (1) GitHub 저장소 → Settings → Webhooks 에서 해당 URL이 등록돼 있는지, (2) 서버에서 `pm2 list` 로 `homepage-webhook` 이 떠 있는지 확인. **자동이 안 되면 아래 5번 수동 배포**로 반영하면 된다.
+**자동 배포가 되는지 확인**: 푸시 후에도 사이트에 오류가 나거나 예전 버전이 보이면 웹훅·CI SSH 중 사용 중인 경로를 점검한다. (1) Webhook: Settings → Webhooks, (2) CI SSH: Actions에서 `deploy-dev` 성공 여부, (3) 서버 `pm2 list`. **자동이 안 되면 아래 6번 수동 배포**로 반영하면 된다.
 
 **배포 후 자동 재기동이 안 되는 경우**: 코드는 갱신됐는데(빌드까지 됐는데) 앱이 예전 버전으로 보이면 **재기동 단계가 빠진 것**이다. 서버에서 다음을 확인할 것. (1) `deploy-from-webhook.sh` 스크립트 **끝**에 `pm2 restart homepage-dev` 가 반드시 있는지. (2) `git pull` 만 쓰는 경로라면 `.git/hooks/post-merge` 에도 빌드 후 `pm2 restart homepage-dev` 가 있는지. 없으면 추가. 참고 예시: `docs/DEPLOY_SCRIPT_REFERENCE.md`
 
@@ -57,16 +71,17 @@
 
 ---
 
-## 4. 서버 배포 스크립트 경로
+## 5. 서버 배포 스크립트 경로
 
 | 스크립트 | 경로 | 용도 |
 |----------|------|------|
-| 웹훅 배포 | `/var/www/homepage/deploy-from-webhook.sh` | 푸시 시 자동 실행 (git fetch/reset, npm install 필요 시, build, pm2 restart homepage-dev) |
-| 수동 배포 | `/var/www/homepage/deploy.sh` | 수동 실행용 |
+| 웹훅·SSH 공통 | 레포 루트 `deploy-from-webhook.sh` → `scripts/deploy-from-webhook.sh` | git fetch/reset, `npm ci`, `build`, `pm2 restart homepage-dev` |
+| 서버상 관례 경로 | `/var/www/homepage/deploy-from-webhook.sh` | 위 루트 스크립트와 동일·또는 심볼릭 링크 권장 |
+| 수동 배포 | `/var/www/homepage/deploy.sh` | 수동 실행용(있는 경우) |
 
 ---
 
-## 5. 수동 배포 절차 (웹훅 미동작 시)
+## 6. 수동 배포 절차 (웹훅·CI SSH 미동작 시)
 
 SSH 접속 후 아래 순서로 실행:
 
@@ -86,24 +101,25 @@ pm2 restart homepage-dev
 
 ---
 
-## 6. GitHub / CI
+## 7. GitHub / CI
 
 - **저장소**: `beta0629/MindGarden`
 - **개발 브랜치**: `homepage/develop`
-- **Actions**: `Deploy Homepage` 워크플로는 **린트 + 빌드**만 수행. 실제 배포는 **웹훅**으로 처리 (SSH/SCP 단계 없음).
-- **Secrets**: 웹훅만 쓰므로 `DEV_SSH_KEY` 등 SSH 시크릿 불필요.
+- **Actions**: `Deploy Homepage` 워크플로 — `deploy-dev`에서 **린트 + 빌드** 후, Variable `HOMEPAGE_DEV_SSH_DEPLOY=true`이면 **SSH로 개발 서버 배포·재기동** (`docs/DEV_DEPLOY_CI_SSH.md`).
+- **Secrets**: CI 후 SSH를 쓰면 `DEV_SSH_HOST`, `DEV_SSH_USER`, `DEV_SSH_KEY` 필요. 웹훅만 쓰면 생략 가능.
 
 ---
 
-## 7. 운영 서버
+## 8. 운영 서버
 
 - 현재 문서 작성 시점에는 **운영 서버 정보는 개발 서버와 동일**한 것으로 가정.  
 - 별도 운영 호스트/경로가 생기면 이 섹션을 갱신하세요.
 
 ---
 
-## 8. 참고 문서 (프로젝트 내)
+## 9. 참고 문서 (프로젝트 내)
 
+- `docs/DEV_DEPLOY_CI_SSH.md` — **CI 통과 후 SSH 배포** 설정
 - `docs/GITHUB_WEBHOOK_SETUP.md` — 웹훅 설정 방법
 - `docs/AUTO_DEPLOY_SETUP.md` — 자동 배포 개요
 - `docs/AUTO_DEPLOY_TROUBLESHOOTING.md` — **자동 배포가 안 될 때 점검 절차** (웹훅 수신 → 재기동)

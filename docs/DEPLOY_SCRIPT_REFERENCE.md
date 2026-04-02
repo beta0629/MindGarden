@@ -4,9 +4,11 @@
 
 ---
 
-## 1. 웹훅용 배포 스크립트 예시 (`deploy-from-webhook.sh`)
+## 1. 웹훅·CI SSH 공통 배포 스크립트
 
-**위치**: 서버 `/var/www/homepage/deploy-from-webhook.sh`
+**레포 단일 소스**: `scripts/deploy-from-webhook.sh` (루트 `deploy-from-webhook.sh`는 이 파일을 호출).
+
+**서버 위치**: `/var/www/homepage/deploy-from-webhook.sh` — 레포를 pull한 뒤 루트 스크립트와 동일 내용이면 됨.
 
 다음 순서가 **전부** 들어가 있어야 한다. **마지막에 `pm2 restart homepage-dev` 가 반드시 있어야** 배포 후 자동 재기동된다.
 

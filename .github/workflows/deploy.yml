@@ -51,8 +51,27 @@ jobs:
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD || secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DEV_DB_NAME || secrets.DB_NAME }}
 
-      # 실제 배포는 GitHub Webhook으로 처리 (별도 SSH 키 불필요)
-      # 푸시 시 서버 homepage-webhook이 수신 → deploy-from-webhook.sh (git pull, build, pm2 restart)
+      # ------------------------------------------------------------------
+      # 개발 배포: CI(린트·빌드) 통과 후에만 SSH로 서버에서 동일 스크립트 실행 → pm2 재기동
+      # 사용법: 저장소 Variables 에 HOMEPAGE_DEV_SSH_DEPLOY=true
+      #         Secrets 에 DEV_SSH_HOST, DEV_SSH_USER, DEV_SSH_KEY (개인키 PEM 전체)
+      # 상세: docs/DEV_DEPLOY_CI_SSH.md
+      # Webhook(푸시 즉시 배포)과 병행 가능하나, 이중 빌드가 될 수 있음 → 운영에서 한쪽만 쓰는 것을 권장
+      # ------------------------------------------------------------------
+      - name: Deploy to dev server (SSH, after CI)
+        if: github.event_name == 'push' && vars.HOMEPAGE_DEV_SSH_DEPLOY == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /var/www/homepage
+            bash deploy-from-webhook.sh
+
+      # Webhook만 쓰는 경우(HOMEPAGE_DEV_SSH_DEPLOY 미설정): 푸시 시 서버 homepage-webhook → deploy-from-webhook.sh
 
   # 프로덕션 브랜치 빌드 및 테스트
   build-and-test:

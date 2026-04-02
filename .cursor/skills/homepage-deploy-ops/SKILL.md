@@ -11,6 +11,9 @@
 3. **배포/머지 후 UI 정책 검증**: `.cursor/skills/verify-changes/SKILL.md` + `./scripts/verify-ui-changes.sh`
 
 ## 빠른 수동 배포 (SSH)
+
+**전제**: 서버에 들어가려면 **SSH 접속이 가능한 상태**(키·계정·방화벽)여야 한다. Actions는 대신 해 주지 않음.
+
 ```bash
 ssh beta0629.cafe24.com
 cd /var/www/homepage

@@ -249,7 +249,7 @@ const mypageApi = {
       let endpoint;
       if (userRole === 'CONSULTANT') {
         endpoint = PROFILE_API.CONSULTANT.GET_INFO(userId);
-      } else if (userRole === 'ADMIN') {
+      } else if (userRole === 'ADMIN' || userRole === 'STAFF') {
         endpoint = PROFILE_API.ADMIN.GET_INFO(userId);
       } else {
         endpoint = PROFILE_API.CLIENT.GET_INFO;
@@ -280,7 +280,7 @@ const mypageApi = {
       let endpoint;
       if (userRole === 'CONSULTANT') {
         endpoint = PROFILE_API.CONSULTANT.UPDATE_INFO(userId);
-      } else if (userRole === 'ADMIN') {
+      } else if (userRole === 'ADMIN' || userRole === 'STAFF') {
         endpoint = PROFILE_API.ADMIN.UPDATE_INFO(userId);
       } else {
         endpoint = PROFILE_API.CLIENT.UPDATE_INFO;
@@ -312,7 +312,7 @@ const mypageApi = {
       let endpoint;
       if (userRole === 'CONSULTANT') {
         endpoint = PROFILE_API.CONSULTANT.GET_SOCIAL_ACCOUNTS(userId);
-      } else if (userRole === 'ADMIN') {
+      } else if (userRole === 'ADMIN' || userRole === 'STAFF') {
         endpoint = PROFILE_API.ADMIN.GET_SOCIAL_ACCOUNTS(userId);
       } else {
         endpoint = PROFILE_API.CLIENT.GET_SOCIAL_ACCOUNTS;

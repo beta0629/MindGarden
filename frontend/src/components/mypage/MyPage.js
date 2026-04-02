@@ -15,6 +15,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import { useSession } from '../../contexts/SessionContext';
 import ProfileSection from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import PasswordResetModal from './components/PasswordResetModal';
@@ -26,6 +27,7 @@ import './MyPage.css';
 const MYPAGE_TITLE_ID = 'mypage-page-title';
 
 const MyPage = () => {
+  const { user: sessionUser } = useSession();
   const [user, setUser] = useState(null);
   const [localUser, setLocalUser] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
@@ -66,11 +68,10 @@ const MyPage = () => {
     }
   };
 
-  // 사용자 정보 로드
+  // 사용자 정보 로드 (sessionManager와 SessionContext 중 먼저 채워지는 쪽 사용 — 운영에서 타이밍 이슈 방지)
   const loadUserInfo = useCallback(async () => {
     try {
-      // 세션에서 사용자 정보 먼저 가져오기
-      const currentUser = sessionManager.getUser();
+      const currentUser = sessionManager.getUser() || sessionUser;
       if (!currentUser) {
         throw new Error('세션에 사용자 정보가 없습니다');
       }
@@ -101,7 +102,7 @@ const MyPage = () => {
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
       // API 호출 실패 시 세션에서 기본 정보 사용
-      const currentUser = sessionManager.getUser();
+      const currentUser = sessionManager.getUser() || sessionUser;
       if (currentUser) {
         console.log('🔄 세션에서 사용자 데이터 로드:', currentUser);
         console.log('📝 로드된 필드 확인:');
@@ -133,11 +134,11 @@ const MyPage = () => {
         setFormData(formDataToSet);
       }
     }
-  }, []); // 의존성 배열을 비워서 한 번만 생성
+  }, [sessionUser]);
   
   const loadSocialAccounts = useCallback(async () => {
     try {
-      const currentUser = sessionManager.getUser();
+      const currentUser = sessionManager.getUser() || sessionUser;
       if (!currentUser) {
         setSocialAccounts([]);
         return;
@@ -150,7 +151,7 @@ const MyPage = () => {
       // 에러가 발생해도 빈 배열로 설정하여 UI가 깨지지 않도록 함
       setSocialAccounts([]);
     }
-  }, []);
+  }, [sessionUser]);
 
   // localStorage에서 사용자 정보 확인 (백업)
   useEffect(() => {
@@ -166,34 +167,31 @@ const MyPage = () => {
     }
   }, []);
 
-  // user prop이 없으면 localStorage에서 가져온 사용자 정보 사용
-  const displayUser = user || localUser;
+  // API/로컬 스토리지 전에도 Context 세션으로 본문 표시 (무한 로딩·흰 화면 방지)
+  const displayUser = user || localUser || sessionUser;
 
   useEffect(() => {
     loadUserInfo();
     loadSocialAccounts();
-    
-    // URL 파라미터에서 연동 결과 확인
+  }, [loadUserInfo, loadSocialAccounts]);
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const linkStatus = urlParams.get('link');
     const provider = urlParams.get('provider');
     const message = urlParams.get('message');
-    
+
     if (linkStatus && provider && message) {
-      // 연동 결과에 따른 알림 표시
       if (linkStatus === 'success') {
         notificationManager.show(`✅ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 완료!`, 'success');
-        // 소셜 계정 목록 새로고침
         loadSocialAccounts();
-        // URL 파라미터 정리
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (linkStatus === 'error') {
         notificationManager.show(`❌ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`, 'error');
-        // URL 파라미터 정리
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, []); // 컴포넌트 마운트 시 한 번만 실행
+  }, [loadSocialAccounts]);
 
   // 소셜 계정 탭이 활성화될 때 데이터 로드
   useEffect(() => {
@@ -270,8 +268,7 @@ const MyPage = () => {
       console.log('🖼️ 크롭된 이미지 감지 - 백엔드에 저장 진행');
     }
     
-    // 사용자 역할에 따라 다른 API 엔드포인트 사용
-    const currentUser = sessionManager.getUser();
+    const currentUser = sessionManager.getUser() || sessionUser;
     if (!currentUser) {
       throw new Error('세션에 사용자 정보가 없습니다');
     }

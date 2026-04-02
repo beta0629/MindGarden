@@ -23,8 +23,11 @@ const ProfileSection = ({
       try {
         setLoading(true);
         const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'GENDER' });
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
+        const list = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.codes) ? response.codes : []);
+        if (list.length > 0) {
+          const options = list.map((code) => ({
             value: code.codeValue,
             label: code.codeLabel,
             icon: code.icon,

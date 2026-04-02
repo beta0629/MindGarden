@@ -11,17 +11,19 @@ import {
 function CounselingTypePageImage({
   slug,
   file,
+  remoteSrc,
   alt,
   variant,
   priority,
 }: {
   slug: string;
   file: string;
+  remoteSrc: string;
   alt: string;
   variant: 'hero' | 'section';
   priority?: boolean;
 }) {
-  const src = counselingTypeImageSrc(slug, file);
+  const src = counselingTypeImageSrc(slug, file, remoteSrc);
   const ratioClass =
     variant === 'hero' ? 'counseling-type-visual-frame--16-9' : 'counseling-type-visual-frame--3-2';
 
@@ -67,6 +69,7 @@ export default function CounselingTypePageView({
               <CounselingTypePageImage
                 slug={data.slug}
                 file={plan.hero.file}
+                remoteSrc={plan.hero.remoteSrc}
                 alt={plan.hero.alt}
                 variant="hero"
                 priority
@@ -83,6 +86,7 @@ export default function CounselingTypePageView({
                       <CounselingTypePageImage
                         slug={data.slug}
                         file={slot.file}
+                        remoteSrc={slot.remoteSrc}
                         alt={slot.alt}
                         variant="section"
                       />

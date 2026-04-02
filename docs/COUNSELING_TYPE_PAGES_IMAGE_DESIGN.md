@@ -68,4 +68,5 @@
 
 ## 코더: 환경 변수
 
-`NEXT_PUBLIC_COUNSELING_IMAGES_ENABLED=true`일 때만 `public/assets/images/counseling/{slug}/` 아래 파일을 요청하고, 그 외에는 투명 1×1 GIF로 레이아웃만 유지합니다. 메타·경로 로직은 `lib/counseling-type-page-images.ts`를 참고하세요.
+- **기본**: Unsplash 원격 URL로 이미지가 바로 보입니다 (`next.config.js`의 `images.unsplash.com` 허용과 동일 패턴).
+- **`NEXT_PUBLIC_COUNSELING_IMAGES_USE_LOCAL=true`**: `public/assets/images/counseling/{slug}/` 아래 WebP 등 정적 파일만 사용(센터 실사로 교체 시). 메타·경로는 `lib/counseling-type-page-images.ts`를 참고하세요.

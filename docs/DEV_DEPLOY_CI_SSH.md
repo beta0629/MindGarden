@@ -41,7 +41,23 @@
 
 | Variable 이름 | 값 | 설명 |
 |---------------|-----|------|
-| **`HOMEPAGE_DEV_SSH_DEPLOY`** | `true` | 이 값일 때만 SSH 배포 step 실행. 끄려면 삭제하거나 `true`가 아닌 값. |
+| **`HOMEPAGE_DEV_SSH_DEPLOY`** | `true` | SSH 배포 step 실행 조건(소문자 `true` 권장). `True`도 허용. |
+
+### Variable 대신(또는 함께) Secret으로 켜기
+
+저장소에 Variable이 **비어 있거나** Actions에서 인식되지 않으면(조직 정책 등), **Secrets**에 아래를 추가하면 SSH 배포가 켜진다.
+
+| Secret 이름 | 값 |
+|-------------|-----|
+| **`DEV_SSH_AUTO_DEPLOY_ENABLE`** | `1` (숫자 1만) |
+
+`HOMEPAGE_DEV_SSH_DEPLOY` Variable이 `true`이거나, 위 Secret이 `1`이면 **둘 중 하나만 만족해도** 배포 step이 실행된다. 끌 때는 Variable을 지우거나 Secret을 삭제한다.
+
+### “Deploy to dev server” 가 skipped 인 경우
+
+1. **Variables**에 `HOMEPAGE_DEV_SSH_DEPLOY`가 **이 저장소**(예: `beta0629/MindGarden`)에 있는지, 값이 `true` / `True` 인지 확인.  
+2. 안 되면 **Secret** `DEV_SSH_AUTO_DEPLOY_ENABLE` = `1` 추가.  
+3. `DEV_SSH_HOST` / `DEV_SSH_USER` / `DEV_SSH_KEY` 세 Secret이 같은 저장소에 있는지 확인.
 
 ---
 

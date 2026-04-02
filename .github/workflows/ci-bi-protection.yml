@@ -53,7 +53,7 @@ jobs:
           exit 1
         elif [ $TOTAL_HARDCODED -gt 1000 ]; then
           echo "⚠️  많은 하드코딩이 발견되었습니다 ($TOTAL_HARDCODED개). 점진적 정리를 권장합니다."
-          echo "💡 개발 중이므로 배포를 허용합니다."
+          echo "💡 운영(main) 파이프라인은 계속 진행되며, 토큰 치환·pre-commit 스캔으로 신규 하드코딩은 차단하는 것을 권장합니다."
         else
           echo "✅ 하드코딩 검사 통과! ($TOTAL_HARDCODED개)"
         fi

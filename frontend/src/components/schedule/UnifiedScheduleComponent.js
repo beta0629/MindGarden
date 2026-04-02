@@ -107,7 +107,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         const colors = [
             'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
             'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
-            '#5a7d6a', '#7a9dbb', '#d4987a', '#3d5a48'
+            'var(--mg-primary-500)', 'var(--mg-info-500)', 'var(--mg-warning-500)', 'var(--mg-success-600)'
         ];
         const colorIndex = consultantId % colors.length;
         return colors[colorIndex];

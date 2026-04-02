@@ -57,6 +57,7 @@ ssh-keygen -t ed25519 -f ./github-actions-homepage-deploy -N "" -C "github-actio
 - **`github-actions-homepage-deploy.pub`** 내용 한 줄을 서버 `~/.ssh/authorized_keys`에 추가.
 - **`github-actions-homepage-deploy`** (비밀키) 내용 전체를 GitHub Secret **`DEV_SSH_KEY`**에 붙여넣기.
 - 로컬 비밀키 파일은 안전한 곳에 보관하거나, Secrets 등록 후 삭제해도 됨(GitHub에만 있으면 Actions는 동작).
+- 레포 루트에 키를 만들었다면 **커밋하지 말 것**. 프로젝트 `.gitignore`에 `github-actions-homepage-deploy` 패턴이 포함되어 있다.
 
 서버에서:
 

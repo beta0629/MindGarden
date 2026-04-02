@@ -16,6 +16,9 @@
 # misc
 .DS_Store
 *.pem
+# 로컬에서 만든 GitHub Actions 배포용 키(실수 커밋 방지)
+github-actions-homepage-deploy
+github-actions-homepage-deploy.pub
 
 # debug
 npm-debug.log*

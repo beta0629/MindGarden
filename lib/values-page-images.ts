@@ -20,14 +20,14 @@ export const valuesPageImages = {
     height: 720,
   },
   humanity: {
-    src: 'https://images.unsplash.com/photo-1416879595882-3373a048d074?w=640&h=640&fit=crop&q=80',
+    src: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=640&h=640&fit=crop&q=80',
     alt: '부드러운 빛 아래 피어 있는 꽃과 잎의 자연스러운 장면',
     width: 640,
     height: 640,
   },
   growth: {
-    src: 'https://images.unsplash.com/photo-1464822759844-d150ad301d9c?w=1200&h=600&fit=crop&q=80',
-    alt: '안개 낀 산맥 너머로 밝아오는 하늘, 고요한 회복과 여정을 연상시키는 풍경',
+    src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=600&fit=crop&q=80',
+    alt: '산맥과 하늘이 펼쳐진 고요한 풍경, 회복과 여정을 연상시키는 장면',
     width: 1200,
     height: 600,
   },

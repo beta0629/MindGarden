@@ -53,7 +53,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     /**
      * 테넌트별 상담사의 특정 날짜 스케줄 조회 (테넌트 필터링)
      */
-    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date")
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
     List<Schedule> findByTenantIdAndConsultantIdAndDate(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("date") LocalDate date);
     
     /**

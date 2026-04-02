@@ -5,10 +5,12 @@ import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 import './TimeSlotGrid.css';
 import { 
-  BUSINESS_HOURS, 
-  TIME_SLOT_INTERVAL, 
-  DEFAULT_CONSULTATION_DURATION,
-  isScheduleStatusOccupyingTimeSlotForConflict
+    BUSINESS_HOURS, 
+    TIME_SLOT_INTERVAL, 
+    DEFAULT_CONSULTATION_DURATION,
+    isScheduleStatusOccupyingTimeSlotForConflict,
+    resolveScheduleStatusCodeForConflict,
+    isScheduleShownInExistingBookingsList
 } from '../../constants/schedule';
 
 /**
@@ -492,11 +494,38 @@ const TimeSlotGrid = ({
                 const conflict = checkTimeConflict(slot, schedules);
                 return {
                     ...slot,
-                    available: !conflict,
+                    available: !conflict && !slot.past && !slot.vacation,
                     conflict: conflict
                 };
             })
         );
+    };
+
+    /** API LocalTime "HH:mm:ss" / 배열 / 객체와 슬롯 "HH:mm" 비교 정규화 */
+    const normalizeTimeStringForSlotCompare = (t) => {
+        if (t == null || t === '') {
+            return '';
+        }
+        if (typeof t === 'string') {
+            const m = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+            if (!m) {
+                return t;
+            }
+            const h = String(Number(m[1])).padStart(2, '0');
+            const mi = String(Number(m[2])).padStart(2, '0');
+            return `${h}:${mi}`;
+        }
+        if (Array.isArray(t) && t.length >= 2) {
+            const h = String(Number(t[0])).padStart(2, '0');
+            const mi = String(Number(t[1])).padStart(2, '0');
+            return `${h}:${mi}`;
+        }
+        if (typeof t === 'object' && t.hour != null) {
+            const h = String(Number(t.hour)).padStart(2, '0');
+            const mi = String(Number(t.minute != null ? t.minute : 0)).padStart(2, '0');
+            return `${h}:${mi}`;
+        }
+        return String(t);
     };
 
 /**
@@ -511,11 +540,14 @@ const TimeSlotGrid = ({
                 ? schedules
                 : schedules.filter((s) => String(s.id) !== String(excludeScheduleId));
 
-        const occupying = filtered.filter((s) => isScheduleStatusOccupyingTimeSlotForConflict(s.status));
+        const occupying = filtered.filter((s) => {
+            const code = resolveScheduleStatusCodeForConflict(s);
+            return isScheduleStatusOccupyingTimeSlotForConflict(code);
+        });
         
         return occupying.some(schedule => {
-            const scheduleStart = schedule.startTime;
-            const scheduleEnd = schedule.endTime;
+            const scheduleStart = normalizeTimeStringForSlotCompare(schedule.startTime);
+            const scheduleEnd = normalizeTimeStringForSlotCompare(schedule.endTime);
             
             // 10분 휴식 시간을 고려한 충돌 검사
             return isTimeOverlapping(slotStart, slotEnd, scheduleStart, scheduleEnd) ||
@@ -680,6 +712,7 @@ const TimeSlotGrid = ({
     }
 
     const groupedSlots = groupSlotsByHour();
+    const existingSchedulesForDisplayList = existingSchedules.filter(isScheduleShownInExistingBookingsList);
 
     const getSlotModifierClass = (slot) => {
         if (slot.vacation) return 'mg-v2-ad-ts-item--vacation';
@@ -780,11 +813,11 @@ const TimeSlotGrid = ({
                 </div>
             )}
 
-            {existingSchedules.length > 0 && (
+            {existingSchedulesForDisplayList.length > 0 && (
                 <div className={useB0kla ? 'mg-v2-ad-ts__existing' : 'mg-v2-schedule-info-box'}>
                     <h6 className={useB0kla ? 'mg-v2-ad-ts__existing-title' : 'mg-v2-schedule-info-title'}>기존 스케줄</h6>
                     <div className={useB0kla ? 'mg-v2-ad-ts__existing-list' : 'mg-v2-schedule-list'}>
-                        {existingSchedules.map(schedule => (
+                        {existingSchedulesForDisplayList.map(schedule => (
                             <div key={schedule.id} className={useB0kla ? 'mg-v2-ad-ts__existing-item' : 'mg-v2-schedule-item'}>
                                 <span className={useB0kla ? 'mg-v2-ad-ts__existing-time' : 'mg-v2-schedule-time'}>
                                     {schedule.startTime} - {schedule.endTime}

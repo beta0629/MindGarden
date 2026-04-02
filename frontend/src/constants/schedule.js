@@ -89,6 +89,71 @@ export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
   return SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has(String(status).toUpperCase());
 }
 
+/**
+ * API Schedule / DTO에서 충돌·표시용 상태 코드를 맞춤 (statusCode 우선, 한글 라벨·레거시 호환).
+ * @param {object} schedule
+ * @returns {string|null} 대문자 코드 또는 null
+ */
+export function resolveScheduleStatusCodeForConflict(schedule) {
+  if (!schedule) {
+    return null;
+  }
+  if (schedule.isDeleted === true || schedule.deletedAt) {
+    return null;
+  }
+  const codeRaw =
+    schedule.statusCode != null && String(schedule.statusCode).trim() !== ''
+      ? String(schedule.statusCode).trim()
+      : null;
+  if (codeRaw) {
+    return codeRaw.toUpperCase();
+  }
+  const st = schedule.status;
+  if (st == null || st === '') {
+    return null;
+  }
+  if (typeof st === 'string') {
+    const s = st.trim();
+    const upper = s.toUpperCase();
+    const known = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE', 'IN_PROGRESS'];
+    if (known.includes(upper)) {
+      return upper;
+    }
+    if (/취소|취소됨/.test(s)) {
+      return STATUS.CANCELLED;
+    }
+    if (/예약됨|예약/.test(s)) {
+      return STATUS.BOOKED;
+    }
+    if (/완료|완료됨/.test(s)) {
+      return STATUS.COMPLETED;
+    }
+    if (/확정|확정됨/.test(s)) {
+      return STATUS.CONFIRMED;
+    }
+    if (/휴가/.test(s)) {
+      return STATUS.VACATION;
+    }
+    if (/가능/.test(s)) {
+      return STATUS.AVAILABLE;
+    }
+    return upper;
+  }
+  return String(st).toUpperCase();
+}
+
+/** 기존 스케줄 안내 영역에 표시할지 (취소·완료는 예약 슬롯 점유 안내에서 제외) */
+export function isScheduleShownInExistingBookingsList(schedule) {
+  const code = resolveScheduleStatusCodeForConflict(schedule);
+  if (!code) {
+    return false;
+  }
+  if (code === STATUS.CANCELLED || code === STATUS.COMPLETED || code === STATUS.AVAILABLE) {
+    return false;
+  }
+  return true;
+}
+
 export const SCHEDULE_TYPES = {
   CONSULTATION: 'CONSULTATION',
   MEETING: 'MEETING',

@@ -51,12 +51,23 @@ jobs:
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD || secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DEV_DB_NAME || secrets.DB_NAME }}
 
-      # 개발 자동 배포: CI 성공 후 SSH로 서버에서 deploy-from-webhook.sh (pm2 restart 포함)
-      # 켜기(택1): (A) Variable HOMEPAGE_DEV_SSH_DEPLOY=true  (B) Secret DEV_SSH_AUTO_DEPLOY_ENABLE=1
-      # (A)가 Actions에서 인식 안 되는 저장소가 있어 (조직/권한 등) (B)로 우회 가능
-      # 로컬 PC의 ~/.ssh 는 건드리지 않음. 상세: docs/DEV_DEPLOY_CI_SSH.md
+      # 개발 자동 배포: CI 성공 후 SSH (secrets는 if:에 쓰면 워크플로 오류 날 수 있어 run step에서 판별)
+      # 켜기(택1): Variable HOMEPAGE_DEV_SSH_DEPLOY=true | Secret DEV_SSH_AUTO_DEPLOY_ENABLE=1
+      # 상세: docs/DEV_DEPLOY_CI_SSH.md
+      - name: Decide if SSH deploy
+        id: ssh_deploy
+        if: github.event_name == 'push'
+        env:
+          HOMEPAGE_VAR: ${{ vars.HOMEPAGE_DEV_SSH_DEPLOY }}
+          AUTO_ENABLE: ${{ secrets.DEV_SSH_AUTO_DEPLOY_ENABLE }}
+        run: |
+          enabled=false
+          if [ "$HOMEPAGE_VAR" = "true" ] || [ "$HOMEPAGE_VAR" = "True" ]; then enabled=true; fi
+          if [ "$AUTO_ENABLE" = "1" ]; then enabled=true; fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to dev server (SSH, after CI)
-        if: ${{ github.event_name == 'push' && (vars.HOMEPAGE_DEV_SSH_DEPLOY == 'true' || vars.HOMEPAGE_DEV_SSH_DEPLOY == 'True' || secrets.DEV_SSH_AUTO_DEPLOY_ENABLE == '1') }}
+        if: github.event_name == 'push' && steps.ssh_deploy.outputs.enabled == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEV_SSH_HOST }}

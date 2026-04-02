@@ -379,7 +379,8 @@
   --mg-gray-900: var(--cs-secondary-900);
   
   --mg-consultant-dark: var(--cs-primary-800);
-  --mg-shadow-light: var(--mg-shadow-light);
+  /* 순환 참조 방지: 그림자·오버레이용 단일 알파 (cs-shadow-* 등에서 참조) */
+  --mg-shadow-light: rgba(0, 0, 0, 0.1);
   
   /* 색상 별칭 */
   --mint-green: var(--cs-success-500);
@@ -1008,7 +1009,7 @@
   --mg-settings: #95a5a6;
   --mg-settings_dark: #7f8c8d;
   --mg-tertiary: var(--mg-gray-100);
-  --mg-white: var(--mg-white);
+  --mg-white: var(--cs-white);
   --mobile-card-max-width: 560px;
   --mobile-card-width: 100%;
   --mobile-grid-columns: repeat(auto-fit, minmax(var(--stat-card-min-width), 1fr));

@@ -23,6 +23,8 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
+      # scp-action 은 source 경로의 디렉터리를 target 아래에 보존함 → 기본값이면
+      # /tmp/scripts/ops/prod-health-snapshot.sh 가 됨. strip_components: 2 로 /tmp/prod-health-snapshot.sh 에 평탄화.
       - name: 스냅샷 스크립트 업로드
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -32,6 +34,8 @@ jobs:
           port: 22
           source: scripts/ops/prod-health-snapshot.sh
           target: /tmp/
+          strip_components: 2
+          overwrite: true
 
       - name: 원격에서 스냅샷 실행
         uses: appleboy/ssh-action@master
@@ -41,4 +45,17 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           timeout: 120s
-          script: bash /tmp/prod-health-snapshot.sh
+          script: |
+            set -euo pipefail
+            SNAPSHOT_SH="/tmp/prod-health-snapshot.sh"
+            if [ ! -f "$SNAPSHOT_SH" ]; then
+              SNAPSHOT_SH="/tmp/scripts/ops/prod-health-snapshot.sh"
+            fi
+            if [ ! -f "$SNAPSHOT_SH" ]; then
+              echo "::error::스냅샷 스크립트를 찾을 수 없습니다. /tmp 또는 scp 경로 보존 여부를 확인하세요."
+              ls -la /tmp/ 2>/dev/null || true
+              ls -la /tmp/scripts/ops/ 2>/dev/null || true
+              exit 1
+            fi
+            chmod +x "$SNAPSHOT_SH" 2>/dev/null || true
+            bash "$SNAPSHOT_SH"

@@ -42,7 +42,7 @@
 
 `.github/workflows/ops-health-snapshot.yml` — **스냅샷만** 주기 실행·수동 실행합니다.  
 스케줄 job에서 로그 정리(`prod-log-cleanup.sh`)는 **호출하지 않습니다**.  
-워크플로는 저장소의 스크립트를 `/tmp`로 복사한 뒤 원격에서 실행합니다(서버에 repo 경로가 없어도 동작).
+워크플로는 저장소의 스크립트를 SCP로 `/tmp/prod-health-snapshot.sh`에 올린 뒤 원격에서 실행합니다(`appleboy/scp-action`은 경로를 보존하므로 `strip_components: 2`로 파일명만 `/tmp`에 둠). 서버에 repo 경로가 없어도 동작합니다.
 
 **권장**: 동일 스크립트를 서버 `cron`/`systemd` timer로 배치하면 Runner 장애와 무관하게 점검할 수 있습니다.
 

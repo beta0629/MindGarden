@@ -55,13 +55,13 @@ export const COUNSELING_TYPE_IMAGE_PLAN = {
         sectionId: 'features',
         file: 'section-features.webp',
         alt: '창가 책상 위에 정돈된 필기구와 노트가 있는 차분한 학습 코너.',
-        remoteSrc: `https://images.unsplash.com/photo-1513542789411-b6d5c869de1b?${W_SEC}`,
+        remoteSrc: `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?${W_SEC}`,
       },
       {
         sectionId: 'family',
         file: 'section-family.webp',
         alt: '소파에 마주 앉은 성인의 어깨와 손만 보이는, 부담 없는 대화 장면의 실내.',
-        remoteSrc: `https://images.unsplash.com/photo-1522336572469-59614c884063?${W_SEC}`,
+        remoteSrc: `https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?${W_SEC}`,
       },
     ],
   },
@@ -103,7 +103,7 @@ export const COUNSELING_TYPE_IMAGE_PLAN = {
         sectionId: 'counseling',
         file: 'section-counseling.webp',
         alt: '상담실 앞 벤치와 벽면 색만 보이는 대기 공간 느낌.',
-        remoteSrc: `https://images.unsplash.com/photo-1505576391889-b40f689d9380?${W_SEC}`,
+        remoteSrc: `https://images.unsplash.com/photo-1541976590-713941681591?${W_SEC}`,
       },
     ],
   },
@@ -111,14 +111,14 @@ export const COUNSELING_TYPE_IMAGE_PLAN = {
     hero: {
       file: 'hero.webp',
       alt: '책장과 은은한 조명이 있는 전문 상담 사무실 분위기의 실내.',
-      remoteSrc: `https://images.unsplash.com/photo-1481627834876-b7833c8f5576?${W_HERO}`,
+      remoteSrc: `https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?${W_HERO}`,
     },
     beforeSection: [
       {
         sectionId: 'examples',
         file: 'section-examples.webp',
         alt: '특정 주제를 과장하지 않는 일반 서가와 식물이 있는 열람 공간.',
-        remoteSrc: `https://images.unsplash.com/photo-1524995997946-a1c36990a10d?${W_SEC}`,
+        remoteSrc: `https://images.unsplash.com/photo-1522071820081-009f0129c71c?${W_SEC}`,
       },
       {
         sectionId: 'intake',

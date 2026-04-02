@@ -14,7 +14,7 @@
  */
 export const homeSectionImages = {
   about: {
-    src: 'https://images.unsplash.com/photo-1527137342181-19aab08a8ee9?w=1200&h=900&fit=crop&q=80',
+    src: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&h=900&fit=crop&q=80',
     alt: '따뜻한 햇살이 들어오는 편안한 실내와 식물이 있는 공간',
   },
   programs: {

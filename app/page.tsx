@@ -42,7 +42,7 @@ async function getGalleryImages() {
     return null;
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }
@@ -73,7 +73,7 @@ async function getHeroVideo() {
     return '/assets/videos/hero-video.mp4';
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }
@@ -125,7 +125,7 @@ async function getReviews() {
     return [];
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

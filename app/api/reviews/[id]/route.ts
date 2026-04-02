@@ -83,7 +83,7 @@ export async function PUT(
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }
@@ -150,7 +150,7 @@ export async function DELETE(
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

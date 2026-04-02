@@ -59,7 +59,7 @@ export async function PATCH(
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

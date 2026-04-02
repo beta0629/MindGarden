@@ -46,7 +46,7 @@ export async function POST(
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

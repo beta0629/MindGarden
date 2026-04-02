@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

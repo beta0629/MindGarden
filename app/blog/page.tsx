@@ -48,7 +48,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
     return [];
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

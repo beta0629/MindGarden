@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     );
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }

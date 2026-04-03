@@ -30,10 +30,12 @@ const BadgeSelect = ({
     currentValue = value;
   }
 
+  // option.value는 렌더 시 String()으로 통일됨. 부모가 number(예: paymentDay)를 넘기면
+  // 5 === "5" 가 false가 되어 선택 표시·aria-checked가 항상 틀어지므로 문자열로 맞춤.
   const isSelected = (optionValue) =>
     multiple
       ? currentValue.includes(optionValue)
-      : currentValue === optionValue;
+      : String(currentValue) === String(optionValue);
 
   const handleClick = (optionValue) => {
     if (disabled || loading) return;

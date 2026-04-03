@@ -4,8 +4,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
 import ConfirmModal from '../common/ConfirmModal';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { useSession } from '../../contexts/SessionContext';
 import ProfileSection from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
@@ -350,29 +350,14 @@ const MyPage = () => {
 
   if (!displayUser) {
     return (
-      <div className="mg-v2-ad-b0kla mg-mypage">
-        <div className="mg-v2-ad-b0kla__container">
-          <header className="mg-mypage__content-header" aria-labelledby={MYPAGE_TITLE_ID}>
-            <div className="mg-mypage__content-header-main">
-              <h1 id={MYPAGE_TITLE_ID} className="mg-mypage__title">
-                마이페이지
-              </h1>
-              <p className="mg-mypage__subtitle">
-                프로필, 설정, 보안, 소셜 계정, 개인정보 동의를 한곳에서 관리합니다.
-              </p>
-            </div>
-          </header>
-          <main className="mg-mypage__main" aria-labelledby={MYPAGE_TITLE_ID}>
-            <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
-          </main>
-        </div>
-      </div>
+      <AdminCommonLayout title="마이페이지" loading loadingText="사용자 정보를 불러오는 중..." />
     );
   }
 
   return (
-    <div className="mg-v2-ad-b0kla mg-mypage">
-      <div className="mg-v2-ad-b0kla__container">
+    <AdminCommonLayout title="마이페이지">
+      <div className="mg-mypage">
+        <div className="mg-v2-ad-b0kla__container">
         <header className="mg-mypage__content-header" aria-labelledby={MYPAGE_TITLE_ID}>
           <div className="mg-mypage__content-header-main">
             <h1 id={MYPAGE_TITLE_ID} className="mg-mypage__title">
@@ -496,6 +481,7 @@ const MyPage = () => {
             </section>
           </div>
         </main>
+        </div>
       </div>
 
       <PasswordResetModal
@@ -538,7 +524,7 @@ const MyPage = () => {
         cancelText="취소"
         type="warning"
       />
-    </div>
+    </AdminCommonLayout>
   );
 };
 

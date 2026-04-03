@@ -3,7 +3,8 @@
  * 색·간격은 unified-design-tokens.css var(--mg-*) 만 사용
  */
 
-.mg-v2-ad-b0kla.mg-mypage {
+/* DesktopLayout main 내부 콘텐츠 루트 (GNB/LNB는 AdminCommonLayout) */
+.mg-mypage {
   width: 100%;
   min-width: 0;
   min-height: 100%;

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import com.coresolution.consultation.constant.OAuth2Constants;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.User;
@@ -357,6 +356,38 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         return null;
+    }
+
+    /**
+     * SNS 계정 연동(link) 콜백은 보통 메인 도메인(api 호스트)으로 들어오므로, 마이페이지 등으로 돌려보낼 때 테넌트 서브도메인을 복원합니다.
+     */
+    private String getTenantAwareFrontendBaseUrlForSnsLinkRedirect(HttpServletRequest request,
+            HttpSession session, String state, User sessionUser) {
+        String tenantId = null;
+        if (sessionUser != null && sessionUser.getTenantId() != null
+                && !sessionUser.getTenantId().isBlank()) {
+            tenantId = sessionUser.getTenantId().trim();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            String holderId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (holderId != null && !holderId.isBlank()) {
+                tenantId = holderId.trim();
+            }
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = resolveTenantIdForRedirect(session, state);
+        }
+        if ((tenantId == null || tenantId.isEmpty()) && session != null) {
+            try {
+                String tid = (String) session.getAttribute("tenantId");
+                if (tid != null && !tid.isBlank()) {
+                    tenantId = tid.trim();
+                }
+            } catch (Exception ignored) {
+                // ignore
+            }
+        }
+        return getTenantAwareFrontendBaseUrl(request, tenantId);
     }
 
     /**
@@ -1367,9 +1398,11 @@ public class OAuth2Controller extends BaseApiController {
                     User currentUser = SessionUtils.getCurrentUser(session);
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, null);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        OAuth2Constants.FRONTEND_BASE_URL + "/mypage?error="
+                                        frontendUrl + "/mypage?error="
                                                 + URLEncoder.encode("세션만료", StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
@@ -1394,7 +1427,8 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("네이버 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}",
                                 currentUser.getId(), userInfo.getId());
 
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?success="
@@ -1403,7 +1437,8 @@ public class OAuth2Controller extends BaseApiController {
                                 .build();
                     } catch (Exception e) {
                         log.error("네이버 계정 연동 실패", e);
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
@@ -2022,7 +2057,8 @@ public class OAuth2Controller extends BaseApiController {
                     User currentUser = SessionUtils.getCurrentUser(session);
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, null);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
@@ -2049,7 +2085,8 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("카카오 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}",
                                 currentUser.getId(), userInfo.getId());
 
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?success="
@@ -2058,7 +2095,8 @@ public class OAuth2Controller extends BaseApiController {
                                 .build();
                     } catch (Exception e) {
                         log.error("카카오 계정 연동 실패", e);
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
+                                session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.User;
@@ -416,6 +418,78 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         return null;
+    }
+
+    /**
+     * 웹 대시보드 OAuth 성공 리다이렉트 쿼리스트링. 프로필 이미지(URL/data URL)는 Location 헤더 길이 한도·민감도 때문에 제외하며,
+     * 세션 및 current-user API로 조회한다.
+     *
+     * @param user 로그인 사용자
+     * @param provider SNS 제공자 식별 문자열
+     * @return {@code oauth=success&userId=...} 형태의 쿼리 (선행 {@code ?} 없음)
+     */
+    private String buildOAuthWebSuccessQueryString(User user, String provider) {
+        return "oauth=success" + "&userId=" + user.getId() + "&email="
+                + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) + "&name="
+                + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8) + "&nickname="
+                + URLEncoder.encode(
+                        user.getNickname() != null ? user.getNickname() : "",
+                        StandardCharsets.UTF_8)
+                + "&role=" + user.getRole() + "&provider=" + provider;
+    }
+
+    /**
+     * 모바일 Deep Link용 OAuth 성공 쿼리 (프로필 이미지 미포함).
+     *
+     * @param providerLiteral 예: {@code NAVER}, {@code KAKAO}
+     */
+    private String buildMindGardenOAuthDeepLinkUrl(String providerLiteral, User user,
+            String sessionId) {
+        return "mindgarden://oauth/callback?" + "success=true" + "&provider=" + providerLiteral
+                + "&userId=" + user.getId() + "&email="
+                + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) + "&name="
+                + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8) + "&nickname="
+                + URLEncoder.encode(
+                        user.getNickname() != null ? user.getNickname() : "",
+                        StandardCharsets.UTF_8)
+                + "&role=" + user.getRole() + "&sessionId=" + sessionId;
+    }
+
+    private static String profileImageUrlLogSummary(String profileImageUrl) {
+        if (profileImageUrl == null || profileImageUrl.isEmpty()) {
+            return "absent";
+        }
+        int len = profileImageUrl.length();
+        boolean dataUrl = profileImageUrl.regionMatches(true, 0, "data:", 0, 5);
+        return String.format("len=%d,dataUrl=%b", len, dataUrl);
+    }
+
+    /**
+     * OAuth 리다이렉트 Location 전체를 INFO에 남기지 않고 요약만 기록한다.
+     */
+    private void logOAuthRedirectLocationSummary(String contextLabel, String redirectUrl) {
+        if (redirectUrl == null) {
+            log.info("{} 리다이렉트 요약: (null)", contextLabel);
+            return;
+        }
+        try {
+            URI uri = URI.create(redirectUrl);
+            String rawQuery = uri.getRawQuery();
+            String keys = "";
+            if (rawQuery != null && !rawQuery.isEmpty()) {
+                keys = Arrays.stream(rawQuery.split("&")).map(p -> {
+                    int eq = p.indexOf('=');
+                    return eq >= 0 ? p.substring(0, eq) : p;
+                }).distinct().collect(Collectors.joining(","));
+            }
+            log.info(
+                    "{} 리다이렉트 요약: length={}, scheme={}, host={}, path={}, queryKeys=[{}]",
+                    contextLabel, redirectUrl.length(), uri.getScheme(), uri.getHost(),
+                    uri.getPath(), keys);
+        } catch (Exception e) {
+            log.info("{} 리다이렉트 요약: length={}, parseError={}", contextLabel,
+                    redirectUrl.length(), e.toString());
+        }
     }
 
     /**
@@ -1590,8 +1664,9 @@ public class OAuth2Controller extends BaseApiController {
                     session.setMaxInactiveInterval(3600);
 
                     log.info(
-                            "네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}, clientType={}",
-                            user.getId(), user.getRole(), user.getProfileImageUrl(),
+                            "네이버 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
+                            user.getId(), user.getRole(),
+                            profileImageUrlLogSummary(user.getProfileImageUrl()),
                             savedClientType);
 
                     // 세션 정보 디버깅 로그 추가
@@ -1631,21 +1706,9 @@ public class OAuth2Controller extends BaseApiController {
                         provider = response.getSocialAccountInfo().getProvider();
                     }
 
-                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용)
-                    String redirectUrl = baseRedirectUrl + "?" + "oauth=success" + "&userId="
-                            + user.getId() + "&email="
-                            + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) + "&name="
-                            + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8)
-                            + "&nickname="
-                            + URLEncoder.encode(
-                                    user.getNickname() != null ? user.getNickname() : "",
-                                    StandardCharsets.UTF_8)
-                            + "&role=" + user.getRole() + "&profileImage="
-                            + URLEncoder.encode(
-                                    user.getProfileImageUrl() != null ? user.getProfileImageUrl()
-                                            : "",
-                                    StandardCharsets.UTF_8)
-                            + "&provider=" + provider;
+                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용; 대용량 profileImage는 제외)
+                    String redirectUrl =
+                            baseRedirectUrl + "?" + buildOAuthWebSuccessQueryString(user, provider);
 
                     // 모바일 클라이언트인 경우 Deep Link로 리다이렉트
                     if ("mobile".equals(savedClientType)) {
@@ -1654,23 +1717,10 @@ public class OAuth2Controller extends BaseApiController {
                         // 세션 ID를 Deep Link에 포함
                         String sessionId = session.getId();
 
-                        // Deep Link URL 생성
-                        String deepLinkUrl = "mindgarden://oauth/callback?" + "success=true"
-                                + "&provider=NAVER" + "&userId=" + user.getId() + "&email="
-                                + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
-                                + "&name="
-                                + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8)
-                                + "&nickname="
-                                + URLEncoder.encode(
-                                        user.getNickname() != null ? user.getNickname() : "",
-                                        StandardCharsets.UTF_8)
-                                + "&role=" + user.getRole() + "&profileImage="
-                                + URLEncoder.encode(user.getProfileImageUrl() != null
-                                        ? user.getProfileImageUrl()
-                                        : "", StandardCharsets.UTF_8)
-                                + "&sessionId=" + sessionId;
+                        String deepLinkUrl =
+                                buildMindGardenOAuthDeepLinkUrl("NAVER", user, sessionId);
 
-                        log.info("생성된 Deep Link URL (네이버): {}", deepLinkUrl);
+                        logOAuthRedirectLocationSummary("네이버 Deep Link", deepLinkUrl);
                         log.info("Deep Link 세션 ID: {}", sessionId);
 
                         // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
@@ -1704,7 +1754,7 @@ public class OAuth2Controller extends BaseApiController {
                             sessionId);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
-                    log.info("리다이렉트 URL: {}", redirectUrl);
+                    logOAuthRedirectLocationSummary("네이버 웹 OAuth", redirectUrl);
 
                     return ResponseEntity.status(302).header("Location", redirectUrl)
                             .header("Set-Cookie", cookieValue).build();
@@ -2285,8 +2335,9 @@ public class OAuth2Controller extends BaseApiController {
                     session.setMaxInactiveInterval(3600);
 
                     log.info(
-                            "카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}, clientType={}",
-                            user.getId(), user.getRole(), user.getProfileImageUrl(),
+                            "카카오 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
+                            user.getId(), user.getRole(),
+                            profileImageUrlLogSummary(user.getProfileImageUrl()),
                             savedClientType);
 
                     // 세션 정보 디버깅 로그 추가
@@ -2308,23 +2359,10 @@ public class OAuth2Controller extends BaseApiController {
                         // 세션 ID를 Deep Link에 포함
                         String sessionId = session.getId();
 
-                        // Deep Link URL 생성
-                        String deepLinkUrl = "mindgarden://oauth/callback?" + "success=true"
-                                + "&provider=KAKAO" + "&userId=" + user.getId() + "&email="
-                                + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
-                                + "&name="
-                                + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8)
-                                + "&nickname="
-                                + URLEncoder.encode(
-                                        user.getNickname() != null ? user.getNickname() : "",
-                                        StandardCharsets.UTF_8)
-                                + "&role=" + user.getRole() + "&profileImage="
-                                + URLEncoder.encode(user.getProfileImageUrl() != null
-                                        ? user.getProfileImageUrl()
-                                        : "", StandardCharsets.UTF_8)
-                                + "&sessionId=" + sessionId;
+                        String deepLinkUrl =
+                                buildMindGardenOAuthDeepLinkUrl("KAKAO", user, sessionId);
 
-                        log.info("생성된 Deep Link URL (카카오): {}", deepLinkUrl);
+                        logOAuthRedirectLocationSummary("카카오 Deep Link", deepLinkUrl);
                         log.info("Deep Link 세션 ID: {}", sessionId);
 
                         // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
@@ -2371,21 +2409,9 @@ public class OAuth2Controller extends BaseApiController {
                     // provider 정보 가져오기
                     String provider = "KAKAO";
 
-                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용)
-                    String redirectUrl = baseRedirectUrl + "?" + "oauth=success" + "&userId="
-                            + user.getId() + "&email="
-                            + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) + "&name="
-                            + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8)
-                            + "&nickname="
-                            + URLEncoder.encode(
-                                    user.getNickname() != null ? user.getNickname() : "",
-                                    StandardCharsets.UTF_8)
-                            + "&role=" + user.getRole() + "&profileImage="
-                            + URLEncoder.encode(
-                                    user.getProfileImageUrl() != null ? user.getProfileImageUrl()
-                                            : "",
-                                    StandardCharsets.UTF_8)
-                            + "&provider=" + provider;
+                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용; 대용량 profileImage는 제외)
+                    String redirectUrl =
+                            baseRedirectUrl + "?" + buildOAuthWebSuccessQueryString(user, provider);
 
                     // 세션 쿠키 설정을 명시적으로 추가
                     String sessionId = session.getId();
@@ -2394,7 +2420,7 @@ public class OAuth2Controller extends BaseApiController {
                             sessionId);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
-                    log.info("리다이렉트 URL: {}", redirectUrl);
+                    logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
 
                     return ResponseEntity.status(302).header("Location", redirectUrl)
                             .header("Set-Cookie", cookieValue).build();

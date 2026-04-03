@@ -1,5 +1,8 @@
 name: 📦 표준화된 프로시저 배포 (개발)
 
+# 참고: CoreSolution 백엔드 개발 배포(deploy-backend-dev.yml)에도 동일 스크립트가 통합되어 있음.
+# Secret이 채워져 있으면 백엔드 배포만으로 프로시저가 적용됩니다. 본 워크플로는 단독·재실행용.
+
 # 필수 시크릿: DEV_SERVER_HOST, DEV_SERVER_SSH_KEY, DEV_DB_USER, DEV_DB_PASSWORD, DEV_DB_NAME
 # (비어 있으면 스크립트가 "DEV_DB_USER 필수" 등으로 종료 — GitHub → Settings → Secrets and variables → Actions 에서 등록)
 # DEV_DB_HOST: 비어 있으면 127.0.0.1 폴백. 실제 값은 개발 서버 SSH 후 systemctl cat mindgarden-dev.service 의 DB_HOST 권장.

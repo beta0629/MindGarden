@@ -5,9 +5,15 @@
 # 사용 예 (crontab):
 #   0 3,15 * * * /root/scripts/certbot-renew-and-reload-nginx.sh >> /var/log/certbot-renew.log 2>&1
 #
-# 주의: --manual-auth-hook + 가비아 수동 DNS 로 발급한 인증서(와일드카드 등)는
-#       renew 시에도 TXT 챌린지가 필요해 자동 갱신이 실패할 수 있음.
-#       그 경우 DNS API 전환 또는 갱신 시 수동 개입 필요.
+# 서버 측 스케줄(참고):
+#   - systemd: certbot.timer (certbot -q renew, 하루 2회)
+#   - cron: /etc/cron.d/mindgarden-ssl → 본 스크립트 (매일 04:15)
+#   - 갱신 시 nginx: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+#     (타이머 경로에서도 deploy hook이 실행되도록 운영·개발에 배치)
+#
+# 와일드카드(DNS-01) + 가비아 훅:
+#   renewal 설정에 manual_auth_hook 이 있으면, 갱신 시 훅이 TXT 등록 유예 시간을 둠.
+#   유예 내 가비아에 _acme-challenge TXT 를 넣어야 renew 가 성공함(완전 무인은 아님).
 
 set -euo pipefail
 

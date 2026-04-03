@@ -1,137 +1,158 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ProfileImageUpload from './ProfileImageUpload';
 import AddressInput from './AddressInput';
 import StandardizedApi from '../../../utils/standardizedApi';
-import './ProfileSection.css';
+import { sessionManager } from '../../../utils/sessionManager';
+import notificationManager from '../../../utils/notification';
+import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 
-const ProfileSection = ({ 
-  user, 
-  formData, 
-  onFormDataChange, 
+const maskEmail = (email) => {
+  if (!email || !email.includes('@')) return email || '—';
+  const [local, domain] = email.split('@');
+  const vis = local.slice(0, 2);
+  return `${vis}***@${domain}`;
+};
+
+const maskPhone = (phone) => {
+  if (!phone) return '—';
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length < 8) return phone;
+  const tail = digits.slice(-4);
+  return `010-****-${tail}`;
+};
+
+const getProfileAvatarSrc = (fd) => {
+  if (fd.profileImage && fd.profileImageType === 'USER_PROFILE') {
+    return fd.profileImage;
+  }
+  if (fd.socialProfileImage && fd.profileImageType === 'SOCIAL_IMAGE') {
+    return fd.socialProfileImage;
+  }
+  if (fd.profileImage && typeof fd.profileImage === 'string' && fd.profileImage.startsWith('http')) {
+    return fd.profileImage;
+  }
+  return '/default-avatar.svg';
+};
+
+const ProfileSection = ({
+  user,
+  displayUser,
+  formData,
+  onFormDataChange,
   onUserChange,
-  onSave, // Added back for auto-save
-  formatPhoneNumber,
-  onEditingChange // 수정 모드 상태 변경 콜백 추가
+  onSave,
+  formatPhoneNumber
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [genderOptions, setGenderOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // 성별 코드 로드
+  const role = displayUser?.role;
+  const roleLabel = role ? ROLE_DISPLAY_LABELS[role] || role : '—';
+  const tenantName =
+    displayUser?.tenantName ||
+    displayUser?.companyName ||
+    displayUser?.branchName ||
+    user?.tenantName ||
+    user?.companyName ||
+    '';
+
   useEffect(() => {
     const loadGenderCodes = async () => {
       try {
-        setLoading(true);
+        setLoadingCodes(true);
         const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'GENDER' });
         const list = Array.isArray(response)
           ? response
-          : (Array.isArray(response?.codes) ? response.codes : []);
+          : Array.isArray(response?.codes)
+            ? response.codes
+            : [];
         if (list.length > 0) {
-          const options = list.map((code) => ({
-            value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode
-          }));
-          setGenderOptions(options);
+          setGenderOptions(
+            list.map((code) => ({
+              value: code.codeValue,
+              label: code.codeLabel,
+              icon: code.icon,
+              color: code.colorCode
+            }))
+          );
         }
       } catch (error) {
         console.error('성별 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
         setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
-          { value: 'FEMALE', label: '여성', icon: '♀️', color: 'var(--mg-pink-600)' },
-          { value: 'OTHER', label: '기타', icon: '⚧', color: 'var(--mg-gray-500)' }
+          { value: 'MALE', label: '남성', icon: '♂️' },
+          { value: 'FEMALE', label: '여성', icon: '♀️' },
+          { value: 'OTHER', label: '기타', icon: '⚧' }
         ]);
       } finally {
-        setLoading(false);
+        setLoadingCodes(false);
       }
     };
 
     loadGenderCodes();
   }, []);
 
+  const applyEditingState = useCallback((next) => {
+    setIsEditing(next);
+    if (next) {
+      sessionManager.startProfileEditing();
+    } else {
+      sessionManager.endProfileEditing();
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => sessionManager.endProfileEditing();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    // 휴대폰 번호 자동 하이픈 포맷팅
     if (name === 'phone') {
       const formattedPhone = formatPhoneNumber(value);
-      onFormDataChange(prev => ({
+      onFormDataChange((prev) => ({
         ...prev,
         [name]: formattedPhone
       }));
     } else {
-      onFormDataChange(prev => ({
+      onFormDataChange((prev) => ({
         ...prev,
         [name]: value
       }));
     }
   };
 
-
-
   const handleImageChange = (newImage) => {
-    console.log('🖼️ ProfileSection handleImageChange 호출:', newImage ? newImage.substring(0, 50) + '...' : 'null');
-    
-    // 이미지 삭제 시 기본 아바타로 복원
     if (newImage === null) {
-      console.log('🗑️ 이미지 삭제 - 기본 아바타로 복원');
       const imageToSet = '/default-avatar.svg';
       const imageTypeToSet = 'DEFAULT_ICON';
-      
-      // formData 업데이트 (기본 아바타로 복원)
-      onFormDataChange(prev => {
-        const updatedData = {
-          ...prev,
-          profileImage: imageToSet,
-          profileImageType: imageTypeToSet
-        };
-        console.log('✅ ProfileSection formData 업데이트 완료 (기본 아바타 복원):', updatedData);
-        return updatedData;
-      });
-      
-      // user 상태도 즉시 업데이트하여 UI에 바로 반영 (기본 아바타로 복원)
+      onFormDataChange((prev) => ({
+        ...prev,
+        profileImage: imageToSet,
+        profileImageType: imageTypeToSet
+      }));
       if (onUserChange) {
-        onUserChange(prev => ({
+        onUserChange((prev) => ({
           ...prev,
           profileImage: imageToSet,
           profileImageType: imageTypeToSet
         }));
-        console.log('✅ user 상태 즉시 업데이트 완료 - 기본 아바타 복원');
       }
     } else {
-      // 새 이미지 설정
-      const imageToSet = newImage;
-      
-      // formData 업데이트 (새 이미지 설정)
-      onFormDataChange(prev => {
-        const updatedData = {
-          ...prev,
-          profileImage: imageToSet,
-          profileImageType: 'USER_PROFILE'
-        };
-        console.log('✅ ProfileSection formData 업데이트 완료 (새 이미지 설정):', updatedData);
-        return updatedData;
-      });
-      
-      // user 상태도 즉시 업데이트하여 UI에 바로 반영 (새 이미지 설정)
+      onFormDataChange((prev) => ({
+        ...prev,
+        profileImage: newImage,
+        profileImageType: 'USER_PROFILE'
+      }));
       if (onUserChange) {
-        onUserChange(prev => ({
+        onUserChange((prev) => ({
           ...prev,
-          profileImage: imageToSet,
+          profileImage: newImage,
           profileImageType: 'USER_PROFILE'
         }));
-        console.log('✅ user 상태 즉시 업데이트 완료 - 새 이미지 설정');
       }
     }
-    
-    // 백엔드 저장 없이 프론트엔드에서만 즉시 적용
-    console.log('🖼️ 이미지 즉시 적용 완료 - 백엔드 저장 없음');
-    
-    // 크롭된 이미지가 있으면 자동으로 백엔드에 저장
+
     if (newImage && newImage.startsWith('data:image/')) {
-      console.log('🖼️ 크롭된 이미지 감지 - 자동 저장 시작');
       setTimeout(() => {
         if (onSave) {
           onSave(null, {
@@ -139,144 +160,231 @@ const ProfileSection = ({
             profileImage: newImage,
             profileImageType: 'USER_PROFILE'
           });
-          console.log('✅ 크롭된 이미지 자동 저장 완료');
         }
-      }, 100);
+      }, 0);
     }
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log('🚀 프로필 정보 저장 시작 (주소 포함)');
-      
-      // onSave 호출하여 백엔드에 저장
       if (onSave) {
         await onSave(e, formData);
-        console.log('✅ 프로필 정보 저장 완료');
       }
-      
-      setIsEditing(false);
+      applyEditingState(false);
     } catch (error) {
-      console.error('❌ 프로필 업데이트 실패:', error);
+      console.error('프로필 업데이트 실패:', error);
     }
   };
 
+  const handleCancelEdit = () => {
+    applyEditingState(false);
+  };
+
+  const displayName = formData.nickname || formData.userId || displayUser?.name || '—';
+
   return (
-    <div className={`mypage-section profile-section ${isEditing ? 'editing' : 'readonly'}`}>
-      <div className="section-header">
-        <h2>프로필 정보</h2>
-        <button
-          className="edit-btn"
-          onClick={() => {
-            const newEditingState = !isEditing;
-            setIsEditing(newEditingState);
-            if (onEditingChange) {
-              onEditingChange(newEditingState);
-            }
-          }}
-        >
-          {isEditing ? '취소' : '수정'}
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="profile-form">
-        <ProfileImageUpload
-          profileImage={formData.profileImage}
-          profileImageType={formData.profileImageType}
-          socialProvider={formData.socialProvider}
-          socialProfileImage={formData.socialProfileImage}
-          onImageChange={handleImageChange}
-          isEditing={isEditing}
-        />
-
-        <div className="mg-form__group">
-          <label>이름</label>
-          <input
-            type="text"
-            name="userId"
-            value={formData.userId}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="mg-form__group">
-          <label>닉네임</label>
-          <input
-            type="text"
-            name="nickname"
-            value={formData.nickname}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="mg-form__group">
-          <label>이메일</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className="mg-form__group">
-          <label>휴대폰 번호</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            placeholder="010-0000-0000"
-            maxLength="13"
-          />
-        </div>
-
-        <div className="mg-form__group">
-          <label>성별</label>
-          <select
-            name="gender"
-            value={formData.gender || ''}
-            onChange={handleInputChange}
-            disabled={!isEditing || loading}
-          >
-            <option value="">선택하세요</option>
-            {genderOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.icon} {option.label} ({option.value})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <AddressInput
-          postalCode={formData.postalCode}
-          address={formData.address}
-          addressDetail={formData.addressDetail}
-          onAddressChange={(addressData) => {
-            onFormDataChange(prev => ({
-              ...prev,
-              ...addressData
-            }));
-          }}
-          isEditing={isEditing}
-        />
-
-        {isEditing && (
-          <div className="form-actions">
-            <button type="submit" className="save-btn">
-              저장
+    <>
+      <article
+        className="mg-v2-ad-b0kla__card mg-mypage__card"
+        aria-labelledby="mg-mypage-profile-header-title"
+      >
+        <div className="mg-mypage__section-head">
+          <span className="mg-mypage__section-accent" aria-hidden="true" />
+          <div className="mg-mypage__section-head-text">
+            <h2 id="mg-mypage-profile-header-title" className="mg-mypage__section-title">
+              프로필
+            </h2>
+            <p className="mg-mypage__section-description">다른 사용자에게 보이는 정보입니다.</p>
+          </div>
+          <div className="mg-mypage__section-action">
+            <button
+              type="button"
+              className="mg-v2-button mg-v2-button--outline"
+              onClick={() => applyEditingState(!isEditing)}
+            >
+              {isEditing ? '취소' : '편집'}
             </button>
           </div>
-        )}
-      </form>
-    </div>
+        </div>
+        <div className="mg-mypage__card-body">
+          <div className="mg-mypage__profile-header">
+            <div className="mg-mypage__avatar-wrap">
+              <img
+                className="mg-mypage__avatar"
+                src={getProfileAvatarSrc(formData)}
+                alt=""
+                width={96}
+                height={96}
+                onError={(ev) => {
+                  ev.target.src = '/default-avatar.svg';
+                }}
+              />
+            </div>
+            <div className="mg-mypage__profile-summary">
+              <p className="mg-mypage__display-name">{displayName}</p>
+              <span className="mg-v2-status-badge mg-v2-badge--info" role="status">
+                {roleLabel}
+              </span>
+              {tenantName ? <p className="mg-mypage__tenant-name">{tenantName}</p> : null}
+            </div>
+          </div>
+          <div className="mg-mypage__card-divider" aria-hidden="true" />
+          <div className="mg-mypage__profile-image-block">
+            <ProfileImageUpload
+              profileImage={formData.profileImage}
+              profileImageType={formData.profileImageType}
+              socialProvider={formData.socialProvider}
+              socialProfileImage={formData.socialProfileImage}
+              onImageChange={handleImageChange}
+              isEditing={isEditing}
+              showPreview={false}
+            />
+          </div>
+        </div>
+      </article>
+
+      <article
+        className="mg-v2-ad-b0kla__card mg-mypage__card"
+        aria-labelledby="mg-mypage-profile-basic-title"
+      >
+        <div className="mg-mypage__section-head">
+          <span className="mg-mypage__section-accent" aria-hidden="true" />
+          <div className="mg-mypage__section-head-text">
+            <h2 id="mg-mypage-profile-basic-title" className="mg-mypage__section-title">
+              기본 정보
+            </h2>
+          </div>
+        </div>
+        <form className="mg-mypage__card-body" onSubmit={handleSubmit}>
+          <fieldset className="mg-mypage__fieldset">
+            <legend className="mg-mypage__visually-hidden">기본 프로필 필드</legend>
+
+            <div className="mg-mypage__form-row">
+              <label className="mg-mypage__form-label" htmlFor="mg-mypage-user-id">
+                이름
+              </label>
+              <input
+                className="mg-mypage__form-control"
+                id="mg-mypage-user-id"
+                name="userId"
+                type="text"
+                value={formData.userId}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                autoComplete="name"
+              />
+            </div>
+
+            <div className="mg-mypage__form-row">
+              <label className="mg-mypage__form-label" htmlFor="mg-mypage-nickname">
+                닉네임
+              </label>
+              <input
+                className="mg-mypage__form-control"
+                id="mg-mypage-nickname"
+                name="nickname"
+                type="text"
+                value={formData.nickname}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                autoComplete="nickname"
+              />
+            </div>
+
+            <div className="mg-mypage__form-row mg-mypage__form-row--stack">
+              <span className="mg-mypage__form-label" id="mg-mypage-email-label">
+                이메일
+              </span>
+              <div className="mg-mypage__readonly-row">
+                <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-email-label">
+                  {maskEmail(formData.email)}
+                </p>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button--outline"
+                  onClick={() =>
+                    notificationManager.show('이메일 변경은 보안 절차 준비 중입니다.', 'info')
+                  }
+                >
+                  변경
+                </button>
+              </div>
+            </div>
+
+            <div className="mg-mypage__form-row mg-mypage__form-row--stack">
+              <span className="mg-mypage__form-label" id="mg-mypage-phone-label">
+                휴대전화
+              </span>
+              <div className="mg-mypage__readonly-row">
+                <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-phone-label">
+                  {maskPhone(formData.phone)}
+                </p>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button--outline"
+                  onClick={() =>
+                    notificationManager.show('휴대전화 변경은 보안 절차 준비 중입니다.', 'info')
+                  }
+                >
+                  변경
+                </button>
+              </div>
+            </div>
+
+            <div className="mg-mypage__form-row">
+              <label className="mg-mypage__form-label" htmlFor="mg-mypage-gender">
+                성별
+              </label>
+              <select
+                className="mg-mypage__form-control"
+                id="mg-mypage-gender"
+                name="gender"
+                value={formData.gender || ''}
+                onChange={handleInputChange}
+                disabled={!isEditing || loadingCodes}
+              >
+                <option value="">선택하세요</option>
+                {genderOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.icon ? `${option.icon} ` : ''}
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <AddressInput
+              postalCode={formData.postalCode}
+              address={formData.address}
+              addressDetail={formData.addressDetail}
+              onAddressChange={(addressData) => {
+                onFormDataChange((prev) => ({
+                  ...prev,
+                  ...addressData
+                }));
+              }}
+              isEditing={isEditing}
+            />
+          </fieldset>
+
+          {isEditing ? (
+            <div className="mg-v2-card-actions">
+              <button type="submit" className="mg-v2-button mg-v2-button--primary">
+                저장
+              </button>
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button--outline"
+                onClick={handleCancelEdit}
+              >
+                취소
+              </button>
+            </div>
+          ) : null}
+        </form>
+      </article>
+    </>
   );
 };
 

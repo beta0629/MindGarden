@@ -1,81 +1,106 @@
-import React from 'react';
-import './SocialAccountsSection.css';
+import { User, MessageCircle, Hash } from 'lucide-react';
 
-const SocialAccountsSection = ({ 
-  socialAccounts, 
-  onLinkAccount, 
-  onUnlinkAccount 
-}) => {
-  return (
-    <div className="mypage-section">
-      <h2>소셜 계정 관리</h2>
-      <div className="social-accounts-list">
-        {socialAccounts.length > 0 ? (
-          socialAccounts.map((account) => (
-            <div key={account.id} className="social-account-item">
-              <div className="social-account-info">
-                <div className="social-provider-icon">
-                  {account.provider === 'KAKAO' ? (
-                    <i className="bi bi-chat-dots-fill social-icon social-icon--kakao"></i>
-                  ) : account.provider === 'NAVER' ? (
-                    <i className="bi bi-n-circle-fill social-icon social-icon--naver"></i>
-                  ) : (
-                    <i className="bi bi-person-circle"></i>
-                  )}
-                </div>
-                <div className="social-account-details">
-                  <h3>{account.provider === 'KAKAO' ? '카카오' : account.provider === 'NAVER' ? '네이버' : account.provider} 계정</h3>
-                  <p>{account.providerUsername || '사용자 ID 없음'}</p>
-                  {account.providerProfileImage && (
-                    <div className="social-profile-image">
-                      <img 
-                        src={account.providerProfileImage} 
-                        alt="소셜 프로필 이미지"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="social-account-actions">
-                <button 
-                  className="unlink-btn"
-                  onClick={() => onUnlinkAccount(account.provider)}
-                >
-                  연동 해제
-                </button>
-              </div>
+const maskIdentifier = (text) => {
+  if (!text) return '—';
+  if (text.includes('@')) {
+    const [local, domain] = text.split('@');
+    const vis = local.slice(0, 2);
+    return `${vis}***@${domain}`;
+  }
+  if (text.length > 6) {
+    return `${text.slice(0, 3)}***${text.slice(-2)}`;
+  }
+  return text;
+};
+
+const providerLabel = (provider) => {
+  if (provider === 'KAKAO') return 'Kakao';
+  if (provider === 'NAVER') return 'Naver';
+  return provider || '기타';
+};
+
+const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount, onSupportClick }) => {
+  const list = Array.isArray(socialAccounts) ? socialAccounts : [];
+  const kakaoAccount = list.find((a) => a.provider === 'KAKAO');
+  const naverAccount = list.find((a) => a.provider === 'NAVER');
+
+  const renderRow = (provider, linkedAccount) => {
+    const isLinked = !!linkedAccount;
+    return (
+      <li key={provider} className="mg-mypage__list-item">
+        <div className="mg-mypage__list-item-main">
+          <div className="mg-mypage__readonly-row">
+            <span className="mg-mypage__provider-name" aria-hidden="true" />
+            {provider === 'KAKAO' ? (
+              <MessageCircle size={20} aria-hidden />
+            ) : provider === 'NAVER' ? (
+              <Hash size={20} aria-hidden />
+            ) : (
+              <User size={20} aria-hidden />
+            )}
+            <div>
+              <p className="mg-mypage__device-name">{providerLabel(provider)}</p>
+              {isLinked ? (
+                <p className="mg-mypage__readonly-value">{maskIdentifier(linkedAccount.providerUsername)}</p>
+              ) : (
+                <p className="mg-mypage__section-description">아직 연결되지 않았습니다.</p>
+              )}
             </div>
-          ))
-        ) : (
-          <div className="no-social-accounts">
-            <p>연동된 소셜 계정이 없습니다.</p>
-          </div>
-        )}
-        
-        <div className="link-new-account">
-          <h3>새로운 소셜 계정 연동</h3>
-          <div className="link-options">
-            <button 
-              className="link-btn kakao"
-              onClick={() => onLinkAccount('KAKAO')}
-            >
-              <i className="bi bi-chat-dots-fill"></i>
-              카카오 계정 연동
-            </button>
-            <button 
-              className="link-btn naver"
-              onClick={() => onLinkAccount('NAVER')}
-            >
-              <i className="bi bi-n-circle-fill"></i>
-              네이버 계정 연동
-            </button>
           </div>
         </div>
+        <div className="mg-mypage__list-item-meta">
+          {isLinked ? (
+            <>
+              <span className="mg-v2-status-badge mg-v2-badge--success" role="status">
+                연결됨
+              </span>
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button--outline mg-v2-button--danger"
+                onClick={() => onUnlinkAccount(linkedAccount.provider, linkedAccount.id)}
+              >
+                연결 해제
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
+                미연결
+              </span>
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button--primary"
+                onClick={() => onLinkAccount(provider)}
+              >
+                연결하기
+              </button>
+            </>
+          )}
+        </div>
+      </li>
+    );
+  };
+
+  return (
+    <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-labelledby="mg-mypage-social-title">
+      <div className="mg-mypage__section-head">
+        <span className="mg-mypage__section-accent" aria-hidden="true" />
+        <div className="mg-mypage__section-head-text">
+          <h2 id="mg-mypage-social-title" className="mg-mypage__section-title">
+            연결된 계정
+          </h2>
+        </div>
       </div>
-    </div>
+      <ul className="mg-mypage__list">
+        {renderRow('KAKAO', kakaoAccount)}
+        {renderRow('NAVER', naverAccount)}
+      </ul>
+      <div className="mg-v2-card-actions">
+        <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={onSupportClick}>
+          고객센터
+        </button>
+      </div>
+    </article>
   );
 };
 

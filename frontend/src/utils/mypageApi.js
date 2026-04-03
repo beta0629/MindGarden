@@ -161,18 +161,13 @@ const mypageApi = {
 
       // 응답이 JSON인지 문자열인지 확인
       const contentType = response.headers.get('content-type');
-      console.log('🔍 OAuth2 응답 Content-Type:', contentType);
-      
+
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('📝 JSON 응답 데이터:', data);
         return data.authUrl || data.redirectUrl || data;
-      } else {
-        // JSON이 아닌 경우 직접 URL 반환
-        const url = await response.text();
-        console.log('🔗 직접 반환된 URL:', url);
-        return url;
       }
+      const url = await response.text();
+      return url;
     } catch (error) {
       console.error('OAuth2 URL 생성 실패:', error);
       throw error;
@@ -197,18 +192,13 @@ const mypageApi = {
 
       // 응답이 JSON인지 문자열인지 확인
       const contentType = response.headers.get('content-type');
-      console.log('🔍 OAuth2 로그인 응답 Content-Type:', contentType);
-      
+
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('📝 JSON 응답 데이터:', data);
         return data.redirectUrl || data;
-      } else {
-        // JSON이 아닌 경우 직접 URL 반환
-        const url = await response.text();
-        console.log('🔗 직접 반환된 URL:', url);
-        return url;
       }
+      const url = await response.text();
+      return url;
     } catch (error) {
       console.error('OAuth2 로그인 URL 생성 실패:', error);
       throw error;

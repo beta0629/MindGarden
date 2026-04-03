@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
-import './AddressInput.css';
 import notificationManager from '../../../utils/notification';
 
-const AddressInput = ({ 
-  postalCode, 
-  address, 
-  addressDetail, 
-  onAddressChange, 
-  isEditing 
-}) => {
+const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isEditing }) => {
   const [addressType, setAddressType] = useState('HOME');
   const [localPostalCode, setLocalPostalCode] = useState(postalCode || '');
   const [localAddress, setLocalAddress] = useState(address || '');
@@ -23,33 +16,29 @@ const AddressInput = ({
     setLocalAddressDetail(addressDetail || '');
   }, [postalCode, address, addressDetail]);
 
-  // 주소 유형 코드 로드
   useEffect(() => {
     const loadAddressTypeCodes = async () => {
       try {
         setLoadingCodes(true);
         const response = await apiGet('/api/v1/common-codes?codeGroup=ADDRESS_TYPE');
         if (response && response.length > 0) {
-          const options = response.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode,
-            description: code.description
-          }));
-          setAddressTypeOptions(options);
+          setAddressTypeOptions(
+            response.map((code) => ({
+              value: code.codeValue,
+              label: code.codeLabel,
+              icon: code.icon
+            }))
+          );
         }
       } catch (error) {
         console.error('주소 유형 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
         setAddressTypeOptions([
-          { value: 'HOME', label: '집', icon: '🏠', color: 'var(--mg-primary-500)', description: '자택 주소' },
-          { value: 'WORK', label: '회사', icon: '🏢', color: 'var(--mg-success-500)', description: '직장 주소' },
-          { value: 'OFFICE', label: '사무실', icon: '🏛️', color: 'var(--mg-purple-500)', description: '사무실 주소' },
-          { value: 'BRANCH', label: '지점', icon: '🏪', color: 'var(--mg-warning-500)', description: '지점 주소' },
-          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨', color: 'var(--mg-error-500)', description: '비상연락처 주소' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-          { value: 'OTHER', label: '기타', icon: '📍', color: '#6b7280', description: '기타 주소' }
+          { value: 'HOME', label: '집', icon: '🏠' },
+          { value: 'WORK', label: '회사', icon: '🏢' },
+          { value: 'OFFICE', label: '사무실', icon: '🏛️' },
+          { value: 'BRANCH', label: '지점', icon: '🏪' },
+          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨' },
+          { value: 'OTHER', label: '기타', icon: '📍' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -81,7 +70,7 @@ const AddressInput = ({
     });
   };
 
-  const handleAddressChange = (e) => {
+  const handleAddressChangeField = (e) => {
     const value = e.target.value;
     setLocalAddress(value);
     onAddressChange({
@@ -106,7 +95,7 @@ const AddressInput = ({
   const handleAddressSearch = () => {
     if (window.daum && window.daum.Postcode) {
       new window.daum.Postcode({
-        oncomplete: function(data) {
+        oncomplete(data) {
           setLocalPostalCode(data.zonecode);
           setLocalAddress(data.address);
           onAddressChange({
@@ -123,60 +112,71 @@ const AddressInput = ({
   };
 
   return (
-    <div className="address-input-container">
-      <div className="form-group">
-        <label>주소 타입</label>
+    <div className="mg-mypage__address-grid">
+      <div className="mg-mypage__form-row">
+        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-type">
+          주소 유형
+        </label>
         <select
+          className="mg-mypage__form-control"
+          id="mg-mypage-address-type"
           value={addressType}
           onChange={handleAddressTypeChange}
           disabled={!isEditing || loadingCodes}
-          className="address-type-select"
         >
-          {addressTypeOptions.map(option => (
+          {addressTypeOptions.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.icon} {option.label} ({option.value})
+              {option.icon ? `${option.icon} ` : ''}
+              {option.label}
             </option>
           ))}
         </select>
       </div>
 
-      <div className="form-group">
-        <label>우편번호</label>
-        <div className="postal-code-container">
+      <div className="mg-mypage__form-row mg-mypage__form-row--stack">
+        <span className="mg-mypage__form-label" id="mg-mypage-postal-label">
+          우편번호
+        </span>
+        <div className="mg-mypage__postal-row">
           <input
+            className="mg-mypage__form-control"
             type="text"
+            aria-labelledby="mg-mypage-postal-label"
             value={localPostalCode}
             onChange={handlePostalCodeChange}
             disabled={!isEditing}
             placeholder="우편번호"
-            className="postal-code-input"
           />
-          {isEditing && (
-            <button
-              type="button"
-              onClick={handleAddressSearch}
-              className="address-search-btn"
-            >
+          {isEditing ? (
+            <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={handleAddressSearch}>
               주소 검색
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      <div className="form-group">
-        <label>주소</label>
+      <div className="mg-mypage__form-row">
+        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-line">
+          주소
+        </label>
         <input
+          className="mg-mypage__form-control"
+          id="mg-mypage-address-line"
           type="text"
           value={localAddress}
-          onChange={handleAddressChange}
+          onChange={handleAddressChangeField}
           disabled={!isEditing}
           placeholder="주소"
         />
       </div>
 
-      <div className="form-group">
-        <label>상세주소</label>
+      <div className="mg-mypage__form-row">
+        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-detail">
+          상세주소
+        </label>
         <input
+          className="mg-mypage__form-control"
+          id="mg-mypage-address-detail"
           type="text"
           value={localAddressDetail}
           onChange={handleAddressDetailChange}

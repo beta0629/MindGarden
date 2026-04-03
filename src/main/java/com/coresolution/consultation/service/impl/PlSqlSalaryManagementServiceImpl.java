@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -248,6 +249,22 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         }
     }
     
+    /**
+     * 급여 미리보기. DB 프로시저 시그니처는 {@code CalculateSalaryPreview_standardized.sql} 과 동일해야 한다.
+     * JDBC {@link CallableStatement} 위치는 MySQL {@code information_schema.PARAMETERS} 의
+     * {@code ORDINAL_POSITION} 과 일치한다.
+     * <ul>
+     * <li>1–4 IN: p_consultant_id, p_period_start, p_period_end, p_tenant_id</li>
+     * <li>5–10 OUT: p_success, p_message, p_gross_salary, p_net_salary, p_tax_amount, p_consultation_count</li>
+     * </ul>
+     * 구버전(3 IN + 6 OUT, tenant_id 없음)이 남아 있으면 OUT 바인딩 오류가 난다.
+     * {@code scripts/automation/deployment/deploy-standardized-procedures.sh} 로 표준 프로시저를 배포한다.
+     *
+     * @param consultantId 상담사 ID
+     * @param periodStart  기간 시작
+     * @param periodEnd    기간 종료
+     * @return success, message, grossSalary, netSalary, taxAmount, consultationCount
+     */
     @Override
     public Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd) {
         log.info("💰 PL/SQL 급여 미리보기 계산: ConsultantID={}, Period={} ~ {}", 
@@ -295,9 +312,32 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
 
         } catch (Exception e) {
             log.error("❌ PL/SQL 급여 미리보기 중 오류 발생: {}", e.getMessage(), e);
+            logCalculateSalaryPreviewParameterDiagnostics(e);
             result.put("success", false);
             result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
         }
         return result;
+    }
+
+    /**
+     * OUT 파라미터 바인딩 오류 시 DB에 적용된 시그니처를 로그로 남겨 배포 불일치 진단을 돕는다.
+     *
+     * @param cause 호출 실패 원인
+     */
+    private void logCalculateSalaryPreviewParameterDiagnostics(Throwable cause) {
+        String msg = cause != null ? cause.getMessage() : "";
+        if (msg == null || !msg.contains("OUT parameter")) {
+            return;
+        }
+        try {
+            String sql = "SELECT ORDINAL_POSITION, PARAMETER_MODE, PARAMETER_NAME "
+                    + "FROM information_schema.PARAMETERS "
+                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = 'CalculateSalaryPreview' "
+                    + "ORDER BY ORDINAL_POSITION";
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+            log.error("CalculateSalaryPreview information_schema.PARAMETERS (기대: 1-4 IN, 5-10 OUT): {}", rows);
+        } catch (Exception ex) {
+            log.warn("프로시저 파라미터 진단 조회 실패: {}", ex.getMessage());
+        }
     }
 }

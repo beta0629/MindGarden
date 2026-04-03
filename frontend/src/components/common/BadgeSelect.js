@@ -32,16 +32,20 @@ const BadgeSelect = ({
 
   // option.value는 렌더 시 String()으로 통일됨. 부모가 number(예: paymentDay)를 넘기면
   // 5 === "5" 가 false가 되어 선택 표시·aria-checked가 항상 틀어지므로 문자열로 맞춤.
-  const isSelected = (optionValue) =>
-    multiple
-      ? currentValue.includes(optionValue)
-      : String(currentValue) === String(optionValue);
+  // multiple: value 배열에 number·string이 섞여도 includes/!== 만으로는 불일치 → 동일 정책 적용.
+  const isSelected = (optionValue) => {
+    const optStr = String(optionValue);
+    return multiple
+      ? currentValue.some((v) => String(v) === optStr)
+      : String(currentValue) === optStr;
+  };
 
   const handleClick = (optionValue) => {
     if (disabled || loading) return;
     if (multiple) {
+      const optStr = String(optionValue);
       const next = isSelected(optionValue)
-        ? currentValue.filter((v) => v !== optionValue)
+        ? currentValue.filter((v) => String(v) !== optStr)
         : [...currentValue, optionValue];
       onChange(next);
     } else {

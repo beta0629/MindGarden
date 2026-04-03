@@ -1,5 +1,9 @@
 -- =====================================================
 -- 급여 미리보기 계산 프로시저 (표준화 버전)
+-- JDBC CallableStatement 위치 = information_schema.PARAMETERS.ORDINAL_POSITION
+--   1–4 IN: consultant_id, period_start, period_end, tenant_id
+--   5–10 OUT: success, message, gross_salary, net_salary, tax_amount, consultation_count
+-- (구버전 3 IN + tenant_id 없음이면 PlSqlSalaryManagementServiceImpl 과 불일치 → OUT 바인딩 오류)
 -- =====================================================
 DELIMITER //
 

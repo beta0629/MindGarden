@@ -4,6 +4,8 @@ import BadgeSelect from '../common/BadgeSelect';
 import ErpModal from './common/ErpModal';
 import './SalaryConfigModal.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import StandardizedApi from '../../utils/standardizedApi';
+import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -38,27 +40,25 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const loadCurrentConfigs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/admin/salary/configs');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data && typeof data.data === 'object') {
-          const raw = data.data;
-          const str = (v) => (v == null ? '' : String(v).trim());
-          const num = (v, fallback) => {
-            const n = Number(v);
-            return Number.isFinite(n) ? n : fallback;
-          };
-          setConfigs({
-            monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
-            paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
-            cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
-            batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
-            calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
-          });
-        }
+      setError('');
+      const raw = await StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIGS);
+      if (raw && typeof raw === 'object') {
+        const str = (v) => (v == null ? '' : String(v).trim());
+        const num = (v, fallback) => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : fallback;
+        };
+        setConfigs({
+          monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
+          paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
+          cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
+          batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
+          calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
+        });
       }
     } catch (error) {
       console.error('설정 로드 오류:', error);
+      setError('설정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setLoading(false);
     }
@@ -66,15 +66,19 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
   const loadConfigOptions = async () => {
     try {
-      const response = await fetch('/api/v1/admin/salary/config-options');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setOptions(data.data);
-        }
+      const data = await StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIG_OPTIONS);
+      if (data && typeof data === 'object') {
+        setOptions({
+          monthlyBaseDays: Array.isArray(data.monthlyBaseDays) ? data.monthlyBaseDays : [],
+          paymentDays: Array.isArray(data.paymentDays) ? data.paymentDays : [],
+          cutoffDays: Array.isArray(data.cutoffDays) ? data.cutoffDays : [],
+          batchCycles: Array.isArray(data.batchCycles) ? data.batchCycles : [],
+          calculationMethods: Array.isArray(data.calculationMethods) ? data.calculationMethods : []
+        });
       }
     } catch (error) {
       console.error('설정 옵션 로드 오류:', error);
+      setError((prev) => prev || '설정 옵션을 불러오지 못했습니다.');
     }
   };
 
@@ -114,18 +118,9 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
         }
       ];
 
-      // 모든 설정 저장
-      const savePromises = configUpdates.map(config => 
-        fetch('/api/v1/admin/salary/config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(config)
-        })
+      await Promise.all(
+        configUpdates.map((config) => StandardizedApi.post(SALARY_API_ENDPOINTS.CONFIG, config))
       );
-
-      await Promise.all(savePromises);
       
       onSave && onSave();
       onClose();

@@ -88,6 +88,13 @@ export const SALARY_API_ENDPOINTS = {
   CALCULATION_PERIOD: '/api/v1/admin/salary/calculation-period',
   CONFIRM: '/api/v1/admin/salary/confirm',
 
+  CONFIGS: '/api/v1/admin/salary/configs',
+  CONFIG_OPTIONS: '/api/v1/admin/salary/config-options',
+  CONFIG: '/api/v1/admin/salary/config',
+
+  /** 공통코드 조회 (쿼리 codeGroup 등) */
+  COMMON_CODES: '/api/v1/common-codes',
+
   PROFILES: '/api/v1/admin/salary/profiles',
   /** PUT 급여 프로필 수정 URL: PROFILES + '/' + profileId */
   getProfileUpdateUrl: (id) => `/api/v1/admin/salary/profiles/${id}`,
@@ -196,6 +203,13 @@ export const SALARY_VALIDATION = {
   REQUIRED_FIELDS: ['consultantId', 'period', 'baseSalary'],
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 };
+
+/** 급여일 공통코드 로드 실패 시 셀렉트 폴백 (codeValue / codeLabel) */
+export const SALARY_PAY_DAY_FALLBACK_OPTIONS = [
+  { codeValue: 'TENTH', codeLabel: '매월 10일' },
+  { codeValue: 'TWENTY_FIFTH', codeLabel: '매월 25일' },
+  { codeValue: 'LAST_DAY', codeLabel: '매월 말일' }
+];
 
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',

@@ -14,7 +14,12 @@ import { Settings, Users, Calculator, Receipt, HelpCircle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
-import { SALARY_API_ENDPOINTS, TAX_BREAKDOWN_ORDER, TAX_BREAKDOWN_LABELS } from '../../constants/salaryConstants';
+import {
+  SALARY_API_ENDPOINTS,
+  SALARY_PAY_DAY_FALLBACK_OPTIONS,
+  TAX_BREAKDOWN_ORDER,
+  TAX_BREAKDOWN_LABELS
+} from '../../constants/salaryConstants';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { showNotification } from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -185,16 +190,24 @@ const SalaryManagement = () => {
 
   const loadPayDayOptions = async () => {
     try {
-      const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'SALARY_PAY_DAY' });
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.COMMON_CODES, {
+        codeGroup: 'SALARY_PAY_DAY'
+      });
+      let list = [];
       if (Array.isArray(response)) {
-        setPayDayOptions(response);
-      } else if (response && response?.data) {
-        setPayDayOptions(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setPayDayOptions([]);
+        list = response;
+      } else if (response && Array.isArray(response.codes)) {
+        list = response.codes;
+      } else if (response?.data && Array.isArray(response.data.codes)) {
+        list = response.data.codes;
+      } else if (response?.data && Array.isArray(response.data)) {
+        list = response.data;
       }
+      setPayDayOptions(list.length > 0 ? list : SALARY_PAY_DAY_FALLBACK_OPTIONS);
     } catch (error) {
       console.error('급여일 옵션 로드 실패:', error);
+      setPayDayOptions(SALARY_PAY_DAY_FALLBACK_OPTIONS);
+      showNotification('급여 지급일 목록을 불러오지 못해 기본 옵션을 표시합니다.', 'warning');
     }
   };
 
@@ -228,6 +241,7 @@ const SalaryManagement = () => {
         const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
         periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
       }
+      // selectedPayDay(급여 지급일 코드)는 미리보기 API에 미전달. 기간은 calculation-period·월 범위로만 산출.
       const queryParams = new URLSearchParams({
         consultantId: selectedConsultant.id,
         periodStart,

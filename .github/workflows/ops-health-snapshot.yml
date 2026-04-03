@@ -23,8 +23,22 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      # scp-action 은 source 경로의 디렉터리를 target 아래에 보존함 → 기본값이면
-      # /tmp/scripts/ops/prod-health-snapshot.sh 가 됨. strip_components: 2 로 /tmp/prod-health-snapshot.sh 에 평탄화.
+      # /tmp 직접 덮어쓰기 시 root 소유 파일 등으로 untar 실패할 수 있어, run_id 별 전용 디렉터리 사용.
+      # scp-action: strip_components: 2 → target 아래 prod-health-snapshot.sh 로 평탄화.
+      - name: 스냅샷 업로드용 원격 디렉터리 준비
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          script: |
+            set -euo pipefail
+            RUN_DIR="/tmp/mg-health-snapshot/${{ github.run_id }}"
+            mkdir -p "$RUN_DIR"
+            chmod 700 "$RUN_DIR"
+            rm -f /tmp/prod-health-snapshot.sh || true
+
       - name: 스냅샷 스크립트 업로드
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -33,7 +47,7 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           source: scripts/ops/prod-health-snapshot.sh
-          target: /tmp/
+          target: /tmp/mg-health-snapshot/${{ github.run_id }}/
           strip_components: 2
           overwrite: true
 
@@ -47,12 +61,16 @@ jobs:
           timeout: 120s
           script: |
             set -euo pipefail
-            SNAPSHOT_SH="/tmp/prod-health-snapshot.sh"
+            SNAPSHOT_SH="/tmp/mg-health-snapshot/${{ github.run_id }}/prod-health-snapshot.sh"
+            if [ ! -f "$SNAPSHOT_SH" ]; then
+              SNAPSHOT_SH="/tmp/prod-health-snapshot.sh"
+            fi
             if [ ! -f "$SNAPSHOT_SH" ]; then
               SNAPSHOT_SH="/tmp/scripts/ops/prod-health-snapshot.sh"
             fi
             if [ ! -f "$SNAPSHOT_SH" ]; then
-              echo "::error::스냅샷 스크립트를 찾을 수 없습니다. /tmp 또는 scp 경로 보존 여부를 확인하세요."
+              echo "::error::스냅샷 스크립트를 찾을 수 없습니다. run_id 디렉터리·/tmp·scp 경로 보존 여부를 확인하세요."
+              ls -la "/tmp/mg-health-snapshot/${{ github.run_id }}/" 2>/dev/null || true
               ls -la /tmp/ 2>/dev/null || true
               ls -la /tmp/scripts/ops/ 2>/dev/null || true
               exit 1

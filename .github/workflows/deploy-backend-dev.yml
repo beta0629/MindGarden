@@ -178,6 +178,20 @@ jobs:
             echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
+          # 백업 보관: 유형별 최신 5개만 유지 (운영 배포와 동일·디스크 누적 방지)
+          BACKUP_DIR="/var/www/mindgarden-dev/backups"
+          if [ -d "$BACKUP_DIR" ]; then
+            cd "$BACKUP_DIR"
+            ls -t app.jar.backup.* 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            ls -t frontend.backup.*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            shopt -s nullglob
+            extra=(app-before-*.jar app-flyway-*.jar)
+            if [ ${#extra[@]} -gt 0 ]; then
+              ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+            fi
+            echo "✅ 백업 디렉터리 정리 완료 (각 패턴별 최대 5개 유지)"
+          fi
+          
     - name: 📤 유틸리티 스크립트 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

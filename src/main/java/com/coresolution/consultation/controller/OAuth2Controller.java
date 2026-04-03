@@ -98,11 +98,71 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
     private String localDefaultTenantId;
 
+    /** 네이버 authorize에서 설정, 콜백에서 1회 소비 (provider가 callback query에 mode를 넘기지 않음). */
+    private static final String SESSION_ATTR_OAUTH2_NAVER_MODE = "oauth2_naver_mode";
+
+    /** 카카오 authorize에서 설정, 콜백에서 1회 소비. */
+    private static final String SESSION_ATTR_OAUTH2_KAKAO_MODE = "oauth2_kakao_mode";
+
+    private static final String OAUTH2_MODE_LINK = "link";
+
+    private static final String OAUTH2_MODE_LOGIN = "login";
+
     // OAuth2 콜백 이후 리다이렉트는 '실제 유입 Host' 기준으로 유지 (proxy/env 설정 불일치로 다른 도메인으로 튀는 문제 방지)
 
     @PostConstruct
     public void init() {
         log.info("🔧 OAuth2Controller 초기화 - frontendBaseUrl: {}", frontendBaseUrl);
+    }
+
+    /**
+     * authorize 단계의 mode를 세션에 반영합니다. 기본(파라미터 없음)은 연동 모드 잔존 방지를 위해 세션 키를 제거합니다.
+     *
+     * @param session HTTP 세션
+     * @param mode 요청 파라미터 mode (link / login 등)
+     * @param sessionAttrKey {@link #SESSION_ATTR_OAUTH2_NAVER_MODE} 또는 {@link #SESSION_ATTR_OAUTH2_KAKAO_MODE}
+     */
+    private void storeOAuth2AuthorizeMode(HttpSession session, String mode, String sessionAttrKey) {
+        if (session == null) {
+            return;
+        }
+        if (mode != null && !mode.isBlank()) {
+            String normalized = mode.trim();
+            if (OAUTH2_MODE_LINK.equalsIgnoreCase(normalized)) {
+                session.setAttribute(sessionAttrKey, OAUTH2_MODE_LINK);
+            } else if (OAUTH2_MODE_LOGIN.equalsIgnoreCase(normalized)) {
+                session.setAttribute(sessionAttrKey, OAUTH2_MODE_LOGIN);
+            } else {
+                session.removeAttribute(sessionAttrKey);
+            }
+        } else {
+            session.removeAttribute(sessionAttrKey);
+        }
+    }
+
+    /**
+     * 콜백에서 사용할 OAuth mode. 쿼리 {@code mode}가 있으면 우선하고, 없으면 authorize에서 저장한 세션 값을 사용합니다. 세션 값은
+     * 읽은 뒤 제거합니다(1회성). 쿼리에 mode가 있을 때도 세션 키는 정리합니다.
+     *
+     * @param session HTTP 세션
+     * @param requestMode 콜백 쿼리 파라미터 mode
+     * @param sessionAttrKey provider별 세션 키
+     * @return 정규화된 mode 문자열, 없으면 null
+     */
+    private String consumeOAuth2EffectiveMode(HttpSession session, String requestMode,
+            String sessionAttrKey) {
+        String fromRequest =
+                requestMode != null && !requestMode.isBlank() ? requestMode.trim() : null;
+        if (session != null) {
+            if (fromRequest != null) {
+                session.removeAttribute(sessionAttrKey);
+                return fromRequest;
+            }
+            Object raw = session.getAttribute(sessionAttrKey);
+            session.removeAttribute(sessionAttrKey);
+            return raw != null ? String.valueOf(raw).trim() : null;
+        }
+        return fromRequest;
     }
 
     /**
@@ -512,6 +572,7 @@ public class OAuth2Controller extends BaseApiController {
 
             if (session != null) {
                 session.setAttribute("oauth2_kakao_state", state);
+                storeOAuth2AuthorizeMode(session, mode, SESSION_ATTR_OAUTH2_KAKAO_MODE);
             }
 
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
@@ -667,6 +728,7 @@ public class OAuth2Controller extends BaseApiController {
             }
 
             session.setAttribute("oauth2_naver_state", state);
+            storeOAuth2AuthorizeMode(session, mode, SESSION_ATTR_OAUTH2_NAVER_MODE);
             // 네이버 인증 URL 생성 시 사용한 redirect_uri를 세션에 저장 (콜백에서 일치 여부 확인용)
 
             // 세션에도 저장 (기존 호환성 유지)
@@ -1392,8 +1454,10 @@ public class OAuth2Controller extends BaseApiController {
                             .build();
                 }
 
+                String effectiveMode =
+                        consumeOAuth2EffectiveMode(session, mode, SESSION_ATTR_OAUTH2_NAVER_MODE);
                 // 계정 연동 모드인지 확인
-                if ("link".equals(mode)) {
+                if (OAUTH2_MODE_LINK.equals(effectiveMode)) {
                     // 기존 로그인된 사용자의 세션 확인
                     User currentUser = SessionUtils.getCurrentUser(session);
                     if (currentUser == null) {
@@ -2050,9 +2114,24 @@ public class OAuth2Controller extends BaseApiController {
             if (response.isSuccess()) {
                 // SocialLoginResponse에서 이미 완성된 UserInfo 사용 (공통 SNS 처리 로직 활용)
                 SocialLoginResponse.UserInfo userInfo = response.getUserInfo();
+                if (userInfo == null) {
+                    log.error("카카오 OAuth2 - userInfo가 null입니다. requiresSignup={}",
+                            response.isRequiresSignup());
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode("사용자 정보를 가져올 수 없습니다.",
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=KAKAO")
+                            .build();
+                }
 
+                String effectiveMode =
+                        consumeOAuth2EffectiveMode(session, mode, SESSION_ATTR_OAUTH2_KAKAO_MODE);
                 // 계정 연동 모드인지 확인
-                if ("link".equals(mode)) {
+                if (OAUTH2_MODE_LINK.equals(effectiveMode)) {
                     // 기존 로그인된 사용자의 세션 확인
                     User currentUser = SessionUtils.getCurrentUser(session);
                     if (currentUser == null) {

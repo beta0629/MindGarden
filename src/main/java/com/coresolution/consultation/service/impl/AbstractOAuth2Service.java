@@ -148,6 +148,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     .nickname(user.getNickname())
                     .role(user.getRole().getValue())
                     .profileImageUrl(finalProfileImageUrl)
+                    .providerUserId(socialUserInfo.getProviderUserId())
                     .build())
                 .socialAccountInfo(SocialLoginResponse.SocialAccountInfo.builder()
                     .provider(getProviderName())

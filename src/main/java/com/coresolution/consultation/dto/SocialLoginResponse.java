@@ -82,6 +82,11 @@ public class SocialLoginResponse {
          * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
          */
         @Deprecated        private String branchCode;
+        /**
+         * SNS 제공자 측 사용자 식별자(앱 User PK와 별개). 계정 연동(link) 시 {@code updateOrCreateSocialAccount}에 전달한다.
+         * 과거 링크 버그로 User PK가 들어간 레거시 행은 별도 마이그레이션으로 정리한다.
+         */
+        private String providerUserId;
     }
     
     /**

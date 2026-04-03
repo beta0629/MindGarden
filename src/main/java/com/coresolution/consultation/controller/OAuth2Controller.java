@@ -419,6 +419,29 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
+     * 계정 연동(link) 시 SNS 제공자의 사용자 식별자. UserInfo에 채워진 값 또는 authenticateWithCode 경로의
+     * {@link SocialLoginResponse#getSocialAccountInfo()}를 사용한다.
+     *
+     * @param response OAuth 응답(소셜 계정 메타 포함 가능)
+     * @param userInfo 앱 사용자 요약(선택 필드 providerUserId)
+     * @return 비어 있지 않은 provider 측 ID, 없으면 null
+     */
+    private String resolveOAuthProviderUserIdForLink(SocialLoginResponse response,
+            SocialLoginResponse.UserInfo userInfo) {
+        if (userInfo != null && userInfo.getProviderUserId() != null
+                && !userInfo.getProviderUserId().isBlank()) {
+            return userInfo.getProviderUserId().trim();
+        }
+        if (response != null && response.getSocialAccountInfo() != null) {
+            String pid = response.getSocialAccountInfo().getProviderUserId();
+            if (pid != null && !pid.isBlank()) {
+                return pid.trim();
+            }
+        }
+        return null;
+    }
+
+    /**
      * SNS 계정 연동(link) 콜백은 보통 메인 도메인(api 호스트)으로 들어오므로, 마이페이지 등으로 돌려보낼 때 테넌트 서브도메인을 복원합니다.
      */
     private String getTenantAwareFrontendBaseUrlForSnsLinkRedirect(HttpServletRequest request,
@@ -1116,7 +1139,9 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     } else {
                         log.warn(
-                                "⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}",
+                                "⚠️ 네이버 콜백 - 세션에 oauth2_naver_redirect_uri 없음. 인가 단계와 토큰 단계의 redirect_uri 불일치 시 "
+                                        + "네이버 invalid_request(no valid data in session)가 발생할 수 있음. "
+                                        + "세션/쿠키 도메인·sticky 여부 및 개발자센터 등록 URL과 다음 동적 URI 일치를 확인: {}",
                                 callbackRedirectUri);
                         // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL 중 하나를 사용
                         // 동적으로 생성한 redirect_uri가 네이버 개발자 센터에 등록된 URL과 일치하는지 확인
@@ -1162,7 +1187,7 @@ public class OAuth2Controller extends BaseApiController {
                                 if (!registeredUrls.isEmpty()) {
                                     String fallbackUrl = registeredUrls.get(0).trim();
                                     log.warn(
-                                            "⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 등록된 URL 목록의 첫 번째 URL 사용: {}",
+                                            "⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록 목록에 없음. 등록 목록 첫 항목으로 토큰 요청(인가 시 사용한 URI와 다르면 실패 가능): {}",
                                             fallbackUrl);
                                     callbackRedirectUri = fallbackUrl;
                                 } else {
@@ -1277,7 +1302,9 @@ public class OAuth2Controller extends BaseApiController {
                                                     : null)
                                             .profileImageUrl(existingUser.getProfileImageUrl())
                                             .branch(existingUser.getBranch())
-                                            .branchCode(existingUser.getBranchCode()).build())
+                                            .branchCode(existingUser.getBranchCode())
+                                            .providerUserId(socialUserInfo.getProviderUserId())
+                                            .build())
                                     .build();
                         } else {
                             response = SocialLoginResponse.builder().success(false)
@@ -1345,7 +1372,9 @@ public class OAuth2Controller extends BaseApiController {
                                                         : null)
                                                 .profileImageUrl(existingUser.getProfileImageUrl())
                                                 .branch(existingUser.getBranch())
-                                                .branchCode(existingUser.getBranchCode()).build())
+                                                .branchCode(existingUser.getBranchCode())
+                                                .providerUserId(socialUserInfo.getProviderUserId())
+                                                .build())
                                                 .build();
                             } else {
                                 response = SocialLoginResponse.builder().success(false)
@@ -1368,12 +1397,12 @@ public class OAuth2Controller extends BaseApiController {
                         log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
                                 txException.getMessage());
                     }
-                    // 네이버 로그인 오류 시 원래 도메인으로 리다이렉트 (요청 도메인 유지)
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     String errorMessage =
                             authException.getMessage() != null ? authException.getMessage()
                                     : "인증 처리 중 오류가 발생했습니다";
-                    log.warn("네이버 로그인 오류 발생 - 원래 도메인으로 리다이렉트: frontendUrl={}, error={}",
+                    log.warn("네이버 로그인 오류 발생 - tenant-aware 리다이렉트: frontendUrl={}, error={}",
                             frontendUrl, errorMessage);
                     return ResponseEntity.status(302)
                             .header("Location",
@@ -1421,7 +1450,11 @@ public class OAuth2Controller extends BaseApiController {
                             ? response.getSocialUserInfo().getNickname()
                             : "";
 
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    if (redirectTenantId == null || redirectTenantId.isEmpty()) {
+                        redirectTenantId = tenantId;
+                    }
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     String signupUrl =
                             frontendUrl + "/login?" + "signup=required" + "&provider=naver"
                                     + (tenantId != null && !tenantId.isEmpty()
@@ -1444,7 +1477,8 @@ public class OAuth2Controller extends BaseApiController {
                 if (userInfo == null) {
                     log.error("네이버 OAuth2 - userInfo가 null입니다. requiresSignup={}",
                             response.isRequiresSignup());
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
@@ -1477,7 +1511,22 @@ public class OAuth2Controller extends BaseApiController {
                         // AbstractOAuth2Service의 updateOrCreateSocialAccount 메서드 호출
                         // SocialUserInfo 객체 생성
                         SocialUserInfo socialUserInfo = new SocialUserInfo();
-                        socialUserInfo.setProviderUserId(String.valueOf(userInfo.getId()));
+                        String naverProviderUserId =
+                                resolveOAuthProviderUserIdForLink(response, userInfo);
+                        if (naverProviderUserId == null || naverProviderUserId.isEmpty()) {
+                            log.error(
+                                    "네이버 계정 연동 실패: SNS provider 사용자 ID 없음 (UserInfo·SocialAccountInfo 확인)");
+                            String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                    request, session, state, currentUser);
+                            return ResponseEntity.status(302)
+                                    .header("Location",
+                                            frontendUrl + "/mypage?error="
+                                                    + URLEncoder.encode("연동실패",
+                                                            StandardCharsets.UTF_8)
+                                                    + "&provider=NAVER")
+                                    .build();
+                        }
+                        socialUserInfo.setProviderUserId(naverProviderUserId);
                         socialUserInfo.setEmail(userInfo.getEmail());
                         socialUserInfo.setName(userInfo.getName());
                         socialUserInfo.setNickname(userInfo.getNickname());
@@ -1488,8 +1537,8 @@ public class OAuth2Controller extends BaseApiController {
                         OAuth2Service oauth2Service =
                                 oauth2FactoryService.getOAuth2Service("NAVER");
                         oauth2Service.linkSocialAccountToUser(currentUser.getId(), socialUserInfo);
-                        log.info("네이버 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}",
-                                currentUser.getId(), userInfo.getId());
+                        log.info("네이버 계정 연동 성공: 기존 사용자 userId={}, naverProviderUserId={}",
+                                currentUser.getId(), naverProviderUserId);
 
                         String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
                                 session, state, currentUser);
@@ -1676,7 +1725,11 @@ public class OAuth2Controller extends BaseApiController {
                 }
 
                 // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
-                String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                if (redirectTenantId == null || redirectTenantId.isEmpty()) {
+                    redirectTenantId = tenantId;
+                }
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 String email = response.getSocialUserInfo() != null
                         ? response.getSocialUserInfo().getEmail()
                         : "";
@@ -1700,8 +1753,8 @@ public class OAuth2Controller extends BaseApiController {
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {
-                String frontendUrl = getTenantAwareFrontendBaseUrl(request,
-                        com.coresolution.core.context.TenantContextHolder.getTenantId());
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -1712,8 +1765,8 @@ public class OAuth2Controller extends BaseApiController {
             }
         } catch (Exception e) {
             log.error("네이버 OAuth2 콜백 처리 실패", e);
-            String frontendUrl = getTenantAwareFrontendBaseUrl(request,
-                    com.coresolution.core.context.TenantContextHolder.getTenantId());
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302)
                     .header("Location", frontendUrl + "/login?error="
                             + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
@@ -2083,7 +2136,9 @@ public class OAuth2Controller extends BaseApiController {
                             .userInfo(SocialLoginResponse.UserInfo.builder().id(user.getId())
                                     .email(user.getEmail()).name(user.getName())
                                     .nickname(user.getNickname()).role(user.getRole().getValue())
-                                    .profileImageUrl(finalProfileImageUrl).build())
+                                    .profileImageUrl(finalProfileImageUrl)
+                                    .providerUserId(socialUserInfo.getProviderUserId())
+                                    .build())
                             .build();
                 }
             } else {
@@ -2098,7 +2153,8 @@ public class OAuth2Controller extends BaseApiController {
                         log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
                                 txException.getMessage());
                     }
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     String errorMessage =
                             e.getMessage() != null ? e.getMessage() : "인증 처리 중 오류가 발생했습니다";
                     return ResponseEntity.status(302)
@@ -2150,7 +2206,22 @@ public class OAuth2Controller extends BaseApiController {
                     try {
                         // SocialUserInfo 객체 생성
                         SocialUserInfo socialUserInfo = new SocialUserInfo();
-                        socialUserInfo.setProviderUserId(String.valueOf(userInfo.getId()));
+                        String kakaoProviderUserId =
+                                resolveOAuthProviderUserIdForLink(response, userInfo);
+                        if (kakaoProviderUserId == null || kakaoProviderUserId.isEmpty()) {
+                            log.error(
+                                    "카카오 계정 연동 실패: SNS provider 사용자 ID 없음 (UserInfo·SocialAccountInfo 확인)");
+                            String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                    request, session, state, currentUser);
+                            return ResponseEntity.status(302)
+                                    .header("Location",
+                                            frontendUrl + "/mypage?error="
+                                                    + URLEncoder.encode("연동실패",
+                                                            StandardCharsets.UTF_8)
+                                                    + "&provider=KAKAO")
+                                    .build();
+                        }
+                        socialUserInfo.setProviderUserId(kakaoProviderUserId);
                         socialUserInfo.setEmail(userInfo.getEmail());
                         socialUserInfo.setName(userInfo.getName());
                         socialUserInfo.setNickname(userInfo.getNickname());
@@ -2161,8 +2232,8 @@ public class OAuth2Controller extends BaseApiController {
                         OAuth2Service oauth2Service =
                                 oauth2FactoryService.getOAuth2Service("KAKAO");
                         oauth2Service.linkSocialAccountToUser(currentUser.getId(), socialUserInfo);
-                        log.info("카카오 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}",
-                                currentUser.getId(), userInfo.getId());
+                        log.info("카카오 계정 연동 성공: 기존 사용자 userId={}, kakaoProviderUserId={}",
+                                currentUser.getId(), kakaoProviderUserId);
 
                         String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request,
                                 session, state, currentUser);
@@ -2354,7 +2425,11 @@ public class OAuth2Controller extends BaseApiController {
                         ? response.getSocialUserInfo().getNickname()
                         : "";
 
-                String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                if (redirectTenantId == null || redirectTenantId.isEmpty()) {
+                    redirectTenantId = tenantId;
+                }
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 String signupUrl =
                         frontendUrl + "/login?" + "signup=required" + "&provider=kakao"
                                 + (tenantId != null && !tenantId.isEmpty() ? "&tenantId="
@@ -2366,8 +2441,8 @@ public class OAuth2Controller extends BaseApiController {
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {
-                String frontendUrl = getTenantAwareFrontendBaseUrl(request,
-                        com.coresolution.core.context.TenantContextHolder.getTenantId());
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -2379,8 +2454,8 @@ public class OAuth2Controller extends BaseApiController {
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
             String errorMessage = e.getMessage() != null ? e.getMessage() : "처리실패";
-            String frontendUrl = getTenantAwareFrontendBaseUrl(request,
-                    com.coresolution.core.context.TenantContextHolder.getTenantId());
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();

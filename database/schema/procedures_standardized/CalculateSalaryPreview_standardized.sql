@@ -62,6 +62,8 @@ BEGIN
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
     END;
+
+    main: BEGIN
     
     -- 1. 입력값 검증
     IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
@@ -71,7 +73,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     IF p_consultant_id IS NULL OR p_consultant_id <= 0 THEN
@@ -81,7 +83,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     IF p_period_start IS NULL OR p_period_end IS NULL OR p_period_start > p_period_end THEN
@@ -91,7 +93,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     -- 2. 상담사 존재 여부 확인 (테넌트 격리)
@@ -110,7 +112,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     -- 기본값 설정
@@ -155,7 +157,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
-        LEAVE;
+        LEAVE main;
     ELSE
         -- 4. 상담 통계 조회 (테넌트 격리)
         SELECT 
@@ -235,6 +237,8 @@ BEGIN
         
         SET p_net_salary = p_gross_salary - p_tax_amount;
     END IF;
+
+    END main;
     
 END //
 

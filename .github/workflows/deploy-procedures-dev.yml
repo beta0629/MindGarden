@@ -1,6 +1,7 @@
 name: 📦 표준화된 프로시저 배포 (개발)
 
-# 필수 시크릿: DEV_SERVER_HOST, DEV_SERVER_SSH_KEY(또는 호스트 접속용), DEV_DB_USER, DEV_DB_PASSWORD, DEV_DB_NAME
+# 필수 시크릿: DEV_SERVER_HOST, DEV_SERVER_SSH_KEY, DEV_DB_USER, DEV_DB_PASSWORD, DEV_DB_NAME
+# (비어 있으면 스크립트가 "DEV_DB_USER 필수" 등으로 종료 — GitHub → Settings → Secrets and variables → Actions 에서 등록)
 # DEV_DB_HOST: 비어 있으면 127.0.0.1 폴백. 실제 값은 개발 서버 SSH 후 systemctl cat mindgarden-dev.service 의 DB_HOST 권장.
 # DEV_SERVER_HOST: 팀 표준은 beta0629.cafe24.com (스킬 core-solution-server-status §SSH 접속 정보).
 # 절차: docs/standards/DEPLOYMENT_STANDARD.md → 「개발 DB 호스트(DEV_DB_HOST) — SSH로 확인」
@@ -35,14 +36,31 @@ jobs:
         ssh-keyscan -H "${{ secrets.DEV_SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
       
     - name: 📤 프로시저 배포
-      env:
-        DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
-        DEV_SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
-        DEV_DB_HOST: ${{ secrets.DEV_DB_HOST || '127.0.0.1' }}
-        DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
-        DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
-        DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}
       run: |
+        set -euo pipefail
+        fail() { echo "::error::$1"; exit 1; }
+
+        [ -n "${{ secrets.DEV_SERVER_HOST }}" ] || fail "DEV_SERVER_HOST 가 비어 있습니다. Repository → Settings → Secrets and variables → Actions 에서 설정하세요."
+        [ -n "${{ secrets.DEV_SERVER_SSH_KEY }}" ] || fail "DEV_SERVER_SSH_KEY 가 비어 있습니다. 개발 서버 SSH용 private key를 등록하세요. (scp/ssh에 필요)"
+        [ -n "${{ secrets.DEV_DB_USER }}" ] || fail "DEV_DB_USER 가 비어 있습니다. 개발 DB MySQL 사용자명을 Secrets에 등록하세요. (오류: DEV_DB_USER 필수)"
+        [ -n "${{ secrets.DEV_DB_PASSWORD }}" ] || fail "DEV_DB_PASSWORD 가 비어 있습니다. 개발 DB 비밀번호를 Secrets에 등록하세요."
+        [ -n "${{ secrets.DEV_DB_NAME }}" ] || fail "DEV_DB_NAME 가 비어 있습니다. 개발 DB 스키마명을 Secrets에 등록하세요."
+
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "${{ secrets.DEV_SERVER_SSH_KEY }}" > ~/.ssh/dev_procedures_ci_key
+        chmod 600 ~/.ssh/dev_procedures_ci_key
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/dev_procedures_ci_key
+
+        export DEV_SERVER_HOST="${{ secrets.DEV_SERVER_HOST }}"
+        U="${{ secrets.DEV_SERVER_USER }}"
+        export DEV_SERVER_USER="${U:-root}"
+        export DEV_DB_HOST="${{ secrets.DEV_DB_HOST }}"
+        export DEV_DB_USER="${{ secrets.DEV_DB_USER }}"
+        export DEV_DB_PASSWORD="${{ secrets.DEV_DB_PASSWORD }}"
+        export DEV_DB_NAME="${{ secrets.DEV_DB_NAME }}"
+
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
 

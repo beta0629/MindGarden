@@ -31,6 +31,7 @@
 
 - **엔티티와 스키마 일치**: 새 컬럼/테이블을 JPA 엔티티에 반영했다면, Flyway 마이그레이션으로 DB에도 동일하게 반영되어 있어야 합니다. (예: system_config.tenant_id → V20260228_001)
 - **배포 브랜치 포함**: 마이그레이션 파일이 develop(또는 배포 브랜치)에 커밋·푸시되어 있어야 CI 빌드 JAR에 포함되고, 기동 시 Flyway가 적용합니다.
+- **급여 미리보기**: `POST /api/v1/admin/salary/calculate` 는 DB `CalculateSalaryPreview` 가 최신 시그니처로 배포되어 있어야 하며, `scripts/automation/deployment/deploy-standardized-procedures.sh` 의 `PROCEDURES` 에 포함된 뒤 표준 프로시저 배포 워크플로(개발/운영)로 적용한다 (목록 누락 시 OUT 파라미터 바인딩 오류 가능).
 
 ### 2.3 트리거 paths
 

@@ -80,6 +80,7 @@ PROCEDURES=(
     "GetConsolidatedFinancialData"
     "ProcessIntegratedSalaryCalculation"
     "GetIntegratedSalaryStatistics"
+    "CalculateSalaryPreview"
     "ProcessDiscountAccounting"
     "UpdateDailyStatistics"
     "UpdateConsultantPerformance"

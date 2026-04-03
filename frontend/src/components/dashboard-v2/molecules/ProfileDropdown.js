@@ -16,6 +16,7 @@ import { useSession } from '../../../contexts/SessionContext';
 import { useBranding } from '../../../hooks/useBranding';
 import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
+import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
 import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
 
@@ -81,9 +82,11 @@ const ProfileDropdown = ({ onLogout }) => {
     setIsOpen(false);
 
     if (action === 'mypage') {
-      navigate('/mypage');
+      const to = getMypagePathForRole(user?.role);
+      navigate(to || '/mypage');
     } else if (action === 'settings') {
-      navigate('/settings');
+      const to = getSettingsPathForRole(user?.role);
+      navigate(to || '/settings');
     } else if (action === 'logout' && onLogout) {
       onLogout();
     }

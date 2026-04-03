@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   User, 
   Settings, 
@@ -26,8 +27,11 @@ import './MyPage.css';
 
 const MYPAGE_TITLE_ID = 'mypage-page-title';
 
+const MYPAGE_TAB_SET = new Set(['profile', 'settings', 'security', 'social', 'privacy']);
+
 const MyPage = () => {
   const { user: sessionUser } = useSession();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState(null);
   const [localUser, setLocalUser] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
@@ -174,6 +178,13 @@ const MyPage = () => {
     loadUserInfo();
     loadSocialAccounts();
   }, [loadUserInfo, loadSocialAccounts]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && MYPAGE_TAB_SET.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

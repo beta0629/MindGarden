@@ -17,8 +17,9 @@ const DASHBOARD_TO_MYPAGE = {
 const DASHBOARD_TO_SETTINGS = {
   '/client/dashboard': '/client/settings',
   '/consultant/dashboard': '/tenant/settings',
-  '/admin/dashboard': '/admin/settings',
-  '/super_admin/dashboard': '/admin/settings'
+  // 프로필 드롭다운 「설정」은 개인 설정(마이페이지 탭). /admin/settings 는 LNB 등 시스템용(ComingSoon)과 분리.
+  '/admin/dashboard': '/admin/mypage?tab=settings',
+  '/super_admin/dashboard': '/super_admin/mypage?tab=settings'
 };
 
 /**
@@ -50,5 +51,5 @@ export function getSettingsPathForRole(role) {
   if (mapped) {
     return mapped;
   }
-  return '/admin/settings';
+  return '/admin/mypage?tab=settings';
 }

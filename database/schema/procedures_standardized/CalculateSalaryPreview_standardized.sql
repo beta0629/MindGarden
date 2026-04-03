@@ -129,7 +129,6 @@ BEGIN
     WHERE csp.consultant_id = p_consultant_id 
       AND csp.tenant_id = p_tenant_id
       AND csp.is_active = TRUE
-      AND csp.is_deleted = FALSE
     LIMIT 1;
     
     -- 프리랜서 등급별 요율: common_codes FREELANCE_BASE_RATE, code_value = {grade}_RATE (없으면 30000)

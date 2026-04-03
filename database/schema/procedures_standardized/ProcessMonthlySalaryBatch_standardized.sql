@@ -38,8 +38,7 @@ BEGIN
           AND csp.tenant_id = p_tenant_id
           AND u.is_active = TRUE 
           AND u.is_deleted = FALSE
-          AND csp.is_active = TRUE
-          AND csp.is_deleted = FALSE;
+          AND csp.is_active = TRUE;
     
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
     
@@ -52,6 +51,8 @@ BEGIN
         SET p_message = CONCAT('월별 급여 일괄 처리 중 오류 발생: ', v_error_message);
         SET p_processed_count = 0;
     END;
+
+    main: BEGIN
     
     START TRANSACTION;
     
@@ -61,7 +62,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_processed_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     IF p_target_month IS NULL OR p_target_month = '' THEN
@@ -69,7 +70,7 @@ BEGIN
         SET p_message = '대상 월은 필수입니다. (YYYY-MM 형식)';
         SET p_processed_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE main;
     END IF;
     
     SET p_processed_count = 0;
@@ -92,7 +93,7 @@ BEGIN
         SET v_period_start = STR_TO_DATE(CONCAT(p_target_month, '-01'), '%Y-%m-%d');
         SET v_period_end = LAST_DAY(v_period_start);
     ELSE
-        SET v_period_end = STR_TO_DATE(CONCAT(p_target_month, '-', LEAST(CAST(v_base_day_str AS UNSIGNED), DAY(LAST_DAY(STR_TO_DATE(CONCAT(p_target_month, '-01'), '%Y-%m-%d')))), '%Y-%m-%d');
+        SET v_period_end = STR_TO_DATE(CONCAT(p_target_month, '-', LEAST(CAST(v_base_day_str AS UNSIGNED), DAY(LAST_DAY(STR_TO_DATE(CONCAT(p_target_month, '-01'), '%Y-%m-%d'))))), '%Y-%m-%d');
         IF v_month = 1 THEN
             SET v_period_start = DATE_ADD(STR_TO_DATE(CONCAT(v_year - 1, '-12-', LEAST(CAST(v_base_day_str AS UNSIGNED), 31)), '%Y-%m-%d'), INTERVAL 1 DAY);
         ELSE
@@ -135,6 +136,8 @@ BEGIN
     SET p_message = CONCAT('월별 급여 일괄 처리 완료. 처리된 상담사 수: ', p_processed_count);
     
     COMMIT;
+
+    END main;
     
 END //
 

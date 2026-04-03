@@ -152,7 +152,6 @@ BEGIN
                   AND csp.tenant_id = p_tenant_id
                   AND u.tenant_id = p_tenant_id
                   AND csp.is_active = TRUE
-                  AND csp.is_deleted = FALSE
                   AND u.is_deleted = FALSE
                 LIMIT 1;
                 
@@ -166,6 +165,23 @@ BEGIN
                     SET p_erp_sync_id = NULL;
                     ROLLBACK;
                 ELSE
+                    -- 프리랜서 등급별 요율: common_codes FREELANCE_BASE_RATE, code_value = {grade}_RATE (없으면 30000)
+                    IF v_salary_type = 'FREELANCE' AND v_grade IS NOT NULL AND v_grade != '' THEN
+                        SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(10,2)) INTO v_grade_rate
+                        FROM common_codes cc
+                        WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                          AND cc.code_group = 'FREELANCE_BASE_RATE'
+                          AND cc.code_value = CONCAT(TRIM(v_grade), '_RATE')
+                          AND cc.is_active = TRUE
+                          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                        ORDER BY cc.tenant_id IS NULL ASC
+                        LIMIT 1;
+                        IF v_grade_rate IS NULL OR v_grade_rate <= 0 THEN
+                            SET v_grade_rate = 30000;
+                        END IF;
+                    ELSEIF v_salary_type = 'FREELANCE' THEN
+                        SET v_grade_rate = 30000;
+                    END IF;
                     -- 5. 상담 통계 조회 (테넌트 격리)
             SELECT 
                 COUNT(*) as total_consultations,

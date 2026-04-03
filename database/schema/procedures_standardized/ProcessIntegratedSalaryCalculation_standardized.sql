@@ -152,7 +152,6 @@ BEGIN
                   AND csp.tenant_id = p_tenant_id
                   AND u.tenant_id = p_tenant_id
                   AND csp.is_active = TRUE
-                  AND csp.is_deleted = FALSE
                   AND u.is_deleted = FALSE
                 LIMIT 1;
                 

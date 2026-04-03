@@ -9,6 +9,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+import org.springframework.context.annotation.Bean;
+
 /**
  * 비동기 처리 설정
  * 
@@ -72,6 +74,27 @@ public class AsyncConfig implements AsyncConfigurer {
         log.info("✅ 비동기 Executor 초기화 완료: corePoolSize={}, maxPoolSize={}, queueCapacity={}", 
                 executor.getCorePoolSize(), executor.getMaxPoolSize(), executor.getQueueCapacity());
         
+        return executor;
+    }
+
+    /**
+     * 온보딩 승인 후 테넌트 시딩·메일 등 장시간 작업 전용 실행기 (HTTP 스레드 조기 반환).
+     * TenantContext 전파를 위해 기본 비동기 풀과 동일한 TaskDecorator를 사용한다.
+     *
+     * @return 온보딩 사후 처리용 Executor
+     */
+    @Bean(name = "onboardingPostApprovalExecutor")
+    public Executor onboardingPostApprovalExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(12);
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("onboarding-post-approval-");
+        executor.setTaskDecorator(new TenantContextTaskDecorator());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(120);
+        executor.initialize();
+        log.info("✅ onboardingPostApprovalExecutor 초기화 완료");
         return executor;
     }
     

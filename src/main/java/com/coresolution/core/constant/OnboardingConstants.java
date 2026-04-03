@@ -56,6 +56,18 @@ public class OnboardingConstants {
     public static final String STEP_DASHBOARD_CREATE = "DASHBOARD_CREATE";
     public static final String STEP_COMPLETE = "COMPLETE";
     public static final String STEP_PROCEDURE_START = "PROCEDURE_START";
+
+    /**
+     * 승인 직후 테넌트 시딩이 백그라운드로 큐에 올라갔음을 initializationStatusJson.phase에 표시
+     */
+    public static final String PHASE_POST_APPROVAL_INITIALIZATION_PENDING =
+            "POST_APPROVAL_INITIALIZATION_PENDING";
+
+    /**
+     * 재승인 경로에서 시딩 대기 중
+     */
+    public static final String PHASE_REAPPROVAL_INITIALIZATION_PENDING =
+            "REAPPROVAL_INITIALIZATION_PENDING";
     
     // 온보딩 프로세스 상태 상수
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";

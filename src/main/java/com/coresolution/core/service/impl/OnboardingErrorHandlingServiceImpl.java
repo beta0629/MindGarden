@@ -164,6 +164,22 @@ public class OnboardingErrorHandlingServiceImpl implements OnboardingErrorHandli
                     return true;
                 }
             }
+
+            // JPA/JDBC 쿼리 타임아웃·MySQL 쿼리 중단(1317) — 짧은 statement 타임아웃·락과 맞물리면 재시도
+            if (current instanceof org.hibernate.QueryTimeoutException) {
+                log.debug("Hibernate QueryTimeoutException (depth={}) - 재시도 가능", depth);
+                return true;
+            }
+            if (current instanceof jakarta.persistence.QueryTimeoutException) {
+                log.debug("JPA QueryTimeoutException (depth={}) - 재시도 가능", depth);
+                return true;
+            }
+            if (current.getClass().getName().contains("MySQLTimeoutException")
+                    || current.getClass().getName().contains("MySQLQueryInterruptedException")) {
+                log.debug("MySQL timeout/interrupted (depth={}) - 재시도 가능: {}", depth,
+                        current.getMessage());
+                return true;
+            }
             
             // 다음 예외 체인으로 이동
             current = current.getCause();

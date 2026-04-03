@@ -55,6 +55,11 @@ spring:
             token-uri: https://appleid.apple.com/auth/token
             user-info-uri: https://appleid.apple.com/auth/userinfo
             user-name-attribute: sub
+  # 온보딩 승인·시딩 장시간 작업: 베이스 application.yml Hikari 위 dev 추가 완화
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      leak-detection-threshold: 180000
 
 # Ops Portal 관리자 (환경변수로 주입, -D 인자 제거로 ps/journalctl 노출 방지)
 ops:

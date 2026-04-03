@@ -31,6 +31,7 @@ import com.coresolution.core.service.TenantIdGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,6 +79,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final EmailService emailService;
     private final JdbcTemplate jdbcTemplate;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Qualifier("onboardingPostApprovalExecutor")
+    private final Executor onboardingPostApprovalExecutor;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
@@ -400,37 +406,21 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 승인 프로세스 결과를 저장할 변수 (블록 밖에서도 사용)
         Boolean success = null;
         String message = null;
+        boolean fallbackUsedForPostApproval = false;
+        boolean schedulePostApprovalInitialization = false;
 
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         // 이미 승인된 테넌트에 대해 재승인한 경우, 프로시저는 건너뛰지만 초기화 작업은 실행
         if (isReApproval && existingTenantId != null) {
             log.info("이미 승인된 테넌트 재승인: 프로시저는 건너뛰고 초기화 작업만 실행: tenantId={}", existingTenantId);
-            // 프로시저는 건너뛰고 바로 초기화 작업 실행
+            String pendingReapprovalJson = buildDecisionStatusJson(null,
+                    OnboardingConstants.PHASE_REAPPROVAL_INITIALIZATION_PENDING, false, requestId,
+                    existingTenantId);
+            request.setInitializationStatusJson(pendingReapprovalJson);
             OnboardingRequest saved = repository.save(request);
 
-            try {
-                OnboardingServiceImpl self =
-                        applicationContext.getBean(OnboardingServiceImpl.class);
-                String initializationStatusJson =
-                        self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
-                                request.getBusinessType(), actorId, requestId);
-
-                persistInitializationStatusAfterDecision(requestId, existingTenantId,
-                        initializationStatusJson, "REAPPROVAL_INITIALIZATION", false);
-                log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
-
-                // 브랜드명 설정
-                try {
-                    setTenantBranding(existingTenantId, request);
-                } catch (Exception e) {
-                    log.warn("브랜드명 설정 실패: tenantId={}, error={}", existingTenantId, e.getMessage());
-                }
-            } catch (Exception e) {
-                log.error("이미 승인된 테넌트 초기화 작업 실패: tenantId={}, error={}", existingTenantId,
-                        e.getMessage(), e);
-                persistInitializationStatusAfterDecision(requestId, existingTenantId, null,
-                        "REAPPROVAL_INITIALIZATION_ERROR", false);
-            }
+            schedulePostApprovalInitializationAfterCommit(requestId, existingTenantId,
+                    request.getBusinessType(), actorId, false, true);
 
             log.info("온보딩 요청 결정 완료: id={}, status={}", saved.getId(), saved.getStatus());
             return saved;
@@ -784,44 +774,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 // 상태는 initializationStatusJson에 저장되므로 별도 업데이트 불필요
 
-                boolean fallbackUsed = isFallbackUsed(approvalResult, message);
+                fallbackUsedForPostApproval = isFallbackUsed(approvalResult, message);
                 try {
                     updateSubscriptionTenantId(request);
                 } catch (Exception e) {
                     log.warn("구독 tenant_id 업데이트 실패 (계속 진행): {}", e.getMessage());
                 }
 
-                // 테넌트 초기화 작업은 별도 트랜잭션으로 분리하여 메인 트랜잭션에 영향 없도록 처리
-                try {
-                    log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
-                    // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
-                    OnboardingServiceImpl self =
-                            applicationContext.getBean(OnboardingServiceImpl.class);
-                    String initializationStatusJson =
-                            self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
-                                    request.getBusinessType(), actorId, requestId);
-
-                    persistInitializationStatusAfterDecision(requestId, tenantId,
-                            initializationStatusJson, "POST_APPROVAL_INITIALIZATION",
-                            fallbackUsed);
-                    log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
-
-                    // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
-                    // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
-
-                    // 브랜드명 설정 (branding_json에 저장)
-                    try {
-                        setTenantBranding(tenantId, request);
-                    } catch (Exception e) {
-                        log.warn("브랜드명 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", tenantId,
-                                e.getMessage());
-                    }
-                } catch (Exception e) {
-                    log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", tenantId,
-                            e.getMessage(), e);
-                    persistInitializationStatusAfterDecision(requestId, tenantId, null,
-                            "POST_APPROVAL_INITIALIZATION_ERROR", fallbackUsed);
-                }
+                // 테넌트 시딩·브랜딩·승인 메일은 트랜잭션 커밋 후 백그라운드 실행 → HTTP 응답·프록시 타임아웃 완화
+                log.info("🔄 테넌트 사후 초기화 예약(커밋 후 비동기): tenantId={}, requestId={}", tenantId,
+                        requestId);
+                schedulePostApprovalInitializationAfterCommit(requestId, tenantId,
+                        request.getBusinessType(), actorId, fallbackUsedForPostApproval, false);
+                schedulePostApprovalInitialization = true;
             }
         }
 
@@ -849,9 +814,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         requestToSave.setDecisionNote(note);
 
-        // 초기화 작업 상태는 initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션으로 저장됨
-        // 별도 트랜잭션에서 이미 저장되었으므로 최종 저장 시 다시 설정할 필요 없음
-        // requestToSave는 이미 최신 버전으로 조회되었으므로 그대로 사용
+        if (schedulePostApprovalInitialization && finalStatus == OnboardingStatus.APPROVED
+                && finalSuccess != null && finalSuccess) {
+            String pendingJson = buildDecisionStatusJson(null,
+                    OnboardingConstants.PHASE_POST_APPROVAL_INITIALIZATION_PENDING,
+                    fallbackUsedForPostApproval, requestId, requestToSave.getTenantId());
+            requestToSave.setInitializationStatusJson(pendingJson);
+        }
 
         // 최종 저장 시도 (OptimisticLockException 발생 시 상위에서 별도 트랜잭션으로 재시도)
         try {
@@ -859,29 +828,23 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
                     saved.getVersion());
 
-            // 승인 성공 시 이메일 발송은 트랜잭션 커밋 후 별도 트랜잭션에서 처리
-            // ObjectOptimisticLockingFailureException 발생 시 트랜잭션이 rollback-only로 마크되므로
-            // 이메일 발송을 트랜잭션 외부로 분리하여 트랜잭션 롤백 방지
-            if (finalStatus == OnboardingStatus.APPROVED && finalSuccess != null && finalSuccess) {
+            // 사후 시딩을 비동기로 돌린 경우 승인 메일은 백그라운드 파이프라인에서 발송한다.
+            if (!schedulePostApprovalInitialization && finalStatus == OnboardingStatus.APPROVED
+                    && finalSuccess != null && finalSuccess) {
                 String finalTenantId = requestToSave.getTenantId();
                 if (finalTenantId != null) {
-                    // 트랜잭션 커밋 후 별도 트랜잭션에서 이메일 발송
-                    // TransactionSynchronizationManager를 사용하여 트랜잭션 커밋 후 실행
-                    org.springframework.transaction.support.TransactionSynchronizationManager
-                            .registerSynchronization(
-                                    new org.springframework.transaction.support.TransactionSynchronization() {
-                                        @Override
-                                        public void afterCommit() {
-                                            try {
-                                                sendOnboardingApprovalEmail(saved, finalTenantId);
-                                            } catch (Exception e) {
-                                                // 이메일 발송 실패는 로그만 남기고 온보딩 프로세스는 계속 진행
-                                                log.error(
-                                                        "온보딩 승인 이메일 발송 실패 (온보딩 프로세스는 계속 진행): requestId={}, error={}",
-                                                        requestId, e.getMessage(), e);
-                                            }
-                                        }
-                                    });
+                    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                sendOnboardingApprovalEmail(saved, finalTenantId);
+                            } catch (Exception e) {
+                                log.error(
+                                        "온보딩 승인 이메일 발송 실패 (온보딩 프로세스는 계속 진행): requestId={}, error={}",
+                                        requestId, e.getMessage(), e);
+                            }
+                        }
+                    });
                 } else {
                     log.warn("테넌트 ID가 없어 이메일 발송을 건너뜁니다: requestId={}", requestId);
                 }
@@ -1581,6 +1544,79 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
+     * 커밋 후 테넌트 시딩·브랜딩·승인 메일을 백그라운드에서 실행하여 decision HTTP 응답 시간을 단축한다.
+     *
+     * @param reapprovalFlow true이면 재승인(프로시저 생략) 경로의 phase/에러 라벨을 사용한다.
+     */
+    private void schedulePostApprovalInitializationAfterCommit(Long requestId, String tenantId,
+            String businessType, String actorId, boolean fallbackUsed, boolean reapprovalFlow) {
+        Runnable pipeline = () -> executePostApprovalInitializationWork(requestId, tenantId, businessType,
+                actorId, fallbackUsed, reapprovalFlow);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    onboardingPostApprovalExecutor.execute(() -> {
+                        try {
+                            pipeline.run();
+                        } catch (Exception e) {
+                            log.error("온보딩 사후 초기화 백그라운드 실행 실패: requestId={}, error={}", requestId,
+                                    e.getMessage(), e);
+                        }
+                    });
+                }
+            });
+        } else {
+            log.debug("활성 트랜잭션 없음 — 사후 초기화 동기 실행: requestId={}", requestId);
+            try {
+                pipeline.run();
+            } catch (Exception e) {
+                log.error("온보딩 사후 초기화 동기 실행 실패: requestId={}, error={}", requestId, e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * 테넌트 시딩·초기화 JSON 저장·브랜딩·승인 메일 (트랜잭션 커밋 이후 실행 전제).
+     */
+    private void executePostApprovalInitializationWork(Long requestId, String tenantId, String businessType,
+            String actorId, boolean fallbackUsed, boolean reapprovalFlow) {
+        String successPhase =
+                reapprovalFlow ? "REAPPROVAL_INITIALIZATION" : "POST_APPROVAL_INITIALIZATION";
+        String errorPhase = reapprovalFlow ? "REAPPROVAL_INITIALIZATION_ERROR"
+                : "POST_APPROVAL_INITIALIZATION_ERROR";
+        try {
+            log.info("🔄 테넌트 사후 초기화 시작: tenantId={}, requestId={}, reapprovalFlow={}", tenantId,
+                    requestId, reapprovalFlow);
+            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+            String initializationStatusJson =
+                    self.initializeTenantAfterOnboardingInNewTransaction(tenantId, businessType, actorId,
+                            requestId);
+            persistInitializationStatusAfterDecision(requestId, tenantId, initializationStatusJson,
+                    successPhase, fallbackUsed);
+            log.info("✅ 사후 초기화 상태 저장 완료: requestId={}", requestId);
+            try {
+                OnboardingRequest forBranding = repository.findActiveById(requestId).orElse(null);
+                if (forBranding != null) {
+                    setTenantBranding(tenantId, forBranding);
+                }
+            } catch (Exception e) {
+                log.warn("브랜드명 설정 실패 (사후 초기화): tenantId={}, error={}", tenantId, e.getMessage());
+            }
+            OnboardingRequest latest = repository.findActiveById(requestId).orElse(null);
+            if (latest != null) {
+                sendOnboardingApprovalEmail(latest, tenantId);
+            } else {
+                log.warn("온보딩 요청 재조회 실패로 승인 메일 생략: requestId={}", requestId);
+            }
+        } catch (Exception e) {
+            log.error("온보딩 후 테넌트 초기화 실패 (사후): tenantId={}, requestId={}, error={}", tenantId,
+                    requestId, e.getMessage(), e);
+            persistInitializationStatusAfterDecision(requestId, tenantId, null, errorPhase, fallbackUsed);
+        }
+    }
+
+    /**
      * 별도 트랜잭션에서 공통코드 삽입
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
@@ -2106,8 +2142,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 트랜잭션 커밋 대기 시간을 최소화
             String tenantRoleId = null;
             String roleName = null;
-            int maxRetries = 5; // 5회로 증가 (트랜잭션 커밋 대기)
-            long retryDelay = 100; // 100ms로 감소 (빠른 조회)
+            int maxRetries = 10;
+            long baseRetryDelayMs = 200L;
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 tenantRoleId = null;
@@ -2214,9 +2250,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 마지막 시도가 아니면 대기 후 재시도 (트랜잭션 커밋 대기)
                 if (attempt < maxRetries) {
                     try {
-                        Thread.sleep(retryDelay);
+                        long delay = Math.min(2500L, baseRetryDelayMs * attempt);
+                        Thread.sleep(delay);
                         log.debug("역할을 찾지 못함, 재시도 대기: tenantId={}, attempt={}/{}, delay={}ms",
-                                tenantId, attempt, maxRetries, retryDelay);
+                                tenantId, attempt, maxRetries, delay);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         log.warn("재시도 대기 중 인터럽트: tenantId={}", tenantId);
@@ -2510,6 +2547,18 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             OnboardingRequest request =
                     repository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestId).orElse(null);
+            if (request == null) {
+                log.debug("온보딩 상태 저장: tenant+id 조회 실패, id 단독 재조회 requestId={}, tenantId={}",
+                        requestId, tenantId);
+                request = repository.findActiveById(requestId).orElse(null);
+                if (request != null && tenantId != null && !tenantId.isBlank()
+                        && request.getTenantId() != null && !request.getTenantId().isBlank()
+                        && !tenantId.equals(request.getTenantId())) {
+                    log.warn(
+                            "온보딩 요청 tenant_id 불일치(상태 저장 계속): requestId={}, argTenantId={}, rowTenantId={}",
+                            requestId, tenantId, request.getTenantId());
+                }
+            }
             if (request != null) {
                 request.setInitializationStatusJson(statusJson);
                 repository.save(request);
@@ -2544,7 +2593,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
             transactionTemplate.setIsolationLevel(
                     org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
-            transactionTemplate.setTimeout(30); // 30초 타임아웃
+            transactionTemplate.setTimeout(120); // 장시간 배치/락 대기 대비 (온보딩 상태 JSON)
 
             transactionTemplate.executeWithoutResult(transactionStatus -> {
                 try {

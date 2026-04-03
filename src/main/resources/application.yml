@@ -14,21 +14,22 @@ spring:
 
   # 데이터베이스 설정 (환경 변수로 설정 - 하드코딩 금지)
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=5000&socketTimeout=10000&autoReconnect=false&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&zeroDateTimeBehavior=CONVERT_TO_NULL&sessionVariables=wait_timeout=180,interactive_timeout=180
+    # socketTimeout: 온보딩 프로시저·대량 시딩 등 장시간 쿼리 시 10초면 MySQLQueryInterruptedException 유발 → 상한 완화
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=15000&socketTimeout=600000&autoReconnect=false&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&zeroDateTimeBehavior=CONVERT_TO_NULL&sessionVariables=wait_timeout=600,interactive_timeout=600
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # 문자셋 설정 및 세션 타임아웃 설정 (HikariCP idle-timeout과 일치: 3분 = 180초)
-    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=180; SET SESSION interactive_timeout=180"
+    # 세션 wait_timeout은 장시간 온보딩 트랜잭션과 JDBC socketTimeout(10분)에 맞춤
+    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=600; SET SESSION interactive_timeout=600"
     # HikariCP 연결 풀 설정
     hikari:
       connection-timeout: 5000   # 5초 (연결 대기 시간 - 빠른 실패로 누수 방지)
       validation-timeout: 3000   # 3초 (연결 검증 시간 - 빠른 실패)
-      idle-timeout: 180000       # 3분 (유휴 연결 타임아웃 - 더 짧게)
-      max-lifetime: 300000       # 5분 (연결 최대 수명 - 더 짧게)
-      maximum-pool-size: 2       # 최대 연결 수 (최소화 - Too many connections 오류 방지)
-      minimum-idle: 0           # 최소 유휴 연결 수 (0으로 설정하여 시작 시 연결 시도 방지)
-      leak-detection-threshold: 30000  # 30초 (연결 누수 감지 - 매우 빠른 감지)
+      idle-timeout: 600000       # 10분 (장시간 온보딩 승인·시딩과 정합)
+      max-lifetime: 900000       # 15분
+      maximum-pool-size: 8       # 온보딩 시 다중 세션·배치 대비
+      minimum-idle: 1
+      leak-detection-threshold: 120000  # 2분 (장시간 작업 중 오탐 완화)
       connection-test-query: SELECT 1  # 연결 검증 쿼리
       keepalive-time: 30000     # 30초 (연결 유지 시간)
       register-mbeans: true     # JMX 모니터링 활성화

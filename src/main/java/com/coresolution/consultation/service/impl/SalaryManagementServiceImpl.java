@@ -20,6 +20,7 @@ import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -62,10 +63,20 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public ConsultantSalaryProfile createSalaryProfile(ConsultantSalaryProfile salaryProfile) {
-        log.info("➕ 급여 프로필 생성: ConsultantID={}, SalaryType={}", 
-                salaryProfile.getConsultantId(), salaryProfile.getSalaryType());
-        
-        return consultantSalaryProfileRepository.save(salaryProfile);
+        String ctxTenantId = TenantContextHolder.getTenantId();
+        String profileTenantId = salaryProfile.getTenantId();
+        log.info("➕ 급여 프로필 생성: ConsultantID={}, SalaryType={}, tenantId(context)={}, tenantId(entity)={}",
+                salaryProfile.getConsultantId(), salaryProfile.getSalaryType(), ctxTenantId,
+                profileTenantId);
+        try {
+            return consultantSalaryProfileRepository.save(salaryProfile);
+        } catch (DataIntegrityViolationException e) {
+            log.error(
+                    "급여 프로필 저장 실패(DataIntegrity): consultantId={}, tenantId(context)={}, tenantId(entity)={}, 원인={}",
+                    salaryProfile.getConsultantId(), ctxTenantId, profileTenantId,
+                    e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage());
+            throw e;
+        }
     }
     
     @Override

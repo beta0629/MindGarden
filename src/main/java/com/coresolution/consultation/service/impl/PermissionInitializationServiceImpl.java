@@ -1,6 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
@@ -12,6 +15,7 @@ import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.service.PermissionInitializationService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
@@ -76,12 +80,10 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             Permission.of("FINANCIAL_VIEW", "재무 통계 조회", "STATISTICS"),
             Permission.of("CONSULTATION_STATISTICS_VIEW", "상담 통계 조회", "STATISTICS"),
             
-            // 매핑 관련 권한
+            // 매핑 관련 권한 (MAPPING_MANAGE는 ADMIN 블록에 정의됨 — permission_code UK 중복 방지)
             Permission.of("MAPPING_VIEW", "매핑 조회", "MAPPING"),
-            Permission.of("MAPPING_MANAGE", "매핑 관리", "MAPPING"),
             
-            // 급여 관리 권한
-            Permission.of("SALARY_MANAGE", "급여 관리", "SALARY"),
+            // 급여 관리 권한 (SALARY_MANAGE는 ERP 블록에 정의됨 — UK 중복 방지)
             Permission.of("SALARY_VIEW", "급여 조회", "SALARY"),
             Permission.of("SALARY_CALCULATE", "급여 계산", "SALARY"),
             
@@ -92,17 +94,45 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             Permission.of("SYSTEM_NOTIFICATION_MANAGE", "시스템 공지 관리", "SYSTEM")
         );
         
-        // 배치 저장으로 변경하여 트랜잭션 시간 단축
-        List<Permission> permissionsToSave = new java.util.ArrayList<>();
+        Map<String, Permission> uniqueByCode = new LinkedHashMap<>();
         for (Permission permission : defaultPermissions) {
+            uniqueByCode.putIfAbsent(permission.getPermissionCode(), permission);
+        }
+        List<Permission> dedupedPermissions = new ArrayList<>(uniqueByCode.values());
+        if (dedupedPermissions.size() < defaultPermissions.size()) {
+            log.info("기본 권한 정의 중 permission_code 중복 {}건 제거(멱등·UK 방지)",
+                    defaultPermissions.size() - dedupedPermissions.size());
+        }
+        
+        // 배치 저장으로 변경하여 트랜잭션 시간 단축
+        List<Permission> permissionsToSave = new ArrayList<>();
+        for (Permission permission : dedupedPermissions) {
             if (!permissionRepository.existsByPermissionCode(permission.getPermissionCode())) {
                 permissionsToSave.add(permission);
             }
         }
         
         if (!permissionsToSave.isEmpty()) {
-            permissionRepository.saveAll(permissionsToSave);
-            log.info("기본 권한 초기화 완료: {}개 생성", permissionsToSave.size());
+            try {
+                permissionRepository.saveAll(permissionsToSave);
+                log.info("기본 권한 초기화 완료: {}개 생성", permissionsToSave.size());
+            } catch (DataIntegrityViolationException e) {
+                log.warn("기본 권한 일괄 저장 무결성 제약 — 건별 저장으로 폴백: {}", e.getMostSpecificCause().getMessage());
+                int inserted = 0;
+                for (Permission permission : permissionsToSave) {
+                    if (permissionRepository.existsByPermissionCode(permission.getPermissionCode())) {
+                        continue;
+                    }
+                    try {
+                        permissionRepository.save(permission);
+                        inserted++;
+                    } catch (DataIntegrityViolationException ex) {
+                        log.debug("권한 스킵(이미 존재 또는 동시 삽입): code={}",
+                                permission.getPermissionCode());
+                    }
+                }
+                log.info("기본 권한 초기화 폴백 완료: {}개 신규 삽입", inserted);
+            }
         } else {
             log.info("기본 권한 초기화 완료: 모든 권한이 이미 존재함");
         }
@@ -364,8 +394,13 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         int createdCount = 0;
         int skippedCount = 0;
         List<RolePermission> permissionsToSave = new java.util.ArrayList<>();
+        List<String> uniqueCodes = permissionCodes.stream().distinct().collect(Collectors.toList());
+        if (uniqueCodes.size() < permissionCodes.size()) {
+            log.debug("{} 역할 권한 목록 중복 코드 {}건 제거", roleName,
+                    permissionCodes.size() - uniqueCodes.size());
+        }
         
-        for (String permissionCode : permissionCodes) {
+        for (String permissionCode : uniqueCodes) {
             // 권한이 존재하는지 확인 (is_active 상태와 관계없이)
             boolean exists = rolePermissionRepository.existsByRoleNameAndPermissionCode(roleName, permissionCode);
             
@@ -391,9 +426,24 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             }
         }
         
-        // 배치 저장
+        // 배치 저장 (동시 기동·중복 시 UK 대비 폴백)
         if (!permissionsToSave.isEmpty()) {
-            rolePermissionRepository.saveAll(permissionsToSave);
+            try {
+                rolePermissionRepository.saveAll(permissionsToSave);
+            } catch (DataIntegrityViolationException e) {
+                log.warn("{} 역할권한 일괄 저장 무결성 제약 — 건별 저장: {}", roleName,
+                        e.getMostSpecificCause().getMessage());
+                for (RolePermission rp : permissionsToSave) {
+                    try {
+                        if (!rolePermissionRepository.existsByRoleNameAndPermissionCode(rp.getRoleName(),
+                                rp.getPermissionCode())) {
+                            rolePermissionRepository.save(rp);
+                        }
+                    } catch (DataIntegrityViolationException ex) {
+                        log.debug("역할권한 스킵: {} - {}", rp.getRoleName(), rp.getPermissionCode());
+                    }
+                }
+            }
         }
         
         log.info("{} 권한 매핑 완료: {}개 생성/활성화, {}개 스킵", roleName, createdCount, skippedCount);

@@ -14,6 +14,7 @@ import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
 import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -43,6 +44,13 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             return false;
         }
 
+        // PermissionCheckUtils와 동일: ADMIN은 동적 role_permissions 없이 허용 (메뉴/LNB·API 정합)
+        if (AdminRoleUtils.isAdmin(user)) {
+            log.debug("ADMIN 자동 권한 허용 (PermissionCheckUtils 정합): userId={}, permission={}",
+                    user.getUserId(), permissionCode);
+            return true;
+        }
+
         return hasPermission(user.getRole().name(), permissionCode);
     }
 
@@ -51,6 +59,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     public boolean hasPermission(String roleName, String permissionCode) {
         try {
             log.info("🔍 권한 체크 시작: 역할={}, 권한={}", roleName, permissionCode);
+
+            if (UserRole.ADMIN.name().equals(roleName)) {
+                log.debug("ADMIN 역할명 자동 권한 허용 (PermissionCheckUtils 정합): permission={}",
+                        permissionCode);
+                return true;
+            }
 
             // 직접 쿼리로 확인
             var directCheck = rolePermissionRepository
@@ -676,6 +690,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     public boolean hasPermission(UserRole userRole, String permissionCode) {
         try {
             log.debug("역할별 권한 체크: 역할={}, 권한={}", userRole, permissionCode);
+            if (userRole == null || permissionCode == null) {
+                return false;
+            }
+            if (userRole.isAdmin()) {
+                return true;
+            }
             return hasPermission(userRole.name(), permissionCode);
         } catch (Exception e) {
             log.error("역할별 권한 체크 실패: 역할={}, 권한={}", userRole, permissionCode, e);

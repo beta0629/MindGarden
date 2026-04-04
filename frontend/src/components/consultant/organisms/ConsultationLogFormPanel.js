@@ -204,7 +204,7 @@ const ConsultationLogFormPanel = ({
           onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
           placeholder="위험도를 선택하세요"
           aria-label="위험도 평가 필수 선택"
-          className="mg-v2-form-badge-select mg-v2-w-full"
+          className="mg-v2-form-badge-select mg-v2-w-full mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--5"
           disabled={loadingCodes}
           error={!!validationErrors.riskAssessment}
         />
@@ -275,7 +275,7 @@ const ConsultationLogFormPanel = ({
           value={formData.goalAchievement}
           onChange={(v) => handleInputChange({ target: { name: 'goalAchievement', value: v } })}
           placeholder="선택하세요"
-          className="mg-v2-form-badge-select mg-v2-w-full"
+          className="mg-v2-form-badge-select mg-v2-w-full mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--3"
         />
       </div>
 

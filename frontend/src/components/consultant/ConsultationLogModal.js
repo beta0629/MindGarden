@@ -16,8 +16,15 @@ const DEFAULT_RISK_LEVEL_OPTIONS = [
   { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
   { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
   { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-  { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-color-secondary-main)', description: '위험 우선순위' }
+  /** 긴급과 구분: 동일하게 원형 이모지로 통일 */
+  { value: 'CRITICAL', label: '치명', icon: '🟣', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
 ];
+
+/** API codeLabel이 영문이어도 UI는 항상 한글·동일 아이콘 */
+const PRIORITY_DISPLAY_BY_VALUE = DEFAULT_RISK_LEVEL_OPTIONS.reduce((acc, row) => {
+  acc[row.value] = { label: row.label, icon: row.icon };
+  return acc;
+}, {});
 
 /**
  * 상담일지 작성 모달 컴포넌트
@@ -70,13 +77,20 @@ const ConsultationLogModal = ({
       const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
       const list = response?.codes ?? [];
       if (list.length > 0) {
-        const options = list.map(code => ({
-          value: code.codeValue,
-          label: code.codeLabel,
-          icon: code.icon,
-          color: code.colorCode,
-          description: code.codeDescription
-        }));
+        const options = list
+          .map((code) => {
+            const v = String(code.codeValue ?? '');
+            const preset = PRIORITY_DISPLAY_BY_VALUE[v];
+            return {
+              value: v,
+              label: preset?.label ?? code.koreanName ?? code.codeLabel ?? v,
+              icon: preset?.icon ?? code.icon,
+              color: code.colorCode,
+              description: code.codeDescription,
+              sortOrder: Number(code.sortOrder) || 0
+            };
+          })
+          .sort((a, b) => a.sortOrder - b.sortOrder);
         setPriorityOptions(options);
       } else {
         setPriorityOptions(DEFAULT_RISK_LEVEL_OPTIONS);

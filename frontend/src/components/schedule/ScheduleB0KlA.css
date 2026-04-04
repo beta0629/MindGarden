@@ -918,6 +918,41 @@
   grid-column: 1 / -1;
 }
 
+/* 위험도(5)·목표 달성도(3) BadgeSelect — 동일 그리드·칩 너비 정렬 */
+.mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid.mg-v2-badge-select {
+  display: grid;
+  gap: var(--cs-spacing-sm, 8px);
+  width: 100%;
+  align-items: stretch;
+}
+
+.mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid--3.mg-v2-badge-select {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid--5.mg-v2-badge-select {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid--5.mg-v2-badge-select {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid .mg-v2-badge-select__item {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  justify-content: center;
+  text-align: center;
+}
+
+.mg-v2-consultation-log-modal .mg-v2-consultation-log-modal__badge-select-grid .mg-v2-badge-select__item-label {
+  flex: 0 1 auto;
+  white-space: nowrap;
+}
+
 .mg-v2-consultation-log-modal__textarea {
   min-height: 5rem;
 }

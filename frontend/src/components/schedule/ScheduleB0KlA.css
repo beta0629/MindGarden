@@ -914,6 +914,10 @@
   gap: var(--spacing-lg, 1.25rem);
 }
 
+.mg-v2-consultation-log-modal__form-grid > .mg-v2-form-group {
+  min-width: 0;
+}
+
 .mg-v2-consultation-log-modal__form-group-full {
   grid-column: 1 / -1;
 }

@@ -192,7 +192,7 @@ const ConsultationLogFormPanel = ({
         />
       </div>
 
-      <div className="mg-v2-form-group">
+      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
         <span className="mg-v2-label">위험도 평가 *</span>
         <BadgeSelect
           options={riskLevels.map((l) => ({

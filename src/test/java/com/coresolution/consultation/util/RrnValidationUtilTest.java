@@ -131,6 +131,34 @@ class RrnValidationUtilTest {
             assertNull(RrnValidationUtil.toBirthDate("900101", "0"));
             assertNull(RrnValidationUtil.toBirthDate("90010", "1"));
         }
+
+        @Test
+        @DisplayName("뒤1자리 1·2 + 1900 해석이 100세 초과·2000 해석이 합리적이면 2000년대(오입력 보정)")
+        void prefer2000WhenPrimaryAgeOver99AndAltPlausible() {
+            LocalDate asOf = LocalDate.of(2026, 4, 4);
+            assertThat(RrnValidationUtil.resolveBirthDate(11, 7, 27, 2, asOf)).isEqualTo(LocalDate.of(2011, 7, 27));
+        }
+
+        @Test
+        @DisplayName("뒤1자리 1·2: 1900 해석이 100세 초과여도 2000 해석 만 나이가 5 미만이면 1900 유지")
+        void keep1900WhenAltWouldBeTooYoung() {
+            LocalDate asOf = LocalDate.of(2026, 6, 1);
+            assertThat(RrnValidationUtil.resolveBirthDate(24, 1, 1, 1, asOf)).isEqualTo(LocalDate.of(1924, 1, 1));
+        }
+
+        @Test
+        @DisplayName("뒤1자리 1·2: 1900·2000 모두 유효하고 1900 만 나이가 100 이하면 1900 유지")
+        void keep1900WhenAgeReasonable() {
+            LocalDate asOf = LocalDate.of(2026, 1, 1);
+            assertThat(RrnValidationUtil.resolveBirthDate(90, 1, 1, 1, asOf)).isEqualTo(LocalDate.of(1990, 1, 1));
+        }
+
+        @Test
+        @DisplayName("뒤1자리 1·2: 1900 해석 불가 날짜는 2000 해석(윤년 2/29)")
+        void leap2000When1900Invalid() {
+            assertTrue(RrnValidationUtil.validateFormat("000229", "2"));
+            assertThat(RrnValidationUtil.toBirthDate("000229", "2")).isEqualTo(LocalDate.of(2000, 2, 29));
+        }
     }
 
     @Nested

@@ -44,9 +44,15 @@ public final class RrnValidationUtil {
         if (mm < 1 || mm > 12 || dd < 1 || dd > 31) {
             return false;
         }
+        int seventh = Integer.parseInt(l, 10);
         try {
-            int century = (Integer.parseInt(l, 10) <= 2) ? 1900 : 2000;
-            LocalDate.of(century + yy, mm, dd);
+            if (seventh <= 2) {
+                // 1·2는 법적으로 1900년대이나, 1900 해석이 불가한 날짜(윤년 등)는 2000 해석만 허용
+                LocalDate d1900 = tryLocalDate(1900 + yy, mm, dd);
+                LocalDate d2000 = tryLocalDate(2000 + yy, mm, dd);
+                return d1900 != null || d2000 != null;
+            }
+            LocalDate.of(2000 + yy, mm, dd);
             return true;
         } catch (Exception e) {
             return false;
@@ -70,8 +76,41 @@ public final class RrnValidationUtil {
         int mm = Integer.parseInt(f.substring(2, 4), 10);
         int dd = Integer.parseInt(f.substring(4, 6), 10);
         int seventh = Integer.parseInt(l, 10);
-        int century = (seventh <= 2) ? 1900 : 2000;
-        return LocalDate.of(century + yy, mm, dd);
+        return resolveBirthDate(yy, mm, dd, seventh, LocalDate.now());
+    }
+
+    /**
+     * 뒤 1자리가 1·2일 때: 법적 해석은 1900년대이나, 오입력(2000년대 생인데 1·2만 넣은 경우)으로
+     * 100세를 초과하는 비현실적 만 나이가 되면 2000년대 해석을 채택한다.
+     * (예: 110727+2 → 1911이 아닌 2011)
+     * 1924+1처럼 1900 해석이 100세 초과이나 2000 해석 만 나이가 5 미만이면 1900 해석을 유지한다.
+     */
+    static LocalDate resolveBirthDate(int yy, int mm, int dd, int seventh, LocalDate asOf) {
+        if (seventh <= 2) {
+            LocalDate primary = tryLocalDate(1900 + yy, mm, dd);
+            LocalDate alt = tryLocalDate(2000 + yy, mm, dd);
+            if (primary == null) {
+                return alt;
+            }
+            if (alt == null || alt.isAfter(asOf)) {
+                return primary;
+            }
+            Integer agePrimary = toAge(primary, asOf);
+            Integer ageAlt = toAge(alt, asOf);
+            if (agePrimary != null && agePrimary > 99 && ageAlt != null && ageAlt >= 5 && ageAlt <= 99) {
+                return alt;
+            }
+            return primary;
+        }
+        return LocalDate.of(2000 + yy, mm, dd);
+    }
+
+    private static LocalDate tryLocalDate(int year, int month, int day) {
+        try {
+            return LocalDate.of(year, month, day);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -81,13 +120,23 @@ public final class RrnValidationUtil {
      * @return 만 나이, null 입력 시 null
      */
     public static Integer toAge(LocalDate birthDate) {
-        if (birthDate == null) {
+        return toAge(birthDate, LocalDate.now());
+    }
+
+    /**
+     * 기준일(asOf) 기준 만 나이 계산
+     *
+     * @param birthDate 생년월일
+     * @param asOf      기준일
+     * @return 만 나이, null 입력 시 null
+     */
+    public static Integer toAge(LocalDate birthDate, LocalDate asOf) {
+        if (birthDate == null || asOf == null) {
             return null;
         }
-        LocalDate today = LocalDate.now();
-        int age = today.getYear() - birthDate.getYear();
-        if (today.getMonthValue() < birthDate.getMonthValue()
-                || (today.getMonthValue() == birthDate.getMonthValue() && today.getDayOfMonth() < birthDate.getDayOfMonth())) {
+        int age = asOf.getYear() - birthDate.getYear();
+        if (asOf.getMonthValue() < birthDate.getMonthValue()
+                || (asOf.getMonthValue() == birthDate.getMonthValue() && asOf.getDayOfMonth() < birthDate.getDayOfMonth())) {
             age--;
         }
         return age;

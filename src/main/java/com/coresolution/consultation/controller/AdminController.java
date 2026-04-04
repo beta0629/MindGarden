@@ -18,7 +18,6 @@ import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
 // 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
-import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
@@ -28,6 +27,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationRecordService;
@@ -91,6 +91,7 @@ public class AdminController extends BaseApiController {
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
     private final CommonCodeService commonCodeService;
+    private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     private final StatusCodeHelper statusCodeHelper;
     private final OnboardingService onboardingService;
     private final RealTimeStatisticsService realTimeStatisticsService;
@@ -2537,7 +2538,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getBranchCode());
 
         Map<String, Object> statistics;
-        if (isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+        if (roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
                 && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", currentUser.getRole(),
                     currentUser.getBranchCode());
@@ -2654,7 +2655,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
+        if (currentUser == null || (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -2690,7 +2691,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
+        if (currentUser == null || (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -3004,7 +3005,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3059,7 +3060,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3099,7 +3100,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3136,7 +3137,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3169,7 +3170,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
 
@@ -3195,7 +3196,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
 
@@ -3526,48 +3527,6 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회) /** 표준 관리자 역할: ADMIN,
-     * TENANT_ADMIN, PRINCIPAL, OWNER /** 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음 /**
-     * 
-     * @param role 사용자 역할 /**
-     * @return 관리자 역할 여부
-     */
-    private boolean isAdminRoleFromCommonCode(UserRole role) {
-        if (role == null) {
-            return false;
-        }
-        try {
-            // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
-            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-            if (roleCodes == null || roleCodes.isEmpty()) {
-                // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
-                return role != null && role.isAdmin();
-            }
-            // 공통코드에서 관리자 역할인지 확인
-            String roleName = role.name();
-            boolean fromCommonCode = roleCodes.stream().anyMatch(
-                    code -> code.getCodeValue().equals(roleName) && (code.getExtraData() != null
-                            && (code.getExtraData().contains("\"isAdmin\":true")
-                                    || code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
-            return fromCommonCode || role.isAdmin();
-        } catch (Exception e) {
-            log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
-            // 폴백: 표준 관리자 역할만 체크
-            return role != null && role.isAdmin();
-        }
-    }
-
-    /**
-     * 공통코드에서 관리자 또는 스태프 역할인지 확인 (ERP 제외 동일 접근용)
-     *
-     * @param role 사용자 역할
-     * @return ADMIN 또는 STAFF(공통코드 기준)이면 true
-     */
-    private boolean isAdminOrStaffRoleFromCommonCode(UserRole role) {
-        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
-    }
-
-    /**
      * 현재 테넌트에 기본 공통코드 추가 (기존 테넌트용) POST /api/v1/admin/initialize-default-codes
      */
     @PostMapping("/initialize-default-codes")
@@ -3606,35 +3565,6 @@ public class AdminController extends BaseApiController {
         } catch (Exception e) {
             log.error("❌ 기본 공통코드 추가 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
             throw new RuntimeException("기본 공통코드 추가 중 오류가 발생했습니다: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * /** 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회) /** BRANCH_MANAGER → STAFF로
-     * 통합 /**
-     * 
-     * @param role 사용자 역할 /**
-     * @return 사무원 역할 여부
-     */
-    private boolean isStaffRoleFromCommonCode(UserRole role) {
-        if (role == null) {
-            return false;
-        }
-        try {
-            // 공통코드에서 사무원 역할 목록 조회
-            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-            if (roleCodes == null || roleCodes.isEmpty()) {
-                return role == UserRole.STAFF;
-            }
-            // 공통코드에서 사무원 역할인지 확인
-            String roleName = role.name();
-            return roleCodes.stream().anyMatch(
-                    code -> code.getCodeValue().equals(roleName) && (code.getExtraData() != null
-                            && (code.getExtraData().contains("\"isStaff\":true")
-                                    || code.getExtraData().contains("\"roleType\":\"STAFF\""))));
-        } catch (Exception e) {
-            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
-            return role == UserRole.STAFF;
         }
     }
 }

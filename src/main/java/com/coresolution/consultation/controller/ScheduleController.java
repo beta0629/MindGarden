@@ -20,6 +20,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -67,6 +68,7 @@ public class ScheduleController extends BaseApiController {
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
     private final CommonCodeService commonCodeService;
+    private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final DynamicPermissionService dynamicPermissionService;
     private final com.coresolution.consultation.repository.UserRepository userRepository;
@@ -208,7 +210,7 @@ public class ScheduleController extends BaseApiController {
         
         if (userRole != null) {
             UserRole role = UserRole.fromString(userRole);
-            if (!isAdminOrStaffRoleFromCommonCode(role)) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
                 log.warn("❌ 관리자 권한 없음: {}", userRole);
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
@@ -233,7 +235,7 @@ public class ScheduleController extends BaseApiController {
         
         if (userRole != null) {
             UserRole role = UserRole.fromString(userRole);
-            if (!isAdminOrStaffRoleFromCommonCode(role)) {
+            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
                 log.warn("❌ 관리자 권한 없음: {}", userRole);
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
@@ -272,9 +274,12 @@ public class ScheduleController extends BaseApiController {
         debugInfo.put("roleName", currentUser.getRole().name());
         debugInfo.put("roleDisplayName", currentUser.getRole().getDisplayName());
         debugInfo.put("isAdmin", currentUser.getRole().isAdmin());
-        debugInfo.put("isBranchManager", isStaffRoleFromCommonCode(currentUser.getRole()));
-        debugInfo.put("isHeadquartersAdmin", isAdminRoleFromCommonCode(currentUser.getRole()));
-        debugInfo.put("isBranchSuperAdmin", isAdminRoleFromCommonCode(currentUser.getRole()));
+        debugInfo.put("isBranchManager",
+            roleCommonCodeAuthorizationService.isStaffRoleFromCommonCode(currentUser.getRole()));
+        debugInfo.put("isHeadquartersAdmin",
+            roleCommonCodeAuthorizationService.isAdminRoleFromCommonCode(currentUser.getRole()));
+        debugInfo.put("isBranchSuperAdmin",
+            roleCommonCodeAuthorizationService.isAdminRoleFromCommonCode(currentUser.getRole()));
         // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         debugInfo.put("tenantId", com.coresolution.core.context.TenantContextHolder.getTenantId());
         
@@ -300,7 +305,8 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(consultantId)) {
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 스케줄을 조회할 권한이 없습니다.");
         }
         
@@ -624,7 +630,8 @@ public class ScheduleController extends BaseApiController {
         log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
         
         UserRole role = UserRole.fromString(userRole);
-        if (role == null || !isAdminOrStaffRoleFromCommonCode(role)) {
+        if (role == null
+                || !roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
@@ -1112,7 +1119,8 @@ public class ScheduleController extends BaseApiController {
         }
         
         try {
-            boolean isAdmin = isAdminOrStaffRoleFromCommonCode(user.getRole());
+            boolean isAdmin =
+                roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(user.getRole());
             log.info("🔍 관리자 권한 확인 (공통코드 기반): userId={}, userRole={}, isAdmin={}", 
                 user.getId(), user.getRole().name(), isAdmin);
             
@@ -1138,89 +1146,15 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
-     /**
-     * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
-     * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
-     * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
-     * @param role 사용자 역할
-     * @return 관리자 역할 여부
-     */
-    private boolean isAdminRoleFromCommonCode(UserRole role) {
-        if (role == null) {
-            return false;
-        }
-        try {
-            // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
-            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-            if (roleCodes == null || roleCodes.isEmpty()) {
-                // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
-                return role == UserRole.ADMIN || 
-                       role.isAdmin();
-            }
-            // 공통코드에서 관리자 역할인지 확인
-            String roleName = role.name();
-            return roleCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
-                              (code.getExtraData() != null && 
-                               (code.getExtraData().contains("\"isAdmin\":true") || 
-                                code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
-        } catch (Exception e) {
-            log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
-            // 폴백: 표준 관리자 역할만 체크
-            return role == UserRole.ADMIN || 
-                       role.isAdmin();
-        }
-    }
-    
-    /**
-     /**
-     * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
-     * BRANCH_MANAGER → STAFF로 통합
-     * @param role 사용자 역할
-     * @return 사무원 역할 여부
-     */
-    private boolean isStaffRoleFromCommonCode(UserRole role) {
-        if (role == null) {
-            return false;
-        }
-        try {
-            // 공통코드에서 사무원 역할 목록 조회
-            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-            if (roleCodes == null || roleCodes.isEmpty()) {
-                return role == UserRole.STAFF;
-            }
-            // 공통코드에서 사무원 역할인지 확인
-            String roleName = role.name();
-            return roleCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
-                              (code.getExtraData() != null && 
-                               (code.getExtraData().contains("\"isStaff\":true") || 
-                                code.getExtraData().contains("\"roleType\":\"STAFF\""))));
-        } catch (Exception e) {
-            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
-            return role == UserRole.STAFF;
-        }
-    }
-
-    /**
-     * 공통코드에서 관리자 또는 스태프 역할인지 확인 (ERP 제외 동일 접근용)
-     *
-     * @param role 사용자 역할
-     * @return ADMIN 또는 STAFF(공통코드 기준)이면 true
-     */
-    private boolean isAdminOrStaffRoleFromCommonCode(UserRole role) {
-        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
-    }
-
-    /**
      * 어드민·스태프는 타인 스케줄 등록/수정/삭제 가능. canRegisterScheduler와 동일한 기준.
      * @param role 사용자 역할
      * @return 타인 스케줄 등록·수정·삭제 가능 여부
      */
     private boolean canRegisterOrModifyOthersSchedule(UserRole role) {
-        if (role == null) return false;
-        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role)
-            || role.isAdmin() || role.isStaff();
+        if (role == null) {
+            return false;
+        }
+        return roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role);
     }
 
     /**
@@ -1286,7 +1220,8 @@ public class ScheduleController extends BaseApiController {
             targetConsultantId = currentUser.getId();
         }
         
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(targetConsultantId)) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(targetConsultantId)) {
             log.warn("❌ 다른 상담사의 다가오는 상담 조회 권한 없음: currentUser={}, targetConsultant={}", 
                     currentUser.getId(), targetConsultantId);
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 일정을 조회할 권한이 없습니다.");
@@ -1345,7 +1280,8 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(consultantId)) {
             log.warn("❌ 다른 상담사의 미작성 상담일지 조회 권한 없음: currentUser={}, targetConsultant={}", 
                     currentUser.getId(), consultantId);
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");
@@ -1394,7 +1330,8 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(consultantId)) {
             log.warn("❌ 다른 상담사의 긴급 내담자 조회 권한 없음: currentUser={}, targetConsultant={}", 
                     currentUser.getId(), consultantId);
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");
@@ -1443,7 +1380,8 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(consultantId)) {
             log.warn("❌ 다른 상담사의 다음 상담 준비 조회 권한 없음: currentUser={}, targetConsultant={}", 
                     currentUser.getId(), consultantId);
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");

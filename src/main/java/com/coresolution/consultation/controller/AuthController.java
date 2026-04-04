@@ -1,9 +1,6 @@
 package com.coresolution.consultation.controller;
 
 // 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
-import com.coresolution.consultation.entity.CommonCode;
-
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +21,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
-import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -65,8 +62,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthController extends BaseApiController {
     
-    private final CommonCodeService commonCodeService;
-    
+    private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
+
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
@@ -1357,7 +1354,7 @@ public class AuthController extends BaseApiController {
                 }
             } else if (request.getLoginType() == BranchLoginRequest.LoginType.HEADQUARTERS) {
                 // 본사 로그인인 경우, 본사 관리자 역할인지 확인
-                if (!isAdminRoleFromCommonCode(user.getRole())) {
+                if (!roleCommonCodeAuthorizationService.isAdminRoleFromCommonCode(user.getRole())) {
                     throw new IllegalArgumentException("본사 로그인은 본사 관리자만 가능합니다.");
                 }
             }
@@ -1678,7 +1675,8 @@ public class AuthController extends BaseApiController {
             User user = users.get(0);
             
             // 표준화 2025-12-05: 브랜치/HQ 개념 제거, 표준 관리자 역할만 체크
-            if (user.getRole() == null || !isAdminRoleFromCommonCode(user.getRole())) {
+            if (user.getRole() == null
+                    || !roleCommonCodeAuthorizationService.isAdminRoleFromCommonCode(user.getRole())) {
                 throw new IllegalArgumentException("관리자 로그인은 관리자만 가능합니다.");
             }
             if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
@@ -1829,40 +1827,6 @@ public class AuthController extends BaseApiController {
             // tenantId가 없으면 중복 검사 없이 기본값 반환 (보안상 위험하지만 레거시 호환)
         }
         return candidate;
-    }
-    
-    /**
-     * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
-     * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
-     * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
-     * @param role 사용자 역할
-     * @return 관리자 역할 여부
-     */
-    private boolean isAdminRoleFromCommonCode(UserRole role) {
-        if (role == null) {
-            return false;
-        }
-        try {
-            // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
-            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-            if (roleCodes == null || roleCodes.isEmpty()) {
-                // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
-                return role == UserRole.ADMIN || 
-                       role.isAdmin();
-            }
-            // 공통코드에서 관리자 역할인지 확인
-            String roleName = role.name();
-            return roleCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
-                              (code.getExtraData() != null && 
-                               (code.getExtraData().contains("\"isAdmin\":true") || 
-                                code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
-        } catch (Exception e) {
-            log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
-            // 폴백: 표준 관리자 역할만 체크
-            return role == UserRole.ADMIN || 
-                       role.isAdmin();
-        }
     }
 
     /**

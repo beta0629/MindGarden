@@ -195,10 +195,15 @@ const ConsultationLogFormPanel = ({
       <div className="mg-v2-form-group">
         <span className="mg-v2-label">위험도 평가 *</span>
         <BadgeSelect
-          options={[{ value: '', label: '위험도를 선택하세요' }, ...riskLevels.map((l) => ({ value: l.value, label: l.label }))]}
+          options={riskLevels.map((l) => ({
+            value: l.value,
+            label: l.label,
+            icon: l.icon
+          }))}
           value={formData.riskAssessment}
           onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
           placeholder="위험도를 선택하세요"
+          aria-label="위험도 평가 필수 선택"
           className="mg-v2-form-badge-select mg-v2-w-full"
           disabled={loadingCodes}
           error={!!validationErrors.riskAssessment}

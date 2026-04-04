@@ -10,6 +10,15 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 
+/** PRIORITY 공통코드가 비어 있거나 로드 실패 시 — 목표 달성도와 동일하게 칩으로 바로 선택 */
+const DEFAULT_RISK_LEVEL_OPTIONS = [
+  { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+  { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+  { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
+  { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+  { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-color-secondary-main)', description: '위험 우선순위' }
+];
+
 /**
  * 상담일지 작성 모달 컴포넌트
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 큰 모달(fullscreen).
@@ -33,7 +42,7 @@ const ConsultationLogModal = ({
   const [clientWithStats, setClientWithStats] = useState(null);
   const [consultationRecord, setConsultationRecord] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [priorityOptions, setPriorityOptions] = useState([]);
+  const [priorityOptions, setPriorityOptions] = useState(DEFAULT_RISK_LEVEL_OPTIONS);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
@@ -69,16 +78,12 @@ const ConsultationLogModal = ({
           description: code.codeDescription
         }));
         setPriorityOptions(options);
+      } else {
+        setPriorityOptions(DEFAULT_RISK_LEVEL_OPTIONS);
       }
     } catch (error) {
       console.error('우선순위 코드 로드 실패:', error);
-      setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-        { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-        { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-color-secondary-main)', description: '위험 우선순위' }
-      ]);
+      setPriorityOptions(DEFAULT_RISK_LEVEL_OPTIONS);
     } finally {
       setLoadingCodes(false);
     }
@@ -469,8 +474,13 @@ const ConsultationLogModal = ({
   };
 
   const handleInputChange = (e) => {
-    e.stopPropagation(); // 이벤트 버블링 방지
-    const { name, value, type, checked } = e.target;
+    // BadgeSelect 등은 { target: { name, value } }만 넘김 — stopPropagation 없음
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    const target = e?.target;
+    if (!target?.name) return;
+    const { name, value, type, checked } = target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value

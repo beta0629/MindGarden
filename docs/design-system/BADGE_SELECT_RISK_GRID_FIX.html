@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>BadgeSelect 위험도 그리드 — 마크업·CSS 권장 (core-publisher)</title>
+  <!--
+    core-coder 전달 요약 (3줄)
+    1) 위험도 BadgeSelect는 radiogroup/role=radio 패턴으로 키보드·스크린리더와 정합; 아이템은 button + __item-icon + __item-label 구조 유지.
+    2) 5열 grid에서 minmax(0,1fr) + width:100% + nowrap 라벨이 칩 내부 텍스트를 자름 → 트랙을 min-content 기반으로 두거나 아이템/라벨에 min-width·줄바꿈·overflow 정책을 명시해 적용할 것(ScheduleB0KlA.css·BadgeSelect.css).
+    3) 아래 HTML은 JSX 변환 시 로직만 연결; 스타일은 토큰만 사용하고 실제 구현 시 unified-design-tokens 로드 전제.
+  -->
+  <style>
+    /* 데모·권장안: 색상·간격은 디자인 토큰만 (hex 없음) */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .demo-wrap {
+      max-width: 100%;
+      padding: var(--cs-spacing-md, 1rem);
+      font-family: system-ui, sans-serif;
+    }
+    .demo-note {
+      color: var(--mg-color-text-secondary, var(--cs-secondary-600));
+      font-size: 0.875rem;
+      margin-bottom: var(--cs-spacing-md, 1rem);
+    }
+    /* 그리드 컨테이너 권장 + badge-select-risk-grid-fix--demo: 이 HTML 전용 시연(코더는 ScheduleB0KlA 모달 스코프로 이전) */
+    .badge-select-risk-grid-fix--demo.mg-v2-badge-select {
+      display: grid;
+      gap: var(--cs-spacing-sm, 8px);
+      width: 100%;
+      align-items: stretch;
+      grid-template-columns: repeat(2, minmax(min-content, 1fr));
+    }
+    @media (min-width: 640px) {
+      .badge-select-risk-grid-fix--demo.mg-v2-badge-select {
+        grid-template-columns: repeat(5, minmax(min-content, 1fr));
+      }
+    }
+    /* 권장: 칩 — 그리드 셀에서 수축 시 라벨이 잘리지 않게 최소 너비·flex 허용 */
+    .badge-select-risk-grid-fix--demo.mg-v2-badge-select .mg-v2-badge-select__item {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      justify-content: center;
+      text-align: center;
+    }
+    .badge-select-risk-grid-fix--demo.mg-v2-badge-select .mg-v2-badge-select__item-icon {
+      flex-shrink: 0;
+    }
+    .badge-select-risk-grid-fix--demo.mg-v2-badge-select .mg-v2-badge-select__item-label {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-wrap">
+    <p class="demo-note">
+      레이아웃 스케치: <strong>좁은 뷰(~300px 한 컬럼)</strong> — 2열 그리드로 5칩을 2+2+1 배치, 열 폭은 min-content~1fr로 라벨 최소 폭을 확보.<br />
+      <strong>640px 이상</strong> — 5열 동일 폭 그리드로 한 줄 배치, 동일 min-content 기반 트랙으로 긴 라벨은 칩 내 줄바꿈(overflow-wrap)으로 처리.
+    </p>
+
+    <!-- Organism: 위험도 평가 — BadgeSelect 그리드 (시맨틱 라디오 그룹) -->
+    <span id="risk-assessment-legend" class="sr-only">위험도 평가</span>
+    <div
+      class="badge-select-risk-grid-fix--demo mg-v2-badge-select mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--5"
+      role="radiogroup"
+      aria-labelledby="risk-assessment-legend"
+    >
+      <button
+        type="button"
+        class="mg-v2-badge-select__item"
+        role="radio"
+        aria-checked="false"
+        aria-label="위험도 없음"
+      >
+        <span class="mg-v2-badge-select__item-icon" aria-hidden="true">○</span>
+        <span class="mg-v2-badge-select__item-label">없음</span>
+      </button>
+
+      <button
+        type="button"
+        class="mg-v2-badge-select__item"
+        role="radio"
+        aria-checked="false"
+        aria-label="위험도 낮음"
+      >
+        <span class="mg-v2-badge-select__item-icon" aria-hidden="true">▁</span>
+        <span class="mg-v2-badge-select__item-label">낮음</span>
+      </button>
+
+      <button
+        type="button"
+        class="mg-v2-badge-select__item mg-v2-badge-select__item--selected"
+        role="radio"
+        aria-checked="true"
+        aria-label="위험도 보통"
+      >
+        <span class="mg-v2-badge-select__item-icon" aria-hidden="true">▃</span>
+        <span class="mg-v2-badge-select__item-label">보통</span>
+      </button>
+
+      <button
+        type="button"
+        class="mg-v2-badge-select__item"
+        role="radio"
+        aria-checked="false"
+        aria-label="위험도 높음"
+      >
+        <span class="mg-v2-badge-select__item-icon" aria-hidden="true">▅</span>
+        <span class="mg-v2-badge-select__item-label">높음</span>
+      </button>
+
+      <button
+        type="button"
+        class="mg-v2-badge-select__item"
+        role="radio"
+        aria-checked="false"
+        aria-label="위험도 매우 높음"
+      >
+        <span class="mg-v2-badge-select__item-icon" aria-hidden="true">█</span>
+        <span class="mg-v2-badge-select__item-label">매우 높음</span>
+      </button>
+    </div>
+
+    <!--
+      권장 CSS 규칙 목록 (속성명 + 값, hex 금지·토큰 var(--*) 위주)
+      — 그리드 컨테이너 (.mg-v2-badge-select + 모달 그리드 모디파이어)
+        • display: grid;
+        • width: 100%;
+        • gap: var(--cs-spacing-sm, 8px);  (또는 프로젝트 스펙 토큰)
+        • align-items: stretch;
+        • grid-template-columns: repeat(2, minmax(min-content, 1fr));  /* 기본(모바일) 5항목 2열 */
+        • @media (min-width: 640px) { grid-template-columns: repeat(5, minmax(min-content, 1fr)); }
+        • 대안: repeat(5, minmax(0, 1fr)) 유지 시 열 최소폭 부족 → 아이템에서 줄바꿈 필수
+
+      — 칩 (.mg-v2-badge-select__item, 그리드 스코프)
+        • width: 100%;
+        • min-width: 0;  /* 그리드 자식 기본 min-auto 우회 */
+        • box-sizing: border-box;
+        • justify-content: center; (또는 flex-start + gap 유지)
+        • min-height: 터치 토큰(예: 44px)은 기존 모달 스코프 유지 시 var 기반만
+
+      — 아이콘 (.mg-v2-badge-select__item-icon)
+        • flex-shrink: 0;
+
+      — 라벨 (.mg-v2-badge-select__item-label) — 잘림 방지 정책(택1 또는 병행)
+        • min-width: 0;
+        • flex: 1 1 auto;
+        • overflow-wrap: anywhere; (또는 break-word)
+        • white-space: normal;  /* nowrap 제거 시 한글 단어 줄바꿈 허용 */
+        • 대안(한 줄 유지): overflow-x: auto; text-overflow: ellipsis; 단, 스크롤/말줄임 UX 검토
+        • 대안: min-width: min-content; on .mg-v2-badge-select__item → 그리드 밖으로 넘칠 수 있어 컨테이너 overflow-x: auto 병행 검토
+
+      — 트랙 비교 메모
+        • minmax(0, 1fr): 균등 분배하나 셀 최소 0 → 내부 nowrap과 충돌 시 클리핑
+        • minmax(min-content, 1fr): 열이 라벨 최소 너비만큼은 확보, 남는 공간 균등 분배
+        • auto-fit/auto-fill + minmax: 가변 열 수가 스펙과 다르면 위험도 5고정에는 repeat(n, …) 권장
+    -->
+  </div>
+</body>
+</html>

@@ -127,7 +127,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                 break;
             case 'AFTERNOON':
                 startDate.setHours(14, 0, 0);
-                endDate = new Date(date + 'T18:00:00+09:00');
+                endDate = new Date(date + 'T20:00:00+09:00');
                 title = '🌇 오후 휴무';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
@@ -154,7 +154,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
-                endDate = new Date(date + 'T18:00:00+09:00');
+                endDate = new Date(date + 'T20:00:00+09:00');
                 title = '🌆 오후 반반차 2';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;

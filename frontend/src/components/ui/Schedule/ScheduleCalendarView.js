@@ -191,7 +191,7 @@ const ScheduleCalendarView = ({
                 businessHours={{
                     daysOfWeek: [1, 2, 3, 4, 5], // 월-금
                     startTime: '09:00',
-                    endTime: '18:00'
+                    endTime: '20:00'
                 }}
                 expandRows={true}
                 stickyHeaderDates={true}

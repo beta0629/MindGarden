@@ -104,8 +104,12 @@ public class ConsultantController extends BaseApiController {
 
         Consultant consultant = consultantService.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
+        String consultationHours = consultant.getConsultationHours();
+        if (consultationHours == null || consultationHours.isBlank()) {
+            consultationHours = "09:00-20:00";
+        }
         ConsultantScheduleSettingsDto dto = ConsultantScheduleSettingsDto.builder()
-                .consultationHours(consultant.getConsultationHours())
+                .consultationHours(consultationHours)
                 .breakTime(consultant.getBreakTime())
                 .sessionDuration(consultant.getSessionDuration())
                 .breakBetweenSessions(consultant.getBreakBetweenSessions())

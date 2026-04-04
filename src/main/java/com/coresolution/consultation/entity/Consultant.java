@@ -87,7 +87,7 @@ public class Consultant extends User {
     private String preferredConsultationMethods; // "FACE_TO_FACE,ONLINE,PHONE"
     
     @Column(name = "consultation_hours")
-    private String consultationHours; // "09:00-18:00"
+    private String consultationHours; // "09:00-20:00" (기본·마이그레이션과 정합)
     
     @Column(name = "break_time")
     private String breakTime; // "12:00-13:00"

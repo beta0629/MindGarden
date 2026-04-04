@@ -160,7 +160,7 @@ public class BranchAccountCreator {
         consultant.setMaxClients(20);
         consultant.setSessionDuration(60);
         consultant.setBreakTime("15분");
-        consultant.setConsultationHours("09:00-18:00");
+        consultant.setConsultationHours("09:00-20:00");
         
         consultantRepository.save(consultant);
         System.out.println("  ✓ 테스트 상담사 계정 생성: " + email);

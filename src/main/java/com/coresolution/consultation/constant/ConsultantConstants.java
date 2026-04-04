@@ -36,7 +36,8 @@ public class ConsultantConstants {
     
     // === 스케줄 관련 ===
     public static final int WORK_START_HOUR = 9;
-    public static final int WORK_END_HOUR = 18;
+    /** 업무 종료 시각(시). 슬롯 시작 시각은 &lt; WORK_END_HOUR (예: 9~19시 시작 → 20시 종료) */
+    public static final int WORK_END_HOUR = 20;
     public static final int SLOT_DURATION_MINUTES = 60;
     
     // === 통계 관련 ===
@@ -70,7 +71,7 @@ public class ConsultantConstants {
     // === 기본값 ===
     public static final String DEFAULT_SPECIALTY = "GENERAL";
     public static final boolean DEFAULT_AVAILABILITY = true;
-    public static final int DEFAULT_SLOT_COUNT = 9; // 9시부터 18시까지 1시간 단위
+    public static final int DEFAULT_SLOT_COUNT = 11; // 9시부터 19시까지 1시간 단위(20시 종료)
     
     // === 페이지네이션 ===
     public static final int DEFAULT_PAGE_SIZE = 10;

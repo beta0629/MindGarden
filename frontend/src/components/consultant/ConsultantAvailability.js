@@ -95,11 +95,14 @@ const ConsultantAvailability = () => {
     { key: 'SUNDAY', label: '일요일', short: '일' }
   ];
 
-  // 시간 슬롯 생성 (30분 단위) - 10:00부터 20:00까지
+  // 시간 슬롯 생성 (30분 단위) - 10:00부터 20:00 시작까지(20:00 행 포함)
   const generateTimeSlots = () => {
     const slots = [];
-    for (let hour = 10; hour < 20; hour++) {
+    for (let hour = 10; hour <= 20; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
+        if (hour === 20 && minute > 0) {
+          break;
+        }
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         slots.push({
           value: timeString,
@@ -430,7 +433,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
   const [formData, setFormData] = useState({
     dayOfWeek: initialData?.dayOfWeek || 'MONDAY',
     startTime: initialData?.startTime || '09:00',
-    endTime: initialData?.endTime || '17:00',
+    endTime: initialData?.endTime || '20:00',
     duration: initialData?.duration || 60,
     isActive: initialData?.isActive !== false
   });

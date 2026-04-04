@@ -113,7 +113,7 @@ const TimeSlotGrid = ({
 
     const setDefaultConsultantInfo = () => {
         setConsultantInfo({
-            consultationHours: '09:00-18:00',
+            consultationHours: '09:00-20:00',
             breakTime: '12:00-13:00',
             sessionDuration: 50,
             breakBetweenSessions: 10

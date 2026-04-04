@@ -764,7 +764,7 @@ const ConsultationLogModal = ({
                     </div>
                   </div>
                   {clientWithStats && (
-                    <div>
+                    <div title="활성 매칭 또는 일정에 등록된 상담사 수(중복 제거)">
                       <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>매칭·패키지 요약</span>
                       <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
                         연결 상담사 {clientWithStats.currentConsultants ?? 0}명

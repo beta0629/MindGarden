@@ -67,6 +67,8 @@ class ClientStatsServiceImplTest {
         TenantContextHolder.setTenantId(TENANT);
         lenient().when(encryptionUtil.safeDecrypt(anyString()))
             .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(scheduleRepository.findDistinctConsultantIdsByClientId(anyString(), anyLong()))
+            .thenReturn(Collections.emptyList());
     }
 
     @AfterEach
@@ -166,6 +168,34 @@ class ClientStatsServiceImplTest {
 
         assertNotNull(result.get("client"));
         assertEquals(0L, result.get("currentConsultants"));
+    }
+
+    @Test
+    @DisplayName("getClientWithStats: 매칭 없고 일정만 있으면 스케줄 상담사 distinct로 currentConsultants 반영")
+    void getClientWithStats_countsConsultantsFromSchedulesWhenMappingsEmpty() {
+        User user = User.builder()
+            .userId("c1")
+            .email("e@test.com")
+            .password("pw")
+            .name("이름")
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(CLIENT_USER_ID);
+        user.setTenantId(TENANT);
+        user.setIsActive(true);
+
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(user));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.findDistinctConsultantIdsByClientId(TENANT, CLIENT_USER_ID))
+            .thenReturn(Collections.singletonList(5L));
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(1L);
+
+        Map<String, Object> result = clientStatsService.getClientWithStats(TENANT, CLIENT_USER_ID);
+
+        assertEquals(1L, result.get("currentConsultants"));
     }
 
     @Test

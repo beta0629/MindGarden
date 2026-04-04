@@ -39,10 +39,10 @@ public interface ClientStatsService {
     List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId);
     
     /**
-     * 현재 활성 매핑 수 계산
-     * 
+     * 활성 매칭(ACTIVE·PAYMENT_CONFIRMED)과 비삭제 일정의 distinct 상담사 ID 합집합 크기.
+     *
      * @param clientId 내담자 ID
-     * @return 활성 매핑 수
+     * @return 고유 연결 상담사 수
      */
     Long calculateCurrentConsultants(Long clientId);
     

@@ -3,8 +3,10 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
@@ -163,17 +165,27 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return 0L;
         }
-        
-        return (long) mappingRepository.findByClientIdAndStatusNot(
+
+        Set<Long> consultantIds = new HashSet<>();
+        mappingRepository.findByClientIdAndStatusNot(
             tenantId,
-            clientId, 
+            clientId,
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             ConsultantClientMapping.MappingStatus.INACTIVE
         ).stream()
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE || 
-                        m.getStatus() == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
-            .count();
+            .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE
+                || m.getStatus() == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+            .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
+            .filter(id -> id != null)
+            .forEach(consultantIds::add);
+
+        List<Long> fromSchedules = scheduleRepository.findDistinctConsultantIdsByClientId(tenantId, clientId);
+        if (fromSchedules != null) {
+            fromSchedules.stream().filter(id -> id != null).forEach(consultantIds::add);
+        }
+
+        return (long) consultantIds.size();
     }
 
     @Override

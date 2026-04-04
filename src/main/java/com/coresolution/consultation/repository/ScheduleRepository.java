@@ -449,6 +449,17 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false")
     long countByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
+
+    /**
+     * 내담자별 비삭제 스케줄에 연결된 고유 상담사 ID (tenantId·clientId 스코프, consultantId 비null만).
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     * @return distinct consultant_id 목록
+     */
+    @Query("SELECT DISTINCT s.consultantId FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId "
+        + "AND s.isDeleted = false AND s.consultantId IS NOT NULL")
+    List<Long> findDistinctConsultantIdsByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

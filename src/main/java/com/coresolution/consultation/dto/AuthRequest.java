@@ -1,5 +1,7 @@
 package com.coresolution.consultation.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,8 +24,11 @@ import lombok.NoArgsConstructor;
 public class AuthRequest {
     
     /**
-     * 사용자 이메일
+     * 로그인 식별자: 이메일(소문자 정규화) 또는 휴대폰 번호(서버에서 숫자 정규화).
+     * JSON 필드명은 하위 호환을 위해 {@code email}을 유지하며, {@code identifier} 별칭을 허용한다.
      */
+    @JsonProperty("email")
+    @JsonAlias({"identifier"})
     private String email;
     
     /**

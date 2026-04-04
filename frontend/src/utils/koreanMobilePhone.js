@@ -1,0 +1,40 @@
+/**
+ * 한국 휴대폰 번호 정규화·검증.
+ * 백엔드 com.coresolution.consultation.util.LoginIdentifierUtils 와 동일 규칙.
+ */
+
+/** 정규화된 숫자열이 휴대폰 패턴인지 (010 / 011·016~019 만 허용). */
+const KOREAN_MOBILE_DIGITS_PATTERN = /^01(0\d{8}|[16789]\d{7,8})$/;
+
+/**
+ * 비숫자 제거 후 한국 휴대폰 관용 정규화 (+82 → 0, 10자리 10… → 0 접두).
+ *
+ * @param {string|null|undefined} raw
+ * @returns {string}
+ */
+export function normalizeKoreanMobileDigits(raw) {
+  if (raw == null || raw === '') {
+    return '';
+  }
+  let digits = String(raw).replaceAll(/\D/g, '');
+  if (digits.startsWith('82') && digits.length >= 10) {
+    digits = `0${digits.slice(2)}`;
+  }
+  if (digits.length === 10 && digits.startsWith('10')) {
+    digits = `0${digits}`;
+  }
+  return digits;
+}
+
+/**
+ * normalizeKoreanMobileDigits 결과가 휴대폰 번호인지.
+ *
+ * @param {string} digits
+ * @returns {boolean}
+ */
+export function isValidKoreanMobileDigits(digits) {
+  if (!digits) {
+    return false;
+  }
+  return KOREAN_MOBILE_DIGITS_PATTERN.test(digits);
+}

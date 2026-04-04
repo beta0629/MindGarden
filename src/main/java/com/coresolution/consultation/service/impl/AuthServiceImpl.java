@@ -100,12 +100,12 @@ public class AuthServiceImpl implements AuthService {
             
             if (authentication.isAuthenticated()) {
                 // 사용자 정보 조회
-                User user = userService.findByEmail(email)
+                User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
                 // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
                 if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
+                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: loginPrincipal={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
                     return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
                 }
                 
@@ -311,8 +311,8 @@ public class AuthServiceImpl implements AuthService {
                 log.info("🔐 Spring Security 인증 성공: email={}", email);
                 
                 // 사용자 정보 조회
-                log.info("👤 사용자 정보 조회 시작: email={}", email);
-                User user = userService.findByEmail(email)
+                log.info("👤 사용자 정보 조회 시작: loginPrincipal={}", email);
+                User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
                 log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}", 

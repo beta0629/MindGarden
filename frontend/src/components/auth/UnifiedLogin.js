@@ -44,6 +44,12 @@ import {
   WRONG_PATH_MESSAGE,
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
+import {
+  LOGIN_IDENTIFIER_FIELD_HINT,
+  LOGIN_IDENTIFIER_LABEL,
+  LOGIN_IDENTIFIER_PASSWORD_REQUIRED,
+  LOGIN_IDENTIFIER_PLACEHOLDER
+} from '../../constants/loginDisplay';
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -487,7 +493,7 @@ const UnifiedLogin = () => {
 
     if (!actualFormData.email || !actualFormData.password) {
       console.log('❌ 폼 데이터 유효성 검사 실패');
-      showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
+      showTooltip(LOGIN_IDENTIFIER_PASSWORD_REQUIRED, 'warning');
       return;
     }
 
@@ -708,18 +714,23 @@ const UnifiedLogin = () => {
             {/* ID/PW 로그인 폼 */}
             <form onSubmit={handleSubmit} className="mg-v2-login-form">
               <div className="mg-v2-field">
-                <label htmlFor="email" className="mg-v2-label">이메일</label>
+                <label htmlFor="email" className="mg-v2-label">{LOGIN_IDENTIFIER_LABEL}</label>
+                <p className="mg-v2-text-secondary mg-v2-text-sm" id="login-identifier-hint">
+                  {LOGIN_IDENTIFIER_FIELD_HINT}
+                </p>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   name="email"
+                  autoComplete="username"
                   defaultValue={formData.email}
                   onChange={handleInputChange}
                   onFocus={() => console.log('📧 이메일 필드 포커스됨')}
                   onBlur={() => console.log('📧 이메일 필드 포커스 해제됨')}
                   className="mg-v2-input"
-                  placeholder="이메일을 입력하세요"
+                  placeholder={LOGIN_IDENTIFIER_PLACEHOLDER}
                   required
+                  aria-describedby="login-identifier-hint"
                 />
               </div>
 

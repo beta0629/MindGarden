@@ -10,6 +10,7 @@ import {
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
+import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
@@ -46,6 +47,8 @@ const TabletRegister = () => {
   const [errors, setErrors] = useState({});
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [phoneCheckStatus, setPhoneCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
 
@@ -121,6 +124,57 @@ const TabletRegister = () => {
     }
   };
 
+  /** 휴대폰 중복 여부만 API로 확인. true: 중복, false: 사용가능, 예외 시 null */
+  const checkPhoneDuplicate = async (phone) => {
+    const trimmed = phone?.trim();
+    if (!trimmed) return null;
+    const normalized = normalizeKoreanMobileDigits(trimmed);
+    if (!isValidKoreanMobileDigits(normalized)) return null;
+    try {
+      const response = await apiGet(
+        `/api/v1/auth/duplicate-check/phone?phone=${encodeURIComponent(normalized)}`
+      );
+      if (response && typeof response.isDuplicate === 'boolean') {
+        return response.isDuplicate;
+      }
+      return null;
+    } catch (error) {
+      console.error('휴대폰 중복 확인 오류:', error);
+      return null;
+    }
+  };
+
+  const handlePhoneDuplicateCheck = async () => {
+    const phone = formData.phone?.trim();
+    if (!phone) {
+      notificationManager.show(VALIDATION_MESSAGES.REQUIRED_PHONE, 'warning');
+      return;
+    }
+    const normalized = normalizeKoreanMobileDigits(phone);
+    if (!isValidKoreanMobileDigits(normalized)) {
+      notificationManager.show(VALIDATION_MESSAGES.INVALID_PHONE, 'warning');
+      return;
+    }
+
+    setIsCheckingPhone(true);
+    setPhoneCheckStatus('checking');
+    try {
+      const isDuplicate = await checkPhoneDuplicate(phone);
+      if (isDuplicate === true) {
+        setPhoneCheckStatus('duplicate');
+        notificationManager.show(VALIDATION_MESSAGES.PHONE_EXISTS, 'error');
+      } else if (isDuplicate === false) {
+        setPhoneCheckStatus('available');
+        notificationManager.show(VALIDATION_MESSAGES.PHONE_AVAILABLE, 'success');
+      } else {
+        setPhoneCheckStatus(null);
+        notificationManager.show(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_ERROR, 'error');
+      }
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     let nextValue = type === 'checkbox' ? checked : value;
@@ -143,6 +197,9 @@ const TabletRegister = () => {
     }
     if (name === 'email') {
       setEmailCheckStatus(null);
+    }
+    if (name === 'phone') {
+      setPhoneCheckStatus(null);
     }
   };
 
@@ -180,7 +237,9 @@ const TabletRegister = () => {
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = '휴대폰 번호를 입력해주세요.';
+      newErrors.phone = VALIDATION_MESSAGES.REQUIRED_PHONE;
+    } else if (!isValidKoreanMobileDigits(normalizeKoreanMobileDigits(formData.phone))) {
+      newErrors.phone = VALIDATION_MESSAGES.INVALID_PHONE;
     }
 
     if (formData.rrnFirst6.length !== 6 || !/^\d{6}$/.test(formData.rrnFirst6)) {
@@ -224,6 +283,21 @@ const TabletRegister = () => {
       }
     }
 
+    if (phoneCheckStatus !== 'available') {
+      const isPhoneDup = await checkPhoneDuplicate(formData.phone);
+      if (isPhoneDup === true) {
+        setPhoneCheckStatus('duplicate');
+        notificationManager.show(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED_MESSAGE, 'error');
+        return;
+      }
+      if (isPhoneDup === false) {
+        setPhoneCheckStatus('available');
+      } else {
+        notificationManager.show(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_ERROR, 'error');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -232,7 +306,7 @@ const TabletRegister = () => {
         email: formData.email.trim(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        phone: formData.phone.trim(),
+        phone: normalizeKoreanMobileDigits(formData.phone.trim()),
         gender: formData.gender || 'OTHER',
         agreeTerms: formData.agreeTerms,
         agreePrivacy: formData.agreePrivacy
@@ -423,17 +497,42 @@ const TabletRegister = () => {
 
             <div className="mg-v2-form-group">
               <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호 *</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
-                placeholder="010-0000-0000"
-                value={formData.phone}
-                onChange={handleInputChange}
-                required
-                maxLength="13"
-              />
+              <div className="mg-v2-form-email-row">
+                <div className="mg-v2-form-email-row__input-wrap">
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
+                    placeholder="010-0000-0000"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    onBlur={() => {
+                      const phone = formData.phone?.trim();
+                      const normalized = phone ? normalizeKoreanMobileDigits(phone) : '';
+                      if (phone && isValidKoreanMobileDigits(normalized)) {
+                        handlePhoneDuplicateCheck();
+                      }
+                    }}
+                    required
+                    maxLength="13"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePhoneDuplicateCheck}
+                  disabled={isCheckingPhone || !formData.phone?.trim()}
+                  className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                >
+                  {isCheckingPhone ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                </button>
+              </div>
+              {phoneCheckStatus === 'duplicate' && (
+                <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.PHONE_EXISTS}</small>
+              )}
+              {phoneCheckStatus === 'available' && (
+                <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.PHONE_AVAILABLE}</small>
+              )}
               {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
             </div>
 

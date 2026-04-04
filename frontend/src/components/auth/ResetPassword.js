@@ -31,7 +31,9 @@ const ResetPassword = () => {
 
       try {
         setIsValidating(true);
-        const response = await apiGet(`/api/password-reset/validate-token?token=${encodeURIComponent(token)}`);
+        const response = await apiGet(
+          `/api/v1/auth/password-reset/validate-token?token=${encodeURIComponent(token)}`
+        );
         
         if (!response.success || !response.valid) {
           notificationManager.error('토큰이 만료되었거나 유효하지 않습니다.');

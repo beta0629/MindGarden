@@ -18,6 +18,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * UserService 구현체
@@ -377,10 +379,95 @@ public class UserServiceImpl implements UserService {
 
         return Optional.empty();
     }
+
+    @Override
+    public Optional<User> findByLoginPrincipal(String loginPrincipal) {
+        if (loginPrincipal == null || loginPrincipal.isEmpty()) {
+            return Optional.empty();
+        }
+        if (LoginIdentifierUtils.looksLikeEmail(loginPrincipal)) {
+            return findByEmail(loginPrincipal);
+        }
+        return findByNormalizedPhoneInTenant(loginPrincipal, TenantContextHolder.getRequiredTenantId());
+    }
+
+    /**
+     * 테넌트 내 사용자 전화번호를 복호화·정규화하여 일치 여부로 조회한다(DB 암호화 비결정적 저장 대응).
+     */
+    private Optional<User> findByNormalizedPhoneInTenant(String normalizedDigits, String tenantId) {
+        if (normalizedDigits == null || normalizedDigits.isEmpty()) {
+            return Optional.empty();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findByNormalizedPhoneInTenant: tenantId 없음 — 조회 생략");
+            return Optional.empty();
+        }
+        List<User> users = userRepository.findByTenantId(tenantId);
+        for (User u : users) {
+            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
+                return Optional.of(u);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 사용자 레코드의 phone(평문·암호화)을 복호화·정규화한 값이 {@code normalizedDigits}와 같은지 여부.
+     *
+     * @param u                 사용자
+     * @param normalizedDigits  {@link LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
+     * @return 일치하면 true
+     */
+    private boolean userPhoneMatchesNormalizedDigits(User u, String normalizedDigits) {
+        if (u.getPhone() == null || u.getPhone().isBlank()) {
+            return false;
+        }
+        try {
+            String plain = encryptionUtil.safeDecrypt(u.getPhone());
+            String candidate = LoginIdentifierUtils.normalizeKoreanMobileDigits(plain);
+            return normalizedDigits.equals(candidate);
+        } catch (Exception e) {
+            log.trace("userPhoneMatchesNormalizedDigits: 전화 비교 스킵 userId={}", u.getId());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean existsPhoneDuplicateForPublicSignup(String normalizedDigits, String tenantIdOrNull) {
+        if (normalizedDigits == null || normalizedDigits.isEmpty()
+                || !LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedDigits)) {
+            return false;
+        }
+        if (StringUtils.hasText(tenantIdOrNull)) {
+            List<User> users = userRepository.findByTenantId(tenantIdOrNull.trim());
+            for (User u : users) {
+                if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        List<User> globalCandidates = userRepository.findAllWithNonBlankPhone();
+        for (User u : globalCandidates) {
+            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     @Override
     public Optional<User> findByPhone(String phone) {
-        return userRepository.findByPhone(phone);
+        if (phone == null || phone.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findByPhone: tenantId 없음 — 전역 전화 조회 금지, 빈 결과 반환");
+            return Optional.empty();
+        }
+        return findByNormalizedPhoneInTenant(
+            LoginIdentifierUtils.normalizeKoreanMobileDigits(phone), tenantId);
     }
     
     @Override

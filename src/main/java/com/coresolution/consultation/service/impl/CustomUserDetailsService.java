@@ -32,8 +32,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         log.info("🔍 CustomUserDetailsService.loadUserByUsername 호출: email={}", email);
         
         try {
-            log.info("🔍 사용자 조회 시작: email={}", email);
-            User user = userService.findByEmail(email)
+            log.info("🔍 사용자 조회 시작: loginPrincipal={}", email);
+            User user = userService.findByLoginPrincipal(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
             
             log.info("✅ 사용자 조회 성공: userId={}, email={}, tenantId={}, role={}, isActive={}, passwordHash={}", 

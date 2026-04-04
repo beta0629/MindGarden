@@ -28,6 +28,14 @@ public interface UserService extends BaseService<User, Long> {
      * 이메일로 사용자 조회
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * 로그인 식별자로 현재 테넌트 내 사용자 조회(이메일 또는 정규화된 휴대폰 숫자열).
+     *
+     * @param loginPrincipal {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeForPasswordLogin(String)} 결과 권장
+     * @return 사용자
+     */
+    Optional<User> findByLoginPrincipal(String loginPrincipal);
     
     /**
      * 전화번호로 사용자 조회
@@ -304,6 +312,19 @@ public interface UserService extends BaseService<User, Long> {
      * 특정 필드 중복 검사 (ID 제외)
      */
     boolean isDuplicateExcludingId(Long excludeId, String fieldName, String fieldValue);
+
+    /**
+     * 공개 회원가입용 전화번호 중복 여부.
+     * {@code tenantId}가 있으면 해당 테넌트 활성 사용자만 순회하며 복호화·정규화 비교
+     * ({@link com.coresolution.consultation.service.impl.UserServiceImpl#findByNormalizedPhoneInTenant} 와 동일).
+     * 없으면 {@link com.coresolution.consultation.repository.UserRepository#existsByEmailAll(String)} 과 대칭되는 전역 스캔
+     * (신뢰도·성능은 테넌트 스코프가 우선; 전역은 레거시·컨텍스트 부재 호환).
+     *
+     * @param normalizedDigits {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
+     * @param tenantIdOrNull   {@link com.coresolution.core.context.TenantContextHolder} 등, 없으면 null·빈 문자열
+     * @return 유효한 휴대폰 숫자열이고 동일 번호가 있으면 true
+     */
+    boolean existsPhoneDuplicateForPublicSignup(String normalizedDigits, String tenantIdOrNull);
     
     // ==================== 특수 조회 메서드 ====================
     

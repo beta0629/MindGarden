@@ -152,7 +152,8 @@ export const VALIDATION_MESSAGES = {
   INVALID_EMAIL_FORMAT: '올바른 이메일 형식을 입력해주세요.',
   
   INVALID_EMAIL: '올바른 이메일 형식이 아닙니다.',
-  INVALID_PHONE: '올바른 휴대폰 번호 형식이 아닙니다.',
+  INVALID_PHONE:
+    '휴대폰 번호만 입력해 주세요. 010·011·016~019이며 하이픈은 입력해도 됩니다.',
   INVALID_PASSWORD: '비밀번호는 6자 이상이어야 합니다.',
   INVALID_NAME: '이름은 2자 이상이어야 합니다.',
   
@@ -162,6 +163,11 @@ export const VALIDATION_MESSAGES = {
   MAX_LENGTH: '최대 {max}자까지 입력 가능합니다.',
   
   EMAIL_EXISTS: '이미 사용 중인 이메일입니다.',
+  PHONE_AVAILABLE: '사용 가능한 휴대폰 번호입니다.',
+  PHONE_DUPLICATE_CHECK_ERROR: '휴대폰 번호 중복 확인 중 오류가 발생했습니다.',
+  PHONE_DUPLICATE_CHECK_REQUIRED_MESSAGE:
+    '이미 사용 중인 휴대폰 번호입니다. 휴대폰 중복확인을 해주세요.',
+  PHONE_DUPLICATE_CHECK_REQUIRED: '휴대폰 번호 중복 확인을 해주세요.',
   PHONE_EXISTS: '이미 사용 중인 휴대폰 번호입니다.',
   USERNAME_EXISTS: '이미 사용 중인 사용자 ID입니다.',
   

@@ -22,6 +22,7 @@ import {
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
+import { LOGIN_IDENTIFIER_PASSWORD_REQUIRED } from '../../constants/loginDisplay';
 import '../../styles/auth/TabletLogin.css';
 
 const TabletLogin = () => {
@@ -181,7 +182,7 @@ const TabletLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
+      showTooltip(LOGIN_IDENTIFIER_PASSWORD_REQUIRED, 'warning');
       return;
     }
 
@@ -346,7 +347,7 @@ const TabletLogin = () => {
       // SMS 인증 성공 시 자동 로그인 처리
       // 전화번호로 사용자 조회 후 로그인
       const loginData = {
-        phoneNumber: formData.phoneNumber,
+        phoneNumber,
         loginType: 'SMS_AUTH'
       };
       

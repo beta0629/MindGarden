@@ -157,8 +157,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByNickname(String nickname);
     
     /**
-     * 전화번호로 사용자 조회 (활성 상태만)
+     * 전화번호로 사용자 조회 (테넌트 조건 없음).
+     *
+     * @deprecated 멀티테넌트 위반 — {@link com.coresolution.consultation.service.UserService#findByPhone(String)} 또는
+     *             {@link com.coresolution.consultation.service.UserService#findByLoginPrincipal(String)} 사용.
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.phone = ?1 AND u.isDeleted = false")
     Optional<User> findByPhone(String phone);
     
@@ -167,6 +171,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.phone = ?1 AND u.isDeleted = false")
     boolean existsByPhone(String phone);
+
+    /**
+     * 공개 전화 중복 검사(테넌트 컨텍스트 없음)용 후보 로드.
+     * phone 컬럼이 암호화 저장이면 DB equals로 중복 판정 불가 — 서비스에서 복호화·정규화 비교.
+     * {@link #existsByEmailAll(String)} 과 동일하게 삭제 행 필터 없음(전역 중복 정책 대칭).
+     */
+    @Query("SELECT u FROM User u WHERE u.phone IS NOT NULL AND u.phone <> ''")
+    List<User> findAllWithNonBlankPhone();
     
     /**
      * 테넌트별 모든 사용자 조회 (tenantId 필터링)

@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
@@ -355,6 +356,14 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
+        String normalizedPhone = LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone());
+        if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhone)) {
+            throw new IllegalArgumentException("올바른 휴대폰 번호를 입력해주세요.");
+        }
+        if (userService.existsPhoneDuplicateForPublicSignup(normalizedPhone, tenantId)) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
         User user = new User();
         user.setUserId(generateUniqueUserId(email, tenantId));
         user.setEmail(email);
@@ -374,10 +383,7 @@ public class AuthController extends BaseApiController {
             user.setBirthDate(request.getBirthDate());
         }
 
-        if (StringUtils.hasText(request.getPhone())) {
-            String sanitizedPhone = request.getPhone().replaceAll("[^0-9]", "");
-            user.setPhone(sanitizedPhone);
-        }
+        user.setPhone(normalizedPhone);
 
         user.setRole(UserRole.CLIENT);
         user.setIsActive(true);
@@ -420,6 +426,29 @@ public class AuthController extends BaseApiController {
         result.put("isDuplicate", isDuplicate);
         result.put("available", !isDuplicate);
         result.put("message", isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        return success(result);
+    }
+
+    /**
+     * 회원가입용 전화번호 중복 확인 (공개 API).
+     * GET /api/v1/auth/duplicate-check/phone?phone={phone}
+     * 테넌트 컨텍스트가 있으면 테넌트 스코프만 검사, 없으면 전역 검사({@link #checkEmailDuplicateForSignup} 와 대칭).
+     */
+    @GetMapping("/duplicate-check/phone")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkPhoneDuplicateForSignup(
+            @RequestParam String phone) {
+        String tenantId = TenantContextHolder.getTenantId();
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(phone);
+        boolean isDuplicate = false;
+        if (StringUtils.hasText(normalized)
+                && LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+            isDuplicate = userService.existsPhoneDuplicateForPublicSignup(normalized, tenantId);
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("phone", normalized);
+        result.put("isDuplicate", isDuplicate);
+        result.put("available", !isDuplicate);
+        result.put("message", isDuplicate ? "이미 사용 중인 전화번호입니다." : "사용 가능한 전화번호입니다.");
         return success(result);
     }
 
@@ -548,15 +577,17 @@ public class AuthController extends BaseApiController {
     @PostMapping("/confirm-duplicate-login")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmDuplicateLogin(@RequestBody Map<String, Object> request, HttpSession session, 
                                                   jakarta.servlet.http.HttpServletRequest httpRequest) {
-        String email = (String) request.get("email");
+        String rawIdentifier = (String) request.get("email");
         String password = (String) request.get("password");
         Boolean confirmTerminate = (Boolean) request.get("confirmTerminate");
         
-        if (email == null || password == null || confirmTerminate == null) {
+        if (rawIdentifier == null || password == null || confirmTerminate == null) {
             throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
         }
         
-        log.info("🔔 중복 로그인 확인 처리: email={}, confirmTerminate={}", email, confirmTerminate);
+        String loginPrincipal = LoginIdentifierUtils.normalizeAndValidateLoginIdentifier(rawIdentifier);
+        
+        log.info("🔔 중복 로그인 확인 처리: loginPrincipal={}, confirmTerminate={}", loginPrincipal, confirmTerminate);
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);
@@ -564,29 +595,17 @@ public class AuthController extends BaseApiController {
         String sessionId = session.getId();
         
         if (confirmTerminate) {
-        // 사용자가 기존 세션 종료를 확인한 경우
-        String tenantId = TenantContextHolder.getTenantId();
-        User user = null;
-        if (tenantId != null && !tenantId.isEmpty()) {
-            user = userRepository.findByTenantIdAndEmail(tenantId, email).orElse(null);
-        }
-        if (user == null) {
-            // 호환성 유지: 테넌트 컨텍스트가 없는 경우 첫 번째 활성 사용자
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
+            User user = userService.findByLoginPrincipal(loginPrincipal).orElse(null);
+            if (user == null) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
-            user = users.get(0);
-        }
-            
-            // 기존 세션들 정리
             authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
-            log.info("🔄 사용자 확인으로 기존 세션 정리 완료: email={}", email);
+            log.info("🔄 사용자 확인으로 기존 세션 정리 완료: loginPrincipal={}", loginPrincipal);
         }
         
         // 로그인 재시도
         AuthResponse authResponse = authService.authenticateWithSession(
-            email, password, sessionId, clientIp, userAgent
+            loginPrincipal, password, sessionId, clientIp, userAgent
         );
         
         if (authResponse.isSuccess()) {
@@ -612,7 +631,7 @@ public class AuthController extends BaseApiController {
             
             SessionUtils.setCurrentUser(session, sessionUser);
             
-            log.info("✅ 중복 로그인 확인 후 로그인 성공: {}", email);
+            log.info("✅ 중복 로그인 확인 후 로그인 성공: {}", loginPrincipal);
             
             Map<String, Object> data = new HashMap<>();
             data.put("user", authResponse.getUser());
@@ -659,23 +678,23 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("로그인 요청 데이터가 없습니다.");
         }
         
-        String email = request.getEmail();
+        String rawIdentifier = request.getEmail();
         String password = request.getPassword();
         
-        if (email == null || email.trim().isEmpty()) {
-            log.error("❌ 로그인 요청 실패: email이 없습니다.");
-            throw new IllegalArgumentException("이메일을 입력해주세요.");
+        if (rawIdentifier == null || rawIdentifier.trim().isEmpty()) {
+            log.error("❌ 로그인 요청 실패: 식별자 없음");
+            throw new IllegalArgumentException("이메일 또는 휴대폰 번호를 입력해주세요.");
         }
         
         if (password == null || password.trim().isEmpty()) {
             log.error("❌ 로그인 요청 실패: password가 없습니다.");
             throw new IllegalArgumentException("비밀번호를 입력해주세요.");
         }
-        // reset 시 저장된 값과 동일 규격으로 비교 (trim, email 소문자 통일)
-        email = email.trim().toLowerCase();
+        String loginPrincipal = LoginIdentifierUtils.normalizeAndValidateLoginIdentifier(rawIdentifier);
         password = password.trim();
 
-        log.info("🔐 로그인 시도: email={}, passwordLength={}", email, password != null ? password.length() : 0);
+        log.info("🔐 로그인 시도: loginPrincipal={}, passwordLength={}", loginPrincipal,
+            password != null ? password.length() : 0);
         
         // 로컬 프로파일에서만 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
         // 개발/운영 환경에서는 서브도메인 기반으로 정상 동작
@@ -693,10 +712,10 @@ public class AuthController extends BaseApiController {
         String sessionId = session.getId();
         
         // 중복로그인 방지 기능이 포함된 세션 기반 인증
-        log.info("🔐 authenticateWithSession 호출 시작: email={}, sessionId={}", email, sessionId);
+        log.info("🔐 authenticateWithSession 호출 시작: loginPrincipal={}, sessionId={}", loginPrincipal, sessionId);
         
         AuthResponse authResponse = authService.authenticateWithSession(
-            email, 
+            loginPrincipal, 
             password, 
             sessionId, 
             clientIp, 
@@ -706,19 +725,19 @@ public class AuthController extends BaseApiController {
         
         if (authResponse.isSuccess()) {
             // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
-            // userService.findByEmail 사용: 암호화된 이메일(legacy::...)도 복호화하여 조회 가능
-            User sessionUser = userService.findByEmail(email).orElse(null);
+            // userService.findByLoginPrincipal: 이메일·휴대폰·암호화 저장 이메일 대응
+            User sessionUser = userService.findByLoginPrincipal(loginPrincipal).orElse(null);
             if (sessionUser == null) {
                 throw new RuntimeException("사용자를 찾을 수 없습니다.");
             }
             
             // tenantId 확인 및 로깅
-            log.info("🔍 로그인 사용자 정보: userId={}, email={}, tenantId={}, role={}", 
-                    sessionUser.getId(), email, sessionUser.getTenantId(), sessionUser.getRole());
+            log.info("🔍 로그인 사용자 정보: userId={}, loginPrincipal={}, tenantId={}, role={}", 
+                    sessionUser.getId(), loginPrincipal, sessionUser.getTenantId(), sessionUser.getRole());
             
             if (sessionUser.getTenantId() == null || sessionUser.getTenantId().isEmpty()) {
-                log.error("❌ 로그인 사용자의 tenantId가 없습니다! userId={}, email={}", 
-                        sessionUser.getId(), email);
+                log.error("❌ 로그인 사용자의 tenantId가 없습니다! userId={}, loginPrincipal={}", 
+                        sessionUser.getId(), loginPrincipal);
                 String tid = resolveTenantIdForScopedUserLookup(authResponse);
                 if (tid != null && !tid.isEmpty()) {
                     Optional<User> dbUser = userRepository.findByTenantIdAndId(tid, sessionUser.getId());
@@ -823,7 +842,7 @@ public class AuthController extends BaseApiController {
                 log.warn("⚠️ 권한 캐시 클리어 실패 (무시): {}", e.getMessage());
             }
             
-            log.info("✅ 로그인 성공: {}", email);
+            log.info("✅ 로그인 성공: {}", loginPrincipal);
             
             // 응답 데이터 구성
             Map<String, Object> response = new HashMap<>();
@@ -843,7 +862,7 @@ public class AuthController extends BaseApiController {
             return success(response);
         } else if (authResponse.isRequiresConfirmation()) {
             // 중복 로그인 확인 요청
-            log.info("🔔 중복 로그인 확인 요청: {}", email);
+            log.info("🔔 중복 로그인 확인 요청: {}", loginPrincipal);
             Map<String, Object> data = new HashMap<>();
             data.put("message", authResponse.getMessage());
             data.put("requiresConfirmation", true);
@@ -1305,8 +1324,9 @@ public class AuthController extends BaseApiController {
     @PostMapping("/branch-login")
     public ResponseEntity<ApiResponse<BranchLoginResponse>> branchLogin(@RequestBody BranchLoginRequest request, HttpSession session, 
                                        jakarta.servlet.http.HttpServletRequest httpRequest) {
-        log.info("🏢 지점별 로그인 시도: email={}, branchCode={}, loginType={}", 
-            request.getEmail(), request.getBranchCode(), request.getLoginType());
+        String loginPrincipal = LoginIdentifierUtils.normalizeAndValidateLoginIdentifier(request.getEmail());
+        log.info("🏢 지점별 로그인 시도: loginPrincipal={}, branchCode={}, loginType={}", 
+            loginPrincipal, request.getBranchCode(), request.getLoginType());
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);
@@ -1331,7 +1351,7 @@ public class AuthController extends BaseApiController {
         
         // 기존 인증 로직 사용
         AuthResponse authResponse = authService.authenticateWithSession(
-            request.getEmail(), 
+            loginPrincipal, 
             request.getPassword(), 
             sessionId, 
             clientIp, 
@@ -1339,12 +1359,8 @@ public class AuthController extends BaseApiController {
         );
         
         if (authResponse.isSuccess()) {
-            // 멀티 테넌트 사용자 고려하여 조회
-            List<User> users = userRepository.findAllByEmail(request.getEmail());
-            if (users.isEmpty()) {
-                throw new RuntimeException("사용자를 찾을 수 없습니다.");
-            }
-            User user = users.get(0);
+            User user = userService.findByLoginPrincipal(loginPrincipal)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 지점 권한 검사
             if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
@@ -1376,8 +1392,8 @@ public class AuthController extends BaseApiController {
             session.setAttribute("loginType", request.getLoginType().name());
             session.setAttribute("branchCode", request.getBranchCode());
             
-            log.info("✅ 지점별 로그인 성공: email={}, branchCode={}, loginType={}", 
-                request.getEmail(), request.getBranchCode(), request.getLoginType());
+            log.info("✅ 지점별 로그인 성공: loginPrincipal={}, branchCode={}, loginType={}", 
+                loginPrincipal, request.getBranchCode(), request.getLoginType());
             
             // 응답 데이터 구성
             BranchLoginResponse.UserInfo userInfo = BranchLoginResponse.UserInfo.builder()
@@ -1518,14 +1534,15 @@ public class AuthController extends BaseApiController {
                                               @RequestBody Map<String, String> loginRequest, 
                                               HttpSession session, 
                                               jakarta.servlet.http.HttpServletRequest httpRequest) {
-        String email = loginRequest.get("email");
+        String rawIdentifier = loginRequest.get("email");
         String password = loginRequest.get("password");
         
-        if (email == null || password == null) {
-            throw new IllegalArgumentException("이메일과 비밀번호를 입력해주세요.");
+        if (rawIdentifier == null || password == null) {
+            throw new IllegalArgumentException("이메일 또는 휴대폰 번호와 비밀번호를 입력해주세요.");
         }
         
-        log.info("🏢 지점별 로그인 시도 (URL 방식): email={}, branchCode={}", email, branchCode);
+        String loginPrincipal = LoginIdentifierUtils.normalizeAndValidateLoginIdentifier(rawIdentifier);
+        log.info("🏢 지점별 로그인 시도 (URL 방식): loginPrincipal={}, branchCode={}", loginPrincipal, branchCode);
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);
@@ -1544,16 +1561,12 @@ public class AuthController extends BaseApiController {
         
         // 기존 인증 로직 사용
         AuthResponse authResponse = authService.authenticateWithSession(
-            email, password, sessionId, clientIp, userAgent
+            loginPrincipal, password, sessionId, clientIp, userAgent
         );
         
         if (authResponse.isSuccess()) {
-            // 멀티 테넌트 사용자 고려하여 조회
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
-                throw new RuntimeException("사용자를 찾을 수 없습니다.");
-            }
-            User user = users.get(0);
+            User user = userService.findByLoginPrincipal(loginPrincipal)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 사용자가 해당 지점에 소속되어 있는지 확인
             if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(branchCode)) {
@@ -1575,7 +1588,7 @@ public class AuthController extends BaseApiController {
             session.setAttribute("loginType", "BRANCH");
             session.setAttribute("branchCode", branchCode);
             
-            log.info("✅ 지점별 로그인 성공 (URL 방식): email={}, branchCode={}", email, branchCode);
+            log.info("✅ 지점별 로그인 성공 (URL 방식): loginPrincipal={}, branchCode={}", loginPrincipal, branchCode);
             
             // 응답 데이터 구성
             Map<String, Object> userInfo = new HashMap<>();
@@ -1647,14 +1660,15 @@ public class AuthController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> headquartersLogin(@RequestBody Map<String, String> loginRequest, 
                                              HttpSession session, 
                                              jakarta.servlet.http.HttpServletRequest httpRequest) {
-        String email = loginRequest.get("email");
+        String rawIdentifier = loginRequest.get("email");
         String password = loginRequest.get("password");
         
-        if (email == null || password == null) {
-            throw new IllegalArgumentException("이메일과 비밀번호를 입력해주세요.");
+        if (rawIdentifier == null || password == null) {
+            throw new IllegalArgumentException("이메일 또는 휴대폰 번호와 비밀번호를 입력해주세요.");
         }
         
-        log.info("🏢 본사 로그인 시도: email={}", email);
+        String loginPrincipal = LoginIdentifierUtils.normalizeAndValidateLoginIdentifier(rawIdentifier);
+        log.info("🏢 본사 로그인 시도: loginPrincipal={}", loginPrincipal);
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);
@@ -1663,16 +1677,12 @@ public class AuthController extends BaseApiController {
         
         // 기존 인증 로직 사용
         AuthResponse authResponse = authService.authenticateWithSession(
-            email, password, sessionId, clientIp, userAgent
+            loginPrincipal, password, sessionId, clientIp, userAgent
         );
         
         if (authResponse.isSuccess()) {
-            // 멀티 테넌트 사용자 고려하여 조회
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
-                throw new RuntimeException("사용자를 찾을 수 없습니다.");
-            }
-            User user = users.get(0);
+            User user = userService.findByLoginPrincipal(loginPrincipal)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 표준화 2025-12-05: 브랜치/HQ 개념 제거, 표준 관리자 역할만 체크
             if (user.getRole() == null
@@ -1695,7 +1705,7 @@ public class AuthController extends BaseApiController {
             session.setAttribute("loginType", "HEADQUARTERS");
             session.setAttribute("branchCode", null);
             
-            log.info("✅ 본사 로그인 성공: email={}", email);
+            log.info("✅ 본사 로그인 성공: loginPrincipal={}", loginPrincipal);
             
             // 응답 데이터 구성
             Map<String, Object> userInfo = new HashMap<>();

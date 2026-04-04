@@ -51,8 +51,8 @@ WHERE tenant_id IS NULL
 
 UPDATE common_codes
 SET
-    code_label = '치명',
-    korean_name = '치명',
+    code_label = '위험',
+    korean_name = '위험',
     code_description = '치명적 위험',
     icon = '🟣',
     updated_at = NOW()

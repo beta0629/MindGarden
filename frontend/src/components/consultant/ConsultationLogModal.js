@@ -16,8 +16,8 @@ const DEFAULT_RISK_LEVEL_OPTIONS = [
   { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
   { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
   { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-  /** 긴급과 구분: 동일하게 원형 이모지로 통일 */
-  { value: 'CRITICAL', label: '치명', icon: '🟣', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
+  /** 긴급(🔴)과 구분: 원형 이모지 통일 */
+  { value: 'CRITICAL', label: '위험', icon: '🟣', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
 ];
 
 /** API codeLabel이 영문이어도 UI는 항상 한글·동일 아이콘 */

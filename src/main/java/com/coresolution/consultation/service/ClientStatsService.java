@@ -22,7 +22,18 @@ public interface ClientStatsService {
      * @return 내담자 정보 + 통계 정보 맵
      */
     Map<String, Object> getClientWithStats(String tenantId, Long clientId);
-    
+
+    /**
+     * 매칭된 내담자에 한해 상담사(CONSULTANT)가 내담자 통계·연락처 등을 조회할 때 사용.
+     * 활성·회기소진 매칭이 없으면 접근 거부.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 사용자 ID
+     * @param consultantUserId 로그인 상담사 사용자 ID
+     * @return {@link #getClientWithStats(String, Long)} 와 동일 형태
+     */
+    Map<String, Object> getClientWithStatsForConsultant(String tenantId, Long clientId, Long consultantUserId);
+
     /**
      * 내담자 목록 + 통계 정보 일괄 조회
      * 

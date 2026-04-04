@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
@@ -19,6 +20,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -57,6 +59,33 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     @Override
     @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId")
     public Map<String, Object> getClientWithStats(String tenantId, Long clientId) {
+        return buildClientWithStats(tenantId, clientId);
+    }
+
+    @Override
+    public Map<String, Object> getClientWithStatsForConsultant(
+            String tenantId, Long clientId, Long consultantUserId) {
+        if (consultantUserId == null) {
+            throw new IllegalArgumentException("consultantUserId는 필수입니다.");
+        }
+        if (tenantId == null || tenantId.isBlank() || clientId == null) {
+            throw new IllegalArgumentException("tenantId와 clientId는 필수입니다.");
+        }
+        Optional<ConsultantClientMapping> mapping = mappingRepository
+                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+                        tenantId, consultantUserId, clientId);
+        if (mapping.isEmpty()) {
+            log.warn("⚠️ 상담사-내담자 매칭 없음: tenantId={}, consultantId={}, clientId={}",
+                    tenantId, consultantUserId, clientId);
+            throw new AccessDeniedException("해당 내담자에 대한 매칭이 없어 조회할 수 없습니다.");
+        }
+        return buildClientWithStats(tenantId, clientId);
+    }
+
+    /**
+     * 내담자 통계 본문 (캐시는 {@link #getClientWithStats} 프록시에만 적용).
+     */
+    private Map<String, Object> buildClientWithStats(String tenantId, Long clientId) {
         if (tenantId == null || tenantId.isBlank()) {
             log.error("❌ getClientWithStats: tenantId가 필수입니다. clientId={}", clientId);
             throw new IllegalArgumentException("tenantId는 필수입니다.");
@@ -77,7 +106,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         }
 
         Client client = convertToClient(user);
-        
+
         Map<String, Object> clientMap = convertClientToMap(client);
         clientMap.put("grade", user.getGrade());
         clientMap.put("notes", user.getNotes());
@@ -85,14 +114,14 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
 
         long currentConsultants = calculateCurrentConsultants(clientId);
-        
+
         Map<String, Object> stats = calculateClientStats(clientId);
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("client", clientMap);
         result.put("currentConsultants", currentConsultants);
         result.put("statistics", stats);
-        
+
         return result;
     }
 

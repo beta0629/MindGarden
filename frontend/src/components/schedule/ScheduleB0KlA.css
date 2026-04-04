@@ -713,6 +713,224 @@
   max-height: none !important;
 }
 
+/* 상담일지: UnifiedModal 헤더·푸터 고정, 본문 단일 스크롤(.mg-v2-modal-body) */
+.mg-modal.mg-modal--fullscreen.mg-v2-ad-b0kla .mg-modal__body:has(> .mg-v2-consultation-log-modal) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+.mg-modal.mg-modal--fullscreen.mg-v2-ad-b0kla .mg-modal__body > .mg-v2-consultation-log-modal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg));
+}
+
+.mg-modal.mg-modal--fullscreen.mg-v2-ad-b0kla .mg-modal__body .mg-v2-consultation-log-modal .mg-v2-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: none !important;
+  padding: var(--spacing-lg);
+  background-color: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, var(--color-bg-primary)));
+}
+
+.mg-v2-consultation-log-modal__status {
+  flex-shrink: 0;
+  padding: var(--spacing-sm) var(--spacing-lg) 0;
+  margin: 0;
+}
+
+.mg-v2-consultation-log-modal__accordion .mg-accordion-content.open {
+  max-height: none;
+  overflow: visible;
+}
+
+.mg-v2-consultation-log-modal__top-context {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-v2-consultation-log-modal .mg-v2-detail-item.mg-v2-consultation-log-modal__detail-span {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.mg-v2-consultation-log-modal__notes-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
+}
+
+.mg-v2-consultation-log-modal__psych-summary {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--border-radius-lg, var(--radius-lg));
+  border-left-width: var(--spacing-xs);
+  border-left-color: var(--mg-color-secondary-main, var(--mg-primary-500));
+  background: var(--mg-color-surface-main, var(--mg-white));
+}
+
+.mg-v2-consultation-log-modal__psych-title {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-v2-consultation-log-modal__psych-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mg-v2-consultation-log-modal__psych-list-item {
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+}
+
+.mg-v2-consultation-log-modal__psych-list-item--last {
+  border-bottom: none;
+}
+
+.mg-v2-consultation-log-modal__psych-list-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-consultation-log-modal__psych-link {
+  text-decoration: none;
+  color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.mg-v2-consultation-log-modal__psych-link:hover,
+.mg-v2-consultation-log-modal__psych-link:focus-visible {
+  text-decoration: underline;
+}
+
+.mg-v2-consultation-log-modal__psych-link--title {
+  font-weight: 600;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-v2-consultation-log-modal__psych-link--sub {
+  font-size: var(--font-size-xs, 0.8125rem);
+}
+
+.mg-v2-consultation-log-modal__psych-badge {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--border-radius-sm, 6px);
+}
+
+.mg-v2-consultation-log-modal__psych-badge--danger {
+  color: var(--mg-error-500);
+  background: var(--cs-error-50);
+}
+
+.mg-v2-consultation-log-modal__psych-badge--warning {
+  color: var(--mg-warning-500);
+  background: var(--cs-warning-50);
+}
+
+.mg-v2-consultation-log-modal__psych-block {
+  margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-consultation-log-modal__psych-block-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  font-weight: 600;
+}
+
+.mg-v2-consultation-log-modal__psych-block-text {
+  font-size: var(--font-size-sm, 0.875rem);
+  margin: var(--spacing-xs) 0 0;
+  line-height: 1.5;
+  color: var(--mg-color-text-main, var(--mg-gray-800));
+}
+
+.mg-v2-consultation-log-modal__psych-block-text--emphasis {
+  font-weight: 600;
+}
+
+.mg-v2-consultation-log-modal__kw {
+  font-weight: 600;
+}
+
+.mg-v2-consultation-log-modal__kw--danger {
+  color: var(--mg-error-500);
+}
+
+.mg-v2-consultation-log-modal__kw--warning {
+  color: var(--mg-warning-500);
+}
+
+.mg-v2-consultation-log-modal__kw--primary {
+  color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.mg-v2-consultation-log-modal__precautions-icon {
+  color: var(--mg-color-accent-main, var(--mg-warning-500));
+  flex-shrink: 0;
+}
+
+.mg-v2-consultation-log-modal__precaution-list {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-color-text-main, var(--mg-gray-800));
+}
+
+.mg-v2-consultation-log-modal__precaution-item {
+  margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-consultation-log-modal__precaution-source {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+}
+
+.mg-v2-consultation-log-modal__precautions-panel .mg-accordion-body {
+  background: var(--mg-warning-50, var(--cs-warning-50));
+}
+
+.mg-v2-consultation-log-modal__form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg, 1.25rem);
+}
+
+.mg-v2-consultation-log-modal__form-group-full {
+  grid-column: 1 / -1;
+}
+
+.mg-v2-consultation-log-modal__textarea {
+  min-height: 5rem;
+}
+
+.mg-v2-consultation-log-modal__input-readonly {
+  background-color: var(--mg-gray-100);
+  cursor: not-allowed;
+}
+
+.mg-v2-consultation-log-modal__input-error {
+  border-color: var(--mg-error-500);
+}
+
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   display: flex;
   justify-content: flex-end;

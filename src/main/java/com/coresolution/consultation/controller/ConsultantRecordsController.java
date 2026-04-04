@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
@@ -17,6 +18,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,12 +41,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 public class ConsultantRecordsController {
-    
+
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final ScheduleService scheduleService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
+    private final ClientStatsService clientStatsService;
     
     /**
      * 상담사별 상담 기록 목록 조회
@@ -161,7 +164,56 @@ public class ConsultantRecordsController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-    
+
+    /**
+     * 상담사 본인(또는 관리자)이 매칭된 내담자의 통계·연락처 등을 조회.
+     * 상담일지 모달은 ADMIN이 아닐 때 이 경로를 사용한다 (admin with-stats는 CONSULTANT에게 403).
+     * GET /api/v1/admin/consultant-records/{consultantId}/clients/{clientId}/with-stats
+     */
+    @GetMapping("/{consultantId}/clients/{clientId}/with-stats")
+    public ResponseEntity<Map<String, Object>> getClientWithStatsForConsultant(
+            @PathVariable Long consultantId,
+            @PathVariable Long clientId,
+            HttpSession session) {
+
+        log.info("상담사용 내담자 with-stats: consultantId={}, clientId={}", consultantId, clientId);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+        if (!SessionUtils.isAdmin(session) && !consultantId.equals(currentUser.getId())) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "본인 담당 내담자만 조회할 수 있습니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
+        }
+        tenantId = tenantId.trim();
+
+        try {
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            Map<String, Object> stats = clientStatsService.getClientWithStatsForConsultant(
+                    tenantId, clientId, consultantId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", stats);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            log.warn("내담자 with-stats 접근 거부: {}", e.getMessage());
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("내담자 with-stats 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "내담자 정보 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
     /**
      * 상담기록 상세 조회
      * GET /api/consultant/{consultantId}/consultation-records/{recordId}

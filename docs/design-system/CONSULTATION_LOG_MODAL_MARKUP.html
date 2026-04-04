@@ -1,0 +1,198 @@
+<!--
+  core-coder 전달 요약 (5줄):
+  1) 어드민·상담사 동일 ConsultationLogModal 전제 — 동일 마크업·클래스 트리로 UnifiedModal 내부에 배치.
+  2) 상단 컨텍스트(프로필·주의사항·선택 심리검사 요약)는 아코디언 — aria-expanded / aria-controls / id 쌍 필수.
+  3) 뷰포트 높이 h≤768(px)에서는 기본 접힘 권장(토글 상태는 JS·미디어쿼리로 결정).
+  4) 스크롤: 모달 헤더(제목·닫기·주요 액션) 고정, 본문은 .mg-v2-modal-body 하나만 세로 스크롤(이중 스크롤 지양).
+  5) 간격·색상 hex 금지 — 패딩 등은 CSS에서 var(--spacing-*) 등 토큰 사용; 본 파일은 토큰명 주석으로만 안내 가능.
+-->
+
+<!-- Template: 상담일지 모달 (Organism 조각 — UnifiedModal 래퍼 바깥은 생략 가능) -->
+<div class="mg-v2-modal mg-v2-modal-large mg-v2-consultation-log-modal mg-v2-ad-b0kla">
+  <!-- 고정 헤더: 단일 스크롤 정책상 헤더 바깥 또는 flex column에서 shrink-0 역할 -->
+  <header class="mg-v2-modal-header">
+    <div class="mg-v2-modal-title-section">
+      <h2 id="consultation-log-modal-title" class="mg-v2-modal-title">상담일지</h2>
+      <p class="mg-v2-modal-description sr-only">내담자 정보와 상담 기록을 확인·작성합니다.</p>
+    </div>
+    <div class="mg-v2-modal__actions mg-v2-card-actions" role="toolbar" aria-label="모달 주요 동작">
+      <button type="button" class="mg-v2-button mg-v2-button--outline mg-v2-button--medium">임시저장</button>
+      <button type="button" class="mg-v2-button mg-v2-button--primary mg-v2-button--medium">저장</button>
+    </div>
+    <button
+      type="button"
+      class="mg-v2-modal-close"
+      aria-label="상담일지 모달 닫기"
+    >&times;</button>
+  </header>
+
+  <!-- 단일 스크롤 영역: flex:1; overflow-y:auto 는 core-coder/CSS에서 부여 -->
+  <div class="mg-v2-modal-body" role="region" aria-labelledby="consultation-log-modal-title" tabindex="-1">
+    <!-- 토큰 참고(코더/CSS): 헤더·본문 패딩 var(--spacing-lg) 등 모달 토큰과 정렬 -->
+
+    <!-- 상단 컨텍스트 그룹: 아코디언 2패널(프로필+심리검사 / 주의사항) -->
+    <section
+      class="mg-v2-ad-modal__section mg-v2-consultation-log-modal__top-context"
+      aria-label="상담 컨텍스트"
+    >
+      <div class="mg-accordion mg-v2-consultation-log-modal__accordion">
+        <!-- Organism: ConsultationLogClientProfilePanel (+ 선택 심리검사 요약) -->
+        <div class="mg-accordion-item mg-v2-consultation-log-modal__client-profile-panel">
+          <button
+            type="button"
+            class="mg-accordion-header"
+            id="consultation-log-accordion-profile-trigger"
+            aria-expanded="true"
+            aria-controls="consultation-log-accordion-profile-panel"
+          >
+            <span class="mg-accordion-title">내담자 프로필</span>
+            <span class="mg-accordion-icon open" aria-hidden="true">▼</span>
+          </button>
+          <div
+            id="consultation-log-accordion-profile-panel"
+            class="mg-accordion-content open"
+            role="region"
+            aria-labelledby="consultation-log-accordion-profile-trigger"
+          >
+            <div class="mg-accordion-body">
+              <dl class="mg-v2-detail-grid">
+                <div class="mg-v2-detail-item">
+                  <dt class="mg-v2-detail-label">이름</dt>
+                  <dd class="mg-v2-detail-value">(표시값)</dd>
+                </div>
+                <div class="mg-v2-detail-item">
+                  <dt class="mg-v2-detail-label">연락처</dt>
+                  <dd class="mg-v2-detail-value">(표시값)</dd>
+                </div>
+                <div class="mg-v2-detail-item">
+                  <dt class="mg-v2-detail-label">상태</dt>
+                  <dd class="mg-v2-detail-value">
+                    <span class="mg-v2-status-badge mg-v2-badge--success" role="status">활성</span>
+                  </dd>
+                </div>
+                <div class="mg-v2-detail-item">
+                  <dt class="mg-v2-detail-label">남은 회기</dt>
+                  <dd class="mg-v2-detail-value">
+                    <span class="mg-v2-count-badge">0회 남음</span>
+                  </dd>
+                </div>
+              </dl>
+
+              <!-- 선택: 심리검사 요약 블록 — 데이터 없으면 섹션 미렌더 -->
+              <div class="mg-v2-card-container mg-v2-consultation-log-modal__psych-summary" hidden>
+                <h3 class="mg-v2-message-title">심리검사 요약</h3>
+                <p class="mg-v2-detail-content">(요약 문단 placeholder)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Organism: ConsultationLogPrecautionsPanel -->
+        <div class="mg-accordion-item mg-v2-consultation-log-modal__precautions-panel">
+          <button
+            type="button"
+            class="mg-accordion-header"
+            id="consultation-log-accordion-precautions-trigger"
+            aria-expanded="true"
+            aria-controls="consultation-log-accordion-precautions-panel"
+          >
+            <span class="mg-accordion-title">상담 시 주의사항</span>
+            <span class="mg-accordion-icon open" aria-hidden="true">▼</span>
+          </button>
+          <div
+            id="consultation-log-accordion-precautions-panel"
+            class="mg-accordion-content open"
+            role="region"
+            aria-labelledby="consultation-log-accordion-precautions-trigger"
+          >
+            <div class="mg-accordion-body">
+              <ul class="mg-v2-consultation-log-modal__precaution-list">
+                <li class="mg-v2-consultation-log-modal__precaution-item">(주의사항 항목 1)</li>
+                <li class="mg-v2-consultation-log-modal__precaution-item">(주의사항 항목 2)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Organism: ConsultationLogFormPanel — 폼 필드 placeholder (라벨만) -->
+    <section
+      class="mg-v2-form-section mg-v2-consultation-log-modal__form-panel"
+      aria-label="상담일지 작성"
+    >
+      <form class="mg-v2-consultation-log-modal__form" action="#" method="post">
+        <fieldset class="mg-v2-consultation-log-modal__fieldset">
+          <legend class="sr-only">상담 세션 및 기록</legend>
+
+          <div class="mg-v2-form-row">
+            <div class="mg-v2-form-group">
+              <label class="mg-v2-form-label" for="consultation-log-placeholder-session-date">상담 일시</label>
+              <input
+                id="consultation-log-placeholder-session-date"
+                type="text"
+                class="mg-v2-form-input"
+                placeholder="YYYY-MM-DD"
+                readonly
+              />
+            </div>
+            <div class="mg-v2-form-group">
+              <label class="mg-v2-form-label" for="consultation-log-placeholder-session-number">회기</label>
+              <input
+                id="consultation-log-placeholder-session-number"
+                type="number"
+                class="mg-v2-form-input"
+                placeholder="1"
+                readonly
+              />
+            </div>
+          </div>
+
+          <div class="mg-v2-form-group">
+            <label class="mg-v2-form-label" for="consultation-log-placeholder-condition">내담자 상태</label>
+            <textarea
+              id="consultation-log-placeholder-condition"
+              class="mg-v2-form-textarea"
+              rows="3"
+              placeholder="내용 입력"
+              readonly
+            ></textarea>
+          </div>
+
+          <div class="mg-v2-form-group">
+            <label class="mg-v2-form-label" for="consultation-log-placeholder-main-issues">주요 호소</label>
+            <textarea
+              id="consultation-log-placeholder-main-issues"
+              class="mg-v2-form-textarea"
+              rows="3"
+              placeholder="내용 입력"
+              readonly
+            ></textarea>
+          </div>
+
+          <div class="mg-v2-form-group">
+            <label class="mg-v2-form-label" for="consultation-log-placeholder-intervention">개입 방법</label>
+            <textarea
+              id="consultation-log-placeholder-intervention"
+              class="mg-v2-form-textarea"
+              rows="3"
+              placeholder="내용 입력"
+              readonly
+            ></textarea>
+          </div>
+
+          <div class="mg-v2-form-group">
+            <label class="mg-v2-form-label" for="consultation-log-placeholder-next-plan">차회 계획</label>
+            <textarea
+              id="consultation-log-placeholder-next-plan"
+              class="mg-v2-form-textarea"
+              rows="2"
+              placeholder="내용 입력"
+              readonly
+            ></textarea>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  </div>
+</div>

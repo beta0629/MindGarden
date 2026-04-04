@@ -3,6 +3,7 @@ import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
 import { SESSION_CHECK_INTERVAL, SESSION_CHECK_COOLDOWN_MS } from '../constants/session';
+import { AUTH_MESSAGES } from '../constants/messages';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -329,7 +330,7 @@ export const SessionProvider = ({ children }) => {
       } else {
         console.log('❌ 로그인 실패:', response);
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
-        return { success: false, message: response?.message || '로그인에 실패했습니다.' };
+        return { success: false, message: response?.message || AUTH_MESSAGES.LOGIN_FAILED };
       }
     } catch (error) {
       console.error('❌ 중앙 세션 로그인 실패:', error);

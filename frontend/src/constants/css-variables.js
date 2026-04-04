@@ -1,3 +1,5 @@
+import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from './loginDisplay';
+
 /**
  * CSS 변수 및 디자인 시스템 상수 (동적 처리)
 /**
@@ -388,7 +390,7 @@ export const TABLET_LOGIN_CONSTANTS = {
   
   MESSAGES: {
     LOGIN_SUCCESS: '로그인되었습니다.',
-    LOGIN_FAILED: '아이디 또는 비밀번호 틀림',
+    LOGIN_FAILED: LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
     SMS_SENT: '인증 코드가 전송되었습니다.',
     SMS_SEND_FAILED: '인증 코드 전송에 실패했습니다.',
     SMS_VERIFY_SUCCESS: '인증이 완료되었습니다.',

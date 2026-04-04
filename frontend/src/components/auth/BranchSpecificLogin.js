@@ -10,6 +10,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay';
 import './BranchLogin.css';
 
 /**
@@ -130,7 +131,7 @@ const BranchSpecificLogin = () => {
         notificationManager.show(result.message, 'warning');
       } else {
         console.log('❌ 로그인 실패:', result.message);
-        notificationManager.show(result.message, 'error');
+        notificationManager.show(LOGIN_CREDENTIALS_MISMATCH_MESSAGE, 'error');
       }
     } catch (error) {
       console.error('❌ 지점별 로그인 오류:', error);

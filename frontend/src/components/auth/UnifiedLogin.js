@@ -45,6 +45,7 @@ import {
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
 import {
+  LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
   LOGIN_IDENTIFIER_FIELD_HINT,
   LOGIN_IDENTIFIER_LABEL,
   LOGIN_IDENTIFIER_PASSWORD_REQUIRED,
@@ -597,7 +598,7 @@ const UnifiedLogin = () => {
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
-          showTooltip('아이디 또는 비밀번호가 틀리니 다시 확인하시고 입력해주세요', 'error');
+          showTooltip(LOGIN_CREDENTIALS_MISMATCH_MESSAGE, 'error');
         }
       }
     } catch (error) {
@@ -617,7 +618,7 @@ const UnifiedLogin = () => {
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
       } else {
-        const msg = isLocalEnv && error.message ? error.message : '아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요';
+        const msg = isLocalEnv && error.message ? error.message : LOGIN_CREDENTIALS_MISMATCH_MESSAGE;
         showTooltip(msg, 'error');
       }
     }

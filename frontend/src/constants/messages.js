@@ -1,3 +1,5 @@
+import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from './loginDisplay';
+
 /**
  * 메시지 상수
 /**
@@ -44,7 +46,7 @@ export const COMMON_MESSAGES = {
 
 export const AUTH_MESSAGES = {
   LOGIN_SUCCESS: '로그인되었습니다.',
-  LOGIN_FAILED: '아이디 또는 비밀번호 틀림',
+  LOGIN_FAILED: LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
   LOGOUT_SUCCESS: '로그아웃되었습니다.',
   LOGOUT_ERROR: '로그아웃 중 오류가 발생했습니다.',
   REGISTER_SUCCESS: '회원가입이 완료되었습니다.',

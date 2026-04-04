@@ -17,8 +17,15 @@ alwaysApply: true
 - **코드 변경이 수반된 배치의 검증** → 반드시 **`core-tester`** 게이트를 거친다고 가정하고, 위임 프롬프트에 검증 항목을 넣는다.
 - UI 구조·중복 컴포넌트 **제안·문서화만** → **`core-component-manager`** (코드 직수정 없음).
 - 디자인·시안 → **`core-designer`** / 마크업만 → **`core-publisher`**.
+- **배포·CI/CD·GitHub Actions 트리거·운영/개발 반영 절차** → **`core-deployer`**. 저장소 워크플로 기준으로만 짧게 안내한다.
 
 서브에이전트 정의는 저장소 **`/.cursor/agents/*.md`** 를 따른다.
+
+### 배포 주제 시 메인 어시스턴트 행동
+
+- **배포가 필요한지·어떻게 할지를 매번 되묻거나**, 동일한 배포 설명을 **길게 반복하지 않는다.**
+- 사용자가 배포·푸시 후 반영만 언급하면 → **`core-deployer`** Task에 위임하거나, **`/.cursor/agents/core-deployer.md`** 를 따른 한 번의 짧은 요약만 한다 (확인 질문·꼬리 제안 금지).
+- Task 도구에 `core-deployer` 타입이 없으면 **`generalPurpose`** 로 동일 프롬프트에 `/.cursor/agents/core-deployer.md` 전문을 붙여 실행한다.
 
 ## 2. 필수 참조 문서 (위임 전 읽기·프롬프트에 인용)
 

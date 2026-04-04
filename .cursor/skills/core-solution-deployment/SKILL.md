@@ -45,6 +45,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 ## 담당
 
+- **배포 트리거·수동/자동 안내(SSOT)**: **`core-deployer`** 서브에이전트 (`/.cursor/agents/core-deployer.md`). 메인 채팅은 배포 절차를 반복 서술하지 않고 위임한다.
 - **구현**: core-coder (워크플로·스크립트 수정).
 - **실행·검증**: 필요 시 shell 서브에이전트로 로컬/CI 명령 실행.
 

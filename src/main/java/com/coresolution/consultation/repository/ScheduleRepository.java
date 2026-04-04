@@ -451,6 +451,25 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     long countByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
 
     /**
+     * 자동 등급 승급용: 테넌트 내 내담자별 완료된 상담 일정(스케줄) 건수 집계.
+     * <p>
+     * 정의: {@link com.coresolution.consultation.entity.Schedule} 중 {@code isDeleted == false},
+     * {@code clientId != null}, {@code status == COMPLETED} 인 건만 센다. 취소·예약중 등은 제외.
+     * {@link com.coresolution.consultation.service.impl.ClientStatsServiceImpl#calculateClientStats(Long)} 의
+     * total/completed 동일 쿼리 이슈와 분리한다.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param completedStatus {@link ScheduleStatus#COMPLETED}
+     * @return [0]=clientId, [1]=count
+     */
+    @Query("SELECT s.clientId, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+        + "AND s.status = :completedStatus AND s.clientId IS NOT NULL GROUP BY s.clientId")
+    List<Object[]> countCompletedConsultationSessionsGroupedByClientIdForAutoGrade(
+        @Param("tenantId") String tenantId,
+        @Param("completedStatus") ScheduleStatus completedStatus);
+
+    /**
      * 내담자별 비삭제 스케줄에 연결된 고유 상담사 ID (tenantId·clientId 스코프, consultantId 비null만).
      *
      * @param tenantId 테넌트 ID

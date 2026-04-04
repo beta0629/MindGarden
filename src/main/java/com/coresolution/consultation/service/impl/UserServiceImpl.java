@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.UserRole;
@@ -832,7 +833,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changeUserGrade(Long id, String newGrade) {
         User user = findActiveByIdOrThrow(id);
+        if (Objects.equals(user.getGrade(), newGrade)) {
+            return;
+        }
         user.setGrade(newGrade);
+        user.setLastGradeUpdate(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setVersion(user.getVersion() + 1);
         

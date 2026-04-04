@@ -197,7 +197,8 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         }
         
         long totalSessions = scheduleRepository.countByClientId(tenantId, clientId);
-        
+        // 완료 건수는 total 과 동일 쿼리를 쓰고 있음(버그). 자동 등급 승급은
+        // ScheduleRepository#countCompletedConsultationSessionsGroupedByClientIdForAutoGrade 로 별도 정의.
         long completedSessions = scheduleRepository.countByClientId(tenantId, clientId);
         
         double completionRate = totalSessions > 0 

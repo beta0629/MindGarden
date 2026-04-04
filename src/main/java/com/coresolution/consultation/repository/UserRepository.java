@@ -1046,6 +1046,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByTenantIdAndRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+
+    /**
+     * 내담자 등급 자동 승급 배치용: 활성 내담자만 id 순 페이징.
+     *
+     * @param tenantId 테넌트 ID
+     * @param role {@link com.coresolution.consultation.constant.UserRole#CLIENT}
+     * @param pageable 페이징
+     * @return 내담자 페이지
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false "
+        + "AND u.isActive = true ORDER BY u.id ASC")
+    Page<User> pageActiveUsersByTenantIdAndRole(
+        @Param("tenantId") String tenantId,
+        @Param("role") UserRole role,
+        Pageable pageable);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!

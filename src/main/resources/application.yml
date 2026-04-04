@@ -457,6 +457,11 @@ scheduler:
     enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}
     cron: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_CRON:0 0 2 * * ?}  # 매일 새벽 2시
 
+  # 12. 내담자 CLIENT 등급 자동 승급 (완료 스케줄 수·common_codes min_sessions)
+  client-grade-auto:
+    enabled: ${SCHEDULER_CLIENT_GRADE_AUTO_ENABLED:true}
+    cron: ${SCHEDULER_CLIENT_GRADE_AUTO_CRON:0 15 3 * * ?}  # 매일 새벽 3시 15분
+
 # =====================================================
 # 보안 설정 (보안 표준화 + 민감정보 보호)
 # =====================================================

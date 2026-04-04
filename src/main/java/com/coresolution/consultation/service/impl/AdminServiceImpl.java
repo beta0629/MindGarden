@@ -2191,7 +2191,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clientUser.setNotes(request.getNotes().trim().isEmpty() ? null : request.getNotes().trim());
         }
         if (request.getGrade() != null) {
-            clientUser.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
+            String newGrade = request.getGrade().trim().isEmpty() ? null : request.getGrade().trim();
+            if (!Objects.equals(clientUser.getGrade(), newGrade)) {
+                clientUser.setLastGradeUpdate(LocalDateTime.now());
+            }
+            clientUser.setGrade(newGrade);
         }
 
         // 주민번호: 입력한 경우에만 검증 후 나이/성별 계산·암호화 저장

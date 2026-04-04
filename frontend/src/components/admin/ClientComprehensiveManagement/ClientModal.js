@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { CheckCircle, AlertTriangle, Link2, Calendar } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
@@ -12,7 +12,36 @@ import {
 import { isValidVehiclePlateOptional } from '../../../utils/validationUtils';
 import SafeText from '../../common/SafeText';
 import { formatConsultantGenderLabel, getConsultantAgeYears } from '../../../utils/consultantHelper';
+import { getUserGradeKoreanNameSync, getUserGradeIconSync } from '../../../utils/codeHelper';
+import { toDisplayString } from '../../../utils/safeDisplay';
+import ContentSection from '../../dashboard-v2/content/ContentSection';
+import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import './ClientModal.css';
+
+/** GET with-stats 및 목록 스냅샷 필드에 맞춘 KPI 라벨(완료율 등 오해 소지 필드는 표시하지 않음) */
+const CLIENT_MODAL_KPI_LABELS = {
+  CURRENT_CONSULTANTS: '연결 상담사',
+  TOTAL_SESSIONS: '일정(회기) 건수'
+};
+
+const CLIENT_MODAL_SUMMARY_SECTION_TITLE = '누적 지표';
+const CLIENT_MODAL_GRADE_LABEL = '현재 등급(저장값)';
+
+/**
+ * 목록 등에서 이미 currentConsultants·statistics가 오면 추가 GET 생략
+ * @param {Object} c client row
+ * @returns {boolean}
+ */
+function clientHasPrefetchedWithStats(c) {
+  if (!c || c.id == null || c.id === '') {
+    return false;
+  }
+  if (typeof c.currentConsultants === 'number') {
+    return true;
+  }
+  return typeof c.statistics?.totalSessions === 'number';
+}
 
 /**
  * 내담자 모달 컴포넌트
@@ -29,6 +58,98 @@ const ClientModal = ({
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const [vehiclePlateError, setVehiclePlateError] = useState('');
+    const [clientSummary, setClientSummary] = useState(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const clientRef = useRef(client);
+    clientRef.current = client;
+
+    useEffect(() => {
+      const c = clientRef.current;
+      if (!type || type === 'create' || !c?.id) {
+        setClientSummary(null);
+        setSummaryLoading(false);
+        return undefined;
+      }
+
+      let cancelled = false;
+
+      if (clientHasPrefetchedWithStats(c)) {
+        setClientSummary({
+          currentConsultants: typeof c.currentConsultants === 'number' ? c.currentConsultants : 0,
+          totalSessions: typeof c.statistics?.totalSessions === 'number' ? c.statistics.totalSessions : null,
+          persistedGrade: c.grade
+        });
+        setSummaryLoading(false);
+        return () => {
+          cancelled = true;
+        };
+      }
+
+      setSummaryLoading(true);
+      setClientSummary(null);
+
+      (async () => {
+        try {
+          const data = await StandardizedApi.get(`${API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS}/${c.id}`);
+          if (cancelled) {
+            return;
+          }
+          if (data && typeof data === 'object') {
+            setClientSummary({
+              currentConsultants: typeof data.currentConsultants === 'number' ? data.currentConsultants : 0,
+              totalSessions: typeof data.statistics?.totalSessions === 'number' ? data.statistics.totalSessions : null,
+              persistedGrade: data.client?.grade
+            });
+          } else {
+            setClientSummary({
+              currentConsultants: 0,
+              totalSessions: null,
+              persistedGrade: c.grade
+            });
+          }
+        } catch (err) {
+          console.error('내담자 with-stats 요약 로드 실패:', err);
+          if (!cancelled) {
+            setClientSummary({
+              currentConsultants: typeof c.currentConsultants === 'number' ? c.currentConsultants : 0,
+              totalSessions: typeof c.statistics?.totalSessions === 'number' ? c.statistics.totalSessions : null,
+              persistedGrade: c.grade
+            });
+          }
+        } finally {
+          if (!cancelled) {
+            setSummaryLoading(false);
+          }
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [type, client?.id]);
+
+    const summaryKpiItems = useMemo(() => {
+      if (!clientSummary) {
+        return [];
+      }
+      const sessionsVal = clientSummary.totalSessions;
+      return [
+        {
+          id: 'currentConsultants',
+          icon: <Link2 size={24} />,
+          label: CLIENT_MODAL_KPI_LABELS.CURRENT_CONSULTANTS,
+          value: clientSummary.currentConsultants,
+          iconVariant: 'blue'
+        },
+        {
+          id: 'totalSessions',
+          icon: <Calendar size={24} />,
+          label: CLIENT_MODAL_KPI_LABELS.TOTAL_SESSIONS,
+          value: sessionsVal == null ? '—' : sessionsVal,
+          iconVariant: 'green'
+        }
+      ];
+    }, [clientSummary]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -134,6 +255,52 @@ const ClientModal = ({
             case 'view': return '닫기';
             default: return '저장';
         }
+    };
+
+    const renderSummaryStrip = () => {
+        if (type === 'create' || !client?.id) {
+            return null;
+        }
+        const persistedGrade = clientSummary?.persistedGrade;
+        const hasGradeCode = persistedGrade != null && String(persistedGrade).trim() !== '';
+        const gradeIcon = hasGradeCode ? getUserGradeIconSync(persistedGrade) : '';
+        const gradeKorean = hasGradeCode ? getUserGradeKoreanNameSync(persistedGrade) : '—';
+
+        return (
+            <ContentSection
+                title={CLIENT_MODAL_SUMMARY_SECTION_TITLE}
+                noCard
+                className="mg-v2-client-modal__summary"
+            >
+                {summaryLoading ? (
+                    <p className="mg-v2-client-modal__summary-loading">
+                        <SafeText>불러오는 중…</SafeText>
+                    </p>
+                ) : (
+                    <ContentKpiRow items={summaryKpiItems} />
+                )}
+                {!summaryLoading && clientSummary ? (
+                    <div className="mg-v2-ad-b0kla__client-modal-grade">
+                        <span className="mg-v2-ad-b0kla__client-modal-grade__label">
+                            {CLIENT_MODAL_GRADE_LABEL}
+                        </span>
+                        <div
+                            className="mg-v2-ad-b0kla__client-modal-grade__value"
+                            aria-label={`${CLIENT_MODAL_GRADE_LABEL} ${toDisplayString(gradeKorean, '—')}`}
+                        >
+                            {gradeIcon ? (
+                                <span className="mg-v2-ad-b0kla__client-modal-grade__icon" aria-hidden="true">
+                                    {gradeIcon}
+                                </span>
+                            ) : null}
+                            <span className="mg-v2-ad-b0kla__client-modal-grade__name">
+                                <SafeText>{toDisplayString(gradeKorean, '—')}</SafeText>
+                            </span>
+                        </div>
+                    </div>
+                ) : null}
+            </ContentSection>
+        );
     };
 
     const renderDeleteContent = () => (
@@ -538,6 +705,7 @@ const ClientModal = ({
             }
         >
             <div className="mg-v2-modal-body">
+                {renderSummaryStrip()}
                 {type === 'delete' ? renderDeleteContent() : renderFormContent()}
             </div>
         </UnifiedModal>

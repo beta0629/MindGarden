@@ -263,7 +263,7 @@ const TenantProfile = () => {
   if (sessionLoading || !isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+        <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." variant="pulse" />
           </div>
@@ -275,7 +275,7 @@ const TenantProfile = () => {
   if (!tenantId) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+        <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
               <AlertCircle size={24} />
@@ -290,7 +290,7 @@ const TenantProfile = () => {
   if (loading) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+        <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." variant="pulse" />
           </div>
@@ -302,7 +302,7 @@ const TenantProfile = () => {
   if (!tenantInfo) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+        <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
               <AlertCircle size={24} />
@@ -316,7 +316,7 @@ const TenantProfile = () => {
 
   return (
     <AdminCommonLayout title="테넌트 프로필">
-      <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+      <div className="mg-v2-tenant-profile">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="테넌트 프로필 콘텐츠">
             <div className="tenant-profile-header">

@@ -1,5 +1,7 @@
 # OAuth2 운영 도메인 설정 가이드
 
+**멀티테넌트·동적 서브도메인:** 테넌트별 호스트를 네이버·카카오 콜백 URL에 일일이 등록할 수 없으므로, 앱은 `*.core-solution.co.kr` 유입을 **apex `core-solution.co.kr`** 로 통일한 하나의 `redirect_uri`를 씁니다(테넌트는 `state` 등으로 복원). 따라서 **`core-solution.co.kr`에 공용 DNS(A/CNAME)·Nginx에서 `/api/auth/*/callback` 라우팅**이 있어야 하며, 개발자센터 콜백은 예: `https://core-solution.co.kr/api/auth/naver/callback` 과 **문자열 일치**가 필요합니다. 특정 테넌트 서브도메인만 콜백 호스트로 고정하는 방식은 서브도메인이 늘어날 때 맞지 않습니다.
+
 ## 🔧 카카오 개발자 콘솔 설정
 
 ### 1. 카카오 개발자 콘솔 접속

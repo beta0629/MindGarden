@@ -84,6 +84,8 @@ spring:
       domain:
         main-domains: core-solution.co.kr,dev.core-solution.co.kr
         subdomain-patterns: "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr"
+        # 멀티테넌트: 어떤 서브도메인으로 들어와도 redirect_uri는 apex(core-solution.co.kr)로 통일 → 네이버·카카오 콜백 URL 1개.
+        # 테넌트는 state 등으로 이어짐. apex에 DNS(A/CNAME)·Nginx server_name 필수.
       client:
         registration:
           kakao:

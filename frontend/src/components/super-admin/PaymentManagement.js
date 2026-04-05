@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
@@ -27,6 +28,9 @@ import notificationManager from '../../utils/notification';
 /**
  * @since 2025-01-05
  */
+
+const PAYMENT_PAGE_TITLE_ID = 'payment-management-title';
+
 const PaymentManagement = () => {
   const [payments, setPayments] = useState([]);
   const [statistics, setStatistics] = useState({});
@@ -431,10 +435,13 @@ const PaymentManagement = () => {
 
   return (
     <AdminCommonLayout title="결제 관리">
-      <div className="payment-management">
-        <div className="payment-header">
-          <h1>결제 관리</h1>
-          <div className="header-actions">
+      <ContentArea ariaLabel="수퍼어드민 결제 관리">
+        <ContentHeader
+          title="결제 관리"
+          subtitle="결제 내역 조회, 상태 관리 및 통계"
+          titleId={PAYMENT_PAGE_TITLE_ID}
+          actions={(
+            <div className="header-actions">
             <button 
               className="btn btn-success"
               onClick={() => exportPayments()}
@@ -453,9 +460,11 @@ const PaymentManagement = () => {
             >
               새로고침
             </button>
-          </div>
-        </div>
+            </div>
+          )}
+        />
 
+        <div className="payment-management">
         {/* 통계 카드 */}
         <div className="statistics-grid">
           <div className="stat-card">
@@ -711,27 +720,28 @@ const PaymentManagement = () => {
           </div>
         </div>
 
-          {/* 페이지네이션 */}
-          <div className="pagination">
-            <button
-              className="btn btn-sm"
-              disabled={pagination.currentPage === 0}
-              onClick={() => handlePageChange(pagination.currentPage - 1)}
-            >
-              이전
-            </button>
-            <span>
-              {pagination.currentPage + 1} / {pagination.totalPages} 
-              (총 {pagination.totalElements}건)
-            </span>
-            <button
-              className="btn btn-sm"
-              disabled={pagination.currentPage >= pagination.totalPages - 1}
-              onClick={() => handlePageChange(pagination.currentPage + 1)}
-            >
-              다음
-            </button>
-          </div>
+        {/* 페이지네이션 */}
+        <div className="pagination">
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={pagination.currentPage === 0}
+            onClick={() => handlePageChange(pagination.currentPage - 1)}
+          >
+            이전
+          </button>
+          <span>
+            {pagination.currentPage + 1} / {pagination.totalPages}
+            (총 {pagination.totalElements}건)
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={pagination.currentPage >= pagination.totalPages - 1}
+            onClick={() => handlePageChange(pagination.currentPage + 1)}
+          >
+            다음
+          </button>
         </div>
 
         {error && (
@@ -739,7 +749,8 @@ const PaymentManagement = () => {
             {error}
           </div>
         )}
-      </div>
+        </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

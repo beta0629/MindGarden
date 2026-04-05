@@ -1,3 +1,201 @@
-/* IPhone17Modal 컴포넌트 스타일은 _iphone17-modals.css에서 관리됩니다 */
-/* 이 파일은 컴포넌트 import를 위한 placeholder입니다 */
+/*
+ * IPhone17Modal: UnifiedModal(mg-modal-overlay / .mg-modal) 위에 단말 프레임 룩만 덧씌움.
+ * 커스텀 오버레이는 사용하지 않음.
+ */
 
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-floating);
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: iphone17-slideUp 0.3s ease;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-6);
+  border-bottom: 0.5px solid var(--ios-system-gray6);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__title {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__subtitle {
+  color: var(--ios-text-secondary);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__close {
+  background: none;
+  border: none;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-fast);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__close:hover {
+  background: var(--ios-bg-secondary);
+  color: var(--ios-text-primary);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__close:active {
+  transform: scale(0.95);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__body {
+  padding: var(--spacing-6);
+  max-height: 60vh;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  padding: var(--spacing-6);
+  border-top: 0.5px solid var(--ios-system-gray6);
+  background: var(--ios-bg-secondary);
+}
+
+/* variant: content */
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='content'] .mg-modal {
+  max-width: 500px;
+  width: 90vw;
+}
+
+/* variant: fullscreen */
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='fullscreen'] .mg-modal__body {
+  max-height: calc(100vh - 120px);
+}
+
+/* variant: side-sheet */
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='side-sheet'] {
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='side-sheet'] .mg-modal {
+  max-width: 400px;
+  width: 90vw;
+  height: 100vh;
+  max-height: 100vh;
+  margin-left: auto;
+  margin-right: 0;
+  border-radius: var(--border-radius-2xl) 0 0 var(--border-radius-2xl);
+  animation: iphone17-slideInRight 0.3s ease;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='side-sheet'] .mg-modal__body {
+  max-height: calc(100vh - 140px);
+}
+
+/* variant: alert (기존 .iphone17-modal.alert 와 동일: 닫기 X 숨김) */
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='alert'] .mg-modal {
+  max-width: 320px;
+  width: 90vw;
+  text-align: center;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='alert'] .mg-modal__header {
+  justify-content: center;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='alert'] .mg-modal__close {
+  display: none;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='alert'] .mg-modal__actions {
+  flex-direction: column;
+}
+
+.dark-mode .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal {
+  background: var(--ios-bg-primary);
+}
+
+.dark-mode .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__header {
+  border-bottom-color: var(--ios-system-gray4);
+}
+
+.dark-mode .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions {
+  background: var(--ios-bg-secondary);
+  border-top-color: var(--ios-system-gray4);
+}
+
+@keyframes iphone17-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iphone17-slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal {
+    max-width: 95vw;
+    margin: var(--spacing-4);
+  }
+
+  .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__header {
+    padding: var(--spacing-4);
+  }
+
+  .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__body {
+    padding: var(--spacing-4);
+  }
+
+  .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions {
+    padding: var(--spacing-4);
+    flex-direction: column;
+  }
+
+  .mg-modal-overlay[data-iphone17-modal='true'][data-iphone17-variant='side-sheet'] .mg-modal {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-modal-overlay[data-iphone17-modal='true'] .mg-modal {
+    animation: none;
+  }
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__close:focus-visible {
+  outline: 2px solid var(--current-theme);
+  outline-offset: 2px;
+}

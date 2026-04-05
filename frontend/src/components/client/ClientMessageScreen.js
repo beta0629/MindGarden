@@ -5,8 +5,10 @@ import { apiGet, apiPut, apiPost } from '../../utils/ajax';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './ClientMessageScreen.css';
+
+const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 
 /**
  * 내담자 메시지 확인 화면
@@ -197,17 +199,13 @@ const ClientMessageScreen = () => {
 
   return (
     <AdminCommonLayout title="메시지">
+      <ContentArea ariaLabel="상담사 메시지">
+        <ContentHeader
+          title="상담사 메시지"
+          subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
+          titleId={CLIENT_MESSAGE_TITLE_ID}
+        />
       <div className="client-message-screen-container">
-      {/* 헤더 */}
-      <div className="client-message-screen-header">
-        <h1 className="client-message-screen-header-title">
-          💬 상담사 메시지
-        </h1>
-        <p className="client-message-screen-header-subtitle">
-          상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다.
-        </p>
-      </div>
-
       {/* 통계 카드 */}
       <div className="client-message-screen-stats-card">
         <div className="client-message-screen-stats-grid">
@@ -337,6 +335,7 @@ const ClientMessageScreen = () => {
         </div>
       )}
       </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

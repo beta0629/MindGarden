@@ -18,6 +18,7 @@ import { apiGet } from '../../../utils/ajax';
 import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 import SafeText from '../../common/SafeText';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const ClientMessageWidget = ({ widget, user }) => {
@@ -344,52 +345,48 @@ const ClientMessageWidget = ({ widget, user }) => {
     );
   };
 
-  // 메시지 상세 모달 렌더링
+  // 메시지 상세 모달 (UnifiedModal)
   const renderMessageModal = () => {
     if (!selectedMessage) return null;
 
     const typeInfo = getMessageTypeInfo(selectedMessage.messageType);
     const TypeIcon = typeInfo?.icon;
+    const modalTitle = toDisplayString(selectedMessage.title, '메시지');
 
     return (
-      <div className="client-message-modal-overlay">
-        <div className="client-message-modal">
-          <div className="client-message-modal-header">
-            <SafeText tag="h3">{selectedMessage.title}</SafeText>
-            <button 
-              className="client-message-modal-close"
-              onClick={closeModal}
-            >
-              ×
-            </button>
+      <UnifiedModal
+        isOpen
+        onClose={closeModal}
+        title={modalTitle}
+        size="medium"
+        variant="detail"
+      >
+        <div className="client-message-modal-body">
+          <div className="client-message-detail-header">
+            <div className="client-message-detail-type">
+              {TypeIcon && (
+                <div className={`client-message-detail-type-icon ${typeInfo.bgClass}`}>
+                  <TypeIcon size={20} />
+                </div>
+              )}
+              <Badge variant="status" statusVariant={typeInfo.statusVariant} label={typeInfo.label} size="sm" />
+              {selectedMessage.isImportant && (
+                <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
+              )}
+              {selectedMessage.isUrgent && (
+                <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
+              )}
+            </div>
+            <span className="client-message-detail-date">
+              <Clock size={14} />
+              {new Date(selectedMessage.displayDate || selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
+            </span>
           </div>
-          <div className="client-message-modal-body">
-            <div className="client-message-detail-header">
-              <div className="client-message-detail-type">
-                {TypeIcon && (
-                  <div className={`client-message-detail-type-icon ${typeInfo.bgClass}`}>
-                    <TypeIcon size={20} />
-                  </div>
-                )}
-                <Badge variant="status" statusVariant={typeInfo.statusVariant} label={typeInfo.label} size="sm" />
-                {selectedMessage.isImportant && (
-                  <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
-                )}
-                {selectedMessage.isUrgent && (
-                  <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
-                )}
-              </div>
-              <span className="client-message-detail-date">
-                <Clock size={14} />
-                {new Date(selectedMessage.displayDate || selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
-              </span>
-            </div>
-            <div className="client-message-detail-content">
-              <div dangerouslySetInnerHTML={{ __html: selectedMessage.content }} />
-            </div>
+          <div className="client-message-detail-content">
+            <div dangerouslySetInnerHTML={{ __html: selectedMessage.content }} />
           </div>
         </div>
-      </div>
+      </UnifiedModal>
     );
   };
 

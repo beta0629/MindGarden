@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { FaTimes, FaEnvelope, FaKey, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { FaEnvelope, FaKey, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './AccountIntegrationModal.css';
 import SafeText from '../common/SafeText';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 계정 통합 모달 컴포넌트
@@ -175,23 +175,22 @@ const AccountIntegrationModal = ({
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    if (!isOpen) return null;
+    const modalTitle =
+        step === 1 ? '계정 통합' :
+        step === 2 ? '이메일 인증' :
+        step === 3 ? '비밀번호 확인' :
+        '통합 완료';
 
     return (
-        <div className="account-integration-modal-overlay">
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={modalTitle}
+            size="large"
+            variant="form"
+            loading={isLoading}
+        >
             <div className="account-integration-modal">
-                <div className="account-integration-modal-header">
-                    <h3>
-                        {step === 1 && '🔗 계정 통합'}
-                        {step === 2 && '📧 이메일 인증'}
-                        {step === 3 && '🔐 비밀번호 확인'}
-                        {step === 4 && '✅ 통합 완료'}
-                    </h3>
-                    <button className="account-integration-modal-close" onClick={handleClose}>
-                        <FaTimes />
-                    </button>
-                </div>
-
                 <div className="account-integration-modal-body">
                     {step === 1 && (
                         <div className="integration-step">
@@ -419,7 +418,7 @@ const AccountIntegrationModal = ({
                     )}
                 </div>
             </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

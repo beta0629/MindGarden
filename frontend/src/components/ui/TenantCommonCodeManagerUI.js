@@ -19,7 +19,10 @@
 import React from 'react';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './TenantCommonCodeManagerUI.css';
+
+const TENANT_COMMON_CODE_FORM_ID = 'tenant-common-code-manager-form';
 
 const TenantCommonCodeManagerUI = ({
     // 데이터
@@ -232,15 +235,40 @@ const TenantCommonCodeManagerUI = ({
                 </div>
             </div>
 
-            {/* 코드 생성/수정 모달 */}
-            {showModal && (
-                <div className="mg-modal-overlay" onClick={onModalClose}>
-                    <div className="mg-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="mg-modal-header">
-                            <h3>{modalMode === 'create' ? '코드 추가' : '코드 수정'}</h3>
-                            <button className="mg-modal-close" onClick={onModalClose}>×</button>
-                        </div>
-                        <form onSubmit={onFormSubmit}>
+            <UnifiedModal
+                isOpen={!!showModal}
+                onClose={onModalClose}
+                title={modalMode === 'create' ? '코드 추가' : '코드 수정'}
+                size="large"
+                variant="form"
+                className="mg-v2-ad-b0kla"
+                backdropClick
+                showCloseButton
+                actions={(
+                    <>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={onModalClose}
+                            preventDoubleClick={true}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            type="submit"
+                            form={TENANT_COMMON_CODE_FORM_ID}
+                            variant="primary"
+                            disabled={loading}
+                            loading={loading}
+                            loadingText="처리 중..."
+                            preventDoubleClick={true}
+                        >
+                            {modalMode === 'create' ? '생성' : '수정'}
+                        </Button>
+                    </>
+                )}
+            >
+                        <form id={TENANT_COMMON_CODE_FORM_ID} onSubmit={onFormSubmit}>
                             <div className="mg-form-group">
                                 <label>코드 그룹</label>
                                 <input
@@ -327,30 +355,8 @@ const TenantCommonCodeManagerUI = ({
                                     상담 패키지/평가 유형의 경우 금액(price), 기간(duration), 회기(sessions) 등을 JSON 형식으로 입력하세요.
                                 </small>
                             </div>
-                            <div className="mg-modal-actions">
-                                <Button 
-                                    type="button" 
-                                    variant="secondary" 
-                                    onClick={onModalClose}
-                                    preventDoubleClick={true}
-                                >
-                                    취소
-                                </Button>
-                                <Button 
-                                    type="submit" 
-                                    variant="primary" 
-                                    disabled={loading}
-                                    loading={loading}
-                                    loadingText="처리 중..."
-                                    preventDoubleClick={true}
-                                >
-                                    {modalMode === 'create' ? '생성' : '수정'}
-                                </Button>
-                            </div>
                         </form>
-                    </div>
-                </div>
-            )}
+            </UnifiedModal>
         </div>
     );
 };

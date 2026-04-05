@@ -4,6 +4,7 @@ import { USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -11,6 +12,8 @@ import BadgeSelect from '../common/BadgeSelect';
 import './UserManagement.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+
+const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
 
 const UserManagement = ({ onUpdate }) => {
     // notificationManager 사용
@@ -210,28 +213,24 @@ const UserManagement = ({ onUpdate }) => {
 
     return (
         <AdminCommonLayout title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
-            <div className="mg-v2-dashboard-layout">
-                {/* Dashboard Header */}
-                <div className="mg-v2-dashboard-header">
-                    <div className="mg-v2-dashboard-header-content">
-                        <div className="mg-v2-dashboard-header-left">
-                            <Users className="mg-v2-dashboard-icon" size={24} />
-                            <div>
-                                <h1 className="mg-v2-dashboard-title">사용자 관리</h1>
-                                <p className="mg-v2-dashboard-subtitle">전체 {filteredUsers.length}명의 사용자를 관리합니다</p>
-                            </div>
-                        </div>
-                        <div className="mg-v2-dashboard-header-right">
-                            <button className="mg-v2-dashboard-icon-btn" onClick={loadData} title="새로고침">
-                                <RefreshCw size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <ContentArea ariaLabel="관리자 사용자 목록 및 역할 관리">
+                <ContentHeader
+                    title="사용자 관리"
+                    subtitle={`전체 ${filteredUsers.length}명의 사용자를 관리합니다`}
+                    titleId={USER_MANAGEMENT_PAGE_TITLE_ID}
+                    actions={(
+                        <button
+                            type="button"
+                            className="mg-v2-dashboard-icon-btn"
+                            onClick={loadData}
+                            title="새로고침"
+                        >
+                            <RefreshCw size={18} />
+                        </button>
+                    )}
+                />
 
-                {/* Main Content */}
-                <div className="mg-v2-dashboard-content">
-                    <div className="mg-v2-card">
+                <div className="mg-v2-card">
                         {/* 필터 및 검색 */}
                         <div className="user-mgmt-filters">
                             <div className="user-mgmt-search-wrapper">
@@ -356,8 +355,7 @@ const UserManagement = ({ onUpdate }) => {
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
+            </ContentArea>
 
             {/* 역할 변경 모달 */}
             <UnifiedModal

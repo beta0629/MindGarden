@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import '../../styles/main.css';
 import './HelpPage.css';
 
 const HelpPage = () => {
-  const navigate = useNavigate();
-  const { user } = useSession();
   const [activeSection, setActiveSection] = useState('general');
 
   const helpSections = [
@@ -156,17 +152,12 @@ const HelpPage = () => {
 
   return (
     <AdminCommonLayout title="도움말">
-      <div className="help-page">
-        <div className="help-page__header">
-          <h1 className="help-page__title">
-            <i className="bi bi-question-circle help-page__title-icon"></i>
-            도움말
-          </h1>
-          <p className="help-page__subtitle">
-            Core Solution 사용에 필요한 모든 정보를 확인하세요
-          </p>
-        </div>
-
+      <ContentArea ariaLabel="도움말">
+        <ContentHeader
+          title="도움말"
+          subtitle="Core Solution 사용에 필요한 모든 정보를 확인하세요"
+        />
+        <div className="help-page">
         <div className="help-page__content">
           <div className="help-page__sidebar">
             <div className="help-page__nav">
@@ -211,7 +202,8 @@ const HelpPage = () => {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

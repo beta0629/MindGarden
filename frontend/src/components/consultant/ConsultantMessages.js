@@ -9,6 +9,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ConsultantMessages.css';
 
@@ -16,6 +17,8 @@ import './ConsultantMessages.css';
  * 상담사 메시지 관리 페이지
  * 내담자들과의 메시지 목록을 확인하고 새 메시지를 전송할 수 있는 화면
  */
+const CONSULTANT_MESSAGES_TITLE_ID = 'consultant-messages-title';
+
 const ConsultantMessages = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -200,11 +203,13 @@ const ConsultantMessages = () => {
   if (sessionLoading) {
     return (
       <AdminCommonLayout title="메시지">
-        <UnifiedLoading 
-          type="page"
-          text="세션 정보를 불러오는 중..."
-          variant="pulse"
-        />
+        <ContentArea ariaLabel="메시지 페이지 로딩">
+          <UnifiedLoading 
+            type="page"
+            text="세션 정보를 불러오는 중..."
+            variant="pulse"
+          />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -212,26 +217,23 @@ const ConsultantMessages = () => {
   if (!isLoggedIn) {
     return (
       <AdminCommonLayout title="메시지">
-        <div className="consultant-messages-login-required">
-          <h3>로그인이 필요합니다.</h3>
-        </div>
+        <ContentArea ariaLabel="메시지">
+          <div className="consultant-messages-login-required">
+            <h3>로그인이 필요합니다.</h3>
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="메시지">
-      <div className="consultant-messages-container">
-        {/* 헤더 */}
-        <div className="consultant-messages-header">
-          <h1 className="consultant-messages-title">
-            <i className="bi bi-chat-dots consultant-messages-icon"></i>
-            메시지 관리
-          </h1>
-          <p className="consultant-messages-subtitle">
-            내담자들과의 메시지를 관리할 수 있습니다.
-          </p>
-        </div>
+      <ContentArea ariaLabel="상담사 메시지 관리">
+        <ContentHeader
+          title="메시지 관리"
+          subtitle="내담자들과의 메시지를 관리할 수 있습니다."
+          titleId={CONSULTANT_MESSAGES_TITLE_ID}
+        />
 
         {/* 검색 및 필터 */}
         <div className="consultant-messages-search-container">
@@ -447,7 +449,7 @@ const ConsultantMessages = () => {
             </label>
           </div>
         </UnifiedModal>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

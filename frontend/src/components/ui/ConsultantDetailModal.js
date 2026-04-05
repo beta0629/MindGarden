@@ -1,6 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
+import { User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import SpecialtyDisplay from './SpecialtyDisplay';
 import Button from './Button/Button';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
@@ -43,37 +43,37 @@ const ConsultantDetailModal = ({
     const contact = getFormattedContact(consultant);
 
     // 평점 정보 계산
-    const ratingInfo = getConsultantRatingInfo(consultant);
+    const ratingInfo = consultant ? getConsultantRatingInfo(consultant) : null;
 
-    if (!isOpen || !consultant) return null;
-
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={onClose}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-modal-header">
-                    <div className="mg-modal-title-section">
-                        <h2 className="mg-modal-title">
-                            <User size={24} />
-                            상담사 상세 정보
-                        </h2>
-                        <p className="mg-modal-description">
-                            <SafeText>{consultant.name}</SafeText> 상담사의 상세 정보입니다.
-                        </p>
-                    </div>
-                    <button 
-                        className="mg-modal-close"
-                        onClick={onClose}
-                        aria-label="닫기"
+    return (
+        <UnifiedModal
+            isOpen={Boolean(isOpen && consultant)}
+            onClose={onClose}
+            title="상담사 상세 정보"
+            subtitle={consultant ? `${toDisplayString(consultant.name, '상담사')} 상담사의 상세 정보입니다.` : ''}
+            size="large"
+            variant="detail"
+            backdropClick
+            showCloseButton
+            actions={(
+                <>
+                    <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+                        닫기
+                    </Button>
+                    <Button
+                        variant="primary"
+                        size="medium"
+                        onClick={() => {
+                            onClose();
+                        }}
+                        preventDoubleClick={false}
                     >
-                        <X size={24} />
-                    </button>
-                </div>
-
-                {/* 본문 */}
-                <div className="mg-modal-body">
+                        이 상담사 선택
+                    </Button>
+                </>
+            )}
+        >
+                    {consultant && (
                     <div className="mg-consultant-detail-container">
                         {/* 상담사 기본 정보 */}
                         <div className="mg-consultant-detail-header">
@@ -221,27 +221,8 @@ const ConsultantDetailModal = ({
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* 푸터 */}
-                <div className="mg-modal__footer mg-modal-footer">
-                    <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-                        닫기
-                    </Button>
-                    <Button
-                        variant="primary"
-                        size="medium"
-                        onClick={() => {
-                            onClose();
-                        }}
-                        preventDoubleClick={false}
-                    >
-                        이 상담사 선택
-                    </Button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+                    )}
+        </UnifiedModal>
     );
 };
 

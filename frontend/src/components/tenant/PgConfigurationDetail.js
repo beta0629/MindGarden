@@ -29,6 +29,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PgConfigurationDetail.css';
@@ -612,48 +613,51 @@ const PgConfigurationDetail = () => {
         )}
         
         {/* 삭제 확인 모달 */}
-        {showDeleteModal && (
-          <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>PG 설정 삭제</h2>
-                <button 
-                  className="modal-close"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              <div className="modal-body">
-                <p>
-                  정말로 <strong><SafeText>{config.pgName ?? config.pgProvider}</SafeText></strong> 설정을 삭제하시겠습니까?
-                </p>
-                <p className="warning-text">
-                  이 작업은 되돌릴 수 없습니다.
-                </p>
-              </div>
-              <div className="modal-footer">
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowDeleteModal(false)}
-                  preventDoubleClick={false}
-                >
-                  취소
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="danger"
-                  onClick={handleDelete}
-                  disabled={loading}
-                  preventDoubleClick={false}
-                >
-                  삭제
-                </MGButton>
-              </div>
-            </div>
-          </div>
-        )}
+        <UnifiedModal
+          isOpen={Boolean(showDeleteModal && config)}
+          onClose={() => setShowDeleteModal(false)}
+          title="PG 설정 삭제"
+          size="small"
+          variant="confirm"
+          className="mg-v2-ad-b0kla"
+          backdropClick={!loading}
+          loading={loading}
+          actions={
+            <>
+              <MGButton
+                type="button"
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={loading}
+                preventDoubleClick={false}
+              >
+                취소
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="danger"
+                onClick={handleDelete}
+                disabled={loading}
+                preventDoubleClick={false}
+              >
+                삭제
+              </MGButton>
+            </>
+          }
+        >
+          {config && (
+            <>
+              <p>
+                정말로{' '}
+                <strong>
+                  <SafeText>{config.pgName ?? config.pgProvider}</SafeText>
+                </strong>
+                {' '}설정을 삭제하시겠습니까?
+              </p>
+              <p className="warning-text">이 작업은 되돌릴 수 없습니다.</p>
+            </>
+          )}
+        </UnifiedModal>
             </main>
           </ContentArea>
         </div>

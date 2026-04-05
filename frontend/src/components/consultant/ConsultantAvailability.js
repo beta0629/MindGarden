@@ -8,6 +8,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import Button from '../ui/Button/Button';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -15,6 +16,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
 
 const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
+const CONSULTANT_AVAILABILITY_FORM_ID = 'consultant-availability-slot-form';
 
 const ConsultantAvailability = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -492,20 +494,36 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay">
-      <div className="modal-content availability-modal">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            <i className="bi bi-clock"></i>
-            {initialData ? '상담 가능 시간 수정' : '상담 가능 시간 추가'}
-          </h2>
-          <button className="modal-close-btn" onClick={onClose}>×</button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="modal-body">
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initialData ? '상담 가능 시간 수정' : '상담 가능 시간 추가'}
+      size="medium"
+      variant="form"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      actions={(
+        <>
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+            <i className="bi bi-x-circle"></i>
+            취소
+          </Button>
+          <Button
+            type="submit"
+            form={CONSULTANT_AVAILABILITY_FORM_ID}
+            variant="primary"
+            size="medium"
+            preventDoubleClick={false}
+          >
+            <i className="bi bi-check-circle"></i>
+            {initialData ? '수정' : '추가'}
+          </Button>
+        </>
+      )}
+    >
+        <form id={CONSULTANT_AVAILABILITY_FORM_ID} onSubmit={handleSubmit} className="modal-body availability-modal__form">
           <div className="form-group">
             <label className="form-label">요일 *</label>
             <select
@@ -608,19 +626,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             </div>
           </div>
         </form>
-        
-        <div className="mg-modal__footer modal-footer">
-          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-            <i className="bi bi-x-circle"></i>
-            취소
-          </Button>
-          <Button type="button" variant="primary" size="medium" onClick={handleSubmit} preventDoubleClick={false}>
-            <i className="bi bi-check-circle"></i>
-            {initialData ? '수정' : '추가'}
-          </Button>
-        </div>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

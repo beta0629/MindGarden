@@ -4,7 +4,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
 import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import { fetchUserPermissions } from '../../utils/permissionUtils';
-import CompactConfirmModal from '../common/CompactConfirmModal';
+import ConfirmModal from '../common/ConfirmModal';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -351,7 +351,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       </div>
 
       {/* 로그아웃 확인 모달 */}
-      <CompactConfirmModal
+      <ConfirmModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}

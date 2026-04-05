@@ -19,7 +19,7 @@ import PsychKpiSection from './psych-assessment/organisms/PsychKpiSection';
 import PsychUploadSection from './psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from './psych-assessment/organisms/PsychDocumentListBlock';
 import PsychAiReportModalContent from './psych-assessment/organisms/PsychAiReportModalContent';
-import MGModal from '../common/MGModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import ComingSoon from '../common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
@@ -337,15 +337,16 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         </div>
       </div>
 
-      <MGModal
+      <UnifiedModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         title="AI 분석 결과"
         size="large"
         showCloseButton
+        className="mg-v2-ad-b0kla"
       >
         <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
-      </MGModal>
+      </UnifiedModal>
     </AdminCommonLayout>
   );
 };

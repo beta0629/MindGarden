@@ -1,6 +1,9 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
+
+const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
 
 /**
  * 개인정보 처리방침 컴포넌트
@@ -9,12 +12,14 @@ import './PrivacyPolicy.css';
  * @since 2025-01-17
  */
 
-/** 레이아웃 없이 개인정보처리방침 본문만 렌더 (페이지·모달 공용) */
-export const PrivacyPolicyContent = () => (
+/** 레이아웃 없이 개인정보처리방침 본문만 렌더 (페이지·모달 공용). omitHeading: ContentHeader와 함께 쓸 때 h1 중복 방지 */
+export const PrivacyPolicyContent = ({ omitHeading = false }) => (
   <div className="privacy-policy-container">
-        <h1 className="privacy-policy-title">
-          개인정보 처리방침
-        </h1>
+        {omitHeading ? null : (
+          <h1 className="privacy-policy-title">
+            개인정보 처리방침
+          </h1>
+        )}
 
         <div className="privacy-policy-info-box">
           <p className="privacy-policy-info-text">
@@ -197,7 +202,10 @@ export const PrivacyPolicyContent = () => (
 
 const PrivacyPolicy = () => (
   <AdminCommonLayout title="개인정보처리방침">
-    <PrivacyPolicyContent />
+    <ContentArea ariaLabel="개인정보 처리방침">
+      <ContentHeader title="개인정보 처리방침" titleId={PRIVACY_PAGE_TITLE_ID} />
+      <PrivacyPolicyContent omitHeading />
+    </ContentArea>
   </AdminCommonLayout>
 );
 

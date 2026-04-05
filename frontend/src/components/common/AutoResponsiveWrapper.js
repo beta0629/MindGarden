@@ -1,8 +1,4 @@
 import React from 'react';
-import IPhone17Card from './IPhone17Card';
-import IPhone17Button from './IPhone17Button';
-import IPhone17Modal from './IPhone17Modal';
-import IPhone17PageHeader from './IPhone17PageHeader';
 // import { useResponsive } from '../../hooks/useResponsive';
 import './AutoResponsiveWrapper.css';
 

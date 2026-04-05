@@ -5,6 +5,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { Bell, AlertCircle, Info, AlertTriangle, Settings, Calendar } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './SystemNotifications.css';
 import SafeText from '../common/SafeText';
@@ -219,50 +220,44 @@ const SystemNotifications = () => {
           </div>
         )}
 
-        {/* 상세 모달 */}
-        {selectedNotification && (
-          <div className="mg-modal-overlay" onClick={closeModal}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal-header">
-                <div>
-                  <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-                    <SafeText tag="h3" className="mg-h3 mg-mb-0">{selectedNotification.title}</SafeText>
-                    {selectedNotification.isUrgent && (
-                      <span className="mg-badge mg-badge-danger">긴급</span>
-                    )}
-                    {selectedNotification.isImportant && (
-                      <span className="mg-badge mg-badge-warning">중요</span>
-                    )}
-                  </div>
-                  <div className="mg-flex mg-gap-sm mg-align-center">
-                    <span className="mg-badge mg-badge-secondary">
-                      {getTargetTypeLabel(selectedNotification.targetType)}
-                    </span>
-                    <span className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      {selectedNotification.authorName || '관리자'} · 
-                      {formatDate(selectedNotification.publishedAt || selectedNotification.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <button onClick={closeModal} className="mg-modal-close">
-                  ×
-                </button>
+        <UnifiedModal
+          isOpen={!!selectedNotification}
+          onClose={closeModal}
+          title={selectedNotification?.title || '시스템 공지'}
+          subtitle={
+            selectedNotification
+              ? `${getTargetTypeLabel(selectedNotification.targetType)} · ${selectedNotification.authorName || '관리자'} · ${formatDate(selectedNotification.publishedAt || selectedNotification.createdAt)}`
+              : ''
+          }
+          size="large"
+          variant="detail"
+          className="mg-v2-ad-b0kla"
+          backdropClick
+          showCloseButton
+          actions={(
+            <button type="button" onClick={closeModal} className="mg-button mg-button-primary">
+              확인
+            </button>
+          )}
+        >
+          {selectedNotification && (
+            <>
+              <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap mg-mb-md">
+                {selectedNotification.isUrgent && (
+                  <span className="mg-badge mg-badge-danger">긴급</span>
+                )}
+                {selectedNotification.isImportant && (
+                  <span className="mg-badge mg-badge-warning">중요</span>
+                )}
               </div>
-              <div className="mg-modal-body">
-                <div className="notification-content">
-                  {selectedNotification.content.split('\n').map((line, index) => (
-                    <p key={index} className="mg-mb-sm">{line}</p>
-                  ))}
-                </div>
+              <div className="notification-content">
+                {selectedNotification.content.split('\n').map((line, index) => (
+                  <p key={index} className="mg-mb-sm">{line}</p>
+                ))}
               </div>
-              <div className="mg-modal-footer">
-                <button onClick={closeModal} className="mg-button mg-button-primary">
-                  확인
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </UnifiedModal>
       </div>
       )}
     </AdminCommonLayout>

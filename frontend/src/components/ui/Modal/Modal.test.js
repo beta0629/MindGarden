@@ -1,195 +1,208 @@
 /**
- * Modal 컴포넌트 테스트
+ * Modal 컴포넌트 테스트 (UnifiedModal 래퍼)
  */
 
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import '@testing-library/jest-dom';
 import Modal from './Modal';
 
-// ReactDOM.createPortal을 모킹
 const mockPortal = jest.fn();
-jest.mock('react-dom', () => ({...jest.requireActual('react-dom'),
-  createPortal: (node) => mockPortal(node)}));
+jest.mock('react-dom', () => ({
+  ...jest.requireActual('react-dom'),
+  createPortal: (node) => mockPortal(node)
+}));
 
-describe('Modal Component', () => {beforeEach(() => {mockPortal.mockClear();});
+describe('Modal Component (UnifiedModal)', () => {
+  beforeEach(() => {
+    mockPortal.mockClear();
+  });
 
-  // 기본 렌더링 테스트
-  test('renders modal when isOpen is true', () => {render(<Modal isOpen={true} onClose={jest.fn()}>
+  test('renders modal when isOpen is true', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    expect(mockPortal).toHaveBeenCalled();});
-
-  // 모달이 닫혀있을 때 렌더링하지 않음
-  test('does not render when isOpen is false', () => {render(<Modal isOpen={false} onClose={jest.fn()}>
-        <div>Modal content</div>
-      </Modal>);
-    
-    expect(mockPortal).not.toHaveBeenCalled();});
-
-  // 제목 표시 테스트
-  test('displays title when provided', () => {render(<Modal isOpen={true} title="Test Modal" onClose={jest.fn()}>
-        <div>Modal content</div>
-      </Modal>);
-    
+      </Modal>
+    );
     expect(mockPortal).toHaveBeenCalled();
-    // 실제 DOM에서 확인하기 위해 portal 내용을 렌더링
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    expect(container.querySelector('#modal-title')).toHaveTextContent('Test Modal');});
+  });
 
-  // 닫기 버튼 테스트
-  test('shows close button when showCloseButton is true', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} showCloseButton={true}>
+  test('does not render when isOpen is false', () => {
+    render(
+      <Modal isOpen={false} onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const closeButton = container.querySelector('[aria-label="모달 닫기"]');
-    expect(closeButton).toBeInTheDocument();});
+      </Modal>
+    );
+    expect(mockPortal).not.toHaveBeenCalled();
+  });
 
-  // 닫기 버튼 숨김 테스트
-  test('hides close button when showCloseButton is false', () => {render(<Modal isOpen={true} onClose={jest.fn()} showCloseButton={false}>
+  test('displays title when provided', () => {
+    render(
+      <Modal isOpen title="Test Modal" onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const closeButton = container.querySelector('[aria-label="모달 닫기"]');
-    expect(closeButton).not.toBeInTheDocument();});
+      </Modal>
+    );
+    expect(mockPortal).toHaveBeenCalled();
+    const portalContent = mockPortal.mock.calls[0][0];
+    render(portalContent);
+    expect(screen.getByRole('heading', { name: 'Test Modal' })).toBeInTheDocument();
+  });
 
-  // 크기 클래스 테스트
-  test('applies correct size class', () => {render(<Modal isOpen={true} size="large" onClose={jest.fn()}>
+  test('shows close button when showCloseButton is true', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} showCloseButton>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modal = container.querySelector('.mg-v2-modal');
-    expect(modal).toHaveClass('mg-v2-modal--large');});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    render(portalContent);
+    expect(screen.getByRole('button', { name: '닫기' })).toBeInTheDocument();
+  });
 
-  // 변형 클래스 테스트
-  test('applies correct variant class', () => {render(<Modal isOpen={true} variant="drawer" onClose={jest.fn()}>
+  test('hides close button when showCloseButton is false', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()} showCloseButton={false}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modal = container.querySelector('.mg-v2-modal');
-    expect(modal).toHaveClass('mg-v2-modal--drawer');});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    render(portalContent);
+    expect(screen.queryByRole('button', { name: '닫기' })).not.toBeInTheDocument();
+  });
 
-  // 커스텀 클래스 테스트
-  test('applies custom className', () => {render(<Modal isOpen={true} className="custom-class" onClose={jest.fn()}>
+  test('applies correct size class on dialog panel', () => {
+    render(
+      <Modal isOpen size="large" onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modal = container.querySelector('.mg-v2-modal');
-    expect(modal).toHaveClass('custom-class');});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const panel = container.querySelector('.mg-modal');
+    expect(panel).toHaveClass('mg-modal--large');
+  });
 
-  // 역할별 테마 테스트
-  test('applies role-based theme', () => {render(<Modal isOpen={true} role="CLIENT" onClose={jest.fn()}>
+  test('applies correct variant class on overlay and panel', () => {
+    render(
+      <Modal isOpen variant="form" onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modal = container.querySelector('.mg-v2-modal-dialog');
-    expect(modal).toHaveAttribute('data-role', 'CLIENT');});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const overlay = container.querySelector('.mg-modal-overlay');
+    const panel = container.querySelector('.mg-modal');
+    expect(overlay).toHaveClass('mg-modal-overlay--form');
+    expect(panel).toHaveClass('mg-modal--form');
+  });
 
-  // 접근성 속성 테스트
-  test('has proper accessibility attributes', () => {render(<Modal isOpen={true} title="Test Modal" onClose={jest.fn()}>
+  test('applies custom className to overlay and panel', () => {
+    render(
+      <Modal isOpen className="custom-class" onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modal = container.querySelector('.mg-v2-modal-dialog');
-    expect(modal).toHaveAttribute('role', 'dialog');
-    expect(modal).toHaveAttribute('aria-modal', 'true');
-    expect(modal).toHaveAttribute('aria-labelledby', 'modal-title');});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const overlay = container.querySelector('.mg-modal-overlay');
+    const panel = container.querySelector('.mg-modal');
+    expect(overlay).toHaveClass('custom-class');
+    expect(panel).toHaveClass('custom-class');
+  });
 
-  // ESC 키 이벤트 테스트
-  test('calls onClose when Escape key is pressed', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} closeOnEscape={true}>
+  test('has proper accessibility attributes on dialog root', () => {
+    render(
+      <Modal isOpen title="Test Modal" onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    fireEvent.keyDown(document, {key: 'Escape'});
-    expect(onClose).toHaveBeenCalledTimes(DEFAULT_VALUES.CURRENT_PAGE);});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const dialogRoot = container.querySelector('[role="dialog"]');
+    expect(dialogRoot).toHaveAttribute('aria-modal', 'true');
+    const title = screen.getByRole('heading', { name: 'Test Modal' });
+    const labelledBy = dialogRoot.getAttribute('aria-labelledby');
+    expect(labelledBy).toBe(title.id);
+  });
 
-  // ESC 키 비활성화 테스트
-  test('does not call onClose when closeOnEscape is false', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} closeOnEscape={false}>
+  test('calls onClose when Escape key is pressed', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose}>
         <div>Modal content</div>
-      </Modal>);
-    
-    fireEvent.keyDown(document, {key: 'Escape'});
-    expect(onClose).not.toHaveBeenCalled();});
+      </Modal>
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 
-  // 오버레이 클릭 테스트
-  test('calls onClose when overlay is clicked', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} closeOnOverlayClick={true}>
+  test('calls onClose when overlay is clicked (backdropClick true)', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} backdropClick>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const overlay = container.querySelector('.mg-v2-modal-overlay');
-    
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const overlay = container.querySelector('.mg-modal-overlay');
     fireEvent.click(overlay);
-    expect(onClose).toHaveBeenCalledTimes(DEFAULT_VALUES.CURRENT_PAGE);});
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 
-  // 오버레이 클릭 비활성화 테스트
-  test('does not call onClose when closeOnOverlayClick is false', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} closeOnOverlayClick={false}>
+  test('does not call onClose when backdropClick is false', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} backdropClick={false}>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const overlay = container.querySelector('.mg-v2-modal-overlay');
-    
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const overlay = container.querySelector('.mg-modal-overlay');
     fireEvent.click(overlay);
-    expect(onClose).not.toHaveBeenCalled();});
+    expect(onClose).not.toHaveBeenCalled();
+  });
 
-  // 모달 내용 클릭 시 닫히지 않음 테스트
-  test('does not call onClose when modal content is clicked', () => {const onClose = jest.fn();
-    render(<Modal isOpen={true} onClose={onClose} closeOnOverlayClick={true}>
+  test('does not call onClose when modal panel is clicked', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} backdropClick>
         <div>Modal content</div>
-      </Modal>);
-    
-    const portalContent = mockPortal.mock.calls[COLOR_CONSTANTS.ALPHA_TRANSPARENT][COLOR_CONSTANTS.ALPHA_TRANSPARENT];
-    const {container} = render(portalContent);
-    const modalDialog = container.querySelector('.mg-v2-modal-dialog');
-    
-    fireEvent.click(modalDialog);
-    expect(onClose).not.toHaveBeenCalled();});
+      </Modal>
+    );
+    const portalContent = mockPortal.mock.calls[0][0];
+    const { container } = render(portalContent);
+    const panel = container.querySelector('.mg-modal');
+    fireEvent.click(panel);
+    expect(onClose).not.toHaveBeenCalled();
+  });
 
-  // body 스크롤 방지 테스트
-  test('prevents body scroll when modal is open', () => {const {rerender} = render(<Modal isOpen={false} onClose={jest.fn()}>
+  test('prevents body scroll when modal is open', () => {
+    const { rerender } = render(
+      <Modal isOpen={false} onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
+      </Modal>
+    );
     expect(document.body.style.overflow).toBe('unset');
-    
-    rerender(<Modal isOpen={true} onClose={jest.fn()}>
+    rerender(
+      <Modal isOpen onClose={jest.fn()}>
         <div>Modal content</div>
-      </Modal>);
-    
-    expect(document.body.style.overflow).toBe('hidden');});
-
-  // 컴포넌트 언마운트 시 스크롤 복원 테스트
-  test('restores body scroll when component unmounts', () => {const {unmount} = render(<Modal isOpen={true} onClose={jest.fn()}>
-        <div>Modal content</div>
-      </Modal>);
-    
+      </Modal>
+    );
     expect(document.body.style.overflow).toBe('hidden');
-    
+  });
+
+  test('restores body scroll when component unmounts', () => {
+    const { unmount } = render(
+      <Modal isOpen onClose={jest.fn()}>
+        <div>Modal content</div>
+      </Modal>
+    );
+    expect(document.body.style.overflow).toBe('hidden');
     unmount();
-    
-    expect(document.body.style.overflow).toBe('unset');});});
+    expect(document.body.style.overflow).toBe('unset');
+  });
+});

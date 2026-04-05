@@ -10,7 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Plus,
-  RotateCcw,
   CheckCircle,
   Pause,
   Clock,
@@ -38,6 +37,7 @@ import PartialRefundModal from '../../mapping/PartialRefundModal';
 import PaymentConfirmationModal from '../../PaymentConfirmationModal';
 import MappingDetailModal from '../../mapping/MappingDetailModal';
 import MappingEditModal from '../../MappingEditModal';
+import UnifiedModal from '../../../common/modals/UnifiedModal';
 import '../../../../styles/unified-design-tokens.css';
 import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
@@ -510,87 +510,78 @@ const MappingManagementPage = () => {
         }}
       />
 
-      {showRefundModal && refundMapping && (
-        <div className="mapping-refund-modal-overlay">
-          <div className="mapping-refund-modal">
-            <div className="mapping-refund-modal-header">
-              <div className="mapping-refund-modal-header-content">
-                <h3 className="mapping-refund-modal-title">
-                  <RotateCcw size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                  매칭 환불 처리
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleCloseRefundModal}
-                  className="mapping-refund-modal-close"
-                >
-                  ×
-                </button>
+      <UnifiedModal
+        isOpen={Boolean(showRefundModal && refundMapping)}
+        onClose={handleCloseRefundModal}
+        title="매칭 환불 처리"
+        size="medium"
+        className="mg-v2-ad-b0kla"
+        loading={loading}
+        backdropClick={!loading}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={handleCloseRefundModal}
+              disabled={loading}
+              preventDoubleClick
+            >
+              취소
+            </Button>
+            <MGButton
+              variant="danger"
+              onClick={handleRefundProcess}
+              disabled={!refundReason.trim() || loading}
+              preventDoubleClick={true}
+            >
+              환불 처리
+            </MGButton>
+          </>
+        }
+      >
+        {refundMapping && (
+          <div className="mapping-refund-modal-body">
+            <div className="mapping-refund-info">
+              <h4 className="mapping-refund-info-title">환불 대상 매칭 정보</h4>
+              <div className="mapping-refund-info-content">
+                <p>
+                  <strong>상담사:</strong> {refundMapping.consultantName}
+                </p>
+                <p>
+                  <strong>내담자:</strong> {refundMapping.clientName}
+                </p>
+                <p>
+                  <strong>패키지:</strong> {refundMapping.packageName}
+                </p>
+                <p>
+                  <strong>총 회기:</strong> {refundMapping.totalSessions}회
+                </p>
+                <p>
+                  <strong>사용 회기:</strong> {refundMapping.usedSessions}회
+                </p>
+                <p className="mapping-refund-info-sessions">
+                  <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
+                </p>
               </div>
             </div>
-            <div className="mapping-refund-modal-body">
-              <div className="mapping-refund-info">
-                <h4 className="mapping-refund-info-title">환불 대상 매칭 정보</h4>
-                <div className="mapping-refund-info-content">
-                  <p>
-                    <strong>상담사:</strong> {refundMapping.consultantName}
-                  </p>
-                  <p>
-                    <strong>내담자:</strong> {refundMapping.clientName}
-                  </p>
-                  <p>
-                    <strong>패키지:</strong> {refundMapping.packageName}
-                  </p>
-                  <p>
-                    <strong>총 회기:</strong> {refundMapping.totalSessions}회
-                  </p>
-                  <p>
-                    <strong>사용 회기:</strong> {refundMapping.usedSessions}회
-                  </p>
-                  <p className="mapping-refund-info-sessions">
-                    <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
-                  </p>
-                </div>
-              </div>
-              <div className="mapping-refund-reason">
-                <h4 className="mapping-refund-reason-title">
-                  환불 사유 <span className="mapping-refund-required">*</span>
-                </h4>
-                <textarea
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  placeholder="환불 사유를 상세히 입력해주세요..."
-                  rows={4}
-                  className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
-                />
-                {!refundReason.trim() && (
-                  <div className="mapping-refund-reason-error">환불 사유를 반드시 입력해주세요.</div>
-                )}
-              </div>
-            </div>
-            <div className="mapping-refund-modal-footer">
-              <Button
-                variant="secondary"
-                onClick={handleCloseRefundModal}
-                disabled={loading}
-                preventDoubleClick
-              >
-                취소
-              </Button>
-              <MGButton
-                variant="danger"
-                onClick={handleRefundProcess}
-                disabled={!refundReason.trim()}
-                loading={loading}
-                preventDoubleClick={true}
-                loadingText="처리 중..."
-              >
-                환불 처리
-              </MGButton>
+            <div className="mapping-refund-reason">
+              <h4 className="mapping-refund-reason-title">
+                환불 사유 <span className="mapping-refund-required">*</span>
+              </h4>
+              <textarea
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="환불 사유를 상세히 입력해주세요..."
+                rows={4}
+                className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
+              />
+              {!refundReason.trim() && (
+                <div className="mapping-refund-reason-error">환불 사유를 반드시 입력해주세요.</div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </UnifiedModal>
 
       <MappingEditModal
         isOpen={showEditModal}

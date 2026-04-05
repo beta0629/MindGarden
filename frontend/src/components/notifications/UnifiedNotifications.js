@@ -5,6 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -15,6 +16,8 @@ import '../../styles/unified-design-tokens.css';
 /**
  * 시스템 공지와 일반 메시지를 탭으로 구분하여 표시
  */
+const UNIFIED_NOTIFICATIONS_TITLE_ID = 'unified-notifications-title';
+
 const UnifiedNotifications = () => {
   const { user, isLoggedIn } = useSession();
   const location = useLocation();
@@ -247,26 +250,23 @@ const UnifiedNotifications = () => {
   if (!isLoggedIn) {
     return (
       <AdminCommonLayout title="알림">
-        <div className="mg-card mg-v2-text-center mg-p-xl">
-          <h3>로그인이 필요합니다.</h3>
-        </div>
+        <ContentArea ariaLabel="알림">
+          <div className="mg-card mg-v2-text-center mg-p-xl">
+            <h3>로그인이 필요합니다.</h3>
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="알림">
-      <div className="mg-dashboard-layout">
-        {/* 헤더 */}
-        <div className="mg-card mg-mb-lg">
-          <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-            <Bell className="mg-v2-color-primary" size={24} />
-            <h2 className="mg-h3 mg-mb-0">알림</h2>
-          </div>
-          <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-            시스템 공지와 메시지를 확인하세요.
-          </p>
-        </div>
+      <ContentArea ariaLabel="통합 알림">
+        <ContentHeader
+          title="알림"
+          subtitle="시스템 공지와 메시지를 확인하세요."
+          titleId={UNIFIED_NOTIFICATIONS_TITLE_ID}
+        />
 
         {/* 탭 */}
         <div className="mg-card mg-mb-lg">
@@ -457,7 +457,7 @@ const UnifiedNotifications = () => {
             />
           </UnifiedModal>
         )}
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

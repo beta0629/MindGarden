@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 import SafeText from '../common/SafeText';
@@ -13,6 +14,8 @@ import SafeText from '../common/SafeText';
 /**
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 종합 화면
  */
+const CONSULTATION_RECORD_TITLE_ID = 'consultation-record-screen-title';
+
 const ConsultationRecordScreen = () => {
   const { consultationId: scheduleId } = useParams();
   const navigate = useNavigate();
@@ -526,9 +529,11 @@ const ConsultationRecordScreen = () => {
   if (loading) {
     return (
       <AdminCommonLayout title="상담일지 작성">
-        <div className="consultation-record-screen-loading">
-          <div className="mg-loading">로딩중...</div>
-        </div>
+        <ContentArea ariaLabel="상담일지 작성 로딩">
+          <div className="consultation-record-screen-loading">
+            <div className="mg-loading">로딩중...</div>
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -536,19 +541,25 @@ const ConsultationRecordScreen = () => {
   if (!consultation || !client) {
     return (
       <AdminCommonLayout title="상담일지 작성">
-        <div className="mg-dashboard-layout">
-          <div className="mg-dashboard-header">
-            <h1 className="mg-dashboard-title">상담일지 작성</h1>
-            <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
-          </div>
-        </div>
+        <ContentArea ariaLabel="상담일지 작성">
+          <ContentHeader
+            title="상담일지 작성"
+            subtitle="상담 정보를 불러올 수 없습니다."
+            titleId={CONSULTATION_RECORD_TITLE_ID}
+          />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="상담일지 작성">
-      <div className="mg-dashboard-layout">
+      <ContentArea ariaLabel="상담일지 작성">
+        <ContentHeader
+          title="상담일지 작성"
+          subtitle="내담자 정보와 세션 내용을 기록합니다."
+          titleId={CONSULTATION_RECORD_TITLE_ID}
+        />
 
       {/* 내담자 정보 카드 */}
       <div className="mg-v2-card mg-mb-lg">
@@ -1056,7 +1067,7 @@ const ConsultationRecordScreen = () => {
           </button>
         </div>
       </div>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

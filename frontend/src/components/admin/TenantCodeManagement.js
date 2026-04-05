@@ -20,8 +20,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { notificationManager } from '../../utils/notificationManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { 
     FaBuilding, 
     FaGlobe, 
@@ -39,7 +41,6 @@ import {
     TENANT_CODE_GROUPS,
     CORE_CODE_GROUPS,
     TAB_TYPES,
-    MODAL_TYPES,
     DEFAULT_FORM_DATA,
     UI_TEXT,
     NOTIFICATION_MESSAGES,
@@ -59,6 +60,8 @@ import {
     formatErrorMessage
 } from '../../utils/tenantCodeUtils';
 import './TenantCodeManagement.css';
+
+const TENANT_CODE_PAGE_TITLE_ID = 'tenant-code-management-title';
 
 const TenantCodeManagement = () => {
     const { user } = useSession();
@@ -267,9 +270,7 @@ const TenantCodeManagement = () => {
 
         if (loading) {
             return (
-                <AdminCommonLayout title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
-                    <UnifiedLoading type="page" text={UI_TEXT.LOADING_CODES} />
-                </AdminCommonLayout>
+                <UnifiedLoading type="inline" text={UI_TEXT.LOADING_CODES} />
             );
         }
 
@@ -404,133 +405,18 @@ const TenantCodeManagement = () => {
         );
     };
 
-    // 코드 추가/수정 모달 렌더링
-    const renderModal = () => {
-        if (!showAddModal) return null;
-
-        const isTenant = TENANT_CODE_GROUPS.includes(selectedGroup);
-
-        return (
-            <div className="modal-overlay" onClick={handleCloseModal}>
-                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                        <h3>
-                            {editingCode ? UI_TEXT.MODAL_EDIT_TITLE : UI_TEXT.MODAL_ADD_TITLE}
-                            {isTenant && <span className="tenant-badge"><FaBuilding /> {UI_TEXT.TENANT_CODE}</span>}
-                        </h3>
-                        <button className="close-btn" onClick={handleCloseModal}>×</button>
-                    </div>
-                    
-                    <div className="modal-body">
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_CODE_VALUE} *</label>
-                                <input
-                                    type="text"
-                                    value={formData.codeValue}
-                                    onChange={(e) => setFormData({...formData, codeValue: e.target.value})}
-                                    placeholder={UI_TEXT.PLACEHOLDER_CODE_VALUE}
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_CODE_LABEL} *</label>
-                                <input
-                                    type="text"
-                                    value={formData.codeLabel}
-                                    onChange={(e) => setFormData({...formData, codeLabel: e.target.value})}
-                                    placeholder={UI_TEXT.PLACEHOLDER_CODE_LABEL}
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_KOREAN_NAME} *</label>
-                                <input
-                                    type="text"
-                                    value={formData.koreanName}
-                                    onChange={(e) => setFormData({...formData, koreanName: e.target.value})}
-                                    placeholder={UI_TEXT.PLACEHOLDER_KOREAN_NAME}
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_SORT_ORDER}</label>
-                                <input
-                                    type="number"
-                                    value={formData.sortOrder}
-                                    onChange={(e) => setFormData({...formData, sortOrder: parseInt(e.target.value) || 1})}
-                                    min="1"
-                                />
-                            </div>
-                            
-                            <div className="form-group full-width">
-                                <label>{UI_TEXT.FORM_DESCRIPTION}</label>
-                                <textarea
-                                    value={formData.codeDescription}
-                                    onChange={(e) => setFormData({...formData, codeDescription: e.target.value})}
-                                    placeholder={UI_TEXT.PLACEHOLDER_DESCRIPTION}
-                                    rows="3"
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_ICON}</label>
-                                <input
-                                    type="text"
-                                    value={formData.icon}
-                                    onChange={(e) => setFormData({...formData, icon: e.target.value})}
-                                    placeholder={UI_TEXT.PLACEHOLDER_ICON}
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>{UI_TEXT.FORM_COLOR}</label>
-                                <input
-                                    type="color"
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                    value={formData.colorCode || '#6b7280'}
-                                    onChange={(e) => setFormData({...formData, colorCode: e.target.value})}
-                                />
-                            </div>
-                            
-                            <div className="form-group full-width">
-                                <label className="checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.isActive}
-                                        onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                                    />
-                                    {UI_TEXT.FORM_ACTIVE}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="modal-footer">
-                        <button className="mg-button" variant="outline" onClick={handleCloseModal}>
-                            {UI_TEXT.BTN_CANCEL}
-                        </button>
-                        <button className="mg-button" 
-                            variant="primary" 
-                            onClick={handleSaveCode}
-                            disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
-                        >
-                            {editingCode ? UI_TEXT.BTN_EDIT : UI_TEXT.BTN_ADD}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
+    const isTenantModal = selectedGroup && TENANT_CODE_GROUPS.includes(selectedGroup);
 
     return (
         <AdminCommonLayout title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
-            <div className="tenant-code-management">
-                <div className="page-header">
-                    <h1>{UI_TEXT.PAGE_TITLE}</h1>
-                    <p>{UI_TEXT.PAGE_DESCRIPTION}</p>
-                </div>
+            <ContentArea ariaLabel="테넌트 및 코어 공통 코드 관리">
+                <ContentHeader
+                    title={UI_TEXT.PAGE_TITLE}
+                    subtitle={UI_TEXT.PAGE_DESCRIPTION}
+                    titleId={TENANT_CODE_PAGE_TITLE_ID}
+                />
 
+                <div className="tenant-code-management">
                 <div className="tab-navigation">
                     <button
                         className={`tab-btn ${activeTab === TAB_TYPES.TENANT ? 'active' : ''}`}
@@ -583,8 +469,127 @@ const TenantCodeManagement = () => {
                     </div>
                 </div>
 
-                {renderModal()}
-            </div>
+                <UnifiedModal
+                    isOpen={showAddModal}
+                    onClose={handleCloseModal}
+                    title={editingCode ? UI_TEXT.MODAL_EDIT_TITLE : UI_TEXT.MODAL_ADD_TITLE}
+                    subtitle={isTenantModal ? UI_TEXT.TENANT_CODE : ''}
+                    size="medium"
+                    className="mg-v2-ad-b0kla"
+                    backdropClick
+                    showCloseButton
+                    actions={(
+                        <>
+                            <button type="button" className="mg-button" variant="outline" onClick={handleCloseModal}>
+                                {UI_TEXT.BTN_CANCEL}
+                            </button>
+                            <button
+                                type="button"
+                                className="mg-button"
+                                variant="primary"
+                                onClick={handleSaveCode}
+                                disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
+                            >
+                                {editingCode ? UI_TEXT.BTN_EDIT : UI_TEXT.BTN_ADD}
+                            </button>
+                        </>
+                    )}
+                >
+                    <div className="mg-v2-modal-body">
+                        <div className="form-grid">
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-value">{UI_TEXT.FORM_CODE_VALUE} *</label>
+                                <input
+                                    id="tenant-code-value"
+                                    type="text"
+                                    value={formData.codeValue}
+                                    onChange={(e) => setFormData({...formData, codeValue: e.target.value})}
+                                    placeholder={UI_TEXT.PLACEHOLDER_CODE_VALUE}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-label">{UI_TEXT.FORM_CODE_LABEL} *</label>
+                                <input
+                                    id="tenant-code-label"
+                                    type="text"
+                                    value={formData.codeLabel}
+                                    onChange={(e) => setFormData({...formData, codeLabel: e.target.value})}
+                                    placeholder={UI_TEXT.PLACEHOLDER_CODE_LABEL}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-korean">{UI_TEXT.FORM_KOREAN_NAME} *</label>
+                                <input
+                                    id="tenant-code-korean"
+                                    type="text"
+                                    value={formData.koreanName}
+                                    onChange={(e) => setFormData({...formData, koreanName: e.target.value})}
+                                    placeholder={UI_TEXT.PLACEHOLDER_KOREAN_NAME}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-sort">{UI_TEXT.FORM_SORT_ORDER}</label>
+                                <input
+                                    id="tenant-code-sort"
+                                    type="number"
+                                    value={formData.sortOrder}
+                                    onChange={(e) => setFormData({...formData, sortOrder: parseInt(e.target.value, 10) || 1})}
+                                    min="1"
+                                />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label htmlFor="tenant-code-desc">{UI_TEXT.FORM_DESCRIPTION}</label>
+                                <textarea
+                                    id="tenant-code-desc"
+                                    value={formData.codeDescription}
+                                    onChange={(e) => setFormData({...formData, codeDescription: e.target.value})}
+                                    placeholder={UI_TEXT.PLACEHOLDER_DESCRIPTION}
+                                    rows="3"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-icon">{UI_TEXT.FORM_ICON}</label>
+                                <input
+                                    id="tenant-code-icon"
+                                    type="text"
+                                    value={formData.icon}
+                                    onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                                    placeholder={UI_TEXT.PLACEHOLDER_ICON}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tenant-code-color">{UI_TEXT.FORM_COLOR}</label>
+                                <input
+                                    id="tenant-code-color"
+                                    type="color"
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
+                                    value={formData.colorCode || '#6b7280'}
+                                    onChange={(e) => setFormData({...formData, colorCode: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label className="checkbox-label" htmlFor="tenant-code-active">
+                                    <input
+                                        id="tenant-code-active"
+                                        type="checkbox"
+                                        checked={formData.isActive}
+                                        onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                                    />
+                                    {UI_TEXT.FORM_ACTIVE}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </UnifiedModal>
+                </div>
+            </ContentArea>
         </AdminCommonLayout>
     );
 };

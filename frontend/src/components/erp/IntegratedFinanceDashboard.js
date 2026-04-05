@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
@@ -2827,129 +2826,124 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     }
   };
 
-  // ReactDOM.createPortal을 사용하여 document.body에 렌더링
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">{rule ? '정산 규칙 수정' : '정산 규칙 생성'}</h3>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+  return (
+    <ErpModal
+      isOpen={true}
+      onClose={onClose}
+      title={rule ? '정산 규칙 수정' : '정산 규칙 생성'}
+      size="md"
+    >
+      <div className="mg-v2-form-group">
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            규칙명 <span className="mg-v2-text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            className={`mg-v2-input ${errors.ruleName ? 'mg-v2-input-error' : ''}`}
+            placeholder="정산 규칙명을 입력하세요"
+            value={formData.ruleName}
+            onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+          />
+          {errors.ruleName && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.ruleName}</div>}
         </div>
-        <div className="mg-v2-modal-body">
-          <div className="mg-v2-form-group">
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                규칙명 <span className="mg-v2-text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                className={`mg-v2-input ${errors.ruleName ? 'mg-v2-input-error' : ''}`}
-                placeholder="정산 규칙명을 입력하세요"
-                value={formData.ruleName}
-                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
-              />
-              {errors.ruleName && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.ruleName}</div>}
-            </div>
 
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">업종 유형</label>
-              <select
-                className="mg-v2-select"
-                value={formData.businessType}
-                onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-              >
-                <option value="">선택 안함</option>
-                <option value="CONSULTATION">상담</option>
-                <option value="EDUCATION">교육</option>
-                <option value="HEALTHCARE">의료</option>
-              </select>
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">업종 유형</label>
+          <select
+            className="mg-v2-select"
+            value={formData.businessType}
+            onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
+          >
+            <option value="">선택 안함</option>
+            <option value="CONSULTATION">상담</option>
+            <option value="EDUCATION">교육</option>
+            <option value="HEALTHCARE">의료</option>
+          </select>
+        </div>
 
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                정산 유형 <span className="mg-v2-text-danger">*</span>
-              </label>
-              <select
-                className={`mg-v2-select ${errors.settlementType ? 'mg-v2-input-error' : ''}`}
-                value={formData.settlementType}
-                onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
-              >
-                <option value="">선택하세요</option>
-                <option value="COMMISSION">수수료</option>
-                <option value="ROYALTY">로열티</option>
-                <option value="REVENUE_SHARE">매출 분배</option>
-              </select>
-              {errors.settlementType && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.settlementType}</div>}
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            정산 유형 <span className="mg-v2-text-danger">*</span>
+          </label>
+          <select
+            className={`mg-v2-select ${errors.settlementType ? 'mg-v2-input-error' : ''}`}
+            value={formData.settlementType}
+            onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
+          >
+            <option value="">선택하세요</option>
+            <option value="COMMISSION">수수료</option>
+            <option value="ROYALTY">로열티</option>
+            <option value="REVENUE_SHARE">매출 분배</option>
+          </select>
+          {errors.settlementType && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.settlementType}</div>}
+        </div>
 
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                계산 방법 <span className="mg-v2-text-danger">*</span>
-              </label>
-              <select
-                className={`mg-v2-select ${errors.calculationMethod ? 'mg-v2-input-error' : ''}`}
-                value={formData.calculationMethod}
-                onChange={(e) => setFormData({ ...formData, calculationMethod: e.target.value })}
-              >
-                <option value="PERCENTAGE">비율 (PERCENTAGE)</option>
-                <option value="FIXED">고정액 (FIXED)</option>
-                <option value="TIERED">구간별 (TIERED)</option>
-              </select>
-              {errors.calculationMethod && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationMethod}</div>}
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            계산 방법 <span className="mg-v2-text-danger">*</span>
+          </label>
+          <select
+            className={`mg-v2-select ${errors.calculationMethod ? 'mg-v2-input-error' : ''}`}
+            value={formData.calculationMethod}
+            onChange={(e) => setFormData({ ...formData, calculationMethod: e.target.value })}
+          >
+            <option value="PERCENTAGE">비율 (PERCENTAGE)</option>
+            <option value="FIXED">고정액 (FIXED)</option>
+            <option value="TIERED">구간별 (TIERED)</option>
+          </select>
+          {errors.calculationMethod && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationMethod}</div>}
+        </div>
 
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                계산 파라미터 (JSON) <span className="mg-v2-text-danger">*</span>
-              </label>
-              <textarea
-                className={`mg-v2-input ${errors.calculationParams ? 'mg-v2-input-error' : ''}`}
-                rows="6"
-                placeholder={
-                  formData.calculationMethod === 'PERCENTAGE' ? '{"percentage": 10.0}' :
-                  formData.calculationMethod === 'FIXED' ? '{"amount": 10000}' :
-                  '{"tiers": [{"min": 0, "max": 1000000, "percentage": 5}, {"min": 1000000, "max": null, "percentage": 10}]}'
-                }
-                value={formData.calculationParams}
-                onChange={(e) => setFormData({ ...formData, calculationParams: e.target.value })}
-              />
-              {errors.calculationParams && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationParams}</div>}
-              <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-mt-xs">
-                {formData.calculationMethod === 'PERCENTAGE' && '예: {"percentage": 10.0}'}
-                {formData.calculationMethod === 'FIXED' && '예: {"amount": 10000}'}
-                {formData.calculationMethod === 'TIERED' && '예: {"tiers": [{"min": 0, "max": 1000000, "percentage": 5}]}'}
-              </div>
-            </div>
-
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                <input
-                  type="checkbox"
-                  className="mg-v2-checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-                활성화
-              </label>
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            계산 파라미터 (JSON) <span className="mg-v2-text-danger">*</span>
+          </label>
+          <textarea
+            className={`mg-v2-input ${errors.calculationParams ? 'mg-v2-input-error' : ''}`}
+            rows="6"
+            placeholder={
+              formData.calculationMethod === 'PERCENTAGE' ? '{"percentage": 10.0}' :
+              formData.calculationMethod === 'FIXED' ? '{"amount": 10000}' :
+              '{"tiers": [{"min": 0, "max": 1000000, "percentage": 5}, {"min": 1000000, "max": null, "percentage": 10}]}'
+            }
+            value={formData.calculationParams}
+            onChange={(e) => setFormData({ ...formData, calculationParams: e.target.value })}
+          />
+          {errors.calculationParams && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationParams}</div>}
+          <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-mt-xs">
+            {formData.calculationMethod === 'PERCENTAGE' && '예: {"percentage": 10.0}'}
+            {formData.calculationMethod === 'FIXED' && '예: {"amount": 10000}'}
+            {formData.calculationMethod === 'TIERED' && '예: {"tiers": [{"min": 0, "max": 1000000, "percentage": 5}]}'}
           </div>
         </div>
-        <div className="mg-v2-modal-footer">
-          <MGButton variant="secondary" onClick={onClose} disabled={loading}>
-            취소
-          </MGButton>
-          <MGButton 
-            variant="primary" 
-            onClick={handleSubmit} 
-            disabled={loading}
-            loading={loading}
-          >
-            저장
-          </MGButton>
+
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            <input
+              type="checkbox"
+              className="mg-v2-checkbox"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+            />
+            활성화
+          </label>
         </div>
       </div>
-    </div>,
-    document.body
+      <div className="mg-v2-modal-footer">
+        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+          취소
+        </MGButton>
+        <MGButton
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={loading}
+          loading={loading}
+        >
+          저장
+        </MGButton>
+      </div>
+    </ErpModal>
   );
 };
 
@@ -2990,85 +2984,76 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     }
   };
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1100px)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">계정별 내역 상세</h3>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+  return (
+    <ErpModal isOpen={true} onClose={onClose} title="계정별 내역 상세" size="xl">
+      <div className="mg-v2-form-group">
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">계정과목</label>
+          <div className="mg-v2-text">{ledger.accountId}</div>
         </div>
-        <div className="mg-v2-modal-body">
-          <div className="mg-v2-form-group">
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">계정과목</label>
-              <div className="mg-v2-text">{ledger.accountId}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">기간</label>
-              <div className="mg-v2-text">{ledger.periodStart} ~ {ledger.periodEnd}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">기초잔액</label>
-              <div className="mg-v2-text">{formatCurrency(ledger.openingBalance || 0)}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">차변합계</label>
-              <div className="mg-v2-text">{formatCurrency(ledger.totalDebit || 0)}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">대변합계</label>
-              <div className="mg-v2-text">{formatCurrency(ledger.totalCredit || 0)}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">기말잔액</label>
-              <div className="mg-v2-text mg-v2-font-weight-bold">{formatCurrency(ledger.closingBalance || 0)}</div>
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">기간</label>
+          <div className="mg-v2-text">{ledger.periodStart} ~ {ledger.periodEnd}</div>
+        </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">기초잔액</label>
+          <div className="mg-v2-text">{formatCurrency(ledger.openingBalance || 0)}</div>
+        </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">차변합계</label>
+          <div className="mg-v2-text">{formatCurrency(ledger.totalDebit || 0)}</div>
+        </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">대변합계</label>
+          <div className="mg-v2-text">{formatCurrency(ledger.totalCredit || 0)}</div>
+        </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">기말잔액</label>
+          <div className="mg-v2-text mg-v2-font-weight-bold">{formatCurrency(ledger.closingBalance || 0)}</div>
+        </div>
 
-            {/* 분개 내역 */}
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">관련 거래 내역</label>
-              {loadingEntries ? (
-                <UnifiedLoading text="거래 내역을 불러오는 중..." size="small" type="inline" />
-              ) : journalEntries.length > 0 ? (
-                <div className="mg-v2-table-container">
-                  <table className="mg-table" data-label="거래 내역 목록">
-                    <thead>
-                      <tr>
-                        <th>거래번호</th>
-                        <th>기준일자</th>
-                        <th>차변</th>
-                        <th>대변</th>
-                        <th>설명</th>
+        {/* 분개 내역 */}
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">관련 거래 내역</label>
+          {loadingEntries ? (
+            <UnifiedLoading text="거래 내역을 불러오는 중..." size="small" type="inline" />
+          ) : journalEntries.length > 0 ? (
+            <div className="mg-v2-table-container">
+              <table className="mg-table" data-label="거래 내역 목록">
+                <thead>
+                  <tr>
+                    <th>거래번호</th>
+                    <th>기준일자</th>
+                    <th>차변</th>
+                    <th>대변</th>
+                    <th>설명</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {journalEntries.map(entry => {
+                    const line = entry.lines?.find(l => l.accountId === ledger.accountId);
+                    return line ? (
+                      <tr key={entry.id}>
+                        <td data-label="거래번호">{entry.entryNumber}</td>
+                        <td data-label="기준일자">{entry.entryDate}</td>
+                        <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
+                        <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
+                        <td data-label="설명">{line.description || entry.description || '-'}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {journalEntries.map(entry => {
-                        const line = entry.lines?.find(l => l.accountId === ledger.accountId);
-                        return line ? (
-                          <tr key={entry.id}>
-                            <td data-label="거래번호">{entry.entryNumber}</td>
-                            <td data-label="기준일자">{entry.entryDate}</td>
-                            <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
-                            <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
-                            <td data-label="설명">{line.description || entry.description || '-'}</td>
-                          </tr>
-                        ) : null;
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="mg-v2-text-center mg-v2-text-secondary">관련 거래 내역이 없습니다.</p>
-              )}
+                    ) : null;
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
-        <div className="mg-v2-modal-footer">
-          <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
+          ) : (
+            <p className="mg-v2-text-center mg-v2-text-secondary">관련 거래 내역이 없습니다.</p>
+          )}
         </div>
       </div>
-    </div>,
-    document.body
+      <div className="mg-v2-modal-footer">
+        <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
+      </div>
+    </ErpModal>
   );
 };
 

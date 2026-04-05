@@ -27,6 +27,7 @@
 import React from 'react';
 import { Plus, Trash2, Settings, Lock, Move } from 'lucide-react';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './DashboardWidgetManager.css';
 
 const DashboardWidgetManagerPresentation = ({
@@ -86,13 +87,12 @@ const DashboardWidgetManagerPresentation = ({
       ))}
       
       {/* 위젯 추가 모달 */}
-      {showAddModal && (
-        <AddWidgetModal
-          availableWidgets={availableWidgets}
-          onAdd={onAddWidget}
-          onClose={onCloseAddModal}
-        />
-      )}
+      <AddWidgetModal
+        isOpen={showAddModal}
+        availableWidgets={availableWidgets}
+        onAdd={onAddWidget}
+        onClose={onCloseAddModal}
+      />
     </div>
   );
 };
@@ -168,46 +168,41 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
 /**
  * 위젯 추가 모달 컴포넌트 (Presentational)
  */
-const AddWidgetModal = ({ availableWidgets, onAdd, onClose }) => {
+const AddWidgetModal = ({ isOpen, availableWidgets, onAdd, onClose }) => {
   return (
-    <div className="mg-modal-overlay" onClick={onClose}>
-      <div className="mg-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-modal-header">
-          <h3>위젯 추가</h3>
-          <button className="mg-modal-close" onClick={onClose}>
-            ×
-          </button>
-        </div>
-        
-        <div className="mg-modal-body">
-          <p className="mg-text--muted mg-mb-md">
-            추가 가능한 위젯 목록입니다. 원하는 위젯을 선택하세요.
-          </p>
-          
-          <div className="mg-available-widgets">
-            {availableWidgets.length > 0 ? (
-              availableWidgets.map(widget => (
-                <button
-                  key={widget.widgetId}
-                  onClick={() => onAdd(widget.widgetType)}
-                  className="mg-available-widget-item"
-                >
-                  <div className="mg-available-widget-info">
-                    <h5>{widget.widgetNameKo}</h5>
-                    <p className="mg-text--sm mg-text--muted">
-                      {widget.description || widget.widgetType}
-                    </p>
-                  </div>
-                  <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_MD} />
-                </button>
-              ))
-            ) : (
-              <p className="mg-text--muted">추가 가능한 위젯이 없습니다.</p>
-            )}
-          </div>
-        </div>
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="위젯 추가"
+      size="medium"
+    >
+      <p className="mg-text--muted mg-mb-md">
+        추가 가능한 위젯 목록입니다. 원하는 위젯을 선택하세요.
+      </p>
+
+      <div className="mg-available-widgets">
+        {availableWidgets.length > 0 ? (
+          availableWidgets.map(widget => (
+            <button
+              key={widget.widgetId}
+              type="button"
+              onClick={() => onAdd(widget.widgetType)}
+              className="mg-available-widget-item"
+            >
+              <div className="mg-available-widget-info">
+                <h5>{widget.widgetNameKo}</h5>
+                <p className="mg-text--sm mg-text--muted">
+                  {widget.description || widget.widgetType}
+                </p>
+              </div>
+              <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_MD} />
+            </button>
+          ))
+        ) : (
+          <p className="mg-text--muted">추가 가능한 위젯이 없습니다.</p>
+        )}
       </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

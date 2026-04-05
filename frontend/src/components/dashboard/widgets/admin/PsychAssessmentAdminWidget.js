@@ -17,7 +17,7 @@ import PsychKpiSection from '../../../admin/psych-assessment/organisms/PsychKpiS
 import PsychUploadSection from '../../../admin/psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from '../../../admin/psych-assessment/organisms/PsychDocumentListBlock';
 import PsychAiReportModalContent from '../../../admin/psych-assessment/organisms/PsychAiReportModalContent';
-import MGModal from '../../../common/MGModal';
+import UnifiedModal from '../../../common/modals/UnifiedModal';
 import MGButton from '../../../common/MGButton';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -305,15 +305,16 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         viewReportLoading={reportLoading}
       />
 
-      <MGModal
+      <UnifiedModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         title="AI 분석 결과"
         size="large"
         showCloseButton
+        className="mg-v2-ad-b0kla"
       >
         <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
-      </MGModal>
+      </UnifiedModal>
     </div>
   );
 });

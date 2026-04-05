@@ -11,15 +11,14 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import Button from '../ui/Button/Button';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
 import { sessionManager } from '../../utils/sessionManager';
-import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
@@ -38,6 +37,10 @@ const stringifyDashboardConfig = (config) => {
     return '{}';
   }
 };
+
+/** 중첩 모달 스택: MODAL_STANDARD·토큰 --mg-z-index-modal-high(10000) 기준 */
+const DASHBOARD_FORM_MODAL_Z_INDEX = 10000;
+const DASHBOARD_FORM_ADD_ROLE_MODAL_Z_INDEX = 10050;
 
 const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [formData, setFormData] = useState({
@@ -357,6 +360,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       setLoading(false);
     }
   };
+
+  const handleCloseAddRoleModal = useCallback(() => {
+    setShowAddRoleModal(false);
+    setSelectedTemplateId('');
+    setNewRoleName('');
+    setNewRoleNameEn('');
+    setNewRoleDescription('');
+  }, []);
 
   // 모달이 열릴 때 데이터 로드
   useEffect(() => {
@@ -1093,28 +1104,64 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   if (!isOpen) return null;
 
-  const portalTarget = document.getElementById('modal-root') || document.body;
+  const mainModalTitle = isEditMode ? '대시보드 수정' : '새 대시보드 생성';
 
-  return ReactDOM.createPortal(
-    <div className="dashboard-form-modal-overlay" onClick={onClose}>
-      <div className="dashboard-form-modal" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="dashboard-form-modal-header">
-          <div className="dashboard-form-modal-title">
-            <LayoutDashboard className="modal-icon" />
-            <h2>{isEditMode ? '대시보드 수정' : '새 대시보드 생성'}</h2>
-          </div>
-          <button
-            className="dashboard-form-modal-close"
-            onClick={onClose}
-            type="button"
-          >
-            <FaTimes />
-          </button>
-        </div>
+  const mainModalActions = !loadingRoles ? (
+    <>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={onClose}
+        disabled={loading}
+        preventDoubleClick={true}
+      >
+        취소
+      </Button>
+      <Button
+        type="button"
+        variant="primary"
+        disabled={loading}
+        onClick={async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('🔘 저장 버튼 클릭:', {
+            isEditMode,
+            loading,
+            dashboardId: dashboard?.dashboardId,
+            formData: {
+              dashboardNameKo: formData.dashboardNameKo,
+              tenantRoleId: formData.tenantRoleId,
+              dashboardConfig: formData.dashboardConfig ? '있음' : '없음'
+            }
+          });
 
-        {/* 본문 */}
-        <div className="dashboard-form-modal-body">
+          const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
+          await handleSubmit(fakeEvent);
+        }}
+        preventDoubleClick={true}
+        loading={loading}
+        loadingText="저장 중..."
+      >
+        {isEditMode ? '수정' : '생성'}
+      </Button>
+    </>
+  ) : null;
+
+  return (
+    <>
+      <UnifiedModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={mainModalTitle}
+        size="fullscreen"
+        variant="form"
+        className="mg-v2-ad-b0kla"
+        backdropClick={true}
+        showCloseButton={true}
+        loading={loading}
+        zIndex={DASHBOARD_FORM_MODAL_Z_INDEX}
+        actions={mainModalActions}
+      >
           {loadingRoles ? (
             <div className="loading-container">
               <div className="mg-loading">로딩중...</div>
@@ -1397,51 +1444,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     )}
                 </div>
               </div>
-
-              {/* 액션 버튼 */}
-              <div className="dashboard-form-modal-actions">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={onClose}
-                  disabled={loading}
-                  preventDoubleClick={true}
-                >
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  disabled={loading}
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🔘 저장 버튼 클릭:', { 
-                      isEditMode, 
-                      loading, 
-                      dashboardId: dashboard?.dashboardId,
-                      formData: {
-                        dashboardNameKo: formData.dashboardNameKo,
-                        tenantRoleId: formData.tenantRoleId,
-                        dashboardConfig: formData.dashboardConfig ? '있음' : '없음'
-                      }
-                    });
-                    
-                    // 직접 handleSubmit 호출
-                    const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
-                    await handleSubmit(fakeEvent);
-                    }}
-                  preventDoubleClick={true}
-                  loading={loading}
-                  loadingText="저장 중..."
-                >
-                  {isEditMode ? '수정' : '생성'}
-                </Button>
-              </div>
             </form>
           )}
-        </div>
-      </div>
+      </UnifiedModal>
 
       {/* 위젯 설정 모달 */}
       {showWidgetConfigModal && selectedWidget && (
@@ -1456,164 +1461,143 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         />
       )}
 
-      {/* 역할 추가 모달 */}
       {showAddRoleModal && (
-        <div className="dashboard-form-modal-overlay" onClick={() => setShowAddRoleModal(false)}>
-          <div className="dashboard-form-modal mg-add-role-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="dashboard-form-modal-header">
-              <div className="dashboard-form-modal-title">
-                <FaPlus className="modal-icon" />
-                <h2>역할 추가</h2>
-              </div>
-              <button
-                className="dashboard-form-modal-close"
-                onClick={() => {
-                  setShowAddRoleModal(false);
-                  setSelectedTemplateId('');
-                  setNewRoleName('');
-                  setNewRoleNameEn('');
-                  setNewRoleDescription('');
-                }}
+        <UnifiedModal
+          isOpen={true}
+          onClose={handleCloseAddRoleModal}
+          title="역할 추가"
+          size="medium"
+          variant="form"
+          className="mg-v2-ad-b0kla mg-add-role-modal"
+          backdropClick={true}
+          showCloseButton={true}
+          loading={loading}
+          zIndex={DASHBOARD_FORM_ADD_ROLE_MODAL_Z_INDEX}
+          actions={
+            <>
+              <Button
                 type="button"
+                variant="outline"
+                size="medium"
+                onClick={handleCloseAddRoleModal}
+                disabled={loading}
+                preventDoubleClick={false}
               >
-                <FaTimes />
-              </button>
+                취소
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="medium"
+                onClick={handleAddRole}
+                disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
+                loading={loading}
+                loadingText="추가 중..."
+                preventDoubleClick={false}
+              >
+                {loading ? '추가 중...' : '역할 추가'}
+              </Button>
+            </>
+          }
+        >
+          {loadingTemplates ? (
+            <div className="loading-container">
+              <div className="mg-loading">로딩중...</div>
             </div>
-
-            <div className="dashboard-form-modal-body">
-              {loadingTemplates ? (
-                <div className="loading-container">
-                  <div className="mg-loading">로딩중...</div>
-                </div>
-              ) : (
-                <>
-                  <div className="form-group">
-                    <label htmlFor="roleTemplate" className="form-label">
-                      역할 템플릿 선택 <span className="required">*</span>
-                    </label>
-                    <select
-                      id="roleTemplate"
-                      value={selectedTemplateId}
-                      onChange={(e) => {
-                        setSelectedTemplateId(e.target.value);
-                        // 템플릿 선택 시 기본 이름 자동 설정
-                        const selectedTemplate = roleTemplates.find(t => t.roleTemplateId === e.target.value);
-                        if (selectedTemplate && !newRoleName) {
-                          setNewRoleName(selectedTemplate.nameKo || selectedTemplate.name || '');
-                          setNewRoleNameEn(selectedTemplate.nameEn || selectedTemplate.name || '');
-                          setNewRoleDescription(selectedTemplate.descriptionKo || selectedTemplate.description || '');
-                        }
-                      }}
-                      className="form-input"
-                      disabled={loading}
-                    >
-                      <option value="">템플릿을 선택해주세요</option>
-                      {roleTemplates.length === 0 ? (
-                        <option value="" disabled>
-                          사용 가능한 템플릿이 없습니다.
-                        </option>
-                      ) : (
-                        roleTemplates.map(template => (
-                          <option key={template.roleTemplateId} value={template.roleTemplateId}>
-                            {`${toDisplayString(template.nameKo || template.name)}${
-                              template.businessType ? ` (${toDisplayString(template.businessType)})` : ''
-                            }`}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    <small className="form-help">
-                      템플릿을 선택하면 해당 템플릿의 권한과 기본 위젯 설정이 자동으로 적용됩니다.
-                    </small>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="newRoleName" className="form-label">
-                      역할 이름 (한글) <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="newRoleName"
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      className="form-input"
-                      placeholder="예: 원장, 상담사, 보조강사 등"
-                      disabled={loading}
-                      required
-                    />
-                    <small className="form-help">
-                      템플릿 선택 시 자동으로 채워지지만, 원하는 이름으로 변경할 수 있습니다.
-                    </small>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="newRoleNameEn" className="form-label">
-                      역할 이름 (영문)
-                    </label>
-                    <input
-                      type="text"
-                      id="newRoleNameEn"
-                      value={newRoleNameEn}
-                      onChange={(e) => setNewRoleNameEn(e.target.value)}
-                      className="form-input"
-                      placeholder="예: Director, Counselor, Assistant Teacher"
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="newRoleDescription" className="form-label">
-                      설명
-                    </label>
-                    <textarea
-                      id="newRoleDescription"
-                      value={newRoleDescription}
-                      onChange={(e) => setNewRoleDescription(e.target.value)}
-                      className="form-input"
-                      placeholder="역할에 대한 설명을 입력해주세요 (선택사항)"
-                      rows="3"
-                      disabled={loading}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="mg-modal__footer dashboard-form-modal-actions mg-add-role-modal-actions">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="medium"
-                  onClick={() => {
-                    setShowAddRoleModal(false);
-                    setSelectedTemplateId('');
-                    setNewRoleName('');
-                    setNewRoleNameEn('');
-                    setNewRoleDescription('');
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="roleTemplate" className="form-label">
+                  역할 템플릿 선택 <span className="required">*</span>
+                </label>
+                <select
+                  id="roleTemplate"
+                  value={selectedTemplateId}
+                  onChange={(e) => {
+                    setSelectedTemplateId(e.target.value);
+                    const selectedTemplate = roleTemplates.find(t => t.roleTemplateId === e.target.value);
+                    if (selectedTemplate && !newRoleName) {
+                      setNewRoleName(selectedTemplate.nameKo || selectedTemplate.name || '');
+                      setNewRoleNameEn(selectedTemplate.nameEn || selectedTemplate.name || '');
+                      setNewRoleDescription(selectedTemplate.descriptionKo || selectedTemplate.description || '');
+                    }
                   }}
+                  className="form-input"
                   disabled={loading}
-                  preventDoubleClick={false}
                 >
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="medium"
-                  onClick={handleAddRole}
-                  disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
-                  loading={loading}
-                  loadingText="추가 중..."
-                  preventDoubleClick={false}
-                >
-                  {loading ? '추가 중...' : '역할 추가'}
-                </Button>
+                  <option value="">템플릿을 선택해주세요</option>
+                  {roleTemplates.length === 0 ? (
+                    <option value="" disabled>
+                      사용 가능한 템플릿이 없습니다.
+                    </option>
+                  ) : (
+                    roleTemplates.map(template => (
+                      <option key={template.roleTemplateId} value={template.roleTemplateId}>
+                        {`${toDisplayString(template.nameKo || template.name)}${
+                          template.businessType ? ` (${toDisplayString(template.businessType)})` : ''
+                        }`}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <small className="form-help">
+                  템플릿을 선택하면 해당 템플릿의 권한과 기본 위젯 설정이 자동으로 적용됩니다.
+                </small>
               </div>
-            </div>
-          </div>
-        </div>
+
+              <div className="form-group">
+                <label htmlFor="newRoleName" className="form-label">
+                  역할 이름 (한글) <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="newRoleName"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  className="form-input"
+                  placeholder="예: 원장, 상담사, 보조강사 등"
+                  disabled={loading}
+                  required
+                />
+                <small className="form-help">
+                  템플릿 선택 시 자동으로 채워지지만, 원하는 이름으로 변경할 수 있습니다.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="newRoleNameEn" className="form-label">
+                  역할 이름 (영문)
+                </label>
+                <input
+                  type="text"
+                  id="newRoleNameEn"
+                  value={newRoleNameEn}
+                  onChange={(e) => setNewRoleNameEn(e.target.value)}
+                  className="form-input"
+                  placeholder="예: Director, Counselor, Assistant Teacher"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="newRoleDescription" className="form-label">
+                  설명
+                </label>
+                <textarea
+                  id="newRoleDescription"
+                  value={newRoleDescription}
+                  onChange={(e) => setNewRoleDescription(e.target.value)}
+                  className="form-input"
+                  placeholder="역할에 대한 설명을 입력해주세요 (선택사항)"
+                  rows="3"
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
+        </UnifiedModal>
       )}
-    </div>,
-    portalTarget
+    </>
   );
 };
 

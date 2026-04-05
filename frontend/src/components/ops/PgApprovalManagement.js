@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  CreditCard, 
   CheckCircle, 
   XCircle, 
   Clock, 
   Search, 
-  Filter,
   Eye,
   RefreshCw,
   AlertCircle,
@@ -26,26 +24,25 @@ import {
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import SafeText from '../common/SafeText';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './PgApprovalManagement.css';
 
 /**
- * 운영 포털 PG 설정 승인 관리 페이지
-/**
- * 운영 포털에서 PG 설정 승인/거부를 관리하는 페이지
-/**
- * 
-/**
+ * 운영 포털에서 테넌트 PG 설정 승인·거부를 관리하는 페이지
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-XX
  */
+
+const PG_APPROVAL_PAGE_TITLE_ID = 'pg-approval-management-title';
+
 const PgApprovalManagement = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -252,9 +249,7 @@ const PgApprovalManagement = () => {
       
       await approvePgConfiguration(selectedConfig.configId, request);
       showNotification('PG 설정이 승인되었습니다.', 'success');
-      setShowApprovalModal(false);
-      setSelectedConfig(null);
-      setApprovalForm({ testConnection: false, notes: '' });
+      handleCloseApprovalModal();
       setTestResult(null);
       loadPendingConfigurations();
     } catch (err) {
@@ -289,9 +284,7 @@ const PgApprovalManagement = () => {
       
       await rejectPgConfiguration(selectedConfig.configId, request);
       showNotification('PG 설정이 거부되었습니다. 테넌트에게 알림이 전송됩니다.', 'success');
-      setShowRejectModal(false);
-      setSelectedConfig(null);
-      setRejectForm({ rejectionReason: '' });
+      handleCloseRejectModal();
       loadPendingConfigurations();
     } catch (err) {
       console.error('PG 설정 거부 실패:', err);
@@ -304,6 +297,25 @@ const PgApprovalManagement = () => {
     }
   };
   
+  const handleCloseApprovalModal = useCallback(() => {
+    setShowApprovalModal(false);
+    setSelectedConfig(null);
+    setApprovalForm({ testConnection: false, notes: '' });
+  }, []);
+
+  const handleCloseRejectModal = useCallback(() => {
+    setShowRejectModal(false);
+    setSelectedConfig(null);
+    setRejectForm({ rejectionReason: '' });
+  }, []);
+
+  const handleCloseDetailModal = useCallback(() => {
+    setShowDetailModal(false);
+    setConfigDetail(null);
+    setShowKeys(false);
+    setDecryptedKeys(null);
+  }, []);
+
   // PG 제공자 옵션
   const pgProviders = [
     { value: '', label: '전체' },
@@ -318,7 +330,9 @@ const PgApprovalManagement = () => {
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
       <AdminCommonLayout title="PG 설정 승인 관리">
-        <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
+        <ContentArea ariaLabel="PG 설정 승인 관리">
+          <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -326,28 +340,26 @@ const PgApprovalManagement = () => {
   if (!isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="PG 설정 승인 관리">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>로그인이 필요합니다.</p>
-        </div>
+        <ContentArea ariaLabel="PG 설정 승인 관리">
+          <div className="error-message">
+            <AlertCircle size={24} />
+            <p>로그인이 필요합니다.</p>
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
   
   return (
     <AdminCommonLayout title="PG 설정 승인 관리">
-      <div className="pg-approval-management">
-        {/* 헤더 */}
-        <div className="pg-approval-header">
-          <div className="header-title">
-            <CreditCard size={32} />
-            <div>
-              <h1>PG 설정 승인 관리</h1>
-              <p>테넌트가 등록한 PG 설정을 검토하고 승인/거부합니다.</p>
-            </div>
-          </div>
-        </div>
-        
+      <ContentArea ariaLabel="PG 설정 승인 관리">
+        <ContentHeader
+          title="PG 설정 승인 관리"
+          subtitle="테넌트가 등록한 PG 설정을 검토하고 승인/거부합니다."
+          titleId={PG_APPROVAL_PAGE_TITLE_ID}
+        />
+
+        <div className="pg-approval-management">
         {/* 필터 및 검색 */}
         <div className="pg-approval-filters">
           <div className="search-box">
@@ -540,115 +552,26 @@ const PgApprovalManagement = () => {
           </div>
         )}
         
-        {/* 승인 모달 */}
-        {showApprovalModal && selectedConfig && (
-          <div className="modal-overlay" onClick={() => setShowApprovalModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>PG 설정 승인</h2>
-                <button 
-                  className="modal-close"
-                  onClick={() => setShowApprovalModal(false)}
-                  aria-label="닫기"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="approval-info">
-                  <p>
-                    <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 승인하시겠습니까?
-                  </p>
-                  <div className="approval-details">
-                    <div className="detail-row">
-                      <span className="detail-label">테넌트 ID:</span>
-                      <span className="detail-value"><SafeText>{selectedConfig.tenantId}</SafeText></span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">PG 제공자:</span>
-                      <span className="detail-value"><SafeText>{selectedConfig.pgProvider}</SafeText></span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="approval-options">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={approvalForm.testConnection}
-                      onChange={(e) => setApprovalForm(prev => ({ ...prev, testConnection: e.target.checked }))}
-                      className="form-checkbox"
-                    />
-                    <span>승인 전 연결 테스트 수행</span>
-                  </label>
-                  <small className="help-text">
-                    연결 테스트를 수행하여 PG 설정이 정상적으로 작동하는지 확인합니다.
-                  </small>
-                  
-                  {testResult && testResult.configId === selectedConfig.configId && (
-                    <div className={`test-result-preview ${testResult.success ? 'success' : 'error'}`}>
-                      {testResult.success ? (
-                        <CheckCircle size={16} />
-                      ) : (
-                        <XCircle size={16} />
-                      )}
-                      <span>
-                        <SafeText>
-                          {testResult.success ? '연결 테스트 성공' : `연결 테스트 실패: ${toDisplayString(testResult.message)}`}
-                        </SafeText>
-                      </span>
-                      {testResult.testedAt && (
-                        <small>
-                          ({toDisplayString(new Date(testResult.testedAt).toLocaleString('ko-KR'))})
-                        </small>
-                      )}
-                    </div>
-                  )}
-                  
-                  {approvalForm.testConnection && !testResult && (
-                    <button className="mg-button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => handleTestConnection(selectedConfig.configId)}
-                      disabled={testingConnection === selectedConfig.configId}
-                      loading={testingConnection === selectedConfig.configId}
-                      className="mg-button-test-connection"
-                    >
-                      <RefreshCw size={16} />
-                      지금 테스트하기
-                    </button>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="approvalNotes">승인 메모 (선택)</label>
-                  <textarea
-                    id="approvalNotes"
-                    value={approvalForm.notes}
-                    onChange={(e) => setApprovalForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="승인 관련 메모를 입력하세요"
-                    className="form-textarea"
-                    rows="3"
-                    maxLength={500}
-                  />
-                  <small className="char-count">
-                    {approvalForm.notes.length} / 500
-                  </small>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="mg-button"
+        <UnifiedModal
+          isOpen={showApprovalModal && !!selectedConfig}
+          onClose={handleCloseApprovalModal}
+          title="PG 설정 승인"
+          size="medium"
+          variant="form"
+          className="mg-v2-ad-b0kla"
+          backdropClick={!loading}
+          loading={loading}
+          actions={
+            selectedConfig ? (
+              <>
+                <MGButton
                   variant="secondary"
-                  onClick={() => {
-                    setShowApprovalModal(false);
-                    setSelectedConfig(null);
-                    setApprovalForm({ testConnection: false, notes: '' });
-                  }}
+                  onClick={handleCloseApprovalModal}
                   disabled={loading}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </MGButton>
+                <MGButton
                   variant="success"
                   onClick={handleApprove}
                   disabled={loading}
@@ -656,68 +579,117 @@ const PgApprovalManagement = () => {
                 >
                   <CheckCircle size={18} />
                   승인
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 거부 모달 */}
-        {showRejectModal && selectedConfig && (
-          <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>PG 설정 거부</h2>
-                <button 
-                  className="modal-close"
-                  onClick={() => setShowRejectModal(false)}
-                  aria-label="닫기"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="reject-info">
-                  <p>
-                    <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 거부하시겠습니까?
-                  </p>
-                  <p className="warning-text">
-                    거부 사유는 테넌트에게 전달됩니다.
-                  </p>
+                </MGButton>
+              </>
+            ) : null
+          }
+        >
+          {selectedConfig && (
+            <>
+              <div className="approval-info">
+                <p>
+                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 승인하시겠습니까?
+                </p>
+                <div className="approval-details">
+                  <div className="detail-row">
+                    <span className="detail-label">테넌트 ID:</span>
+                    <span className="detail-value"><SafeText>{selectedConfig.tenantId}</SafeText></span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">PG 제공자:</span>
+                    <span className="detail-value"><SafeText>{selectedConfig.pgProvider}</SafeText></span>
+                  </div>
                 </div>
-                
-                <div className="form-group">
-                  <label htmlFor="rejectionReason" className="required">
-                    거부 사유 <span className="required-mark">*</span>
-                  </label>
-                  <textarea
-                    id="rejectionReason"
-                    value={rejectForm.rejectionReason}
-                    onChange={(e) => setRejectForm(prev => ({ ...prev, rejectionReason: e.target.value }))}
-                    placeholder="거부 사유를 입력하세요"
-                    className="form-textarea"
-                    rows="4"
-                    required
-                    maxLength={1000}
+              </div>
+
+              <div className="approval-options">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={approvalForm.testConnection}
+                    onChange={(e) => setApprovalForm(prev => ({ ...prev, testConnection: e.target.checked }))}
+                    className="form-checkbox"
                   />
-                  <small className="char-count">
-                    {rejectForm.rejectionReason.length} / 1000
-                  </small>
-                </div>
+                  <span>승인 전 연결 테스트 수행</span>
+                </label>
+                <small className="help-text">
+                  연결 테스트를 수행하여 PG 설정이 정상적으로 작동하는지 확인합니다.
+                </small>
+
+                {testResult && testResult.configId === selectedConfig.configId && (
+                  <div className={`test-result-preview ${testResult.success ? 'success' : 'error'}`}>
+                    {testResult.success ? (
+                      <CheckCircle size={16} />
+                    ) : (
+                      <XCircle size={16} />
+                    )}
+                    <span>
+                      <SafeText>
+                        {testResult.success ? '연결 테스트 성공' : `연결 테스트 실패: ${toDisplayString(testResult.message)}`}
+                      </SafeText>
+                    </span>
+                    {testResult.testedAt && (
+                      <small>
+                        ({toDisplayString(new Date(testResult.testedAt).toLocaleString('ko-KR'))})
+                      </small>
+                    )}
+                  </div>
+                )}
+
+                {approvalForm.testConnection && !testResult && (
+                  <MGButton
+                    variant="secondary"
+                    size="small"
+                    onClick={() => handleTestConnection(selectedConfig.configId)}
+                    disabled={testingConnection === selectedConfig.configId}
+                    loading={testingConnection === selectedConfig.configId}
+                    className="mg-button-test-connection"
+                  >
+                    <RefreshCw size={16} />
+                    지금 테스트하기
+                  </MGButton>
+                )}
               </div>
-              <div className="modal-footer">
-                <button className="mg-button"
+
+              <div className="form-group">
+                <label htmlFor="approvalNotes">승인 메모 (선택)</label>
+                <textarea
+                  id="approvalNotes"
+                  value={approvalForm.notes}
+                  onChange={(e) => setApprovalForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="승인 관련 메모를 입력하세요"
+                  className="form-textarea"
+                  rows={3}
+                  maxLength={500}
+                />
+                <small className="char-count">
+                  {approvalForm.notes.length} / 500
+                </small>
+              </div>
+            </>
+          )}
+        </UnifiedModal>
+
+        <UnifiedModal
+          isOpen={showRejectModal && !!selectedConfig}
+          onClose={handleCloseRejectModal}
+          title="PG 설정 거부"
+          size="medium"
+          variant="form"
+          className="mg-v2-ad-b0kla"
+          backdropClick={!loading}
+          loading={loading}
+          actions={
+            selectedConfig ? (
+              <>
+                <MGButton
                   variant="secondary"
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setSelectedConfig(null);
-                    setRejectForm({ rejectionReason: '' });
-                  }}
+                  onClick={handleCloseRejectModal}
                   disabled={loading}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </MGButton>
+                <MGButton
                   variant="danger"
                   onClick={handleReject}
                   disabled={loading || !rejectForm.rejectionReason.trim()}
@@ -725,200 +697,213 @@ const PgApprovalManagement = () => {
                 >
                   <XCircle size={18} />
                   거부
-                </button>
+                </MGButton>
+              </>
+            ) : null
+          }
+        >
+          {selectedConfig && (
+            <>
+              <div className="reject-info">
+                <p>
+                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 거부하시겠습니까?
+                </p>
+                <p className="warning-text">
+                  거부 사유는 테넌트에게 전달됩니다.
+                </p>
               </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 상세 정보 모달 */}
-        {showDetailModal && configDetail && (
-          <div className="modal-overlay modal-overlay--large" onClick={() => setShowDetailModal(false)}>
-            <div className="modal-content modal-content--large" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>PG 설정 상세 정보</h2>
-                <button 
-                  className="modal-close"
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setConfigDetail(null);
-                    setShowKeys(false);
-                    setDecryptedKeys(null);
-                  }}
-                  aria-label="닫기"
-                >
-                  ×
-                </button>
+
+              <div className="form-group">
+                <label htmlFor="rejectionReason" className="required">
+                  거부 사유 <span className="required-mark">*</span>
+                </label>
+                <textarea
+                  id="rejectionReason"
+                  value={rejectForm.rejectionReason}
+                  onChange={(e) => setRejectForm(prev => ({ ...prev, rejectionReason: e.target.value }))}
+                  placeholder="거부 사유를 입력하세요"
+                  className="form-textarea"
+                  rows={4}
+                  required
+                  maxLength={1000}
+                />
+                <small className="char-count">
+                  {rejectForm.rejectionReason.length} / 1000
+                </small>
               </div>
-              <div className="modal-body modal-body--scrollable">
-                {/* 상세 정보 표시는 PgConfigurationDetail 컴포넌트와 유사하게 구현 */}
-                <div className="detail-section">
-                  <h3>기본 정보</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <label>테넌트 ID</label>
-                      <div className="detail-value"><SafeText>{configDetail.tenantId}</SafeText></div>
-                    </div>
-                    <div className="detail-item">
-                      <label>PG 제공자</label>
-                      <div className="detail-value"><SafeText>{configDetail.pgProvider}</SafeText></div>
-                    </div>
-                    <div className="detail-item">
-                      <label>PG사 명칭</label>
-                      <div className="detail-value"><SafeText fallback="-">{configDetail.pgName}</SafeText></div>
-                    </div>
-                    <div className="detail-item">
-                      <label>가맹점 ID</label>
-                      <div className="detail-value"><SafeText fallback="-">{configDetail.merchantId}</SafeText></div>
-                    </div>
-                    <div className="detail-item">
-                      <label>스토어 ID</label>
-                      <div className="detail-value"><SafeText fallback="-">{configDetail.storeId}</SafeText></div>
-                    </div>
-                    <div className="detail-item">
-                      <label>테스트 모드</label>
-                      <div className="detail-value">{configDetail.testMode ? '예' : '아니오'}</div>
-                    </div>
+            </>
+          )}
+        </UnifiedModal>
+
+        <UnifiedModal
+          isOpen={showDetailModal && !!configDetail}
+          onClose={handleCloseDetailModal}
+          title="PG 설정 상세 정보"
+          size="large"
+          variant="detail"
+          className="mg-v2-ad-b0kla"
+          backdropClick
+          actions={
+            <MGButton variant="secondary" onClick={handleCloseDetailModal}>
+              닫기
+            </MGButton>
+          }
+        >
+          {configDetail && (
+            <div className="modal-body--scrollable">
+              <div className="detail-section">
+                <h3>기본 정보</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <label>테넌트 ID</label>
+                    <div className="detail-value"><SafeText>{configDetail.tenantId}</SafeText></div>
+                  </div>
+                  <div className="detail-item">
+                    <label>PG 제공자</label>
+                    <div className="detail-value"><SafeText>{configDetail.pgProvider}</SafeText></div>
+                  </div>
+                  <div className="detail-item">
+                    <label>PG사 명칭</label>
+                    <div className="detail-value"><SafeText fallback="-">{configDetail.pgName}</SafeText></div>
+                  </div>
+                  <div className="detail-item">
+                    <label>가맹점 ID</label>
+                    <div className="detail-value"><SafeText fallback="-">{configDetail.merchantId}</SafeText></div>
+                  </div>
+                  <div className="detail-item">
+                    <label>스토어 ID</label>
+                    <div className="detail-value"><SafeText fallback="-">{configDetail.storeId}</SafeText></div>
+                  </div>
+                  <div className="detail-item">
+                    <label>테스트 모드</label>
+                    <div className="detail-value">{configDetail.testMode ? '예' : '아니오'}</div>
                   </div>
                 </div>
-                
-                {/* 키 정보 */}
-                <div className="detail-section">
-                  <h3>키 정보</h3>
-                  <div className="key-info">
-                    {!showKeys ? (
-                      <div className="key-placeholder">
-                        <Key size={24} />
-                        <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
-                        <button className="mg-button"
-                          variant="secondary"
-                          onClick={() => handleDecryptKeys(configDetail.configId)}
-                          disabled={loadingKeys}
-                          loading={loadingKeys}
-                        >
-                          <Eye size={18} />
-                          키 확인
-                        </button>
+              </div>
+
+              <div className="detail-section">
+                <h3>키 정보</h3>
+                <div className="key-info">
+                  {!showKeys ? (
+                    <div className="key-placeholder">
+                      <Key size={24} />
+                      <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
+                      <MGButton
+                        variant="secondary"
+                        onClick={() => handleDecryptKeys(configDetail.configId)}
+                        disabled={loadingKeys}
+                        loading={loadingKeys}
+                      >
+                        <Eye size={18} />
+                        키 확인
+                      </MGButton>
+                    </div>
+                  ) : (
+                    <div className="key-display">
+                      <div className="key-item">
+                        <label>API 키</label>
+                        <div className="key-value">
+                          <code><SafeText>{decryptedKeys?.apiKey || '***'}</SafeText></code>
+                          <button
+                            type="button"
+                            className="key-copy-button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
+                              showNotification('API 키가 복사되었습니다.', 'success');
+                            }}
+                            title={toDisplayString('복사')}
+                          >
+                            복사
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="key-display">
-                        <div className="key-item">
-                          <label>API 키</label>
-                          <div className="key-value">
-                            <code><SafeText>{decryptedKeys?.apiKey || '***'}</SafeText></code>
-                            <button
-                              className="key-copy-button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
-                                showNotification('API 키가 복사되었습니다.', 'success');
-                              }}
-                              title={toDisplayString('복사')}
-                            >
-                              복사
-                            </button>
-                          </div>
+                      <div className="key-item">
+                        <label>시크릿 키</label>
+                        <div className="key-value">
+                          <code><SafeText>{decryptedKeys?.secretKey || '***'}</SafeText></code>
+                          <button
+                            type="button"
+                            className="key-copy-button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
+                              showNotification('시크릿 키가 복사되었습니다.', 'success');
+                            }}
+                            title={toDisplayString('복사')}
+                          >
+                            복사
+                          </button>
                         </div>
-                        <div className="key-item">
-                          <label>시크릿 키</label>
-                          <div className="key-value">
-                            <code><SafeText>{decryptedKeys?.secretKey || '***'}</SafeText></code>
-                            <button
-                              className="key-copy-button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
-                                showNotification('시크릿 키가 복사되었습니다.', 'success');
-                              }}
-                              title={toDisplayString('복사')}
-                            >
-                              복사
-                            </button>
-                          </div>
+                      </div>
+                      <MGButton
+                        variant="secondary"
+                        size="small"
+                        onClick={() => {
+                          setShowKeys(false);
+                          setDecryptedKeys(null);
+                        }}
+                      >
+                        <Eye size={18} />
+                        숨기기
+                      </MGButton>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {(configDetail.webhookUrl || configDetail.returnUrl || configDetail.cancelUrl) && (
+                <div className="detail-section">
+                  <h3>URL 정보</h3>
+                  <div className="detail-grid">
+                    {configDetail.webhookUrl && (
+                      <div className="detail-item detail-item--full">
+                        <label>Webhook URL</label>
+                        <div className="detail-value detail-value--url">
+                          <a href={toDisplayString(configDetail.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
+                            <SafeText>{configDetail.webhookUrl}</SafeText>
+                            <ExternalLink size={14} />
+                          </a>
                         </div>
-                        <button className="mg-button"
-                          variant="secondary"
-                          size="small"
-                          onClick={() => {
-                            setShowKeys(false);
-                            setDecryptedKeys(null);
-                          }}
-                        >
-                          <Eye size={18} />
-                          숨기기
-                        </button>
+                      </div>
+                    )}
+                    {configDetail.returnUrl && (
+                      <div className="detail-item detail-item--full">
+                        <label>Return URL</label>
+                        <div className="detail-value detail-value--url">
+                          <a href={toDisplayString(configDetail.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
+                            <SafeText>{configDetail.returnUrl}</SafeText>
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    {configDetail.cancelUrl && (
+                      <div className="detail-item detail-item--full">
+                        <label>Cancel URL</label>
+                        <div className="detail-value detail-value--url">
+                          <a href={toDisplayString(configDetail.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
+                            <SafeText>{configDetail.cancelUrl}</SafeText>
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
-                
-                {/* URL 정보 */}
-                {(configDetail.webhookUrl || configDetail.returnUrl || configDetail.cancelUrl) && (
-                  <div className="detail-section">
-                    <h3>URL 정보</h3>
-                    <div className="detail-grid">
-                      {configDetail.webhookUrl && (
-                        <div className="detail-item detail-item--full">
-                          <label>Webhook URL</label>
-                          <div className="detail-value detail-value--url">
-                            <a href={toDisplayString(configDetail.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
-                              <SafeText>{configDetail.webhookUrl}</SafeText>
-                              <ExternalLink size={14} />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                      {configDetail.returnUrl && (
-                        <div className="detail-item detail-item--full">
-                          <label>Return URL</label>
-                          <div className="detail-value detail-value--url">
-                            <a href={toDisplayString(configDetail.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
-                              <SafeText>{configDetail.returnUrl}</SafeText>
-                              <ExternalLink size={14} />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                      {configDetail.cancelUrl && (
-                        <div className="detail-item detail-item--full">
-                          <label>Cancel URL</label>
-                          <div className="detail-value detail-value--url">
-                            <a href={toDisplayString(configDetail.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
-                              <SafeText>{configDetail.cancelUrl}</SafeText>
-                              <ExternalLink size={14} />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+              )}
+
+              {configDetail.notes && (
+                <div className="detail-section">
+                  <h3>비고</h3>
+                  <div className="detail-notes">
+                    <SafeText>{configDetail.notes}</SafeText>
                   </div>
-                )}
-                
-                {/* 비고 */}
-                {configDetail.notes && (
-                  <div className="detail-section">
-                    <h3>비고</h3>
-                    <div className="detail-notes">
-                      <SafeText>{configDetail.notes}</SafeText>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="modal-footer">
-                <button className="mg-button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setConfigDetail(null);
-                    setShowKeys(false);
-                    setDecryptedKeys(null);
-                  }}
-                >
-                  닫기
-                </button>
-              </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </UnifiedModal>
+        </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

@@ -1,7 +1,9 @@
 /**
  * Core Solution 모달 컴포넌트 (레거시)
- * 사용처: AdvancedDesignSample.js, PsychAssessmentManagement.js, PsychAssessmentAdminWidget.js
- * @deprecated common/modals/UnifiedModal 및 common/ConfirmModal 사용 권장. 마이그레이션 후 제거 예정.
+ * 외부 import 사용처 없음. MGConfirmModal·MGLoadingModal·MGModal* 서브컴포넌트는 이 파일 내부에서만 사용.
+ * 신규·수정 화면: `common/modals/UnifiedModal` 및 ConfirmModal 표준 사용.
+ *
+ * @deprecated 외부에서 default MGModal import 금지. UnifiedModal로 교체할 것.
  */
 
 import React, { useEffect } from 'react';

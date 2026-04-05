@@ -6,6 +6,7 @@ import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { useSession } from '../../contexts/SessionContext';
 import ProfileSection from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
@@ -356,30 +357,28 @@ const MyPage = () => {
 
   return (
     <AdminCommonLayout title="마이페이지">
-      <div className="mg-mypage">
-        <div className="mg-v2-ad-b0kla__container">
-        <header className="mg-mypage__content-header" aria-labelledby={MYPAGE_TITLE_ID}>
-          <div className="mg-mypage__content-header-main">
-            <h1 id={MYPAGE_TITLE_ID} className="mg-mypage__title">
-              마이페이지
-            </h1>
-            <p className="mg-mypage__subtitle">
-              프로필, 설정, 보안, 소셜 계정, 개인정보 동의를 한곳에서 관리합니다.
-            </p>
-          </div>
-          <div className="mg-mypage__header-actions">
-            <button
-              type="button"
-              className="mg-v2-button mg-v2-button--outline"
-              onClick={handleSupportClick}
-            >
-              고객센터
-            </button>
-            <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={handleLogoutClick}>
-              로그아웃
-            </button>
-          </div>
-        </header>
+      <ContentArea ariaLabel="마이페이지">
+        <div className="mg-mypage">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentHeader
+              title="마이페이지"
+              subtitle="프로필, 설정, 보안, 소셜 계정, 개인정보 동의를 한곳에서 관리합니다."
+              titleId={MYPAGE_TITLE_ID}
+              actions={
+                <div className="mg-mypage__header-actions">
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--outline"
+                    onClick={handleSupportClick}
+                  >
+                    고객센터
+                  </button>
+                  <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={handleLogoutClick}>
+                    로그아웃
+                  </button>
+                </div>
+              }
+            />
 
         <nav className="mg-mypage__tabs" aria-label="마이페이지 섹션">
           <ul className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle" role="tablist">
@@ -401,7 +400,7 @@ const MyPage = () => {
           </ul>
         </nav>
 
-        <main className="mg-mypage__main">
+        <section className="mg-mypage__main" aria-labelledby={MYPAGE_TITLE_ID}>
           <div className="mg-mypage__tab-panels">
             <section
               className="mg-mypage__panel"
@@ -480,9 +479,10 @@ const MyPage = () => {
               </div>
             </section>
           </div>
-        </main>
+        </section>
+          </div>
         </div>
-      </div>
+      </ContentArea>
 
       <PasswordResetModal
         isOpen={showPasswordResetModal}

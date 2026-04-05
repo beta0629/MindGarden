@@ -15,9 +15,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import Button from '../ui/Button/Button';
-import { FaTimes } from 'react-icons/fa';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './WidgetConfigModal.css';
 
 const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
@@ -166,26 +165,33 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
     onClose();
   };
 
-  if (!isOpen) return null;
-
-  const portalTarget = document.getElementById('modal-root') || document.body;
-
-  return ReactDOM.createPortal(
-    <div className="widget-config-modal-overlay" onClick={onClose}>
-      <div className="widget-config-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 'min(90vw, 900px)' }}>
-        {/* 헤더 */}
-        <div className="widget-config-modal-header">
-          <h2>위젯 설정</h2>
-          <button
-            className="widget-config-modal-close"
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="위젯 설정"
+      size="large"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      actions={
+        <>
+          <Button
+            variant="secondary"
             onClick={onClose}
-            aria-label="닫기"
+            preventDoubleClick={true}
           >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* 본문 */}
+            취소
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            preventDoubleClick={true}
+          >
+            저장
+          </Button>
+        </>
+      }
+    >
         <div className="widget-config-modal-body">
           {/* 위젯 타입 */}
           <div className="form-group">
@@ -316,27 +322,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
             </small>
           </div>
         </div>
-
-        {/* 푸터 */}
-        <div className="widget-config-modal-footer">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            preventDoubleClick={true}
-          >
-            취소
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            preventDoubleClick={true}
-          >
-            저장
-          </Button>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

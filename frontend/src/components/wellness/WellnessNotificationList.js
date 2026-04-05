@@ -5,6 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import Badge from '../common/Badge';
@@ -23,6 +24,8 @@ import './WellnessNotificationList.css';
 /**
  * @since 2025-01-21
  */
+const WELLNESS_NOTIFICATION_LIST_TITLE_ID = 'wellness-notification-list-title';
+
 const stripHtmlToPreview = (raw) => {
   const text = toDisplayString(raw, '');
   return text.replace(/<[^>]*>/g, '');
@@ -94,7 +97,9 @@ const WellnessNotificationList = () => {
   if (loading) {
     return (
       <AdminCommonLayout title="웰니스 알림">
-        <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
+        <ContentArea ariaLabel="웰니스 알림 로딩">
+          <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -102,38 +107,39 @@ const WellnessNotificationList = () => {
   if (error) {
     return (
       <AdminCommonLayout title="웰니스 알림">
-        <div className="wellness-notification-list">
-          <div className="wellness-notification-empty">
-            <div className="empty-icon">
-              <AlertCircle size={48} />
+        <ContentArea ariaLabel="웰니스 알림">
+          <ContentHeader
+            title="웰니스 알림"
+            subtitle="마음 건강을 위한 유용한 정보와 팁을 확인하세요"
+            titleId={WELLNESS_NOTIFICATION_LIST_TITLE_ID}
+          />
+          <div className="wellness-notification-list">
+            <div className="wellness-notification-empty">
+              <div className="empty-icon">
+                <AlertCircle size={48} />
+              </div>
+              <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
+              <p className="empty-message"><SafeText>{error}</SafeText></p>
+              <button className="mg-btn mg-btn--primary" onClick={loadNotifications}>
+                다시 시도
+              </button>
             </div>
-            <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
-            <p className="empty-message"><SafeText>{error}</SafeText></p>
-            <button className="mg-btn mg-btn--primary" onClick={loadNotifications}>
-              다시 시도
-            </button>
           </div>
-        </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="웰니스 알림">
-      <div className="wellness-notification-list">
-        {/* 헤더 */}
-        <div className="wellness-list-header">
-          <div className="header-icon">
-            <Heart size={32} />
-          </div>
-          <div className="header-content">
-            <h1 className="header-title">웰니스 알림</h1>
-            <p className="header-subtitle">
-              마음 건강을 위한 유용한 정보와 팁을 확인하세요
-            </p>
-          </div>
-        </div>
+      <ContentArea ariaLabel="웰니스 알림 목록">
+        <ContentHeader
+          title="웰니스 알림"
+          subtitle="마음 건강을 위한 유용한 정보와 팁을 확인하세요"
+          titleId={WELLNESS_NOTIFICATION_LIST_TITLE_ID}
+        />
 
+        <div className="wellness-notification-list">
         {/* 알림 목록 */}
         {notifications.length === 0 ? (
           <div className="wellness-notification-empty">
@@ -211,7 +217,8 @@ const WellnessNotificationList = () => {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

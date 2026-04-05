@@ -6,6 +6,7 @@ import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/auth/social-signup-modal.css';
 
@@ -275,48 +276,41 @@ const SocialSignupModal = ({
     }
   };
 
-  console.log('🔍 SocialSignupModal 렌더링:', { isOpen, socialUser });
-  console.log('🔍 모달 상태 상세:', { 
-    isOpen, 
-    socialUserExists: !!socialUser, 
-    socialUserProvider: socialUser?.provider,
-    socialUserEmail: socialUser?.email,
-    formDataEmail: formData.email
-  });
-  
-  if (!isOpen) {
-    console.log('❌ 모달이 닫혀있음 - isOpen:', isOpen);
-    return null;
-  }
-  
-  console.log('✅ 모달 렌더링 진행 - isOpen:', isOpen);
-  console.log('📊 현재 폼 데이터:', formData);
-  console.log('👤 SNS 사용자 정보:', socialUser);
+  const handleDismiss = () => {
+    onClose();
+    navigate('/login');
+  };
+
+  const modalTitle = socialUser?.needsBranchMapping ? '계정 활성화' : '간편 회원가입';
+  const modalSubtitle = socialUser?.needsBranchMapping
+    ? '계정을 활성화합니다'
+    : '소셜 계정 정보로 간편하게 가입하세요';
 
   return (
     <>
-      {/* 오버레이 */}
-      <div className="modal-overlay" onClick={() => {
-        onClose();
-        navigate('/login');
-      }}></div>
-      
-      {/* 모달 */}
-      <div className="social-signup-modal">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            <i className={socialUser?.needsBranchMapping ? "bi bi-person-check" : "bi bi-person-plus"}></i>
-            {socialUser?.needsBranchMapping ? "계정 활성화" : "간편 회원가입"}
-          </h2>
-          <button className="modal-close" onClick={() => {
-            onClose();
-            navigate('/login');
-          }}>
-            <i className="bi bi-x-lg"></i>
-          </button>
-        </div>
-        
-        <div className="modal-body">
+      <UnifiedModal
+        isOpen={isOpen}
+        onClose={handleDismiss}
+        title={modalTitle}
+        subtitle={modalSubtitle}
+        size="medium"
+        variant="form"
+        backdropClick
+        showCloseButton
+      >
+        <div
+          className="social-signup-modal"
+          style={{
+            position: 'relative',
+            top: 'auto',
+            left: 'auto',
+            transform: 'none',
+            zIndex: 'auto',
+            width: '100%',
+            maxWidth: '500px',
+            margin: '0 auto'
+          }}
+        >
           <div className="social-info">
             <div className="social-provider">
               <span className="provider-icon">
@@ -529,10 +523,7 @@ const SocialSignupModal = ({
             )}
             
             <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => {
-                onClose();
-                navigate('/login');
-              }}>
+              <button type="button" className="btn btn-secondary" onClick={handleDismiss}>
                 취소
               </button>
               <MGButton
@@ -547,8 +538,8 @@ const SocialSignupModal = ({
             </div>
           </form>
         </div>
-      </div>
-      
+      </UnifiedModal>
+
       {/* 개인정보 수집 및 이용 동의 모달 */}
       <PrivacyConsentModal
         isOpen={showPrivacyConsent}

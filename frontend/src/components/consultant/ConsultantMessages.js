@@ -54,17 +54,23 @@ const ConsultantMessages = () => {
     if (!user?.id) return;
     try {
       setLoading(true);
-      const response = await apiGet(`/api/v1/consultation-messages/consultant/${user.id}`);
-      if (response && response.success) {
-        const raw = response.data;
-        const list = Array.isArray(raw) ? raw : (raw?.messages ?? []);
-        setMessages(list);
-      } else {
-        notificationManager.show(response?.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
+      // apiGet은 { success, data } 응답 시 data만 반환 → 언랩된 본문으로 처리
+      const data = await apiGet(`/api/v1/consultation-messages/consultant/${user.id}`);
+      if (data == null) {
+        setMessages([]);
+        return;
       }
+      let list = [];
+      if (Array.isArray(data.messages)) {
+        list = data.messages;
+      } else if (Array.isArray(data)) {
+        list = data;
+      }
+      setMessages(list);
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
       notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -73,14 +79,26 @@ const ConsultantMessages = () => {
   const loadClients = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
-      if (response && response.success) {
-        const clientData = response.data || [];
-        const list = clientData.map(item => item.client).filter(Boolean);
-        setClients(list);
+      const data = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
+      if (data == null) {
+        setClients([]);
+        return;
       }
+      let rows = [];
+      if (Array.isArray(data.mappings)) {
+        rows = data.mappings;
+      } else if (Array.isArray(data.clients)) {
+        rows = data.clients;
+      } else if (Array.isArray(data)) {
+        rows = data;
+      }
+      const list = rows
+        .map((item) => (item && typeof item === 'object' ? item.client : null))
+        .filter(Boolean);
+      setClients(list);
     } catch (err) {
       console.error('내담자 목록 로드 오류:', err);
+      setClients([]);
     }
   }, [user?.id]);
 
@@ -256,9 +274,9 @@ const ConsultantMessages = () => {
               onChange={(val) => setFilterStatus(val)}
               options={[
                 { value: 'ALL', label: '전체 유형' },
-                ...messageTypes.map(type => ({
+                ...messageTypes.map((type) => ({
                   value: type.value,
-                  label: `${type.icon} ${type.label}`
+                  label: type.label
                 }))
               ]}
               placeholder="선택하세요"
@@ -403,9 +421,9 @@ const ConsultantMessages = () => {
               className="mg-v2-form-badge-select"
               value={newMessage.messageType}
               onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
-              options={messageTypes.map(type => ({
+              options={messageTypes.map((type) => ({
                 value: type.value,
-                label: `${type.icon} ${type.label}`
+                label: type.label
               }))}
               placeholder="선택하세요"
             />

@@ -207,34 +207,26 @@ const ConsultantDashboardV2 = ({ user }) => {
       const stats = statsResponse && typeof statsResponse === 'object' ? statsResponse : {};
       const todaySchedulesFromStats = stats.totalToday ?? stats.todaySchedules;
 
-      // 주간 통계 및 최근 알림 연동
-      const mockWeeklyStats = [
-        { day: '월', count: 0 }, { day: '화', count: 0 }, { day: '수', count: 0 },
-        { day: '목', count: 0 }, { day: '금', count: 0 }, { day: '토', count: 0 }, { day: '일', count: 0 }
-      ];
-      const weeklyStatsData = [...mockWeeklyStats];
-      if (stats?.weeklyStats?.length > 0) {
-        stats.weeklyStats.forEach(s => {
-            const dateStr = s.period; // "MM/dd"
-            let dayName = '';
-            if (dateStr) {
-               const parts = dateStr.split('/');
-               if (parts.length === 2) {
-                 const year = new Date().getFullYear();
-                 const tempDate = new Date(`${year}-${parts[0]}-${parts[1]}`);
-                 const days = ['일', '월', '화', '수', '목', '금', '토'];
-                 if (!isNaN(tempDate.getTime())) dayName = days[tempDate.getDay()];
-               }
-            }
-            const targetDay = dayName || s.period;
-            const existingIndex = weeklyStatsData.findIndex(w => w.day === targetDay);
-            if (existingIndex !== -1) {
-              weeklyStatsData[existingIndex].count = s.completedCount || 0;
-            } else if (targetDay) {
-              // 요일 매칭이 안되는 경우 추가 (예: 날짜 형식)
-              weeklyStatsData.push({ day: targetDay, count: s.completedCount || 0 });
-            }
+      // 주간 추이: 백엔드는 주차 종료일(MM/dd)별 완료 건수 배열(최근 N주) — 요일 매핑 금지
+      const weeklyStatsData = Array.isArray(stats?.weeklyStats) && stats.weeklyStats.length > 0
+        ? stats.weeklyStats.map((s) => ({
+            label: s.period != null && String(s.period).trim() !== '' ? String(s.period).trim() : '—',
+            count: typeof s.completedCount === 'number' ? s.completedCount : (Number(s.completedCount) || 0)
+          }))
+        : [];
+
+      let unreadMessages = stats.unreadMessages ?? 0;
+      try {
+        const unreadRes = await StandardizedApi.get('/api/v1/consultation-messages/unread-count', {
+          userId: currentUser.id,
+          userType: 'CONSULTANT',
+          _t: Date.now()
         });
+        if (unreadRes != null && typeof unreadRes.unreadCount === 'number') {
+          unreadMessages = unreadRes.unreadCount;
+        }
+      } catch (unreadErr) {
+        console.warn('안읽은 메시지 수(unread-count) 조회 실패, 통계 응답값 유지:', unreadErr?.message || unreadErr);
       }
 
       let activeNotifications = [];
@@ -315,7 +307,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         stats: {
           todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
           newClients: stats.newClients ?? 0,
-          unreadMessages: stats.unreadMessages ?? 0,
+          unreadMessages,
           averageRating: averageHeartScore,
           totalRatingCount: totalRatingCount
         },
@@ -482,7 +474,8 @@ const ConsultantDashboardV2 = ({ user }) => {
     fetchDashboardData();
   };
 
-  const maxChartValue = Math.max(...(dashboardData.weeklyStats.map(s => s.count) || [1]));
+  const weeklyCounts = dashboardData.weeklyStats.map((s) => s.count);
+  const maxChartValue = weeklyCounts.length > 0 ? Math.max(...weeklyCounts) : 1;
 
   const renderSchedules = () => {
     if (loading) {
@@ -760,23 +753,29 @@ const ConsultantDashboardV2 = ({ user }) => {
             className="mg-v2-content-section--full"
           >
             <div className="card-body">
-              <div className="chart-container">
-                {dashboardData.weeklyStats.map((stat, idx) => {
-                  const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
-                  const isToday = new Date().getDay() === (idx === 6 ? 0 : idx + 1);
-                  
-                  return (
-                    <div key={`stat-${stat.day}`} className="chart-bar-wrapper">
-                      <div 
-                        className={`chart-bar ${isToday ? 'active' : ''}`} 
-                        style={{ height: `${Math.max(heightPercent, 4)}%` }}
-                        title={`${stat.count}건`}
-                      ></div>
-                      <span className="chart-label">{stat.day}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {dashboardData.weeklyStats.length === 0 ? (
+                <div className="empty-state">
+                  <BarChart3 size={32} className="empty-state-icon" />
+                  <span className="empty-state-text">최근 주간 상담 추이 데이터가 없습니다.</span>
+                </div>
+              ) : (
+                <div className="chart-container">
+                  {dashboardData.weeklyStats.map((stat, idx) => {
+                    const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
+                    const isLatestWeek = idx === dashboardData.weeklyStats.length - 1;
+                    return (
+                      <div key={`stat-${stat.label}-${idx}`} className="chart-bar-wrapper">
+                        <div
+                          className={`chart-bar ${isLatestWeek ? 'active' : ''}`}
+                          style={{ height: `${Math.max(heightPercent, 4)}%` }}
+                          title={`${stat.label}: ${stat.count}건`}
+                        ></div>
+                        <span className="chart-label">{stat.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </ContentSection>
 

@@ -299,11 +299,13 @@
   align-items: flex-end;
   justify-content: space-between;
   padding-top: var(--mg-v2-spacing-xl, 24px);
+  padding-bottom: var(--mg-v2-spacing-2xl, 32px);
   gap: var(--mg-v2-spacing-sm, 8px);
 }
 
 .chart-bar-wrapper {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -332,6 +334,13 @@
 .chart-label {
   font-size: var(--mg-v2-font-size-xs, 12px);
   color: var(--mg-v2-color-text-secondary, #6b7280);
+  line-height: var(--mg-v2-line-height-tight, 1.2);
+  white-space: nowrap;
+  transform: rotate(-45deg);
+  transform-origin: center top;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Upcoming Schedule List */

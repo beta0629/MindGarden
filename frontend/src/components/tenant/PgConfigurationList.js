@@ -159,11 +159,9 @@ const PgConfigurationList = () => {
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
       <AdminCommonLayout title="PG 설정 목록">
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
-          </div>
-        </div>
+        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
+          <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -171,14 +169,12 @@ const PgConfigurationList = () => {
   if (!isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="PG 설정 목록">
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
-          <div className="mg-v2-ad-b0kla__container">
-            <div className="error-message">
-              <AlertCircle size={24} />
-              <p>로그인이 필요합니다.</p>
-            </div>
+        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
+          <div className="error-message">
+            <AlertCircle size={24} />
+            <p>로그인이 필요합니다.</p>
           </div>
-        </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -186,23 +182,20 @@ const PgConfigurationList = () => {
   if (!tenantId) {
     return (
       <AdminCommonLayout title="PG 설정 목록">
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
-          <div className="mg-v2-ad-b0kla__container">
-            <div className="error-message">
-              <AlertCircle size={24} />
-              <p>테넌트 정보를 찾을 수 없습니다.</p>
-            </div>
+        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
+          <div className="error-message">
+            <AlertCircle size={24} />
+            <p>테넌트 정보를 찾을 수 없습니다.</p>
           </div>
-        </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
   
   return (
     <AdminCommonLayout title="PG 설정 목록">
-      <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="PG 설정 목록">
+      <>
+        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
             <ContentHeader
               title="PG 설정 관리"
               subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
@@ -434,7 +427,8 @@ const PgConfigurationList = () => {
             ))}
           </div>
         )}
-        
+        </ContentArea>
+
         {/* 삭제 확인 모달 */}
         <UnifiedModal
           isOpen={Boolean(showDeleteModal && selectedConfig)}
@@ -479,9 +473,7 @@ const PgConfigurationList = () => {
             </>
           )}
         </UnifiedModal>
-          </ContentArea>
-        </div>
-      </div>
+      </>
     </AdminCommonLayout>
   );
 };

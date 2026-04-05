@@ -361,7 +361,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   if (loading) {
     return (
       <AdminCommonLayout title="수입·지출 관리" loading={true} loadingText="데이터를 불러오는 중...">
-        {null}
+        <ContentArea ariaLabel="수입·지출 관리 본문" />
       </AdminCommonLayout>
     );
   }
@@ -369,17 +369,17 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   if (error) {
     return (
       <AdminCommonLayout title="수입·지출 관리">
-        <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla" ariaLabel="수입·지출 관리 본문">
+        <ContentArea ariaLabel="수입·지출 관리 본문">
           <ContentHeader
             title="수입·지출 관리"
             subtitle="거래·손익·정산을 한곳에서"
             titleId={INTEGRATED_FINANCE_TITLE_ID}
           />
-          <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
+          <section aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
             <div className="error-container">
               <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
             </div>
-          </main>
+          </section>
         </ContentArea>
       </AdminCommonLayout>
     );
@@ -387,46 +387,46 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   return (
     <AdminCommonLayout title="수입·지출 관리">
-      <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla" ariaLabel="수입·지출 관리 본문">
-            <ContentHeader
-              title="수입·지출 관리"
-              subtitle="거래·손익·정산을 한곳에서"
-              titleId={INTEGRATED_FINANCE_TITLE_ID}
-              actions={(
-                <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
-                  <MGButton
-                    variant="danger"
-                    size="small"
-                    onClick={() => setShowQuickExpenseForm(true)}
-                    title="빠른 지출"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <TrendingDown size={18} />
-                  </MGButton>
-                  <MGButton
-                    variant="success"
-                    size="small"
-                    onClick={() => setShowTransactionForm(true)}
-                    title="거래 등록"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <DollarSign size={18} />
-                  </MGButton>
-                  <MGButton
-                    variant="primary"
-                    size="small"
-                    onClick={() => {
-                      navigate('/erp/financial');
-                    }}
-                    title="상세 내역 보기"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <FileText size={18} />
-                  </MGButton>
-                </div>
-              )}
-            />
-            <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
+      <ContentArea ariaLabel="수입·지출 관리 본문">
+        <ContentHeader
+          title="수입·지출 관리"
+          subtitle="거래·손익·정산을 한곳에서"
+          titleId={INTEGRATED_FINANCE_TITLE_ID}
+          actions={(
+            <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
+              <MGButton
+                variant="danger"
+                size="small"
+                onClick={() => setShowQuickExpenseForm(true)}
+                title="빠른 지출"
+                className="mg-dashboard-icon-btn"
+              >
+                <TrendingDown size={18} />
+              </MGButton>
+              <MGButton
+                variant="success"
+                size="small"
+                onClick={() => setShowTransactionForm(true)}
+                title="거래 등록"
+                className="mg-dashboard-icon-btn"
+              >
+                <DollarSign size={18} />
+              </MGButton>
+              <MGButton
+                variant="primary"
+                size="small"
+                onClick={() => {
+                  navigate('/erp/financial');
+                }}
+                title="상세 내역 보기"
+                className="mg-dashboard-icon-btn"
+              >
+                <FileText size={18} />
+              </MGButton>
+            </div>
+          )}
+        />
+        <section aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
             {/* 탭 메뉴: B0KlA Pill 토큰 */}
             <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
               {[
@@ -470,7 +470,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
               {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
             </div>
-            </main>
+        </section>
       </ContentArea>
 
       {/* 모달 컴포넌트들 */}

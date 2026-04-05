@@ -406,35 +406,30 @@ const MappingManagementPage = () => {
 
   if (loading) {
     return (
-      <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
-        <div className="mg-v2-ad-b0kla__container">
-          <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
-      </div>
+      <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
     );
   }
 
   return (
-    <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="매칭 관리 본문">
-          <ContentHeader
-            title="매칭 관리"
-            subtitle="상담사와 내담자 간의 매칭을 관리합니다."
-            titleId="mapping-management-title"
-            actions={
-              <button
-                type="button"
-                className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus size={20} />
-                새 매칭 생성
-              </button>
-            }
-          />
+    <>
+      <ContentArea ariaLabel="매칭 관리 본문" className="mg-v2-mapping-management">
+        <ContentHeader
+          title="매칭 관리"
+          subtitle="상담사와 내담자 간의 매칭을 관리합니다."
+          titleId="mapping-management-title"
+          actions={
+            <button
+              type="button"
+              className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={20} />
+              새 매칭 생성
+            </button>
+          }
+        />
 
-          <main aria-labelledby="mapping-management-title">
+        <section aria-labelledby="mapping-management-title">
           <MappingSearchSection
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
@@ -461,9 +456,8 @@ const MappingManagementPage = () => {
             onApprove={handleApproveMapping}
             onCreateClick={() => setShowCreateModal(true)}
           />
-          </main>
-        </ContentArea>
-      </div>
+        </section>
+      </ContentArea>
 
       <MappingCreationModal
         isOpen={showCreateModal}
@@ -592,7 +586,7 @@ const MappingManagementPage = () => {
         mapping={editMapping}
         onSuccess={handleEditSuccess}
       />
-    </div>
+    </>
   );
 };
 

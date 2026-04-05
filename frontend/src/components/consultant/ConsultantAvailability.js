@@ -224,21 +224,17 @@ const ConsultantAvailability = () => {
   const pageShell = (body, options = {}) => {
     const { title = '상담 가능 시간 관리', subtitle = '상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.', actions } = options;
     return (
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="상담 가능 시간">
-            <ContentHeader
-              title={title}
-              subtitle={subtitle}
-              titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
-              actions={actions}
-            />
-            <main aria-labelledby={CONSULTANT_AVAILABILITY_TITLE_ID}>
-              {body}
-            </main>
-          </ContentArea>
-        </div>
-      </div>
+      <ContentArea ariaLabel="상담 가능 시간">
+        <ContentHeader
+          title={title}
+          subtitle={subtitle}
+          titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
+          actions={actions}
+        />
+        <section aria-labelledby={CONSULTANT_AVAILABILITY_TITLE_ID}>
+          {body}
+        </section>
+      </ContentArea>
     );
   };
 
@@ -328,104 +324,101 @@ const ConsultantAvailability = () => {
 
   return (
     <AdminCommonLayout title="가능 시간">
-      {pageShell(
-        <div className="consultant-availability-container">
-      {/* 로딩 상태 */}
-      {loading && (
-        <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
-      )}
+      <>
+        {pageShell(
+          <div className="consultant-availability-container">
+            {loading && (
+              <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
+            )}
 
-      {/* 오류 상태 */}
-      {error && (
-        <div className="error-container">
-          <div className="alert alert-danger" role="alert">
-            <i className="bi bi-exclamation-triangle-fill"></i>
-            {error}
-          </div>
-        </div>
-      )}
-
-      {/* 상담 가능 시간 목록 */}
-      {!loading && !error && (
-        <div className="availability-content">
-          {availability.length === 0 ? (
-            <div className="empty-state">
-              <i className="bi bi-clock"></i>
-              <h3>설정된 상담 가능 시간이 없습니다</h3>
-              <p>상담 가능한 시간을 추가해보세요.</p>
-            </div>
-          ) : (
-            <div className="availability-grid">
-              {DAYS_OF_WEEK.map(day => (
-                <div key={day.key} className="day-card">
-                  <div className="day-header">
-                    <SafeText tag="h3" className="day-title">{day.label}</SafeText>
-                    <span className="day-count">
-                      {groupedAvailability[day.key]?.length || 0}개 시간
-                    </span>
-                  </div>
-                  
-                  <div className="time-slots">
-                    {groupedAvailability[day.key]?.map(slot => (
-                      <div key={slot.id} className="time-slot">
-                        <div className="time-info">
-                          <span className="time-range">
-                            <SafeText>{slot.startTime}</SafeText> - <SafeText>{slot.endTime}</SafeText>
-                          </span>
-                          <span className="time-duration">
-                            {slot.duration}분
-                          </span>
-                        </div>
-                        <div className="time-actions">
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => setEditingSlot(slot)}
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDeleteAvailability(slot.id)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                    )) || (
-                      <div className="no-slots">
-                        <i className="bi bi-dash-circle"></i>
-                        <span>설정된 시간이 없습니다</span>
-                      </div>
-                    )}
-                  </div>
+            {error && (
+              <div className="error-container">
+                <div className="alert alert-danger" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  {error}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
 
-      {/* 상담 가능 시간 추가/수정 모달 */}
-      {(showAddModal || editingSlot) && (
-        <AvailabilityModal
-          isOpen={showAddModal || !!editingSlot}
-          onClose={() => {
-            setShowAddModal(false);
-            setEditingSlot(null);
-          }}
-          onSubmit={editingSlot ? 
-            (data) => handleEditAvailability(editingSlot.id, data) : 
-            handleAddAvailability
-          }
-          initialData={editingSlot}
-          timeSlots={timeSlots}
-          daysOfWeek={DAYS_OF_WEEK}
-          durationOptions={durationOptions}
-        />
-      )}
-        </div>,
-        { actions: headerActions }
-      )}
+            {!loading && !error && (
+              <div className="availability-content">
+                {availability.length === 0 ? (
+                  <div className="empty-state">
+                    <i className="bi bi-clock"></i>
+                    <h3>설정된 상담 가능 시간이 없습니다</h3>
+                    <p>상담 가능한 시간을 추가해보세요.</p>
+                  </div>
+                ) : (
+                  <div className="availability-grid">
+                    {DAYS_OF_WEEK.map(day => (
+                      <div key={day.key} className="day-card">
+                        <div className="day-header">
+                          <SafeText tag="h3" className="day-title">{day.label}</SafeText>
+                          <span className="day-count">
+                            {groupedAvailability[day.key]?.length || 0}개 시간
+                          </span>
+                        </div>
+
+                        <div className="time-slots">
+                          {groupedAvailability[day.key]?.map(slot => (
+                            <div key={slot.id} className="time-slot">
+                              <div className="time-info">
+                                <span className="time-range">
+                                  <SafeText>{slot.startTime}</SafeText> - <SafeText>{slot.endTime}</SafeText>
+                                </span>
+                                <span className="time-duration">
+                                  {slot.duration}분
+                                </span>
+                              </div>
+                              <div className="time-actions">
+                                <button
+                                  className="btn btn-sm btn-outline-primary"
+                                  onClick={() => setEditingSlot(slot)}
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => handleDeleteAvailability(slot.id)}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+                            </div>
+                          )) || (
+                            <div className="no-slots">
+                              <i className="bi bi-dash-circle"></i>
+                              <span>설정된 시간이 없습니다</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>,
+          { actions: headerActions }
+        )}
+
+        {(showAddModal || editingSlot) && (
+          <AvailabilityModal
+            isOpen={showAddModal || !!editingSlot}
+            onClose={() => {
+              setShowAddModal(false);
+              setEditingSlot(null);
+            }}
+            onSubmit={editingSlot
+              ? (data) => handleEditAvailability(editingSlot.id, data)
+              : handleAddAvailability}
+            initialData={editingSlot}
+            timeSlots={timeSlots}
+            daysOfWeek={DAYS_OF_WEEK}
+            durationOptions={durationOptions}
+          />
+        )}
+      </>
     </AdminCommonLayout>
   );
 };

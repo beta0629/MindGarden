@@ -29,19 +29,11 @@
   transform: translateY(-1px);
 }
 
-.mg-v2-psych-assessment-management.mg-v2-ad-b0kla {
+/* ContentArea에 부여한 페이지 클래스 (AdminCommonLayout·본문 main이 padding 제공) */
+.mg-v2-psych-assessment-management {
   min-height: 100%;
   background: transparent;
   padding: 0;
-}
-
-.mg-v2-psych-assessment-management .mg-v2-ad-b0kla__container {
-  max-width: var(--mg-container-max, 1400px);
-  margin: 0 auto;
-}
-
-.mg-v2-psych-assessment-management .mg-v2-ad-b0kla__container {
   max-width: none;
   width: 100%;
 }
-

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -382,7 +382,7 @@ const FinancialManagement = () => {
   if (sessionLoading) {
     return (
       <AdminCommonLayout title="재무 관리">
-        <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+        <ContentArea className="erp-system">
           <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
         </ContentArea>
       </AdminCommonLayout>
@@ -392,7 +392,7 @@ const FinancialManagement = () => {
   if (!isLoggedIn) {
     return (
       <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-        <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+        <ContentArea className="erp-system">
           <div className="erp-error">
             <h3>로그인이 필요합니다.</h3>
             <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -404,7 +404,8 @@ const FinancialManagement = () => {
 
   return (
     <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-      <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+      <Fragment>
+        <ContentArea className="erp-system">
             <ContentHeader
               title="재무 관리"
               subtitle="재무 거래 및 회계를 관리할 수 있습니다."
@@ -937,28 +938,29 @@ const FinancialManagement = () => {
             </>
           )}
           </div>
-      </ContentArea>
+        </ContentArea>
 
-      {/* 거래 상세 정보 모달 */}
-      {showDetailModal && selectedTransaction && (
-        <TransactionDetailModal
-          transaction={selectedTransaction}
-          onClose={() => {
-            setShowDetailModal(false);
-            setSelectedTransaction(null);
-          }}
+        {/* 거래 상세 정보 모달 */}
+        {showDetailModal && selectedTransaction && (
+          <TransactionDetailModal
+            transaction={selectedTransaction}
+            onClose={() => {
+              setShowDetailModal(false);
+              setSelectedTransaction(null);
+            }}
+          />
+        )}
+
+        {/* 컨펌 모달 */}
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
+          onConfirm={confirmModal.onConfirm}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          type={confirmModal.type}
         />
-      )}
-
-      {/* 컨펌 모달 */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
-        onConfirm={confirmModal.onConfirm}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        type={confirmModal.type}
-      />
+      </Fragment>
     </AdminCommonLayout>
   );
 };

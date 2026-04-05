@@ -272,81 +272,75 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   if (loading) {
     return (
       <AdminCommonLayout>
-        <div className="mg-v2-ad-b0kla mg-v2-psych-assessment-management">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-          </div>
-        </div>
+        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout>
-      <div className="mg-v2-ad-b0kla mg-v2-psych-assessment-management">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea>
-            <ContentHeader
-              title="심리검사 리포트(AI)"
-              subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
-              actions={
-                <MGButton
-                  type="button"
-                  variant="primary"
-                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                  onClick={() => loadStatsAndRecent()}
-                  title="새로고침"
-                  loading={loading}
-                  preventDoubleClick={true}
-                  loadingText="새로고침 중..."
-                >
-                  <RefreshCw size={20} />
-                  새로고침
-                </MGButton>
-              }
-            />
+      <>
+        <ContentArea ariaLabel="심리검사 리포트 관리 본문" className="mg-v2-psych-assessment-management">
+          <ContentHeader
+            title="심리검사 리포트(AI)"
+            subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
+            actions={
+              <MGButton
+                type="button"
+                variant="primary"
+                className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                onClick={() => loadStatsAndRecent()}
+                title="새로고침"
+                loading={loading}
+                preventDoubleClick={true}
+                loadingText="새로고침 중..."
+              >
+                <RefreshCw size={20} />
+                새로고침
+              </MGButton>
+            }
+          />
 
-            <PsychKpiSection stats={stats} />
+          <PsychKpiSection stats={stats} />
 
-            <PsychUploadSection
-              uploadType={uploadType}
-              onUploadTypeChange={setUploadType}
-              uploadFiles={uploadFiles}
-              onFilePick={handlePickFile}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onUpload={handleUpload}
-              uploading={uploading}
-              isDragOver={isDragOver}
-              clientId={clientId}
-              onClientIdChange={setClientId}
-              clients={clients}
-              clientsLoading={clientsLoading}
-            />
+          <PsychUploadSection
+            uploadType={uploadType}
+            onUploadTypeChange={setUploadType}
+            uploadFiles={uploadFiles}
+            onFilePick={handlePickFile}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onUpload={handleUpload}
+            uploading={uploading}
+            isDragOver={isDragOver}
+            clientId={clientId}
+            onClientIdChange={setClientId}
+            clients={clients}
+            clientsLoading={clientsLoading}
+          />
 
-            <PsychDocumentListBlock
-              documents={displayDocuments}
-              onGenerateReport={handleGenerateReport}
-              onViewReport={handleViewReport}
-              viewReportLoading={reportLoading}
-              listLoadError={recentLoadError}
-              generatingReportDocumentId={generatingReportDocumentId}
-            />
-          </ContentArea>
-        </div>
-      </div>
+          <PsychDocumentListBlock
+            documents={displayDocuments}
+            onGenerateReport={handleGenerateReport}
+            onViewReport={handleViewReport}
+            viewReportLoading={reportLoading}
+            listLoadError={recentLoadError}
+            generatingReportDocumentId={generatingReportDocumentId}
+          />
+        </ContentArea>
 
-      <UnifiedModal
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
-        title="AI 분석 결과"
-        size="large"
-        showCloseButton
-        className="mg-v2-ad-b0kla"
-      >
-        <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
-      </UnifiedModal>
+        <UnifiedModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          title="AI 분석 결과"
+          size="large"
+          showCloseButton
+          className="mg-v2-ad-b0kla"
+        >
+          <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
+        </UnifiedModal>
+      </>
     </AdminCommonLayout>
   );
 };

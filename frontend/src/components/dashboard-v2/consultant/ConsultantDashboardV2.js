@@ -13,7 +13,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../content';
+import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API, RATING_API } from '../../../constants/api';
@@ -651,110 +651,90 @@ const ConsultantDashboardV2 = ({ user }) => {
         />
 
         {/* Hero Area: 주요 통계 */}
-        <section className="consultant-hero-grid">
-          <div className="consultant-stat-card">
-            <div className="stat-icon-wrapper primary">
-              <Calendar size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-label">오늘의 상담</span>
-              <span className="stat-value">{dashboardData.stats.todaySchedules}건</span>
-            </div>
-          </div>
-          
-          <div className="consultant-stat-card">
-            <div className="stat-icon-wrapper success">
-              <UserPlus size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-label">신규 내담자</span>
-              <span className="stat-value">{dashboardData.stats.newClients}명</span>
-            </div>
-          </div>
-          
-          <div className="consultant-stat-card">
-            <div className="stat-icon-wrapper warning">
-              <MessageSquare size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-label">안읽은 메시지</span>
-              <span className="stat-value">{dashboardData.stats.unreadMessages}건</span>
-            </div>
-          </div>
-          
-          <div className="consultant-stat-card">
-            <div className="stat-icon-wrapper info">
-              <Star size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-label">평균 평점</span>
-              <span className="stat-value">
-                {dashboardData.stats.averageRating > 0 
-                  ? dashboardData.stats.averageRating.toFixed(1) 
-                  : '-'}
-              </span>
-              {dashboardData.stats.totalRatingCount > 0 && (
-                <span className="stat-sublabel">({dashboardData.stats.totalRatingCount}개 평가)</span>
-              )}
-            </div>
-          </div>
-        </section>
+        <ContentKpiRow items={[
+          {
+            id: 'todaySchedules',
+            icon: <Calendar size={28} />,
+            label: '오늘의 상담',
+            value: `${dashboardData.stats.todaySchedules}건`,
+            iconVariant: 'blue'
+          },
+          {
+            id: 'newClients',
+            icon: <UserPlus size={28} />,
+            label: '신규 내담자',
+            value: `${dashboardData.stats.newClients}명`,
+            iconVariant: 'green'
+          },
+          {
+            id: 'unreadMessages',
+            icon: <MessageSquare size={28} />,
+            label: '안읽은 메시지',
+            value: `${dashboardData.stats.unreadMessages}건`,
+            iconVariant: 'orange'
+          },
+          {
+            id: 'averageRating',
+            icon: <Star size={28} />,
+            label: '평균 평점',
+            value: dashboardData.stats.averageRating > 0 ? dashboardData.stats.averageRating.toFixed(1) : '-',
+            subtitle: dashboardData.stats.totalRatingCount > 0 ? `(${dashboardData.stats.totalRatingCount}개 평가)` : undefined,
+            iconVariant: 'gray'
+          }
+        ]} />
 
         {/* Main Content Grid */}
-        <section className="consultant-main-grid">
+        <div className="mg-v2-content-growth-row">
           
           {/* Section A: 최근 일정 (오늘·어제) - 테넌트별 조회는 백엔드 TenantContextHolder 적용 */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h2 className="card-title">
-                <Clock size={18} className="card-title-icon" />
-                최근 일정 (오늘·어제)
-              </h2>
+          <ContentSection
+            title="최근 일정 (오늘·어제)"
+            titleIcon={<Clock size={18} />}
+            actions={
               <button 
                 className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/consultant/schedule')}
               >
                 전체보기 <ChevronRight size={16} />
               </button>
-            </div>
+            }
+          >
             <div className="card-body">
               {renderSchedules()}
             </div>
-          </div>
+          </ContentSection>
 
           {/* Section B: 다가오는 상담 (신규) */}
-          <section className="dashboard-card" aria-label="다가오는 상담">
-            <div className="card-header">
-              <h2 className="card-title">
-                <Calendar size={18} className="card-title-icon" />
-                다가오는 상담
-              </h2>
+          <ContentSection
+            title="다가오는 상담"
+            titleIcon={<Calendar size={18} />}
+            actions={
               <button 
                 className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/consultant/schedule')}
               >
                 전체보기 <ChevronRight size={16} />
               </button>
-            </div>
+            }
+          >
             <div className="card-body">
               {renderUpcomingSchedules()}
             </div>
-          </section>
+          </ContentSection>
 
           {/* Section C: 최근 알림 */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h2 className="card-title">
-                <Bell size={18} className="card-title-icon" />
-                최근 알림
-              </h2>
+          <ContentSection
+            title="최근 알림"
+            titleIcon={<Bell size={18} />}
+            actions={
               <button 
                 className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/notifications')}
               >
                 전체보기 <ChevronRight size={16} />
               </button>
-            </div>
+            }
+          >
             <div className="card-body">
               {dashboardData.recentNotifications.length > 0 ? (
                 <div className="notification-list">
@@ -777,16 +757,14 @@ const ConsultantDashboardV2 = ({ user }) => {
                 </div>
               )}
             </div>
-          </div>
+          </ContentSection>
 
           {/* Section D: 주간 상담 현황 (전체 너비) */}
-          <div className="dashboard-card" style={{ gridColumn: '1 / -1' }}>
-            <div className="card-header">
-              <h2 className="card-title">
-                <BarChart3 size={18} className="card-title-icon" />
-                주간 상담 현황
-              </h2>
-            </div>
+          <ContentSection
+            title="주간 상담 현황"
+            titleIcon={<BarChart3 size={18} />}
+            className="mg-v2-content-section--full"
+          >
             <div className="card-body">
               <div className="chart-container">
                 {dashboardData.weeklyStats.map((stat, idx) => {
@@ -806,9 +784,9 @@ const ConsultantDashboardV2 = ({ user }) => {
                 })}
               </div>
             </div>
-          </div>
+          </ContentSection>
 
-        </section>
+        </div>
 
         {/* Phase 1 컨텐츠: 긴급 확인 필요 내담자 */}
         <UrgentClientsSection

@@ -17,7 +17,7 @@ import {
   Sun
 } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
@@ -313,81 +313,47 @@ const ClientDashboard = () => {
             <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID} className="mg-v2-dashboard-layout">
 
         {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
-        <div className="client-dashboard__stats">
-          <div 
-            className="client-dashboard__stat-card client-dashboard__stat-card--primary clickable"
-            onClick={() => navigate('/client/consultations?filter=today')}
-            title="오늘의 상담 상세 보기"
-          >
-            <div className="client-dashboard__stat-icon">
-              <Calendar />
-            </div>
-            <div className="client-dashboard__stat-content">
-              <div className="client-dashboard__stat-value">
-                {consultationData.todaySchedules.length}
-              </div>
-              <div className="client-dashboard__stat-label">오늘의 상담</div>
-            </div>
-          </div>
-
-          <div 
-            className="client-dashboard__stat-card client-dashboard__stat-card--success clickable"
-            onClick={() => navigate('/client/consultations?filter=completed')}
-            title="완료한 상담 상세 보기"
-          >
-            <div className="client-dashboard__stat-icon">
-              <CheckCircle />
-            </div>
-            <div className="client-dashboard__stat-content">
-              <div className="client-dashboard__stat-value">
-                {consultationData.completedCount}
-              </div>
-              <div className="client-dashboard__stat-label">완료한 상담</div>
-            </div>
-          </div>
-
-          <div 
-            className="client-dashboard__stat-card client-dashboard__stat-card--info clickable"
-            onClick={() => navigate('/client/consultations?filter=weekly')}
-            title="이번 주 상담 상세 보기"
-          >
-            <div className="client-dashboard__stat-icon">
-              <TrendingUp />
-            </div>
-            <div className="client-dashboard__stat-content">
-              <div className="client-dashboard__stat-value">
-                {consultationData.weeklySchedules.length}
-              </div>
-              <div className="client-dashboard__stat-label">이번 주 상담</div>
-            </div>
-          </div>
-
-          <div 
-            className="client-dashboard__stat-card client-dashboard__stat-card--warning clickable"
-            onClick={() => navigate('/client/mappings')}
-            title="남은 회기 상세 보기"
-          >
-            <div className="client-dashboard__stat-icon">
-              <Heart />
-            </div>
-            <div className="client-dashboard__stat-content">
-              <div className="client-dashboard__stat-value">
-                {consultationData.remainingSessions}
-              </div>
-              <div className="client-dashboard__stat-label">남은 회기</div>
-            </div>
-          </div>
-        </div>
+        <ContentKpiRow items={[
+          {
+            id: 'todaySchedules',
+            icon: <Calendar size={28} />,
+            label: '오늘의 상담',
+            value: consultationData.todaySchedules.length,
+            iconVariant: 'blue',
+            onClick: () => navigate('/client/consultations?filter=today')
+          },
+          {
+            id: 'completedCount',
+            icon: <CheckCircle size={28} />,
+            label: '완료한 상담',
+            value: consultationData.completedCount,
+            iconVariant: 'green',
+            onClick: () => navigate('/client/consultations?filter=completed')
+          },
+          {
+            id: 'weeklySchedules',
+            icon: <TrendingUp size={28} />,
+            label: '이번 주 상담',
+            value: consultationData.weeklySchedules.length,
+            iconVariant: 'orange',
+            onClick: () => navigate('/client/consultations?filter=weekly')
+          },
+          {
+            id: 'remainingSessions',
+            icon: <Heart size={28} />,
+            label: '남은 회기',
+            value: consultationData.remainingSessions,
+            iconVariant: 'gray',
+            onClick: () => navigate('/client/mappings')
+          }
+        ]} />
 
         {/* 다가오는 상담 일정 */}
         {consultationData.upcomingSchedules.length > 0 && (
-          <div className="client-dashboard__section">
-            <div className="client-dashboard__section-header">
-              <h2 className="client-dashboard__section-title">
-                <Calendar size={24} />
-                다가오는 상담 일정
-              </h2>
-            </div>
+          <ContentSection
+            title="다가오는 상담 일정"
+            titleIcon={<Calendar size={24} />}
+          >
             <div className="client-dashboard__schedule-list">
               {consultationData.upcomingSchedules.map((schedule, index) => (
                 <div 
@@ -417,7 +383,7 @@ const ClientDashboard = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </ContentSection>
         )}
 
         {/* 맞춤형 메시지 */}
@@ -437,8 +403,7 @@ const ClientDashboard = () => {
         <HealingCard userRole="CLIENT" />
 
         {/* 빠른 액션 버튼 */}
-        <div className="client-dashboard__quick-actions">
-          <h2 className="client-dashboard__section-title">빠른 메뉴</h2>
+        <ContentSection title="빠른 메뉴">
           <div className="client-dashboard__action-grid">
             <MGButton
               variant="primary"
@@ -477,7 +442,7 @@ const ClientDashboard = () => {
               <span>내 정보</span>
             </MGButton>
           </div>
-        </div>
+        </ContentSection>
 
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import UrgentClientCard from './UrgentClientCard';
+import { ContentSection } from '../content';
 
 /**
  * 긴급 확인 필요 내담자 섹션 컴포넌트
@@ -21,12 +22,14 @@ const UrgentClientsSection = ({
   if (clients.length === 0) return null;
 
   return (
-    <div className={`mg-v2-urgent-clients-section ${className}`}>
-      <div className="mg-v2-urgent-clients-section__header">
-        <div className="mg-v2-urgent-clients-section__title">
+    <ContentSection
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <AlertCircle size={18} />
           긴급 확인 필요 내담자
         </div>
+      }
+      actions={
         <button
           className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
           onClick={onViewAllClients}
@@ -35,8 +38,9 @@ const UrgentClientsSection = ({
         >
           전체보기 <ChevronRight size={16} />
         </button>
-      </div>
-
+      }
+      className={`mg-v2-urgent-clients-section ${className}`}
+    >
       <div className="mg-v2-urgent-clients-section__body">
         {clients.slice(0, 5).map(client => (
           <UrgentClientCard
@@ -46,7 +50,7 @@ const UrgentClientsSection = ({
           />
         ))}
       </div>
-    </div>
+    </ContentSection>
   );
 };
 

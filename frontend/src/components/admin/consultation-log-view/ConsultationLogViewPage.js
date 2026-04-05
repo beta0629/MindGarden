@@ -196,84 +196,80 @@ const ConsultationLogViewPage = () => {
 
   if (loading && records.length === 0) {
     return (
-      <div className="mg-v2-ad-b0kla mg-v2-consultation-log-view">
-        <div className="mg-v2-ad-b0kla__container">
-          <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
-      </div>
+      <ContentArea>
+        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+      </ContentArea>
     );
   }
 
   return (
-    <div className="mg-v2-ad-b0kla mg-v2-consultation-log-view">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea>
-          <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
+    <>
+      <ContentArea>
+        <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
 
-          <ConsultationLogFilterSection
-            isAdmin={isAdmin}
-            consultantId={consultantId}
-            consultants={consultants}
-            onConsultantChange={setConsultantId}
-            clientId={clientId}
-            clients={clients}
-            onClientChange={setClientId}
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
-
-          <nav className="mg-v2-consultation-log-view-tabs" aria-label="뷰 전환">
-            {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className={`mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`}
-                onClick={() => setViewMode(mode)}
-                aria-pressed={viewMode === mode}
-                aria-current={viewMode === mode ? 'true' : undefined}
-              >
-                {TAB_LABELS[mode]}
-              </button>
-            ))}
-          </nav>
-
-          {viewMode === VIEW_MODE_CALENDAR && (
-            <ConsultationLogCalendarBlock
-              records={filteredRecords}
-              clientNameMap={clientNameMap}
-              consultantNameMap={consultantNameMap}
-              onOpenModal={handleOpenModal}
-            />
-          )}
-          {viewMode === VIEW_MODE_LIST && (
-            <ConsultationLogListBlock
-              records={filteredRecords}
-              clientNameMap={clientNameMap}
-              consultantNameMap={consultantNameMap}
-              onCardClick={handleOpenModal}
-            />
-          )}
-          {viewMode === VIEW_MODE_TABLE && (
-            <ConsultationLogTableBlock
-              records={filteredRecords}
-              clientNameMap={clientNameMap}
-              consultantNameMap={consultantNameMap}
-              onRowClick={handleOpenModal}
-            />
-          )}
-        </ContentArea>
-
-        <ConsultationLogModal
-          isOpen={modalOpen}
-          onClose={handleModalClose}
-          onSave={handleModalSave}
-          recordId={modalRecordId}
+        <ConsultationLogFilterSection
           isAdmin={isAdmin}
+          consultantId={consultantId}
+          consultants={consultants}
+          onConsultantChange={setConsultantId}
+          clientId={clientId}
+          clients={clients}
+          onClientChange={setClientId}
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
         />
-      </div>
-    </div>
+
+        <nav className="mg-v2-consultation-log-view-tabs" aria-label="뷰 전환">
+          {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={`mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`}
+              onClick={() => setViewMode(mode)}
+              aria-pressed={viewMode === mode}
+              aria-current={viewMode === mode ? 'true' : undefined}
+            >
+              {TAB_LABELS[mode]}
+            </button>
+          ))}
+        </nav>
+
+        {viewMode === VIEW_MODE_CALENDAR && (
+          <ConsultationLogCalendarBlock
+            records={filteredRecords}
+            clientNameMap={clientNameMap}
+            consultantNameMap={consultantNameMap}
+            onOpenModal={handleOpenModal}
+          />
+        )}
+        {viewMode === VIEW_MODE_LIST && (
+          <ConsultationLogListBlock
+            records={filteredRecords}
+            clientNameMap={clientNameMap}
+            consultantNameMap={consultantNameMap}
+            onCardClick={handleOpenModal}
+          />
+        )}
+        {viewMode === VIEW_MODE_TABLE && (
+          <ConsultationLogTableBlock
+            records={filteredRecords}
+            clientNameMap={clientNameMap}
+            consultantNameMap={consultantNameMap}
+            onRowClick={handleOpenModal}
+          />
+        )}
+      </ContentArea>
+
+      <ConsultationLogModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        onSave={handleModalSave}
+        recordId={modalRecordId}
+        isAdmin={isAdmin}
+      />
+    </>
   );
 };
 

@@ -107,9 +107,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
         Client client = convertToClient(user);
 
-        Map<String, Object> clientMap = convertClientToMap(client);
+        Map<String, Object> clientMap = convertClientToMap(client, user);
         clientMap.put("grade", user.getGrade());
-        clientMap.put("notes", user.getNotes());
+        clientMap.put("notes", resolveDisplayNotes(user));
         clientMap.put("status", Boolean.TRUE.equals(user.getIsActive()) ? "ACTIVE" : "INACTIVE");
         clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
 
@@ -165,9 +165,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                 .map(user -> {
                     Client client = convertToClient(user);
                     
-                    Map<String, Object> clientMap = convertClientToMap(client);
+                    Map<String, Object> clientMap = convertClientToMap(client, user);
                     clientMap.put("grade", user.getGrade());
-                    clientMap.put("notes", user.getNotes());
+                    clientMap.put("notes", resolveDisplayNotes(user));
                     clientMap.put("status", Boolean.TRUE.equals(user.getIsActive()) ? "ACTIVE" : "INACTIVE");
                     clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
                     if (user.getProfileImageUrl() != null) {
@@ -310,18 +310,66 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         if (userTenantId == null || userTenantId.isBlank()) {
             log.warn("내담자 User.tenantId가 없어 차량번호 복사 생략: userId={}", user.getId());
         } else {
-            // 소프트 삭제된 clients 행에도 차량번호가 있으면 DTO에 반영
+            // 소프트 삭제된 clients 행에도 차량번호·상담·비상연락처가 있으면 DTO에 반영
             clientRepository.findByTenantIdAndIdIncludingDeleted(userTenantId, user.getId())
-                    .ifPresent(row -> client.setVehiclePlate(row.getVehiclePlate()));
+                    .ifPresent(row -> {
+                        client.setVehiclePlate(row.getVehiclePlate());
+                        client.setConsultationPurpose(row.getConsultationPurpose());
+                        client.setConsultationHistory(row.getConsultationHistory());
+                        if (row.getEmergencyContact() != null && !row.getEmergencyContact().trim().isEmpty()) {
+                            try {
+                                client.setEmergencyContact(
+                                        encryptionUtil.safeDecrypt(row.getEmergencyContact()));
+                            } catch (Exception e) {
+                                log.warn("🔓 내담자 비상연락처(이름) 복호화 실패: userId={}, error={}",
+                                        user.getId(), e.getMessage());
+                                client.setEmergencyContact(row.getEmergencyContact());
+                            }
+                        }
+                        if (row.getEmergencyPhone() != null && !row.getEmergencyPhone().trim().isEmpty()) {
+                            try {
+                                client.setEmergencyPhone(encryptionUtil.safeDecrypt(row.getEmergencyPhone()));
+                            } catch (Exception e) {
+                                log.warn("🔓 내담자 비상연락처 전화 복호화 실패: userId={}, error={}",
+                                        user.getId(), e.getMessage());
+                                client.setEmergencyPhone(row.getEmergencyPhone());
+                            }
+                        }
+                    });
         }
 
         return client;
     }
+
+    /**
+     * API 단일 메모 UX: {@code notes} 우선, 비어 있으면 레거시 {@code memo}를 표시용으로 사용.
+     *
+     * @param user 내담자 User
+     * @return 표시용 메모 또는 null
+     */
+    private String resolveDisplayNotes(com.coresolution.consultation.entity.User user) {
+        if (user == null) {
+            return null;
+        }
+        String n = user.getNotes();
+        if (n != null && !n.trim().isEmpty()) {
+            return n.trim();
+        }
+        String m = user.getMemo();
+        if (m != null && !m.trim().isEmpty()) {
+            return m.trim();
+        }
+        return null;
+    }
     
      /**
      * Client 엔티티를 Map으로 변환
+     *
+     * @param client 복호화·clients 행 보강된 Client
+     * @param user   나이 fallback 등 users 컬럼 참조
      */
-    private Map<String, Object> convertClientToMap(Client client) {
+    private Map<String, Object> convertClientToMap(Client client,
+            com.coresolution.consultation.entity.User user) {
         Map<String, Object> clientMap = new HashMap<>();
         clientMap.put("id", client.getId());
         clientMap.put("name", client.getName());
@@ -332,12 +380,18 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         Integer ageYears = null;
         if (client.getBirthDate() != null) {
             ageYears = Period.between(client.getBirthDate(), LocalDate.now()).getYears();
+        } else if (user != null && user.getAge() != null) {
+            ageYears = user.getAge();
         }
         clientMap.put("age", ageYears);
         clientMap.put("address", client.getAddress());
         clientMap.put("addressDetail", client.getAddressDetail());
         clientMap.put("postalCode", client.getPostalCode());
         clientMap.put("vehiclePlate", client.getVehiclePlate());
+        clientMap.put("emergencyContact", client.getEmergencyContact());
+        clientMap.put("emergencyPhone", client.getEmergencyPhone());
+        clientMap.put("consultationPurpose", client.getConsultationPurpose());
+        clientMap.put("consultationHistory", client.getConsultationHistory());
         clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("isDeleted", client.getIsDeleted());
         clientMap.put("createdAt", client.getCreatedAt());

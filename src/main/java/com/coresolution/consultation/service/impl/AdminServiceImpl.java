@@ -408,6 +408,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         applyRrnAndAddressToUser(clientUser, request.getRrnFirst6(), request.getRrnLast1(),
                 request.getAddress(), request.getAddressDetail(), request.getPostalCode());
 
+        if (request.getNotes() != null) {
+            clientUser.setNotes(request.getNotes().trim().isEmpty() ? null : request.getNotes().trim());
+        }
+        if (request.getGrade() != null) {
+            String newGrade = request.getGrade().trim().isEmpty() ? null : request.getGrade().trim();
+            if (!Objects.equals(clientUser.getGrade(), newGrade)) {
+                clientUser.setLastGradeUpdate(LocalDateTime.now());
+            }
+            clientUser.setGrade(newGrade);
+        }
+        if (clientUser.getBirthDate() == null && request.getAge() != null) {
+            clientUser.setAge(request.getAge());
+        }
+
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
                 clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
 
@@ -450,6 +464,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setPostalCode(savedUser.getPostalCode());
         String vehiclePlate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
         client.setVehiclePlate(vehiclePlate);
+        client.setEmergencyContact(encryptOptionalPiiForStorage(request.getEmergencyContact()));
+        client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
+        client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
+        client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
         client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -2265,6 +2283,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     log.info("🚗 내담자 수정: 차량번호 갱신 (마스킹): {}", maskVehiclePlate(plate));
                 }
             }
+            if (request.getEmergencyContact() != null) {
+                client.setEmergencyContact(request.getEmergencyContact().trim().isEmpty()
+                        ? null
+                        : encryptionUtil.safeEncrypt(request.getEmergencyContact().trim()));
+            }
+            if (request.getEmergencyPhone() != null) {
+                client.setEmergencyPhone(request.getEmergencyPhone().trim().isEmpty()
+                        ? null
+                        : encryptionUtil.safeEncrypt(request.getEmergencyPhone().trim()));
+            }
+            if (request.getConsultationPurpose() != null) {
+                client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
+            }
+            if (request.getConsultationHistory() != null) {
+                client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+            }
             persistedClient = clientRepository.save(client);
         } else {
             Client client = new Client();
@@ -2280,6 +2314,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             client.setPostalCode(savedUser.getPostalCode());
             String vehiclePlate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
             client.setVehiclePlate(vehiclePlate);
+            client.setEmergencyContact(encryptOptionalPiiForStorage(request.getEmergencyContact()));
+            client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
+            client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
+            client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
             client.setIsDeleted(false);
             client.setCreatedAt(savedUser.getCreatedAt());
             client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -6013,6 +6051,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (postalCode != null && !postalCode.trim().isEmpty()) {
             user.setPostalCode(postalCode.trim());
         }
+    }
+
+    /**
+     * 선택 PII 문자열을 clients 등에 저장할 때 암호화 (빈값은 null).
+     *
+     * @param plain 평문
+     * @return 암호문 또는 null
+     */
+    private String encryptOptionalPiiForStorage(String plain) {
+        if (plain == null || plain.trim().isEmpty()) {
+            return null;
+        }
+        return encryptionUtil.safeEncrypt(plain.trim());
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null || s.trim().isEmpty()) {
+            return null;
+        }
+        return s.trim();
     }
 
     /**

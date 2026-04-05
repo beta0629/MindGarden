@@ -29,21 +29,6 @@ const CLIENT_MODAL_SUMMARY_SECTION_TITLE = '누적 지표';
 const CLIENT_MODAL_GRADE_LABEL = '현재 등급(저장값)';
 
 /**
- * 목록 등에서 이미 currentConsultants·statistics가 오면 추가 GET 생략
- * @param {Object} c client row
- * @returns {boolean}
- */
-function clientHasPrefetchedWithStats(c) {
-  if (!c || c.id == null || c.id === '') {
-    return false;
-  }
-  if (typeof c.currentConsultants === 'number') {
-    return true;
-  }
-  return typeof c.statistics?.totalSessions === 'number';
-}
-
-/**
  * 내담자 모달 컴포넌트
  */
 const ClientModal = ({
@@ -65,25 +50,13 @@ const ClientModal = ({
 
     useEffect(() => {
       const c = clientRef.current;
-      if (!type || type === 'create' || !c?.id) {
+      if (!type || type === 'create' || type === 'delete' || !c?.id) {
         setClientSummary(null);
         setSummaryLoading(false);
         return undefined;
       }
 
       let cancelled = false;
-
-      if (clientHasPrefetchedWithStats(c)) {
-        setClientSummary({
-          currentConsultants: typeof c.currentConsultants === 'number' ? c.currentConsultants : 0,
-          totalSessions: typeof c.statistics?.totalSessions === 'number' ? c.statistics.totalSessions : null,
-          persistedGrade: c.grade
-        });
-        setSummaryLoading(false);
-        return () => {
-          cancelled = true;
-        };
-      }
 
       setSummaryLoading(true);
       setClientSummary(null);
@@ -100,10 +73,33 @@ const ClientModal = ({
               totalSessions: typeof data.statistics?.totalSessions === 'number' ? data.statistics.totalSessions : null,
               persistedGrade: data.client?.grade
             });
+            const ac = data.client;
+            if (ac && typeof ac === 'object' && (type === 'view' || type === 'edit')) {
+              setFormData((prev) => ({
+                ...prev,
+                consultationPurpose: ac.consultationPurpose != null ? ac.consultationPurpose : '',
+                consultationHistory: ac.consultationHistory != null ? ac.consultationHistory : '',
+                emergencyContact: ac.emergencyContact != null ? ac.emergencyContact : '',
+                emergencyPhone: ac.emergencyPhone != null ? ac.emergencyPhone : '',
+                notes: ac.notes != null ? ac.notes : prev.notes,
+                address: ac.address != null ? ac.address : prev.address,
+                addressDetail: ac.addressDetail != null ? ac.addressDetail : prev.addressDetail,
+                postalCode: ac.postalCode != null ? ac.postalCode : prev.postalCode,
+                gender: ac.gender != null ? ac.gender : prev.gender,
+                birthDate: ac.birthDate != null ? ac.birthDate : prev.birthDate,
+                age: ac.age != null ? ac.age : prev.age,
+                vehiclePlate: ac.vehiclePlate != null ? ac.vehiclePlate : prev.vehiclePlate,
+                grade: ac.grade != null ? ac.grade : prev.grade,
+                status: ac.status != null ? ac.status : prev.status,
+                profileImageUrl: ac.profileImageUrl != null ? ac.profileImageUrl : prev.profileImageUrl,
+                phone: ac.phone != null ? ac.phone : prev.phone,
+                name: ac.name != null ? ac.name : prev.name
+              }));
+            }
           } else {
             setClientSummary({
-              currentConsultants: 0,
-              totalSessions: null,
+              currentConsultants: typeof c.currentConsultants === 'number' ? c.currentConsultants : 0,
+              totalSessions: typeof c.statistics?.totalSessions === 'number' ? c.statistics.totalSessions : null,
               persistedGrade: c.grade
             });
           }
@@ -126,7 +122,7 @@ const ClientModal = ({
       return () => {
         cancelled = true;
       };
-    }, [type, client?.id]);
+    }, [type, client?.id, setFormData]);
 
     const summaryKpiItems = useMemo(() => {
       if (!clientSummary) {
@@ -338,7 +334,11 @@ const ClientModal = ({
             vehiclePlate: formData.vehiclePlate || '',
             gender: formData.gender || '',
             birthDate: formData.birthDate ?? null,
-            age: formData.age != null && formData.age !== '' ? formData.age : null
+            age: formData.age != null && formData.age !== '' ? formData.age : null,
+            consultationPurpose: formData.consultationPurpose || '',
+            consultationHistory: formData.consultationHistory || '',
+            emergencyContact: formData.emergencyContact || '',
+            emergencyPhone: formData.emergencyPhone || ''
         };
 
         const demographicAgeYears = getConsultantAgeYears({
@@ -609,6 +609,7 @@ const ClientModal = ({
                     <BadgeSelect
                         value={safeFormData.status}
                         onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+                        disabled={type === 'view'}
                         options={userStatusOptions && userStatusOptions.length > 0
                             ? userStatusOptions.map(option => ({
                                 value: option.codeValue || option.code,
@@ -628,6 +629,7 @@ const ClientModal = ({
                     <BadgeSelect
                         value={safeFormData.grade}
                         onChange={(val) => setFormData(prev => ({ ...prev, grade: val }))}
+                        disabled={type === 'view'}
                         options={[
                             { value: 'BRONZE', label: '브론즈' },
                             { value: 'SILVER', label: '실버' },
@@ -639,6 +641,62 @@ const ClientModal = ({
                         className="mg-v2-form-badge-select"
                     />
                 </div>
+                <ContentSection title="상담 정보" noCard className="mg-v2-client-modal__subsection">
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="client-consultationPurpose" className="mg-v2-form-label">상담 목적</label>
+                        <textarea
+                            id="client-consultationPurpose"
+                            name="consultationPurpose"
+                            value={safeFormData.consultationPurpose}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="mg-v2-form-textarea"
+                            readOnly={type === 'view'}
+                            placeholder="상담을 받는 목적을 입력하세요"
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="client-consultationHistory" className="mg-v2-form-label">상담 이력</label>
+                        <textarea
+                            id="client-consultationHistory"
+                            name="consultationHistory"
+                            value={safeFormData.consultationHistory}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="mg-v2-form-textarea"
+                            readOnly={type === 'view'}
+                            placeholder="이전 상담 이력을 입력하세요"
+                        />
+                    </div>
+                </ContentSection>
+                <ContentSection title="비상 연락처" noCard className="mg-v2-client-modal__subsection">
+                    <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="client-emergencyContact" className="mg-v2-form-label">비상 연락처 이름</label>
+                            <input
+                                type="text"
+                                id="client-emergencyContact"
+                                name="emergencyContact"
+                                value={safeFormData.emergencyContact}
+                                onChange={handleInputChange}
+                                className="mg-v2-form-input"
+                                readOnly={type === 'view'}
+                            />
+                        </div>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="client-emergencyPhone" className="mg-v2-form-label">비상 연락처 전화</label>
+                            <input
+                                type="tel"
+                                id="client-emergencyPhone"
+                                name="emergencyPhone"
+                                value={safeFormData.emergencyPhone}
+                                onChange={handleInputChange}
+                                className="mg-v2-form-input"
+                                readOnly={type === 'view'}
+                            />
+                        </div>
+                    </div>
+                </ContentSection>
                 <div className="mg-v2-form-group">
                     <label htmlFor="notes" className="mg-v2-form-label">메모</label>
                     <textarea
@@ -648,6 +706,7 @@ const ClientModal = ({
                         onChange={handleInputChange}
                         rows={4}
                         className="mg-v2-form-textarea"
+                        readOnly={type === 'view'}
                     />
                 </div>
             </form>

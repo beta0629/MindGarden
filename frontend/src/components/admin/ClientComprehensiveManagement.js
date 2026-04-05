@@ -84,7 +84,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         address: '',
         addressDetail: '',
         postalCode: '',
-        vehiclePlate: ''
+        vehiclePlate: '',
+        consultationPurpose: '',
+        consultationHistory: '',
+        emergencyContact: '',
+        emergencyPhone: ''
     });
     useEffect(() => {
         formDataRef.current = formData;
@@ -161,6 +165,10 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,
                         vehiclePlate: clientEntity.vehiclePlate,
+                        consultationPurpose: clientEntity.consultationPurpose || '',
+                        consultationHistory: clientEntity.consultationHistory || '',
+                        emergencyContact: clientEntity.emergencyContact || '',
+                        emergencyPhone: clientEntity.emergencyPhone || '',
                         currentConsultants: item.currentConsultants || 0,
                         totalConsultants: item.totalConsultants || 0,
                         statistics: item.statistics || {}
@@ -278,7 +286,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             address: client.address || '',
             addressDetail: client.addressDetail || '',
             postalCode: client.postalCode || '',
-            vehiclePlate: client.vehiclePlate || ''
+            vehiclePlate: client.vehiclePlate || '',
+            consultationPurpose: client.consultationPurpose || '',
+            consultationHistory: client.consultationHistory || '',
+            emergencyContact: client.emergencyContact || '',
+            emergencyPhone: client.emergencyPhone || ''
         });
         setShowModal(true);
     }, []);
@@ -324,7 +336,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             address: '',
             addressDetail: '',
             postalCode: '',
-            vehiclePlate: ''
+            vehiclePlate: '',
+            consultationPurpose: '',
+            consultationHistory: '',
+            emergencyContact: '',
+            emergencyPhone: ''
         });
         setShowModal(true);
     }, []);
@@ -348,7 +364,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             address: client.address || '',
             addressDetail: client.addressDetail || '',
             postalCode: client.postalCode || '',
-            vehiclePlate: client.vehiclePlate || ''
+            vehiclePlate: client.vehiclePlate || '',
+            consultationPurpose: client.consultationPurpose || '',
+            consultationHistory: client.consultationHistory || '',
+            emergencyContact: client.emergencyContact || '',
+            emergencyPhone: client.emergencyPhone || ''
         });
         setShowModal(true);
     }, []);
@@ -410,7 +430,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             address: '',
             addressDetail: '',
             postalCode: '',
-            vehiclePlate: ''
+            vehiclePlate: '',
+            consultationPurpose: '',
+            consultationHistory: '',
+            emergencyContact: '',
+            emergencyPhone: ''
         });
     }, []);
 
@@ -655,7 +679,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         status: dataToUse.status,
                                         grade: dataToUse.grade,
                                         notes: dataToUse.notes ?? '',
-                                        vehiclePlate: normalizeVehiclePlateInput(dataToUse.vehiclePlate || '')
+                                        vehiclePlate: normalizeVehiclePlateInput(dataToUse.vehiclePlate || ''),
+                                        consultationPurpose: (dataToUse.consultationPurpose ?? '').trim(),
+                                        consultationHistory: (dataToUse.consultationHistory ?? '').trim(),
+                                        emergencyContact: (dataToUse.emergencyContact ?? '').trim(),
+                                        emergencyPhone: (dataToUse.emergencyPhone ?? '').trim()
                                     };
                                     if (modalType === 'create') {
                                         payload.password = dataToUse.password ?? '';

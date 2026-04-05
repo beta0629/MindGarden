@@ -64,6 +64,12 @@ public class Client extends AuditableTenantBase {
     @Column(name = "vehicle_plate", length = 32)
     private String vehiclePlate;
 
+    @Column(name = "consultation_purpose", columnDefinition = "TEXT")
+    private String consultationPurpose;
+
+    @Column(name = "consultation_history", columnDefinition = "TEXT")
+    private String consultationHistory;
+
     @Column(name = "emergency_contact", length = 500) // users와 동일: 암호화된 값 복사 정합
     private String emergencyContact;
 

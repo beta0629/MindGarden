@@ -214,6 +214,67 @@ class ClientStatsServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAllClientsWithStatsByTenant: birthDate 없고 User.age 있으면 목록 age에 반영")
+    void getAllClientsWithStatsByTenant_ageFallbackFromUserWhenNoBirthDate() {
+        User user = User.builder()
+            .userId("client-71")
+            .email("c@test.example")
+            .password("password12")
+            .name("홍길동")
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(CLIENT_USER_ID);
+        user.setTenantId(TENANT);
+        user.setBirthDate(null);
+        user.setAge(34);
+
+        when(userRepository.findByRole(TENANT, UserRole.CLIENT))
+            .thenReturn(Collections.singletonList(user));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
+
+        List<Map<String, Object>> result = clientStatsService.getAllClientsWithStatsByTenant(TENANT);
+
+        assertEquals(1, result.size());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> clientMap = (Map<String, Object>) result.get(0).get("client");
+        assertEquals(34, clientMap.get("age"));
+    }
+
+    @Test
+    @DisplayName("getAllClientsWithStatsByTenant: notes 비어 있고 memo만 있으면 notes 키에 memo 표시")
+    void getAllClientsWithStatsByTenant_notesFallsBackToMemo() {
+        User user = User.builder()
+            .userId("client-71")
+            .email("c@test.example")
+            .password("password12")
+            .name("홍길동")
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(CLIENT_USER_ID);
+        user.setTenantId(TENANT);
+        user.setNotes(null);
+        user.setMemo("  레거시메모  ");
+
+        when(userRepository.findByRole(TENANT, UserRole.CLIENT))
+            .thenReturn(Collections.singletonList(user));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
+
+        List<Map<String, Object>> result = clientStatsService.getAllClientsWithStatsByTenant(TENANT);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> clientMap = (Map<String, Object>) result.get(0).get("client");
+        assertEquals("레거시메모", clientMap.get("notes"));
+    }
+
+    @Test
     @DisplayName("getClientWithStats: 역할이 CLIENT가 아니면 EntityNotFoundException")
     void getClientWithStats_nonClientRole_throws() {
         User consultant = User.builder()

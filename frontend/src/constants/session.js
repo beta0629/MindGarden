@@ -18,6 +18,9 @@ export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 
+/** 401/403 후 current-user 재확인 fetch 재시도 간격(백오프). 횟수 = 배열 길이만큼 재시도. */
+export const SESSION_VERIFY_FETCH_RETRY_DELAYS_MS = [300, 700];
+
 // 로그인 후 세션 확인 지연 시간 (밀리초)
 export const LOGIN_SESSION_CHECK_DELAY = 100; // 100ms
 

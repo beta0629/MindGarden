@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -235,7 +236,7 @@ const FinancialManagement = () => {
           
           if (response?.redirectToLogin) {
             console.error('🔒 세션 만료 - 로그인 화면으로 이동');
-            window.location.href = '/login';
+            redirectToLoginPageOnce();
             return;
           }
         }
@@ -249,7 +250,7 @@ const FinancialManagement = () => {
       
       if (err.response?.status === 401 || err.status === 401) {
         console.error('🔒 인증 오류 - 로그인 화면으로 이동');
-        window.location.href = '/login';
+        redirectToLoginPageOnce();
         return;
       }
       

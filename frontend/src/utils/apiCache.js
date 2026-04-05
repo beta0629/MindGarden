@@ -1,3 +1,6 @@
+import { redirectToLoginPageOnce } from './sessionRedirect';
+import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
+
 /**
  * API 호출 캐싱 유틸리티
 /**
@@ -144,9 +147,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
                 
                 if (!isPublicPage) {
                     console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                    window.location.href = `${window.location.origin}/login`;
+                    redirectToLoginPageOnce();
                 }
             }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -161,7 +162,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
         return data;
     } catch (error) {
         // 네트워크 오류 시 로그인 페이지로 리다이렉트
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        if (isTransientNetworkError(error)) {
             const currentPath = window.location.pathname;
             const isPublicPage = currentPath === '/login' || 
                                currentPath.startsWith('/login/') || 
@@ -173,10 +174,8 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
                                currentPath.startsWith('/auth/oauth2/callback');
             
             if (!isPublicPage) {
-                console.log('🔐 API 캐시 네트워크 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = `${window.location.origin}/login`;
+                console.warn('🔐 API 캐시 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
+                notifyTransientNetworkIssue();
             }
         }
         console.error(`❌ API 호출 실패: ${url}`, error);

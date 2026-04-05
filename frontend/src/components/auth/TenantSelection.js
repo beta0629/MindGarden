@@ -23,6 +23,7 @@ import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { sessionManager } from '../../utils/sessionManager';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
@@ -135,7 +136,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
       await onCancel();
     } else {
       await sessionManager.logout();
-      window.location.href = '/login';
+      redirectToLoginPageOnce();
     }
   };
 

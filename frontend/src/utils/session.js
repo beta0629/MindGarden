@@ -6,6 +6,7 @@
 
 import { storage } from './common';
 import { getLegacyDashboardPath } from './dashboardUtils';
+import { redirectToLoginPageOnce } from './sessionRedirect';
 
 // 세션 키 상수
 const SESSION_KEYS = {
@@ -383,8 +384,7 @@ export const logout = () => {
     // 세션 정리
     clearSession();
     
-    // 로그인 페이지로 리다이렉트
-    window.location.href = '/login';
+    redirectToLoginPageOnce();
     
     console.log('로그아웃 완료');
     return true;

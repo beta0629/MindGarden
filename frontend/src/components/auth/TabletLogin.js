@@ -21,6 +21,7 @@ import {
 } from '../../utils/subdomainUtils';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import {
   LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
@@ -668,7 +669,7 @@ const TabletLogin = () => {
       
       // 현재 페이지가 이미 로그인 페이지인지 확인
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        redirectToLoginPageOnce();
       }
     }
   };

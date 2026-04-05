@@ -1,5 +1,6 @@
-import React, { useEffect, useId } from 'react';
+import React, { useContext, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
+import { SessionContext } from '../../../contexts/SessionContext';
 import UnifiedLoading from '../UnifiedLoading';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
@@ -52,6 +53,20 @@ const UnifiedModal = ({
   ...props 
 }) => {
   const titleId = useId();
+  const sessionContext = useContext(SessionContext);
+  const setSessionModalOpen = sessionContext?.setModalOpen;
+
+  useEffect(() => {
+    if (!setSessionModalOpen) {
+      return undefined;
+    }
+    setSessionModalOpen(isOpen);
+    return () => {
+      if (isOpen) {
+        setSessionModalOpen(false);
+      }
+    };
+  }, [isOpen, setSessionModalOpen]);
 
   useEffect(() => {
     const handleEscape = (e) => {

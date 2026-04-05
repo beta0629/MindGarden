@@ -23,6 +23,7 @@ import {
   getOAuth2Config as getOAuth2ConfigFromConstants
 } from '../constants/oauth2';
 import { setLoginSession, redirectToDashboard, logSessionInfo } from './session';
+import { redirectToLoginPageOnce } from './sessionRedirect';
 import notificationManager from './notification';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 
@@ -414,7 +415,7 @@ export const socialLogout = async () => {
     sessionStorage.remove('pkce_code_verifier');
     
     console.log('소셜 로그아웃 완료');
-    window.location.href = '/login';
+    redirectToLoginPageOnce();
   } catch (error) {
     console.error('소셜 로그아웃 오류:', error);
   }

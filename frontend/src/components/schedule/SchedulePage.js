@@ -12,6 +12,7 @@ import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
 import { useSession } from '../../contexts/SessionContext';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -83,7 +84,7 @@ const SchedulePage = ({ user: propUser }) => {
             <p>스케줄 관리 기능을 사용하려면 로그인해주세요.</p>
             <button 
               className="btn schedule-page-btn-primary"
-              onClick={() => window.location.href = '/login'}
+              onClick={() => redirectToLoginPageOnce()}
             >
               로그인하기
             </button>

@@ -10,6 +10,8 @@ import {
   getTenantSubdomainFromHost,
   isLocalhost
 } from './subdomainUtils';
+import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
+import { redirectToLoginPageOnce } from './sessionRedirect';
 
 class SessionManager {
   constructor() {
@@ -134,8 +136,13 @@ class SessionManager {
           headers
         });
       } catch (fetchError) {
-        // 네트워크 오류나 401 오류는 정상적인 상황이므로 조용히 처리
-        console.log('🔍 세션 확인 실패 (정상):', fetchError.message);
+        console.log('🔍 세션 확인 fetch 실패:', fetchError.message);
+        if (isTransientNetworkError(fetchError)) {
+          this.lastCheckTime = now;
+          notifyTransientNetworkIssue();
+          this.notifyListeners();
+          return this.user !== null;
+        }
         this.user = null;
         this.sessionInfo = null;
         this.lastCheckTime = now;
@@ -182,9 +189,7 @@ class SessionManager {
 
         if (!isPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = `${window.location.origin}/login`;
+          redirectToLoginPageOnce();
         } else {
           console.log('🔍 공개 페이지에 있음 - 리다이렉트 스킵');
         }
@@ -259,43 +264,27 @@ class SessionManager {
       return this.user !== null;
 
     } catch (error) {
-      // 네트워크 오류나 기타 예외 처리
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        console.log('ℹ️ 네트워크 연결 실패 - 서버가 실행되지 않았을 수 있습니다');
-
-        // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
-        this.user = null;
-        this.sessionInfo = null;
-
-        // 환경변수로 리다이렉트 제어
+      if (isTransientNetworkError(error)) {
+        console.log('ℹ️ 세션 확인 중 일시적 네트워크 오류 - 로그인 상태 유지');
         const ENABLE_AUTH_REDIRECT = process.env.REACT_APP_ENABLE_AUTH_REDIRECT !== 'false';
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        if (isLocalEnv && !ENABLE_AUTH_REDIRECT) {
-          console.log('🔍 로컬 환경 - 네트워크 오류 리다이렉트 스킵 (환경변수 설정)');
-          return false;
+        if (!(isLocalEnv && !ENABLE_AUTH_REDIRECT)) {
+          const currentPath = window.location.pathname;
+          const isPublicPage = currentPath === '/login' ||
+            currentPath.startsWith('/login/') ||
+            currentPath === '/landing' ||
+            currentPath === '/' ||
+            currentPath.startsWith('/register') ||
+            currentPath.startsWith('/forgot-password') ||
+            currentPath.startsWith('/reset-password') ||
+            currentPath.startsWith('/auth/oauth2/callback');
+          if (!isPublicPage) {
+            notifyTransientNetworkIssue();
+          }
         }
-
-        // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
-        const currentPath = window.location.pathname;
-        const isPublicPage = currentPath === '/login' ||
-          currentPath.startsWith('/login/') ||
-          currentPath === '/landing' ||
-          currentPath === '/' ||
-          currentPath.startsWith('/register') ||
-          currentPath.startsWith('/forgot-password') ||
-          currentPath.startsWith('/reset-password') ||
-          currentPath.startsWith('/auth/oauth2/callback');
-
-        if (!isPublicPage) {
-          console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음, 서브도메인 유지)');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = `${window.location.origin}/login`;
-        } else {
-          console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
-        }
-        return false;
+        this.lastCheckTime = now;
+        this.notifyListeners();
+        return this.user !== null;
       } else if (error.message && error.message.includes('401')) {
         // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
         // 조용히 처리

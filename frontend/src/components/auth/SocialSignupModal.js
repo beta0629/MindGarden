@@ -8,6 +8,7 @@ import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/auth/social-signup-modal.css';
 
 const SocialSignupModal = ({ 
@@ -256,7 +257,7 @@ const SocialSignupModal = ({
           notificationManager.show('계정이 활성화되었습니다. 다시 로그인해주세요.', 'success');
           onClose();
           // 로그인 페이지로 리다이렉트
-          window.location.href = '/login';
+          redirectToLoginPageOnce();
         } else {
           // 일반 회원가입 성공
           onSignupSuccess(response);

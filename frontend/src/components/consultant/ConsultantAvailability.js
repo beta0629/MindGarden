@@ -11,6 +11,7 @@ import Button from '../ui/Button/Button';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
@@ -266,7 +267,7 @@ const ConsultantAvailability = () => {
                 <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
                 <MGButton
                   variant="primary"
-                  onClick={() => { window.location.href = '/login'; }}
+                  onClick={() => { redirectToLoginPageOnce(); }}
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-box-arrow-in-right"></i>

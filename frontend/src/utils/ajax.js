@@ -7,8 +7,11 @@ import {
   API_STATUS,
   API_ERROR_MESSAGES
 } from '../constants/api';
+import { SESSION_VERIFY_FETCH_RETRY_DELAYS_MS } from '../constants/session';
 import csrfTokenManager from './csrfTokenManager';
 import { getDefaultApiHeaders } from './apiHeaders';
+import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
+import { redirectToLoginPageOnce } from './sessionRedirect';
 
 /**
  * 공통 AJAX 유틸리티
@@ -27,24 +30,6 @@ import { getDefaultApiHeaders } from './apiHeaders';
 // 기본 헤더 설정 (공통 유틸리티 사용)
 const getDefaultHeaders = () => {
   return getDefaultApiHeaders();
-};
-
-/** 401/403 등으로 로그인 리다이렉트가 이미 예약되었는지 여부. 동시 다발 401 시 한 번만 리다이렉트. */
-let redirectScheduled = false;
-
-/**
- * 로그인 페이지로 한 번만 리다이렉트. 이미 예약된 경우 스킵.
- * @returns {boolean} 리다이렉트를 수행했으면 true, 스킵했으면 false
- */
-const redirectToLoginOnce = () => {
-  if (redirectScheduled) {
-    return false;
-  }
-  redirectScheduled = true;
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  window.location.href = `${window.location.origin}/login`;
-  return true;
 };
 
 // 에러 메시지 생성
@@ -82,28 +67,41 @@ const checkSessionAndRedirect = async (response) => {
       return false;
     }
     
-    try {
-      // 세션 체크 API 호출
-      const sessionResponse = await fetch(`${getApiBaseUrl()}/api/v1/auth/current-user`, {
-        credentials: 'include',
-        method: 'GET'
-      });
-      
-      // 세션이 없으면 로그인 페이지로 리다이렉트 (서브도메인 유지, 한 번만)
-      if (!sessionResponse.ok) {
-        console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-        redirectToLoginOnce();
-        return true;
+    const verifyUrl = `${getApiBaseUrl()}/api/v1/auth/current-user`;
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    let lastVerifyError;
+
+    for (let attempt = 0; attempt <= SESSION_VERIFY_FETCH_RETRY_DELAYS_MS.length; attempt += 1) {
+      if (attempt > 0) {
+        await sleep(SESSION_VERIFY_FETCH_RETRY_DELAYS_MS[attempt - 1]);
       }
-      
-      // 세션이 있으면 리다이렉트하지 않음 (권한 문제일 수 있음)
-      console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
-      return false;
-    } catch (sessionError) {
-      console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-      redirectToLoginOnce();
-      return true;
+      try {
+        const sessionResponse = await fetch(verifyUrl, {
+          credentials: 'include',
+          method: 'GET'
+        });
+        if (!sessionResponse.ok) {
+          console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          redirectToLoginPageOnce();
+          return true;
+        }
+        console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+        return false;
+      } catch (sessionError) {
+        lastVerifyError = sessionError;
+        if (!isTransientNetworkError(sessionError)) {
+          console.warn('🔐 세션 재확인 중 비네트워크 오류:', sessionError);
+          notifyTransientNetworkIssue();
+          return false;
+        }
+        if (attempt >= SESSION_VERIFY_FETCH_RETRY_DELAYS_MS.length) {
+          break;
+        }
+      }
     }
+    console.warn('🔐 세션 재확인 fetch 네트워크 실패(재시도 소진):', lastVerifyError);
+    notifyTransientNetworkIssue();
+    return false;
   }
   
   // 500 오류는 서버 오류이므로 세션 체크하지 않음
@@ -119,7 +117,7 @@ const checkSessionAndRedirect = async (response) => {
 const handleError = (error, status) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
-    redirectToLoginOnce();
+    redirectToLoginPageOnce();
   }
   throw new Error(getErrorMessage(status));
 };
@@ -205,7 +203,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-              redirectToLoginOnce();
+              redirectToLoginPageOnce();
               throw err; // 위젯이 실패로 인식해 "목록을 불러오지 못했습니다" 표시 (return null 시 빈 목록으로 오인됨)
             }
           }
@@ -292,7 +290,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          redirectToLoginOnce();
+          redirectToLoginPageOnce();
           throw error; // 위젯이 실패로 인식하도록 throw (return null 시 빈 목록으로 오인됨)
         }
       }
@@ -322,7 +320,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
       if (!isPublicPage) {
         console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-        redirectToLoginOnce();
+        redirectToLoginPageOnce();
         return null;
       }
     }
@@ -330,33 +328,27 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     // 403이 아닌 오류만 콘솔에 표시
     console.error('GET 요청 오류:', error);
     
-    // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+    if (isTransientNetworkError(error)) {
       const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocalEnv) {
         throw error;
       }
-      // 현재 페이지가 로그인 페이지인지 확인
       const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-      const isPublicPage = currentPath === '/login' || 
-                         currentPath.startsWith('/login/') || 
-                         currentPath === '/landing' || 
+      const isPublicPage = currentPath === '/login' ||
+                         currentPath.startsWith('/login/') ||
+                         currentPath === '/landing' ||
                          currentPath === '/' ||
                          currentPath.startsWith('/register') ||
                          currentPath.startsWith('/forgot-password') ||
                          currentPath.startsWith('/reset-password') ||
                          currentPath.startsWith('/auth/oauth2/callback');
-      
-      // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
-      if (isLoginPage || isPublicPage) {
-        console.log('🔐 네트워크 오류 - 이미 공개 페이지에 있음 - 리다이렉트 스킵');
+
+      if (isPublicPage) {
+        console.log('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
         return null;
       }
-      
-      // 네트워크 오류 시 재시도 없이 바로 로그인 페이지로 리다이렉트 (서브도메인 유지)
-      console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음, 서브도메인 유지)');
-      redirectToLoginOnce();
+      console.warn('🔐 GET 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
+      notifyTransientNetworkIssue();
       return null;
     }
     

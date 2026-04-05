@@ -22,6 +22,7 @@ import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton';
 import notificationManager from '../../utils/notification';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { 
   TrendingUp, 
@@ -347,7 +348,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       // 401 오류인 경우 로그인 화면으로 이동
       if (err.response?.status === 401 || err.status === 401) {
         console.error('🔒 인증 오류 - 로그인 화면으로 이동');
-        window.location.href = '/login';
+        redirectToLoginPageOnce();
         return;
       }
       

@@ -391,6 +391,7 @@ export const API_STATUS = {
 
 // API 에러 메시지
 export const API_ERROR_MESSAGES = {
+  SESSION_VERIFY_NETWORK_TRANSIENT: '연결이 잠시 불안정합니다. 로그인 상태는 유지됩니다. 잠시 후 다시 시도해주세요.',
   NETWORK_ERROR: '네트워크 연결을 확인해주세요.',
   UNAUTHORIZED: '로그인이 필요합니다.',
   FORBIDDEN: '접근 권한이 없습니다.',

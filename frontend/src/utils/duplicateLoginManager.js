@@ -14,6 +14,7 @@
 
 import ajax from './ajax';
 import notificationManager from './notification';
+import { redirectToLoginPageOnce } from './sessionRedirect';
 
 class DuplicateLoginManager {
     constructor() {
@@ -140,8 +141,7 @@ class DuplicateLoginManager {
         localStorage.removeItem('sessionId');
         sessionStorage.clear();
         
-        // 로그인 페이지로 리다이렉트
-        window.location.href = '/login?reason=duplicate-login';
+        redirectToLoginPageOnce({ search: '?reason=duplicate-login' });
     }
 
 /**

@@ -116,8 +116,8 @@ const sessionReducer = (state, action) => {
   }
 };
 
-// 컨텍스트 생성
-const SessionContext = createContext();
+// 컨텍스트 생성 (UnifiedModal 등 Provider 외부에서 선택 연동 시 useContext용)
+export const SessionContext = createContext(null);
 
 // 세션 프로바이더 컴포넌트
 export const SessionProvider = ({ children }) => {

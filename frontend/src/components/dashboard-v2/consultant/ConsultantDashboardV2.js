@@ -598,21 +598,15 @@ const ConsultantDashboardV2 = ({ user }) => {
   });
 
   const dashboardShell = (mainBody) => (
-    <div className="mg-v2-ad-b0kla">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="상담사 대시보드">
-          <ContentHeader
-            title="상담 대시보드"
-            subtitle={`${user?.name || '상담사'} 선생님, 환영합니다. 오늘(${todayDateStr}) 일정·알림·내담 현황을 한곳에서 확인하세요.`}
-            titleId={CONSULTANT_DASHBOARD_TITLE_ID}
-            actions={<QuickActionBar onNavigate={navigate} />}
-          />
-          <main aria-labelledby={CONSULTANT_DASHBOARD_TITLE_ID}>
-            {mainBody}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ContentArea ariaLabel="상담사 대시보드">
+      <ContentHeader
+        title="상담 대시보드"
+        subtitle={`${user?.name || '상담사'} 선생님, 환영합니다. 오늘(${todayDateStr}) 일정·알림·내담 현황을 한곳에서 확인하세요.`}
+        titleId={CONSULTANT_DASHBOARD_TITLE_ID}
+        actions={<QuickActionBar onNavigate={navigate} />}
+      />
+      {mainBody}
+    </ContentArea>
   );
 
   if (loading && user?.id) {
@@ -628,7 +622,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   return (
     <AdminCommonLayout title="상담사 대시보드">
       {dashboardShell(
-        <div className="consultant-dashboard-v2">
+        <>
         {/* 테넌트 미설정 안내 배너 */}
         {dashboardError && (
           <div className="consultant-dashboard-tenant-alert" role="alert">
@@ -794,7 +788,7 @@ const ConsultantDashboardV2 = ({ user }) => {
           onViewAllClients={handleViewAllClients}
           onViewClientDetails={handleViewClientDetails}
         />
-        </div>
+        </>
       )}
 
       {/* 상담일지 작성 모달 */}

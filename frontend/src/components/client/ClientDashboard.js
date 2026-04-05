@@ -284,33 +284,30 @@ const ClientDashboard = () => {
   };
 
   return (
-    <AdminCommonLayout title="대시보드">
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="내담자 대시보드">
-            <ContentHeader
-              title="내 대시보드"
-              subtitle={
-                <>
-                  <Sparkles size={16} className="mg-v2-mr-xs" aria-hidden />
-                  {getGreeting()},{' '}
-                  <span className="mg-v2-color-primary">
-                    <SafeText>{currentUser?.name}</SafeText>
-                  </span>
-                  {' '}
-                  님 · 오늘도 마음 건강을 위한 한 걸음을 함께해요
-                </>
-              }
-              titleId={CLIENT_DASHBOARD_TITLE_ID}
-              actions={(
-                <div className="mg-v2-flex mg-align-center mg-gap-sm">
-                  <Sun size={24} aria-hidden />
-                  <Clock size={18} aria-hidden />
-                  <span className="mg-v2-text-sm">{currentTime}</span>
-                </div>
-              )}
-            />
-            <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title="대시보드" className="mg-v2-dashboard-layout">
+      <ContentArea ariaLabel="내담자 대시보드">
+        <ContentHeader
+          title="내 대시보드"
+          subtitle={
+            <>
+              <Sparkles size={16} className="mg-v2-mr-xs" aria-hidden />
+              {getGreeting()},{' '}
+              <span className="mg-v2-color-primary">
+                <SafeText>{currentUser?.name}</SafeText>
+              </span>
+              {' '}
+              님 · 오늘도 마음 건강을 위한 한 걸음을 함께해요
+            </>
+          }
+          titleId={CLIENT_DASHBOARD_TITLE_ID}
+          actions={(
+            <div className="mg-v2-flex mg-align-center mg-gap-sm">
+              <Sun size={24} aria-hidden />
+              <Clock size={18} aria-hidden />
+              <span className="mg-v2-text-sm">{currentTime}</span>
+            </div>
+          )}
+        />
 
         {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
         <ContentKpiRow items={[
@@ -446,10 +443,7 @@ const ClientDashboard = () => {
 
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />
-            </main>
-          </ContentArea>
-        </div>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

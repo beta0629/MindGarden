@@ -56,8 +56,8 @@
 /* 입금 아이템 */
 .deposit-item {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  gap: var(--cs-spacing-md);
   padding: var(--cs-spacing-lg);
   background: var(--cs-glass-white-90);
   border: 1px solid var(--cs-border-light);
@@ -91,6 +91,7 @@
 /* 입금 정보 */
 .deposit-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--cs-spacing-sm);
@@ -167,7 +168,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--cs-spacing-sm);
-  margin-left: var(--cs-spacing-md);
+  flex-shrink: 0;
 }
 
 .deposit-btn {

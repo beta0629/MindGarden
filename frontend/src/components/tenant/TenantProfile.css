@@ -226,3 +226,17 @@
 .tenant-profile-error svg {
   margin-bottom: var(--mg-spacing-md, 1rem);
 }
+
+@media (max-width: 768px) {
+  .subscription-summary-item,
+  .payment-method-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mg-spacing-md, 1rem);
+  }
+
+  .payment-method-card-content,
+  .payment-method-actions {
+    width: 100%;
+  }
+}

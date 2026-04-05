@@ -128,11 +128,11 @@ const SchedulePage = ({ user: propUser }) => {
         </div>
       )}
 
-      <div className="mg-v2-schedule-grid" style={{ display: 'flex', gap: '24px', alignItems: 'stretch' }}>
+      <div className="mg-v2-schedule-grid">
         {/* 좌측 캘린더 영역 (메인) */}
-        <div className="mg-v2-schedule-grid__main" style={{ flex: '1', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <div className="mg-v2-schedule-grid__main">
           <ContentSection noCard={true} className="mg-v2-schedule-content-section">
-            <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+            <div className="mg-v2-schedule-grid__main-inner">
               <UnifiedScheduleComponent 
                 user={displayUser}
                 userRole={userRole}
@@ -144,7 +144,7 @@ const SchedulePage = ({ user: propUser }) => {
 
         {/* 우측 통계/현황 영역 (사이드바) */}
         {isAdmin() && (
-          <div className="mg-v2-schedule-grid__sidebar" style={{ width: '320px', flexShrink: 0 }}>
+          <div className="mg-v2-schedule-grid__sidebar">
             <ContentSection title="상담사 현황" noCard={true}>
               <ConsultantStatus />
             </ContentSection>

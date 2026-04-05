@@ -361,7 +361,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   if (loading) {
     return (
       <AdminCommonLayout title="수입·지출 관리" loading={true} loadingText="데이터를 불러오는 중...">
-        <div />
+        {null}
       </AdminCommonLayout>
     );
   }
@@ -369,31 +369,25 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   if (error) {
     return (
       <AdminCommonLayout title="수입·지출 관리">
-        <div className="mg-dashboard-layout mg-v2-ad-b0kla">
-          <div className="mg-v2-ad-b0kla__container">
-            <ContentArea ariaLabel="수입·지출 관리 본문">
-              <ContentHeader
-                title="수입·지출 관리"
-                subtitle="거래·손익·정산을 한곳에서"
-                titleId={INTEGRATED_FINANCE_TITLE_ID}
-              />
-              <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
-                <div className="error-container">
-                  <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
-                </div>
-              </main>
-            </ContentArea>
-          </div>
-        </div>
+        <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla" ariaLabel="수입·지출 관리 본문">
+          <ContentHeader
+            title="수입·지출 관리"
+            subtitle="거래·손익·정산을 한곳에서"
+            titleId={INTEGRATED_FINANCE_TITLE_ID}
+          />
+          <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
+            <div className="error-container">
+              <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
+            </div>
+          </main>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="수입·지출 관리">
-      <div className="mg-dashboard-layout mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="수입·지출 관리 본문">
+      <ContentArea className="mg-v2-content-area mg-v2-ad-b0kla" ariaLabel="수입·지출 관리 본문">
             <ContentHeader
               title="수입·지출 관리"
               subtitle="거래·손익·정산을 한곳에서"
@@ -477,8 +471,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
             </div>
             </main>
-          </ContentArea>
-        </div>
+      </ContentArea>
 
       {/* 모달 컴포넌트들 */}
       {showTransactionForm && (
@@ -500,7 +493,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           }}
         />
       )}
-      </div>
     </AdminCommonLayout>
   );
 };

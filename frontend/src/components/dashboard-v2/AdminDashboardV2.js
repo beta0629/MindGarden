@@ -9,7 +9,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getLnbMenus } from '../../utils/menuApi';
-import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
+import {
+  deriveGnbQuickNavigateActionsFromLnb,
+  getLnbTreeFromResponse,
+  normalizeLnbTree
+} from '../../utils/lnbMenuUtils';
 import { useNavigate } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
@@ -889,14 +893,21 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, [logout]);
 
+  const dashboardMenuItems = lnbMenuItems ?? DEFAULT_MENU_ITEMS;
+  const navigateQuickActionsFromLnb = useMemo(
+    () => deriveGnbQuickNavigateActionsFromLnb(dashboardMenuItems),
+    [dashboardMenuItems]
+  );
+
   const layoutProps = {
-    menuItems: lnbMenuItems ?? DEFAULT_MENU_ITEMS,
+    menuItems: dashboardMenuItems,
     headerTitle: '시스템 관리',
     logoLabel,
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),
-    onLogout: handleLogout
+    onLogout: handleLogout,
+    navigateQuickActionsFromLnb
   };
 
   const kpiItems = [

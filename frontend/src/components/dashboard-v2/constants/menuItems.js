@@ -69,6 +69,44 @@ const DEFAULT_MENU_ITEMS = [
   }
 ];
 
+const ADMIN_LNB_QUICK_NAV_ID_BY_TO = new Map([
+  [ADMIN_ROUTES.DASHBOARD, 'dashboard'],
+  [ADMIN_ROUTES.INTEGRATED_SCHEDULE, 'integrated-schedule'],
+  [ADMIN_ROUTES.CONSULTATION_LOGS, 'consultation-logs'],
+  [ADMIN_ROUTES.NOTIFICATIONS, 'notifications'],
+  [ADMIN_ROUTES.USER_MANAGEMENT, 'user-management'],
+  ['/erp/dashboard', 'erp-dashboard']
+]);
+
+/**
+ * GNB 퀵 액션용: {@link DEFAULT_MENU_ITEMS} 1차 메뉴와 동일한 순서·라벨·경로.
+ * 설정 그룹은 LNB와 동일하게 시스템 설정( {@link ADMIN_ROUTES.SYSTEM_CONFIG} ) 1건으로 대체.
+ *
+ * @returns {Array<{ id: string, to: string, icon: import('lucide-react').LucideIcon, label: string }>}
+ * @author CoreSolution
+ * @since 2026-04-05
+ */
+export function buildAdminLnbFallbackQuickNavigateSpecs() {
+  return DEFAULT_MENU_ITEMS.map((item) => {
+    if (item.label === '설정' && item.to === '/tenant/profile') {
+      return {
+        id: 'system-config',
+        to: ADMIN_ROUTES.SYSTEM_CONFIG,
+        icon: Settings,
+        label: '시스템 설정'
+      };
+    }
+    const fallbackId = `nav-${item.to.split('/').filter(Boolean).join('-')}`;
+    const id = ADMIN_LNB_QUICK_NAV_ID_BY_TO.get(item.to) ?? fallbackId;
+    return {
+      id,
+      to: item.to,
+      icon: item.icon,
+      label: item.label
+    };
+  });
+}
+
 const CLIENT_MENU_ITEMS = [
   { to: '/client/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
   { to: '/client/schedule', icon: Calendar, label: '스케줄', end: true },

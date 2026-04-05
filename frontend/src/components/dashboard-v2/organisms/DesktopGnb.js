@@ -20,7 +20,8 @@ const DesktopGnb = ({
   searchValue = '',
   onSearchChange,
   onLogout,
-  onModalAction
+  onModalAction,
+  navigateQuickActionsFromLnb
 }) => {
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
@@ -37,6 +38,7 @@ const DesktopGnb = ({
           onSearchChange={onSearchChange}
           onLogout={onLogout}
           onModalAction={onModalAction}
+          navigateQuickActionsFromLnb={navigateQuickActionsFromLnb}
         />
       </div>
     </header>
@@ -49,7 +51,8 @@ DesktopGnb.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   onLogout: PropTypes.func,
-  onModalAction: PropTypes.func
+  onModalAction: PropTypes.func,
+  navigateQuickActionsFromLnb: PropTypes.array
 };
 
 export default DesktopGnb;

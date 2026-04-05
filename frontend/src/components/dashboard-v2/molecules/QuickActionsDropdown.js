@@ -19,7 +19,7 @@ import SafeText from '../../common/SafeText';
 import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
-const QuickActionsDropdown = ({ onModalAction }) => {
+const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [actions, setActions] = useState([]);
   const dropdownRef = useRef(null);
@@ -30,10 +30,20 @@ const QuickActionsDropdown = ({ onModalAction }) => {
 
   useEffect(() => {
     const user = sessionManager.getUser();
-    const role = user?.role;
-    const roleActions = getQuickActionsForRole(role);
-    setActions(roleActions);
-  }, []);
+    const roleRaw = user?.role;
+    const normalizedRole = roleRaw ? String(roleRaw).toUpperCase() : '';
+    const isAdminOrStaff = normalizedRole === 'ADMIN' || normalizedRole === 'STAFF';
+    const fromLnb = navigateQuickActionsFromLnb;
+    if (
+      isAdminOrStaff &&
+      Array.isArray(fromLnb) &&
+      fromLnb.length > 0
+    ) {
+      setActions(fromLnb);
+      return;
+    }
+    setActions(getQuickActionsForRole(roleRaw));
+  }, [navigateQuickActionsFromLnb]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -135,7 +145,8 @@ const QuickActionsDropdown = ({ onModalAction }) => {
 };
 
 QuickActionsDropdown.propTypes = {
-  onModalAction: PropTypes.func
+  onModalAction: PropTypes.func,
+  navigateQuickActionsFromLnb: PropTypes.arrayOf(PropTypes.object)
 };
 
 export default QuickActionsDropdown;

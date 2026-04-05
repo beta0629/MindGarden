@@ -13,18 +13,22 @@ import QuickActionsDropdown from './QuickActionsDropdown';
 import ProfileDropdown from './ProfileDropdown';
 import './GnbRight.css';
 
-const GnbRight = ({ 
-  searchValue = '', 
-  onSearchChange, 
+const GnbRight = ({
+  searchValue = '',
+  onSearchChange,
   onLogout,
-  onModalAction
+  onModalAction,
+  navigateQuickActionsFromLnb
 }) => {
   return (
     <div className="mg-v2-gnb-right">
       <SearchInput value={searchValue} onChange={onSearchChange} />
       <div className="mg-v2-gnb-right__icons">
         <NotificationDropdown />
-        <QuickActionsDropdown onModalAction={onModalAction} />
+        <QuickActionsDropdown
+          onModalAction={onModalAction}
+          navigateQuickActionsFromLnb={navigateQuickActionsFromLnb}
+        />
         <ProfileDropdown onLogout={onLogout} />
       </div>
     </div>
@@ -35,7 +39,8 @@ GnbRight.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   onLogout: PropTypes.func,
-  onModalAction: PropTypes.func
+  onModalAction: PropTypes.func,
+  navigateQuickActionsFromLnb: PropTypes.array
 };
 
 export default GnbRight;

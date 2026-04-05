@@ -1,62 +1,36 @@
 /**
  * GNB 빠른 액션 상수 - 역할별 빠른 액션 목록
- * 
+ *
+ * ADMIN/STAFF 내비게이션 퀵은 {@link buildAdminLnbFallbackQuickNavigateSpecs}와 동일 소스(LNB 폴백).
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
 
 import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  FileText,
-  Database,
   FileEdit,
   Calendar,
+  Users,
+  FileText,
   MessageSquare,
   Clock,
   CalendarPlus,
   Star
 } from 'lucide-react';
+import { buildAdminLnbFallbackQuickNavigateSpecs } from '../components/dashboard-v2/constants/menuItems';
+
+const adminStaffNavigateQuickActions = buildAdminLnbFallbackQuickNavigateSpecs().map(
+  ({ id, icon, label, to }) => ({
+    id,
+    icon,
+    label,
+    action: to,
+    type: 'navigate'
+  })
+);
 
 export const QUICK_ACTIONS = {
-  ADMIN: [
-    {
-      id: 'dashboard',
-      icon: LayoutDashboard,
-      label: '대시보드 보기',
-      action: '/admin/dashboard',
-      type: 'navigate'
-    },
-    {
-      id: 'users',
-      icon: Users,
-      label: '사용자 관리',
-      action: '/admin/users',
-      type: 'navigate'
-    },
-    {
-      id: 'settings',
-      icon: Settings,
-      label: '시스템 설정',
-      action: '/admin/settings',
-      type: 'navigate'
-    },
-    {
-      id: 'reports',
-      icon: FileText,
-      label: '통계 리포트',
-      action: '/admin/reports',
-      type: 'navigate'
-    },
-    {
-      id: 'backup',
-      icon: Database,
-      label: '백업 관리',
-      action: '/admin/backup',
-      type: 'navigate'
-    }
-  ],
+  ADMIN: adminStaffNavigateQuickActions,
   CONSULTANT: [
     {
       id: 'record',
@@ -68,14 +42,14 @@ export const QUICK_ACTIONS = {
     {
       id: 'schedule',
       icon: Calendar,
-      label: '일정 확인',
+      label: '일정 관리',
       action: '/consultant/schedule',
       type: 'navigate'
     },
     {
       id: 'clients',
       icon: Users,
-      label: '내담자 관리',
+      label: '내담자 조회',
       action: '/consultant/clients',
       type: 'navigate'
     },
@@ -105,15 +79,15 @@ export const QUICK_ACTIONS = {
     {
       id: 'schedule',
       icon: Calendar,
-      label: '내 일정',
+      label: '스케줄',
       action: '/client/schedule',
       type: 'navigate'
     },
     {
-      id: 'records',
+      id: 'session-management',
       icon: FileText,
-      label: '상담 기록',
-      action: '/client/records',
+      label: '회기 관리',
+      action: '/client/session-management',
       type: 'navigate'
     },
     {
@@ -124,43 +98,14 @@ export const QUICK_ACTIONS = {
       type: 'modal'
     }
   ],
-  STAFF: [
-    {
-      id: 'schedule',
-      icon: Calendar,
-      label: '일정 관리',
-      action: '/staff/schedule',
-      type: 'navigate'
-    },
-    {
-      id: 'clients',
-      icon: Users,
-      label: '내담자 관리',
-      action: '/staff/clients',
-      type: 'navigate'
-    },
-    {
-      id: 'records',
-      icon: FileText,
-      label: '기록 조회',
-      action: '/staff/records',
-      type: 'navigate'
-    },
-    {
-      id: 'notification',
-      icon: MessageSquare,
-      label: '알림 발송',
-      action: 'openNotificationModal',
-      type: 'modal'
-    }
-  ]
+  STAFF: adminStaffNavigateQuickActions
 };
 
 export const getQuickActionsForRole = (role) => {
   if (!role) {
     return [];
   }
-  
+
   const normalizedRole = role.toUpperCase();
   return QUICK_ACTIONS[normalizedRole] || [];
 };

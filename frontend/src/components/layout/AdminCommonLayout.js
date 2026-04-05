@@ -18,7 +18,11 @@ import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOIN
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
-import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
+import {
+  deriveGnbQuickNavigateActionsFromLnb,
+  getLnbTreeFromResponse,
+  normalizeLnbTree
+} from '../../utils/lnbMenuUtils';
 
 const AdminCommonLayout = ({
   children,
@@ -69,6 +73,11 @@ const AdminCommonLayout = ({
 
   const menuItems = lnbMenuItems !== null ? lnbMenuItems : getDefaultMenu();
 
+  const navigateQuickActionsFromLnb = useMemo(
+    () => deriveGnbQuickNavigateActionsFromLnb(menuItems),
+    [menuItems]
+  );
+
   const handleLogout = useCallback(async () => {
     try {
       if (onLogout) {
@@ -96,7 +105,8 @@ const AdminCommonLayout = ({
     searchValue,
     onSearchChange,
     onBellClick: handleBellClick,
-    onLogout: handleLogout
+    onLogout: handleLogout,
+    navigateQuickActionsFromLnb
   };
 
   const content = loading ? (

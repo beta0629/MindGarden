@@ -19,6 +19,41 @@ import './ConsultantMessages.css';
  */
 const CONSULTANT_MESSAGES_TITLE_ID = 'consultant-messages-title';
 
+/** 메시지 카드 하단 상대/출처 표기용 문구 (사용자 노출) */
+const MESSAGE_COUNTERPARTY_COPY = {
+  SOURCE_REMINDER_OR_SYSTEM: '출처: 리마인더·알림',
+  SENDER_PREFIX: '보낸 사람:',
+  RECIPIENT_PREFIX: '받는 사람:',
+  RELATED_PREFIX: '관련:',
+  NO_SPECIFIC_COUNTERPARTY: '특정 상대 없음 (알림·일괄)',
+};
+
+/**
+ * 백엔드 messageType·senderType·clientName에 따라 카드 푸터 한 줄 문자열을 반환한다.
+ *
+ * @param {object} message - API 메시지 객체
+ * @returns {string}
+ */
+function getMessageCounterpartyLine(message) {
+  const messageType = (message?.messageType && String(message.messageType).trim().toUpperCase()) || '';
+  const senderType = (message?.senderType && String(message.senderType).trim().toUpperCase()) || '';
+  const clientName = (message?.clientName && String(message.clientName).trim()) || '';
+
+  if (messageType === 'REMINDER' || senderType === 'SYSTEM') {
+    return MESSAGE_COUNTERPARTY_COPY.SOURCE_REMINDER_OR_SYSTEM;
+  }
+  if (senderType === 'CLIENT' && clientName) {
+    return `${MESSAGE_COUNTERPARTY_COPY.SENDER_PREFIX} ${clientName}`;
+  }
+  if (senderType === 'CONSULTANT' && clientName) {
+    return `${MESSAGE_COUNTERPARTY_COPY.RECIPIENT_PREFIX} ${clientName}`;
+  }
+  if (clientName) {
+    return `${MESSAGE_COUNTERPARTY_COPY.RELATED_PREFIX} ${clientName}`;
+  }
+  return MESSAGE_COUNTERPARTY_COPY.NO_SPECIFIC_COUNTERPARTY;
+}
+
 const ConsultantMessages = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -360,7 +395,7 @@ const ConsultantMessages = () => {
                       
                       <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">
                         <span className="mg-v2-text-sm mg-v2-color-text-secondary">
-                          받는 사람: {message.clientName || '알 수 없음'}
+                          {getMessageCounterpartyLine(message)}
                         </span>
                         <span className={`mg-badge ${message.isRead ? 'mg-badge-success' : 'mg-badge-secondary'} mg-v2-text-xs`}>
                           {message.isRead ? '읽음' : '안읽음'}

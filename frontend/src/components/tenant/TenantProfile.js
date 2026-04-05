@@ -7,10 +7,19 @@
  * @since 2025-11-22
  */
 
-import React, { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-import { CreditCard, DollarSign, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import {
+  CreditCard,
+  DollarSign,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Edit2,
+  LayoutDashboard,
+  Package
+} from 'lucide-react';
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import SubscriptionManagement from '../billing/SubscriptionManagement';
@@ -19,9 +28,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import ContentSection from '../dashboard-v2/content/ContentSection';
+import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -312,49 +319,55 @@ const TenantProfile = () => {
       <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="테넌트 프로필 콘텐츠">
-            <ContentHeader
-              title={toDisplayString(tenantInfo.name, '테넌트')}
-              subtitle="테넌트 상태 및 결제 정보 관리"
-              titleId="tenant-profile-title"
-              actions={renderStatusBadge(tenantInfo.status)}
-            />
+            <div className="tenant-profile-header">
+              <ContentHeader
+                title={toDisplayString(tenantInfo.name, '테넌트')}
+                subtitle="테넌트 상태 및 결제 정보 관리"
+                titleId="tenant-profile-title"
+                actions={renderStatusBadge(tenantInfo.status)}
+              />
+            </div>
 
-            <nav
-              className="mg-v2-tab-buttons mg-v2-tenant-profile__tabs"
+            <div
+              className="mg-v2-ad-b0kla__pill-toggle mg-v2-tenant-profile__pill-toggle"
+              role="tablist"
               aria-label="테넌트 프로필 섹션"
             >
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'overview'}
-                className={`mg-v2-tab-button${activeTab === 'overview' ? ' active' : ''}`}
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('overview')}
               >
-                개요
+                <LayoutDashboard size={18} aria-hidden /> 개요
               </button>
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'subscription'}
-                className={`mg-v2-tab-button${activeTab === 'subscription' ? ' active' : ''}`}
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'subscription' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('subscription')}
               >
-                구독 관리
+                <Package size={18} aria-hidden /> 구독 관리
               </button>
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'payment'}
-                className={`mg-v2-tab-button${activeTab === 'payment' ? ' active' : ''}`}
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('payment')}
               >
-                결제 수단
+                <CreditCard size={18} aria-hidden /> 결제 수단
               </button>
-            </nav>
+            </div>
 
-            <div className="mg-v2-tenant-profile__panel" role="tabpanel">
+            <div
+              className="mg-v2-tenant-profile__panel tenant-profile-content"
+              role="tabpanel"
+            >
               {activeTab === 'overview' && (
-                <div className="mg-v2-tenant-profile__overview">
+                <div className="mg-v2-tenant-profile__overview tenant-profile-overview">
                   <ContentSection
                     title="테넌트 정보"
                     actions={
@@ -436,7 +449,10 @@ const TenantProfile = () => {
               )}
 
               {activeTab === 'subscription' && (
-                <ContentSection title="구독 관리" className="mg-v2-tenant-profile__subscription-wrap">
+                <ContentSection
+                  title="구독 관리"
+                  className="mg-v2-tenant-profile__subscription-wrap tenant-profile-subscription"
+                >
                   <SubscriptionManagement tenantId={tenantId} />
                 </ContentSection>
               )}
@@ -456,7 +472,7 @@ const TenantProfile = () => {
                       결제 수단 추가
                     </MGButton>
                   }
-                  className="mg-v2-tenant-profile__payment-wrap"
+                  className="mg-v2-tenant-profile__payment-wrap tenant-profile-payment"
                 >
                   {showPaymentMethodRegistration && (
                     <div className="payment-method-registration-wrapper">

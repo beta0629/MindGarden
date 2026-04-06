@@ -42,6 +42,8 @@ erd:
   auto-generation:
     enabled: false
     trigger-on-migration: false
+  notification:
+    enabled: false
 
 # 기타 테스트 관련 설정
 server:

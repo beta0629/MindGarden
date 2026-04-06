@@ -210,6 +210,9 @@ erd:
   auto-generation:
     enabled: false  # JPA 순환 참조 문제 방지를 위해 비활성화
     trigger-on-migration: false
+  # ERD/DB 스키마 변경 알림 메일만 제어 (비밀번호 재설정·알림톡 등 다른 메일과 무관)
+  notification:
+    enabled: false
 
 # 로깅 설정
 logging:

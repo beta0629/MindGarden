@@ -29,7 +29,8 @@ public class ErdChangeNotificationServiceImpl implements ErdChangeNotificationSe
     private final EmailService emailService;
     private final TenantRepository tenantRepository;
 
-    @Value("${erd.notification.enabled:true}")
+    /** 기본 false: ERD·스키마 변경 알림만 중단. 재개 시 erd.notification.enabled=true 또는 ERD_NOTIFICATION_ENABLED=true */
+    @Value("${erd.notification.enabled:false}")
     private boolean notificationEnabled;
 
     @Value("${erd.notification.email.from:noreply@mindgarden.com}")

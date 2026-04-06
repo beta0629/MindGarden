@@ -605,9 +605,15 @@ public class MockEmailServiceImpl implements EmailService {
             """;
     }
     
-    private String applyTemplateVariables(String template, Map<String, Object> variables) {
-        if (template == null || variables == null) {
+    private String applyTemplateVariables(String template, Map<String, Object> originalVariables) {
+        if (template == null || originalVariables == null) {
             return template;
+        }
+        
+        Map<String, Object> variables = new java.util.HashMap<>(originalVariables);
+        if (!variables.containsKey("companyName") && !variables.containsKey(com.coresolution.consultation.constant.EmailConstants.VAR_COMPANY_NAME)) {
+            variables.put("companyName", "mindgarden");
+            variables.put(com.coresolution.consultation.constant.EmailConstants.VAR_COMPANY_NAME, "mindgarden");
         }
         
         String result = template;

@@ -47,6 +47,9 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private CommonCodeService commonCodeService;
 
+    @Autowired
+    private com.coresolution.core.repository.TenantRepository tenantRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${email.block-legacy-branch-recipients:true}")
@@ -125,7 +128,7 @@ public class EmailServiceImpl implements EmailService {
     }
     
     @Override
-    public EmailResponse sendTemplateEmail(String templateType, String toEmail, String toName, Map<String, Object> variables) {
+    public EmailResponse sendTemplateEmail(String templateType, String toEmail, String toName, Map<String, Object> originalVariables) {
         log.info("템플릿 이메일 발송 요청: templateType={}, to={}", templateType, toEmail);
         
         try {
@@ -136,15 +139,19 @@ public class EmailServiceImpl implements EmailService {
                 return createErrorResponse(null, EmailConstants.ERROR_EMAIL_TEMPLATE_NOT_FOUND);
             }
             
+            // 템플릿 변수 보강 (테넌트 정보 등)
+            Map<String, Object> variables = enrichTemplateVariables(originalVariables);
+            
             // 템플릿 변수 적용
             String content = applyTemplateVariables(template, variables);
             
-            // 이메일 제목 생성
+            // 이메일 제목 생성 및 변수 치환
             String subject = getEmailSubject(templateType);
+            subject = applyTemplateVariables(subject, variables);
             
             // Trinity 관련 이메일인 경우 발신자 정보 변경
             String fromEmail = EmailConstants.FROM_EMAIL;
-            String fromName = EmailConstants.FROM_NAME;
+            String fromName = variables.containsKey("companyName") ? (String) variables.get("companyName") : EmailConstants.FROM_NAME;
             String replyTo = EmailConstants.REPLY_TO_EMAIL;
             
             if (EmailConstants.TEMPLATE_EMAIL_VERIFICATION.equals(templateType)) {
@@ -336,7 +343,8 @@ public class EmailServiceImpl implements EmailService {
                 return null;
             }
             
-            return applyTemplateVariables(template, variables);
+            Map<String, Object> enrichedVariables = enrichTemplateVariables(variables);
+            return applyTemplateVariables(template, enrichedVariables);
             
         } catch (Exception e) {
             log.error("이메일 템플릿 미리보기 실패: templateType={}, error={}", templateType, e.getMessage(), e);
@@ -591,6 +599,32 @@ public class EmailServiceImpl implements EmailService {
         return templates.get(templateType);
     }
     
+    private Map<String, Object> enrichTemplateVariables(Map<String, Object> originalVariables) {
+        Map<String, Object> variables = new java.util.HashMap<>(originalVariables != null ? originalVariables : new java.util.HashMap<>());
+        
+        // 기본값 설정 (변수에 없으면)
+        if (!variables.containsKey("companyName") && !variables.containsKey(EmailConstants.VAR_COMPANY_NAME)) {
+            variables.put("companyName", "mindgarden");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
+        }
+        
+        // 서브도메인(테넌트) 동적 치환: companyName이 하드코딩된 경우 실제 테넌트 정보로 교체
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty() && tenantRepository != null) {
+            try {
+                tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId).ifPresent(tenant -> {
+                    String subdomain = tenant.getSubdomain();
+                    String companyName = (subdomain != null && !subdomain.isEmpty()) ? subdomain : tenant.getName();
+                    variables.put(EmailConstants.VAR_COMPANY_NAME, companyName);
+                    variables.put("companyName", companyName);
+                });
+            } catch (Exception e) {
+                log.warn("이메일 템플릿 변수 치환 중 테넌트 조회 실패: {}", e.getMessage());
+            }
+        }
+        return variables;
+    }
+
     private String applyTemplateVariables(String template, Map<String, Object> variables) {
         if (template == null || variables == null) {
             return template;
@@ -626,7 +660,7 @@ public class EmailServiceImpl implements EmailService {
         subjects.put(EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION, EmailConstants.SUBJECT_SYSTEM_NOTIFICATION);
         subjects.put(EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION, EmailConstants.SUBJECT_SESSION_EXTENSION_CONFIRMATION);
         
-        return subjects.getOrDefault(templateType, "mindgarden 알림");
+        return subjects.getOrDefault(templateType, "{{companyName}} 알림");
     }
     
     private void incrementEmailCount(String email) {
@@ -687,7 +721,7 @@ public class EmailServiceImpl implements EmailService {
                                             문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #3D5246; text-decoration: underline;">{{supportEmail}}</a>로 연락해주세요.
                                         </p>
                                         <p style="margin: 0; color: #999999; font-size: 13px; line-height: 1.5;">
-                                            감사합니다.<br><strong>mindgarden 팀</strong>
+                                            감사합니다.<br><strong>{{companyName}} 팀</strong>
                                         </p>
                                     </td>
                                 </tr>
@@ -710,7 +744,7 @@ public class EmailServiceImpl implements EmailService {
                 안녕하세요, {{userName}}님!
             </h2>
             <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
-                mindgarden에 가입해주셔서 감사합니다.<br>
+                {{companyName}}에 가입해주셔서 감사합니다.<br>
                 계정을 활성화하려면 아래 버튼을 클릭해주세요.
             </p>
             <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 32px 0 0 0;">
@@ -741,7 +775,7 @@ public class EmailServiceImpl implements EmailService {
             </h2>
             <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
                 상담사 승인이 완료되었습니다.<br>
-                이제 mindgarden에서 상담 서비스를 제공하실 수 있습니다.
+                이제 {{companyName}}에서 상담 서비스를 제공하실 수 있습니다.
             </p>
             """;
         return getBaseTemplate()
@@ -772,7 +806,7 @@ public class EmailServiceImpl implements EmailService {
             </h2>
             <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
                 관리자 승인이 완료되었습니다.<br>
-                이제 mindgarden의 관리자 권한을 사용하실 수 있습니다.
+                이제 {{companyName}}의 관리자 권한을 사용하실 수 있습니다.
             </p>
             """;
         return getBaseTemplate()
@@ -826,7 +860,7 @@ public class EmailServiceImpl implements EmailService {
             </h2>
             <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
                 계정이 성공적으로 활성화되었습니다.<br>
-                이제 mindgarden의 모든 서비스를 이용하실 수 있습니다.
+                이제 {{companyName}}의 모든 서비스를 이용하실 수 있습니다.
             </p>
             """;
         return getBaseTemplate()
@@ -1032,7 +1066,9 @@ public class EmailServiceImpl implements EmailService {
         try {
             log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
             
-            String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
+            Map<String, Object> variables = enrichTemplateVariables(salaryData);
+            String subject = String.format("[{{companyName}}] %s 급여 계산서 - %s", consultantName, period);
+            subject = applyTemplateVariables(subject, variables); // variables에 companyName 보강
             String content = createSalaryCalculationEmailContent(consultantName, period, salaryData);
             
             EmailRequest request = EmailRequest.builder()
@@ -1065,7 +1101,9 @@ public class EmailServiceImpl implements EmailService {
         try {
             log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
             
-            String subject = String.format("[mindgarden] %s 급여 승인 완료 - %s", consultantName, period);
+            Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
+            String subject = String.format("[{{companyName}}] %s 급여 승인 완료 - %s", consultantName, period);
+            subject = applyTemplateVariables(subject, variables);
             String content = createSalaryApprovalEmailContent(consultantName, period, approvedAmount);
             
             EmailRequest request = EmailRequest.builder()
@@ -1097,7 +1135,9 @@ public class EmailServiceImpl implements EmailService {
         try {
             log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
             
-            String subject = String.format("[mindgarden] %s 급여 지급 완료 - %s", consultantName, period);
+            Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
+            String subject = String.format("[{{companyName}}] %s 급여 지급 완료 - %s", consultantName, period);
+            subject = applyTemplateVariables(subject, variables);
             String content = createSalaryPaymentEmailContent(consultantName, period, paidAmount, payDate);
             
             EmailRequest request = EmailRequest.builder()
@@ -1131,7 +1171,9 @@ public class EmailServiceImpl implements EmailService {
         try {
             log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
             
-            String subject = String.format("[mindgarden] %s 세금 내역서 - %s", consultantName, period);
+            Map<String, Object> variables = enrichTemplateVariables(taxData);
+            String subject = String.format("[{{companyName}}] %s 세금 내역서 - %s", consultantName, period);
+            subject = applyTemplateVariables(subject, variables);
             String content = createTaxReportEmailContent(consultantName, period, taxData);
             
             EmailRequest request = EmailRequest.builder()

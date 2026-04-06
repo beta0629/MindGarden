@@ -25,19 +25,19 @@ public final class EmailConstants {
     public static final String TEMPLATE_SESSION_EXTENSION_CONFIRMATION = "SESSION_EXTENSION_CONFIRMATION";
     
     // === 이메일 제목 ===
-    public static final String SUBJECT_WELCOME = "[mindgarden] 회원가입을 환영합니다";
-    public static final String SUBJECT_CONSULTANT_APPROVAL = "[mindgarden] 상담사 승인 완료";
-    public static final String SUBJECT_CONSULTANT_REJECTION = "[mindgarden] 상담사 신청 결과 안내";
-    public static final String SUBJECT_ADMIN_APPROVAL = "[mindgarden] 관리자 승인 완료";
-    public static final String SUBJECT_PASSWORD_RESET = "[mindgarden] 비밀번호 재설정";
-    public static final String SUBJECT_ACCOUNT_ACTIVATION = "[mindgarden] 계정 활성화";
-    public static final String SUBJECT_EMAIL_VERIFICATION = "[트리니티] 이메일 인증 코드";
-    public static final String SUBJECT_APPOINTMENT_CONFIRMATION = "[mindgarden] 상담 예약 확인";
-    public static final String SUBJECT_APPOINTMENT_REMINDER = "[mindgarden] 상담 예약 알림";
-    public static final String SUBJECT_PAYMENT_CONFIRMATION = "[mindgarden] 결제 완료 안내";
-    public static final String SUBJECT_PAYMENT_FAILED = "[mindgarden] 결제 실패 안내";
-    public static final String SUBJECT_SYSTEM_NOTIFICATION = "[mindgarden] 시스템 알림";
-    public static final String SUBJECT_SESSION_EXTENSION_CONFIRMATION = "[mindgarden] 회기 추가 완료 안내";
+    public static final String SUBJECT_WELCOME = "[{{companyName}}] 회원가입을 환영합니다";
+    public static final String SUBJECT_CONSULTANT_APPROVAL = "[{{companyName}}] 상담사 승인 완료";
+    public static final String SUBJECT_CONSULTANT_REJECTION = "[{{companyName}}] 상담사 신청 결과 안내";
+    public static final String SUBJECT_ADMIN_APPROVAL = "[{{companyName}}] 관리자 승인 완료";
+    public static final String SUBJECT_PASSWORD_RESET = "[{{companyName}}] 비밀번호 재설정";
+    public static final String SUBJECT_ACCOUNT_ACTIVATION = "[{{companyName}}] 계정 활성화";
+    public static final String SUBJECT_EMAIL_VERIFICATION = "[{{companyName}}] 이메일 인증 코드";
+    public static final String SUBJECT_APPOINTMENT_CONFIRMATION = "[{{companyName}}] 상담 예약 확인";
+    public static final String SUBJECT_APPOINTMENT_REMINDER = "[{{companyName}}] 상담 예약 알림";
+    public static final String SUBJECT_PAYMENT_CONFIRMATION = "[{{companyName}}] 결제 완료 안내";
+    public static final String SUBJECT_PAYMENT_FAILED = "[{{companyName}}] 결제 실패 안내";
+    public static final String SUBJECT_SYSTEM_NOTIFICATION = "[{{companyName}}] 시스템 알림";
+    public static final String SUBJECT_SESSION_EXTENSION_CONFIRMATION = "[{{companyName}}] 회기 추가 완료 안내";
     
     // === 이메일 설정 ===
     public static final String FROM_EMAIL = "noreply@mindgarden.com";

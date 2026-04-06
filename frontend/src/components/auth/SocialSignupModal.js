@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/common';
 import { userAPI } from '../../utils/ajax';
@@ -11,11 +10,11 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/auth/social-signup-modal.css';
 
-const SocialSignupModal = ({ 
-  isOpen, 
-  onClose, 
-  socialUser, // SNS에서 받아온 사용자 정보
-  onSignupSuccess 
+const SocialSignupModal = ({
+  isOpen,
+  onClose,
+  socialUser,
+  onSignupSuccess
 }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -38,19 +37,9 @@ const SocialSignupModal = ({
     marketing: false
   });
 
-  // SNS 사용자 정보로 폼 초기화
   useEffect(() => {
-    console.log('🔍 SocialSignupModal useEffect 실행:', { socialUser, isOpen });
-    
     if (socialUser && isOpen) {
-      console.log('👤 SNS 사용자 정보로 폼 초기화:', {
-        email: socialUser.email,
-        name: socialUser.name,
-        nickname: socialUser.nickname
-      });
-      
-      // SNS 정보를 최대한 활용하여 사용자 입력 최소화
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         email: socialUser.email || '',
         name: socialUser.name || '',
@@ -59,27 +48,22 @@ const SocialSignupModal = ({
         confirmPassword: '',
         phone: ''
       }));
-      console.log('✅ 폼 데이터 업데이트 완료');
-    } else {
-      console.log('❌ socialUser가 null이거나 모달이 닫혀있음');
     }
   }, [socialUser, isOpen]);
 
-  // 휴대폰 번호 자동 하이픈 처리
   const handlePhoneChange = (e) => {
     const value = e.target.value;
     const cleaned = value.replace(/\D/g, '');
-    
+
     if (cleaned.length <= 13) {
       const formatted = formatPhoneNumber(cleaned);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         phone: formatted
       }));
-      
-      // 에러 메시지 제거
+
       if (errors.phone) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
           phone: ''
         }));
@@ -89,14 +73,13 @@ const SocialSignupModal = ({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    // 에러 메시지 제거
+
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [name]: ''
       }));
@@ -111,32 +94,26 @@ const SocialSignupModal = ({
     }
   };
 
-  // 폼 유효성 검사
   const validateForm = () => {
     const newErrors = {};
 
-    // 이메일 검사 (SNS에서 받아온 값이므로 수정 불가)
     if (!formData.email || !isValidEmail(formData.email)) {
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 회원가입 모드인 경우에만 추가 검사
     if (!socialUser?.needsBranchMapping) {
-      // 이름 검사
       if (!formData.name.trim()) {
         newErrors.name = '이름을 입력해주세요.';
       } else if (formData.name.trim().length < 2) {
         newErrors.name = '이름은 2자 이상 입력해주세요.';
       }
 
-      // 닉네임 검사
       if (!formData.nickname.trim()) {
         newErrors.nickname = '닉네임을 입력해주세요.';
       } else if (formData.nickname.trim().length < 2) {
         newErrors.nickname = '닉네임은 2자 이상 입력해주세요.';
       }
 
-      // 비밀번호 검사
       if (!formData.password) {
         newErrors.password = '비밀번호를 입력해주세요.';
       } else if (formData.password.length < 8) {
@@ -145,14 +122,12 @@ const SocialSignupModal = ({
         newErrors.password = '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.';
       }
 
-      // 비밀번호 확인 검사
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
       } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
       }
 
-      // 휴대폰 번호 검사
       if (!formData.phone.trim()) {
         newErrors.phone = '휴대폰 번호를 입력해주세요.';
       } else if (formData.phone.replace(/\D/g, '').length !== 11) {
@@ -164,39 +139,53 @@ const SocialSignupModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // 개인정보 동의 처리
   const handlePrivacyConsent = (consents) => {
     setPrivacyConsents(consents);
     setShowPrivacyConsent(false);
-    console.log('개인정보 동의 완료:', consents);
   };
 
-  // 개인정보 동의 모달 열기
   const openPrivacyConsent = () => {
     setShowPrivacyConsent(true);
   };
 
-  // 회원가입 제출
-  const handleSubmit = async (e) => {
+  const handleSummaryPrivacyChange = (e) => {
+    if (e.target.checked) {
+      openPrivacyConsent();
+      return;
+    }
+    setPrivacyConsents((prev) => ({ ...prev, privacy: false, terms: false }));
+  };
+
+  const handleSummaryTermsChange = (e) => {
+    if (e.target.checked) {
+      openPrivacyConsent();
+      return;
+    }
+    setPrivacyConsents((prev) => ({ ...prev, terms: false }));
+  };
+
+  const handleSummaryMarketingChange = (e) => {
+    setPrivacyConsents((prev) => ({ ...prev, marketing: e.target.checked }));
+  };
+
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    
-    // 개인정보 동의 검증
+
     if (!privacyConsents.privacy || !privacyConsents.terms) {
-      setErrors({ 
-        privacy: '개인정보 수집 및 이용 동의와 이용약관에 동의해주세요.' 
+      setErrors({
+        privacy: '개인정보 수집 및 이용 동의와 이용약관에 동의해주세요.'
       });
       return;
     }
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     setErrors({});
-    
+
     try {
-      // API 호출 데이터 준비
       const signupData = {
         provider: socialUser.provider,
         providerUserId: socialUser.providerUserId,
@@ -208,16 +197,13 @@ const SocialSignupModal = ({
         phone: formData.phone,
         providerProfileImage: socialUser.profileImageUrl,
         branchCode: '',
-        // 개인정보 동의 정보 추가
         privacyConsent: privacyConsents.privacy,
         termsConsent: privacyConsents.terms,
         marketingConsent: privacyConsents.marketing
       };
-      
-      // 학원 시스템 회원가입 모드인 경우 테넌트 정보 포함
+
       let response;
       if (socialUser.isAcademySignup && socialUser.tenantId) {
-        console.log('🎓 학원 시스템 SNS 회원가입 요청:', { tenantId: socialUser.tenantId });
         const { API_BASE_URL } = require('../../constants/api');
         const academySignupResponse = await fetch(
           `${API_BASE_URL}/api/v1/academy/registration/social-signup?tenantId=${socialUser.tenantId}`,
@@ -232,8 +218,6 @@ const SocialSignupModal = ({
         );
         response = await academySignupResponse.json();
       } else if (socialUser.tenantId) {
-        // 서브도메인에서 추출한 tenantId가 있는 경우 (일반 회원가입이지만 특정 테넌트에 가입)
-        console.log('✅ 서브도메인 기반 SNS 회원가입 요청:', { tenantId: socialUser.tenantId });
         const { API_BASE_URL } = require('../../constants/api');
         const tenantSignupResponse = await fetch(
           `${API_BASE_URL}/api/v1/auth/social/signup?tenantId=${socialUser.tenantId}`,
@@ -248,29 +232,25 @@ const SocialSignupModal = ({
         );
         response = await tenantSignupResponse.json();
       } else {
-        // 일반 회원가입 (tenantId 없음)
         response = await userAPI.socialSignup(signupData);
       }
-      
+
       if (response.success) {
         if (socialUser.needsBranchMapping) {
           notificationManager.show('계정이 활성화되었습니다. 다시 로그인해주세요.', 'success');
           onClose();
-          // 로그인 페이지로 리다이렉트
           redirectToLoginPageOnce();
         } else {
-          // 일반 회원가입 성공
           onSignupSuccess(response);
           onClose();
         }
       } else {
-        // 회원가입 실패
         setErrors({ submit: response.message || '회원가입에 실패했습니다.' });
       }
     } catch (error) {
       console.error('간편 회원가입 오류:', error);
-      setErrors({ 
-        submit: error.response?.data?.message || '회원가입 처리 중 오류가 발생했습니다.' 
+      setErrors({
+        submit: error.response?.data?.message || '회원가입 처리 중 오류가 발생했습니다.'
       });
     } finally {
       setIsLoading(false);
@@ -287,6 +267,11 @@ const SocialSignupModal = ({
     ? '계정을 활성화합니다'
     : '소셜 계정 정보로 간편하게 가입하세요';
 
+  const isKakao = socialUser?.provider === 'KAKAO';
+  const providerKey = isKakao ? 'kakao' : 'naver';
+  const providerLabel = isKakao ? '카카오' : '네이버';
+  const providerAction = socialUser?.needsBranchMapping ? '계정 활성화' : '가입';
+
   return (
     <>
       <UnifiedModal
@@ -299,237 +284,289 @@ const SocialSignupModal = ({
         backdropClick
         showCloseButton
       >
-        <div
-          className="social-signup-modal"
-          style={{
-            position: 'relative',
-            top: 'auto',
-            left: 'auto',
-            transform: 'none',
-            zIndex: 'auto',
-            width: '100%',
-            maxWidth: '500px',
-            margin: '0 auto'
-          }}
-        >
-          <div className="social-info">
-            <div className="social-provider">
-              <span className="provider-icon">
-                <i className={`bi bi-${socialUser?.provider === 'KAKAO' ? 'chat-dots-fill' : 'chat-square-fill'}`} 
-                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #03C75A -> var(--mg-custom-03C75A)
-                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FEE500 -> var(--mg-custom-FEE500)
-                   data-provider-color={socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A'}></i>
-              </span>
-              <span className="provider-name">
-                {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 {socialUser?.needsBranchMapping ? '계정 활성화' : '가입'}
-              </span>
-            </div>
-            <p className="social-description">
-              {socialUser?.needsBranchMapping
-                ? '계정을 활성화합니다'
-                : '소셜 계정 정보로 간편하게 가입하세요'
-              }
-            </p>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="social-signup-form">
+        <div className="social-signup-modal">
+          <section
+            className="social-signup-modal__provider"
+            aria-label={toDisplayString(`${providerLabel} 계정`)}
+          >
+            <span
+              className="social-signup-modal__provider-badge"
+              data-provider={providerKey}
+            >
+              <i
+                className={`bi bi-${isKakao ? 'chat-dots-fill' : 'chat-square-fill'} social-signup-modal__provider-icon`}
+                aria-hidden
+              />
+            </span>
+            <span className="social-signup-modal__provider-name">
+              {toDisplayString(
+                `${providerLabel} 계정으로 ${providerAction}`
+              )}
+            </span>
+          </section>
+
+          <form onSubmit={handleSubmit} className="social-signup-modal__form">
             {!socialUser?.needsBranchMapping && (
               <>
-                <div className="form-group">
-                  <label htmlFor="socialName" className="form-label">이름 *</label>
+                <div className="mg-v2-form-group">
+                  <label htmlFor="socialName" className="mg-v2-label">
+                    이름 <span className="mg-v2-form-label-required">*</span>
+                  </label>
                   <input
                     type="text"
                     id="socialName"
                     name="name"
-                    className={`form-input ${errors.name ? 'error' : ''}`}
+                    className={`mg-v2-input mg-v2-w-full ${errors.name ? 'social-signup-modal__input--error' : ''}`}
                     value={formData.name}
                     onChange={handleInputChange}
                     required
                     placeholder="이름을 입력하세요"
+                    autoComplete="name"
                   />
                   {errors.name && (
-                    <span className="error-message">{toDisplayString(errors.name)}</span>
+                    <span className="social-signup-modal__error-text">
+                      {toDisplayString(errors.name)}
+                    </span>
                   )}
                 </div>
-                
-                <div className="form-group">
-                  <label htmlFor="socialNickname" className="form-label">닉네임 *</label>
+
+                <div className="mg-v2-form-group">
+                  <label htmlFor="socialNickname" className="mg-v2-label">
+                    닉네임 <span className="mg-v2-form-label-required">*</span>
+                  </label>
                   <input
                     type="text"
                     id="socialNickname"
                     name="nickname"
-                    className={`form-input ${errors.nickname ? 'error' : ''}`}
+                    className={`mg-v2-input mg-v2-w-full ${errors.nickname ? 'social-signup-modal__input--error' : ''}`}
                     value={formData.nickname}
                     onChange={handleInputChange}
                     required
                     placeholder="닉네임을 입력하세요"
+                    autoComplete="nickname"
                   />
-                  {errors.nickname && <span className="error-message">{errors.nickname}</span>}
+                  {errors.nickname && (
+                    <span className="social-signup-modal__error-text">
+                      {toDisplayString(errors.nickname)}
+                    </span>
+                  )}
                 </div>
               </>
             )}
-            
-            <div className="form-group">
-              <label htmlFor="socialEmail" className="form-label">이메일 *</label>
+
+            <div className="mg-v2-form-group">
+              <label htmlFor="socialEmail" className="mg-v2-label">
+                이메일 <span className="mg-v2-form-label-required">*</span>
+              </label>
               <input
                 type="email"
                 id="socialEmail"
                 name="email"
-                className={`form-input ${errors.email ? 'error' : ''}`}
+                className={`mg-v2-input mg-v2-w-full ${errors.email ? 'social-signup-modal__input--error' : ''}`}
                 value={formData.email}
                 readOnly
                 disabled
+                autoComplete="email"
               />
-              {errors.email && <span className="error-message">{errors.email}</span>}
-              <small className="form-help">소셜 계정의 이메일이 자동으로 입력됩니다</small>
+              {errors.email && (
+                <span className="social-signup-modal__error-text">
+                  {toDisplayString(errors.email)}
+                </span>
+              )}
+              <span className="mg-v2-form-help">
+                소셜 계정의 이메일이 자동으로 입력됩니다
+              </span>
             </div>
-            
+
             {!socialUser?.needsBranchMapping && (
               <>
-                <div className="form-group">
-                  <label htmlFor="socialPassword" className="form-label">비밀번호 *</label>
-                  <div className="input-wrapper">
+                <div className="mg-v2-form-group">
+                  <label htmlFor="socialPassword" className="mg-v2-label">
+                    비밀번호 <span className="mg-v2-form-label-required">*</span>
+                  </label>
+                  <div className="social-signup-modal__password-wrap">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       id="socialPassword"
                       name="password"
-                      className={`form-input ${errors.password ? 'error' : ''}`}
+                      className={`mg-v2-input mg-v2-w-full ${errors.password ? 'social-signup-modal__input--error' : ''}`}
                       value={formData.password}
                       onChange={handleInputChange}
                       required
                       minLength="8"
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
-                      className="password-toggle"
+                      className="social-signup-modal__password-toggle"
                       onClick={() => togglePassword('password')}
+                      aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
-                      <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`}></i>
+                      <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`} aria-hidden />
                     </button>
                   </div>
-                  {errors.password && <span className="error-message">{errors.password}</span>}
-                  <small className="form-help">8자 이상의 안전한 비밀번호를 입력하세요</small>
+                  {errors.password && (
+                    <span className="social-signup-modal__error-text">
+                      {toDisplayString(errors.password)}
+                    </span>
+                  )}
+                  <span className="mg-v2-form-help">
+                    8자 이상의 안전한 비밀번호를 입력하세요
+                  </span>
                 </div>
-                
-                <div className="form-group">
-                  <label htmlFor="socialPasswordConfirm" className="form-label">비밀번호 확인 *</label>
-                  <div className="input-wrapper">
+
+                <div className="mg-v2-form-group">
+                  <label htmlFor="socialPasswordConfirm" className="mg-v2-label">
+                    비밀번호 확인 <span className="mg-v2-form-label-required">*</span>
+                  </label>
+                  <div className="social-signup-modal__password-wrap">
                     <input
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       id="socialPasswordConfirm"
                       name="confirmPassword"
-                      className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                      className={`mg-v2-input mg-v2-w-full ${errors.confirmPassword ? 'social-signup-modal__input--error' : ''}`}
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
                       minLength="8"
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
-                      className="password-toggle"
+                      className="social-signup-modal__password-toggle"
                       onClick={() => togglePassword('confirmPassword')}
+                      aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
-                      <i className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}></i>
+                      <i
+                        className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}
+                        aria-hidden
+                      />
                     </button>
                   </div>
-                  {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-                  <small className="form-help">비밀번호를 한 번 더 입력하세요</small>
+                  {errors.confirmPassword && (
+                    <span className="social-signup-modal__error-text">
+                      {toDisplayString(errors.confirmPassword)}
+                    </span>
+                  )}
+                  <span className="mg-v2-form-help">
+                    비밀번호를 한 번 더 입력하세요
+                  </span>
                 </div>
               </>
             )}
-            
+
             {!socialUser?.needsBranchMapping && (
-              <div className="form-group">
-                <label htmlFor="socialPhone" className="form-label">휴대폰 번호 *</label>
+              <div className="mg-v2-form-group">
+                <label htmlFor="socialPhone" className="mg-v2-label">
+                  휴대폰 번호 <span className="mg-v2-form-label-required">*</span>
+                </label>
                 <input
                   type="tel"
                   id="socialPhone"
                   name="phone"
-                  className={`form-input ${errors.phone ? 'error' : ''}`}
+                  className={`mg-v2-input mg-v2-w-full ${errors.phone ? 'social-signup-modal__input--error' : ''}`}
                   value={formData.phone}
                   onChange={handlePhoneChange}
                   required
                   maxLength="13"
                   placeholder="010-0000-0000"
+                  autoComplete="tel"
                 />
-                {errors.phone && <span className="error-message">{errors.phone}</span>}
-                <small className="form-help">숫자만 입력하면 자동으로 하이픈이 추가됩니다</small>
+                {errors.phone && (
+                  <span className="social-signup-modal__error-text">
+                    {toDisplayString(errors.phone)}
+                  </span>
+                )}
+                <span className="mg-v2-form-help">
+                  숫자만 입력하면 자동으로 하이픈이 추가됩니다
+                </span>
               </div>
             )}
-            
-            {/* 개인정보 수집 및 이용 동의 섹션 */}
-            <div className="form-group">
-              <div className="privacy-consent-section">
-                <h4 className="privacy-consent-title">
-                  <i className="bi bi-shield-check"></i>
+
+            <div className="mg-v2-form-group">
+              <div className="social-signup-modal__consent-block">
+                <h3 className="social-signup-modal__consent-heading">
+                  <i className="bi bi-shield-check" aria-hidden />
                   개인정보 수집 및 이용 동의
-                </h4>
-                
-                <div className="privacy-consent-summary">
-                  <div className="consent-item">
-                    <div className="consent-status">
-                      <i className={`bi bi-${privacyConsents.privacy ? 'check-circle-fill' : 'circle'}`} 
-                         data-consent-status={privacyConsents.privacy ? 'agreed' : 'pending'}></i>
-                      <span className={privacyConsents.privacy ? 'consent-agreed' : 'consent-pending'}>
-                        개인정보 처리방침 동의
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="consent-item">
-                    <div className="consent-status">
-                      <i className={`bi bi-${privacyConsents.terms ? 'check-circle-fill' : 'circle'}`} 
-                         data-consent-status={privacyConsents.terms ? 'agreed' : 'pending'}></i>
-                      <span className={privacyConsents.terms ? 'consent-agreed' : 'consent-pending'}>
-                        이용약관 동의
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="consent-item">
-                    <div className="consent-status">
-                      <i className={`bi bi-${privacyConsents.marketing ? 'check-circle-fill' : 'circle'}`} 
-                         data-consent-status={privacyConsents.marketing ? 'agreed' : 'pending'}></i>
-                      <span className={privacyConsents.marketing ? 'consent-agreed' : 'consent-pending'}>
-                        마케팅 정보 수신 동의 (선택)
-                      </span>
-                    </div>
-                  </div>
+                </h3>
+
+                <div className="social-signup-modal__consent-list">
+                  <label className="mg-v2-form-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={privacyConsents.privacy}
+                      onChange={handleSummaryPrivacyChange}
+                    />
+                    <span>
+                      개인정보 처리방침 동의{' '}
+                      <span className="mg-v2-form-label-required">*</span>
+                    </span>
+                  </label>
+
+                  <label className="mg-v2-form-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={privacyConsents.terms}
+                      onChange={handleSummaryTermsChange}
+                    />
+                    <span>
+                      이용약관 동의{' '}
+                      <span className="mg-v2-form-label-required">*</span>
+                    </span>
+                  </label>
+
+                  <label className="mg-v2-form-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={privacyConsents.marketing}
+                      onChange={handleSummaryMarketingChange}
+                    />
+                    <span>마케팅 정보 수신 동의 (선택)</span>
+                  </label>
                 </div>
-                
-                <button
+
+                <MGButton
                   type="button"
-                  className="btn btn-outline-primary privacy-consent-button"
+                  variant="outline"
+                  fullWidth
+                  preventDoubleClick={false}
                   onClick={openPrivacyConsent}
+                  className="social-signup-modal__consent-open"
                 >
-                  <i className="bi bi-file-text"></i>
-                  개인정보 수집 및 이용 동의하기
-                </button>
-                
+                  <i className="bi bi-file-text" aria-hidden="true" />
+                  약관 전문 보기 및 동의
+                </MGButton>
+
                 {errors.privacy && (
-                  <div className="error-message privacy-error">
-                    <i className="bi bi-exclamation-triangle"></i>
-                    {errors.privacy}
+                  <div className="social-signup-modal__error-text" role="alert">
+                    <i className="bi bi-exclamation-triangle" aria-hidden />
+                    <span>{toDisplayString(errors.privacy)}</span>
                   </div>
                 )}
               </div>
             </div>
-            
-            {/* 전체 에러 메시지 */}
+
             {errors.submit && (
-              <div className="error-summary">
-                <i className="bi bi-exclamation-triangle"></i>
-                <span>{errors.submit}</span>
+              <div className="social-signup-modal__error-banner" role="alert">
+                <i className="bi bi-exclamation-triangle" aria-hidden />
+                <span>{toDisplayString(errors.submit)}</span>
               </div>
             )}
-            
-            <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={handleDismiss}>
+
+            <div className="social-signup-modal__actions">
+              <MGButton
+                type="button"
+                variant="secondary"
+                className="social-signup-modal__action-btn"
+                preventDoubleClick={false}
+                onClick={handleDismiss}
+              >
                 취소
-              </button>
+              </MGButton>
               <MGButton
                 type="submit"
                 variant="primary"
+                className="social-signup-modal__action-btn"
                 loading={isLoading}
                 loadingText={socialUser?.needsBranchMapping ? '처리 중...' : '가입 중...'}
                 preventDoubleClick
@@ -541,7 +578,6 @@ const SocialSignupModal = ({
         </div>
       </UnifiedModal>
 
-      {/* 개인정보 수집 및 이용 동의 모달 */}
       <PrivacyConsentModal
         isOpen={showPrivacyConsent}
         onClose={() => setShowPrivacyConsent(false)}

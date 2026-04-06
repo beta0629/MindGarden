@@ -1,398 +1,200 @@
-/* Social Signup Modal Styles */
-.mg-modal__overlay,
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--cs-glass-dark-60);
-  backdrop-filter: blur(8px);
-  z-index: var(--z-modal, 10000);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/**
+ * SocialSignupModal — UnifiedModal 본문 전용 (오버레이·고정 중앙 카드 없음)
+ */
 
 .social-signup-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 500px;
-  background-color: var(--mg-white);
-  border-radius: 24px;
-  box-shadow: var(--cs-shadow-xxl), 0 0 0 1px var(--cs-glass-light-subtle);
-  z-index: var(--z-modal-content, 10002);
-  overflow: hidden;
-  animation: scaleIn 0.3s ease-out;
-}
-
-.mg-modal__header,
-.modal-header {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--cs-purple-600) 100%);
-  padding: 24px 32px;
-  color: white;
-  position: relative;
-}
-
-.modal-title {
-  margin: 0;
-  font-size: var(--font-size-xxl);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-title i {
-  font-size: var(--font-size-xxl);
-}
-
-.modal-close {
-  position: absolute;
-  top: 20px;
-  right: 24px;
-  background: var(--cs-glass-light-subtle);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  color: white;
-  font-size: var(--font-size-lg);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-  background: var(--cs-glass-light);
-}
-
-.mg-modal__body,
-.modal-body {
-  padding: 32px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.social-info {
-  background: linear-gradient(135deg, var(--cs-slate-50) 0%, var(--cs-slate-200) 100%);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid var(--cs-slate-200);
-}
-
-.social-provider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.provider-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--cs-slate-100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xl);
-}
-
-.provider-name {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--cs-slate-800);
-}
-
-.social-description {
-  margin: var(--spacing-sm) 0 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--cs-slate-500);
-  line-height: 1.5;
-}
-
-.social-signup-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.social-signup-modal .mg-form__group {
-  display: flex;
-  flex-direction: column;
-}
-
-.mg-form__label {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--cs-slate-700);
-  margin-bottom: 8px;
-}
-
-.social-signup-modal .mg-form__input {
   width: 100%;
-  padding: 16px;
-  border: 1px solid var(--cs-gray-200);
-  border-radius: 12px;
-  font-size: var(--font-size-base);
-  color: var(--cs-slate-700);
-  background-color: var(--mg-white);
-  transition: all 0.2s ease;
+  max-width: 100%;
+  box-sizing: border-box;
+  --social-signup-kakao-icon: var(--mypage-kakao-bg);
+  --social-signup-naver-icon: var(--mypage-naver-bg);
 }
 
-.social-signup-modal .mg-form__input:focus {
-  outline: none;
-  border-color: var(--mg-primary-500);
-  box-shadow: 0 0 0 3px var(--cs-glass-primary-10);
+/* 소셜 제공자 뱃지 (브랜드 색은 00-core 토큰, 미로드 시 시스템 팔레트 폴백) */
+.social-signup-modal__provider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
-.social-signup-modal .mg-form__input:disabled {
-  background-color: var(--cs-secondary-50);
-  color: var(--cs-secondary-500);
+.social-signup-modal__provider-badge {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+.social-signup-modal__provider-icon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: var(--color-text-secondary);
+}
+
+.social-signup-modal__provider-badge[data-provider='kakao'] .social-signup-modal__provider-icon {
+  color: var(--social-signup-kakao-icon, var(--mg-warning-500));
+}
+
+.social-signup-modal__provider-badge[data-provider='naver'] .social-signup-modal__provider-icon {
+  color: var(--social-signup-naver-icon, var(--mg-success-600));
+}
+
+.social-signup-modal__provider-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.social-signup-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.social-signup-modal__form .mg-v2-form-group {
+  margin-bottom: 0;
+}
+
+.social-signup-modal .mg-v2-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.social-signup-modal .mg-v2-input:disabled {
+  opacity: 0.85;
   cursor: not-allowed;
+  background-color: var(--color-background-secondary);
 }
 
-.social-signup-modal .mg-form__input.error {
+.social-signup-modal .mg-v2-input.social-signup-modal__input--error {
   border-color: var(--mg-error-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cs-error-500) 10%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mg-error-500) 18%, transparent);
 }
 
-.social-signup-modal .mg-form__input.loading {
-  background-color: var(--cs-slate-50);
-  color: var(--cs-slate-500);
-  text-align: center;
-  font-style: italic;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: var(--mg-error-500);
-  font-size: var(--font-size-xs);
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.error-summary {
-  background-color: var(--cs-error-50);
-  border: 1px solid var(--cs-error-200);
-  border-radius: 8px;
-  padding: 12px;
-  color: var(--cs-error-600);
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.mg-form__help {
-  font-size: var(--font-size-xs);
-  color: var(--cs-secondary-500);
-  margin-top: 4px;
-}
-
-.input-wrapper {
+.social-signup-modal__password-wrap {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.password-toggle {
+.social-signup-modal__password-wrap .mg-v2-input {
+  padding-right: var(--spacing-xl);
+}
+
+.social-signup-modal__password-toggle {
   position: absolute;
-  right: 16px;
+  right: var(--spacing-sm);
   background: none;
   border: none;
-  color: var(--cs-secondary-500);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.password-toggle:hover {
-  color: var(--cs-slate-700);
-  background-color: var(--cs-secondary-100);
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.social-signup-modal .btn {
-  flex: 1;
-  padding: 16px 24px;
-  border: none;
-  border-radius: 12px;
+  padding: var(--spacing-xs);
   font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  color: var(--color-text-secondary);
+  border-radius: var(--border-radius-sm);
 }
 
-.mg-btn--primary {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--cs-purple-600) 100%);
-  color: white;
+.social-signup-modal__password-toggle:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-background-light);
 }
 
-.mg-btn--primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px var(--cs-glass-primary-30);
-}
-
-.mg-btn--primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.mg-btn--secondary {
-  background-color: var(--cs-secondary-100);
-  color: var(--cs-slate-700);
-  border: 1px solid var(--cs-gray-200);
-}
-
-.mg-btn--secondary:hover {
-  background-color: var(--cs-gray-200);
-}
-
-/* Animation */
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .social-signup-modal {
-    width: 95%;
-    max-width: none;
-    margin: var(--spacing-base);
-  }
-  
-  .mg-modal__body {
-    padding: 24px;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
-}
-
-/* 개인정보 동의 섹션 스타일 */
-.privacy-consent-section {
-  background: var(--mg-gray-100);
-  border: 1px solid var(--cs-secondary-200);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: var(--spacing-base);
-}
-
-.privacy-consent-title {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--cs-secondary-700);
-  margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.privacy-consent-title i {
-  color: var(--mg-primary-500);
-  font-size: var(--font-size-lg);
-}
-
-.privacy-consent-summary {
-  margin-bottom: 16px;
-}
-
-.consent-item {
-  margin-bottom: 8px;
-}
-
-.consent-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-sm);
-}
-
-.consent-status i {
-  font-size: var(--font-size-base);
-}
-
-.consent-agreed {
-  color: var(--mg-success-500);
-  font-weight: 500;
-}
-
-.consent-pending {
-  color: var(--mg-secondary-500);
-}
-
-.privacy-consent-button {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border: 1px solid var(--mg-primary-500);
-  background-color: var(--mg-white);
-  color: var(--mg-primary-500);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.privacy-consent-button:hover {
-  background-color: var(--mg-primary-500);
-  color: var(--mg-white);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--cs-blue-500) 30%, transparent);
-}
-
-.privacy-consent-button i {
-  font-size: var(--font-size-base);
-}
-
-.privacy-error {
-  margin-top: 8px;
+.social-signup-modal__error-text {
   color: var(--mg-error-500);
   font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
-.privacy-error i {
+.social-signup-modal__error-banner {
+  background-color: color-mix(in srgb, var(--mg-error-500) 8%, var(--color-background-primary));
+  border: 1px solid color-mix(in srgb, var(--mg-error-500) 28%, var(--color-border-light));
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--mg-error-600, var(--mg-error-500));
   font-size: var(--font-size-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.social-signup-modal__error-banner i {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* 약관 요약 — 실제 체크박스 + 모달 연동 */
+.social-signup-modal__consent-block {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-background-primary);
+}
+
+.social-signup-modal__consent-heading {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.social-signup-modal__consent-heading i {
+  color: var(--color-primary);
+  font-size: var(--font-size-base);
+}
+
+.social-signup-modal__consent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.social-signup-modal__consent-list .mg-v2-form-checkbox {
+  align-items: flex-start;
+}
+
+.social-signup-modal__consent-list .mg-v2-form-checkbox input[type='checkbox'] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.social-signup-modal__consent-list .mg-v2-form-checkbox span {
+  line-height: 1.45;
+}
+
+.social-signup-modal__consent-open .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.social-signup-modal__actions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.social-signup-modal__action-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .social-signup-modal__actions {
+    flex-direction: column;
+  }
 }

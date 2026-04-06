@@ -1,9 +1,9 @@
 # Core Solution 운영 환경 설정
 # 서버 예시: beta74.cafe24.com
-# 도메인 단일 진실: dev(application-dev.yml) 공개 FQDN에서 `.dev`만 제거한 HTTPS URL과 일치
-#   예) server.base-url dev 기본값 https://mindgarden.dev.core-solution.co.kr
-#       → 운영 OAUTH2_BASE_URL/프론트 기본 예시 https://mindgarden.core-solution.co.kr
-# Nginx 실제 server_name: config/nginx/core-solution-prod.conf (테넌트 *.core-solution.co.kr 등)와 systemd/env 정합
+# OAuth 콜백(네이버·카카오): 등록 URL과 문자열 일치 → apex https://core-solution.co.kr (deployment/oauth2-production-setup.md)
+#   OAUTH2_BASE_URL / SERVER_BASE_URL 은 위 apex. 테넌트 로그인 URL과 혼동 금지.
+# 프론트 진입 URL 예: https://mindgarden.core-solution.co.kr → FRONTEND_BASE_URL 등으로 별도.
+# Nginx: config/nginx/core-solution-prod.conf 와 systemd/env 정합
 # 레거시: 과거 문서·인스턴스의 m-garden.co.kr — 신규 합의 도메인으로 통일
 #
 # 운영 필수 환경 변수 (미설정 시 기동 실패):
@@ -84,7 +84,7 @@ spring:
           naver:
             client-id: ${NAVER_CLIENT_ID:}
             client-secret: ${NAVER_CLIENT_SECRET:}
-            redirect-uri: "${OAUTH2_BASE_URL:https://mindgarden.core-solution.co.kr}/api/auth/naver/callback"
+            redirect-uri: "${OAUTH2_BASE_URL:https://core-solution.co.kr}/api/auth/naver/callback"
             client-authentication-method: post
             authorization-grant-type: authorization_code
             scope: name,email

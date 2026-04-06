@@ -2,8 +2,10 @@
 # 복사: sudo cp mindgarden.prod-env.example /etc/mindgarden/mindgarden.env && sudo chmod 600 ...
 # 서비스: EnvironmentFile=-/etc/mindgarden/mindgarden.env
 #
-# 도메인: application-dev.yml 공개 URL에서 `.dev`만 제거 → HTTPS (예 mindgarden.core-solution.co.kr)
-# 실제 host는 Nginx(config/nginx/core-solution-prod.conf)와 Kakao/Naver redirect와 일치시킬 것.
+# OAuth: NAVER_REDIRECT_URI 미지정 시 server.base-url 사용. 네이버·카카오 콘솔 Callback과 동일 호스트 필수.
+#   운영 권장: OAUTH2_BASE_URL=https://core-solution.co.kr , SERVER_BASE_URL=https://core-solution.co.kr
+#   (테넌트 mindgarden.core-solution.co.kr 가 아님 — 멀티테넌트는 apex 콜백 1개 패턴)
+# FRONTEND_BASE_URL: 사용자 SPA (예 https://mindgarden.core-solution.co.kr)
 # 저장소에는 실비밀·실키를 넣지 말고 값은 비우거나 배포 호스트에서만 채움.
 
 OAUTH2_BASE_URL=

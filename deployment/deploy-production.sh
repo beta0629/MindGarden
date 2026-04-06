@@ -66,9 +66,11 @@ cat << 'EOF'
 서버에서 다음 환경변수를 설정해주세요:
 
 # ~/.bashrc, /etc/environment 또는 systemd EnvironmentFile (deployment/mindgarden.prod-env.example 참고)
-export OAUTH2_BASE_URL=https://mindgarden.core-solution.co.kr
+# OAuth 콜백 호스트는 네이버·카카오에 등록된 apex와 동일해야 함(테넌트 서브도메인 아님).
+export OAUTH2_BASE_URL=https://core-solution.co.kr
+export SERVER_BASE_URL=https://core-solution.co.kr
+# 사용자가 접속하는 SPA 호스트(테넌트별 가능)
 export FRONTEND_BASE_URL=https://mindgarden.core-solution.co.kr
-export SERVER_BASE_URL=https://mindgarden.core-solution.co.kr
 # export SESSION_COOKIE_DOMAIN=core-solution.co.kr
 
 export DB_USERNAME=mindgarden_prod
@@ -257,6 +259,6 @@ echo ""
 echo "🔐 OAuth2 설정 확인:"
 echo "- ./oauth2-callback-test.sh       # 콜백 URL 테스트"
 echo ""
-echo "📋 OAuth2 콜백 URL (HTTPS, OAUTH2_BASE_URL과 동일 호스트):"
-echo "- 카카오: https://mindgarden.core-solution.co.kr/api/auth/kakao/callback"
-echo "- 네이버: https://mindgarden.core-solution.co.kr/api/auth/naver/callback"
+echo "📋 OAuth2 콜백 URL (네이버·카카오 콘솔에 등록, OAUTH2_BASE_URL과 동일 호스트):"
+echo "- 카카오: https://core-solution.co.kr/api/auth/kakao/callback"
+echo "- 네이버: https://core-solution.co.kr/api/auth/naver/callback"

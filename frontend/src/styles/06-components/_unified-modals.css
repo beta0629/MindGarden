@@ -136,3 +136,48 @@
   max-height: none !important;
   flex: 1 1 auto;
 }
+
+/* --------------------------------------------------------------------------
+ * Form variant (간편 회원가입 등): 불투명 패널 · 글래스/레거시 전체화면 잔존 제거
+ * common/components·tablet의 단독 .social-signup-modal { position:fixed } 보다 높은 특이도로 정합
+ * -------------------------------------------------------------------------- */
+.mg-modal.mg-modal--form {
+  position: relative;
+  background: var(--color-white, var(--mg-white));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mg-modal-overlay:has(.mg-modal--form) .mg-modal.mg-modal--form {
+  background: var(--color-white, var(--mg-white));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mg-modal.mg-modal--form .mg-modal__header {
+  background: var(--color-white, var(--mg-white));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mg-modal.mg-modal--form .mg-modal__body {
+  background: var(--color-white, var(--mg-white));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mg-modal.mg-modal--form .mg-modal__body .social-signup-modal {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: 0;
+  z-index: auto;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}

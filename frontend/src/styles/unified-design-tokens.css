@@ -11205,8 +11205,8 @@ body {
     transform: translateY(-1px);
 }
 
-/* Modal Styles */
-.mg-modal {
+/* Modal Styles — 레거시 풀스크린 루트만 (.mg-modal 단독). UnifiedModal 패널은 항상 mg-modal--* 포함 */
+.mg-modal:not([class*='mg-modal--']) {
     position: fixed;
     top: 0;
     left: 0;

@@ -132,8 +132,12 @@ export const kakaoLogin = async () => {
     }
 
     // 백엔드의 인증 URL 생성 엔드포인트 호출
+    // OAuth 인가 API는 세션 쿠키(JSESSIONID)가 필요함 — cross-origin fetch 시 credentials 필수
     console.log('백엔드 API 호출 시작:', `${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
-    const response = await fetch(`${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
+    const response = await fetch(`${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' }
+    });
     console.log('백엔드 응답 상태:', response.status, response.statusText);
     
     if (!response.ok) {
@@ -217,7 +221,11 @@ export const naverLogin = async () => {
     }
 
     // 백엔드의 인증 URL 생성 엔드포인트 호출
-    const response = await fetch(`${API_BASE_URL}${AUTH_API.NAVER_AUTHORIZE}`);
+    // OAuth 인가 API는 세션 쿠키(JSESSIONID)가 필요함 — cross-origin fetch 시 credentials 필수
+    const response = await fetch(`${API_BASE_URL}${AUTH_API.NAVER_AUTHORIZE}`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' }
+    });
     if (!response.ok) {
       let errorMessage = '네이버 로그인을 시작할 수 없습니다.';
       try {

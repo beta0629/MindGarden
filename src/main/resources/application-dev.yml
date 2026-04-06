@@ -3,9 +3,12 @@
 # OAuth2 redirect 등 기본값으로 기동 보장 (환경 변수 미설정 시에도 기동)
 # 배포 후 Flyway V20260330_001 적용 및 clients.phone DDL(길이) 확인 권장 — 미적용 시 phone truncation 재발 가능
 
-# 서버 기준 URL (OAuth2 callback 등에 사용, 환경 변수로 오버라이드)
+# 서버 기준 URL (Spring OAuth2 registration.redirect-uri, 토큰 교환 등)
+# 네이버·카카오 개발자센터 Callback은 dev apex 한 줄과 문자열 일치 필요:
+#   https://dev.core-solution.co.kr/api/auth/{naver|kakao}/callback
+# 테넌트 프론트는 *.dev.core-solution.co.kr 이더라도 위 호스트를 쓰면 됨(OAuth2DomainUtil이 동적 생성 시에도 동일 apex로 수렴).
 server:
-  base-url: ${OAUTH2_BASE_URL:https://mindgarden.dev.core-solution.co.kr}
+  base-url: ${OAUTH2_BASE_URL:https://dev.core-solution.co.kr}
   servlet:
     session:
       cookie:

@@ -356,7 +356,8 @@ class SessionManager {
 
     const preserved = {
       subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
-      subdomain: sessionStorage.getItem('subdomain')
+      subdomain: sessionStorage.getItem('subdomain'),
+      subdomain_tenant_name: sessionStorage.getItem('subdomain_tenant_name')
     };
     sessionStorage.clear();
     if (preserved.subdomain_tenant_id) {
@@ -364,6 +365,9 @@ class SessionManager {
     }
     if (preserved.subdomain) {
       sessionStorage.setItem('subdomain', preserved.subdomain);
+    }
+    if (preserved.subdomain_tenant_name) {
+      sessionStorage.setItem('subdomain_tenant_name', preserved.subdomain_tenant_name);
     }
 
     document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -399,7 +403,8 @@ class SessionManager {
   async logout() {
     const preservedForRedirect = {
       subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
-      subdomain: sessionStorage.getItem('subdomain')
+      subdomain: sessionStorage.getItem('subdomain'),
+      subdomain_tenant_name: sessionStorage.getItem('subdomain_tenant_name')
     };
     try {
       console.log('🔓 로그아웃 시작...');

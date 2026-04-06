@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { XCircle, Check, ChevronDown, ChevronUp, FileText, Megaphone } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
 import MGButton from './MGButton';
 import notificationManager from '../../utils/notification';
 import { PrivacyPolicyContent } from './PrivacyPolicy';
 import { TermsOfServiceContent } from './TermsOfService';
+import StandardizedApi from '../../utils/standardizedApi';
+import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  DEFAULT_GNB_LOGO_LABEL,
+  SESSION_SUBDOMAIN_TENANT_NAME_KEY,
+  getConsentModalTenantLabel,
+  shouldFetchSubdomainTenantDisplayNameForConsent
+} from '../../utils/tenantDisplayName';
+import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import './PrivacyConsentModal.css';
 
 /**
@@ -19,8 +28,14 @@ const PrivacyConsentModal = ({
   onClose,
   onConsent,
   title = '개인정보 수집 및 이용 동의',
-  showMarketingConsent = true
+  showMarketingConsent = true,
+  tenantDisplayName = null,
+  brandingInfo = null
 }) => {
+  const [introTenantLabel, setIntroTenantLabel] = useState(() =>
+    getConsentModalTenantLabel({ tenantDisplayName, brandingInfo })
+  );
+
   const [consents, setConsents] = useState({
     privacy: false,
     terms: false,
@@ -29,6 +44,49 @@ const PrivacyConsentModal = ({
 
   const [showPrivacyDetail, setShowPrivacyDetail] = useState(false);
   const [showTermsDetail, setShowTermsDetail] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const opts = { tenantDisplayName, brandingInfo };
+    setIntroTenantLabel(getConsentModalTenantLabel(opts));
+
+    if (!shouldFetchSubdomainTenantDisplayNameForConsent({ brandingInfo, tenantDisplayName })) {
+      return;
+    }
+
+    const subdomain = getTenantSubdomainFromHost();
+    if (!subdomain) {
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const tenantData = await StandardizedApi.get('/api/v1/auth/tenant/by-subdomain', { subdomain });
+        if (cancelled) {
+          return;
+        }
+        if (tenantData && tenantData.found && tenantData.tenant) {
+          const nm = toDisplayString(tenantData.tenant.name, '').trim();
+          const toStore = nm || subdomain;
+          try {
+            globalThis.window?.sessionStorage?.setItem(SESSION_SUBDOMAIN_TENANT_NAME_KEY, toStore);
+          } catch {
+            /* 저장 실패 시 무시 */
+          }
+          setIntroTenantLabel(getConsentModalTenantLabel(opts));
+        }
+      } catch (e) {
+        console.warn('PrivacyConsentModal: 테넌트 표시명 보강 실패', e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, tenantDisplayName, brandingInfo]);
 
   const handleConsentChange = (type) => {
     setConsents((prev) => ({
@@ -85,7 +143,7 @@ const PrivacyConsentModal = ({
       <div className="privacy-consent-modal">
         <div className="mg-v2-info-box mg-v2-mb-lg">
           <p className="mg-v2-text-sm">
-            Core Solution 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
+            {`${toDisplayString(introTenantLabel, DEFAULT_GNB_LOGO_LABEL)} 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.`}
           </p>
         </div>
 

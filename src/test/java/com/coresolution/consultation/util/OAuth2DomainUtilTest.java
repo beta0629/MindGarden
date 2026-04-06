@@ -40,6 +40,24 @@ class OAuth2DomainUtilTest {
     }
 
     @Test
+    void normalizeParent_appCoreSolutionHost_convergesToProdApex() {
+        assertEquals("core-solution.co.kr",
+                util.normalizeFrontendParentDomainForRedirect("app.core-solution.co.kr"));
+    }
+
+    @Test
+    void normalizeParent_tenantCoreSolutionHost_unchanged() {
+        assertEquals("mindgarden.core-solution.co.kr",
+                util.normalizeFrontendParentDomainForRedirect("mindgarden.core-solution.co.kr"));
+    }
+
+    @Test
+    void normalizeParent_appDevPipelineHost_convergesToDevApex() {
+        assertEquals("dev.core-solution.co.kr",
+                util.normalizeFrontendParentDomainForRedirect("app.dev.core-solution.co.kr"));
+    }
+
+    @Test
     void devProfileStyle_mainDomains_devFirst_stillBranchesByPattern() {
         OAuth2DomainUtil devUtil = new OAuth2DomainUtil();
         ReflectionTestUtils.setField(devUtil, "mainDomainsConfig", "dev.core-solution.co.kr,core-solution.co.kr");

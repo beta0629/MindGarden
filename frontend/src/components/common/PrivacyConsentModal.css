@@ -1,0 +1,13 @@
+/* PrivacyConsentModal — 스코프: 약관·개인정보 본문 스크롤 영역 */
+
+.privacy-consent-modal__legal-scroll {
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.privacy-consent-modal__legal-scroll .privacy-policy-container {
+  max-width: none;
+  margin: 0;
+  padding: var(--spacing-md) var(--spacing-sm);
+}

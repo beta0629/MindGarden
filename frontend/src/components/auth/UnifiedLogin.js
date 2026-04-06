@@ -39,6 +39,7 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 import '../../styles/auth/UnifiedLogin.css';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import { SESSION_SUBDOMAIN_TENANT_NAME_KEY } from '../../utils/tenantDisplayName';
 import {
   shouldRedirectWrongPath,
   WRONG_PATH_MESSAGE,
@@ -168,6 +169,12 @@ const UnifiedLogin = () => {
               // sessionStorage에 저장 (SNS 로그인 시 사용)
               sessionStorage.setItem('subdomain_tenant_id', tenantId);
               sessionStorage.setItem('subdomain', subdomain);
+              const tenantNameRaw = tenantData.tenant.name;
+              const tenantName = toDisplayString(tenantNameRaw, '').trim();
+              sessionStorage.setItem(
+                SESSION_SUBDOMAIN_TENANT_NAME_KEY,
+                tenantName || subdomain
+              );
             } else {
               console.log('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
             }

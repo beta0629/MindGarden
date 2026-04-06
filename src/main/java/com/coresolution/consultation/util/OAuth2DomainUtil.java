@@ -7,8 +7,11 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -23,6 +26,17 @@ import java.util.regex.PatternSyntaxException;
 @Slf4j
 @Component
 public class OAuth2DomainUtil {
+
+    /**
+     * 프론트 {@code subdomainUtils.DEFAULT_SUBDOMAINS} 과 동기: 테넌트가 아닌 인프라용 1단 라벨.
+     */
+    private static final Set<String> OAUTH_INFRA_SUBDOMAIN_LABELS;
+
+    static {
+        Set<String> labels = new HashSet<>();
+        Collections.addAll(labels, "dev", "app", "api", "staging", "www");
+        OAUTH_INFRA_SUBDOMAIN_LABELS = Collections.unmodifiableSet(labels);
+    }
 
     @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr}")
     private String mainDomainsConfig;
@@ -100,6 +114,60 @@ public class OAuth2DomainUtil {
 
         // 변환되지 않은 경우 원본 반환
         return hostWithoutPort;
+    }
+
+    /**
+     * OAuth 콜백이 {@code app.*} / {@code api.*} 등 인프라 호스트로 유입된 뒤, 테넌트 서브도메인을 붙일 때
+     * parent 가 {@code tenant.app.core-solution.co.kr} 형이 되지 않도록 apex 로 수렴한다.
+     *
+     * @param parentDomain 테넌트 라벨 제거 후(또는 원본) 부모 호스트, 포트 없음
+     * @return 정규화된 parent (변경 없으면 입력과 동일)
+     */
+    public String normalizeFrontendParentDomainForRedirect(String parentDomain) {
+        if (parentDomain == null || parentDomain.isEmpty() || mainDomains == null || mainDomains.isEmpty()) {
+            return parentDomain;
+        }
+        String devApex = findConfiguredDevApexHost();
+        String prodApex = findConfiguredProdApexHost();
+        if (devApex != null && parentDomain.equals(devApex)) {
+            return parentDomain;
+        }
+        if (prodApex != null && parentDomain.equals(prodApex)) {
+            return parentDomain;
+        }
+        if (devApex != null && parentDomain.endsWith("." + devApex)) {
+            String head = parentDomain.substring(0, parentDomain.length() - devApex.length() - 1);
+            if (!head.contains(".") && isOAuthInfraSubdomainLabel(head)) {
+                return devApex;
+            }
+        }
+        if (prodApex != null && parentDomain.endsWith("." + prodApex)) {
+            String head = parentDomain.substring(0, parentDomain.length() - prodApex.length() - 1);
+            if (!head.contains(".") && isOAuthInfraSubdomainLabel(head)) {
+                return prodApex;
+            }
+        }
+        return parentDomain;
+    }
+
+    private static boolean isOAuthInfraSubdomainLabel(String label) {
+        return label != null && !label.isEmpty() && OAUTH_INFRA_SUBDOMAIN_LABELS.contains(label);
+    }
+
+    private String findConfiguredDevApexHost() {
+        return mainDomains.stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && s.contains("dev.core-solution"))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String findConfiguredProdApexHost() {
+        return mainDomains.stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && isCoreSolutionProdApexCandidate(s))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

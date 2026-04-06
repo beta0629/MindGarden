@@ -357,6 +357,9 @@ public class OAuth2Controller extends BaseApiController {
                                     hostWithoutPort.substring((subdomain.trim() + ".").length());
                         }
 
+                        parentDomain =
+                                oauth2DomainUtil.normalizeFrontendParentDomainForRedirect(parentDomain);
+
                         String dynamicUrl =
                                 requestScheme + "://" + subdomain.trim() + "." + parentDomain;
                         log.info("프론트엔드 URL (tenantId 기반 서브도메인 복원): tenantId={}, url={}", tenantId,

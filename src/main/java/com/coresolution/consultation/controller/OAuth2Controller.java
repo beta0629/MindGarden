@@ -30,7 +30,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping({"/api/v1/auth", "/api/auth"}) // 표준화 2025-12-05: 레거시 경로도 지원 (OAuth 콜백 호환성)
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class OAuth2Controller extends BaseApiController {
 
     private final OAuth2FactoryService oauth2FactoryService;
@@ -421,6 +419,27 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         return null;
+    }
+
+    /**
+     * 로그용: state의 tenant 인코딩 구간(첫 '.' 앞)만 최대 8자까지, 전체 state/tenantId 원문은 남기지 않음.
+     *
+     * @param state OAuth state 쿼리 값 (nullable)
+     * @return 진단용 접두만; dot 없으면 {@code n/a}
+     */
+    private static String oauth2StateEncodedSegmentPrefixForLog(String state) {
+        if (state == null || !state.contains(".")) {
+            return "n/a";
+        }
+        String encoded = state.split("\\.", 2)[0];
+        if (encoded.isEmpty()) {
+            return "empty";
+        }
+        final int max = 8;
+        if (encoded.length() <= max) {
+            return encoded;
+        }
+        return encoded.substring(0, max) + "...";
     }
 
     /**
@@ -1049,6 +1068,14 @@ public class OAuth2Controller extends BaseApiController {
                             sessionTenantId);
                 } else {
                     // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
+                    log.warn(
+                            "네이버 OAuth2 콜백 - tenant 미결정 직전 진단: stateLen={}, stateHasDot={}, "
+                                    + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}",
+                            state != null ? state.length() : 0,
+                            Boolean.valueOf(state != null && state.contains(".")),
+                            Boolean.valueOf(stateBasedTenantId != null),
+                            Boolean.valueOf(savedState != null),
+                            oauth2StateEncodedSegmentPrefixForLog(state));
                     log.error("❌ 네이버 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -1066,6 +1093,14 @@ public class OAuth2Controller extends BaseApiController {
             // TenantContextHolder에 tenantId가 설정되었는지 최종 확인
             String finalTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
             if (finalTenantId == null || finalTenantId.isEmpty()) {
+                log.warn(
+                        "네이버 OAuth2 콜백 - TenantContext 미설정 직전 진단: stateLen={}, stateHasDot={}, "
+                                + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}",
+                        state != null ? state.length() : 0,
+                        Boolean.valueOf(state != null && state.contains(".")),
+                        Boolean.valueOf(stateBasedTenantId != null),
+                        Boolean.valueOf(savedState != null),
+                        oauth2StateEncodedSegmentPrefixForLog(state));
                 log.error(
                         "❌ 네이버 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
                 String redirectTenantId = resolveTenantIdForRedirect(session, state);

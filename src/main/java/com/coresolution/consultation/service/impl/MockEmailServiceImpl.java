@@ -544,7 +544,65 @@ public class MockEmailServiceImpl implements EmailService {
     
     private String loadEmailTemplate(String templateType) {
         // Mock 템플릿 반환
-        return "<html><body><h2>Mock 이메일 템플릿: {{templateType}}</h2><p>{{content}}</p></body></html>";
+        return getBaseTemplate()
+                .replace("{{title}}", "Mock 이메일: " + templateType)
+                .replace("{{content}}", "<p>{{content}}</p>");
+    }
+    
+    private String getBaseTemplate() {
+        return """
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{{title}}</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #F2EDE8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; word-break: keep-all;">
+                <!-- 100% Width Background Table -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F2EDE8; width: 100%;">
+                    <tr>
+                        <td align="center" style="padding: 40px 20px;">
+                            
+                            <!-- 600px Container Table -->
+                            <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                
+                                <!-- Header -->
+                                <tr>
+                                    <td align="center" style="background-color: #FAF9F7; padding: 32px 40px; border-bottom: 1px solid #EAEAEA;">
+                                        <h1 style="margin: 0; color: #333333; font-size: 24px; font-weight: bold; line-height: 1.4;">{{title}}</h1>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Content (Body) -->
+                                <tr>
+                                    <td style="padding: 40px;">
+                                        {{content}}
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #FAF9F7; padding: 32px 40px; border-top: 1px solid #EAEAEA; border-radius: 0 0 16px 16px;">
+                                        <p style="margin: 0 0 8px 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                                            문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #3D5246; text-decoration: underline;">{{supportEmail}}</a>로 연락해주세요.
+                                        </p>
+                                        <p style="margin: 0; color: #999999; font-size: 13px; line-height: 1.5;">
+                                            감사합니다.<br><strong>mindgarden 팀</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                                
+                            </table>
+                            <!-- // 600px Container Table -->
+            
+                        </td>
+                    </tr>
+                </table>
+                <!-- // 100% Width Background Table -->
+            </body>
+            </html>
+            """;
     }
     
     private String applyTemplateVariables(String template, Map<String, Object> variables) {
@@ -554,7 +612,10 @@ public class MockEmailServiceImpl implements EmailService {
         
         String result = template;
         for (Map.Entry<String, Object> entry : variables.entrySet()) {
-            String placeholder = "{{" + entry.getKey() + "}}";
+            String key = entry.getKey();
+            String placeholder = (key != null && key.startsWith("{{") && key.endsWith("}}"))
+                    ? key
+                    : "{{" + key + "}}";
             String value = entry.getValue() != null ? entry.getValue().toString() : "";
             result = result.replace(placeholder, value);
         }

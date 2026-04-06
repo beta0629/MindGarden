@@ -598,7 +598,11 @@ public class EmailServiceImpl implements EmailService {
         
         String result = template;
         for (Map.Entry<String, Object> entry : variables.entrySet()) {
-            String placeholder = "{{" + entry.getKey() + "}}";
+            String key = entry.getKey();
+            // EmailConstants.VAR_* 는 "{{userName}}" 형태 — 이중으로 감싸면 {{ {{userName}} }} 가 되어 치환 실패
+            String placeholder = (key != null && key.startsWith("{{") && key.endsWith("}}"))
+                    ? key
+                    : "{{" + key + "}}";
             String value = entry.getValue() != null ? entry.getValue().toString() : "";
             result = result.replace(placeholder, value);
         }
@@ -644,314 +648,379 @@ public class EmailServiceImpl implements EmailService {
     
     // ==================== Template Methods ====================
     
-    private String getWelcomeTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>안녕하세요, {{userName}}님!</h2>
-                <p>mindgarden에 가입해주셔서 감사합니다.</p>
-                <p>계정을 활성화하려면 아래 링크를 클릭해주세요:</p>
-                <p><a href="{{activationLink}}">계정 활성화</a></p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getConsultantApprovalTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>축하합니다, {{userName}}님!</h2>
-                <p>상담사 승인이 완료되었습니다.</p>
-                <p>이제 mindgarden에서 상담 서비스를 제공하실 수 있습니다.</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getConsultantRejectionTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>안녕하세요, {{userName}}님</h2>
-                <p>상담사 신청에 대한 검토 결과를 안내드립니다.</p>
-                <p>현재 자격 요건을 충족하지 못하여 승인이 어렵습니다.</p>
-                <p>자세한 내용은 {{supportEmail}}로 문의해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getAdminApprovalTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>축하합니다, {{userName}}님!</h2>
-                <p>관리자 승인이 완료되었습니다.</p>
-                <p>이제 mindgarden의 관리자 권한을 사용하실 수 있습니다.</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getPasswordResetTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>비밀번호 재설정</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>비밀번호 재설정을 요청하셨습니다.</p>
-                <p>아래 링크를 클릭하여 새 비밀번호를 설정해주세요:</p>
-                <p><a href="{{resetLink}}">비밀번호 재설정</a></p>
-                <p>이 링크는 24시간 후 만료됩니다.</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getAccountActivationTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>계정 활성화</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>계정이 성공적으로 활성화되었습니다.</p>
-                <p>이제 mindgarden의 모든 서비스를 이용하실 수 있습니다.</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
-            """;
-    }
-    
-    private String getEmailVerificationTemplate() {
+    private String getBaseTemplate() {
         return """
             <!DOCTYPE html>
             <html lang="ko">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>이메일 인증 코드 - Trinity</title>
+                <title>{{title}}</title>
             </head>
-            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
-                <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+            <body style="margin: 0; padding: 0; background-color: #F2EDE8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; word-break: keep-all;">
+                <!-- 100% Width Background Table -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F2EDE8; width: 100%;">
                     <tr>
                         <td align="center" style="padding: 40px 20px;">
-                            <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            
+                            <!-- 600px Container Table -->
+                            <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                
                                 <!-- Header -->
                                 <tr>
-                                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0;">
-                                        <div style="display: inline-block; width: 60px; height: 60px; background-color: #ffffff; border-radius: 50%; line-height: 60px; font-size: 32px; font-weight: bold; color: #667eea; margin-bottom: 15px;">
-                                            T
-                                        </div>
-                                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Trinity</h1>
-                                        <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">CoreSolution 플랫폼</p>
+                                    <td align="center" style="background-color: #FAF9F7; padding: 32px 40px; border-bottom: 1px solid #EAEAEA;">
+                                        <h1 style="margin: 0; color: #333333; font-size: 24px; font-weight: bold; line-height: 1.4;">{{title}}</h1>
                                     </td>
                                 </tr>
                                 
-                                <!-- Content -->
+                                <!-- Content (Body) -->
                                 <tr>
                                     <td style="padding: 40px;">
-                                        <h2 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600;">이메일 인증 코드</h2>
-                                        <p style="margin: 0 0 30px; color: #666666; font-size: 16px; line-height: 1.6;">
-                                            안녕하세요,<br>
-                                            CoreSolution 서비스 신청을 위한 이메일 인증 코드입니다.
-                                        </p>
-                                        
-                                        <!-- Verification Code Box -->
-                                        <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px solid #667eea; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
-                                            <p style="margin: 0 0 12px; font-size: 13px; color: #667eea; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">인증 코드</p>
-                                            <p style="margin: 0; font-size: 42px; font-weight: 700; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">{{verificationCode}}</p>
-                                        </div>
-                                        
-                                        <!-- Info Box -->
-                                        <div style="background-color: #fff9e6; border-left: 4px solid #ffc107; padding: 16px; margin: 30px 0; border-radius: 4px;">
-                                            <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.6;">
-                                                <strong>⏰ 유효 시간:</strong> 이 코드는 <strong>{{expiryMinutes}}분</strong> 동안 유효합니다.<br>
-                                                <strong>🔒 보안:</strong> 본인이 요청하지 않은 경우 이 이메일을 무시하셔도 됩니다.
-                                            </p>
-                                        </div>
-                                        
-                                        <!-- Instructions -->
-                                        <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
-                                            <p style="margin: 0 0 12px; color: #333333; font-size: 15px; font-weight: 600;">사용 방법</p>
-                                            <ol style="margin: 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
-                                                <li>서비스 신청 페이지로 돌아가세요</li>
-                                                <li>위의 인증 코드를 입력란에 입력하세요</li>
-                                                <li>"인증 코드 확인" 버튼을 클릭하세요</li>
-                                            </ol>
-                                        </div>
+                                        {{content}}
                                     </td>
                                 </tr>
                                 
                                 <!-- Footer -->
                                 <tr>
-                                    <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px; border-top: 1px solid #e0e0e0;">
-                                        <p style="margin: 0 0 12px; color: #666666; font-size: 13px; line-height: 1.6;">
-                                            문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #667eea; text-decoration: none;">{{supportEmail}}</a>로 연락해주세요.
+                                    <td style="background-color: #FAF9F7; padding: 32px 40px; border-top: 1px solid #EAEAEA; border-radius: 0 0 16px 16px;">
+                                        <p style="margin: 0 0 8px 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                                            문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #3D5246; text-decoration: underline;">{{supportEmail}}</a>로 연락해주세요.
                                         </p>
-                                        <p style="margin: 0; color: #999999; font-size: 12px;">
-                                            © {{currentYear}} Trinity - CoreSolution. All rights reserved.<br>
-                                            <a href="https://e-trinity.co.kr" style="color: #999999; text-decoration: none;">e-trinity.co.kr</a>
+                                        <p style="margin: 0; color: #999999; font-size: 13px; line-height: 1.5;">
+                                            감사합니다.<br><strong>mindgarden 팀</strong>
                                         </p>
                                     </td>
                                 </tr>
+                                
                             </table>
+                            <!-- // 600px Container Table -->
+            
                         </td>
                     </tr>
                 </table>
+                <!-- // 100% Width Background Table -->
             </body>
             </html>
             """;
+    }
+    
+    private String getWelcomeTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님!
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                mindgarden에 가입해주셔서 감사합니다.<br>
+                계정을 활성화하려면 아래 버튼을 클릭해주세요.
+            </p>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 32px 0 0 0;">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td align="center" bgcolor="#3D5246" style="border-radius: 8px;">
+                                    <a href="{{activationLink}}" target="_blank" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 16px; color: #FFFFFF; text-decoration: none; font-weight: bold; border-radius: 8px; background-color: #3D5246; border: 1px solid #3D5246;">
+                                        계정 활성화
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "환영합니다")
+                .replace("{{content}}", content);
+    }
+    
+    private String getConsultantApprovalTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                축하합니다, {{userName}}님!
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                상담사 승인이 완료되었습니다.<br>
+                이제 mindgarden에서 상담 서비스를 제공하실 수 있습니다.
+            </p>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "상담사 승인 완료")
+                .replace("{{content}}", content);
+    }
+    
+    private String getConsultantRejectionTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                상담사 신청에 대한 검토 결과를 안내드립니다.<br>
+                현재 자격 요건을 충족하지 못하여 승인이 어렵습니다.<br>
+                자세한 내용은 고객센터로 문의해주세요.
+            </p>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "상담사 신청 결과 안내")
+                .replace("{{content}}", content);
+    }
+    
+    private String getAdminApprovalTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                축하합니다, {{userName}}님!
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                관리자 승인이 완료되었습니다.<br>
+                이제 mindgarden의 관리자 권한을 사용하실 수 있습니다.
+            </p>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "관리자 승인 완료")
+                .replace("{{content}}", content);
+    }
+    
+    private String getPasswordResetTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                비밀번호 재설정을 요청하셨습니다.<br>
+                아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.
+            </p>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FAF9F7; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0; color: #333333; font-size: 15px; line-height: 1.5; text-align: center;">
+                            <strong>링크 유효 시간:</strong> 24시간 이내
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 32px 0 0 0;">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td align="center" bgcolor="#3D5246" style="border-radius: 8px;">
+                                    <a href="{{resetLink}}" target="_blank" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 16px; color: #FFFFFF; text-decoration: none; font-weight: bold; border-radius: 8px; background-color: #3D5246; border: 1px solid #3D5246;">
+                                        비밀번호 재설정
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "비밀번호 재설정")
+                .replace("{{content}}", content);
+    }
+    
+    private String getAccountActivationTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                계정이 성공적으로 활성화되었습니다.<br>
+                이제 mindgarden의 모든 서비스를 이용하실 수 있습니다.
+            </p>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "계정 활성화 완료")
+                .replace("{{content}}", content);
+    }
+    
+    private String getEmailVerificationTemplate() {
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                이메일 인증 코드
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                안녕하세요,<br>
+                CoreSolution 서비스 신청을 위한 이메일 인증 코드입니다.
+            </p>
+            <div style="background-color: #FAF9F7; border: 1px solid #EAEAEA; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                <p style="margin: 0 0 12px; font-size: 13px; color: #3D5246; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">인증 코드</p>
+                <p style="margin: 0; font-size: 42px; font-weight: 700; color: #3D5246; letter-spacing: 8px; font-family: 'Courier New', monospace;">{{verificationCode}}</p>
+            </div>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FFF9E6; padding: 20px; border-radius: 8px; border-left: 4px solid #FFC107;">
+                        <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.6;">
+                            <strong>⏰ 유효 시간:</strong> 이 코드는 <strong>{{expiryMinutes}}분</strong> 동안 유효합니다.<br>
+                            <strong>🔒 보안:</strong> 본인이 요청하지 않은 경우 이 이메일을 무시하셔도 됩니다.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #EAEAEA;">
+                <p style="margin: 0 0 12px; color: #333333; font-size: 15px; font-weight: 600;">사용 방법</p>
+                <ol style="margin: 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
+                    <li>서비스 신청 페이지로 돌아가세요</li>
+                    <li>위의 인증 코드를 입력란에 입력하세요</li>
+                    <li>"인증 코드 확인" 버튼을 클릭하세요</li>
+                </ol>
+            </div>
+            """;
+        return getBaseTemplate()
+                .replace("{{title}}", "이메일 인증 코드 - Trinity")
+                .replace("{{content}}", content);
     }
     
     private String getAppointmentConfirmationTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>상담 예약 확인</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>상담 예약이 확정되었습니다.</p>
-                <p><strong>상담사:</strong> {{consultantName}}</p>
-                <p><strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                상담 예약이 확정되었습니다.
+            </p>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FAF9F7; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>상담사:</strong> {{consultantName}}
+                        </p>
+                        <p style="margin: 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}
+                        </p>
+                    </td>
+                </tr>
+            </table>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "상담 예약 확인")
+                .replace("{{content}}", content);
     }
     
     private String getAppointmentReminderTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>상담 예약 알림</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>내일 상담 예약이 있습니다.</p>
-                <p><strong>상담사:</strong> {{consultantName}}</p>
-                <p><strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                내일 상담 예약이 있습니다.
+            </p>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FAF9F7; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>상담사:</strong> {{consultantName}}
+                        </p>
+                        <p style="margin: 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}
+                        </p>
+                    </td>
+                </tr>
+            </table>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "상담 예약 알림")
+                .replace("{{content}}", content);
     }
     
     private String getPaymentConfirmationTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>결제 완료 안내</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>결제가 성공적으로 완료되었습니다.</p>
-                <p><strong>결제 금액:</strong> {{paymentAmount}}원</p>
-                <p><strong>결제 방법:</strong> {{paymentMethod}}</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                결제가 성공적으로 완료되었습니다.
+            </p>
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FAF9F7; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>결제 금액:</strong> {{paymentAmount}}원
+                        </p>
+                        <p style="margin: 0; color: #333333; font-size: 15px; line-height: 1.5;">
+                            <strong>결제 방법:</strong> {{paymentMethod}}
+                        </p>
+                    </td>
+                </tr>
+            </table>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "결제 완료 안내")
+                .replace("{{content}}", content);
     }
     
     private String getPaymentFailedTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>결제 실패 안내</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>결제 처리 중 오류가 발생했습니다.</p>
-                <p>다시 시도해주시거나 다른 결제 방법을 이용해주세요.</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                결제 처리 중 오류가 발생했습니다.<br>
+                다시 시도해주시거나 다른 결제 방법을 이용해주세요.
+            </p>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "결제 실패 안내")
+                .replace("{{content}}", content);
     }
     
     private String getSystemNotificationTemplate() {
-        return """
-            <html>
-            <body>
-                <h2>시스템 알림</h2>
-                <p>안녕하세요, {{userName}}님</p>
-                <p>{{message}}</p>
-                <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>mindgarden 팀</p>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                {{message}}
+            </p>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "시스템 알림")
+                .replace("{{content}}", content);
     }
     
     private String getSessionExtensionConfirmationTemplate() {
-        return """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px;">
-                        회기 추가 완료 안내
-                    </h2>
-                    
-                    <p>안녕하세요, <strong>{{userName}}</strong>님</p>
-                    
-                    <p>요청하신 회기 추가가 성공적으로 완료되었습니다.</p>
-                    
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #2c5aa0; margin-top: 0;">📋 결제 정보</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin: 8px 0;"><strong>결제 금액:</strong> {{paymentAmount}}원</li>
-                            <li style="margin: 8px 0;"><strong>결제 방법:</strong> {{paymentMethod}}</li>
-                            <li style="margin: 8px 0;"><strong>확인 일시:</strong> {{confirmationDate}}</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="background-color: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #2c5aa0; margin-top: 0;">📈 회기 정보</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin: 8px 0;"><strong>패키지명:</strong> {{packageName}}</li>
-                            <li style="margin: 8px 0;"><strong>추가 회기:</strong> {{additionalSessions}}회</li>
-                            <li style="margin: 8px 0;"><strong>총 회기:</strong> {{totalSessions}}회</li>
-                            <li style="margin: 8px 0;"><strong>남은 회기:</strong> {{remainingSessions}}회</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="background-color: #f0f8e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #2c5aa0; margin-top: 0;">👥 상담 정보</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin: 8px 0;"><strong>상담사:</strong> {{consultantName}}</li>
-                            <li style="margin: 8px 0;"><strong>내담자:</strong> {{clientName}}</li>
-                        </ul>
-                    </div>
-                    
-                    <p style="margin-top: 30px;">
-                        추가된 회기는 즉시 사용 가능하며, 상담 예약 시 자동으로 차감됩니다.
-                    </p>
-                    
-                    <p>
-                        문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #2c5aa0;">{{supportEmail}}</a>로 연락해주세요.
-                    </p>
-                    
-                    <p style="margin-top: 30px;">
-                        감사합니다.<br>
-                        <strong>mindgarden 팀</strong>
-                    </p>
-                    
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                    <p style="font-size: 12px; color: #666; text-align: center;">
-                        © {{currentYear}} mindgarden. All rights reserved.
-                    </p>
-                </div>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{userName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                요청하신 회기 추가가 성공적으로 완료되었습니다.
+            </p>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">📋 결제 정보</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: #444444; font-size: 14px; line-height: 1.6;">
+                    <li style="margin-bottom: 8px;"><strong>결제 금액:</strong> {{paymentAmount}}원</li>
+                    <li style="margin-bottom: 8px;"><strong>결제 방법:</strong> {{paymentMethod}}</li>
+                    <li><strong>확인 일시:</strong> {{confirmationDate}}</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">📈 회기 정보</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: #444444; font-size: 14px; line-height: 1.6;">
+                    <li style="margin-bottom: 8px;"><strong>패키지명:</strong> {{packageName}}</li>
+                    <li style="margin-bottom: 8px;"><strong>추가 회기:</strong> {{additionalSessions}}회</li>
+                    <li style="margin-bottom: 8px;"><strong>총 회기:</strong> {{totalSessions}}회</li>
+                    <li><strong>남은 회기:</strong> {{remainingSessions}}회</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">👥 상담 정보</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: #444444; font-size: 14px; line-height: 1.6;">
+                    <li style="margin-bottom: 8px;"><strong>상담사:</strong> {{consultantName}}</li>
+                    <li><strong>내담자:</strong> {{clientName}}</li>
+                </ul>
+            </div>
+            
+            <p style="margin: 24px 0 0 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                추가된 회기는 즉시 사용 가능하며, 상담 예약 시 자동으로 차감됩니다.
+            </p>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "회기 추가 완료 안내")
+                .replace("{{content}}", content);
     }
     
     // ==================== 급여 관련 이메일 ====================
@@ -1149,140 +1218,112 @@ public class EmailServiceImpl implements EmailService {
     }
     
     private String getSalaryCalculationTemplate() {
-        return """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
-                        급여 계산서
-                    </h2>
-                    
-                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
-                    
-                    <p>{{period}} 급여 계산이 완료되었습니다.</p>
-                    
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #2c3e50; margin-top: 0;">급여 내역</h3>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>기본 급여:</strong></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{baseSalary}}원</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>옵션 급여:</strong></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{optionSalary}}원</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>총 급여 (세전):</strong></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{totalSalary}}원</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>세금:</strong></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right; color: #e74c3c;">-{{taxAmount}}원</td>
-                            </tr>
-                            <tr style="background-color: #e8f5e8;">
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>실지급액 (세후):</strong></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right; color: #27ae60; font-weight: bold;">{{netSalary}}원</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px;"><strong>상담 건수:</strong></td>
-                                <td style="padding: 8px; text-align: right;">{{consultationCount}}건</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                    
-                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
-                </div>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{consultantName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                {{period}} 급여 계산이 완료되었습니다.
+            </p>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">급여 내역</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #444444;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>기본 급여:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{baseSalary}}원</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>옵션 급여:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{optionSalary}}원</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>총 급여 (세전):</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{totalSalary}}원</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>세금:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right; color: #D32F2F;">-{{taxAmount}}원</td>
+                    </tr>
+                    <tr style="background-color: #F2EDE8;">
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>실지급액 (세후):</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right; color: #3D5246; font-weight: bold;">{{netSalary}}원</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;"><strong>상담 건수:</strong></td>
+                        <td style="padding: 8px; text-align: right;">{{consultationCount}}건</td>
+                    </tr>
+                </table>
+            </div>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "급여 계산서")
+                .replace("{{content}}", content);
     }
     
     private String getSalaryApprovalTemplate() {
-        return """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
-                        급여 승인 완료
-                    </h2>
-                    
-                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
-                    
-                    <p>{{period}} 급여가 승인되었습니다.</p>
-                    
-                    <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                        <h3 style="color: #27ae60; margin-top: 0;">승인된 급여</h3>
-                        <p style="font-size: 24px; font-weight: bold; color: #27ae60; margin: 10px 0;">{{approvedAmount}}원</p>
-                    </div>
-                    
-                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                    
-                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
-                </div>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{consultantName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                {{period}} 급여가 승인되었습니다.
+            </p>
+            
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+                <tr>
+                    <td style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; text-align: center;">
+                        <h3 style="color: #3D5246; margin: 0 0 8px 0; font-size: 15px;">승인된 급여</h3>
+                        <p style="margin: 0; color: #3D5246; font-size: 24px; font-weight: bold;">{{approvedAmount}}원</p>
+                    </td>
+                </tr>
+            </table>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "급여 승인 완료")
+                .replace("{{content}}", content);
     }
     
     private String getSalaryPaymentTemplate() {
-        return """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
-                        급여 지급 완료
-                    </h2>
-                    
-                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
-                    
-                    <p>{{period}} 급여가 지급되었습니다.</p>
-                    
-                    <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #27ae60; margin-top: 0;">지급 정보</h3>
-                        <p><strong>지급 금액:</strong> {{paidAmount}}원</p>
-                        <p><strong>지급일:</strong> {{payDate}}</p>
-                    </div>
-                    
-                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                    
-                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
-                </div>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{consultantName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                {{period}} 급여가 지급되었습니다.
+            </p>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">지급 정보</h3>
+                <p style="margin: 0 0 8px 0; color: #444444; font-size: 14px;"><strong>지급 금액:</strong> {{paidAmount}}원</p>
+                <p style="margin: 0; color: #444444; font-size: 14px;"><strong>지급일:</strong> {{payDate}}</p>
+            </div>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "급여 지급 완료")
+                .replace("{{content}}", content);
     }
     
     private String getTaxReportTemplate() {
-        return """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
-                        세금 내역서
-                    </h2>
-                    
-                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
-                    
-                    <p>{{period}} 세금 내역서를 발송해드립니다.</p>
-                    
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #2c3e50; margin-top: 0;">세금 요약</h3>
-                        <p><strong>총 세금:</strong> {{totalTaxAmount}}원</p>
-                    </div>
-                    
-                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                    
-                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
-                </div>
-            </body>
-            </html>
+        String content = """
+            <h2 style="margin: 0 0 16px 0; color: #111111; font-size: 20px; font-weight: bold; line-height: 1.5;">
+                안녕하세요, {{consultantName}}님
+            </h2>
+            <p style="margin: 0 0 12px 0; color: #444444; font-size: 16px; line-height: 1.6;">
+                {{period}} 세금 내역서를 발송해드립니다.
+            </p>
+            
+            <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">세금 요약</h3>
+                <p style="margin: 0; color: #444444; font-size: 14px;"><strong>총 세금:</strong> {{totalTaxAmount}}원</p>
+            </div>
             """;
+        return getBaseTemplate()
+                .replace("{{title}}", "세금 내역서")
+                .replace("{{content}}", content);
     }
-    
-    private String formatAmount(Object amount) {
+
+        private String formatAmount(Object amount) {
         if (amount == null) return "0";
         try {
             return String.format("%,d", Long.parseLong(amount.toString()));

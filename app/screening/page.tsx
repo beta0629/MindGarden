@@ -1,21 +1,23 @@
 import Link from 'next/link';
-import { screeningData, Topic } from '@/lib/screening-data';
+import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
 
 export const metadata = {
-  title: '자가진단 | 마인드가든',
-  description: '마인드가든 심리상담센터에서 제공하는 다양한 자가진단 테스트입니다.',
+  title: '주제별 자가 점검 | 마인드가든',
+  description:
+    '마인드가든 심리상담센터에서 제공하는 ADHD·우울·공황 등 주제별 참고용 자가 점검입니다.',
 };
 
 export default function ScreeningHubPage() {
-  const topics = Object.values(screeningData);
+  const topics = SCREENING_TOPIC_ORDER.map((key) => screeningData[key]);
 
   return (
     <main className="content-shell">
       <div className="screening-hub">
-        <h1 className="screening-hub-title">자가진단 테스트</h1>
+        <h1 className="screening-hub-title">주제별 자가 점검</h1>
         <p className="screening-hub-desc">
           현재 겪고 있는 어려움을 간단히 점검해 보세요.
-          <br />본 테스트는 참고용이며, 정확한 진단은 전문가와의 상담이 필요합니다.
+          <br />
+          본 화면은 참고용이며, 임상 진단을 대신하지 않습니다. 전문가 상담이 필요할 수 있습니다.
         </p>
 
         <div className="screening-grid">

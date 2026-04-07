@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
+import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
 import { ScreeningData, TargetGroup } from '@/lib/screening-data';
 
 interface Props {
@@ -48,9 +50,20 @@ export default function ScreeningFlow({ data }: Props) {
   const maxScore = questions.length * 3;
   const getResultBand = () => {
     const ratio = score / maxScore;
-    if (ratio < 0.33) return { level: '양호', desc: '현재 특별한 증상이 관찰되지 않습니다. 일상적인 스트레스 관리로 충분해 보입니다.' };
-    if (ratio < 0.66) return { level: '주의', desc: '일부 증상이 관찰되며 일상생활에 약간의 불편함이 있을 수 있습니다. 전문가와의 상담을 고려해 보시는 것을 권장합니다.' };
-    return { level: '심각', desc: '증상의 정도가 높아 일상생활에 상당한 어려움이 예상됩니다. 가급적 빠른 시일 내에 전문가의 도움을 받으시길 권장합니다.' };
+    if (ratio < 0.33)
+      return {
+        level: '양호에 가까운 응답',
+        desc: '응답만으로는 어려움의 정도를 알 수 없습니다. 일상에서 불편이 거의 없다면 참고용으로만 활용하시면 됩니다.',
+      };
+    if (ratio < 0.66)
+      return {
+        level: '추가로 살펴볼 응답',
+        desc: '여러 영역에서 어려움을 느끼신다면 전문가와 이야기 나누는 것이 도움이 될 수 있습니다.',
+      };
+    return {
+      level: '전문 상담을 권하는 응답',
+      desc: '응답이 높은 편입니다. 정확한 이해를 위해 정신건강의학과·심리전문가 등과 상담·평가를 고려해 보시길 권합니다.',
+    };
   };
 
   return (
@@ -62,7 +75,7 @@ export default function ScreeningFlow({ data }: Props) {
       {step === 'target' && (
         <div className="screening-target-select">
           <p style={{ textAlign: 'center', marginBottom: '16px', color: 'var(--text-sub)' }}>
-            검사를 진행할 대상군을 선택해 주세요.
+            점검을 진행할 대상군을 선택해 주세요.
           </p>
           <button className="screening-target-btn" onClick={() => handleTargetSelect('adult')}>
             일반 성인
@@ -108,7 +121,7 @@ export default function ScreeningFlow({ data }: Props) {
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <h2 className="screening-result-title">검사 결과: {getResultBand().level}</h2>
+          <h2 className="screening-result-title">응답 요약: {getResultBand().level}</h2>
           <p className="screening-result-desc">{getResultBand().desc}</p>
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '24px' }}>
@@ -120,15 +133,21 @@ export default function ScreeningFlow({ data }: Props) {
               style={{ background: 'var(--surface-2)', color: 'var(--text-main)', border: '1px solid var(--border-soft)' }}
               onClick={resetFlow}
             >
-              다시 검사하기
+              다시 점검하기
             </button>
           </div>
 
-          <div className="screening-disclaimer">
-            <p>본 자가진단 테스트는 귀하의 현재 심리적 상태를 간단히 점검해 보기 위한 목적으로 제공됩니다. 이 결과는 의학적 진단이나 전문적인 심리 평가를 대신할 수 없습니다.</p>
-            <p>테스트 결과가 귀하의 모든 심리적 어려움이나 질환을 완벽하게 반영하는 것은 아니며, 결과에 관계없이 일상생활에서 지속적인 불편함을 느끼신다면 반드시 전문가의 도움을 받으셔야 합니다.</p>
-            <p>본 센터는 이 자가진단 테스트의 결과로 인해 발생하는 어떠한 결정이나 행동, 그리고 그에 따른 결과에 대해 법적 또는 의학적 책임을 지지 않습니다.</p>
-            <p>정확한 진단과 맞춤형 치료 계획을 위해서는 정신건강의학과 전문의 또는 임상심리전문가와의 대면 상담 및 정식 심리검사가 필수적임을 알려드립니다.</p>
+          <div className="screening-disclaimer" role="note">
+            {checklistLegalNotice.paragraphs.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+            <p>
+              {checklistLegalNotice.psychoExamBeforeLink}
+              <Link href="/programs/test" className="adhd-self-check-inline-link">
+                심리검사
+              </Link>
+              {checklistLegalNotice.psychoExamAfterLink}
+            </p>
           </div>
         </div>
       )}

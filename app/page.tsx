@@ -5,6 +5,7 @@ import HomeSectionVisual from '@/components/HomeSectionVisual';
 import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsList from '@/components/ReviewsList';
 import Footer from '@/components/Footer';
+import HomeScreeningPromo from '@/components/HomeScreeningPromo';
 import SectionTabs from '@/components/SectionTabs';
 import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
@@ -185,6 +186,8 @@ export default async function Home() {
       <HashScroll />
       <Navigation />
       <HeroSection slogan={homeData.slogan} videoUrl={homeData.videoUrl} />
+
+      <HomeScreeningPromo />
 
       <SectionTabs />
 

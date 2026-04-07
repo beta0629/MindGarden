@@ -20,8 +20,8 @@ export default function LocationPage() {
   // 구글 지도에서 주소를 검색한 후 공유 > 지도 퍼가기에서 얻은 iframe URL 형식
   const googleMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`;
   
-  // 구글 지도 검색 링크 (새 탭에서 열기)
-  const googleMapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+  // 구글 지도 검색 링크 (새 탭에서 열기) - 송도 지점 노출을 위해 지역명 포함
+  const googleMapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('송도 마인드가든 심리상담센터')}`;
   // 네이버 지도 링크 (대체 옵션) - 배곧 등 타 지점 노출 방지를 위해 지역명 포함
   const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent('송도 마인드가든 심리상담센터')}`;
 

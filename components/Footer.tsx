@@ -99,7 +99,9 @@ export default function Footer() {
               marginTop: '2.5rem', // h3 높이만큼 상단 여백
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
-                <strong>운영시간:</strong> 평일 09:00 - 18:00
+                <strong>운영시간:</strong> 주중 10:00 - 20:00<br />
+                <strong>토요일:</strong> 10:00 - 17:00<br />
+                <strong>일요일:</strong> 정기휴무
               </p>
             </div>
           </div>
@@ -113,6 +115,10 @@ export default function Footer() {
               lineHeight: '1.8',
               marginTop: '2.5rem', // h3 높이만큼 상단 여백
             }}>
+              <p style={{ marginBottom: '0.5rem' }}>
+                <strong>전화:</strong> 032-724-8501<br />
+                <strong>휴대폰:</strong> 010-7924-8501
+              </p>
               <p>
                 <strong>문의:</strong> 상담 예약 및 문의는<br />
                 하단 문의/예약 버튼을 이용해주세요.

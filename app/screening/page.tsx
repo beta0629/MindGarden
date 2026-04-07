@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
 
 export const metadata = {
-  title: '주제별 자가 점검 | 마인드가든',
+  title: '주제별 간이 체크리스트 | 마인드가든',
   description:
-    '마인드가든 심리상담센터에서 제공하는 ADHD·우울·공황 등 주제별 참고용 자가 점검입니다.',
+    '마인드가든 심리상담센터에서 제공하는 ADHD·우울·공황 등 주제별 참고용 간이 체크리스트입니다.',
 };
 
 export default function ScreeningHubPage() {
@@ -13,7 +13,7 @@ export default function ScreeningHubPage() {
   return (
     <main className="content-shell">
       <div className="screening-hub">
-        <h1 className="screening-hub-title">주제별 자가 점검</h1>
+        <h1 className="screening-hub-title">주제별 간이 체크리스트</h1>
         <p className="screening-hub-desc">
           현재 겪고 있는 어려움을 간단히 점검해 보세요.
           <br />

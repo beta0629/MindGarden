@@ -199,7 +199,7 @@ export default async function Home() {
                 <h2 className="section-title">마인드 가든 소개</h2>
                 <p className="section-desc">
                   내담자의 주호소 문제에 대해 풍부한 임상경력의 전문가가 객관화 된 검사와 내담자의 기질, 성격적 특성, 자라나온 양육환경 등을 고려해서 핵심문제를 찾습니다.<br /><br />
-                  내담자와 함께 치료계획과 합의된 목표 세우고 최우선적으로<br />
+                  내담자와 함께 상담 계획과 합의된 목표 세우고 최우선적으로<br />
                   증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
                 </p>
               </div>
@@ -249,7 +249,7 @@ export default async function Home() {
               <Link href="/screening" className="program-card">
                 <div className="program-title">ADHD &amp; 공존질환 체크리스트</div>
                 <div className="program-body">
-                  주제별 자가 점검으로 먼저 살펴보실 수 있어요
+                  주제별 간이 체크리스트로 먼저 살펴보실 수 있어요
                 </div>
               </Link>
             </div>

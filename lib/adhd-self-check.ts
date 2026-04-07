@@ -1,5 +1,5 @@
 /**
- * ADHD 자가 점검용 체크리스트 문항 (교육·선별 목적, 의학적 진단 도구 아님).
+ * ADHD 간이 체크리스트 문항 (교육·선별 목적, 의학적 진단 도구 아님).
  * 부주의·과잉행동·충동성 등 일반적으로 알려진 영역을 일상 언어로 구성.
  */
 
@@ -18,7 +18,7 @@ export const SCORE_IF_OFTEN = 1;
 export const adhdSelfCheckLegalNotice = checklistLegalNotice;
 
 export const adhdSelfCheckIntro = {
-  title: 'ADHD 자가 점검 체크리스트',
+  title: 'ADHD 간이 체크리스트',
   lead: [
     adhdSelfCheckLegalNotice.paragraphs[0],
     adhdSelfCheckLegalNotice.paragraphs[1],

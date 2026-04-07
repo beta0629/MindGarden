@@ -14,7 +14,7 @@ INSERT INTO banners (
   is_active,
   priority
 ) VALUES (
-  '주제별 자가 점검(PTSD·경계선 성격·학교·직장·중독 등)',
+  '주제별 간이 체크리스트(PTSD·경계선 성격·학교·직장·중독 등)',
   '',
   '/assets/images/programs/adhd-testing.png',
   '/screening',

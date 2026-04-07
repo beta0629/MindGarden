@@ -10,7 +10,7 @@ export function generateStaticParams() {
 
 export function generateMetadata({ params }: { params: { topic: string } }) {
   const data = screeningData[params.topic as Topic];
-  if (!data) return { title: '자가 점검 | 마인드가든' };
+  if (!data) return { title: '간이 체크리스트 | 마인드가든' };
   
   return {
     title: `${data.title} | 마인드가든`,

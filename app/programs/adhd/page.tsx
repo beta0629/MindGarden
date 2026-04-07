@@ -86,7 +86,7 @@ export default function AdhdProgramPage() {
                 ADHD는 단순한 주의력의 문제를 넘어, 일상생활과 대인관계 전반에 영향을 미치는 복합적인 어려움입니다. 마인드가든은 증상 완화에만 머물지 않고, 내담자가 자신의 잠재력을 발휘하며 건강한 삶을 살아갈 수 있도록 돕습니다.
               </p>
               <p>
-                놀이치료, 미술치료, 가족상담, 그리고 트라우마 치료까지. 각 분야의 전문성을 바탕으로 내담자의 연령과 환경, 그리고 동반되는 심리적 어려움까지 세심하게 고려한 맞춤형 통합 케어를 제공합니다.
+                놀이치료, 미술치료, 가족상담, 그리고 트라우마 상담까지. 각 분야의 전문성을 바탕으로 내담자의 연령과 환경, 그리고 동반되는 심리적 어려움까지 세심하게 고려한 맞춤형 통합 케어를 제공합니다.
               </p>
             </div>
 
@@ -121,14 +121,14 @@ export default function AdhdProgramPage() {
                   wordBreak: 'keep-all',
                 }}
               >
-                교육·선별 목적의 자가 점검 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 임상 진단을 대신하지 않습니다.
+                교육·선별 목적의 간이 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 의학적 진단을 대신하지 않습니다.
               </p>
               <Link
                 href="/screening"
                 className="adhd-self-check-btn adhd-self-check-btn-primary"
                 style={{ width: '100%', maxWidth: '280px' }}
               >
-                자가 점검 허브로 가기
+                간이 체크리스트 허브로 가기
               </Link>
             </div>
 
@@ -189,7 +189,7 @@ export default function AdhdProgramPage() {
                       color: 'var(--text-main)',
                       marginBottom: '16px'
                     }}>
-                      정밀 진단 및 평가
+                      심층 평가
                     </h3>
                     <p style={{
                       fontSize: '1rem',
@@ -239,7 +239,7 @@ export default function AdhdProgramPage() {
                       color: 'var(--text-main)',
                       marginBottom: '16px'
                     }}>
-                      맞춤 핵심 치료
+                      맞춤 핵심 상담
                     </h3>
                     <p style={{
                       fontSize: '1rem',
@@ -346,7 +346,7 @@ export default function AdhdProgramPage() {
                       lineHeight: '1.8',
                       color: 'var(--text-sub)'
                     }}>
-                      치료실 밖의 삶이 변화할 수 있도록 가족상담과 부모 교육을 제공합니다. 내담자를 둘러싼 환경이 지지적인 체계로 기능하도록 돕고, 일상에서의 적응력을 높입니다.
+                      상담실 밖의 삶이 변화할 수 있도록 가족상담과 부모 교육을 제공합니다. 내담자를 둘러싼 환경이 지지적인 체계로 기능하도록 돕고, 일상에서의 적응력을 높입니다.
                     </p>
                   </div>
                 </div>

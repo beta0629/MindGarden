@@ -72,5 +72,26 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         
         return candidate;
     }
+
+    @Override
+    public String generateUniqueUserIdFromPhone(String normalizedDigits, String tenantId) {
+        if (!StringUtils.hasText(normalizedDigits)) {
+            log.error("❌ 정규화된 휴대폰 번호가 없습니다.");
+            throw new IllegalArgumentException("휴대폰 번호는 필수입니다.");
+        }
+        if (!StringUtils.hasText(tenantId)) {
+            log.error("❌ 테넌트 ID가 없습니다. tenantId={}", tenantId);
+            throw new IllegalArgumentException("테넌트 ID는 필수입니다.");
+        }
+        String base = normalizedDigits;
+        String candidate = base;
+        int suffix = 1;
+        while (userRepository.existsByUserId(candidate)) {
+            candidate = base + suffix++;
+            log.debug("사용자 ID 중복 감지 (전화 기반, 전역), 순번 증가: candidate={}", candidate);
+        }
+        log.info("✅ 전역 사용자 ID 생성 완료(전화): tenantId={}, userId={}", tenantId, candidate);
+        return candidate;
+    }
 }
 

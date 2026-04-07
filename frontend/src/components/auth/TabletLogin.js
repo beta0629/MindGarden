@@ -22,6 +22,7 @@ import {
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import {
   LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
@@ -579,7 +580,12 @@ const TabletLogin = () => {
         // 세션 설정 완료 후 잠시 대기
         console.log('⏳ 간편 회원가입 - 세션 설정 완료, 잠시 대기...');
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
+        notificationManager.show(
+          toDisplayString(response.message, '회원가입이 완료되었습니다.'),
+          'success'
+        );
+
         // 역할에 따른 대시보드로 리다이렉트
         // 동적 대시보드 라우팅
         const authResponse = {
@@ -590,7 +596,7 @@ const TabletLogin = () => {
         await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         console.log('❌ 간편 회원가입 - 세션 설정 실패');
-        notificationManager.show('세션 설정에 실패했습니다.', 'info');
+        notificationManager.show('세션 설정에 실패했습니다.', 'error');
       }
     } else {
       // 사용자 정보가 없으면 새로고침

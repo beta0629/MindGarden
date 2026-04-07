@@ -6,7 +6,7 @@ import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { toDisplayString } from '../../utils/safeDisplay';
+import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/auth/social-signup-modal.css';
 
@@ -245,13 +245,21 @@ const SocialSignupModal = ({
           onClose();
         }
       } else {
-        setErrors({ submit: response.message || '회원가입에 실패했습니다.' });
+        const submitFailMsg = toDisplayString(
+          response.message,
+          '회원가입에 실패했습니다.'
+        );
+        setErrors({ submit: submitFailMsg });
+        notificationManager.show(submitFailMsg, 'error');
       }
     } catch (error) {
       console.error('간편 회원가입 오류:', error);
-      setErrors({
-        submit: error.response?.data?.message || '회원가입 처리 중 오류가 발생했습니다.'
-      });
+      const submitErrMsg = toDisplayString(
+        toErrorMessage(error?.response?.data ?? error, ''),
+        '회원가입 처리 중 오류가 발생했습니다.'
+      );
+      setErrors({ submit: submitErrMsg });
+      notificationManager.show(submitErrMsg, 'error');
     } finally {
       setIsLoading(false);
     }

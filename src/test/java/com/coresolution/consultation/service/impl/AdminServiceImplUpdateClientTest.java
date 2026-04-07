@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
@@ -125,6 +126,8 @@ class AdminServiceImplUpdateClientTest {
     private PlatformTransactionManager transactionManager;
     @Mock
     private UserIdGenerator userIdGenerator;
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private AdminServiceImpl adminService;
@@ -321,6 +324,7 @@ class AdminServiceImplUpdateClientTest {
         request.setEmail("NewClientReg@test.com");
 
         when(userIdGenerator.generateUniqueUserId(anyString(), anyString())).thenReturn("uid-reg-1");
+        when(userRepository.existsByTenantIdAndEmail(anyString(), anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-pw");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))

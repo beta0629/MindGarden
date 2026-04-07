@@ -20,6 +20,15 @@ public interface UserIdGenerator {
      * @throws IllegalArgumentException email 또는 tenantId가 null이거나 비어있는 경우
      */
     String generateUniqueUserId(String email, String tenantId);
+
+    /**
+     * 정규화된 휴대폰 숫자열만으로 사용자 ID를 만들고, 전역 {@code existsByUserId}로 중복 시 접미사를 붙입니다.
+     *
+     * @param normalizedDigits {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
+     * @param tenantId         테넌트 ID (검증용)
+     * @return 전역 고유 userId
+     */
+    String generateUniqueUserIdFromPhone(String normalizedDigits, String tenantId);
     
     /**
      * 이름 기반 사용자 ID 생성 (이메일이 없는 경우 대체)

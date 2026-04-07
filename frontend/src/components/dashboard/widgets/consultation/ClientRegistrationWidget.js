@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
+import { VALIDATION_MESSAGES } from '../../../../constants/messages';
 import './ClientRegistrationWidget.css';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
@@ -138,8 +139,8 @@ const ClientRegistrationWidget = ({ widget, user }) => {
         }
         break;
       default:
-        // 필수 필드 검사
-        if (['userId', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
+        // 필수 필드 검사 (이메일·휴대폰은 택1이므로 여기서 단독 필수 처리하지 않음)
+        if (['userId', 'name', 'password'].includes(name) && !value.trim()) {
           newErrors[name] = '이 필드는 필수입니다.';
         } else {
           delete newErrors[name];
@@ -181,10 +182,24 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 필수 필드 검사
-    const requiredFields = ['userId', 'name', 'email', 'password', 'phone'];
+    const emailTrim = formData.email?.trim() || '';
+    const phoneTrim = formData.phone?.trim() || '';
+    if (!emailTrim && !phoneTrim) {
+      showNotification(VALIDATION_MESSAGES.EMAIL_OR_PHONE_ONE_REQUIRED, 'warning');
+      return;
+    }
+    if (emailTrim && !validateEmail(emailTrim)) {
+      showNotification(VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT, 'warning');
+      return;
+    }
+    if (phoneTrim && !validatePhone(phoneTrim)) {
+      showNotification(VALIDATION_MESSAGES.INVALID_PHONE, 'warning');
+      return;
+    }
+
+    const requiredFields = ['userId', 'name', 'password'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
-    
+
     if (missingFields.length > 0) {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
       return;
@@ -213,10 +228,10 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     // 제출 데이터 준비
     const requestData = {
       userId: formData.userId?.trim(),
-      email: formData.email?.trim(),
+      email: emailTrim,
       password: formData.password,
       name: formData.name?.trim(),
-      phone: formData.phone?.trim(),
+      phone: phoneTrim,
       role: 'CLIENT',
       ...(formData.rrnFirst6?.trim() && { rrnFirst6: formData.rrnFirst6.trim() }),
       ...(formData.rrnLast1?.trim() && { rrnLast1: formData.rrnLast1.trim() }),
@@ -339,6 +354,9 @@ const ClientRegistrationWidget = ({ widget, user }) => {
               {/* 필수 필드 */}
               <div className="form-section">
                 <h4 className="section-title">기본 정보</h4>
+                <p className="mg-v2-form-help" style={{ marginBottom: 'var(--mg-space-3, 12px)' }}>
+                  {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
+                </p>
                 <div className="form-grid">
                   <div className="form-group">
                     <label htmlFor="userId" className="form-label">
@@ -385,7 +403,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
-                      이메일 <span className="required">*</span>
+                      이메일
                     </label>
                     <input
                       type="email"
@@ -393,7 +411,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      required
                       className={`form-control ${getFieldError('email') ? 'error' : ''}`}
                     />
                     {getFieldError('email') && (
@@ -428,7 +445,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">
-                      전화번호 <span className="required">*</span>
+                      휴대폰 번호
                     </label>
                     <input
                       type="tel"
@@ -436,7 +453,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      required
                       className={`form-control ${getFieldError('phone') ? 'error' : ''}`}
                       placeholder="010-1234-5678"
                     />

@@ -288,7 +288,15 @@ export default function ReviewsPage() {
   };
 
   return (
-    <main id="top" style={{ backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
+    <main
+      id="top"
+      style={{
+        backgroundColor: '#F8FAFC',
+        minHeight: '100vh',
+        /* 고정 GNB(.gnb) 아래로 콘텐츠 시작 — 헤더·후기 작성 버튼이 가려지지 않도록 */
+        paddingTop: 'clamp(5.25rem, 12vw, 7rem)',
+      }}
+    >
       <Navigation />
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 0.75rem' }} className="reviews-page-container">
         <header style={{
@@ -639,7 +647,28 @@ export default function ReviewsPage() {
                 alignItems: 'center',
                 gap: '0.375rem',
                 padding: '0 0.25rem',
+                flexWrap: 'wrap',
               }}>
+                <Link
+                  href="/reviews/new"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    backgroundColor: '#B8956A',
+                    color: 'white',
+                    padding: '0.5rem 0.9rem',
+                    borderRadius: '0.75rem',
+                    textDecoration: 'none',
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                  }}
+                  className="write-review-button--inline"
+                >
+                  후기 작성
+                </Link>
                 <button
                   onClick={() => {
                     setSortBy('latest');
@@ -1139,6 +1168,9 @@ export default function ReviewsPage() {
         .write-review-button {
           width: 100% !important;
           justify-content: center !important;
+        }
+        .write-review-button--inline {
+          flex-shrink: 0;
         }
         .review-card {
           padding: 1rem 1.25rem !important;

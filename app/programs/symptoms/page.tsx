@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
+import { programPageContent } from '@/lib/program-pages-content';
 
 const symptomsImages = {
   hero: {
@@ -19,6 +20,8 @@ const symptomsImages = {
     height: 600,
   },
 };
+
+const copy = programPageContent.symptoms;
 
 export default function SymptomsPage() {
   return (
@@ -42,8 +45,8 @@ export default function SymptomsPage() {
               overflowWrap: 'break-word',
               color: 'var(--text-main)'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>주요 증상과</span>
-              <span style={{ display: 'block' }}>동반 어려움</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroTitle[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroTitle[1]}</span>
             </h1>
             
             <div style={{
@@ -60,8 +63,8 @@ export default function SymptomsPage() {
               overflowWrap: 'break-word',
               padding: '0 20px'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>"단순한 산만함이 아닌</span>
-              <span style={{ display: 'block' }}>실행 기능의 어려움입니다"</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroLead[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroLead[1]}</span>
             </div>
 
             {/* Hero Image */}

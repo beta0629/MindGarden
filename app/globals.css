@@ -1214,14 +1214,16 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     transition: all 0.2s ease;
 }
 
-a.feature-card {
+a.feature-card,
+a.program-card {
     text-decoration: none;
     color: inherit;
     display: block;
     cursor: pointer;
 }
 
-a.feature-card:hover {
+a.feature-card:hover,
+a.program-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     border-color: rgba(255, 212, 184, 0.55);

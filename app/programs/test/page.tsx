@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
+import { programPageContent } from '@/lib/program-pages-content';
 
 const testImages = {
   hero: {
@@ -19,6 +20,8 @@ const testImages = {
     height: 1000,
   },
 };
+
+const copy = programPageContent.test;
 
 export default function TestPage() {
   return (
@@ -42,8 +45,8 @@ export default function TestPage() {
               overflowWrap: 'break-word',
               color: 'var(--text-main)'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>정확한 진단을 위한</span>
-              <span style={{ display: 'block' }}>종합 심리검사</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroTitle[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroTitle[1]}</span>
             </h1>
             
             <div style={{
@@ -60,8 +63,8 @@ export default function TestPage() {
               overflowWrap: 'break-word',
               padding: '0 20px'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>"객관적이고 신뢰할 수 있는</span>
-              <span style={{ display: 'block' }}>평가가 치료의 시작입니다"</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroLead[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroLead[1]}</span>
             </div>
 
             {/* Hero Image */}

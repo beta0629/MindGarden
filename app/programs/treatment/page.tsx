@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
+import { programPageContent } from '@/lib/program-pages-content';
 
 const treatmentImages = {
   hero: {
@@ -19,6 +20,8 @@ const treatmentImages = {
     height: 400,
   },
 };
+
+const copy = programPageContent.treatment;
 
 export default function TreatmentPage() {
   return (
@@ -42,8 +45,8 @@ export default function TreatmentPage() {
               overflowWrap: 'break-word',
               color: 'var(--text-main)'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>다각적이고</span>
-              <span style={{ display: 'block' }}>통합적인 치료 접근</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroTitle[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroTitle[1]}</span>
             </h1>
             
             <div style={{
@@ -60,8 +63,8 @@ export default function TreatmentPage() {
               overflowWrap: 'break-word',
               padding: '0 20px'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>"증상 완화를 넘어</span>
-              <span style={{ display: 'block' }}>전인적 성장을 목표로 합니다"</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroLead[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroLead[1]}</span>
             </div>
 
             {/* Hero Image */}

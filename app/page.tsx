@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import HomeSectionVisual from '@/components/HomeSectionVisual';
@@ -10,6 +11,7 @@ import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
 import { homeSectionImages } from '@/lib/home-section-images';
 import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
+import { PROGRAM_PAGE_ORDER, programPageContent } from '@/lib/program-pages-content';
 
 // 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
 export const dynamic = 'force-dynamic';
@@ -232,22 +234,15 @@ export default async function Home() {
               </div>
             </div>
             <div className="program-grid">
-              <div className="program-card">
-                <div className="program-title">대상</div>
-                <div className="program-body">상담 대상 안내</div>
-              </div>
-              <div className="program-card">
-                <div className="program-title">증상</div>
-                <div className="program-body">주요 증상 안내</div>
-              </div>
-              <div className="program-card">
-                <div className="program-title">치료</div>
-                <div className="program-body">치료 프로그램 안내</div>
-              </div>
-              <div className="program-card">
-                <div className="program-title">심리검사</div>
-                <div className="program-body">심리검사 안내</div>
-              </div>
+              {PROGRAM_PAGE_ORDER.map((id) => {
+                const p = programPageContent[id];
+                return (
+                  <Link key={id} href={p.href} className="program-card">
+                    <div className="program-title">{p.cardTitle}</div>
+                    <div className="program-body">{p.cardLead}</div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
 

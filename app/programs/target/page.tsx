@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
+import { programPageContent } from '@/lib/program-pages-content';
 
 const targetImages = {
   hero: {
@@ -19,6 +20,8 @@ const targetImages = {
     height: 1000,
   },
 };
+
+const copy = programPageContent.target;
 
 export default function TargetPage() {
   return (
@@ -42,8 +45,8 @@ export default function TargetPage() {
               overflowWrap: 'break-word',
               color: 'var(--text-main)'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>누구를 위한</span>
-              <span style={{ display: 'block' }}>프로그램인가요?</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroTitle[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroTitle[1]}</span>
             </h1>
             
             <div style={{
@@ -60,8 +63,8 @@ export default function TargetPage() {
               overflowWrap: 'break-word',
               padding: '0 20px'
             }}>
-              <span style={{ display: 'block', marginBottom: '8px' }}>"각자의 발달 단계와 환경에 맞춘</span>
-              <span style={{ display: 'block' }}>세심한 접근이 필요합니다"</span>
+              <span style={{ display: 'block', marginBottom: '8px' }}>{copy.heroLead[0]}</span>
+              <span style={{ display: 'block' }}>{copy.heroLead[1]}</span>
             </div>
 
             {/* Hero Image */}

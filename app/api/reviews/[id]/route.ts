@@ -3,6 +3,74 @@ import { getDbConnection } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import DOMPurify from 'isomorphic-dompurify';
 
+// 단건 후기 조회 (승인된 글만, 공개용)
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  let connection;
+  try {
+    const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { success: false, error: '유효하지 않은 ID입니다.' },
+        { status: 400 }
+      );
+    }
+
+    connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      `SELECT id, author_name, content, tags, ratings, COALESCE(like_count, 0) as like_count, created_at, updated_at
+       FROM homepage_reviews WHERE id = ? AND is_approved = 1`,
+      [id]
+    );
+    const row = (rows as any[])[0];
+    if (!row) {
+      return NextResponse.json(
+        { success: false, error: '후기를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    let tags: string[] = [];
+    let ratings: Record<string, unknown> | null = null;
+    try {
+      tags = row.tags ? JSON.parse(row.tags) : [];
+    } catch {
+      tags = [];
+    }
+    try {
+      ratings = row.ratings ? JSON.parse(row.ratings) : null;
+    } catch {
+      ratings = null;
+    }
+
+    return NextResponse.json({
+      success: true,
+      review: {
+        id: row.id,
+        authorName: row.author_name,
+        content: row.content,
+        tags,
+        ratings,
+        likeCount: row.like_count || 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get review error:', error);
+    return NextResponse.json(
+      { success: false, error: '후기를 불러오는데 실패했습니다.' },
+      { status: 500 }
+    );
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+}
+
 // 후기 수정
 export async function PUT(
   request: NextRequest,
@@ -40,7 +108,7 @@ export async function PUT(
 
     // 기존 후기 조회
     const [existingRows] = await connection.execute(
-      `SELECT password_hash FROM reviews WHERE id = ?`,
+      `SELECT password_hash FROM homepage_reviews WHERE id = ?`,
       [id]
     );
     const existingReview = (existingRows as any[])[0];

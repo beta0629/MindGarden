@@ -1026,8 +1026,9 @@ export default function ReviewsPage() {
                       {/* 액션 버튼 */}
                       <div style={{
                         display: 'flex',
+                        flexWrap: 'wrap',
                         alignItems: 'center',
-                        gap: '1rem',
+                        gap: '0.75rem',
                         borderTop: '1px solid #f1f5f9',
                         paddingTop: '1.25rem',
                       }}>
@@ -1035,7 +1036,8 @@ export default function ReviewsPage() {
                           onClick={() => handleLike(review.id)}
                           disabled={likedReviews.has(review.id)}
                           style={{
-                            flex: 1,
+                            flex: '1 1 30%',
+                            minWidth: '6rem',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1078,10 +1080,43 @@ export default function ReviewsPage() {
                             </span>
                           </span>
                         </button>
+                        <Link
+                          href={`/reviews/${review.id}/edit`}
+                          style={{
+                            flex: '1 1 30%',
+                            minWidth: '6rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.625rem',
+                            borderRadius: '0.75rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            transition: 'all 0.2s',
+                            boxSizing: 'border-box',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                            e.currentTarget.style.color = '#6366F1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#64748b';
+                          }}
+                        >
+                          수정
+                        </Link>
                         <button
                           onClick={() => handleShare('link', review.id)}
                           style={{
-                            flex: 1,
+                            flex: '1 1 30%',
+                            minWidth: '6rem',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

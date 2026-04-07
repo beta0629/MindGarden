@@ -62,12 +62,16 @@ export default function ConsultationBottomSheet() {
     }
   };
 
-  // 바텀시트 높이 계산
+  const COLLAPSED_PX = 140;
+
+  // 바텀시트 높이 (접힘: 화살표·탭 힌트가 잘리지 않도록 여유)
   const getBottomSheetHeight = () => {
-    if (!isOpen) return '80px'; // 접혀있을 때 높이
-    if (typeof window === 'undefined') return '80px'; // SSR 대응
-    const baseHeight = window.innerHeight * 0.9; // 열렸을 때 화면의 90%
-    return `${Math.max(baseHeight - currentY, 80)}px`;
+    if (typeof window === 'undefined') {
+      return isOpen ? '90vh' : `${COLLAPSED_PX}px`;
+    }
+    if (!isOpen) return `${COLLAPSED_PX}px`;
+    const baseHeight = window.innerHeight * 0.9;
+    return `${Math.max(baseHeight - currentY, COLLAPSED_PX)}px`;
   };
 
   return (
@@ -161,13 +165,23 @@ export default function ConsultationBottomSheet() {
               >
                 클릭하여 상담 문의하기
               </div>
-              <span className="consultation-sheet-arrow-hint" aria-hidden="true">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M12 4.5l-8.5 8.5 1.4 1.4L12 7.3l7.1 7.1 1.4-1.4L12 4.5z"
-                    fill="currentColor"
-                  />
-                </svg>
+              <span className="consultation-sheet-cue" aria-hidden="true">
+                <span className="consultation-sheet-arrow-hint">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 4.5l-8.5 8.5 1.4 1.4L12 7.3l7.1 7.1 1.4-1.4L12 4.5z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+                <span className="consultation-sheet-tap-hint">
+                  <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      fill="currentColor"
+                      d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm7.91.86c-.06-.06-.13-.11-.2-.15l-.23-.09a1.16 1.16 0 0 0-.25-.03H15v-4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5h8c.83 0 1.5-.67 1.5-1.5v-5c0-.39-.16-.74-.41-1-.06-.06-.13-.11-.2-.15z"
+                    />
+                  </svg>
+                </span>
               </span>
             </>
           )}
@@ -249,32 +263,57 @@ export default function ConsultationBottomSheet() {
           color: var(--accent-sky, #0284c7);
           flex-shrink: 0;
         }
-        .consultation-sheet-arrow--up {
-          animation: consultationSheetArrowNudge 1.35s ease-in-out infinite;
-        }
         .consultation-sheet-arrow--down {
           animation: consultationSheetArrowPulse 2s ease-in-out infinite;
           opacity: 0.85;
         }
+        .consultation-sheet-cue {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 10px;
+          color: var(--accent-sky, #0284c7);
+        }
         .consultation-sheet-arrow-hint {
           display: flex;
+          align-items: center;
           justify-content: center;
-          margin-top: 8px;
-          color: var(--accent-sky, #0284c7);
-          opacity: 0.9;
-          animation: consultationSheetArrowNudge 1.35s ease-in-out infinite;
+          animation: consultationSheetCueMotion 1.25s ease-in-out infinite,
+            consultationSheetCueBlink 1.1s ease-in-out infinite;
         }
         .consultation-sheet-arrow-hint svg {
           display: block;
-          filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
+          filter: drop-shadow(0 1px 2px rgba(2, 132, 199, 0.25));
         }
-        @keyframes consultationSheetArrowNudge {
+        .consultation-sheet-tap-hint {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.92;
+          animation: consultationSheetCueMotion 1.25s ease-in-out 0.2s infinite,
+            consultationSheetCueBlink 1.1s ease-in-out 0.35s infinite;
+        }
+        .consultation-sheet-tap-hint svg {
+          display: block;
+          filter: drop-shadow(0 1px 2px rgba(2, 132, 199, 0.2));
+        }
+        @keyframes consultationSheetCueMotion {
           0%,
           100% {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-5px);
+            transform: translateY(-6px);
+          }
+        }
+        @keyframes consultationSheetCueBlink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.38;
           }
         }
         @keyframes consultationSheetArrowPulse {
@@ -286,6 +325,13 @@ export default function ConsultationBottomSheet() {
           50% {
             opacity: 1;
             transform: translateY(2px);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .consultation-sheet-arrow-hint,
+          .consultation-sheet-tap-hint,
+          .consultation-sheet-arrow--down {
+            animation: none !important;
           }
         }
       `}</style>

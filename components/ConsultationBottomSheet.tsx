@@ -43,6 +43,12 @@ export default function ConsultationBottomSheet() {
     setCurrentY(0);
   };
 
+  useEffect(() => {
+    const handleOpenBottomSheet = () => setIsOpen(true);
+    window.addEventListener('open-consultation-bottom-sheet', handleOpenBottomSheet);
+    return () => window.removeEventListener('open-consultation-bottom-sheet', handleOpenBottomSheet);
+  }, []);
+
   // 바텀시트 열기/닫기
   const toggleBottomSheet = () => {
     setIsOpen(!isOpen);

@@ -2,7 +2,12 @@ import { valuesPageImages } from '@/lib/values-page-images';
 
 export type ValuesVisualVariant = 'hero' | 'split' | 'accent' | 'band';
 
-type ImageBlock = (typeof valuesPageImages)[keyof typeof valuesPageImages];
+export interface ImageBlock {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
 
 export interface ValuesSectionVisualProps {
   variant: ValuesVisualVariant;

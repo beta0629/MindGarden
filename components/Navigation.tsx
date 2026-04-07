@@ -145,6 +145,7 @@ export default function Navigation() {
       label: '프로그램', 
       href: '#programs',
       submenu: [
+        { label: 'ADHD 및 동반질환', href: '/programs/adhd' },
         { label: '대상', href: '#' },
         { label: '증상', href: '#' },
         { label: '치료', href: '#' },

@@ -152,6 +152,10 @@ export default function Navigation() {
         { label: '심리검사', href: '/programs/test' }
       ]
     },
+    {
+      label: 'ADHD 자가 점검',
+      href: '/programs/symptoms#adhd-self-check',
+    },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
   ];

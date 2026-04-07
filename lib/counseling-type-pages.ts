@@ -55,7 +55,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         id: 'features',
         title: '아동·청소년기에 흔히 논의되는 특징',
         paragraphs: [
-          '집중 유지, 행동 조절, 시간 관리 등에서 어려움이 겹쳐 보일 수 있습니다. 진단·평가의 필요와 범위는 전문가와 상담하여 결정합니다.',
+          '집중 유지, 행동 조절, 시간 관리 등에서 어려움이 겹쳐 보일 수 있습니다. 평가·상담의 필요와 범위는 전문가와 상의하여 결정합니다.',
         ],
         variant: 'accent',
       },
@@ -134,7 +134,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         title: '성인기에 드러나는 모습',
         paragraphs: [
           '과잉행동이 두드러지지 않거나 인지적 보상으로 겉보기 기능이 높을 때, 어려움이 늦게 인지되는 경우가 있습니다. 여성 내담자는 사회적 기대와 맞물린 억제 경향 등이 논의될 수 있습니다.',
-          '이 페이지의 설명은 교육 목적이며, 개인 진단을 의미하지 않습니다.',
+          '이 페이지의 설명은 교육 목적이며, 개인에 대한 의학적 판단을 의미하지 않습니다.',
         ],
         variant: 'accent',
       },
@@ -234,7 +234,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
       },
       {
         id: 'medical',
-        title: '의학적 치료와의 관계',
+        title: '의학적 처방과의 관계',
         paragraphs: [
           '약물 처방 등은 의료진의 영역입니다. 심리상담은 정서·행동·인지적 지지와 생활 맥락에서의 실천을 중심으로 합니다.',
         ],
@@ -306,7 +306,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         id: 'intake',
         title: '초기 상담에서 확인하는 것',
         paragraphs: [
-          '현재 호소, 기대, 과거 상담·치료 경험, 안전과 관련해 필요한 확인 사항 등을 함께 살펴봅니다.',
+          '현재 호소, 기대, 과거 상담 경험, 안전과 관련해 필요한 확인 사항 등을 함께 살펴봅니다.',
         ],
         variant: 'band',
       },

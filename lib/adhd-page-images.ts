@@ -7,13 +7,13 @@ export const adhdPageImages = {
   },
   mod1: {
     src: '/assets/images/programs/adhd-v2-mod1.png',
-    alt: '진단 및 평가',
+    alt: '심층 평가',
     width: 1376,
     height: 768,
   },
   mod2: {
     src: '/assets/images/programs/adhd-v2-mod2.png',
-    alt: '맞춤 핵심 치료',
+    alt: '맞춤 핵심 상담',
     width: 1376,
     height: 768,
   },

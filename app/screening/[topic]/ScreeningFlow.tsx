@@ -86,6 +86,19 @@ export default function ScreeningFlow({ data }: Props) {
           <button className="screening-target-btn" onClick={() => handleTargetSelect('woman')}>
             여성
           </button>
+
+          <div className="screening-disclaimer" role="note" style={{ marginTop: '32px' }}>
+            {checklistLegalNotice.paragraphs.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+            <p>
+              {checklistLegalNotice.psychoExamBeforeLink}
+              <Link href="/programs/test" className="adhd-self-check-inline-link">
+                심리검사
+              </Link>
+              {checklistLegalNotice.psychoExamAfterLink}
+            </p>
+          </div>
         </div>
       )}
 

@@ -41,16 +41,16 @@ export const programPageContent: Record<ProgramPageId, ProgramPageCopy> = {
   },
   treatment: {
     href: '/programs/treatment',
-    cardTitle: '치료',
+    cardTitle: '상담 및 지원',
     cardLead: '증상 완화를 넘어 전인적 성장을 목표로 합니다',
-    heroTitle: ['다각적이고', '통합적인 치료 접근'],
+    heroTitle: ['다각적이고', '통합적인 상담 접근'],
     heroLead: ['"증상 완화를 넘어', '전인적 성장을 목표로 합니다"'],
   },
   test: {
     href: '/programs/test',
     cardTitle: '심리검사',
-    cardLead: '객관적이고 신뢰할 수 있는 평가가 치료의 시작입니다',
-    heroTitle: ['정확한 진단을 위한', '종합 심리검사'],
+    cardLead: '객관적이고 신뢰할 수 있는 평가가 상담의 시작입니다',
+    heroTitle: ['정확한 평가를 위한', '종합 심리검사'],
     heroLead: ['"객관적이고 신뢰할 수 있는', '평가가 치료의 시작입니다"'],
   },
 };

@@ -159,7 +159,7 @@ export default function Navigation() {
         { label: 'ADHD 통합 케어', href: '/programs/adhd' },
         { label: '대상', href: '/programs/target' },
         { label: '증상', href: '/programs/symptoms' },
-        { label: '치료', href: '/programs/treatment' },
+        { label: '상담 및 지원', href: '/programs/treatment' },
         { label: '심리검사', href: '/programs/test' }
       ]
     },

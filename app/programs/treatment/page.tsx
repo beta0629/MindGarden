@@ -9,13 +9,13 @@ import { programPageContent } from '@/lib/program-pages-content';
 const treatmentImages = {
   hero: {
     src: '/assets/images/programs/adhd-treatment.png',
-    alt: '치료',
+    alt: '상담 및 지원',
     width: 1200,
     height: 800,
   },
   band: {
     src: '/assets/images/programs/adhd-treatment.png',
-    alt: '치료',
+    alt: '상담 및 지원',
     width: 1200,
     height: 400,
   },
@@ -89,10 +89,10 @@ export default function TreatmentPage() {
               </div>
               <div style={{ maxWidth: '900px', margin: '0 auto', fontSize: '1.125rem', lineHeight: '2', color: 'var(--text-sub)', textAlign: 'center' }}>
                 <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '24px' }}>
-                  개인 맞춤형 치료 계획
+                  개인 맞춤형 상담 계획
                 </h2>
                 <p style={{ marginBottom: '24px' }}>
-                  약물 치료만으로는 해결되지 않는 정서적, 행동적 어려움을 다루기 위해 인지행동치료(CBT), 놀이치료, 미술치료 등 다양한 비약물적 개입을 병행합니다.
+                  약물 처방만으로는 해결되지 않는 정서적, 행동적 어려움을 다루기 위해 인지행동치료(CBT), 놀이치료, 미술치료 등 다양한 비약물적 개입을 병행합니다.
                 </p>
                 <p>
                   실행 기능 향상 훈련, 사회성 기술 훈련, 감정 조절 연습 등을 통해 일상생활에서의 실질적인 적응력을 높이고, 긍정적인 자아상을 형성하도록 돕습니다.

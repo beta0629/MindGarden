@@ -163,7 +163,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   ptsd: {
     topic: 'ptsd',
-    title: 'PTSD·외상 후 스트레스',
+    title: 'PTSD(외상후스트레스장애)',
     description: '힘들었던 경험 이후 반복되는 불안·회상·각성 반응을 참고용으로 살펴봅니다.',
     questions: {
       adult: [

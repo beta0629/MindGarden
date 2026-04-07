@@ -132,7 +132,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   asperger: {
     topic: 'asperger',
-    title: 'ASD(자폐 스펙트럼) 패턴',
+    title: '아스퍼거 및 ASD(자폐 스펙트럼)',
     description: '사회적 상호작용·감각·관심 패턴을 참고용으로 살펴봅니다.',
     questions: {
       adult: [

@@ -124,11 +124,11 @@ export default function AdhdProgramPage() {
                 교육·선별 목적의 자가 점검 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 임상 진단을 대신하지 않습니다.
               </p>
               <Link
-                href="/programs/symptoms#adhd-self-check"
+                href="/screening"
                 className="adhd-self-check-btn adhd-self-check-btn-primary"
                 style={{ width: '100%', maxWidth: '280px' }}
               >
-                자가 점검 하러 가기
+                자가 점검 허브로 가기
               </Link>
             </div>
 

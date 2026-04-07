@@ -243,6 +243,12 @@ export default async function Home() {
                   </Link>
                 );
               })}
+              <Link href="/screening" className="program-card">
+                <div className="program-title">ADHD &amp; 공존질환 체크리스트</div>
+                <div className="program-body">
+                  주제별 자가 점검으로 먼저 살펴보실 수 있어요
+                </div>
+              </Link>
             </div>
           </section>
 

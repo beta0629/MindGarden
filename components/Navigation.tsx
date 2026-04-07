@@ -165,7 +165,7 @@ export default function Navigation() {
     },
     {
       label: 'ADHD & 공존질환 체크리스트',
-      href: '/programs/symptoms#adhd-self-check',
+      href: '/screening',
     },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },

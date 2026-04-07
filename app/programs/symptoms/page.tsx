@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
@@ -107,6 +108,30 @@ export default function SymptomsPage() {
               style={{ maxWidth: '760px', margin: '0 auto 80px', padding: '0 20px' }}
             >
               <AdhdSelfCheck />
+              <p
+                style={{
+                  textAlign: 'center',
+                  fontSize: '0.95rem',
+                  color: 'var(--text-sub)',
+                  marginTop: '24px',
+                  lineHeight: 1.65,
+                  wordBreak: 'keep-all',
+                }}
+              >
+                우울, 공황 등 다른 주제의 자가 점검은{' '}
+                <Link
+                  href="/screening"
+                  style={{
+                    fontWeight: 600,
+                    color: 'var(--text-main)',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                  }}
+                >
+                  체크리스트 허브
+                </Link>
+                에서 이용하실 수 있습니다.
+              </p>
             </section>
 
             {/* 상담 예약하기 버튼 */}

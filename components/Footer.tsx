@@ -78,8 +78,8 @@ export default function Footer() {
               lineHeight: '1.8',
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
-                <strong>주소:</strong> 인천광역시 연수구 송도과학로 123<br />
-                송도 아크리아2 204호
+                <strong>주소:</strong> 인천 연수구 해돋이로120번길 23<br />
+                아크리아2 2층 204호
               </p>
               <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
                 <Link href="/location" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>

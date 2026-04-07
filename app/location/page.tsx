@@ -6,9 +6,9 @@ import Footer from '@/components/Footer';
 export default function LocationPage() {
   // 구글 지도 임베드 방식 사용 (HTTPS 완전 지원, Mixed Content 오류 없음)
   // 송도 아크리아2 204호 주소
-  const address = '인천광역시 연수구 송도과학로 123';
-  const buildingName = '송도 아크리아2 204호';
-  const fullAddress = `${address} ${buildingName}`;
+  const address = '인천광역시 연수구 해돋이로120번길 23';
+  const buildingName = '아크리아2 2층 204호';
+  const fullAddress = `${address} ${buildingName} 마인드가든 심리상담센터`;
   
   // 구글 지도 임베드 URL (API 키 없이도 작동하는 공개 방식)
   // 방법 1: API 키가 있는 경우 - Embed API 사용
@@ -103,14 +103,14 @@ export default function LocationPage() {
                     color: 'var(--text-main)',
                     fontSize: '1.25rem'
                   }}>
-                    송도 아크리아2 204호
+                    마인드가든 심리상담센터
                   </p>
                   <p style={{
                     marginBottom: '0',
                     wordBreak: 'keep-all',
                     overflowWrap: 'break-word'
                   }}>
-                    인천광역시 연수구 송도과학로 123
+                    인천 연수구 해돋이로120번길 23<br />아크리아2 2층 204호
                   </p>
                 </div>
               </div>

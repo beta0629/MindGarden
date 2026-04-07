@@ -53,7 +53,7 @@ export default function ScreeningFlow({ data }: Props) {
     if (ratio < 0.33)
       return {
         level: '양호에 가까운 응답',
-        desc: '응답만으로는 어려움의 정도를 알 수 없습니다. 일상에서 불편이 거의 없다면 참고용으로만 활용하시면 됩니다.',
+        desc: '응답만으로는 어려움의 정도를 알 수 없습니다. 일상에서 불편이 거의 없다면 이 정도로만 살펴보셔도 됩니다.',
       };
     if (ratio < 0.66)
       return {

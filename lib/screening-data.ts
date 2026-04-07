@@ -40,7 +40,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   adhd: {
     topic: 'adhd',
     title: 'ADHD',
-    description: '주의력과 활동량·충동성 등 일상 패턴을 참고용으로 살펴봅니다.',
+    description: '주의력과 활동량·충동성 등 일상 패턴을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'a1', text: '어떤 일의 어려운 부분은 끝내 놓고, 그 일을 마무리할 때 곤란을 겪은 적이 있습니까?' },
@@ -71,7 +71,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   depression: {
     topic: 'depression',
     title: '우울',
-    description: '최근 기분과 활력, 흥미 변화를 참고용으로 점검합니다.',
+    description: '최근 기분과 활력, 흥미 변화를 점검합니다.',
     questions: {
       adult: [
         { id: 'd_a1', text: '최근 2주일 동안 기분이 가라앉거나 희망이 없다고 느낀 적이 있습니까?' },
@@ -102,7 +102,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   panic: {
     topic: 'panic',
     title: '공황·불안 발작',
-    description: '갑작스러운 불안과 신체 반응 패턴을 참고용으로 살펴봅니다.',
+    description: '갑작스러운 불안과 신체 반응 패턴을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'p_a1', text: '갑자기 심장이 심하게 두근거리거나 빨리 뛰는 것을 느낀 적이 있습니까?' },
@@ -133,7 +133,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   asperger: {
     topic: 'asperger',
     title: '아스퍼거 및 ASD(자폐 스펙트럼)',
-    description: '사회적 상호작용·감각·관심 패턴을 참고용으로 살펴봅니다.',
+    description: '사회적 상호작용·감각·관심 패턴을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'as_a1', text: '다른 사람의 의도나 감정을 파악하는 데 어려움을 겪는 편입니까?' },
@@ -164,7 +164,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   ptsd: {
     topic: 'ptsd',
     title: 'PTSD(외상후스트레스장애)',
-    description: '힘들었던 경험 이후 반복되는 불안·회상·각성 반응을 참고용으로 살펴봅니다.',
+    description: '힘들었던 경험 이후 반복되는 불안·회상·각성 반응을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'pt_a1', text: '괴로웠던 사건이 떠오르거나 악몽으로 반복되는 경우가 있습니까?' },
@@ -195,7 +195,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   borderline: {
     topic: 'borderline',
     title: '경계선 성격 패턴',
-    description: '감정 기복, 대인관계, 정체감 등 패턴을 참고용으로 살펴봅니다. (임상적 명칭 확정이 아님)',
+    description: '감정 기복, 대인관계, 정체감 등 패턴을 살펴봅니다. (임상적 명칭 확정이 아님)',
     questions: {
       adult: [
         { id: 'bd_a1', text: '가까운 사람에 대한 생각이 극단적으로 좋거나 나쁘게 바뀌곤 합니까?' },
@@ -226,7 +226,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   school: {
     topic: 'school',
     title: '학교생활 부적응',
-    description: '출석, 수업 참여, 또래 관계 등 학교 적응 어려움을 참고용으로 살펴봅니다.',
+    description: '출석, 수업 참여, 또래 관계 등 학교 적응 어려움을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'sc_a1', text: '(보호자 기준) 자녀가 학교 가기를 극도로 거부하거나 자주 빠진다고 느끼십니까?' },
@@ -257,7 +257,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   work: {
     topic: 'work',
     title: '직장생활 부적응',
-    description: '업무 몰입, 대인관계, 번아웃 신호 등을 참고용으로 살펴봅니다.',
+    description: '업무 몰입, 대인관계, 번아웃 신호 등을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'wk_a1', text: '출근 전부터 심한 불안·저항감이 드는 날이 잦습니까?' },
@@ -288,7 +288,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   addiction: {
     topic: 'addiction',
     title: '중독·과몰입 행동',
-    description: '술·담배·약물, 게임, 스마트폰 등 행동 조절 어려움을 참고용으로 살펴봅니다.',
+    description: '술·담배·약물, 게임, 스마트폰 등 행동 조절 어려움을 살펴봅니다.',
     questions: {
       adult: [
         { id: 'ad_a1', text: '특정 행동(음주, 게임, 스마트폰 등)을 줄이려 해도 잘 되지 않습니까?' },

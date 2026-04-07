@@ -22,8 +22,8 @@ export default function LocationPage() {
   
   // 구글 지도 검색 링크 (새 탭에서 열기)
   const googleMapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
-  // 네이버 지도 링크 (대체 옵션)
-  const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent(fullAddress)}`;
+  // 네이버 지도 링크 (대체 옵션) - 네이버 플레이스 등록명으로 검색
+  const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent('마인드가든 심리상담센터')}`;
 
   return (
     <main id="top">

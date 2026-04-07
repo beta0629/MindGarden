@@ -23,7 +23,7 @@ export default function HomeScreeningPromo() {
                 <br />
                 체크리스트
               </span>
-              <span className="home-screening-promo-sub">주제별 간이 체크리스트 · 참고용</span>
+              <span className="home-screening-promo-sub">주제별 간이 체크리스트</span>
               <span className="home-screening-promo-cta">살펴보기</span>
             </span>
             <span className="sr-only">

@@ -165,23 +165,13 @@ export default function ConsultationBottomSheet() {
               >
                 클릭하여 상담 문의하기
               </div>
-              <span className="consultation-sheet-cue" aria-hidden="true">
-                <span className="consultation-sheet-arrow-hint">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M12 4.5l-8.5 8.5 1.4 1.4L12 7.3l7.1 7.1 1.4-1.4L12 4.5z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-                <span className="consultation-sheet-tap-hint">
-                  <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      fill="currentColor"
-                      d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm7.91.86c-.06-.06-.13-.11-.2-.15l-.23-.09a1.16 1.16 0 0 0-.25-.03H15v-4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5h8c.83 0 1.5-.67 1.5-1.5v-5c0-.39-.16-.74-.41-1-.06-.06-.13-.11-.2-.15z"
-                    />
-                  </svg>
-                </span>
+              <span className="consultation-sheet-arrow-hint" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 4.5l-8.5 8.5 1.4 1.4L12 7.3l7.1 7.1 1.4-1.4L12 4.5z"
+                    fill="currentColor"
+                  />
+                </svg>
               </span>
             </>
           )}
@@ -267,36 +257,18 @@ export default function ConsultationBottomSheet() {
           animation: consultationSheetArrowPulse 2s ease-in-out infinite;
           opacity: 0.85;
         }
-        .consultation-sheet-cue {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          margin-top: 10px;
-          color: var(--accent-sky, #0284c7);
-        }
         .consultation-sheet-arrow-hint {
           display: flex;
           align-items: center;
           justify-content: center;
+          margin-top: 10px;
+          color: var(--accent-sky, #0284c7);
           animation: consultationSheetCueMotion 1.25s ease-in-out infinite,
             consultationSheetCueBlink 1.1s ease-in-out infinite;
         }
         .consultation-sheet-arrow-hint svg {
           display: block;
           filter: drop-shadow(0 1px 2px rgba(2, 132, 199, 0.25));
-        }
-        .consultation-sheet-tap-hint {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0.92;
-          animation: consultationSheetCueMotion 1.25s ease-in-out 0.2s infinite,
-            consultationSheetCueBlink 1.1s ease-in-out 0.35s infinite;
-        }
-        .consultation-sheet-tap-hint svg {
-          display: block;
-          filter: drop-shadow(0 1px 2px rgba(2, 132, 199, 0.2));
         }
         @keyframes consultationSheetCueMotion {
           0%,
@@ -329,7 +301,6 @@ export default function ConsultationBottomSheet() {
         }
         @media (prefers-reduced-motion: reduce) {
           .consultation-sheet-arrow-hint,
-          .consultation-sheet-tap-hint,
           .consultation-sheet-arrow--down {
             animation: none !important;
           }

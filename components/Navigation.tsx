@@ -164,14 +164,8 @@ export default function Navigation() {
       ]
     },
     {
-      label: 'ADHD 자가 점검',
-      href: '/programs/symptoms',
-      submenu: [
-        {
-          label: 'ADHD 및 공존질환 체크리스트',
-          href: '/programs/symptoms#adhd-self-check',
-        },
-      ],
+      label: 'ADHD & 공존질환 체크리스트',
+      href: '/programs/symptoms#adhd-self-check',
     },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },

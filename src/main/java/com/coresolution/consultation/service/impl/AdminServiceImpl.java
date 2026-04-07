@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
@@ -55,6 +56,8 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
+import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
@@ -112,6 +115,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final PasswordResetService passwordResetService;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
+    private final UserService userService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -326,25 +330,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public Client registerClient(ClientRegistrationRequest request) {
-        // 표준화 2025-12-08: 이메일만 입력받고 userId, password, name 자동 생성
-        String email = request.getEmail();
-        if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("이메일은 필수입니다.");
-        }
-        email = email.trim().toLowerCase();
-        
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
             throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
         }
-        
-        // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
-        String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
-        log.info("✅ 테넌트별 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
-                email, tenantId, userId);
-        
-        // 2. 비밀번호 처리: 사용자가 입력한 비밀번호가 있으면 사용, 없으면 임시 비밀번호 자동 생성
+
+        String rawEmail = request.getEmail();
+        String rawPhone = request.getPhone();
+        boolean hasEmail = rawEmail != null && !rawEmail.trim().isEmpty();
+        boolean hasPhone = rawPhone != null && !rawPhone.trim().isEmpty();
+        if (!hasEmail && !hasPhone) {
+            throw new IllegalArgumentException(ClientRegistrationConstants.MSG_EMAIL_OR_PHONE_REQUIRED);
+        }
+
+        String normalizedPhoneDigits = null;
+        if (hasPhone) {
+            normalizedPhoneDigits = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+            if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhoneDigits)) {
+                throw new IllegalArgumentException(ClientRegistrationConstants.MSG_INVALID_PHONE);
+            }
+            if (userService.existsPhoneDuplicateForPublicSignup(normalizedPhoneDigits, tenantId)) {
+                throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_PHONE);
+            }
+        }
+
+        String emailPlain;
+        if (hasEmail) {
+            emailPlain = rawEmail.trim().toLowerCase();
+            String encryptedForLookup = encryptionUtil.safeEncrypt(emailPlain);
+            if (userRepository.existsByTenantIdAndEmail(tenantId, encryptedForLookup)) {
+                throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_EMAIL);
+            }
+        } else {
+            emailPlain = allocateUniqueSyntheticEmailForClient(normalizedPhoneDigits, tenantId);
+        }
+
+        // 1. userId: 이메일 우선, 전화만이면 정규화 번호 기반
+        String userId;
+        if (hasEmail) {
+            userId = userIdGenerator.generateUniqueUserId(emailPlain, tenantId);
+        } else {
+            userId = userIdGenerator.generateUniqueUserIdFromPhone(normalizedPhoneDigits, tenantId);
+        }
+        log.info("✅ 내담자 사용자 ID 자동 생성: hasEmail={}, tenantId={}, userId={}", hasEmail, tenantId, userId);
+
+        // 2. 비밀번호
         String password;
         boolean isTempPassword = false;
         log.debug("registerClient password received: present={}, nonEmpty={}",
@@ -352,32 +383,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 request.getPassword() != null && !request.getPassword().trim().isEmpty());
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             password = request.getPassword().trim();
-            log.info("✅ 사용자 입력 비밀번호 사용: email={}", email);
+            log.info("✅ 사용자 입력 비밀번호 사용: principalHint={}", hasEmail ? emailPlain : normalizedPhoneDigits);
         } else {
             password = generateTempPassword();
             isTempPassword = true;
-            log.info("✅ 임시 비밀번호 자동 생성 완료: email={}", email);
+            log.info("✅ 임시 비밀번호 자동 생성 완료");
         }
-        
-        // 3. 이름 자동 생성 (이메일 로컬 파트 또는 기본값 사용) (표준화 2025-12-08)
+
+        // 3. 표시 이름
         String name = request.getName();
         if (name == null || name.trim().isEmpty()) {
-            // 이메일 로컬 파트에서 이름 생성
-            String localPart = email.split("@")[0];
-            name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
-            if (name.isEmpty()) {
-                name = "내담자";
+            if (hasEmail) {
+                String localPart = emailPlain.split("@")[0];
+                name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
+                if (name.isEmpty()) {
+                    name = ClientRegistrationConstants.DEFAULT_CLIENT_DISPLAY_NAME;
+                }
+            } else {
+                name = maskPhone(normalizedPhoneDigits);
+                if (name == null || name.length() < 4) {
+                    name = ClientRegistrationConstants.DEFAULT_CLIENT_DISPLAY_NAME;
+                }
             }
         }
         name = name.trim();
-        
+
         // 개인정보 암호화
         String encryptedName = encryptionUtil.safeEncrypt(name);
-        String encryptedEmail = encryptionUtil.safeEncrypt(email);
+        String encryptedEmail = encryptionUtil.safeEncrypt(emailPlain);
         String encryptedPhone = null;
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
-            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+        if (hasPhone) {
+            encryptedPhone = encryptionUtil.safeEncrypt(normalizedPhoneDigits);
+            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(normalizedPhoneDigits));
         }
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
@@ -423,7 +460,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
-                clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
+                clientUser.getUserId(), emailPlain, tenantId, clientUser.getIsActive(), clientUser.getRole());
 
         User savedUser = userRepository.saveAndFlush(clientUser);
         validateClientUserTenantIntegrity(savedUser, tenantId);
@@ -5141,6 +5178,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
     
+    /**
+     * 전화만 등록 시 DB NOT NULL용 합성 이메일을 테넌트 범위에서 유일하게 할당합니다.
+     *
+     * @param normalizedDigits 정규화된 휴대폰 숫자열
+     * @param tenantId         테넌트 ID
+     * @return 평문 합성 이메일
+     */
+    private String allocateUniqueSyntheticEmailForClient(String normalizedDigits, String tenantId) {
+        String sanitized = ClientRegistrationConstants.sanitizeTenantIdForSyntheticEmailDomain(tenantId);
+        for (int i = 0; i < 1000; i++) {
+            String candidate = ClientRegistrationConstants.buildSyntheticEmail(normalizedDigits, sanitized, i);
+            String enc = encryptionUtil.safeEncrypt(candidate);
+            if (!userRepository.existsByTenantIdAndEmail(tenantId, enc)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("합성 이메일을 할당하지 못했습니다. 관리자에게 문의하세요.");
+    }
+
      /**
      * 전화번호 마스킹
      */

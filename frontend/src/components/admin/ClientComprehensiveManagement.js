@@ -4,9 +4,10 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
-import { normalizeVehiclePlateInput } from '../../utils/validationUtils';
+import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { showError, showSuccess } from '../../utils/notification';
+import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ViewModeToggle } from '../common';
@@ -672,6 +673,22 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             return;
                                         }
                                     }
+                                    const emailTrim = dataToUse.email != null ? String(dataToUse.email).trim() : '';
+                                    const phoneTrim = dataToUse.phone != null ? String(dataToUse.phone).trim() : '';
+                                    if (modalType === 'create' || modalType === 'edit') {
+                                        if (!emailTrim && !phoneTrim) {
+                                            showError(VALIDATION_MESSAGES.EMAIL_OR_PHONE_ONE_REQUIRED);
+                                            return;
+                                        }
+                                        if (emailTrim && !validateEmail(emailTrim)) {
+                                            showError(VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT);
+                                            return;
+                                        }
+                                        if (phoneTrim && !validatePhone(phoneTrim)) {
+                                            showError(VALIDATION_MESSAGES.INVALID_PHONE);
+                                            return;
+                                        }
+                                    }
                                     const payload = {
                                         name: dataToUse.name,
                                         email: dataToUse.email,
@@ -713,11 +730,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         if (editingClient?.id == null || editingClient?.id === '') {
                                             const idErr = '내담자 ID가 없어 수정할 수 없습니다. 목록에서 다시 선택해 주세요.';
                                             showError(idErr);
-                                            return;
-                                        }
-                                        if (!(dataToUse.email && String(dataToUse.email).trim())) {
-                                            const emailErr = '이메일은 필수입니다.';
-                                            showError(emailErr);
                                             return;
                                         }
                                         console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });

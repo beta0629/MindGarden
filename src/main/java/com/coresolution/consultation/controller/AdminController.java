@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
+import org.springframework.validation.annotation.Validated;
+import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
@@ -1650,12 +1653,14 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 등록 (관리자, 스태프만 가능)
+     * 내담자 등록 (관리자, 스태프만 가능).
+     * 이메일과 휴대폰 중 최소 하나는 필수이며, 전화만인 경우 서비스에서 합성 이메일을 부여해 저장합니다.
      */
     @PostMapping("/clients")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Client>> registerClient(
-            @RequestBody @Valid ClientRegistrationRequest request, HttpSession session) {
+            @RequestBody @Validated({Default.class, OnAdminClientRegister.class}) ClientRegistrationRequest request,
+            HttpSession session) {
         log.info("🔧 내담자 등록: {}", request.getName());
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,

@@ -1,8 +1,11 @@
 package com.coresolution.consultation.dto;
 
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.VehiclePlateOptional;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,8 +27,7 @@ public class ClientRegistrationRequest {
     // 표준화 2025-12-08: userId는 이메일 기반으로 자동 생성됨 (프론트엔드에서 전송하지 않음)
     private String userId;
     
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    /** 비어 있을 수 있음. 이메일 또는 휴대폰 중 하나 필수는 {@link #isEmailOrPhonePresent()}로 검증. */
     private String email;
     
     // 비밀번호: 사용자가 입력하면 사용, 없으면 임시 비밀번호 자동 생성
@@ -81,6 +83,27 @@ public class ClientRegistrationRequest {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    @AssertTrue(message = ClientRegistrationConstants.MSG_EMAIL_OR_PHONE_REQUIRED, groups = OnAdminClientRegister.class)
+    private boolean isEmailOrPhonePresent() {
+        boolean hasEmail = email != null && !email.trim().isEmpty();
+        boolean hasPhone = phone != null && !phone.trim().isEmpty();
+        return hasEmail || hasPhone;
+    }
+
+    @AssertTrue(message = ClientRegistrationConstants.MSG_INVALID_EMAIL_FORMAT, groups = OnAdminClientRegister.class)
+    private boolean isEmailFormatValidWhenPresent() {
+        if (email == null || email.trim().isEmpty()) {
+            return true;
+        }
+        try {
+            InternetAddress addr = new InternetAddress(email.trim());
+            addr.validate();
+            return true;
+        } catch (AddressException e) {
+            return false;
+        }
     }
 
     /**

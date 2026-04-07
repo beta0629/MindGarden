@@ -144,6 +144,8 @@ export const VALIDATION_MESSAGES = {
   REQUIRED_PHONE: '휴대폰 번호를 입력해주세요.',
 
   LABEL_EMAIL_REQUIRED: '이메일 *',
+  HELP_EMAIL_OR_PHONE_ONE_REQUIRED: '이메일 또는 휴대폰 번호 중 하나는 입력해 주세요.',
+  EMAIL_OR_PHONE_ONE_REQUIRED: '이메일 또는 휴대폰 번호 중 하나는 입력해 주세요.',
   BUTTON_DUPLICATE_CHECK: '중복확인',
   BUTTON_CHECKING: '확인 중...',
   HELP_EMAIL_READONLY: '이메일은 변경할 수 없습니다.',

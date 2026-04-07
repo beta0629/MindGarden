@@ -10,6 +10,10 @@ import SocialSignupModal from './SocialSignupModal';
 import AccountIntegrationModal from './AccountIntegrationModal';
 import TenantSelection from './TenantSelection';
 import { API_BASE_URL } from '../../constants/api';
+import { toDisplayString } from '../../utils/safeDisplay';
+
+/** OAuth2 리다이렉트 error 쿼리 표시 상한 (민감·과다 노출 완화) */
+const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 
 const OAuth2Callback = () => {
   const navigate = useNavigate();
@@ -47,18 +51,29 @@ const OAuth2Callback = () => {
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchCode = searchParams.get('branchCode');
         const needsBranchMapping = searchParams.get('needsBranchMapping');
-        const error = searchParams.get('error');
+        const oauthErrorParam = searchParams.get('error');
         const requiresSignup = searchParams.get('requiresSignup');
         
         console.log('📋 OAuth2 콜백 파라미터:', { 
           success, provider, userId, email, name, nickname, role, profileImageUrl, providerUserId, 
-          branchId, branchName, branchCode, needsBranchMapping, error, requiresSignup
+          branchId, branchName, branchCode, needsBranchMapping, error: oauthErrorParam, requiresSignup
         });
         
-        if (error) {
-          console.error('❌ OAuth2 오류:', error);
-          setError(`OAuth2 인증 오류: ${error}`);
-          notificationManager.show('OAuth2 인증에 실패했습니다.', 'error');
+        if (oauthErrorParam) {
+          console.error('❌ OAuth2 오류:', oauthErrorParam);
+          let decodedError = oauthErrorParam;
+          try {
+            decodedError = decodeURIComponent(oauthErrorParam);
+          } catch {
+            decodedError = oauthErrorParam;
+          }
+          const displayError = toDisplayString(decodedError, 'OAuth2 인증에 실패했습니다.');
+          const truncated =
+            displayError.length > OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN
+              ? `${displayError.slice(0, OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN)}…`
+              : displayError;
+          setError(truncated);
+          notificationManager.show(truncated, 'error');
           setTimeout(() => navigate('/login'), 3000);
           return;
         }

@@ -453,7 +453,7 @@ const ClientModal = ({
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="phone" className="mg-v2-form-label">전화번호</label>
+                    <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호</label>
                     <input
                         type="tel"
                         id="phone"
@@ -464,6 +464,11 @@ const ClientModal = ({
                         className="mg-v2-form-input"
                         readOnly={type === 'view'}
                     />
+                    {type === 'create' && (
+                        <small className="mg-v2-form-help">
+                            {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
+                        </small>
+                    )}
                 </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">차량번호 (선택)</label>
@@ -553,7 +558,9 @@ const ClientModal = ({
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
+                    <label htmlFor="email" className="mg-v2-form-label">
+                        {type === 'create' ? '이메일' : VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}
+                    </label>
                     <div className="mg-v2-form-email-row">
                         <div className="mg-v2-form-email-row__input-wrap">
                             <MgEmailFieldWithAutocomplete
@@ -562,7 +569,7 @@ const ClientModal = ({
                                 value={safeFormData.email}
                                 onChange={handleInputChange}
                                 placeholder="example@email.com"
-                                required
+                                required={false}
                                 disabled={type === 'edit'}
                                 autocompleteMode="datalist"
                             />

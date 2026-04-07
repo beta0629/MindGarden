@@ -117,26 +117,59 @@ export default function ConsultationBottomSheet() {
               marginBottom: '8px',
             }}
           />
-          <div
-            style={{
-              fontSize: '1.125rem',
-              fontWeight: '700',
-              color: 'var(--text-main)',
-              textAlign: 'center',
-            }}
-          >
-            {isOpen ? '문의 / 예약 접기' : '문의 / 예약'}
-          </div>
-          {!isOpen && (
+          {isOpen ? (
+            <div className="consultation-sheet-title-row">
+              <div
+                style={{
+                  fontSize: '1.125rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  textAlign: 'center',
+                }}
+              >
+                문의 / 예약 접기
+              </div>
+              <span className="consultation-sheet-arrow consultation-sheet-arrow--down" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 18.5l7-7-1.4-1.4L12 15.7 6.4 10.1 5 11.5l7 7z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+            </div>
+          ) : (
             <div
               style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-sub)',
-                marginTop: '4px',
+                fontSize: '1.125rem',
+                fontWeight: '700',
+                color: 'var(--text-main)',
+                textAlign: 'center',
               }}
             >
-              클릭하여 상담 문의하기
+              문의 / 예약
             </div>
+          )}
+          {!isOpen && (
+            <>
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--text-sub)',
+                  marginTop: '4px',
+                }}
+              >
+                클릭하여 상담 문의하기
+              </div>
+              <span className="consultation-sheet-arrow-hint" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 4.5l-8.5 8.5 1.4 1.4L12 7.3l7.1 7.1 1.4-1.4L12 4.5z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+            </>
           )}
         </div>
 
@@ -201,6 +234,58 @@ export default function ConsultationBottomSheet() {
           }
           to {
             opacity: 1;
+          }
+        }
+        .consultation-sheet-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: 2px;
+        }
+        .consultation-sheet-arrow {
+          display: inline-flex;
+          color: var(--accent-sky, #0284c7);
+          flex-shrink: 0;
+        }
+        .consultation-sheet-arrow--up {
+          animation: consultationSheetArrowNudge 1.35s ease-in-out infinite;
+        }
+        .consultation-sheet-arrow--down {
+          animation: consultationSheetArrowPulse 2s ease-in-out infinite;
+          opacity: 0.85;
+        }
+        .consultation-sheet-arrow-hint {
+          display: flex;
+          justify-content: center;
+          margin-top: 8px;
+          color: var(--accent-sky, #0284c7);
+          opacity: 0.9;
+          animation: consultationSheetArrowNudge 1.35s ease-in-out infinite;
+        }
+        .consultation-sheet-arrow-hint svg {
+          display: block;
+          filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
+        }
+        @keyframes consultationSheetArrowNudge {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+        @keyframes consultationSheetArrowPulse {
+          0%,
+          100% {
+            opacity: 0.65;
+            transform: translateY(0);
+          }
+          50% {
+            opacity: 1;
+            transform: translateY(2px);
           }
         }
       `}</style>

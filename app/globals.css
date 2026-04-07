@@ -1769,7 +1769,7 @@ a.program-card:hover {
 .footer-simple {
   background-color: var(--bg-pastel-2);
   border-top: 1px solid var(--border-soft);
-    text-align: center;
+    text-align: left;
     padding: 4rem;
     color: var(--text-sub);
     font-size: 0.8rem;

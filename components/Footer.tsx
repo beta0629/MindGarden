@@ -52,23 +52,30 @@ export default function Footer() {
         padding: '3rem 2rem',
       }}>
         {/* 센터 정보 - 가로 배치 */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          gap: '3rem',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start',
+            gap: 'clamp(1.5rem, 4vw, 3rem)',
+            marginBottom: '2rem',
+            flexWrap: 'wrap',
+            textAlign: 'left',
+            width: '100%',
+          }}
+        >
           <div style={{
-            flex: '0 0 auto',
+            flex: '1 1 12rem',
+            minWidth: '10rem',
+            maxWidth: '22rem',
           }}>
             <h3 style={{
               fontSize: '1.125rem',
               fontWeight: '700',
               color: 'var(--text-main)',
               marginBottom: '1rem',
+              textAlign: 'left',
             }}>
               마인드가든 심리상담센터
             </h3>
@@ -76,6 +83,7 @@ export default function Footer() {
               fontSize: '0.875rem',
               color: 'var(--text-sub)',
               lineHeight: '1.8',
+              textAlign: 'left',
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
                 <strong>주소:</strong> 인천 연수구 해돋이로120번길 23<br />
@@ -90,13 +98,16 @@ export default function Footer() {
           </div>
 
           <div style={{
-            flex: '0 0 auto',
+            flex: '1 1 10rem',
+            minWidth: '9rem',
+            maxWidth: '18rem',
           }}>
             <div style={{
               fontSize: '0.875rem',
               color: 'var(--text-sub)',
               lineHeight: '1.8',
               marginTop: '2.5rem', // h3 높이만큼 상단 여백
+              textAlign: 'left',
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
                 <strong>운영시간:</strong> 주중 10:00 - 20:00<br />
@@ -107,13 +118,16 @@ export default function Footer() {
           </div>
 
           <div style={{
-            flex: '0 0 auto',
+            flex: '1 1 12rem',
+            minWidth: '10rem',
+            maxWidth: '22rem',
           }}>
             <div style={{
               fontSize: '0.875rem',
               color: 'var(--text-sub)',
               lineHeight: '1.8',
               marginTop: '2.5rem', // h3 높이만큼 상단 여백
+              textAlign: 'left',
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
                 <strong>전화:</strong> 032-724-8501<br />

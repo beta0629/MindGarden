@@ -42,10 +42,9 @@ export default function CounselingTypePageView({
             )}
 
             <div className="counseling-type-stack">
-              {data.sections.map((section, index) => {
+              {data.sections.map((section) => {
                 const slot = plan?.beforeSection.find((s) => s.sectionId === section.id);
-                const variants: ValuesVisualVariant[] = ['split', 'accent', 'band', 'hero'];
-                const variant = variants[index % variants.length];
+                const variant = section.variant || 'split';
 
                 return (
                   <Fragment key={section.id}>

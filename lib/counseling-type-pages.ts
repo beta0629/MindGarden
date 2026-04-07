@@ -8,6 +8,8 @@ export type CounselingSection = {
   title: string;
   paragraphs: string[];
   internalLinks?: { href: string; label: string }[];
+  variant?: 'hero' | 'split' | 'accent' | 'band';
+  imagePosition?: 'left' | 'right';
 };
 
 export type CounselingPageData = {
@@ -46,6 +48,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           '수업·숙제·생활 루틴을 유지하기 어렵고, 또래 관계나 가족 소통에서 자주 마찰이 생기는 아동·청소년과 보호자.',
           '발달 단계에 따라 증상이 다르게 보일 수 있으며, 아래 내용은 일반적인 안내입니다. 개인별 상태는 상담·평가 과정에서 함께 살펴봅니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'features',
@@ -53,6 +57,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '집중 유지, 행동 조절, 시간 관리 등에서 어려움이 겹쳐 보일 수 있습니다. 진단·평가의 필요와 범위는 전문가와 상담하여 결정합니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'focus',
@@ -61,6 +66,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           '증상에 대한 이해를 바탕으로, 학교 적응, 또래 관계, 가족 대화 방식, 자기조절 루틴 등에서 우선순위를 내담자·보호자와 합의합니다.',
           '목표와 회기 구성은 개인차가 크므로 고정된 횟수나 결과를 약속하지 않습니다.',
         ],
+        variant: 'split',
+        imagePosition: 'left',
       },
       {
         id: 'family',
@@ -68,6 +75,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '가정에서의 일관된 지지와 과제·루틴이 상담 내용과 맞물릴 때 변화가 이어지기 쉽습니다. 보호자 면담·피드백을 과정에 포함할 수 있습니다.',
         ],
+        variant: 'band',
       },
       {
         id: 'network',
@@ -75,6 +83,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '필요하다고 판단될 때 의학·교육 등 다른 기관 안내를 논의할 수 있습니다. 연계 여부와 방식은 개별 상황에 따라 달라집니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'process',
@@ -82,6 +92,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '초기 면담에서 호소와 기대를 정리한 뒤, 상담 목표와 간격을 함께 정합니다. 진행 중 목표를 조정할 수 있습니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'related',
@@ -91,6 +102,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           { href: '/counseling/adult-adhd', label: '성인 ADHD 상담' },
           { href: '/counseling/comorbidity', label: 'ADHD와 동반질환' },
         ],
+        variant: 'band',
       },
     ],
     ctaTitle: '다음 단계',
@@ -114,6 +126,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '업무·가사·관계에서 반복적으로 일정·집중·감정 조절이 어렵고, 그로 인해 스트레스가 누적되는 성인 내담자.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'presentation',
@@ -122,6 +136,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           '과잉행동이 두드러지지 않거나 인지적 보상으로 겉보기 기능이 높을 때, 어려움이 늦게 인지되는 경우가 있습니다. 여성 내담자는 사회적 기대와 맞물린 억제 경향 등이 논의될 수 있습니다.',
           '이 페이지의 설명은 교육 목적이며, 개인 진단을 의미하지 않습니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'focus',
@@ -129,6 +144,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '증상 라벨에만 머무르지 않고, 직장·관계·자기돌봄 맥락에서 기능 회복과 자기이해를 함께 다룹니다.',
         ],
+        variant: 'split',
+        imagePosition: 'left',
       },
       {
         id: 'assessment',
@@ -136,6 +153,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '필요 시 심리검사·평가 절차를 안내할 수 있습니다. 결과와 해석은 전문가와의 상담을 통해 진행합니다.',
         ],
+        variant: 'band',
       },
       {
         id: 'comorbid',
@@ -144,6 +162,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           '우울·불안 등 다른 정서적 어려움과 겹칠 수 있습니다. 함께 다루는 방식은 내담자 상태와 목표에 따라 달라집니다.',
         ],
         internalLinks: [{ href: '/counseling/comorbidity', label: 'ADHD와 동반질환 안내' }],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'process',
@@ -151,6 +171,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '초기 면담에서 호소와 기대를 정리한 뒤, 상담 목표와 간격을 함께 정합니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'related',
@@ -160,6 +181,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           { href: '/counseling/child-adolescent-adhd', label: '아동·청소년 ADHD 상담' },
           { href: '/counseling/comorbidity', label: 'ADHD와 동반질환' },
         ],
+        variant: 'band',
       },
     ],
     ctaTitle: '다음 단계',
@@ -182,6 +204,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           'ADHD 특성과 다른 정서·행동 어려움이 겹칠 때, 한 가지 원인만으로 설명하기 어려운 경우가 있습니다. 상담에서는 이런 맥락을 함께 정리합니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'areas',
@@ -189,6 +213,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '예를 들어 우울·불안, 수면, 관계 갈등 등이 언급될 수 있습니다. 아래는 일반적 교육용 나열이며, 개인에게 해당한다고 단정하지 않습니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'assessment',
@@ -196,6 +221,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '호소가 겹칠 때 우선 다룰 영역을 정리하면 개입 방향이 달라질 수 있습니다. 평가·해석은 전문 절차에 따릅니다.',
         ],
+        variant: 'split',
+        imagePosition: 'left',
       },
       {
         id: 'counseling',
@@ -203,6 +230,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '동반 어려움을 동시에 고려한 목표를 세우고, 단기·중기 우선순위를 조정해 갑니다.',
         ],
+        variant: 'band',
       },
       {
         id: 'medical',
@@ -210,6 +238,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '약물 처방 등은 의료진의 영역입니다. 심리상담은 정서·행동·인지적 지지와 생활 맥락에서의 실천을 중심으로 합니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'experience',
@@ -217,6 +247,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '임상 경험을 바탕으로 개인별 상황에 맞춰 논의합니다. 결과를 보장하거나 특정 수치적 효과를 약속하지는 않습니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'related',
@@ -226,6 +257,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           { href: '/counseling/child-adolescent-adhd', label: '아동·청소년 ADHD 상담' },
           { href: '/counseling/adult-adhd', label: '성인 ADHD 상담' },
         ],
+        variant: 'band',
       },
     ],
     ctaTitle: '다음 단계',
@@ -248,6 +280,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           'ADHD 경향성과 연관된 주의력, 행동 조절, 정서 조절, 관계·학교·직장 적응 등을 상담 목표와 연결해 논의합니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'examples',
@@ -257,6 +291,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           '성인: 업무·시간 관리, 관계 패턴, 번아웃·불안과의 공존 등.',
           '구체 과목은 초기 면담에서 호소에 맞춰 정리합니다.',
         ],
+        variant: 'accent',
       },
       {
         id: 'out-of-scope',
@@ -264,6 +299,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '센터 역량·전문 분야 밖으로 판단되면 솔직히 안내하고, 다른 기관·전문가 연계를 논의할 수 있습니다.',
         ],
+        variant: 'split',
+        imagePosition: 'left',
       },
       {
         id: 'intake',
@@ -271,6 +308,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '현재 호소, 기대, 과거 상담·치료 경험, 안전과 관련해 필요한 확인 사항 등을 함께 살펴봅니다.',
         ],
+        variant: 'band',
       },
       {
         id: 'format',
@@ -278,6 +316,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         paragraphs: [
           '개별 상담을 기본으로 하며, 가족·부모 면담이 병행될 수 있습니다. 홈페이지 프로그램 안내와 용어를 맞추어 안내합니다.',
         ],
+        variant: 'split',
+        imagePosition: 'right',
       },
       {
         id: 'related',
@@ -288,6 +328,7 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
           { href: '/counseling/adult-adhd', label: '성인 ADHD' },
           { href: '/counseling/comorbidity', label: '동반질환' },
         ],
+        variant: 'accent',
       },
     ],
     ctaTitle: '다음 단계',

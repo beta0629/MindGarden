@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
 
 interface Counselor {
@@ -17,6 +18,46 @@ interface Counselor {
   certifications: string | null;
   experience: string | null;
 }
+
+const HEAD_COUNSELOR = {
+  name: '김선희',
+  title: '대표원장',
+  imageUrl: '/assets/images/counselors/default-profile.png',
+  specialties: [
+    'ADHD, ADD(조용한 ADHD)',
+    '틱, 투렛',
+    '아스퍼거',
+    'HSP(초민감성)',
+    'PTSD(외상후 스트레스장애), 트라우마',
+    '불안, 강박, 공황장애',
+    '우울, 양극성(조울)',
+    '경계선 성격, 애착문제',
+    '자해, 자살, 위기개입',
+    '아동, 청소년',
+    '부부, 커플, 가족상담'
+  ],
+  education: '청소년 교육(학사), 상담학(석사), 가족상담(박사수료)',
+  certifications: [
+    '한국상담학회 전문상담사, 부부가족분과소속',
+    '보건복지부 사회복지사',
+    '여성가족부 청소년지도사',
+    '놀이치료사, 미술치료사, 교류분석사'
+  ],
+  experience: [
+    '인천지역 건강·다문화가족지원센터, 부부가족상담',
+    '인천지역 소방공무원·PTSD·트라우마 상담 및 검사',
+    '한국이민재단·부부 상호 이해 과목 강사(결혼이민자조기적응P)',
+    '서구 초등학교 외부 전문상담사',
+    '한부모가정지지·사회복지 사례담당자 힐링 프로그램',
+    '정서조절P·감정코칭·자기이해·자녀양육·청소년 진로집단P',
+    '아동보호전문기관(법원수탁프로그램)·부모교육·개인·가족상담',
+    '한양아이소리센터(아동, 청소년, 부부, 가족)',
+    '허그인 허그맘센터 수석상담사(아동, 청소년, 부부, 가족)',
+    '엠브레스 마인드 수석상담사(아동, 청소년, 부부, 가족)',
+    '트리니티 연구소 소장(아동, 청소년, 부부, 가족) 외 다수'
+  ],
+  training: '사티어 경험적 가족치료·미술치료·모래놀이치료·NLP·인간중심, PTSD재난분과·부부·가족상담분과(한국상담학회)'
+};
 
 export default function CounselorsPage() {
   const [counselors, setCounselors] = useState<Counselor[]>([]);
@@ -141,6 +182,158 @@ export default function CounselorsPage() {
               }}>
                 마인드 가든의 전문 선생님들을 소개합니다
               </p>
+            </div>
+
+            {/* 대표원장 섹션 */}
+            <div style={{
+              maxWidth: '1000px',
+              margin: '0 auto 64px',
+              background: 'linear-gradient(to bottom, var(--white) 0%, rgba(184, 212, 227, 0.05) 100%)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-1)',
+              border: '2px solid var(--accent-sky)40',
+              padding: isMobile ? '32px 24px' : '48px',
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '40px',
+              alignItems: isMobile ? 'center' : 'flex-start'
+            }}>
+              {/* 왼쪽: 프로필 이미지 */}
+              <div style={{
+                flexShrink: 0,
+                width: isMobile ? '200px' : '280px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <div style={{
+                  width: '100%',
+                  aspectRatio: '1/1',
+                  position: 'relative',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  marginBottom: '24px',
+                  border: '4px solid var(--accent-sky)',
+                  boxShadow: 'var(--shadow-1)'
+                }}>
+                  <Image
+                    src={HEAD_COUNSELOR.imageUrl}
+                    alt={`${HEAD_COUNSELOR.name} ${HEAD_COUNSELOR.title}`}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <h2 style={{
+                  fontSize: '1.75rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  marginBottom: '8px'
+                }}>
+                  {HEAD_COUNSELOR.name} <span style={{ fontSize: '1.25rem', color: 'var(--accent-sky)', fontWeight: '600' }}>{HEAD_COUNSELOR.title}</span>
+                </h2>
+              </div>
+
+              {/* 오른쪽: 약력 및 상담분야 */}
+              <div style={{ flex: 1, width: '100%' }}>
+                {/* 상담분야 태그 */}
+                <div style={{ marginBottom: '32px' }}>
+                  <h3 style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: '700', 
+                    color: 'var(--text-main)', 
+                    marginBottom: '16px', 
+                    borderBottom: '2px solid var(--accent-sky)', 
+                    paddingBottom: '8px', 
+                    display: 'inline-block' 
+                  }}>
+                    상담 분야
+                  </h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {HEAD_COUNSELOR.specialties.map((specialty, idx) => (
+                      <span key={idx} style={{
+                        background: 'var(--accent-sky)',
+                        color: 'white',
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}>
+                        {specialty}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 약력 리스트 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>전공</h4>
+                    <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', lineHeight: '1.6', wordBreak: 'keep-all' }}>{HEAD_COUNSELOR.education}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>전문자격</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {HEAD_COUNSELOR.certifications.map((cert, idx) => (
+                        <li key={idx} style={{ 
+                          fontSize: '0.95rem', 
+                          color: 'var(--text-sub)', 
+                          lineHeight: '1.6', 
+                          position: 'relative', 
+                          paddingLeft: '12px', 
+                          marginBottom: '4px',
+                          wordBreak: 'keep-all'
+                        }}>
+                          <span style={{ 
+                            position: 'absolute', 
+                            left: 0, 
+                            top: '8px', 
+                            width: '4px', 
+                            height: '4px', 
+                            borderRadius: '50%', 
+                            backgroundColor: 'var(--accent-sky)' 
+                          }} />
+                          {cert}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>강의 및 상담 경력</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {HEAD_COUNSELOR.experience.map((exp, idx) => (
+                        <li key={idx} style={{ 
+                          fontSize: '0.95rem', 
+                          color: 'var(--text-sub)', 
+                          lineHeight: '1.6', 
+                          position: 'relative', 
+                          paddingLeft: '12px', 
+                          marginBottom: '4px',
+                          wordBreak: 'keep-all'
+                        }}>
+                          <span style={{ 
+                            position: 'absolute', 
+                            left: 0, 
+                            top: '8px', 
+                            width: '4px', 
+                            height: '4px', 
+                            borderRadius: '50%', 
+                            backgroundColor: 'var(--accent-sky)' 
+                          }} />
+                          {exp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>교육 수료 및 이수</h4>
+                    <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', lineHeight: '1.6', wordBreak: 'keep-all' }}>{HEAD_COUNSELOR.training}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* 상담사 목록 */}

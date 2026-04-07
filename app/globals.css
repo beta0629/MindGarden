@@ -299,6 +299,8 @@ main {
     transition: transform 0.25s ease;
     box-shadow: -10px 0 40px rgba(0, 0, 0, 0.12);
     padding: 18px;
+    display: flex;
+    flex-direction: column;
 }
 
 .gnb-drawer.open {
@@ -333,6 +335,8 @@ main {
     gap: 12px;
     padding-top: 8px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .gnb-drawer-link {
@@ -384,6 +388,314 @@ main {
     background: rgba(168, 213, 186, 0.35);
     color: var(--text-main);
     font-weight: 600;
+}
+
+.gnb-drawer-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    flex-shrink: 0;
+}
+
+/* 햄버거 메뉴 하단 '센터 위치' — gnb-drawer-link와 동일한 카드형 버튼 */
+.gnb-drawer-cta {
+    text-decoration: none;
+    color: var(--text-main);
+    font-weight: 600;
+    padding: 14px 14px;
+    border-radius: 12px;
+    background: rgba(168, 213, 186, 0.18);
+    display: block;
+    min-height: 48px;
+    box-sizing: border-box;
+    font-size: inherit;
+    font-family: inherit;
+    text-align: center;
+    transition: background 0.2s ease;
+}
+
+.gnb-drawer-cta:hover {
+    background: rgba(168, 213, 186, 0.28);
+    color: var(--text-main);
+}
+
+/* ADHD 자가 점검 (programs/symptoms) */
+.adhd-self-check {
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    border: 1px solid rgba(168, 213, 186, 0.35);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    padding: clamp(20px, 4vw, 32px);
+    margin-top: 8px;
+}
+
+.adhd-self-check-inner {
+    max-width: 40rem;
+    margin: 0 auto;
+}
+
+.adhd-self-check-title {
+    font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: center;
+    margin: 0 0 16px;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+}
+
+.adhd-self-check-lead {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-sub);
+    text-align: center;
+    margin: 0 0 10px;
+    word-break: keep-all;
+}
+
+.adhd-self-check-notice {
+    margin: 20px 0 24px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: rgba(168, 213, 186, 0.12);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-sub);
+    word-break: keep-all;
+}
+
+.adhd-self-check-notice p {
+    margin: 0 0 8px;
+}
+
+.adhd-self-check-notice p:last-child {
+    margin-bottom: 0;
+}
+
+.adhd-self-check-notice--compact {
+    margin: 16px 0 20px;
+}
+
+.adhd-self-check-inline-link {
+    color: var(--text-main);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.adhd-self-check-inline-link:hover {
+    color: var(--accent-peach, #c97b5a);
+}
+
+.adhd-self-check-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.adhd-self-check-actions--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    max-width: 20rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.adhd-self-check-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 14px 24px;
+    border-radius: var(--radius-full);
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.adhd-self-check-btn-primary {
+    background-color: var(--accent-peach);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 212, 184, 0.4);
+}
+
+.adhd-self-check-btn-primary:hover {
+    filter: brightness(1.03);
+    color: #fff;
+}
+
+.adhd-self-check-btn-secondary {
+    background: rgba(168, 213, 186, 0.22);
+    color: var(--text-main);
+    border: 1px solid rgba(168, 213, 186, 0.45);
+}
+
+.adhd-self-check-btn-secondary:hover {
+    background: rgba(168, 213, 186, 0.32);
+    color: var(--text-main);
+}
+
+.adhd-self-check-btn-ghost {
+    background: transparent;
+    color: var(--text-sub);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.adhd-self-check-btn-ghost:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-main);
+}
+
+.adhd-self-check-quiz {
+    margin-top: 8px;
+}
+
+.adhd-self-check-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(168, 213, 186, 0.15);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.adhd-self-check-progress-label {
+    color: var(--text-sub);
+    font-weight: 500;
+}
+
+.adhd-self-check-question-index {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin: 0 0 8px;
+}
+
+.adhd-self-check-question {
+    font-size: 1.08rem;
+    font-weight: 600;
+    line-height: 1.65;
+    color: var(--text-main);
+    margin: 0 0 20px;
+    word-break: keep-all;
+}
+
+.adhd-self-check-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+@media (min-width: 480px) {
+    .adhd-self-check-options {
+        flex-direction: row;
+    }
+
+    .adhd-self-check-option {
+        flex: 1;
+    }
+}
+
+.adhd-self-check-option {
+    min-height: 52px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 2px solid rgba(168, 213, 186, 0.5);
+    background: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    word-break: keep-all;
+}
+
+.adhd-self-check-option:hover {
+    background: rgba(168, 213, 186, 0.2);
+    border-color: rgba(168, 213, 186, 0.75);
+}
+
+.adhd-self-check-option:active {
+    transform: scale(0.99);
+}
+
+.adhd-self-check-hint {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-sub);
+    margin: 0;
+    padding: 12px 14px;
+    border-left: 3px solid rgba(168, 213, 186, 0.6);
+    background: rgba(168, 213, 186, 0.08);
+    border-radius: 0 8px 8px 0;
+    word-break: keep-all;
+}
+
+.adhd-self-check-back {
+    margin-top: 20px;
+    padding: 8px 4px;
+    border: none;
+    background: none;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text-sub);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.adhd-self-check-back:hover {
+    color: var(--text-main);
+}
+
+.adhd-self-check-result {
+    margin-top: 12px;
+    padding-top: 8px;
+}
+
+.adhd-self-check-result-score {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--text-sub);
+    text-align: center;
+    margin: 0 0 16px;
+    word-break: keep-all;
+}
+
+.adhd-self-check-result-score strong {
+    color: var(--text-main);
+    font-size: 1.15em;
+}
+
+.adhd-self-check-result-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: center;
+    margin: 0 0 12px;
+    line-height: 1.45;
+    word-break: keep-all;
+}
+
+.adhd-self-check-result-body {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-sub);
+    text-align: center;
+    margin: 0 0 8px;
+    word-break: keep-all;
 }
 
 .gnb.scrolled {

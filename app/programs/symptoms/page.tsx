@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
+import AdhdSelfCheck from '@/components/AdhdSelfCheck';
 import { programPageContent } from '@/lib/program-pages-content';
 
 const symptomsImages = {
@@ -99,6 +100,14 @@ export default function SymptomsPage() {
                 </p>
               </div>
             </div>
+
+            <section
+              id="adhd-self-check"
+              aria-label="ADHD 자가 점검 체크리스트"
+              style={{ maxWidth: '760px', margin: '0 auto 80px', padding: '0 20px' }}
+            >
+              <AdhdSelfCheck />
+            </section>
 
             {/* 상담 예약하기 버튼 */}
             <div style={{ marginTop: '80px', textAlign: 'center', marginBottom: '40px' }}>

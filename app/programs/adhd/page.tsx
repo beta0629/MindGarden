@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
@@ -87,6 +88,48 @@ export default function AdhdProgramPage() {
               <p>
                 놀이치료, 미술치료, 가족상담, 그리고 트라우마 치료까지. 각 분야의 전문성을 바탕으로 내담자의 연령과 환경, 그리고 동반되는 심리적 어려움까지 세심하게 고려한 맞춤형 통합 케어를 제공합니다.
               </p>
+            </div>
+
+            <div
+              style={{
+                maxWidth: '640px',
+                margin: '0 auto 56px',
+                padding: '24px 28px',
+                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(168, 213, 186, 0.15)',
+                border: '1px solid rgba(168, 213, 186, 0.35)',
+                textAlign: 'center',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '1.05rem',
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                  marginBottom: '12px',
+                  wordBreak: 'keep-all',
+                }}
+              >
+                스스로 증상 패턴을 살펴보고 싶다면
+              </p>
+              <p
+                style={{
+                  fontSize: '0.95rem',
+                  lineHeight: 1.75,
+                  color: 'var(--text-sub)',
+                  marginBottom: '20px',
+                  wordBreak: 'keep-all',
+                }}
+              >
+                교육·선별 목적의 자가 점검 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 임상 진단을 대신하지 않습니다.
+              </p>
+              <Link
+                href="/programs/symptoms#adhd-self-check"
+                className="adhd-self-check-btn adhd-self-check-btn-primary"
+                style={{ width: '100%', maxWidth: '280px' }}
+              >
+                자가 점검 하러 가기
+              </Link>
             </div>
 
             {/* 4-Step Modules (2x2 Grid) */}

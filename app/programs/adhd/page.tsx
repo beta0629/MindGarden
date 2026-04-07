@@ -77,7 +77,8 @@ export default function AdhdProgramPage() {
 
             <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-                {/* 1. 전문성 */}
+                
+                {/* 1. 대상 (Target) - split */}
                 <div className="value-section-card" style={{
                   background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
@@ -94,7 +95,7 @@ export default function AdhdProgramPage() {
                     paddingBottom: '16px',
                     borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
-                    전문성(임상 경험과 감별 평가)
+                    대상 (Target)
                   </h3>
                   <div className="values-card__split">
                     <div
@@ -106,20 +107,17 @@ export default function AdhdProgramPage() {
                       }}
                     >
                       <p style={{ marginBottom: '16px' }}>
-                        15년 이상의 임상 경험을 바탕으로 ADHD 경향성 및 동반질환의 근원적인 핵심 문제를 정확히 파악합니다.
-                      </p>
-                      <p style={{ marginBottom: '16px' }}>
-                        우울, 불안, 틱장애, 강박 등 다양한 동반질환에 대한 높은 이해도를 바탕으로, 감별 평가를 통해 조기 개입과 맞춤형 상담 계획을 수립합니다.
+                        유아기부터 아동, 청소년, 그리고 성인에 이르기까지 전 연령대를 포괄하는 맞춤형 접근을 제공합니다.
                       </p>
                       <p>
-                        검증된 자격과 풍부한 사례를 갖춘 전문가들이 내담자의 특성을 깊이 이해하고 실제적인 도움을 제공합니다.
+                        각 발달 단계마다 다르게 나타나는 특성을 세심하게 고려하여, 내담자의 생애주기에 가장 적합한 개입 방식을 설계합니다.
                       </p>
                     </div>
-                    <ValuesSectionVisual variant="split" image={adhdPageImages.professionalism} />
+                    <ValuesSectionVisual variant="split" image={adhdPageImages.target} />
                   </div>
                 </div>
 
-                {/* 2. 인류애 */}
+                {/* 2. 증상 (Symptoms) - accent */}
                 <div className="value-section-card" style={{
                   background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
@@ -136,7 +134,7 @@ export default function AdhdProgramPage() {
                     paddingBottom: '16px',
                     borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
-                    인류애(따뜻한 지지와 수용)
+                    증상 (Symptoms)
                   </h3>
                   <div className="values-card__human">
                     <div
@@ -148,17 +146,17 @@ export default function AdhdProgramPage() {
                       }}
                     >
                       <p style={{ marginBottom: '16px' }}>
-                        ADHD로 인해 겪는 일상에서의 좌절감, 자존감 하락, 관계의 어려움을 깊이 공감하고 따뜻하게 수용합니다.
+                        주의력 결핍, 과잉행동, 충동성 등 생애주기별로 다르게 발현되는 핵심 증상을 면밀히 분석합니다.
                       </p>
                       <p>
-                        평가가 늦어지기 쉬운 고기능 성인이나 여성 ADHD 내담자들이 겪는 남모를 고충을 이해하며, 안전하고 편안한 환경에서 자신을 온전히 드러낼 수 있도록 돕겠습니다.
+                        단순한 표면적 증상뿐만 아니라, 우울, 불안, 틱장애, 강박 등 흔히 동반되는 질환들을 함께 파악하여 통합적인 관점에서 문제를 바라봅니다.
                       </p>
                     </div>
-                    <ValuesSectionVisual variant="accent" image={adhdPageImages.humanity} />
+                    <ValuesSectionVisual variant="accent" image={adhdPageImages.symptoms} />
                   </div>
                 </div>
 
-                {/* 3. 회복과 성장 */}
+                {/* 3. 치료 (Treatment) - band */}
                 <div className="value-section-card" style={{
                   background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
@@ -175,7 +173,7 @@ export default function AdhdProgramPage() {
                     paddingBottom: '16px',
                     borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
-                    회복과 성장(기능 회복과 독립)
+                    치료 (Treatment)
                   </h3>
                   <div
                     className="values-card__prose"
@@ -187,14 +185,57 @@ export default function AdhdProgramPage() {
                     }}
                   >
                     <p style={{ marginBottom: '16px' }}>
-                      우선적으로 증상을 완화하고 일상의 기능을 회복하는 것을 목표로 합니다. 나아가 내담자 내면의 자원을 발견하고 강점을 찾아 건강한 독립을 이루도록 조력합니다.
+                      <strong>전문성:</strong> 약물 치료와 비약물적 개입(인지행동치료, 실행기능 훈련 등)을 아우르는 통합 치료를 지향합니다.
+                    </p>
+                    <p style={{ marginBottom: '16px' }}>
+                      <strong>인류애:</strong> 내담자가 겪는 일상의 좌절을 따뜻하게 수용하고 지지하며, 안전한 환경에서 자신을 드러낼 수 있도록 돕습니다.
                     </p>
                     <p>
-                      자신만의 고유한 특성을 수용하고, 적응적인 방식으로 삶을 새롭게 디자인해 나갈 수 있도록 끝까지 함께하겠습니다.
+                      <strong>회복과 성장:</strong> 증상의 완화를 넘어, 내면의 강점을 발견하고 주도적인 삶을 살아갈 수 있도록 조력합니다.
                     </p>
                   </div>
-                  <ValuesSectionVisual variant="band" image={adhdPageImages.recovery} />
+                  <ValuesSectionVisual variant="band" image={adhdPageImages.treatment} />
                 </div>
+
+                {/* 4. 심리검사 (Testing) - split */}
+                <div className="value-section-card" style={{
+                  background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '40px 32px',
+                  boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 212, 184, 0.35)',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
+                  }}>
+                    심리검사 (Testing)
+                  </h3>
+                  <div className="values-card__split">
+                    <div
+                      className="values-card__prose"
+                      style={{
+                        fontSize: '1.0625rem',
+                        lineHeight: '2',
+                        color: 'var(--text-sub)',
+                      }}
+                    >
+                      <p style={{ marginBottom: '16px' }}>
+                        정확한 진단과 개입 계획 수립을 위해 체계적인 평가를 실시합니다.
+                      </p>
+                      <p>
+                        종합심리검사(Full Battery)를 통해 전반적인 인지, 정서, 성격 특성을 파악하고, 객관적인 주의력 검사(CAT 등)를 병행하여 현재의 상태를 명확히 진단합니다.
+                      </p>
+                    </div>
+                    <ValuesSectionVisual variant="split" image={adhdPageImages.testing} />
+                  </div>
+                </div>
+
               </div>
               
               {/* 상담 예약하기 버튼 */}

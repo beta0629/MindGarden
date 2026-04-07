@@ -23,4 +23,28 @@ export const adhdPageImages = {
     width: 1376,
     height: 768,
   },
+  target: {
+    src: '/assets/images/programs/adhd-target.png',
+    alt: '유아부터 성인까지 전 연령대 포괄',
+    width: 1376,
+    height: 768,
+  },
+  symptoms: {
+    src: '/assets/images/programs/adhd-symptoms.png',
+    alt: '생애주기별 증상 및 동반질환',
+    width: 1376,
+    height: 768,
+  },
+  treatment: {
+    src: '/assets/images/programs/adhd-treatment.png',
+    alt: '약물/비약물 통합 치료',
+    width: 1376,
+    height: 768,
+  },
+  testing: {
+    src: '/assets/images/programs/adhd-testing.png',
+    alt: '종합심리검사 및 주의력 검사',
+    width: 1376,
+    height: 768,
+  },
 } as const;

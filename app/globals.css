@@ -475,6 +475,14 @@ main {
     margin: 16px 0 20px;
 }
 
+/* 문항 진행 중에도 동일 면책 노출(문구는 소스 단일화) */
+.adhd-self-check-notice--quiz-persistent {
+    font-size: 0.82rem;
+    line-height: 1.55;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+}
+
 .adhd-self-check-inline-link {
     color: var(--text-main);
     font-weight: 600;

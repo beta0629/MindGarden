@@ -6,11 +6,39 @@ import {
   adhdSelfCheckIntro,
   adhdSelfCheckItems,
   adhdSelfCheckLabels,
+  adhdSelfCheckLegalNotice,
   getAdhdSelfCheckBand,
   SCORE_IF_OFTEN,
 } from '@/lib/adhd-self-check';
 
 type Phase = 'intro' | 'quiz' | 'result';
+
+function SelfCheckLegalNotice({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'quiz';
+}) {
+  const { paragraphs, psychoExamBeforeLink, psychoExamAfterLink } =
+    adhdSelfCheckLegalNotice;
+  const cls =
+    variant === 'quiz'
+      ? 'adhd-self-check-notice adhd-self-check-notice--quiz-persistent'
+      : 'adhd-self-check-notice';
+  return (
+    <div className={cls} role="note">
+      <p>{paragraphs[0]}</p>
+      <p>{paragraphs[1]}</p>
+      <p>{paragraphs[2]}</p>
+      <p>
+        {psychoExamBeforeLink}
+        <Link href="/programs/test" className="adhd-self-check-inline-link">
+          심리검사
+        </Link>
+        {psychoExamAfterLink}
+      </p>
+    </div>
+  );
+}
 
 function openConsultationSheet() {
   if (typeof window !== 'undefined') {
@@ -77,19 +105,8 @@ export default function AdhdSelfCheck() {
     <div className="adhd-self-check">
       <div className="adhd-self-check-inner">
         <h2 className="adhd-self-check-title">{adhdSelfCheckIntro.title}</h2>
-        <p className="adhd-self-check-lead">{adhdSelfCheckIntro.lead[0]}</p>
-        <p className="adhd-self-check-lead">{adhdSelfCheckIntro.lead[1]}</p>
 
-        <div className="adhd-self-check-notice" role="note">
-          <p>{adhdSelfCheckIntro.disclaimer}</p>
-          <p>
-            전문적인 심리·신경심리 검사에 대해서는{' '}
-            <Link href="/programs/test" className="adhd-self-check-inline-link">
-              심리검사
-            </Link>
-            {' '}페이지를 참고해 주세요.
-          </p>
-        </div>
+        {phase === 'intro' && <SelfCheckLegalNotice />}
 
         {phase === 'intro' && (
           <div className="adhd-self-check-actions">
@@ -105,6 +122,7 @@ export default function AdhdSelfCheck() {
 
         {phase === 'quiz' && currentItem && (
           <div className="adhd-self-check-quiz">
+            <SelfCheckLegalNotice variant="quiz" />
             <div className="adhd-self-check-progress" aria-live="polite">
               <span className="adhd-self-check-progress-label">진행</span>
               <span className="adhd-self-check-progress-value">{progressLabel}</span>
@@ -155,9 +173,7 @@ export default function AdhdSelfCheck() {
             <h3 className="adhd-self-check-result-title">{band.title}</h3>
             <p className="adhd-self-check-result-body">{band.body}</p>
 
-            <div className="adhd-self-check-notice adhd-self-check-notice--compact">
-              <p>{adhdSelfCheckIntro.disclaimer}</p>
-            </div>
+            <SelfCheckLegalNotice />
 
             <div className="adhd-self-check-actions adhd-self-check-actions--stack">
               <button

@@ -12,15 +12,29 @@ export type AdhdSelfCheckItem = {
 /** '자주 그렇다'에 해당할 때 가산되는 점수 (문항당 0 또는 1) */
 export const SCORE_IF_OFTEN = 1;
 
+/**
+ * 운영·법무 합의용 고정 면책 문구.
+ * 공개 UI 전 구간에서 동일 내용을 노출; 법무·운영 정책에 따른 금지어는 넣지 않는다.
+ */
+export const adhdSelfCheckLegalNotice = {
+  paragraphs: [
+    '아동·청소년과 성인 모두 일상에서 겪을 수 있는 패턴을 기준으로 스스로 살펴볼 수 있도록 구성했습니다.',
+    '이 점검은 임상 진단을 대신하지 않으며, 참고용 정보 제공 목적입니다.',
+    '결과는 의학적 진단을 대체하지 않습니다. 걱정이 있다면 전문가와 상담하시기 바랍니다.',
+  ] as const,
+  /** 링크 앞/뒤 (가운데 「심리검사」 링크 삽입) */
+  psychoExamBeforeLink:
+    '전문적인 심리·신경심리 검사에 대해서는 ',
+  psychoExamAfterLink: ' 페이지를 참고해 주세요.',
+} as const;
+
 export const adhdSelfCheckIntro = {
   title: 'ADHD 자가 점검 체크리스트',
   lead: [
-    '아동·청소년과 성인 모두 일상에서 겪을 수 있는 패턴을 기준으로 스스로 살펴볼 수 있도록 구성했습니다.',
-    '이 점검은 임상 진단을 대신하지 않으며, 참고용 정보 제공 목적입니다.',
+    adhdSelfCheckLegalNotice.paragraphs[0],
+    adhdSelfCheckLegalNotice.paragraphs[1],
   ] as const,
-  /** 진단 면책 — 결과 화면에서도 동일 문구 재사용 */
-  disclaimer:
-    '결과는 의학적 진단이나 치료를 대체하지 않습니다. 걱정이 있다면 정신건강의학과·발달·심리 전문가와 상담하시기 바랍니다.',
+  disclaimer: adhdSelfCheckLegalNotice.paragraphs[2],
 };
 
 export const adhdSelfCheckItems: AdhdSelfCheckItem[] = [

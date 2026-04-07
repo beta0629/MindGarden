@@ -112,7 +112,7 @@ export function getAdhdSelfCheckBand(total: number, max: number): {
     return {
       key: 'mid',
       title: '주의 깊게 살펴볼 만한 응답',
-      body: '여러 영역에서 비슷한 패턴이 이어진다면, 단순한 습관 문제가 아닐 수 있습니다. 상담이나 발달·정신건강 전문의 평가를 고려해 보세요.',
+      body: '여러 영역에서 비슷한 패턴이 이어진다면, 단순한 습관 문제가 아닐 수 있습니다. 상담이나 전문가와의 평가를 고려해 보세요.',
     };
   }
   return {

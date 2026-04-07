@@ -62,7 +62,7 @@ export default function ScreeningFlow({ data }: Props) {
       };
     return {
       level: '전문 상담을 권하는 응답',
-      desc: '응답이 높은 편입니다. 정확한 이해를 위해 정신건강의학과·심리전문가 등과 상담·평가를 고려해 보시길 권합니다.',
+      desc: '응답이 높은 편입니다. 정확한 이해를 위해 전문가와 상담·평가를 고려해 보시길 권합니다.',
     };
   };
 

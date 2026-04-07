@@ -4,6 +4,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.AdminRoleUtilsMetaAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,11 @@ import org.springframework.stereotype.Service;
 /**
  * 공통코드 권한 검증 서비스
  * 코어/테넌트 코드별 권한 분리
- * 
+ * <p>
+ * 코어(시스템) 코드 편집: {@link AdminRoleUtilsMetaAdapter#isHqAdmin(User)} — 규칙 {@code ROLE_CHECK_HQ_ADMIN},
+ * 실패 시 폴백은 표준 관리자({@code UserRole#isAdmin()})와 동일하게 동작한다.
+ * (구 {@link AdminRoleUtils#isHqAdmin(User)} 는 표준화 이후 항상 false 이므로 사용하지 않음.)
+ *
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-01-XX
@@ -20,6 +25,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CommonCodePermissionService {
+
+    private final AdminRoleUtilsMetaAdapter adminRoleUtilsMetaAdapter;
     
     /**
      * 코어 코드 생성 권한 확인
@@ -34,7 +41,7 @@ public class CommonCodePermissionService {
             return false;
         }
         
-        boolean hasPermission = AdminRoleUtils.isHqAdmin(user);
+        boolean hasPermission = adminRoleUtilsMetaAdapter.isHqAdmin(user);
         log.info("코어 코드 생성 권한 확인: userId={}, hasPermission={}", user.getId(), hasPermission);
         return hasPermission;
     }
@@ -76,7 +83,7 @@ public class CommonCodePermissionService {
         }
         
         // HQ 관리자는 모든 테넌트 코드 생성 가능
-        if (AdminRoleUtils.isHqAdmin(user)) {
+        if (adminRoleUtilsMetaAdapter.isHqAdmin(user)) {
             log.info("HQ 관리자는 모든 테넌트 코드 생성 가능: userId={}", user.getId());
             return true;
         }

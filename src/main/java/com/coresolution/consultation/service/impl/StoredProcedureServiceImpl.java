@@ -246,8 +246,13 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
         }
     }
     
+    /**
+     * ERP 매핑 동기화 프로시저. Spring {@code @Transactional}을 두지 않음 — 호출부가
+     * {@link org.springframework.transaction.support.TransactionTemplate}(REQUIRES_NEW 등)로 경계를 잡으면
+     * 중첩 트랜잭션 AOP와 결합될 때 rollback-only가 남아 {@code UnexpectedRollbackException}이 나는 것을 방지한다.
+     * 컨트롤러 등 단독 호출 시에는 JDBC 기본 커넥션으로 수행된다.
+     */
     @Override
-    @Transactional
     public Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName,
                                                 Double newPackagePrice, Integer newTotalSessions, String updatedBy) {
         String tenantId = TenantContextHolder.getRequiredTenantId();

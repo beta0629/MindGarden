@@ -1114,11 +1114,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 try {
                     action.run();
+                } catch (RuntimeException ex) {
+                    // 중첩 @Transactional 등으로 이미 rollback-only인데 예외를 상위로 올리지 않으면
+                    // commit 단계에서 UnexpectedRollbackException이 날 수 있음. 명시 롤백 후 전파.
+                    status.setRollbackOnly();
+                    throw ex;
                 } finally {
                     TenantContextHolder.clear();
                 }
             });
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("별도 트랜잭션 실행 실패: {}", e.getMessage(), e);
         }
     }
@@ -1228,14 +1233,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
         }
 
-        // 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 (별도 트랜잭션, 실패 시 로그만)
-        String tenantIdForProc = getTenantIdFromMapping(savedMapping);
-        if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
-        if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {
-            throw new IllegalStateException("테넌트는 필수입니다. ERP 매핑 정보 동기화를 수행할 수 없습니다. MappingID=" + mappingId);
-        }
-        runInNewTransaction(tenantIdForProc, () -> {
-            try {
+        // 입금 확인 후 ERP 매핑 정보 동기화 (유효 금액이 있을 때만 — INCOME 경로와 동일, 불필요한 프로시저/롤백 방지)
+        if (effectiveAmount != null && effectiveAmount > 0) {
+            String tenantIdForProc = getTenantIdFromMapping(savedMapping);
+            if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
+            if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {
+                throw new IllegalStateException("테넌트는 필수입니다. ERP 매핑 정보 동기화를 수행할 수 없습니다. MappingID=" + mappingId);
+            }
+            runInNewTransaction(tenantIdForProc, () -> {
                 log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
                 Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
                     mappingId,
@@ -1249,10 +1254,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 } else {
                     log.warn("⚠️ ERP 매핑 정보 동기화 실패: mappingId={}, message={}", mappingId, procedureResult.get("message"));
                 }
-            } catch (Exception e) {
-                log.error("❌ 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 실패: mappingId={}", mappingId, e);
-            }
-        });
+            });
+        } else {
+            log.debug("입금 확인 ERP 매핑 프로시저 스킵(유효 금액 없음): mappingId={}", mappingId);
+        }
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
         Hibernate.initialize(savedMapping.getConsultant());
@@ -2431,32 +2436,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantIdFromMapping(savedMapping);
             if (tenantId == null) tenantId = getTenantIdOrNull();
             runInNewTransaction(tenantId, () -> {
-                try {
-                    log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
+                log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
 
-                    String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty()
-                        ? updatedBy
-                        : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
-                            ? savedMapping.getConsultant().getName()
-                            : "System");
+                String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty()
+                    ? updatedBy
+                    : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
+                        ? savedMapping.getConsultant().getName()
+                        : "System");
 
-                    Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
-                        id,
-                        savedMapping.getPackageName(),
-                        savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
-                        savedMapping.getTotalSessions(),
-                        procedureUpdatedBy
-                    );
+                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
+                    id,
+                    savedMapping.getPackageName(),
+                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
+                    savedMapping.getTotalSessions(),
+                    procedureUpdatedBy
+                );
 
-                    if ((Boolean) procedureResult.getOrDefault("success", false)) {
-                        log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}",
-                                id, procedureResult.get("message"));
-                    } else {
-                        log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}",
-                                id, procedureResult.get("message"));
-                    }
-                } catch (Exception e) {
-                    log.error("❌ ERP 재무 거래 동기화 프로시저 호출 실패: mappingId={}", id, e);
+                if ((Boolean) procedureResult.getOrDefault("success", false)) {
+                    log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}",
+                            id, procedureResult.get("message"));
+                } else {
+                    log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}",
+                            id, procedureResult.get("message"));
                 }
             });
         }

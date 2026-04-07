@@ -8,7 +8,6 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.TenantCommonCodeService;
-import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +32,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
+
+    /**
+     * 테넌트 공통코드 API로 시스템(코어) 코드를 수정하려 할 때 안내 메시지
+     */
+    private static final String MSG_SYSTEM_CODE_USE_PLATFORM_API =
+        "시스템 공통코드는 운영(플랫폼) 공통코드 API에서만 수정할 수 있습니다.";
 
     private final CommonCodeRepository commonCodeRepository;
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
@@ -61,6 +66,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse createTenantCode(String tenantId, CommonCodeCreateRequest request) {
         log.info("테넌트 공통코드 생성: tenantId={}, codeGroup={}, codeValue={}", 
             tenantId, request.getCodeGroup(), request.getCodeValue());
+
+        requireNonBlankTenantId(tenantId);
         
         // 코드 그룹이 테넌트 타입인지 검증
         validateTenantCodeGroup(request.getCodeGroup());
@@ -100,13 +107,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse updateTenantCode(String tenantId, Long codeId, CommonCodeUpdateRequest request) {
         log.info("테넌트 공통코드 수정: tenantId={}, codeId={}", tenantId, codeId);
         
-        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
-        
-        // 소유권 검증
-        if (!validateTenantCodeOwnership(tenantId, codeId)) {
-            throw new IllegalArgumentException("해당 코드를 수정할 권한이 없습니다.");
-        }
+        CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
         
         // 수정
         if (request.getCodeLabel() != null) {
@@ -145,13 +146,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public void deleteTenantCode(String tenantId, Long codeId) {
         log.info("테넌트 공통코드 삭제: tenantId={}, codeId={}", tenantId, codeId);
         
-        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
-        
-        // 소유권 검증
-        if (!validateTenantCodeOwnership(tenantId, codeId)) {
-            throw new IllegalArgumentException("해당 코드를 삭제할 권한이 없습니다.");
-        }
+        CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
         
         // 소프트 삭제
         code.setIsDeleted(true);
@@ -166,13 +161,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse toggleTenantCodeActive(String tenantId, Long codeId, boolean isActive) {
         log.info("테넌트 공통코드 활성화 토글: tenantId={}, codeId={}, isActive={}", tenantId, codeId, isActive);
         
-        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
-        
-        // 소유권 검증
-        if (!validateTenantCodeOwnership(tenantId, codeId)) {
-            throw new IllegalArgumentException("해당 코드를 수정할 권한이 없습니다.");
-        }
+        CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
         
         code.setIsActive(isActive);
         CommonCode updatedCode = commonCodeRepository.save(code);
@@ -187,13 +176,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse updateTenantCodeOrder(String tenantId, Long codeId, int newOrder) {
         log.info("테넌트 공통코드 정렬 순서 변경: tenantId={}, codeId={}, newOrder={}", tenantId, codeId, newOrder);
         
-        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
-        
-        // 소유권 검증
-        if (!validateTenantCodeOwnership(tenantId, codeId)) {
-            throw new IllegalArgumentException("해당 코드를 수정할 권한이 없습니다.");
-        }
+        CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
         
         code.setSortOrder(newOrder);
         CommonCode updatedCode = commonCodeRepository.save(code);
@@ -285,26 +268,52 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
 
     @Override
     public boolean validateTenantCodeOwnership(String tenantId, Long codeId) {
-        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
-        
-        // 시스템 코드는 수정 불가
-        if (code.isCoreCode()) {
-            log.warn("시스템 공통코드 수정 시도: codeId={}", codeId);
-            return false;
-        }
-        
-        // 테넌트 소유권 확인
-        if (!tenantId.equals(code.getTenantId())) {
-            log.warn("다른 테넌트의 코드 수정 시도: codeId={}, requestTenantId={}, ownerTenantId={}", 
-                codeId, tenantId, code.getTenantId());
-            return false;
-        }
-        
-        return true;
+        requireNonBlankTenantId(tenantId);
+        return commonCodeRepository.findByTenantIdAndId(tenantId, codeId)
+            .map(code -> {
+                if (code.isCoreCode()) {
+                    log.warn("시스템 공통코드 소유 검증 실패(코어 행): codeId={}", codeId);
+                    return false;
+                }
+                if (!tenantId.equals(code.getTenantId())) {
+                    log.warn("다른 테넌트의 코드 소유 검증 실패: codeId={}, requestTenantId={}, ownerTenantId={}",
+                        codeId, tenantId, code.getTenantId());
+                    return false;
+                }
+                return true;
+            })
+            .orElseGet(() -> {
+                if (commonCodeRepository.findActiveCoreCodeById(codeId).isPresent()) {
+                    log.warn("테넌트 API로 시스템 공통코드 소유 검증 시도: codeId={}, tenantId={}", codeId, tenantId);
+                    return false;
+                }
+                throw new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId);
+            });
     }
 
     // ==================== Private Methods ====================
+
+    private void requireNonBlankTenantId(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("테넌트 ID가 필요합니다.");
+        }
+    }
+
+    /**
+     * 요청 tenantId와 일치하는 테넌트 공통코드 행만 조회한다. 코어 PK만 존재하면 플랫폼 API 안내 예외.
+     */
+    private CommonCode requireTenantCodeRowForMutation(String tenantId, Long codeId) {
+        requireNonBlankTenantId(tenantId);
+        return commonCodeRepository.findByTenantIdAndId(tenantId, codeId)
+            .orElseThrow(() -> resolveMissingTenantScopedCode(codeId));
+    }
+
+    private IllegalArgumentException resolveMissingTenantScopedCode(Long codeId) {
+        if (commonCodeRepository.findActiveCoreCodeById(codeId).isPresent()) {
+            return new IllegalArgumentException(MSG_SYSTEM_CODE_USE_PLATFORM_API);
+        }
+        return new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId);
+    }
 
     /**
      * 코드 그룹이 테넌트 타입인지 검증

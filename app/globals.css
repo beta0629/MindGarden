@@ -2603,16 +2603,18 @@ a.program-card:hover {
     outline-offset: 3px;
 }
 
+/* 가로형 배너(구 adhd-testing 1200×400과 동일 비율). 원본 사진은 세로가 길어 cover로 크롭 */
 .home-screening-promo-visual {
     position: relative;
     display: block;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    max-height: 400px;
 }
 
 .home-screening-promo-img {
-    width: 100%;
-    height: auto;
-    display: block;
-    vertical-align: top;
+    object-fit: cover;
+    object-position: 45% center;
 }
 
 .home-screening-promo-overlay {

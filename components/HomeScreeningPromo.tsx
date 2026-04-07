@@ -10,9 +10,8 @@ export default function HomeScreeningPromo() {
           <span className="home-screening-promo-visual">
             <Image
               src="/assets/images/programs/screening-promo-desk.png"
-              width={1024}
-              height={606}
               alt=""
+              fill
               className="home-screening-promo-img"
               priority
               sizes="(max-width: 768px) 100vw, min(1200px, 100vw)"

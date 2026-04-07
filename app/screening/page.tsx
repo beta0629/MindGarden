@@ -4,7 +4,7 @@ import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
 export const metadata = {
   title: '주제별 간이 체크리스트 | 마인드가든',
   description:
-    '마인드가든 심리상담센터에서 제공하는 ADHD·우울·공황 등 주제별 참고용 간이 체크리스트입니다.',
+    '마인드가든 심리상담센터에서 제공하는 ADHD·우울·공황 등 주제별 참고용 체크리스트입니다.',
 };
 
 export default function ScreeningHubPage() {

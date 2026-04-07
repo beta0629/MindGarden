@@ -121,14 +121,14 @@ export default function AdhdProgramPage() {
                   wordBreak: 'keep-all',
                 }}
               >
-                교육·선별 목적의 간이 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 의학적 진단을 대신하지 않습니다.
+                교육·선별 목적의 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 의학적 진단을 대신하지 않습니다.
               </p>
               <Link
                 href="/screening"
                 className="adhd-self-check-btn adhd-self-check-btn-primary"
                 style={{ width: '100%', maxWidth: '280px' }}
               >
-                간이 체크리스트 허브로 가기
+                체크리스트 허브로 가기
               </Link>
             </div>
 

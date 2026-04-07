@@ -418,7 +418,7 @@ main {
     color: var(--text-main);
 }
 
-/* ADHD 간이 체크리스트 (programs/symptoms) */
+/* ADHD 체크리스트 (programs/symptoms) */
 .adhd-self-check {
     border-radius: var(--radius-lg);
     background: var(--surface-1);
@@ -2570,7 +2570,7 @@ a.program-card:hover {
     border: 0;
 }
 
-/* 메인: 간이 체크리스트 허브 이미지 링크 (/screening) */
+/* 메인: 체크리스트 허브 이미지 링크 (/screening) */
 .home-screening-promo {
     width: 100%;
     background: rgba(168, 213, 186, 0.12);

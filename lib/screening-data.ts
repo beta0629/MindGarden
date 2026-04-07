@@ -39,7 +39,7 @@ export interface ScreeningData {
 export const screeningData: Record<Topic, ScreeningData> = {
   adhd: {
     topic: 'adhd',
-    title: 'ADHD 간이 체크리스트',
+    title: 'ADHD',
     description: '주의력과 활동량·충동성 등 일상 패턴을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -70,7 +70,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   depression: {
     topic: 'depression',
-    title: '우울 간이 체크리스트',
+    title: '우울',
     description: '최근 기분과 활력, 흥미 변화를 참고용으로 점검합니다.',
     questions: {
       adult: [
@@ -101,7 +101,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   panic: {
     topic: 'panic',
-    title: '공황·불안 발작 간이 체크리스트',
+    title: '공황·불안 발작',
     description: '갑작스러운 불안과 신체 반응 패턴을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -132,7 +132,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   asperger: {
     topic: 'asperger',
-    title: 'ASD(자폐 스펙트럼) 패턴 간이 체크리스트',
+    title: 'ASD(자폐 스펙트럼) 패턴',
     description: '사회적 상호작용·감각·관심 패턴을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -163,7 +163,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   ptsd: {
     topic: 'ptsd',
-    title: 'PTSD·외상 후 스트레스 간이 체크리스트',
+    title: 'PTSD·외상 후 스트레스',
     description: '힘들었던 경험 이후 반복되는 불안·회상·각성 반응을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -194,7 +194,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   borderline: {
     topic: 'borderline',
-    title: '경계선 성격 패턴 간이 체크리스트',
+    title: '경계선 성격 패턴',
     description: '감정 기복, 대인관계, 정체감 등 패턴을 참고용으로 살펴봅니다. (임상적 명칭 확정이 아님)',
     questions: {
       adult: [
@@ -225,7 +225,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   school: {
     topic: 'school',
-    title: '학교생활 부적응 간이 체크리스트',
+    title: '학교생활 부적응',
     description: '출석, 수업 참여, 또래 관계 등 학교 적응 어려움을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -256,7 +256,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   work: {
     topic: 'work',
-    title: '직장생활 부적응 간이 체크리스트',
+    title: '직장생활 부적응',
     description: '업무 몰입, 대인관계, 번아웃 신호 등을 참고용으로 살펴봅니다.',
     questions: {
       adult: [
@@ -287,7 +287,7 @@ export const screeningData: Record<Topic, ScreeningData> = {
   },
   addiction: {
     topic: 'addiction',
-    title: '중독·과몰입 행동 간이 체크리스트',
+    title: '중독·과몰입 행동',
     description: '술·담배·약물, 게임, 스마트폰 등 행동 조절 어려움을 참고용으로 살펴봅니다.',
     questions: {
       adult: [

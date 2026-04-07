@@ -104,7 +104,7 @@ export default function SymptomsPage() {
 
             <section
               id="adhd-self-check"
-              aria-label="ADHD 간이 체크리스트"
+              aria-label="ADHD 체크리스트"
               style={{ maxWidth: '760px', margin: '0 auto 80px', padding: '0 20px' }}
             >
               <AdhdSelfCheck />
@@ -118,7 +118,7 @@ export default function SymptomsPage() {
                   wordBreak: 'keep-all',
                 }}
               >
-                우울, 공황 등 다른 주제의 간이 체크리스트는{' '}
+                우울, 공황 등 다른 주제의 체크리스트는{' '}
                 <Link
                   href="/screening"
                   style={{

@@ -156,7 +156,7 @@ export default function AdhdProgramPage() {
                   </div>
                 </div>
 
-                {/* 3. 치료 (Treatment) - band */}
+                {/* 3. 치료 (Therapy) - band */}
                 <div className="value-section-card" style={{
                   background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
@@ -173,7 +173,7 @@ export default function AdhdProgramPage() {
                     paddingBottom: '16px',
                     borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
-                    치료 (Treatment)
+                    치료 (Therapy)
                   </h3>
                   <div
                     className="values-card__prose"
@@ -185,13 +185,13 @@ export default function AdhdProgramPage() {
                     }}
                   >
                     <p style={{ marginBottom: '16px' }}>
-                      <strong>전문성:</strong> 약물 치료와 비약물적 개입(인지행동치료, 실행기능 훈련 등)을 아우르는 통합 치료를 지향합니다.
+                      <strong>전문성:</strong> 인지행동치료(CBT), 실행기능 훈련, 놀이치료 등 검증된 심리학적 접근을 통해 실질적인 행동 변화와 일상 적응을 돕습니다.
                     </p>
                     <p style={{ marginBottom: '16px' }}>
-                      <strong>인류애:</strong> 내담자가 겪는 일상의 좌절을 따뜻하게 수용하고 지지하며, 안전한 환경에서 자신을 드러낼 수 있도록 돕습니다.
+                      <strong>인류애:</strong> 내담자가 일상에서 겪는 좌절과 어려움을 깊이 공감하고 지지하며, 평가받지 않는 안전한 환경에서 있는 그대로의 자신을 수용하도록 돕습니다.
                     </p>
                     <p>
-                      <strong>회복과 성장:</strong> 증상의 완화를 넘어, 내면의 강점을 발견하고 주도적인 삶을 살아갈 수 있도록 조력합니다.
+                      <strong>회복과 성장:</strong> 단순한 대처를 넘어, 내면의 강점을 발견하고 건강한 자아존중감을 형성하여 주도적인 삶을 살아갈 수 있도록 조력합니다.
                     </p>
                   </div>
                   <ValuesSectionVisual variant="band" image={adhdPageImages.treatment} />

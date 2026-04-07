@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
 import { ScreeningData, TargetGroup } from '@/lib/screening-data';
@@ -91,13 +90,6 @@ export default function ScreeningFlow({ data }: Props) {
             {checklistLegalNotice.paragraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
-            <p>
-              {checklistLegalNotice.psychoExamBeforeLink}
-              <Link href="/programs/test" className="adhd-self-check-inline-link">
-                심리검사
-              </Link>
-              {checklistLegalNotice.psychoExamAfterLink}
-            </p>
           </div>
         </div>
       )}
@@ -154,13 +146,6 @@ export default function ScreeningFlow({ data }: Props) {
             {checklistLegalNotice.paragraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
-            <p>
-              {checklistLegalNotice.psychoExamBeforeLink}
-              <Link href="/programs/test" className="adhd-self-check-inline-link">
-                심리검사
-              </Link>
-              {checklistLegalNotice.psychoExamAfterLink}
-            </p>
           </div>
         </div>
       )}

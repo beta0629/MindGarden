@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
 import { adhdPageImages } from '@/lib/adhd-page-images';
+import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
 
 export default function AdhdProgramPage() {
   return (
@@ -112,17 +113,31 @@ export default function AdhdProgramPage() {
               >
                 스스로 증상 패턴을 살펴보고 싶다면
               </p>
-              <p
+              <div
+                className="screening-disclaimer"
+                role="note"
                 style={{
-                  fontSize: '0.95rem',
-                  lineHeight: 1.75,
-                  color: 'var(--text-sub)',
+                  marginTop: 0,
                   marginBottom: '20px',
-                  wordBreak: 'keep-all',
+                  textAlign: 'left',
+                  padding: '16px 18px',
                 }}
               >
-                교육·선별 목적의 체크리스트(10문항)를 증상 페이지에서 이용하실 수 있습니다. 의학적 진단을 대신하지 않습니다.
-              </p>
+                {checklistLegalNotice.paragraphs.map((p, i) => (
+                  <p
+                    key={i}
+                    style={{
+                      fontSize: '0.9rem',
+                      lineHeight: 1.7,
+                      color: 'var(--text-sub)',
+                      marginBottom: i === checklistLegalNotice.paragraphs.length - 1 ? 0 : '10px',
+                      wordBreak: 'keep-all',
+                    }}
+                  >
+                    {p}
+                  </p>
+                ))}
+              </div>
               <Link
                 href="/screening"
                 className="adhd-self-check-btn adhd-self-check-btn-primary"

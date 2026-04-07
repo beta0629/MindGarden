@@ -18,24 +18,16 @@ function SelfCheckLegalNotice({
 }: {
   variant?: 'default' | 'quiz';
 }) {
-  const { paragraphs, psychoExamBeforeLink, psychoExamAfterLink } =
-    adhdSelfCheckLegalNotice;
+  const { paragraphs } = adhdSelfCheckLegalNotice;
   const cls =
     variant === 'quiz'
       ? 'adhd-self-check-notice adhd-self-check-notice--quiz-persistent'
       : 'adhd-self-check-notice';
   return (
     <div className={cls} role="note">
-      <p>{paragraphs[0]}</p>
-      <p>{paragraphs[1]}</p>
-      <p>{paragraphs[2]}</p>
-      <p>
-        {psychoExamBeforeLink}
-        <Link href="/programs/test" className="adhd-self-check-inline-link">
-          심리검사
-        </Link>
-        {psychoExamAfterLink}
-      </p>
+      {paragraphs.map((p, i) => (
+        <p key={i}>{p}</p>
+      ))}
     </div>
   );
 }

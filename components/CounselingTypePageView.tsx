@@ -7,44 +7,7 @@ import {
   COUNSELING_TYPE_IMAGE_PLAN,
   counselingTypeImageSrc,
 } from '@/lib/counseling-type-page-images';
-
-function CounselingTypePageImage({
-  slug,
-  file,
-  remoteSrc,
-  alt,
-  variant,
-  priority,
-}: {
-  slug: string;
-  file: string;
-  remoteSrc: string;
-  alt: string;
-  variant: 'hero' | 'section';
-  priority?: boolean;
-}) {
-  const src = counselingTypeImageSrc(slug, file, remoteSrc);
-  const ratioClass =
-    variant === 'hero' ? 'counseling-type-visual-frame--16-9' : 'counseling-type-visual-frame--3-2';
-
-  return (
-    <figure className={`counseling-type-visual counseling-type-visual--${variant}`}>
-      <div className={`counseling-type-visual-frame ${ratioClass}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- HomeSectionVisual과 동일: 직접 로드 */}
-        <img
-          src={src}
-          alt={alt}
-          width={1600}
-          height={variant === 'hero' ? 900 : 1067}
-          className="counseling-type-visual-img"
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-          fetchPriority={priority ? 'high' : undefined}
-        />
-      </div>
-    </figure>
-  );
-}
+import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
 
 export default function CounselingTypePageView({
   data,
@@ -66,29 +29,35 @@ export default function CounselingTypePageView({
             </header>
 
             {plan && (
-              <CounselingTypePageImage
-                slug={data.slug}
-                file={plan.hero.file}
-                remoteSrc={plan.hero.remoteSrc}
-                alt={plan.hero.alt}
+              <ValuesSectionVisual
                 variant="hero"
+                image={{
+                  src: counselingTypeImageSrc(data.slug, plan.hero.file, plan.hero.remoteSrc),
+                  alt: plan.hero.alt,
+                  width: 1600,
+                  height: 900,
+                }}
                 priority
               />
             )}
 
             <div className="counseling-type-stack">
-              {data.sections.map((section) => {
+              {data.sections.map((section, index) => {
                 const slot = plan?.beforeSection.find((s) => s.sectionId === section.id);
+                const variants: ValuesVisualVariant[] = ['split', 'accent', 'band', 'hero'];
+                const variant = variants[index % variants.length];
 
                 return (
                   <Fragment key={section.id}>
                     {slot && (
-                      <CounselingTypePageImage
-                        slug={data.slug}
-                        file={slot.file}
-                        remoteSrc={slot.remoteSrc}
-                        alt={slot.alt}
-                        variant="section"
+                      <ValuesSectionVisual
+                        variant={variant}
+                        image={{
+                          src: counselingTypeImageSrc(data.slug, slot.file, slot.remoteSrc),
+                          alt: slot.alt,
+                          width: 1600,
+                          height: 1067,
+                        }}
                       />
                     )}
                     <article

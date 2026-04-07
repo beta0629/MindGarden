@@ -145,11 +145,11 @@ export default function Navigation() {
       label: '프로그램', 
       href: '#programs',
       submenu: [
-        { label: 'ADHD 및 동반질환', href: '/programs/adhd' },
-        { label: '대상', href: '#' },
-        { label: '증상', href: '#' },
-        { label: '치료', href: '#' },
-        { label: '심리검사', href: '#' }
+        { label: 'ADHD 통합 케어', href: '/programs/adhd' },
+        { label: '대상', href: '/programs/target' },
+        { label: '증상', href: '/programs/symptoms' },
+        { label: '치료', href: '/programs/treatment' },
+        { label: '심리검사', href: '/programs/test' }
       ]
     },
     { label: '칼럼', href: '/blog' },
@@ -406,6 +406,15 @@ export default function Navigation() {
             );
           })}
         </nav>
+        <div className="gnb-drawer-footer">
+          <Link
+            href="/location"
+            className="gnb-drawer-cta"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            센터 위치
+          </Link>
+        </div>
       </aside>
     </>
   );

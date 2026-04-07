@@ -4,12 +4,14 @@ import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
+import ProgramLNB from '@/components/ProgramLNB';
 import { adhdPageImages } from '@/lib/adhd-page-images';
 
 export default function AdhdProgramPage() {
   return (
     <main id="top">
       <Navigation />
+      <ProgramLNB />
       
       <div className="content-shell">
         <div className="content-main">

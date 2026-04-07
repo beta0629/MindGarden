@@ -2,7 +2,7 @@
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import HomeSectionVisual from '@/components/HomeSectionVisual';
+import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
 import { mindgardenSectionImages } from '@/lib/mindgarden-section-images';
 import Link from 'next/link';
 
@@ -172,9 +172,14 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                   </h2>
 
                   <div style={{ marginBottom: '24px' }}>
-                    <HomeSectionVisual
-                      src={mindgardenSectionImages[section.id].src}
-                      alt={mindgardenSectionImages[section.id].alt}
+                    <ValuesSectionVisual
+                      variant={['hero', 'split', 'accent', 'band'][index % 4] as ValuesVisualVariant}
+                      image={{
+                        src: mindgardenSectionImages[section.id].src,
+                        alt: mindgardenSectionImages[section.id].alt,
+                        width: 1000,
+                        height: 667,
+                      }}
                       priority={index === 0}
                     />
                   </div>

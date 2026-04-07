@@ -6,6 +6,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 
+/** 서브메뉴 href에 `#`가 있어도 경로만으로 현재 페이지와 매칭 */
+function submenuBasePath(href: string): string {
+  const i = href.indexOf('#');
+  return i === -1 ? href : href.slice(0, i);
+}
+
+function isSubmenuHrefActive(subHref: string, pathname: string): boolean {
+  const base = submenuBasePath(subHref);
+  return base === pathname || pathname.startsWith(`${base}/`);
+}
+
 export default function Navigation() {
   const pathname = usePathname();
   const [logoSrc, setLogoSrc] = useState('/assets/images/logo/logo_new.png');
@@ -105,8 +116,8 @@ export default function Navigation() {
   
   // 현재 경로가 서브메뉴 항목 중 하나인지 확인
   useEffect(() => {
-    const currentSubmenu = menu.find(m => 
-      m.submenu && m.submenu.some(sub => sub.href === pathname || pathname.startsWith(sub.href + '/'))
+    const currentSubmenu = menu.find(
+      (m) => m.submenu && m.submenu.some((sub) => isSubmenuHrefActive(sub.href, pathname)),
     );
     if (currentSubmenu) {
       setOpenSubmenu(currentSubmenu.href);
@@ -154,7 +165,13 @@ export default function Navigation() {
     },
     {
       label: 'ADHD 자가 점검',
-      href: '/programs/symptoms#adhd-self-check',
+      href: '/programs/symptoms',
+      submenu: [
+        {
+          label: 'ADHD 및 공존질환 체크리스트',
+          href: '/programs/symptoms#adhd-self-check',
+        },
+      ],
     },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
@@ -329,9 +346,8 @@ export default function Navigation() {
         <nav className="gnb-drawer-nav" aria-label="Mobile Navigation">
           {menu.map((m) => {
             const isSubmenuOpen = openSubmenu === m.href;
-            const hasActiveSubmenu = m.submenu && m.submenu.some(sub => 
-              sub.href === pathname || pathname.startsWith(sub.href + '/')
-            );
+            const hasActiveSubmenu =
+              m.submenu && m.submenu.some((sub) => isSubmenuHrefActive(sub.href, pathname));
             
             return (
               <div key={m.href}>
@@ -369,7 +385,7 @@ export default function Navigation() {
                       }}
                     >
                       {m.submenu.map((sub) => {
-                        const isActive = sub.href === pathname || pathname.startsWith(sub.href + '/');
+                        const isActive = isSubmenuHrefActive(sub.href, pathname);
                         return (
                           <Link 
                             key={sub.href} 

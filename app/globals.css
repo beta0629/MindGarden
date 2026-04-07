@@ -2682,8 +2682,9 @@ a.program-card:hover {
 }
 
 /* Screening Hub & Flow Styles */
+/* 하단: ConsultationBottomSheet 접힘 높이(~112px) + 스크롤 여유 — COLLAPSED_PX와 맞출 것 */
 .screening-hub {
-    padding: 4rem 20px;
+    padding: 4rem 20px calc(112px + 4rem);
     max-width: var(--container-width);
     margin: 0 auto;
 }
@@ -2753,7 +2754,7 @@ a.program-card:hover {
 .screening-flow {
     max-width: 600px;
     margin: 4rem auto;
-    padding: 0 20px;
+    padding: 0 20px calc(112px + 4rem);
 }
 
 .screening-flow-header {

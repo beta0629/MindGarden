@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     if (banners.length === 0) {
       // 디버깅: 빈 결과일 때 전체 배너 확인
       const [allRows] = await connection.execute(
-        `SELECT id, title, is_active, start_datetime, end_datetime, NOW() as current_time
+        `SELECT id, title, is_active, start_datetime, end_datetime, NOW() AS server_now
          FROM banners
          ORDER BY id DESC
          LIMIT 5`

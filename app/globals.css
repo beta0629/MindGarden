@@ -2557,6 +2557,19 @@ a.program-card:hover {
     }
 }
 
+/* 스크린 리더 전용 텍스트 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* 메인: 간이 체크리스트 허브 이미지 링크 (/screening) */
 .home-screening-promo {
     width: 100%;
@@ -2576,6 +2589,8 @@ a.program-card:hover {
     overflow: hidden;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+    color: inherit;
 }
 
 .home-screening-promo-link:hover {
@@ -2583,11 +2598,85 @@ a.program-card:hover {
     transform: translateY(-2px);
 }
 
+.home-screening-promo-link:focus-visible {
+    outline: 3px solid var(--accent-sky, #0ea5e9);
+    outline-offset: 3px;
+}
+
+.home-screening-promo-visual {
+    position: relative;
+    display: block;
+}
+
 .home-screening-promo-img {
     width: 100%;
     height: auto;
     display: block;
     vertical-align: top;
+}
+
+.home-screening-promo-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: clamp(0.75rem, 3.5vw, 1.75rem) clamp(1rem, 4vw, 2.25rem);
+    max-width: min(52%, 26rem);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
+}
+
+.home-screening-promo-kicker {
+    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-sub, #5c6b6b);
+}
+
+.home-screening-promo-headline {
+    font-size: clamp(1.15rem, 3.8vw, 1.65rem);
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--text-main, #1a2e2e);
+    letter-spacing: -0.02em;
+}
+
+.home-screening-promo-sub {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    color: var(--text-sub, #5c6b6b);
+    line-height: 1.4;
+    margin-top: 0.15rem;
+}
+
+.home-screening-promo-cta {
+    margin-top: 0.5rem;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    font-weight: 700;
+    color: var(--accent-sky, #0284c7);
+}
+
+.home-screening-promo-link:hover .home-screening-promo-cta {
+    text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+    .home-screening-promo-overlay {
+        max-width: 72%;
+        padding: 0.65rem 0.85rem;
+        gap: 0.2rem;
+    }
+
+    .home-screening-promo-headline br {
+        display: none;
+    }
 }
 
 /* Screening Hub & Flow Styles */

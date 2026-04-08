@@ -8,6 +8,9 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.SessionManager;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.security.PasswordService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,8 +79,36 @@ public class SocialAuthController {
                 log.error("소셜 회원가입 실패: {}", response.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
-            
+
+        } catch (PasswordService.InvalidPasswordException e) {
+            log.warn("소셜 회원가입 비밀번호 정책 위반: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(SocialSignupResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (ConstraintViolationException e) {
+            String msg = e.getConstraintViolations().stream()
+                    .map(ConstraintViolation::getMessage)
+                    .findFirst()
+                    .orElse("입력 정보를 확인 후 다시 시도해주세요.");
+            log.warn("소셜 회원가입 입력 검증 실패: {}", msg);
+            return ResponseEntity.badRequest().body(SocialSignupResponse.builder()
+                    .success(false)
+                    .message(msg)
+                    .build());
         } catch (Exception e) {
+            ConstraintViolationException wrapped = findConstraintViolationCause(e);
+            if (wrapped != null) {
+                String msg = wrapped.getConstraintViolations().stream()
+                        .map(ConstraintViolation::getMessage)
+                        .findFirst()
+                        .orElse("입력 정보를 확인 후 다시 시도해주세요.");
+                log.warn("소셜 회원가입 입력 검증 실패(래핑): {}", msg);
+                return ResponseEntity.badRequest().body(SocialSignupResponse.builder()
+                        .success(false)
+                        .message(msg)
+                        .build());
+            }
             log.error("소셜 회원가입 처리 중 오류 발생", e);
             SocialSignupResponse errorResponse = SocialSignupResponse.builder()
                 .success(false)
@@ -85,5 +116,15 @@ public class SocialAuthController {
                 .build();
             return ResponseEntity.internalServerError().body(errorResponse);
         }
+    }
+
+    private static ConstraintViolationException findConstraintViolationCause(Throwable t) {
+        while (t != null) {
+            if (t instanceof ConstraintViolationException cve) {
+                return cve;
+            }
+            t = t.getCause();
+        }
+        return null;
     }
 }

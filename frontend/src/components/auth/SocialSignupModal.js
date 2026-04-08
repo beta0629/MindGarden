@@ -176,7 +176,8 @@ const SocialSignupModal = ({
       } else if (formData.password.length < 8) {
         newErrors.password = '비밀번호는 8자 이상 입력해주세요.';
       } else if (!isValidPassword(formData.password)) {
-        newErrors.password = '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.';
+        newErrors.password =
+          '비밀번호는 8~100자이며, 영문 대소문자·숫자·특수문자(@$!%*?&)를 각각 포함하고, 연속·동일문자 3회 반복은 사용할 수 없습니다.';
       }
 
       if (!formData.confirmPassword) {
@@ -329,8 +330,12 @@ const SocialSignupModal = ({
       }
     } catch (error) {
       console.error('간편 회원가입 오류:', error);
+      const fromThrown =
+        typeof error?.message === 'string' && error.message.trim().length > 0
+          ? error.message.trim()
+          : '';
       const submitErrMsg = toDisplayString(
-        toErrorMessage(error?.response?.data ?? error, ''),
+        fromThrown || toErrorMessage(error?.response?.data ?? error, ''),
         '회원가입 처리 중 오류가 발생했습니다.'
       );
       setErrors({ submit: submitErrMsg });

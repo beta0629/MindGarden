@@ -72,10 +72,34 @@ export const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
-// 비밀번호 유효성 검사 (8자 이상, 영문+숫자+특수문자 조합)
+/**
+ * 백엔드 PasswordService.validatePassword 와 동일한 문자 종류·최소 길이(8~100).
+ * 대·소문자·숫자·특수(@$!%*?&) 각 1자 이상, 허용 문자만 사용.
+ */
 export const isValidPassword = (password) => {
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
+  if (password == null || password.length < 8 || password.length > 100) {
+    return false;
+  }
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return false;
+  }
+  for (let i = 0; i < password.length - 2; i += 1) {
+    const c1 = password.charCodeAt(i);
+    const c2 = password.charCodeAt(i + 1);
+    const c3 = password.charCodeAt(i + 2);
+    if (c2 === c1 + 1 && c3 === c2 + 1) {
+      return false;
+    }
+    if (c2 === c1 - 1 && c3 === c2 - 1) {
+      return false;
+    }
+  }
+  if (/(.)\1{2,}/.test(password)) {
+    return false;
+  }
+  return true;
 };
 
 // 문자열 길이 제한 및 말줄임표 추가

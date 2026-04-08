@@ -31,7 +31,7 @@
 - **세션 쿠키**: `Domain=dev.core-solution.co.kr` 로 설정 (RFC 6265: 선행 점 불허) → `dev.core-solution.co.kr` 및 **모든 서브도메인**(mindgarden 등)에서 동일 쿠키 전송
 - **장점**: 네이버/카카오 개발자 콘솔에 **기존 루트 도메인 콜백만** 등록하면 됨. 서브도메인용 URL 추가 불필요.
 - **설정**: `config/environments/development/dev.env` 에 `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` (선행 점 없음), `NAVER_REDIRECT_URI`/`KAKAO_REDIRECT_URI` 는 `https://dev.core-solution.co.kr/...` 유지.  
-  `application-dev.yml` 에 `server.servlet.session.cookie.domain: ${SESSION_COOKIE_DOMAIN:dev.core-solution.co.kr}` 반영됨.
+  앱은 `SESSION_COOKIE_DOMAIN` 이 비어 있지 않을 때만 세션 쿠키 `Domain` 을 설정한다(`SessionCookieDomainWebServerCustomizer`). YAML 에 `domain: ${SESSION_COOKIE_DOMAIN:}` 형태의 빈 기본값은 쓰지 않는다(Spring Boot 3.x에서 빈 문자열이 Domain에 적용될 수 있음).
 
 ### 방식 B: 서브도메인 콜백 (콜백과 프론트 동일 호스트)
 
@@ -53,8 +53,8 @@
      `https://dev.core-solution.co.kr/api/auth/kakao/callback`
    - `OAUTH2_BASE_URL` = 로그인 성공 후 리다이렉트할 프론트(mindgarden 등)
 
-2. **src/main/resources/application-dev.yml**
-   - `server.servlet.session.cookie.domain: ${SESSION_COOKIE_DOMAIN:}` 추가 (dev 프로파일에서만 적용)
+2. **세션 쿠키 Domain**
+   - 환경 변수 `SESSION_COOKIE_DOMAIN` 이 설정된 경우에만 적용 (`SessionCookieDomainWebServerCustomizer`). 미설정 시 호스트 전용 쿠키(로컬 기본).
 
 3. **네이버/Kakao 개발자 콘솔**
    - **방식 A** 사용 시: 기존처럼 **루트 도메인**만 등록하면 됨.  

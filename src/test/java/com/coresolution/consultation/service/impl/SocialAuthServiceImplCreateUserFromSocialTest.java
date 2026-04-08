@@ -199,6 +199,40 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     }
 
     @Test
+    @DisplayName("성공: 비밀번호 앞뒤 공백은 trim 후 encodePassword에 전달된다")
+    void createUserFromSocial_passwordTrimmedBeforeEncode() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("social-user@test.com")
+            .name("홍길동")
+            .password("  ValidPass123!  ")
+            .phone("01012345678")
+            .provider("NAVER")
+            .providerUserId("nv-456")
+            .providerUsername("nv-name")
+            .providerProfileImage("https://img")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .marketingConsent(false)
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(passwordService.encodePassword(anyString())).thenReturn("encoded");
+        when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(7004L);
+            return user;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        verify(passwordService).encodePassword("ValidPass123!");
+    }
+
+    @Test
     @DisplayName("실패: 이메일이 공백뿐이면 검증 실패 응답")
     void createUserFromSocial_blankEmail_returnsFailure() {
         SocialSignupRequest request = SocialSignupRequest.builder()

@@ -11,7 +11,9 @@
 OAUTH2_BASE_URL=
 FRONTEND_BASE_URL=
 SERVER_BASE_URL=
-SESSION_COOKIE_DOMAIN=
+# 테넌트 서브도메인 + apex OAuth 콜백 패턴에서 필수에 가깝다(미설정 시 로그인 직후 mindgarden.* 에서 401 반복 가능).
+# 값: 공유할 상위 호스트만(RFC 6265 Cookie Domain: 선행 점(.) 없이 reg-name 형태, 예 core-solution.co.kr).
+SESSION_COOKIE_DOMAIN=core-solution.co.kr
 
 DB_USERNAME=
 DB_PASSWORD=

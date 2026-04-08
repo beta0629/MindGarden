@@ -1,5 +1,9 @@
 name: 🚀 Core Solution 운영 배포
 #
+# OAuth가 apex(예: core-solution.co.kr) 콜백이고 SPA가 테넌트 서브도메인이면,
+# 서버 EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 를 넣는다(비밀 아님, RFC 6265 선행 점 없음).
+# 예시: deployment/mindgarden.prod-env.example — 앱 재시작 후 브라우저에서 JSESSIONID Domain 확인.
+#
 # 표준 프로시저 통합: PRODUCTION_DB_PASSWORD 가 있으면 본 워크플로에서
 # deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를 서비스 재시작 전에 실행합니다.
 # 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.

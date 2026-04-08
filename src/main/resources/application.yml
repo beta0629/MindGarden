@@ -194,6 +194,13 @@ server:
     session:
       cookie:
         http-only: true
+        # OAuth 콜백이 apex(예: core-solution.co.kr)이고 프론트가 테넌트 서브도메인(mindgarden.*)인 경우,
+        # Domain 미설정 시 JSESSIONID가 콜백 호스트에만 묶여 서브도메인으로 돌아온 뒤 세션이 비는 현상 발생.
+        # 도메인 값은 YAML placeholder(빈 기본값)로 두지 않음 — Spring Boot 3.x는 빈 문자열도 Domain에 적용될 수 있음.
+        # 대신 com.coresolution.core.config.SessionCookieDomainWebServerCustomizer 가
+        # SESSION_COOKIE_DOMAIN 이 비어 있지 않을 때만 Domain 을 설정(로컬·미설정은 호스트 전용 쿠키).
+        # 운영/개발: EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 또는 dev.core-solution.co.kr
+        # (RFC 6265: 선행 점 없음). deployment/mindgarden.prod-env.example 참고.
         # OAuth2(카카오/네이버 등) 외부 리다이렉트 콜백에서는 SameSite=strict일 경우 세션 쿠키가 전송되지 않아
         # state 검증/세션 연속성이 깨질 수 있으므로 Lax로 설정합니다.
         # - local 프로파일은 application-local.yml에서 secure=false로 오버라이드됩니다.

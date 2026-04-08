@@ -171,18 +171,21 @@ const SocialSignupModal = ({
         newErrors.nickname = '닉네임은 2자 이상 입력해주세요.';
       }
 
-      if (!formData.password) {
+      const trimmedPassword = (formData.password || '').trim();
+      const trimmedConfirm = (formData.confirmPassword || '').trim();
+
+      if (!trimmedPassword) {
         newErrors.password = '비밀번호를 입력해주세요.';
-      } else if (formData.password.length < 8) {
+      } else if (trimmedPassword.length < 8) {
         newErrors.password = '비밀번호는 8자 이상 입력해주세요.';
-      } else if (!isValidPassword(formData.password)) {
+      } else if (!isValidPassword(trimmedPassword)) {
         newErrors.password =
           '비밀번호는 8~100자이며, 영문 대소문자·숫자·특수문자(@$!%*?&)를 각각 포함하고, 연속·동일문자 3회 반복은 사용할 수 없습니다.';
       }
 
-      if (!formData.confirmPassword) {
+      if (!trimmedConfirm) {
         newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-      } else if (formData.password !== formData.confirmPassword) {
+      } else if (trimmedPassword !== trimmedConfirm) {
         newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
       }
 
@@ -251,7 +254,7 @@ const SocialSignupModal = ({
         email: formData.email,
         name: formData.name,
         nickname: formData.nickname,
-        password: formData.password,
+        password: (formData.password || '').trim(),
         phone: formData.phone,
         providerProfileImage: socialUser.profileImageUrl,
         branchCode: '',

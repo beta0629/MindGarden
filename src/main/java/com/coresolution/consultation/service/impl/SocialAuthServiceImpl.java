@@ -101,17 +101,18 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .build();
         }
             
-        // 비밀번호 검증
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+        // 비밀번호 검증 (로그인 AuthController와 동일하게 trim 후 길이·해시 처리)
+        String trimmedPassword = request.getPassword() == null ? "" : request.getPassword().trim();
+        if (!StringUtils.hasText(trimmedPassword)) {
             log.warn("비밀번호가 입력되지 않음");
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("비밀번호를 입력해주세요.")
                 .build();
         }
-            
-        if (request.getPassword().length() < 8) {
-            log.warn("비밀번호가 너무 짧음: {}", request.getPassword().length());
+
+        if (trimmedPassword.length() < 8) {
+            log.warn("비밀번호가 너무 짧음: {}", trimmedPassword.length());
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("비밀번호는 8자 이상이어야 합니다.")
@@ -182,7 +183,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         User user = User.builder()
                 .userId(userId)
-                .password(passwordService.encodePassword(request.getPassword()))
+                .password(passwordService.encodePassword(trimmedPassword))
                 .name(request.getName())
                 .email(normalizedEmail)
                 .phone(phone)

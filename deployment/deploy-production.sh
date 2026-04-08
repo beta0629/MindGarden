@@ -71,6 +71,7 @@ export OAUTH2_BASE_URL=https://core-solution.co.kr
 export SERVER_BASE_URL=https://core-solution.co.kr
 # 사용자가 접속하는 SPA 호스트(테넌트별 가능)
 export FRONTEND_BASE_URL=https://mindgarden.core-solution.co.kr
+# apex OAuth 콜백 + 테넌트 SPA 서브도메인 시 필수. systemd EnvironmentFile 권장(deployment/mindgarden.prod-env.example).
 # export SESSION_COOKIE_DOMAIN=core-solution.co.kr
 
 export DB_USERNAME=mindgarden_prod

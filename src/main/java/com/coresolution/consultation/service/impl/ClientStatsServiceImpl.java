@@ -9,12 +9,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ClientProfileContextFields;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
@@ -54,6 +57,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
+    private final ConsultationRecordRepository consultationRecordRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
@@ -71,15 +75,81 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         if (tenantId == null || tenantId.isBlank() || clientId == null) {
             throw new IllegalArgumentException("tenantId와 clientId는 필수입니다.");
         }
+        User consultantCaller = new User();
+        consultantCaller.setId(consultantUserId);
+        consultantCaller.setTenantId(tenantId);
+        consultantCaller.setRole(UserRole.CONSULTANT);
+        return getClientContextProfile(tenantId, clientId, consultantCaller);
+    }
+
+    @Override
+    public Map<String, Object> getClientContextProfile(String tenantId, Long clientId, User caller) {
+        if (caller == null) {
+            throw new IllegalArgumentException("caller는 필수입니다.");
+        }
+        if (tenantId == null || tenantId.isBlank() || clientId == null) {
+            throw new IllegalArgumentException("tenantId와 clientId는 필수입니다.");
+        }
+        UserRole role = caller.getRole();
+        if (role == null) {
+            throw new AccessDeniedException("역할 정보가 없어 프로필 맥락을 조회할 수 없습니다.");
+        }
+        if (role.isClient()) {
+            throw new AccessDeniedException("내담자 프로필 맥락 조회 권한이 없습니다.");
+        }
+        if (role.isAdmin()) {
+            Map<String, Object> stats = getClientWithStats(tenantId, clientId);
+            Map<String, Object> out = new HashMap<>(stats);
+            out.put(ClientProfileContextFields.VISIBILITY_TIER, ClientProfileContextFields.TIER_FULL);
+            out.put(ClientProfileContextFields.ACCESS_REASON, ClientProfileContextFields.REASON_ADMIN_SCOPE);
+            return out;
+        }
+        if (role.isStaff()) {
+            Map<String, Object> stats = getClientWithStats(tenantId, clientId);
+            Map<String, Object> out = new HashMap<>(stats);
+            out.put(ClientProfileContextFields.VISIBILITY_TIER, ClientProfileContextFields.TIER_FULL);
+            out.put(ClientProfileContextFields.ACCESS_REASON, ClientProfileContextFields.REASON_STAFF_SCOPE);
+            return out;
+        }
+        if (!role.isConsultant()) {
+            throw new AccessDeniedException("지원하지 않는 역할입니다.");
+        }
+        Long consultantUserId = caller.getId();
+        if (consultantUserId == null) {
+            throw new AccessDeniedException("상담사 식별 정보가 없습니다.");
+        }
+
         Optional<ConsultantClientMapping> mapping = mappingRepository
                 .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
                         tenantId, consultantUserId, clientId);
-        if (mapping.isEmpty()) {
-            log.warn("⚠️ 상담사-내담자 매칭 없음: tenantId={}, consultantId={}, clientId={}",
-                    tenantId, consultantUserId, clientId);
-            throw new AccessDeniedException("해당 내담자에 대한 매칭이 없어 조회할 수 없습니다.");
+        if (mapping.isPresent()) {
+            ConsultantClientMapping m = mapping.get();
+            String reason = m.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED
+                    ? ClientProfileContextFields.REASON_SESSIONS_EXHAUSTED
+                    : ClientProfileContextFields.REASON_MAPPING_ACTIVE;
+            Map<String, Object> stats = buildClientWithStats(tenantId, clientId);
+            stats.put(ClientProfileContextFields.VISIBILITY_TIER, ClientProfileContextFields.TIER_FULL);
+            stats.put(ClientProfileContextFields.ACCESS_REASON, reason);
+            return stats;
         }
-        return buildClientWithStats(tenantId, clientId);
+        if (scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+                tenantId, consultantUserId, clientId)) {
+            Map<String, Object> stats = buildClientWithStats(tenantId, clientId);
+            stats.put(ClientProfileContextFields.VISIBILITY_TIER, ClientProfileContextFields.TIER_STANDARD);
+            stats.put(ClientProfileContextFields.ACCESS_REASON, ClientProfileContextFields.REASON_SCHEDULE_LINKED);
+            return stats;
+        }
+        if (consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+                tenantId, consultantUserId, clientId)) {
+            Map<String, Object> stats = buildClientWithStats(tenantId, clientId);
+            stats.put(ClientProfileContextFields.VISIBILITY_TIER, ClientProfileContextFields.TIER_STANDARD);
+            stats.put(ClientProfileContextFields.ACCESS_REASON, ClientProfileContextFields.REASON_RECORD_LINKED);
+            return stats;
+        }
+        log.warn("⚠️ 상담사 프로필 맥락 거부: 매칭·일정·상담기록 없음 tenantId={}, consultantId={}, clientId={}",
+                tenantId, consultantUserId, clientId);
+        throw new AccessDeniedException(
+                "해당 내담자에 대한 매칭·일정·상담기록 연결이 없어 조회할 수 없습니다.");
     }
 
     /**

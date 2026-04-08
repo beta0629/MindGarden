@@ -451,6 +451,12 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     long countByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
 
     /**
+     * 상담사·내담자가 같은 테넌트에서 비삭제 일정으로 연결된 적이 있는지.
+     */
+    boolean existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            String tenantId, Long consultantId, Long clientId);
+
+    /**
      * 자동 등급 승급용: 테넌트 내 내담자별 완료된 상담 일정(스케줄) 건수 집계.
      * <p>
      * 정의: {@link com.coresolution.consultation.entity.Schedule} 중 {@code isDeleted == false},

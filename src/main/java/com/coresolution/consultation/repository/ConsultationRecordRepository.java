@@ -66,6 +66,12 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      */
     Page<ConsultationRecord> findByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
         String tenantId, Long consultantId, Long clientId, Pageable pageable);
+
+    /**
+     * 해당 상담사가 작성(귀속)한 비삭제 상담일지 중 내담자가 일치하는 건 존재 여부.
+     */
+    boolean existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            String tenantId, Long consultantId, Long clientId);
     
     /**
      * 테넌트 전체 상담일지 목록 조회 (관리자 상담 이력 전체 조회용)

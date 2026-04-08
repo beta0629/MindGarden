@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ClientStatsService;
@@ -196,8 +197,8 @@ public class ConsultantRecordsController {
 
         try {
             com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
-            Map<String, Object> stats = clientStatsService.getClientWithStatsForConsultant(
-                    tenantId, clientId, consultantId);
+            Map<String, Object> stats = clientStatsService.getClientContextProfile(
+                    tenantId, clientId, currentUser);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", stats);
@@ -206,6 +207,10 @@ public class ConsultantRecordsController {
             log.warn("내담자 with-stats 접근 거부: {}", e.getMessage());
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (EntityNotFoundException e) {
+            log.warn("내담자 with-stats 조회 불가(리소스 없음·접근 불가)");
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "해당 내담자 정보를 조회할 수 없습니다."));
         } catch (Exception e) {
             log.error("내담자 with-stats 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(

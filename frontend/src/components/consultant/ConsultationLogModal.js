@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { isRestrictedClientProfileTier } from '../../constants/clientProfileContext';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
@@ -195,7 +198,7 @@ const ConsultationLogModal = ({
   }, []);
 
   /**
-   * ADMIN: /admin/clients/with-stats — 상담사: 매칭 검증 후 consultant-records 경로 (with-stats는 ADMIN/STAFF 전용이라 403 방지)
+   * 내담자 맥락 프로필 SSOT — ADMIN/STAFF: consultantId 생략, CONSULTANT: consultantId 필수(백엔드 검증).
    */
   const fetchClientWithStats = useCallback(async (clientIdNum) => {
     if (clientIdNum == null || Number.isNaN(Number(clientIdNum))) {
@@ -206,12 +209,10 @@ const ConsultationLogModal = ({
       return { payload: null, clientData: null };
     }
     const consultantId = user.id;
-    const url = isAdmin
-      ? `/api/v1/admin/clients/with-stats/${cid}`
-      : `/api/v1/admin/consultant-records/${consultantId}/clients/${cid}/with-stats`;
-    const withStatsRes = await apiGet(url);
-    const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
-    const rawClient = payload?.client ?? payload ?? withStatsRes?.client ?? withStatsRes;
+    const endpoint = API_ENDPOINTS.CLIENT_CONTEXT.CONTEXT_PROFILE(cid);
+    const params = isAdmin ? {} : { consultantId: String(consultantId) };
+    const payload = await StandardizedApi.get(endpoint, params);
+    const rawClient = payload?.client ?? payload ?? null;
     const clientData = rawClient && typeof rawClient === 'object' && !Array.isArray(rawClient) ? rawClient : null;
     return { payload, clientData };
   }, [isAdmin, user?.id]);
@@ -469,7 +470,8 @@ const ConsultationLogModal = ({
 
       const comments = [];
       const clientForNotes = withStatsData?.client || null;
-      if (clientForNotes?.notes && String(clientForNotes.notes).trim()) {
+      const tierRestricted = isRestrictedClientProfileTier(withStatsData?.visibilityTier);
+      if (!tierRestricted && clientForNotes?.notes && String(clientForNotes.notes).trim()) {
         comments.push({ source: '내담자 메모', text: clientForNotes.notes });
       }
       if (scheduleData?.notes && String(scheduleData.notes).trim()) {
@@ -733,6 +735,7 @@ const ConsultationLogModal = ({
                 onExpandedChange={setAccordionProfileOpen}
                 client={client}
                 clientWithStats={clientWithStats}
+                visibilityTier={clientWithStats?.visibilityTier}
                 loading={loading}
                 hasValidScheduleClientId={hasValidScheduleClientId}
                 psychDocuments={psychDocuments}

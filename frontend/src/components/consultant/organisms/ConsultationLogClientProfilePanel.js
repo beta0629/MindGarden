@@ -2,6 +2,7 @@ import React from 'react';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
+import { isRestrictedClientProfileTier } from '../../../constants/clientProfileContext';
 import ClientSummaryField from '../molecules/ClientSummaryField';
 import ConsultationLogPsychSummaryPanel from './ConsultationLogPsychSummaryPanel';
 
@@ -18,6 +19,7 @@ const ConsultationLogClientProfilePanel = ({
   onExpandedChange,
   client,
   clientWithStats,
+  visibilityTier,
   loading,
   hasValidScheduleClientId,
   psychDocuments,
@@ -25,6 +27,7 @@ const ConsultationLogClientProfilePanel = ({
 }) => {
   const renderBody = () => {
     if (client) {
+      const hideContactDetail = isRestrictedClientProfileTier(visibilityTier);
       const gradeLabel = client.grade === 'BRONZE'
         ? '브론즈'
         : client.grade === 'SILVER'
@@ -40,26 +43,40 @@ const ConsultationLogClientProfilePanel = ({
       else if (gradeLabel) gradeStatus = gradeLabel;
       else if (statusLabel) gradeStatus = statusLabel;
 
-      const notesPreview = client.notes
-        ? (client.notes.length > NOTES_PREVIEW_MAX
-          ? `${client.notes.slice(0, NOTES_PREVIEW_MAX)}…`
-          : client.notes)
-        : null;
+      const notesPreview = hideContactDetail
+        ? null
+        : (client.notes
+          ? (client.notes.length > NOTES_PREVIEW_MAX
+            ? `${client.notes.slice(0, NOTES_PREVIEW_MAX)}…`
+            : client.notes)
+          : null);
+      const displayPhone = hideContactDetail ? '—' : toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—');
+      const displayGender = hideContactDetail ? '—' : (client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—');
+      const displayAddress = hideContactDetail
+        ? '—'
+        : ([client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '—');
 
       return (
         <>
           <dl className="mg-v2-detail-grid">
+            {hideContactDetail && (
+              <ClientSummaryField label="표시 안내" className="mg-v2-consultation-log-modal__detail-span">
+                <span className="mg-v2-text-secondary mg-v2-text-sm">
+                  정책에 따라 연락처·이메일·주소·메모는 표시되지 않습니다.
+                </span>
+              </ClientSummaryField>
+            )}
             <ClientSummaryField label="이름">
               <SafeText fallback="—">{client.name}</SafeText>
             </ClientSummaryField>
             <ClientSummaryField label="연락처(전화)">
-              {toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—')}
+              {displayPhone}
             </ClientSummaryField>
             <ClientSummaryField label="이메일">
-              <SafeText fallback="—">{client.email}</SafeText>
+              {hideContactDetail ? '—' : <SafeText fallback="—">{client.email}</SafeText>}
             </ClientSummaryField>
             <ClientSummaryField label="성별">
-              {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—'}
+              {displayGender}
             </ClientSummaryField>
             <ClientSummaryField label="등급/상태">{gradeStatus}</ClientSummaryField>
             <ClientSummaryField label="메모 요약" className="mg-v2-consultation-log-modal__detail-span">
@@ -68,7 +85,7 @@ const ConsultationLogClientProfilePanel = ({
               </span>
             </ClientSummaryField>
             <ClientSummaryField label="주소 요약" className="mg-v2-consultation-log-modal__detail-span">
-              {[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '—'}
+              {displayAddress}
             </ClientSummaryField>
             {clientWithStats && (
               <ClientSummaryField

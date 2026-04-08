@@ -153,6 +153,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
                     .requestMatchers("/api/v1/schedules/**").authenticated() // 스케줄 API v1은 인증 필요
                     .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
+                    .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
                     .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
                     .requestMatchers("/api/v1/consultants/**").authenticated() // 상담사 API v1은 인증 필요
                     // Ops Portal API는 인증 필요 (공개 엔드포인트 제외)
@@ -204,6 +205,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 API는 허용
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
+                    .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용

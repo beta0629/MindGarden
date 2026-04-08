@@ -85,6 +85,11 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/v1/auth/login',
     LOGOUT: '/api/v1/auth/logout'
   },
+
+  /** 내담자 맥락 프로필 SSOT (상담일지 모달 등) */
+  CLIENT_CONTEXT: {
+    CONTEXT_PROFILE: (clientId) => `/api/v1/clients/${clientId}/context-profile`
+  },
   
   COMMON_CODE: {
     LIST: '/api/v1/common-codes',

@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -57,6 +58,8 @@ class ClientStatsServiceImplTest {
     @Mock
     private ScheduleRepository scheduleRepository;
     @Mock
+    private ConsultationRecordRepository consultationRecordRepository;
+    @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
@@ -69,6 +72,10 @@ class ClientStatsServiceImplTest {
             .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(scheduleRepository.findDistinctConsultantIdsByClientId(anyString(), anyLong()))
             .thenReturn(Collections.emptyList());
+        lenient().when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            anyString(), anyLong(), anyLong())).thenReturn(false);
+        lenient().when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            anyString(), anyLong(), anyLong())).thenReturn(false);
     }
 
     @AfterEach

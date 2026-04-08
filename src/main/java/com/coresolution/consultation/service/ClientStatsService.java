@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.entity.User;
 
 /**
  * 내담자 통계 정보 조회 서비스
@@ -33,6 +34,16 @@ public interface ClientStatsService {
      * @return {@link #getClientWithStats(String, Long)} 와 동일 형태
      */
     Map<String, Object> getClientWithStatsForConsultant(String tenantId, Long clientId, Long consultantUserId);
+
+    /**
+     * 상담일지·프로필 맥락 SSOT — ADMIN/STAFF는 전권(FULL), CONSULTANT는 매칭·일정·상담기록 근거로 FULL/STANDARD 결정.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 사용자 ID
+     * @param caller   현재 로그인 사용자(역할·ID로 분기)
+     * @return {@link #getClientWithStats(String, Long)} 와 동일 키 + {@code visibilityTier}, {@code accessReason}
+     */
+    Map<String, Object> getClientContextProfile(String tenantId, Long clientId, User caller);
 
     /**
      * 내담자 목록 + 통계 정보 일괄 조회

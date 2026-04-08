@@ -19,11 +19,10 @@ const API_BASE = '/api/v1/common-codes';
 const TENANT_CODES_WRITE_BASE = '/api/v1/tenant/common-codes';
 
 /**
- * 테넌트별 독립 코드 그룹 목록
-/**
- * 이 코드 그룹들은 테넌트별로 완전히 독립적으로 관리되어야 함
+ * 생성·수정·삭제·토글 시 TenantCommonCodeController 경로 사용
+ * (GET /api/v1/tenant/common-codes/...).
  */
-const TENANT_ISOLATED_CODE_GROUPS = [
+const TENANT_WRITE_ISOLATED_GROUPS = [
     'CONSULTATION_PACKAGE',
     'PACKAGE_TYPE',
     'PAYMENT_METHOD',
@@ -54,8 +53,40 @@ const TENANT_ISOLATED_CODE_GROUPS = [
     'SALARY_GRADE'
 ];
 
-const isTenantIsolatedGroup = (codeGroup) =>
-    Boolean(codeGroup) && TENANT_ISOLATED_CODE_GROUPS.includes(codeGroup);
+const isTenantWriteIsolatedGroup = (codeGroup) =>
+    Boolean(codeGroup) && TENANT_WRITE_ISOLATED_GROUPS.includes(codeGroup);
+
+/**
+ * 조회만 GET /api/v1/common-codes?codeGroup= (테넌트 우선 + 코어 폴백).
+ * CRUD는 위 TENANT_WRITE_ISOLATED_GROUPS 와 동일하게 테넌트 API 유지.
+ */
+const HYBRID_READ_WITH_CORE_FALLBACK_GROUPS = [
+    'TRANSACTION_TYPE',
+    'INCOME_CATEGORY',
+    'INCOME_SUBCATEGORY',
+    'EXPENSE_CATEGORY',
+    'EXPENSE_SUBCATEGORY',
+    'FINANCIAL_SUBCATEGORY',
+    'VAT_APPLICABLE',
+    'TAX_TYPE',
+    'SALARY_GRADE'
+];
+
+const shouldUseTenantOnlyReadPath = (codeGroup, forceTenant) => {
+    if (forceTenant === true) {
+        return true;
+    }
+    if (forceTenant === false) {
+        return false;
+    }
+    if (!codeGroup || !isTenantWriteIsolatedGroup(codeGroup)) {
+        return false;
+    }
+    if (HYBRID_READ_WITH_CORE_FALLBACK_GROUPS.includes(codeGroup)) {
+        return false;
+    }
+    return true;
+};
 
 const resolveCodeGroupForRoute = (codeData, routeOpts = {}) =>
     routeOpts.codeGroup ?? codeData?.codeGroup ?? null;
@@ -112,17 +143,13 @@ const CORE_CODE_GROUPS = [
 /**
  * @param {string} codeGroup - 코드 그룹 (선택)
 /**
- * @param {boolean} forceTenant - 테넌트 코드만 조회 (기본값: 자동 판단)
+ * @param {boolean|null} forceTenant - true: 항상 /tenant, false: 통합·코어 분기, null: 자동(하이브리드 그룹은 통합 조회)
 /**
  * @returns {Promise<Array>} 공통코드 목록
  */
 export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
     try {
-        // forceTenant가 명시되지 않았으면 코드 그룹 타입에 따라 자동 판단
-        let useTenantApi = forceTenant;
-        if (useTenantApi === null && codeGroup) {
-            useTenantApi = isTenantIsolatedGroup(codeGroup);
-        }
+        const useTenantApi = shouldUseTenantOnlyReadPath(codeGroup, forceTenant);
         
         let url;
         if (useTenantApi) {
@@ -132,7 +159,7 @@ export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
             // 코어 코드 전용 API
             url = `${API_BASE}/core/groups/${codeGroup}`;
         } else {
-            // 통합 조회 API (하위 호환성 - 시스템 전역 코드에만 사용)
+            // 통합 조회 API (테넌트 우선 + 코어 폴백, 하이브리드 재무 그룹 등)
             url = codeGroup ? `${API_BASE}?codeGroup=${codeGroup}` : API_BASE;
         }
         
@@ -251,7 +278,7 @@ export const getCommonCodeById = async (id) => {
 export const createCommonCode = async (codeData) => {
     try {
         const group = codeData?.codeGroup;
-        const useTenant = isTenantIsolatedGroup(group);
+        const useTenant = isTenantWriteIsolatedGroup(group);
         const payload = { ...codeData };
         if (useTenant && Object.hasOwn(payload, 'tenantId')) {
             delete payload.tenantId;
@@ -280,7 +307,7 @@ export const createCommonCode = async (codeData) => {
 export const updateCommonCode = async (id, codeData, routeOpts = {}) => {
     try {
         const group = resolveCodeGroupForRoute(codeData, routeOpts);
-        const useTenant = isTenantIsolatedGroup(group);
+        const useTenant = isTenantWriteIsolatedGroup(group);
         const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
         const response = await apiPut(url, codeData);
         return normalizeMutationResponse(response, '공통코드 수정에 실패했습니다.');
@@ -303,7 +330,7 @@ export const updateCommonCode = async (id, codeData, routeOpts = {}) => {
 export const deleteCommonCode = async (id, routeOpts = {}) => {
     try {
         const group = routeOpts.codeGroup ?? null;
-        const useTenant = isTenantIsolatedGroup(group);
+        const useTenant = isTenantWriteIsolatedGroup(group);
         const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
         const response = await apiDelete(url);
         return normalizeDeleteResponse(response, '공통코드 삭제에 실패했습니다.');
@@ -326,7 +353,7 @@ export const deleteCommonCode = async (id, routeOpts = {}) => {
 export const toggleCommonCodeStatus = async (id, routeOpts = {}) => {
     try {
         const group = routeOpts.codeGroup ?? null;
-        const useTenant = isTenantIsolatedGroup(group);
+        const useTenant = isTenantWriteIsolatedGroup(group);
         if (useTenant) {
             const cur = routeOpts.currentIsActive;
             if (typeof cur !== 'boolean') {

@@ -13,10 +13,11 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,10 +33,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SocialAuthServiceImpl implements SocialAuthService {
 
+    /**
+     * {@link UserSocialAccount#getProviderUsername()} 저장 전 평문 상한.
+     * 암호화·Base64·키 접두어 후에도 컬럼 길이(500) 내에 들어가도록 여유 있게 제한한다.
+     */
+    private static final int MAX_PROVIDER_USERNAME_PLAINTEXT_LENGTH = 200;
+
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
@@ -165,7 +172,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         User user = User.builder()
                 .userId(userId)
-                .password(passwordEncoder.encode(request.getPassword())) // 사용자 입력 비밀번호 암호화
+                .password(passwordService.encodePassword(request.getPassword()))
                 .name(request.getName())
                 .email(request.getEmail())
                 .phone(phone)
@@ -216,11 +223,16 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 
             // 이미 생성된 User 객체 사용
                 
+            String plainProviderUsername = resolvePlainProviderUsername(request);
+            String storedProviderUsername = StringUtils.hasText(plainProviderUsername)
+                ? encryptionUtil.encrypt(truncateForEncryptedUsername(plainProviderUsername))
+                : "";
+
             UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(user)
                 .provider(request.getProvider()) // 제공자명은 암호화하지 않음
-                .providerUserId(request.getProviderUserId()) // 소셜 사용자 ID는 암호화하지 않음 (조회용)
-                .providerUsername(encryptionUtil.encrypt(request.getProviderUsername())) // 소셜 사용자 ID 암호화
+                .providerUserId(request.getProviderUserId()) // 소셜 측 고유 ID (평문 저장)
+                .providerUsername(storedProviderUsername) // 표시명 등(평문은 resolvePlainProviderUsername 경유)
                 .providerProfileImage(request.getProviderProfileImage()) // 프로필 이미지 URL은 암호화하지 않음
                 .isActive(true)
                 .build();
@@ -257,6 +269,33 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             .build();
     }
     
+    /**
+     * 소셜 providerUsername 평문: 비어 있으면 이름·이메일 순으로 대체한다.
+     *
+     * @param request 소셜 회원가입 요청
+     * @return 트림된 평문 (빈 문자열 가능)
+     */
+    private String resolvePlainProviderUsername(SocialSignupRequest request) {
+        String username = request.getProviderUsername();
+        if (StringUtils.hasText(username)) {
+            return username.trim();
+        }
+        if (StringUtils.hasText(request.getName())) {
+            return request.getName().trim();
+        }
+        if (StringUtils.hasText(request.getEmail())) {
+            return request.getEmail().trim();
+        }
+        return "";
+    }
+
+    private String truncateForEncryptedUsername(String plainText) {
+        if (plainText == null || plainText.length() <= MAX_PROVIDER_USERNAME_PLAINTEXT_LENGTH) {
+            return plainText;
+        }
+        return plainText.substring(0, MAX_PROVIDER_USERNAME_PLAINTEXT_LENGTH);
+    }
+
     /**
      * SNS 이름 기반으로 userId 생성
      */

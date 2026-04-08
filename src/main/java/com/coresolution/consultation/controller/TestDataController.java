@@ -24,11 +24,11 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,7 +55,7 @@ public class TestDataController {
     private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ConsultationRepository consultationRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final StatusCodeHelper statusCodeHelper;
     
     @Value("${isDev:false}")
@@ -84,7 +84,7 @@ public class TestDataController {
             User adminUser = User.builder()
                     .userId("admin@mindgarden.com")
                     .email("admin@mindgarden.com")
-                    .password(passwordEncoder.encode("admin123"))
+                    .password(passwordService.encodeSecret("admin123"))
                     .name("시스템 관리자")
                     .phone("010-0000-0000")
                     .role(UserRole.ADMIN)
@@ -713,8 +713,7 @@ public class TestDataController {
                     ));
                 }
                 
-                // PasswordEncoder로 검증
-                boolean matches = passwordEncoder.matches(password, storedHash);
+                boolean matches = passwordService.matches(password, storedHash);
                 
                 log.info("🔑 비밀번호 검증 결과: email={}, matches={}, hashPrefix={}", 
                     email, matches, storedHash.substring(0, Math.min(20, storedHash.length())));
@@ -776,7 +775,7 @@ public class TestDataController {
                 String oldHash = user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null";
                 log.info("🔑 기존 비밀번호 해시: {}", oldHash);
                 
-                String newHash = passwordEncoder.encode(newPassword);
+                String newHash = passwordService.encodeSecret(newPassword);
                 log.info("🔑 새로운 비밀번호 해시: {}", newHash.substring(0, 20) + "...");
                 
                 user.setPassword(newHash);

@@ -12,10 +12,10 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PersonalDataRequestService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +35,7 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
     
     private final UserRepository userRepository;
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     @Override
@@ -119,7 +119,7 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
                 throw new IllegalArgumentException("본인 확인을 위해 비밀번호를 입력해주세요.");
             }
             
-            if (!passwordEncoder.matches(password, user.getPassword())) {
+            if (!passwordService.matches(password, user.getPassword())) {
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
             

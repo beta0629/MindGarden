@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +45,7 @@ class UserServiceImplLoginLookupTenantScopeTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock

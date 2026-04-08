@@ -4,11 +4,13 @@ import com.coresolution.consultation.dto.SocialSignupRequest;
 import com.coresolution.consultation.dto.SocialSignupResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,6 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +41,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     @Mock
     private UserSocialAccountRepository userSocialAccountRepository;
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
 
@@ -63,7 +64,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         SocialSignupRequest request = SocialSignupRequest.builder()
             .email("social-user@test.com")
             .name("홍길동")
-            .password("password123")
+            .password("ValidPass123!")
             .phone("01012345678")
             .provider("KAKAO")
             .providerUserId("kakao-123")
@@ -75,7 +76,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .build();
 
         when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
@@ -95,19 +96,54 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     }
 
     @Test
+    @DisplayName("성공: providerUsername이 비어 있으면 name을 암호화 대상 평문으로 사용한다")
+    void createUserFromSocial_blankProviderUsername_fallsBackToNameForEncrypt() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("social-user@test.com")
+            .name("폴백표시명")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("KAKAO")
+            .providerUserId("kakao-123")
+            .providerUsername(null)
+            .providerProfileImage("https://img")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .marketingConsent(false)
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(passwordService.encodePassword(anyString())).thenReturn("encoded");
+        when(encryptionUtil.encrypt("폴백표시명")).thenReturn("enc-name");
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(7002L);
+            return user;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        verify(encryptionUtil).encrypt("폴백표시명");
+        verify(userSocialAccountRepository).save(any(UserSocialAccount.class));
+    }
+
+    @Test
     @DisplayName("실패: users tenantId 불일치면 IllegalStateException이 발생하고 clients는 저장하지 않는다")
     void createUserFromSocial_tenantMismatch_throwsBeforeClientSave() {
         SocialSignupRequest request = SocialSignupRequest.builder()
             .email("social-user@test.com")
             .name("홍길동")
-            .password("password123")
+            .password("ValidPass123!")
             .phone("01012345678")
             .privacyConsent(true)
             .termsConsent(true)
             .build();
 
         when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
             User user = inv.getArgument(0);
             user.setId(8002L);

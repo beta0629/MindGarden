@@ -7,7 +7,6 @@ import com.coresolution.core.repository.billing.PaymentMethodRepository;
 import com.coresolution.core.service.billing.PaymentMethodService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
 public class PaymentMethodServiceImpl implements PaymentMethodService {
     
     private final PaymentMethodRepository paymentMethodRepository;
-    private final PasswordEncoder passwordEncoder; // 토큰 암호화용
     
     @Override
     public PaymentMethodResponse createPaymentMethod(PaymentMethodCreateRequest request) {

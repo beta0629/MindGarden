@@ -66,11 +66,11 @@ public class UserSocialAccount extends BaseEntity {
     private String provider; // KAKAO, NAVER, FACEBOOK, INSTAGRAM
     
     @NotNull(message = "SNS 제공자 사용자 ID는 필수입니다.")
-    @Size(max = 100, message = "SNS 제공자 사용자 ID는 100자 이하여야 합니다.")
+    @Size(max = 500, message = "SNS 제공자 사용자 ID는 500자 이하여야 합니다.")
     @Column(name = PROVIDER_USER_ID, nullable = false, length = 500) // 암호화된 데이터를 위해 길이 확장
     private String providerUserId;
     
-    @Size(max = 100, message = "SNS 제공자 사용자 ID은 100자 이하여야 합니다.")
+    @Size(max = 500, message = "SNS 제공자 사용자명은 500자 이하여야 합니다.")
     @Column(name = PROVIDER_USERNAME, length = 500) // 암호화된 데이터를 위해 길이 확장
     private String providerUsername;
     

@@ -9,8 +9,8 @@ import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,7 +38,7 @@ public class PasswordManagementController {
     private final PasswordConfigService passwordConfigService;
     private final PasswordResetService passwordResetService;
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     
     /**
      * 비밀번호 정책 요구사항 조회
@@ -149,7 +149,7 @@ public class PasswordManagementController {
             }
             
             // 현재 비밀번호 확인
-            if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            if (!passwordService.matches(request.getCurrentPassword(), currentUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "현재 비밀번호가 올바르지 않습니다."
@@ -157,7 +157,7 @@ public class PasswordManagementController {
             }
             
             // 새 비밀번호가 현재 비밀번호와 같은지 확인
-            if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPassword())) {
+            if (passwordService.matches(request.getNewPassword(), currentUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "새 비밀번호는 현재 비밀번호와 달라야 합니다."

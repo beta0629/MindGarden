@@ -18,9 +18,9 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +43,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected final JwtService jwtService;
     protected final DynamicPermissionService dynamicPermissionService;
     protected final PersonalDataEncryptionUtil encryptionUtil;
+    protected final PasswordService passwordService;
 
 
     @Override
@@ -324,9 +325,10 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         // 표준화 원칙: users 선저장/flush 후 clients 저장 (FK 정합성 보장)
+        // 소셜 전용 더미 비밀번호 — 정책 없이 BCrypt만 적용
         User user = User.builder()
                 .userId("social_" + socialUserInfo.getProviderUserId())
-                .password(new BCryptPasswordEncoder().encode(generateTemporaryPassword()))
+                .password(passwordService.encodeSecret(generateTemporaryPassword()))
                 .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
                 .email(encryptionUtil.safeEncrypt(socialUserInfo.getEmail()))
                 .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)

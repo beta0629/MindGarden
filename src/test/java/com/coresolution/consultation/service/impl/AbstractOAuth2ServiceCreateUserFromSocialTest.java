@@ -12,6 +12,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,19 +47,23 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     private DynamicPermissionService dynamicPermissionService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock
+    private PasswordService passwordService;
 
     private TestOAuth2Service oauth2Service;
 
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId("tenant-oauth-ut");
+        when(passwordService.encodeSecret(anyString())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
         oauth2Service = new TestOAuth2Service(
             userRepository,
             clientRepository,
             userSocialAccountRepository,
             jwtService,
             dynamicPermissionService,
-            encryptionUtil
+            encryptionUtil,
+            passwordService
         );
     }
 
@@ -126,10 +132,11 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
             UserSocialAccountRepository userSocialAccountRepository,
             JwtService jwtService,
             DynamicPermissionService dynamicPermissionService,
-            PersonalDataEncryptionUtil encryptionUtil
+            PersonalDataEncryptionUtil encryptionUtil,
+            PasswordService passwordService
         ) {
             super(userRepository, clientRepository, userSocialAccountRepository, jwtService, dynamicPermissionService,
-                encryptionUtil);
+                encryptionUtil, passwordService);
         }
 
         @Override

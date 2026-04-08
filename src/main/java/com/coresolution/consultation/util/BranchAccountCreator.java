@@ -11,7 +11,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +33,7 @@ public class BranchAccountCreator {
     private ClientRepository clientRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
 
     // 지점별 계정 정보
     private static final List<String> BRANCH_CODES = Arrays.asList(
@@ -85,7 +85,7 @@ public class BranchAccountCreator {
         User admin = new User();
         admin.setEmail(email);
         admin.setUserId(userId);
-        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setPassword(passwordService.encodeSecret("admin123"));
         admin.setName(name);
         admin.setRole(UserRole.ADMIN); // 표준화 2025-12-05: BRANCH_SUPER_ADMIN → ADMIN으로 통합
         admin.setPhone("010-1234-5678");
@@ -121,7 +121,7 @@ public class BranchAccountCreator {
         User user = new User();
         user.setEmail(email);
         user.setUserId(userId);
-        user.setPassword(passwordEncoder.encode("consultant123"));
+        user.setPassword(passwordService.encodeSecret("consultant123"));
         user.setName(name);
         user.setRole(UserRole.CONSULTANT);
         user.setPhone("010-2345-6789");
@@ -140,7 +140,7 @@ public class BranchAccountCreator {
         consultant.setId(savedUser.getId());
         consultant.setEmail(email);
         consultant.setUserId(userId);
-        consultant.setPassword(passwordEncoder.encode("consultant123"));
+        consultant.setPassword(passwordService.encodeSecret("consultant123"));
         consultant.setName(name);
         consultant.setRole(UserRole.CONSULTANT);
         consultant.setPhone("010-2345-6789");
@@ -186,7 +186,7 @@ public class BranchAccountCreator {
         User user = new User();
         user.setEmail(email);
         user.setUserId(userId);
-        user.setPassword(passwordEncoder.encode("client123"));
+        user.setPassword(passwordService.encodeSecret("client123"));
         user.setName(name);
         user.setRole(UserRole.CLIENT);
         user.setPhone("010-3456-7890");

@@ -71,7 +71,7 @@ import com.coresolution.core.service.UserRoleQueryService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.hibernate.Hibernate;
@@ -94,7 +94,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final ScheduleRepository scheduleRepository;
     private final CommonCodeRepository commonCodeRepository;
     private final CommonCodeService commonCodeService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final ConsultationMessageService consultationMessageService;
@@ -179,7 +179,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
             
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(password)); // 사용자 입력 또는 자동 생성된 비밀번호 사용
+            // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
+            consultant.setPassword(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password));
             consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
@@ -259,7 +260,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             Consultant consultant = new Consultant();
             consultant.setUserId(userId); // 자동 생성된 userId 사용
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(password)); // 사용자 입력 또는 자동 생성된 비밀번호 사용
+            // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
+            consultant.setPassword(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password));
             consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
@@ -425,10 +427,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         // User 엔티티 생성
+        // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
         User clientUser = User.builder()
                 .userId(userId)
                 .email(encryptedEmail)
-                .password(passwordEncoder.encode(password))
+                .password(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password))
                 .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
@@ -565,7 +568,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User staffUser = User.builder()
                 .userId(userId)
                 .email(encryptedEmail)
-                .password(passwordEncoder.encode(password))
+                .password(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password))
                 .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.STAFF)
@@ -2147,7 +2150,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             log.info("🔧 상담사 비밀번호 변경: ID={}", id);
-            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
+            consultant.setPassword(passwordService.encodePassword(request.getPassword()));
             consultant.setUpdatedAt(LocalDateTime.now());
             consultant.setVersion(consultant.getVersion() + 1);
         }

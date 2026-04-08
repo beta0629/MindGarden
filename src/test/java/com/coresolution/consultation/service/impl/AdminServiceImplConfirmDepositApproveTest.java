@@ -43,7 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
@@ -90,7 +90,7 @@ class AdminServiceImplConfirmDepositApproveTest {
     @Mock
     private CommonCodeService commonCodeService;
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
@@ -166,7 +166,7 @@ class AdminServiceImplConfirmDepositApproveTest {
                 scheduleRepository,
                 commonCodeRepository,
                 commonCodeService,
-                passwordEncoder,
+                passwordService,
                 encryptionUtil,
                 consultantAvailabilityService,
                 consultationMessageService,

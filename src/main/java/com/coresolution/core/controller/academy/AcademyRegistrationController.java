@@ -14,12 +14,12 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +49,7 @@ public class AcademyRegistrationController extends BaseApiController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final BranchService branchService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserSocialAccountRepository userSocialAccountRepository;
     
@@ -132,7 +132,7 @@ public class AcademyRegistrationController extends BaseApiController {
             User user = new User();
             user.setUserId(generateUniqueUserId(email));
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setPassword(passwordService.encodePassword(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
             
             if (StringUtils.hasText(request.getNickname())) {
@@ -249,7 +249,7 @@ public class AcademyRegistrationController extends BaseApiController {
             User user = new User();
             user.setUserId(generateUniqueUserId(email, currentTenantId));
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setPassword(passwordService.encodePassword(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
             
             if (StringUtils.hasText(request.getNickname())) {

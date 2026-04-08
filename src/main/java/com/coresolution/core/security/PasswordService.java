@@ -6,8 +6,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * 비밀번호 서비스
- * 
+ * 비밀번호·시크릿 BCrypt 처리 단일 진입점.
+ * <ul>
+ *   <li>로그인용 비밀번호(사용자·관리자 입력) 저장/변경: {@link #encodePassword} — 정책 검증 후 인코딩</li>
+ *   <li>시스템/소셜 플레이스홀더, 임시 비밀번호, 시드, 토큰 해시 등: {@link #encodeSecret} — 동일 {@link PasswordEncoder} 빈만 사용, 정책 없음</li>
+ * </ul>
+ *
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-12-02
@@ -63,12 +67,32 @@ public class PasswordService {
     }
     
     /**
-     * 비밀번호 암호화
+     * 로그인 비밀번호 암호화(정책 검증 후 BCrypt).
+     *
+     * @param rawPassword 평문 비밀번호
+     * @return BCrypt 해시
      */
     public String encodePassword(String rawPassword) {
         validatePassword(rawPassword);
         String encoded = passwordEncoder.encode(rawPassword);
         log.debug("비밀번호 암호화 완료");
+        return encoded;
+    }
+
+    /**
+     * 정책 검증 없이 평문을 BCrypt 인코딩한다.
+     * OAuth 소셜용 플레이스홀더 비밀번호, 자동 생성 임시 비밀번호, 개발 시드, 리프레시 토큰 해시 저장 등에 사용한다.
+     *
+     * @param rawSecret null이 아닌 평문
+     * @return BCrypt 해시
+     * @throws IllegalArgumentException {@code rawSecret == null}
+     */
+    public String encodeSecret(String rawSecret) {
+        if (rawSecret == null) {
+            throw new IllegalArgumentException("rawSecret must not be null");
+        }
+        String encoded = passwordEncoder.encode(rawSecret);
+        log.debug("시크릿 인코딩 완료(정책 미적용)");
         return encoded;
     }
     

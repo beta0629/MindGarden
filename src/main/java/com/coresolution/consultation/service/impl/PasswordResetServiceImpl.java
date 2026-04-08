@@ -12,8 +12,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     
     @Value("${app.password-reset.token-expiry-hours:24}")
     private int tokenExpiryHours;
@@ -202,7 +202,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             }
             
             // 비밀번호 암호화 및 업데이트
-            String encodedPassword = passwordEncoder.encode(newPassword);
+            String encodedPassword = passwordService.encodePassword(newPassword);
             user.setPassword(encodedPassword);
             user.setIsPasswordChanged(true); // 비밀번호 변경 완료
             user.setUpdatedAt(LocalDateTime.now());

@@ -5,9 +5,9 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.RefreshTokenRepository;
 import com.coresolution.consultation.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
+import com.coresolution.core.security.PasswordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +30,7 @@ import java.util.UUID;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     
     private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     
     // Refresh Token 만료 시간 (7일)
     private static final long REFRESH_TOKEN_EXPIRATION_DAYS = 7;
@@ -40,8 +40,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken createRefreshToken(User user, String refreshToken, HttpServletRequest request) {
         log.debug("Refresh Token 생성: userId={}, tenantId={}", user.getId(), user.getTenantId());
         
-        // Refresh Token 해시 생성
-        String refreshTokenHash = passwordEncoder.encode(refreshToken);
+        // Refresh Token 해시 — 정책 없이 BCrypt만 적용
+        String refreshTokenHash = passwordService.encodeSecret(refreshToken);
         
         // Token ID 생성 (UUID)
         String tokenId = UUID.randomUUID().toString();
@@ -102,7 +102,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
         
         // Refresh Token 해시 검증
-        if (!passwordEncoder.matches(refreshToken, token.getRefreshTokenHash())) {
+        if (!passwordService.matches(refreshToken, token.getRefreshTokenHash())) {
             log.warn("Refresh Token 해시 불일치: tokenId={}", tokenId);
             return false;
         }

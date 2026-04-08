@@ -36,7 +36,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,7 +66,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final TenantIdGenerator tenantIdGenerator;
     private final TenantDashboardService tenantDashboardService;
     private final TenantRepository tenantRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final ObjectMapper objectMapper;
     private final CommonCodeService commonCodeService;
     private final CommonCodeRepository commonCodeRepository;
@@ -548,7 +548,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                         adminPassword = asText.isEmpty() ? null : asText;
                     }
                     if (adminPassword != null) {
-                        adminPasswordHash = passwordEncoder.encode(adminPassword);
+                        adminPasswordHash = passwordService.encodePassword(adminPassword);
                         log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
                     } else if (contactEmailPresent) {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);

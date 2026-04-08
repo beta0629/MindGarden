@@ -33,7 +33,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
@@ -72,7 +72,7 @@ class OnboardingServiceTest {
     private TenantRepository tenantRepository;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
 
     /** 워크플로에서 getBean으로 조회되는 온보딩 서비스(초기화 단계 스텁용) */
     @Mock
@@ -119,7 +119,7 @@ class OnboardingServiceTest {
         lenient().when(preValidationService.validateSystemMetadata(anyString())).thenReturn(ok);
         lenient().when(tenantRepository.findDeletedByContactEmailIgnoreCase(anyString()))
                 .thenReturn(Collections.emptyList());
-        lenient().when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$stubEncodedPassword");
+        lenient().when(passwordService.encodePassword(anyString())).thenReturn("$2a$10$stubEncodedPassword");
         lenient().when(applicationContext.getBean(OnboardingServiceImpl.class))
                 .thenReturn(onboardingWorkflowBean);
         lenient()

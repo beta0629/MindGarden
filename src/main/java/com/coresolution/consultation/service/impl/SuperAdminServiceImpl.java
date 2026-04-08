@@ -12,8 +12,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SuperAdminServiceImpl implements SuperAdminService {
     
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
@@ -61,7 +61,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
             User superAdmin = User.builder()
                 .email(request.getEmail())
                 .userId(request.getUserId())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordService.encodePassword(request.getPassword()))
                 .name(encryptedName)
                 .nickname(encryptedNickname)
                 .phone(encryptedPhone)

@@ -19,7 +19,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.context.TenantContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordService passwordService;
     private final EmailService emailService;
     
     // 이메일 인증 코드 저장 (실제 운영에서는 Redis 등 사용)
@@ -109,7 +109,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             
             // 4. 기존 계정 비밀번호 검증 (선택사항)
             if (request.getExistingPassword() != null) {
-                if (!passwordEncoder.matches(request.getExistingPassword(), existingUser.getPassword())) {
+                if (!passwordService.matches(request.getExistingPassword(), existingUser.getPassword())) {
                     return AccountIntegrationResponse.failure(
                         "기존 계정 비밀번호가 올바르지 않습니다.", 
                         AccountIntegrationResponse.IntegrationStatus.VERIFICATION_FAILED

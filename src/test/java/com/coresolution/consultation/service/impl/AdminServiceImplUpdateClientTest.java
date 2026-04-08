@@ -36,6 +36,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.service.UserRoleQueryService;
+import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,7 +85,7 @@ class AdminServiceImplUpdateClientTest {
     @Mock
     private CommonCodeService commonCodeService;
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
@@ -325,7 +325,7 @@ class AdminServiceImplUpdateClientTest {
 
         when(userIdGenerator.generateUniqueUserId(anyString(), anyString())).thenReturn("uid-reg-1");
         when(userRepository.existsByTenantIdAndEmail(anyString(), anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed-pw");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed-pw");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
                 .thenReturn(Optional.empty());

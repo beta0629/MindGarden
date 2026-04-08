@@ -21,12 +21,12 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
     
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
@@ -90,7 +90,8 @@ public class UserServiceImpl implements UserService {
             user.setCreatedAt(LocalDateTime.now());
             user.setVersion(1L);
             if (user.getPassword() != null && !isPasswordEncoded(user.getPassword())) {
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
+                // 신규 저장 시 평문은 사용자·관리자 입력 비밀번호로 간주
+                user.setPassword(passwordService.encodePassword(user.getPassword()));
             }
             
             // 전화번호 암호화 (새 사용자 등록 시)
@@ -112,7 +113,7 @@ public class UserServiceImpl implements UserService {
                 user.setCreatedAt(LocalDateTime.now());
                 user.setVersion(1L);
                 if (user.getPassword() != null && !isPasswordEncoded(user.getPassword())) {
-                    user.setPassword(passwordEncoder.encode(user.getPassword()));
+                    user.setPassword(passwordService.encodePassword(user.getPassword()));
                 }
             }
             user.setUpdatedAt(LocalDateTime.now());
@@ -132,7 +133,7 @@ public class UserServiceImpl implements UserService {
         
         if (user.getPassword() != null && !user.getPassword().equals(existingUser.getPassword())) {
             if (!isPasswordEncoded(user.getPassword())) {
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
+                user.setPassword(passwordService.encodePassword(user.getPassword()));
             }
         }
         
@@ -171,7 +172,7 @@ public class UserServiceImpl implements UserService {
             existingUser.setGrade(updateData.getGrade());
         }
         if (updateData.getPassword() != null) {
-            existingUser.setPassword(passwordEncoder.encode(updateData.getPassword()));
+            existingUser.setPassword(passwordService.encodePassword(updateData.getPassword()));
         }
         
         existingUser.setUpdatedAt(LocalDateTime.now());
@@ -865,12 +866,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = findActiveByIdOrThrow(userId);
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+        if (!passwordService.matches(oldPassword, user.getPassword())) {
             throw new RuntimeException("기존 비밀번호가 일치하지 않습니다.");
         }
         
         // 현재 테넌트의 비밀번호만 변경
-        String hashedPassword = passwordEncoder.encode(newPassword);
+        String hashedPassword = passwordService.encodePassword(newPassword);
         userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
         
         log.info("비밀번호 변경 완료: email={}, userId={}", 
@@ -884,7 +885,7 @@ public class UserServiceImpl implements UserService {
         
         // 임시 비밀번호 생성 및 설정
         String tempPassword = generateTempPassword();
-        userRepository.updatePassword(user.getId(), passwordEncoder.encode(tempPassword), LocalDateTime.now());
+        userRepository.updatePassword(user.getId(), passwordService.encodeSecret(tempPassword), LocalDateTime.now());
         
         // 이메일로 임시 비밀번호 발송
         try {
@@ -1036,7 +1037,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = findByEmail(email);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            return !user.getIsDeleted() && passwordEncoder.matches(password, user.getPassword());
+            return !user.getIsDeleted() && passwordService.matches(password, user.getPassword());
         }
         return false;
     }
@@ -1046,7 +1047,7 @@ public class UserServiceImpl implements UserService {
         User user = findActiveByIdOrThrow(userId);
         
         // 현재 테넌트의 비밀번호만 변경
-        String hashedPassword = passwordEncoder.encode(newPassword);
+        String hashedPassword = passwordService.encodePassword(newPassword);
         userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
         
         log.info("비밀번호 변경 완료: email={}, userId={}", 

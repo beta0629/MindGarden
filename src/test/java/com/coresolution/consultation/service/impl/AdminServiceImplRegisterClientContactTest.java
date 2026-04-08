@@ -47,6 +47,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.service.UserRoleQueryService;
+import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
@@ -90,7 +90,7 @@ class AdminServiceImplRegisterClientContactTest {
     @Mock
     private CommonCodeService commonCodeService;
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
@@ -157,7 +157,7 @@ class AdminServiceImplRegisterClientContactTest {
         when(userService.existsPhoneDuplicateForPublicSignup("01098765432", TENANT)).thenReturn(false);
         when(userRepository.existsByTenantIdAndEmail(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserIdFromPhone("01098765432", TENANT)).thenReturn("01098765432");
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
                 .thenReturn(Optional.empty());
@@ -235,7 +235,7 @@ class AdminServiceImplRegisterClientContactTest {
 
         when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-email-1");
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
                 .thenReturn(Optional.empty());
@@ -269,7 +269,7 @@ class AdminServiceImplRegisterClientContactTest {
         when(userService.existsPhoneDuplicateForPublicSignup("01020003000", TENANT)).thenReturn(false);
         when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-both-1");
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
                 .thenReturn(Optional.empty());

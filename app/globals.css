@@ -4,6 +4,9 @@
 /* Noto Sans KR - 코어솔루션 폰트 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
+/* Quill 에디터 추가 폰트 (나눔·노토 세리프) */
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
+
 /* CSS Reset & Variables */
 :root {
     /* 따뜻한 톤 - 상담소에 맞는 부드러운 색상 */
@@ -54,6 +57,29 @@
     --breakpoint-tablet: 768px;
     --breakpoint-desktop: 1024px;
     --breakpoint-wide: 1440px;
+}
+
+/* Quill(BlogEditor) 저장 HTML 폰트 — components/BlogEditor.tsx QUILL_FONT_WHITELIST와 동기화 */
+.ql-font-noto-sans-kr {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+.ql-font-pretendard {
+    font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.ql-font-nanum-gothic {
+    font-family: 'Nanum Gothic', 'Noto Sans KR', sans-serif;
+}
+.ql-font-nanum-myeongjo {
+    font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif;
+}
+.ql-font-noto-serif-kr {
+    font-family: 'Noto Serif KR', 'Nanum Myeongjo', Georgia, serif;
+}
+.ql-font-serif {
+    font-family: Georgia, 'Times New Roman', 'Noto Serif KR', serif;
+}
+.ql-font-monospace {
+    font-family: 'Consolas', 'Monaco', 'Noto Sans Mono KR', monospace;
 }
 
 /* 후기 섹션 반응형 스타일 */

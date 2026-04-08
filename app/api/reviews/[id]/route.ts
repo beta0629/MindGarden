@@ -131,8 +131,27 @@ export async function PUT(
 
     // XSS 방지: HTML 정화
     const sanitizedContent = DOMPurify.sanitize(content, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote'],
-      ALLOWED_ATTR: ['href', 'src', 'alt', 'style'],
+      ALLOWED_TAGS: [
+        'p',
+        'br',
+        'span',
+        'strong',
+        'em',
+        'u',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'ul',
+        'ol',
+        'li',
+        'a',
+        'img',
+        'blockquote',
+      ],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'style', 'class'],
       ALLOW_DATA_ATTR: false,
     });
 

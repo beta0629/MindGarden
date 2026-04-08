@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import axios from 'axios';
 import ErpModal from './common/ErpModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -42,12 +42,13 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   const loadCommonCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/v1/erp/common-codes/financial', {
-        withCredentials: true
-      });
-      
-      if (response.data.success) {
-        setCommonCodes(response.data.data);
+      const response = await csrfTokenManager.get('/api/v1/erp/common-codes/financial');
+      const body = await response.json().catch(() => ({}));
+
+      if (response.ok && body.success) {
+        setCommonCodes(body.data);
+      } else {
+        setError(body.message || '공통 코드를 불러오는데 실패했습니다.');
       }
     } catch (err) {
       console.error('공통 코드 로드 실패:', err);
@@ -74,23 +75,34 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     setSuccessMessage(null);
 
     try {
-      const response = await axios.post('/api/v1/erp/finance/transactions', formData);
-      const ok = response?.data && (response.data.success === true || (response.data.success === undefined && response.status === 200));
+      const payload = {
+        transactionType: formData.transactionType,
+        category: formData.category,
+        subcategory: formData.subcategory || undefined,
+        amount: formData.amount === '' ? undefined : Number(formData.amount),
+        description: formData.description ? formData.description : undefined,
+        transactionDate: formData.transactionDate,
+        taxIncluded: formData.taxIncluded
+      };
+
+      const response = await csrfTokenManager.post('/api/v1/erp/finance/transactions', payload);
+      const body = await response.json().catch(() => ({}));
+      const ok = response.ok && (body.success === true || (body.success === undefined && response.status === 200));
 
       if (ok) {
         setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
         notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
         setTimeout(() => {
-          onSuccess?.(response?.data?.data ?? response?.data);
+          onSuccess?.(body?.data ?? body);
           onClose?.();
         }, 1200);
       } else {
-        const msg = response.data?.message || '등록에 실패했습니다.';
+        const msg = body.message || '등록에 실패했습니다.';
         setError(msg);
         notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || '거래 등록 중 오류가 발생했습니다.';
+      const msg = err?.message || '거래 등록 중 오류가 발생했습니다.';
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
     } finally {

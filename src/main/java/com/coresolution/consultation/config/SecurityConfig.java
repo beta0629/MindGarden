@@ -19,8 +19,10 @@ import org.springframework.security.web.authentication.session.CompositeSessionA
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -90,15 +92,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
                     .ignoringRequestMatchers(
-                        "/api/auth/**",                              // 인증 관련 API는 CSRF 제외 (레거시 경로)
-                        "/api/v1/auth/**",                           // v1 인증 API: SPA가 로그인/로그아웃 시 토큰 없이 POST (레거시 /api/auth/** 와 동일 정책)
-                        "/api/admin/mappings/**",                     // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
-                        "/api/erp/finance/transactions/**",          // 재무 거래 DELETE는 CSRF 제외 (권한 체크는 별도로 수행)
-                        // Trinity/공개 온보딩: 로그인 전·세션 없이 호출 → CSRF 토큰 없음. permitAll 과 쌍으로 제외하지 않으면 403(접근 권한) 발생.
-                        "/api/v1/accounts/integration/**",           // 이메일 인증 코드 발송/검증 등
-                        "/api/v1/onboarding/**",
-                        "/api/v1/ops/onboarding/**",
-                        "/api/v1/ops/auth/**"                        // Ops 로그인 API: 인증 전 POST 요청은 CSRF 토큰이 없어 제외 필요
+                        new AntPathRequestMatcher("/api/auth/**"),
+                        new AntPathRequestMatcher("/api/v1/auth/**"),
+                        new AntPathRequestMatcher("/api/admin/mappings/**"),
+                        // 재무 거래 DELETE만 CSRF 제외(SPA가 axios DELETE 시 헤더 미포함 등). v1 실제 경로와 레거시 경로 모두.
+                        new AntPathRequestMatcher("/api/erp/finance/transactions/**", HttpMethod.DELETE.name()),
+                        new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
+                        new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
+                        new AntPathRequestMatcher("/api/v1/onboarding/**"),
+                        new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
+                        new AntPathRequestMatcher("/api/v1/ops/auth/**")
                     )
                 )
                 

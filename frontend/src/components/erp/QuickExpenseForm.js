@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import MGButton from '../common/MGButton';
 import { getLucideIcon } from '../../utils/iconUtils';
 import ErpModal from './common/ErpModal';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 
 /**
  * 빠른 지출 등록 컴포넌트 (ErpModal + 모달 내 금액 입력)
@@ -26,13 +26,15 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const loadExpenseCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/v1/erp/common-codes/financial', {
-        withCredentials: true
-      });
+      const response = await csrfTokenManager.get('/api/v1/erp/common-codes/financial');
+      const body = await response.json().catch(() => ({}));
 
-      if (response.data.success) {
-        setExpenseCategories(response.data.data.expenseCategories || []);
-        setExpenseSubcategories(response.data.data.expenseSubcategories || []);
+      if (response.ok && body.success) {
+        setExpenseCategories(body.data.expenseCategories || []);
+        setExpenseSubcategories(body.data.expenseSubcategories || []);
+      } else if (!response.ok) {
+        setError(body.message || '공통 코드를 불러오는데 실패했습니다.');
+        notificationManager.error('공통 코드를 불러오는데 실패했습니다.');
       }
     } catch (err) {
       console.error('지출 공통 코드 로드 실패:', err);
@@ -91,19 +93,21 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/v1/erp/finance/quick-expense', null, {
-        params: {
-          category: categoryCode,
-          subcategory: subcategoryCode,
-          amount,
-          description: `${category.codeLabel} 지출`,
-          transactionDate: new Date().toISOString().split('T')[0]
-        },
-        withCredentials: true
+      const params = new URLSearchParams({
+        category: categoryCode,
+        subcategory: subcategoryCode,
+        amount: String(amount),
+        description: `${category.codeLabel} 지출`,
+        transactionDate: new Date().toISOString().split('T')[0]
       });
+      const response = await csrfTokenManager.fetchWithCsrf(
+        `/api/v1/erp/finance/quick-expense?${params.toString()}`,
+        { method: 'POST' }
+      );
+      const responseData = await response.json().catch(() => ({}));
 
-      if (response.data.success) {
-        const taxInfo = response?.data?.data ?? {};
+      if (response.ok && responseData.success) {
+        const taxInfo = responseData?.data ?? {};
         const isVatApplicable = categoryCode !== 'SALARY';
         let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
         if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
@@ -111,15 +115,15 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           successMessage += ` (총 ${Number(totalAmount).toLocaleString()}원)`;
         }
         notificationManager.show(successMessage, 'success', 3000);
-        onSuccess?.(response.data.data);
+        onSuccess?.(responseData.data);
         onClose?.();
       } else {
-        const msg = response.data.message || '지출 등록에 실패했습니다.';
+        const msg = responseData.message || '지출 등록에 실패했습니다.';
         setError(msg);
         notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || '지출 등록 중 오류가 발생했습니다.';
+      const msg = err?.message || '지출 등록 중 오류가 발생했습니다.';
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
     } finally {

@@ -22,7 +22,7 @@
  * @since 2025-12-03
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -40,6 +40,11 @@ import {
 import { getCodeGroupKoreanNameSync, loadCodeGroupMetadata } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import TenantCommonCodeManagerUI from '../ui/TenantCommonCodeManagerUI';
+import {
+    getParentCodeGroupForSubcategory,
+    isSubcategoryCodeGroup
+} from '../../utils/commonCodeParentGroups';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const TENANT_COMMON_CODE_TITLE_ID = 'tenant-common-code-title';
 
@@ -61,8 +66,12 @@ const TenantCommonCodeManager = () => {
         codeDescription: '',
         sortOrder: 0,
         isActive: true,
-        extraData: ''
+        extraData: '',
+        parentCodeGroup: '',
+        parentCodeValue: ''
     });
+    const [parentCategoryOptions, setParentCategoryOptions] = useState([]);
+    const [parentOptionsLoading, setParentOptionsLoading] = useState(false);
 
     // 초기 로드: 코드 그룹 목록 조회
     useEffect(() => {
@@ -79,6 +88,47 @@ const TenantCommonCodeManager = () => {
             loadCodes(selectedGroup.groupName);
         }
     }, [selectedGroup]);
+
+    const loadParentCategoryOptions = useCallback(async (groupName) => {
+        const parentGroup = getParentCodeGroupForSubcategory(groupName);
+        if (!parentGroup) {
+            setParentCategoryOptions([]);
+            return;
+        }
+        setParentOptionsLoading(true);
+        try {
+            const res = await getTenantCodesByGroup(parentGroup);
+            if (res.success) {
+                const list = (res.data || []).filter((c) => c.isActive !== false);
+                setParentCategoryOptions(
+                    list.map((c) => ({
+                        value: c.codeValue,
+                        label: toDisplayString(c.codeLabel || c.koreanName || c.codeValue, c.codeValue)
+                    }))
+                );
+            } else {
+                setParentCategoryOptions([]);
+            }
+        } catch (err) {
+            console.error('상위 카테고리 옵션 로드 오류:', err);
+            setParentCategoryOptions([]);
+        } finally {
+            setParentOptionsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!selectedGroup) {
+            setParentCategoryOptions([]);
+            return;
+        }
+        const gn = selectedGroup.groupName || selectedGroup;
+        if (!isSubcategoryCodeGroup(gn)) {
+            setParentCategoryOptions([]);
+            return;
+        }
+        loadParentCategoryOptions(gn);
+    }, [selectedGroup, loadParentCategoryOptions]);
 
 /**
      * 코드 그룹 목록 로드
@@ -137,15 +187,19 @@ const TenantCommonCodeManager = () => {
     const handleCreateCode = () => {
         setModalMode('create');
         setCurrentCode(null);
+        const gn = selectedGroup?.groupName || '';
+        const pg = getParentCodeGroupForSubcategory(gn) || '';
         setFormData({
-            codeGroup: selectedGroup?.groupName || '',
+            codeGroup: gn,
             codeValue: '',
             codeLabel: '',
             koreanName: '',
             codeDescription: '',
             sortOrder: codes.length,
             isActive: true,
-            extraData: ''
+            extraData: '',
+            parentCodeGroup: pg,
+            parentCodeValue: ''
         });
         setShowModal(true);
     };
@@ -156,6 +210,7 @@ const TenantCommonCodeManager = () => {
     const handleEditCode = (code) => {
         setModalMode('edit');
         setCurrentCode(code);
+        const pg = code.parentCodeGroup || getParentCodeGroupForSubcategory(code.codeGroup) || '';
         setFormData({
             codeGroup: code.codeGroup,
             codeValue: code.codeValue,
@@ -164,7 +219,9 @@ const TenantCommonCodeManager = () => {
             codeDescription: code.codeDescription || '',
             sortOrder: code.sortOrder || 0,
             isActive: code.isActive !== false,
-            extraData: code.extraData || ''
+            extraData: code.extraData || '',
+            parentCodeGroup: pg,
+            parentCodeValue: code.parentCodeValue || ''
         });
         setShowModal(true);
     };
@@ -175,15 +232,33 @@ const TenantCommonCodeManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
+        const gn = selectedGroup?.groupName || selectedGroup;
+        if (isSubcategoryCodeGroup(gn)) {
+            if (!formData.parentCodeValue || !String(formData.parentCodeValue).trim()) {
+                notificationManager.error('상위 카테고리를 선택하세요.');
+                return;
+            }
+        }
+
+        const parentGroupResolved = getParentCodeGroupForSubcategory(gn);
+        const payload = { ...formData };
+        if (parentGroupResolved) {
+            payload.parentCodeGroup = parentGroupResolved;
+            payload.parentCodeValue = formData.parentCodeValue;
+        } else {
+            delete payload.parentCodeGroup;
+            delete payload.parentCodeValue;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
             let response;
             if (modalMode === 'create') {
-                response = await createTenantCode(formData);
+                response = await createTenantCode(payload);
             } else {
-                response = await updateTenantCode(currentCode.id, formData);
+                response = await updateTenantCode(currentCode.id, payload);
             }
 
             if (response.success) {
@@ -446,6 +521,8 @@ const TenantCommonCodeManager = () => {
             showModal={showModal}
             modalMode={modalMode}
             formData={formData}
+            parentCategoryOptions={parentCategoryOptions}
+            parentOptionsLoading={parentOptionsLoading}
             
             // 이벤트 핸들러
             onSearchChange={setSearchTerm}

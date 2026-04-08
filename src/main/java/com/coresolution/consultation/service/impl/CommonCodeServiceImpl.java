@@ -21,6 +21,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.CommonCodePermissionService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -646,6 +647,13 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             koreanName = request.getCodeLabel() != null ? request.getCodeLabel() : request.getCodeValue();
             log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", request.getCodeValue(), koreanName);
         }
+
+        String parentGroup = request.getParentCodeGroup();
+        String parentValue = request.getParentCodeValue();
+        if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
+            parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(request.getCodeGroup());
+            CommonCodeSubcategoryParents.requireValidParent(request.getCodeGroup(), parentGroup, parentValue);
+        }
         
         CommonCode commonCode = CommonCode.builder()
                 .codeGroup(request.getCodeGroup())
@@ -654,8 +662,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .codeDescription(request.getCodeDescription())
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
-                .parentCodeGroup(request.getParentCodeGroup())
-                .parentCodeValue(request.getParentCodeValue())
+                .parentCodeGroup(parentGroup)
+                .parentCodeValue(parentValue)
                 .extraData(request.getExtraData())
                 .icon(request.getIcon())
                 .colorCode(request.getColorCode())
@@ -728,6 +736,19 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         }
         if (request.getColorCode() != null) {
             existingCode.setColorCode(request.getColorCode());
+        }
+        if (request.getParentCodeGroup() != null) {
+            existingCode.setParentCodeGroup(trimToNull(request.getParentCodeGroup()));
+        }
+        if (request.getParentCodeValue() != null) {
+            existingCode.setParentCodeValue(trimToNull(request.getParentCodeValue()));
+        }
+        if (CommonCodeSubcategoryParents.isSubcategoryGroup(existingCode.getCodeGroup())) {
+            existingCode.setParentCodeGroup(CommonCodeSubcategoryParents.expectedParentGroup(existingCode.getCodeGroup()));
+            CommonCodeSubcategoryParents.requireValidParent(
+                existingCode.getCodeGroup(),
+                existingCode.getParentCodeGroup(),
+                existingCode.getParentCodeValue());
         }
         
         CommonCode updated = commonCodeRepository.save(existingCode);
@@ -832,5 +853,13 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             userId
         );
         return userRepository.findActiveById(userId);
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

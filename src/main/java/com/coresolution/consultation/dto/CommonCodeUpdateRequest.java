@@ -40,5 +40,11 @@ public class CommonCodeUpdateRequest {
     
     @Size(max = 7, message = "색상 코드는 7자 이하여야 합니다.")
     private String colorCode;
+
+    @Size(max = 50, message = "상위 코드 그룹은 50자 이하여야 합니다.")
+    private String parentCodeGroup;
+
+    @Size(max = 50, message = "상위 코드 값은 50자 이하여야 합니다.")
+    private String parentCodeValue;
 }
 

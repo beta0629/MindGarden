@@ -20,6 +20,12 @@ import React from 'react';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
+import {
+    getParentCodeGroupForSubcategory,
+    isSubcategoryCodeGroup
+} from '../../utils/commonCodeParentGroups';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './TenantCommonCodeManagerUI.css';
 
 const TENANT_COMMON_CODE_FORM_ID = 'tenant-common-code-manager-form';
@@ -35,6 +41,8 @@ const TenantCommonCodeManagerUI = ({
     showModal,
     modalMode,
     formData,
+    parentCategoryOptions = [],
+    parentOptionsLoading = false,
     
     // 이벤트 핸들러
     onSearchChange,
@@ -58,6 +66,21 @@ const TenantCommonCodeManagerUI = ({
         } catch {
             return null;
         }
+    };
+
+    const selectedGroupName = selectedGroup ? (selectedGroup.groupName || selectedGroup) : '';
+    const showSubcategoryParent = isSubcategoryCodeGroup(selectedGroupName);
+    const showParentInModal = isSubcategoryCodeGroup(formData.codeGroup || '');
+
+    const resolveParentLabel = (code) => {
+        if (!code?.parentCodeValue) {
+            return '—';
+        }
+        const opt = parentCategoryOptions.find((o) => o.value === code.parentCodeValue);
+        if (opt) {
+            return toDisplayString(opt.label, '—');
+        }
+        return toDisplayString(code.parentCodeValue, '—');
     };
 
     return (
@@ -163,8 +186,8 @@ const TenantCommonCodeManagerUI = ({
                                                 {/* 카드 헤더 */}
                                                 <div className="mg-code-card__header">
                                                     <div className="mg-code-card__title-section">
-                                                        <code className="mg-code-value">{code.codeValue}</code>
-                                                        <h4 className="mg-code-name">{code.koreanName || code.codeLabel}</h4>
+                                                        <code className="mg-code-value">{toDisplayString(code.codeValue, '—')}</code>
+                                                        <h4 className="mg-code-name">{toDisplayString(code.koreanName || code.codeLabel, '—')}</h4>
                                                     </div>
                                                     <button
                                                         className={`mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`}
@@ -176,10 +199,16 @@ const TenantCommonCodeManagerUI = ({
                                                 
                                                 {/* 카드 본문 */}
                                                 <div className="mg-code-card__content">
+                                                    {showSubcategoryParent && (
+                                                        <div className="mg-code-card__field">
+                                                            <span className="mg-code-card__label">상위 카테고리</span>
+                                                            <span className="mg-code-card__value">{resolveParentLabel(code)}</span>
+                                                        </div>
+                                                    )}
                                                     {code.codeDescription && (
                                                         <div className="mg-code-card__field">
                                                             <span className="mg-code-card__label">설명</span>
-                                                            <p className="mg-code-card__value">{code.codeDescription}</p>
+                                                            <p className="mg-code-card__value">{toDisplayString(code.codeDescription, '—')}</p>
                                                         </div>
                                                     )}
                                                     
@@ -301,6 +330,23 @@ const TenantCommonCodeManagerUI = ({
                                     placeholder="예: 기본 10회기 패키지"
                                 />
                             </div>
+                            {showParentInModal && (
+                                <div className="mg-form-group">
+                                    <label htmlFor="tenant-parent-category">상위 카테고리 *</label>
+                                    <CustomSelect
+                                        options={parentCategoryOptions}
+                                        value={formData.parentCodeValue || ''}
+                                        onChange={(v) => onFormChange({
+                                            ...formData,
+                                            parentCodeGroup: getParentCodeGroupForSubcategory(formData.codeGroup) || '',
+                                            parentCodeValue: v
+                                        })}
+                                        placeholder="상위 카테고리를 선택하세요"
+                                        disabled={parentOptionsLoading || parentCategoryOptions.length === 0}
+                                        loading={parentOptionsLoading}
+                                    />
+                                </div>
+                            )}
                             <div className="mg-form-group">
                                 <label>한글명</label>
                                 <input

@@ -317,6 +317,11 @@
     gap: var(--mg-spacing-xs);
 }
 
+.mg-v2-ad-b0kla__form-group--full-width {
+    flex: 1 1 100%;
+    min-width: 100%;
+}
+
 .mg-v2-ad-b0kla__form-label {
     font-size: 13px;
     font-weight: 500;

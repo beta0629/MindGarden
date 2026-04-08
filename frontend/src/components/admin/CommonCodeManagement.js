@@ -8,6 +8,12 @@ import {
     toggleCommonCodeStatus,
     getCodeGroups
 } from '../../utils/commonCodeApi';
+import CustomSelect from '../common/CustomSelect';
+import {
+    getParentCodeGroupForSubcategory,
+    isSubcategoryCodeGroup
+} from '../../utils/commonCodeParentGroups';
+import { toDisplayString } from '../../utils/safeDisplay';
 import notificationManager from '../../utils/notification';
 import { 
     loadCodeGroupMetadata, 
@@ -88,6 +94,7 @@ const CommonCodeManagement = () => {
     
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [parentCategoryCodes, setParentCategoryCodes] = useState([]);
 
     const loadMetadata = useCallback(async() => {
         try {
@@ -148,6 +155,31 @@ const CommonCodeManagement = () => {
         }
     }, [user?.role]);
 
+    const loadParentCategoryCodes = useCallback(async (groupName) => {
+        if (!groupName || !isSubcategoryCodeGroup(groupName)) {
+            setParentCategoryCodes([]);
+            return;
+        }
+        const parentGroup = getParentCodeGroupForSubcategory(groupName);
+        if (!parentGroup) {
+            setParentCategoryCodes([]);
+            return;
+        }
+        try {
+            const codes = await getCommonCodes(parentGroup);
+            if (codes && codes.length > 0) {
+                setParentCategoryCodes(codes.filter((c) => c.isActive !== false));
+            } else {
+                const response = await apiGet(`/api/common-codes/${parentGroup}`);
+                const list = response && response.length > 0 ? response : [];
+                setParentCategoryCodes(list.filter((c) => c.isActive !== false));
+            }
+        } catch (error) {
+            console.error('상위 카테고리 코드 로드 오류:', error);
+            setParentCategoryCodes([]);
+        }
+    }, []);
+
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
@@ -191,6 +223,7 @@ const CommonCodeManagement = () => {
         setSelectedGroup(group);
         setShowAddForm(false);
         setEditingCode(null);
+        loadParentCategoryCodes(group);
         loadGroupCodes(group);
     };
 
@@ -343,8 +376,16 @@ const CommonCodeManagement = () => {
             return;
         }
 
+        if (isSubcategoryCodeGroup(selectedGroup)) {
+            if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
+                notificationManager.error('상위 카테고리를 선택하세요.');
+                return;
+            }
+        }
+
         try {
             setLoading(true);
+            const parentGroupForSub = getParentCodeGroupForSubcategory(selectedGroup);
             const codeData = {
                 codeGroup: selectedGroup,
                 codeValue: newCodeData.codeValue,
@@ -353,12 +394,17 @@ const CommonCodeManagement = () => {
                 codeDescription: newCodeData.codeDescription,
                 sortOrder: newCodeData.sortOrder,
                 isActive: newCodeData.isActive,
-                parentCodeGroup: newCodeData.parentCodeGroup,
-                parentCodeValue: newCodeData.parentCodeValue,
                 extraData: newCodeData.extraData,
                 icon: newCodeData.icon,
                 colorCode: newCodeData.colorCode
             };
+            if (parentGroupForSub) {
+                codeData.parentCodeGroup = parentGroupForSub;
+                codeData.parentCodeValue = newCodeData.parentCodeValue;
+            } else {
+                codeData.parentCodeGroup = newCodeData.parentCodeGroup || undefined;
+                codeData.parentCodeValue = newCodeData.parentCodeValue || undefined;
+            }
             
             const createdCode = await createCommonCode(codeData);
             
@@ -443,6 +489,7 @@ const CommonCodeManagement = () => {
 
     const handleEditCode = (code) => {
         setEditingCode(code);
+        const pg = code.parentCodeGroup || getParentCodeGroupForSubcategory(code.codeGroup) || '';
         setNewCodeData({
             codeGroup: code.codeGroup,
             codeValue: code.codeValue,
@@ -450,8 +497,8 @@ const CommonCodeManagement = () => {
             codeDescription: code.codeDescription || '',
             sortOrder: code.sortOrder || 0,
             isActive: code.isActive,
-            parentCodeGroup: code.parentCodeGroup,
-            parentCodeValue: code.parentCodeValue,
+            parentCodeGroup: pg,
+            parentCodeValue: code.parentCodeValue || '',
             extraData: code.extraData,
             icon: code.icon,
             colorCode: code.colorCode,
@@ -468,6 +515,14 @@ const CommonCodeManagement = () => {
             return;
         }
 
+        const editGroup = editingCode?.codeGroup || selectedGroup;
+        if (isSubcategoryCodeGroup(editGroup)) {
+            if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
+                notificationManager.error('상위 카테고리를 선택하세요.');
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             const updateData = {
@@ -480,7 +535,12 @@ const CommonCodeManagement = () => {
                 icon: newCodeData.icon,
                 colorCode: newCodeData.colorCode
             };
-            
+            const parentGroupForSub = getParentCodeGroupForSubcategory(editGroup);
+            if (parentGroupForSub) {
+                updateData.parentCodeGroup = parentGroupForSub;
+                updateData.parentCodeValue = newCodeData.parentCodeValue;
+            }
+
             await updateCommonCode(editingCode.id, updateData, {
                 codeGroup: editingCode?.codeGroup || selectedGroup
             });
@@ -518,13 +578,39 @@ const CommonCodeManagement = () => {
         setShowAddForm(false);
         setEditingCode(null);
         setNewCodeData({
+            codeGroup: '',
             codeValue: '',
             codeLabel: '',
             codeDescription: '',
             sortOrder: 0,
-            isActive: true
+            isActive: true,
+            parentCodeGroup: '',
+            parentCodeValue: '',
+            extraData: '',
+            icon: '',
+            colorCode: '',
+            koreanName: ''
         });
     };
+
+    const parentCategorySelectOptions = parentCategoryCodes.map((c) => ({
+        value: c.codeValue,
+        label: toDisplayString(c.codeLabel || c.koreanName || c.codeValue, c.codeValue)
+    }));
+
+    const resolveParentCategoryLabel = (code) => {
+        if (!code?.parentCodeValue) {
+            return '—';
+        }
+        const found = parentCategoryCodes.find((c) => c.codeValue === code.parentCodeValue);
+        if (found) {
+            return toDisplayString(found.codeLabel || found.koreanName || found.codeValue, '—');
+        }
+        return toDisplayString(code.parentCodeValue, '—');
+    };
+
+    const showParentColumn = isSubcategoryCodeGroup(selectedGroup);
+    const tableColSpan = showParentColumn ? 7 : 6;
 
     useEffect(() => {
         loadMetadata();
@@ -607,7 +693,25 @@ const CommonCodeManagement = () => {
                                         {!showAddForm && (
                                             <button 
                                                 className="mg-v2-btn mg-v2-btn--primary"
-                                                onClick={() => setShowAddForm(true)}
+                                                onClick={() => {
+                                                    setEditingCode(null);
+                                                    const pg = getParentCodeGroupForSubcategory(selectedGroup) || '';
+                                                    setNewCodeData({
+                                                        codeGroup: selectedGroup,
+                                                        codeValue: '',
+                                                        codeLabel: '',
+                                                        codeDescription: '',
+                                                        sortOrder: 0,
+                                                        isActive: true,
+                                                        parentCodeGroup: pg,
+                                                        parentCodeValue: '',
+                                                        extraData: '',
+                                                        icon: '',
+                                                        colorCode: '',
+                                                        koreanName: ''
+                                                    });
+                                                    setShowAddForm(true);
+                                                }}
                                                 disabled={loading}
                                             >
                                                 <i className="bi bi-plus-lg"></i> 신규 추가
@@ -656,6 +760,27 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                             </div>
+                                            {isSubcategoryCodeGroup(selectedGroup) && (
+                                                <div className="mg-v2-ad-b0kla__form-row">
+                                                    <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
+                                                        <label htmlFor="parentCategorySelect" className="mg-v2-ad-b0kla__form-label">
+                                                            상위 카테고리 *
+                                                        </label>
+                                                        <CustomSelect
+                                                            className="mg-v2-ad-b0kla__custom-select"
+                                                            options={parentCategorySelectOptions}
+                                                            value={newCodeData.parentCodeValue || ''}
+                                                            onChange={(v) => setNewCodeData({
+                                                                ...newCodeData,
+                                                                parentCodeGroup: getParentCodeGroupForSubcategory(selectedGroup) || '',
+                                                                parentCodeValue: v
+                                                            })}
+                                                            placeholder="상위 카테고리를 선택하세요"
+                                                            disabled={loading || parentCategorySelectOptions.length === 0}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
                                                     <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">설명</label>
@@ -718,6 +843,7 @@ const CommonCodeManagement = () => {
                                             <tr>
                                                 <th>코드 라벨</th>
                                                 <th>코드 값</th>
+                                                {showParentColumn && <th>상위 카테고리</th>}
                                                 <th>상태</th>
                                                 <th>정렬</th>
                                                 <th>설명</th>
@@ -727,23 +853,28 @@ const CommonCodeManagement = () => {
                                         <tbody>
                                             {groupCodes.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="6" style={{ textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)', padding: 'var(--mg-spacing-xl)' }}>
+                                                    <td colSpan={tableColSpan} style={{ textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)', padding: 'var(--mg-spacing-xl)' }}>
                                                         등록된 세부 코드가 없습니다.
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 groupCodes.map(code => (
                                                     <tr key={code.id} style={{ opacity: code.isActive ? 1 : 0.6 }}>
-                                                        <td style={{ fontWeight: 500 }}>{code.codeLabel}</td>
-                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{code.codeValue}</code></td>
+                                                        <td style={{ fontWeight: 500 }}>{toDisplayString(code.codeLabel, '—')}</td>
+                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{toDisplayString(code.codeValue, '—')}</code></td>
+                                                        {showParentColumn && (
+                                                            <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
+                                                                {resolveParentCategoryLabel(code)}
+                                                            </td>
+                                                        )}
                                                         <td>
                                                             <span className={`mg-v2-badge ${code.isActive ? 'mg-v2-badge--active' : 'mg-v2-badge--inactive'}`}>
                                                                 {code.isActive ? '활성' : '비활성'}
                                                             </span>
                                                         </td>
-                                                        <td>{code.sortOrder}</td>
+                                                        <td>{toDisplayString(code.sortOrder, '—')}</td>
                                                         <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
-                                                            {code.codeDescription || '-'}
+                                                            {code.codeDescription ? toDisplayString(code.codeDescription, '—') : '—'}
                                                         </td>
                                                         <td style={{ textAlign: 'center' }}>
                                                             <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
@@ -753,7 +884,7 @@ const CommonCodeManagement = () => {
                                                                 <button onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}>
                                                                     <i className={`bi ${code.isActive ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
                                                                 </button>
-                                                                <button onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500, #dc2626)' }}>
+                                                                <button onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500)' }}>
                                                                     <i className="bi bi-trash"></i>
                                                                 </button>
                                                             </div>

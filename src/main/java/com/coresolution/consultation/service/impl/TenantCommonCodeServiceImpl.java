@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.TenantCommonCodeService;
+import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -80,6 +81,13 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
                 );
             });
         
+        String parentGroup = request.getParentCodeGroup();
+        String parentValue = request.getParentCodeValue();
+        if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
+            parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(request.getCodeGroup());
+            CommonCodeSubcategoryParents.requireValidParent(request.getCodeGroup(), parentGroup, parentValue);
+        }
+
         // 엔티티 생성
         CommonCode code = CommonCode.builder()
             .codeGroup(request.getCodeGroup())
@@ -89,6 +97,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             .codeDescription(request.getCodeDescription())
             .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
             .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+            .parentCodeGroup(parentGroup)
+            .parentCodeValue(parentValue)
             .extraData(request.getExtraData())
             .icon(request.getIcon())
             .colorCode(request.getColorCode())
@@ -134,7 +144,20 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         if (request.getColorCode() != null) {
             code.setColorCode(request.getColorCode());
         }
-        
+        if (request.getParentCodeGroup() != null) {
+            code.setParentCodeGroup(trimToNull(request.getParentCodeGroup()));
+        }
+        if (request.getParentCodeValue() != null) {
+            code.setParentCodeValue(trimToNull(request.getParentCodeValue()));
+        }
+        if (CommonCodeSubcategoryParents.isSubcategoryGroup(code.getCodeGroup())) {
+            code.setParentCodeGroup(CommonCodeSubcategoryParents.expectedParentGroup(code.getCodeGroup()));
+            CommonCodeSubcategoryParents.requireValidParent(
+                code.getCodeGroup(),
+                code.getParentCodeGroup(),
+                code.getParentCodeValue());
+        }
+
         CommonCode updatedCode = commonCodeRepository.save(code);
         log.info("테넌트 공통코드 수정 완료: id={}", updatedCode.getId());
         
@@ -330,6 +353,14 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     /**
      * 코드 값 자동 생성
      */
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     private String generateCodeValue(String tenantId, String codeGroup, String prefix) {
         List<CommonCode> existingCodes = commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
         int nextNumber = existingCodes.size() + 1;
@@ -350,6 +381,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             .codeDescription(code.getCodeDescription())
             .sortOrder(code.getSortOrder())
             .isActive(code.getIsActive())
+            .parentCodeGroup(code.getParentCodeGroup())
+            .parentCodeValue(code.getParentCodeValue())
             .extraData(code.getExtraData())
             .icon(code.getIcon())
             .colorCode(code.getColorCode())

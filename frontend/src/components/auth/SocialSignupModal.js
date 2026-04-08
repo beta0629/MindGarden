@@ -8,7 +8,64 @@ import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { API_BASE_URL, API_ERROR_MESSAGES, API_STATUS } from '../../constants/api';
 import '../../styles/auth/social-signup-modal.css';
+
+const statusToFallbackMessage = (status) => {
+  switch (status) {
+    case API_STATUS.UNAUTHORIZED:
+      return API_ERROR_MESSAGES.UNAUTHORIZED;
+    case API_STATUS.FORBIDDEN:
+      return API_ERROR_MESSAGES.FORBIDDEN;
+    case API_STATUS.NOT_FOUND:
+      return API_ERROR_MESSAGES.NOT_FOUND;
+    case API_STATUS.INTERNAL_SERVER_ERROR:
+      return API_ERROR_MESSAGES.SERVER_ERROR;
+    default:
+      return API_ERROR_MESSAGES.NETWORK_ERROR;
+  }
+};
+
+/**
+ * fetch 응답 본문을 안전하게 JSON으로 파싱한다. (HTML/빈 본문 대응)
+ * @param {Response} fetchResponse
+ * @returns {Promise<object|null>}
+ */
+const messageFromFetchErrorBody = (bodyJson) => {
+  if (!bodyJson || typeof bodyJson !== 'object') {
+    return '';
+  }
+  const nestedMsg =
+    bodyJson.data && typeof bodyJson.data === 'object' ? bodyJson.data.message : '';
+  return bodyJson.message || bodyJson.error || nestedMsg || '';
+};
+
+const parseFetchJsonBodySafe = async(fetchResponse) => {
+  let text;
+  try {
+    text = await fetchResponse.text();
+  } catch {
+    return null;
+  }
+  if (!text || !String(text).trim()) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+const isSocialSignupSuccess = (payload) => {
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+  if (payload.success === true) {
+    return true;
+  }
+  return payload.userId != null && Boolean(payload.email);
+};
 
 const SocialSignupModal = ({
   isOpen,
@@ -204,7 +261,6 @@ const SocialSignupModal = ({
 
       let response;
       if (socialUser.isAcademySignup && socialUser.tenantId) {
-        const { API_BASE_URL } = require('../../constants/api');
         const academySignupResponse = await fetch(
           `${API_BASE_URL}/api/v1/academy/registration/social-signup?tenantId=${socialUser.tenantId}`,
           {
@@ -216,9 +272,18 @@ const SocialSignupModal = ({
             body: JSON.stringify(signupData)
           }
         );
-        response = await academySignupResponse.json();
+        const bodyJson = await parseFetchJsonBodySafe(academySignupResponse);
+        if (!academySignupResponse.ok) {
+          const submitFailMsg = toDisplayString(
+            messageFromFetchErrorBody(bodyJson),
+            statusToFallbackMessage(academySignupResponse.status)
+          );
+          setErrors({ submit: submitFailMsg });
+          notificationManager.show(submitFailMsg, 'error');
+          return;
+        }
+        response = bodyJson || {};
       } else if (socialUser.tenantId) {
-        const { API_BASE_URL } = require('../../constants/api');
         const tenantSignupResponse = await fetch(
           `${API_BASE_URL}/api/v1/auth/social/signup?tenantId=${socialUser.tenantId}`,
           {
@@ -230,12 +295,22 @@ const SocialSignupModal = ({
             body: JSON.stringify(signupData)
           }
         );
-        response = await tenantSignupResponse.json();
+        const bodyJson = await parseFetchJsonBodySafe(tenantSignupResponse);
+        if (!tenantSignupResponse.ok) {
+          const submitFailMsg = toDisplayString(
+            messageFromFetchErrorBody(bodyJson),
+            statusToFallbackMessage(tenantSignupResponse.status)
+          );
+          setErrors({ submit: submitFailMsg });
+          notificationManager.show(submitFailMsg, 'error');
+          return;
+        }
+        response = bodyJson || {};
       } else {
         response = await userAPI.socialSignup(signupData);
       }
 
-      if (response.success) {
+      if (isSocialSignupSuccess(response)) {
         if (socialUser.needsBranchMapping) {
           notificationManager.show('계정이 활성화되었습니다. 다시 로그인해주세요.', 'success');
           onClose();
@@ -572,12 +647,13 @@ const SocialSignupModal = ({
                 취소
               </MGButton>
               <MGButton
-                type="submit"
+                type="button"
                 variant="primary"
                 className="social-signup-modal__action-btn"
                 loading={isLoading}
                 loadingText={socialUser?.needsBranchMapping ? '처리 중...' : '가입 중...'}
-                preventDoubleClick
+                preventDoubleClick={false}
+                onClick={handleSubmit}
               >
                 {socialUser?.needsBranchMapping ? '계정 활성화 완료' : '회원가입 완료'}
               </MGButton>

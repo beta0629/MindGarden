@@ -59,7 +59,7 @@
     --breakpoint-wide: 1440px;
 }
 
-/* Quill(BlogEditor) 저장 HTML 폰트 — components/BlogEditor.tsx QUILL_FONT_WHITELIST와 동기화 */
+/* Quill(BlogEditor) 저장 HTML 폰트 — lib/quill-font.ts QUILL_FONT_WHITELIST와 동기화 */
 .ql-font-noto-sans-kr {
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
@@ -80,6 +80,43 @@
 }
 .ql-font-monospace {
     font-family: 'Consolas', 'Monaco', 'Noto Sans Mono KR', monospace;
+}
+
+/* Quill 툴바 폰트 드롭다운 (블로그·후기·팝업·상담진 등 모든 BlogEditor 공통) */
+.ql-snow .ql-picker.ql-font {
+    width: 11.5rem;
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item::before {
+    content: none;
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='noto-sans-kr']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='noto-sans-kr']::before {
+    content: '본문 (Noto 고딕)';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='pretendard']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='pretendard']::before {
+    content: '프리텐다드';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='nanum-gothic']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='nanum-gothic']::before {
+    content: '나눔고딕';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='nanum-myeongjo']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='nanum-myeongjo']::before {
+    content: '나눔명조';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='noto-serif-kr']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='noto-serif-kr']::before {
+    content: '노토 세리프';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='serif']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='serif']::before {
+    content: '웹 명조';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='monospace']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='monospace']::before {
+    content: '고정폭';
 }
 
 /* 후기 섹션 반응형 스타일 */

@@ -1,23 +1,13 @@
 'use client';
 
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
-import { getApiService } from '@/lib/api';
+import { QUILL_FONT_WHITELIST, registerQuillFontsOnce } from '@/lib/quill-font';
 
 // React Quill을 동적으로 로드
 let ReactQuill: any = null;
 let quillStylesLoaded = false;
-let quillFontRegistered = false;
 
-/** Quill 폰트 화이트리스트 (툴바·globals.css·서버 sanitize와 동일 순서 유지) */
-export const QUILL_FONT_WHITELIST = [
-  'noto-sans-kr',
-  'pretendard',
-  'nanum-gothic',
-  'nanum-myeongjo',
-  'noto-serif-kr',
-  'serif',
-  'monospace',
-] as const;
+export { QUILL_FONT_WHITELIST } from '@/lib/quill-font';
 
 interface BlogEditorProps {
   value: string;
@@ -58,14 +48,7 @@ export default function BlogEditor({
           quillStylesLoaded = true;
         }
 
-        // Quill 폰트 포맷 등록 (에디터 인스턴스 생성 전에 1회)
-        if (!quillFontRegistered) {
-          const Quill = (await import('quill')).default;
-          const Font = Quill.import('formats/font') as { whitelist: string[] };
-          Font.whitelist = [...QUILL_FONT_WHITELIST];
-          Quill.register(Font, true);
-          quillFontRegistered = true;
-        }
+        await registerQuillFontsOnce();
 
         // ReactQuill 모듈 로드
         const ReactQuillModule = await import('react-quill');
@@ -480,42 +463,6 @@ export default function BlogEditor({
           height: auto;
           border-radius: var(--radius-sm);
           margin: 16px 0;
-        }
-        /* 폰트 패밀리는 app/globals.css .ql-font-* (저장 HTML·목록 표시와 공유) */
-        .ql-snow .ql-picker.ql-font {
-          width: 11.5rem;
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item::before {
-          content: none;
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='noto-sans-kr']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='noto-sans-kr']::before {
-          content: '본문 (Noto 고딕)';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='pretendard']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='pretendard']::before {
-          content: '프리텐다드';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='nanum-gothic']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='nanum-gothic']::before {
-          content: '나눔고딕';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='nanum-myeongjo']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='nanum-myeongjo']::before {
-          content: '나눔명조';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='noto-serif-kr']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='noto-serif-kr']::before {
-          content: '노토 세리프';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='serif']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='serif']::before {
-          content: '웹 명조';
-        }
-        .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='monospace']::before,
-        .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='monospace']::before {
-          content: '고정폭';
         }
       `}</style>
     </div>

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -378,22 +379,11 @@ public class OAuth2Controller extends BaseApiController {
      * TenantContextHolder
      */
     private String resolveTenantIdForRedirect(HttpSession session, String state) {
-        // 1) state에서 tenantId 디코딩 (형식: {base64TenantId}.{uuid})
-        if (state != null && state.contains(".")) {
-            try {
-                String[] parts = state.split("\\.", 2);
-                if (parts.length == 2) {
-                    String encodedTenantId = parts[0];
-                    String decoded =
-                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
-                                    StandardCharsets.UTF_8);
-                    if (decoded != null && !decoded.trim().isEmpty()) {
-                        return decoded.trim();
-                    }
-                }
-            } catch (Exception e) {
-                // ignore (fallback to session/holder)
-            }
+        // 1) state에서 tenantId 디코딩 (형식: {base64TenantId}.{nonce})
+        String normalized = normalizeOAuth2StateQueryValue(state);
+        OAuthCompositeState parsed = parseCompositeOAuthState(normalized);
+        if (parsed.tenantId != null && !parsed.tenantId.isEmpty()) {
+            return parsed.tenantId;
         }
 
         // 2) 세션에서 tenantId
@@ -431,7 +421,8 @@ public class OAuth2Controller extends BaseApiController {
         if (state == null || !state.contains(".")) {
             return "n/a";
         }
-        String encoded = state.split("\\.", 2)[0];
+        String normalized = normalizeOAuth2StateQueryValue(state);
+        String encoded = normalized != null ? normalized.split("\\.", 2)[0] : "";
         if (encoded.isEmpty()) {
             return "empty";
         }
@@ -440,6 +431,136 @@ public class OAuth2Controller extends BaseApiController {
             return encoded;
         }
         return encoded.substring(0, max) + "...";
+    }
+
+    /**
+     * OAuth2 state 쿼리 값 정규화 (공백·중개 프록시에 따른 미세 변형 완화).
+     *
+     * @param state 원본 state (nullable)
+     * @return trim 된 값 또는 null
+     */
+    static String normalizeOAuth2StateQueryValue(String state) {
+        if (state == null) {
+            return null;
+        }
+        return state.trim();
+    }
+
+    /**
+     * authorize 단계에서 붙인 URL-safe Base64 테넌트 접두를 디코드한다. URL-safe 실패 시 표준 Base64+패딩을 시도한다.
+     *
+     * @param encodedSegment 첫 '.' 앞 구간
+     * @return UTF-8 원시 바이트 디코드 결과
+     */
+    static byte[] decodeOAuthStateTenantSegment(String encodedSegment) {
+        if (encodedSegment == null || encodedSegment.isEmpty()) {
+            throw new IllegalArgumentException("empty segment");
+        }
+        String norm = encodedSegment.trim().replace(' ', '+');
+        try {
+            return Base64.getUrlDecoder().decode(norm);
+        } catch (IllegalArgumentException ignored) {
+            String std = norm.replace('-', '+').replace('_', '/');
+            int pad = (4 - std.length() % 4) % 4;
+            StringBuilder sb = new StringBuilder(std);
+            for (int i = 0; i < pad; i++) {
+                sb.append('=');
+            }
+            return Base64.getDecoder().decode(sb.toString());
+        }
+    }
+
+    /**
+     * OAuth state (복합: base64url(tenant).nonce 또는 nonce 단일) 파싱 결과.
+     *
+     * @param tenantId 복합 형식에서만 비어 있지 않음
+     * @param nonceOrFull 복합 성공 시 dot 뒤 nonce, 그 외에는 정규화된 전체 state
+     */
+    static final class OAuthCompositeState {
+        final String tenantId;
+        final String nonceOrFull;
+
+        OAuthCompositeState(String tenantId, String nonceOrFull) {
+            this.tenantId = tenantId;
+            this.nonceOrFull = nonceOrFull;
+        }
+    }
+
+    /**
+     * Naver/Kakao 등에서 공통으로 쓰는 {@code {base64url(tenant)}.{nonce}} state 파싱.
+     *
+     * @param state {@link #normalizeOAuth2StateQueryValue(String)} 적용 권장
+     * @return tenant 미디코드 시 tenantId 는 null, nonceOrFull 은 판단용 전체 문자열
+     */
+    static OAuthCompositeState parseCompositeOAuthState(String state) {
+        String normalized = normalizeOAuth2StateQueryValue(state);
+        if (normalized == null || normalized.isEmpty()) {
+            return new OAuthCompositeState(null, null);
+        }
+        if (!normalized.contains(".")) {
+            return new OAuthCompositeState(null, normalized);
+        }
+        String[] parts = normalized.split("\\.", 2);
+        if (parts.length != 2 || parts[0].isEmpty()) {
+            return new OAuthCompositeState(null, normalized);
+        }
+        try {
+            byte[] raw = decodeOAuthStateTenantSegment(parts[0]);
+            String tenant = new String(raw, StandardCharsets.UTF_8).trim();
+            if (tenant.isEmpty()) {
+                return new OAuthCompositeState(null, normalized);
+            }
+            return new OAuthCompositeState(tenant, parts[1]);
+        } catch (Exception e) {
+            return new OAuthCompositeState(null, normalized);
+        }
+    }
+
+    /**
+     * OAuth 콜백 CSRF: 세션의 state와 콜백 state 비교. 세션 소실({@code savedState==null})이면 통과.
+     * 인가 응답과 콜백 간 state 문자열이 미세하게 달라도 nonce 구간이 일치하면 허용한다.
+     */
+    private static boolean prefixedOAuthSavedStateMatches(String savedState, String normalizedCallbackState,
+            OAuthCompositeState parsed) {
+        if (savedState == null) {
+            return true;
+        }
+        if (normalizedCallbackState != null && savedState.equals(normalizedCallbackState)) {
+            return true;
+        }
+        if (parsed.tenantId != null) {
+            String nonce = parsed.nonceOrFull;
+            if (nonce != null && savedState.endsWith("." + nonce)) {
+                return true;
+            }
+            if (normalizedCallbackState != null && normalizedCallbackState.contains(".")
+                    && savedState.contains(".")) {
+                String cbNonce = normalizedCallbackState.split("\\.", 2)[1];
+                String savedNonce = savedState.split("\\.", 2)[1];
+                if (cbNonce.equals(savedNonce)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
+    }
+
+    /**
+     * 콜백 Host/Forwarded-Host가 서브도메인 형태일 가능성이 있는지 여부만 기록용으로 판별 (호스트 문자열 원문은 로그에 남기지 않음).
+     */
+    private static boolean callbackHostSuggestsSubdomain(HttpServletRequest request) {
+        String host = request.getHeader("X-Forwarded-Host");
+        if (host == null || host.isEmpty()) {
+            host = request.getHeader("Host");
+        }
+        if (host == null || host.isEmpty()) {
+            return false;
+        }
+        String hostOnly = host.split(":")[0];
+        long dotCount = hostOnly.chars().filter(c -> c == '.').count();
+        return dotCount >= 2 || hostOnly.endsWith(".localhost") || hostOnly.endsWith(".127.0.0.1")
+                || (hostOnly.contains("localhost") && hostOnly.contains("."));
     }
 
     /**
@@ -774,7 +895,8 @@ public class OAuth2Controller extends BaseApiController {
             String authUrl = "https://kauth.kakao.com/oauth/authorize?" + "client_id="
                     + kakaoClientId + "&redirect_uri="
                     + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8) + "&response_type=code"
-                    + "&scope=" + kakaoScope + "&state=" + state;
+                    + "&scope=" + kakaoScope + "&state="
+                    + URLEncoder.encode(state, StandardCharsets.UTF_8).replace("+", "%20");
 
             Map<String, Object> data = new HashMap<>();
             data.put("authUrl", authUrl);
@@ -945,7 +1067,8 @@ public class OAuth2Controller extends BaseApiController {
 
             String authUrl = "https://nid.naver.com/oauth2.0/authorize?" + "response_type=code"
                     + "&client_id=" + naverClientId + "&redirect_uri="
-                    + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8) + "&state=" + state
+                    + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8) + "&state="
+                    + URLEncoder.encode(state, StandardCharsets.UTF_8).replace("+", "%20")
                     + "&scope=" + naverScope;
 
             Map<String, Object> data = new HashMap<>();
@@ -985,33 +1108,23 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         String savedState = (String) session.getAttribute("oauth2_naver_state");
-        log.info("네이버 OAuth2 콜백 - state 검증: savedState={}, state={}, sessionId={}", savedState,
-                state, session.getId());
+        String normalizedState = normalizeOAuth2StateQueryValue(state);
+        OAuthCompositeState compositeState = parseCompositeOAuthState(normalizedState);
+        String stateBasedTenantId = compositeState.tenantId;
+        log.info("네이버 OAuth2 콜백 - state 검증: savedStatePresent={}, stateLen={}, sessionId={}",
+                Boolean.valueOf(savedState != null), normalizedState != null ? normalizedState.length() : 0,
+                session.getId());
 
-        // state에서 tenantId 디코딩 시도 (state에 tenantId가 인코딩되어 있는 경우)
-        String stateBasedTenantId = null;
-        String actualState = state; // 실제 state (tenantId가 인코딩되지 않은 경우 원본 state 사용)
-        if (state != null && state.contains(".")) {
-            try {
-                String[] parts = state.split("\\.", 2);
-                if (parts.length == 2) {
-                    String encodedTenantId = parts[0];
-                    actualState = parts[1];
-                    // base64 디코딩
-                    stateBasedTenantId =
-                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
-                                    StandardCharsets.UTF_8);
-                    log.info("네이버 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, actualState={}",
-                            stateBasedTenantId, actualState);
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ 네이버 OAuth2 콜백 - state에서 tenantId 디코딩 실패: state={}, error={}", state,
-                        e.getMessage());
-            }
+        if (stateBasedTenantId != null) {
+            log.info("네이버 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, nonceLen={}",
+                    stateBasedTenantId,
+                    compositeState.nonceOrFull != null ? compositeState.nonceOrFull.length() : 0);
+        } else if (normalizedState != null && normalizedState.contains(".")) {
+            log.warn("⚠️ 네이버 OAuth2 콜백 - state에 '.'는 있으나 tenant 접두 디코딩 실패(형식 불일치 가능): prefix={}",
+                    oauth2StateEncodedSegmentPrefixForLog(normalizedState));
         }
 
-        // state 검증 (actualState 사용)
-        if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
+        if (!prefixedOAuthSavedStateMatches(savedState, normalizedState, compositeState)) {
             session.removeAttribute("oauth2_naver_state");
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -1021,19 +1134,20 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         // 기존 방식: 세션에서 state로 tenantId 조회 (호환성 유지, stateBasedTenantId가 없는 경우에만)
-        if (stateBasedTenantId == null && state != null) {
-            String tenantIdKey = "oauth2_naver_tenant_id_" + state;
+        if (stateBasedTenantId == null && normalizedState != null) {
+            String tenantIdKey = "oauth2_naver_tenant_id_" + normalizedState;
             stateBasedTenantId = (String) session.getAttribute(tenantIdKey);
             log.info(
-                    "네이버 OAuth2 콜백 - 세션에서 state로 tenant_id 조회 시도: state={}, tenantIdKey={}, found={}, sessionId={}",
-                    state, tenantIdKey, stateBasedTenantId != null, session.getId());
+                    "네이버 OAuth2 콜백 - 세션에서 state로 tenant_id 조회 시도: stateLen={}, tenantIdKeyFound={}, sessionId={}",
+                    normalizedState.length(), Boolean.valueOf(stateBasedTenantId != null),
+                    session.getId());
             if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
-                log.info("네이버 OAuth2 콜백 - 세션에서 state로 tenant_id 조회 성공: tenantId={}, state={}",
-                        stateBasedTenantId, state);
-                session.removeAttribute(tenantIdKey); // 사용 후 제거
+                log.info("네이버 OAuth2 콜백 - 세션에서 state로 tenant_id 조회 성공: tenantId={}, stateLen={}",
+                        stateBasedTenantId, normalizedState.length());
+                session.removeAttribute(tenantIdKey);
             } else {
-                log.warn("⚠️ 네이버 OAuth2 콜백 - state로 tenant_id를 찾지 못함: state={}, sessionId={}",
-                        state, session.getId());
+                log.warn("⚠️ 네이버 OAuth2 콜백 - state로 tenant_id를 찾지 못함: stateLen={}, sessionId={}",
+                        normalizedState.length(), session.getId());
             }
         }
 
@@ -1042,20 +1156,29 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         try {
-            // 서브도메인에서 tenant_id 추출하여 TenantContextHolder에 설정 (OAuth 콜백 처리 전 필수)
             String callbackTenantId = extractTenantIdFromSubdomain(request);
-            if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
+            // state 단독 복구(세션·메인 도메인 콜백) 우선 — 서브도메인은 보조
+            if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "네이버 OAuth2 콜백 - state 기반 tenant_id를 TenantContextHolder에 설정: tenantId={}",
+                        stateBasedTenantId);
+                if (callbackTenantId != null && !callbackTenantId.isEmpty()
+                        && !callbackTenantId.equals(stateBasedTenantId)) {
+                    log.warn(
+                            "네이버 OAuth2 콜백 - state 기반 tenant와 서브도메인 기반 tenant 불일치, state 우선 적용: callbackHostSuggestsSubdomain={}",
+                            Boolean.valueOf(callbackHostSuggestsSubdomain(request)));
+                }
+            } else if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
                 com.coresolution.core.context.TenantContextHolder.setTenantId(callbackTenantId);
                 log.info(
                         "네이버 OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                         callbackTenantId);
-            } else if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
-                // state로 조회한 tenantId 사용
-                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
-                log.info(
-                        "네이버 OAuth2 콜백 - state로 조회한 tenant_id를 TenantContextHolder에 설정: tenantId={}",
-                        stateBasedTenantId);
             } else {
+                if (!callbackHostSuggestsSubdomain(request)) {
+                    log.info(
+                            "네이버 OAuth2 콜백 - Host/Forwarded-Host가 서브도메인 형태로 보이지 않음(쿠키/프록시 환경에서 tenant 미결정 가능)");
+                }
                 // 서브도메인이 없으면 세션에서 tenant_id 확인 (카카오와 동일하게 tenantId 우선 확인)
                 String sessionTenantId = (String) session.getAttribute("tenantId");
                 if (sessionTenantId == null || sessionTenantId.isEmpty()) {
@@ -1070,12 +1193,13 @@ public class OAuth2Controller extends BaseApiController {
                     // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
                     log.warn(
                             "네이버 OAuth2 콜백 - tenant 미결정 직전 진단: stateLen={}, stateHasDot={}, "
-                                    + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}",
-                            state != null ? state.length() : 0,
-                            Boolean.valueOf(state != null && state.contains(".")),
+                                    + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}, callbackHostSuggestsSubdomain={}",
+                            normalizedState != null ? normalizedState.length() : 0,
+                            Boolean.valueOf(normalizedState != null && normalizedState.contains(".")),
                             Boolean.valueOf(stateBasedTenantId != null),
                             Boolean.valueOf(savedState != null),
-                            oauth2StateEncodedSegmentPrefixForLog(state));
+                            oauth2StateEncodedSegmentPrefixForLog(normalizedState),
+                            Boolean.valueOf(callbackHostSuggestsSubdomain(request)));
                     log.error("❌ 네이버 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -1095,12 +1219,13 @@ public class OAuth2Controller extends BaseApiController {
             if (finalTenantId == null || finalTenantId.isEmpty()) {
                 log.warn(
                         "네이버 OAuth2 콜백 - TenantContext 미설정 직전 진단: stateLen={}, stateHasDot={}, "
-                                + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}",
-                        state != null ? state.length() : 0,
-                        Boolean.valueOf(state != null && state.contains(".")),
+                                + "stateBasedTenantIdNonNull={}, savedStateNonNull={}, encodedSegmentPrefix={}, callbackHostSuggestsSubdomain={}",
+                        normalizedState != null ? normalizedState.length() : 0,
+                        Boolean.valueOf(normalizedState != null && normalizedState.contains(".")),
                         Boolean.valueOf(stateBasedTenantId != null),
                         Boolean.valueOf(savedState != null),
-                        oauth2StateEncodedSegmentPrefixForLog(state));
+                        oauth2StateEncodedSegmentPrefixForLog(normalizedState),
+                        Boolean.valueOf(callbackHostSuggestsSubdomain(request)));
                 log.error(
                         "❌ 네이버 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
                 String redirectTenantId = resolveTenantIdForRedirect(session, state);
@@ -1116,16 +1241,16 @@ public class OAuth2Controller extends BaseApiController {
 
             // 모바일 클라이언트 정보를 Redis에서 조회 (state 기반)
             String savedClientType = null;
-            if (state != null) {
-                String cacheKey = "oauth2_naver_client:" + state;
+            if (normalizedState != null) {
+                String cacheKey = "oauth2_naver_client:" + normalizedState;
                 // java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey,
                 // String.class); // 캐시 서비스 임시 비활성화
                 java.util.Optional<String> clientTypeOpt = java.util.Optional.empty();
                 if (clientTypeOpt.isPresent()) {
                     savedClientType = clientTypeOpt.get();
                     // cacheService.evict(cacheKey); // 사용 후 삭제 - 캐시 서비스 임시 비활성화
-                    log.info("네이버 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, state={}",
-                            savedClientType, state);
+                    log.info("네이버 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, stateLen={}",
+                            savedClientType, normalizedState.length());
                 } else {
                     // Redis에 없으면 세션에서도 확인 (기존 호환성)
                     savedClientType = (String) session.getAttribute("oauth2_client");
@@ -1923,30 +2048,23 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         String savedState = (String) session.getAttribute("oauth2_kakao_state");
+        String normalizedKakaoState = normalizeOAuth2StateQueryValue(state);
+        OAuthCompositeState kakaoComposite = parseCompositeOAuthState(normalizedKakaoState);
+        String stateBasedTenantId = kakaoComposite.tenantId;
+        log.info("카카오 OAuth2 콜백 - state 검증: savedStatePresent={}, stateLen={}, sessionId={}",
+                Boolean.valueOf(savedState != null),
+                normalizedKakaoState != null ? normalizedKakaoState.length() : 0, session.getId());
 
-        // state에 tenantId가 인코딩되어 있는 경우 디코딩 (네이버와 동일 패턴)
-        String stateBasedTenantId = null;
-        String actualState = state;
-        if (state != null && state.contains(".")) {
-            try {
-                String[] parts = state.split("\\.", 2);
-                if (parts.length == 2) {
-                    String encodedTenantId = parts[0];
-                    actualState = parts[1];
-                    stateBasedTenantId =
-                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
-                                    StandardCharsets.UTF_8);
-                    log.info("카카오 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, actualState={}",
-                            stateBasedTenantId, actualState);
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ 카카오 OAuth2 콜백 - state에서 tenantId 디코딩 실패: state={}, error={}", state,
-                        e.getMessage());
-            }
+        if (stateBasedTenantId != null) {
+            log.info("카카오 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, nonceLen={}",
+                    stateBasedTenantId,
+                    kakaoComposite.nonceOrFull != null ? kakaoComposite.nonceOrFull.length() : 0);
+        } else if (normalizedKakaoState != null && normalizedKakaoState.contains(".")) {
+            log.warn("⚠️ 카카오 OAuth2 콜백 - state에 '.'는 있으나 tenant 접두 디코딩 실패: prefix={}",
+                    oauth2StateEncodedSegmentPrefixForLog(normalizedKakaoState));
         }
 
-        // state 검증 (actualState 지원)
-        if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
+        if (!prefixedOAuthSavedStateMatches(savedState, normalizedKakaoState, kakaoComposite)) {
             session.removeAttribute("oauth2_kakao_state");
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -1960,21 +2078,28 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         try {
-            // 서브도메인에서 tenant_id 추출하여 TenantContextHolder에 설정 (OAuth 콜백 처리 전 필수)
             String callbackTenantId = extractTenantIdFromSubdomain(request);
-            if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
+            if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "카카오 OAuth2 콜백 - state 기반 tenant_id를 TenantContextHolder에 설정: tenantId={}",
+                        stateBasedTenantId);
+                if (callbackTenantId != null && !callbackTenantId.isEmpty()
+                        && !callbackTenantId.equals(stateBasedTenantId)) {
+                    log.warn(
+                            "카카오 OAuth2 콜백 - state 기반 tenant와 서브도메인 기반 tenant 불일치, state 우선 적용: callbackHostSuggestsSubdomain={}",
+                            Boolean.valueOf(callbackHostSuggestsSubdomain(request)));
+                }
+            } else if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
                 com.coresolution.core.context.TenantContextHolder.setTenantId(callbackTenantId);
                 log.info(
                         "카카오 OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                         callbackTenantId);
-            } else if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
-                // state로 전달된 tenantId 우선 적용 (메인 도메인 콜백에서도 안정적으로 동작)
-                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
-                log.info(
-                        "카카오 OAuth2 콜백 - state로 전달된 tenant_id를 TenantContextHolder에 설정: tenantId={}",
-                        stateBasedTenantId);
             } else {
-                // 서브도메인이 없으면 세션에서 tenant_id 확인
+                if (!callbackHostSuggestsSubdomain(request)) {
+                    log.info(
+                            "카카오 OAuth2 콜백 - Host/Forwarded-Host가 서브도메인 형태로 보이지 않음(쿠키/프록시 환경에서 tenant 미결정 가능)");
+                }
                 String sessionTenantId = (String) session.getAttribute("tenantId");
                 if (sessionTenantId == null || sessionTenantId.isEmpty()) {
                     sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
@@ -2018,16 +2143,16 @@ public class OAuth2Controller extends BaseApiController {
 
             // 모바일 클라이언트 정보를 Redis에서 조회 (state 기반)
             String savedClientType = null;
-            if (state != null) {
-                String cacheKey = "oauth2_kakao_client:" + state;
+            if (normalizedKakaoState != null) {
+                String cacheKey = "oauth2_kakao_client:" + normalizedKakaoState;
                 // java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey,
                 // String.class); // 캐시 서비스 임시 비활성화
                 java.util.Optional<String> clientTypeOpt = java.util.Optional.empty();
                 if (clientTypeOpt.isPresent()) {
                     savedClientType = clientTypeOpt.get();
                     // cacheService.evict(cacheKey); // 사용 후 삭제 - 캐시 서비스 임시 비활성화
-                    log.info("카카오 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, state={}",
-                            savedClientType, state);
+                    log.info("카카오 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, stateLen={}",
+                            savedClientType, normalizedKakaoState.length());
                 } else {
                     // Redis에 없으면 세션에서도 확인 (기존 호환성)
                     savedClientType = (String) session.getAttribute("oauth2_client");

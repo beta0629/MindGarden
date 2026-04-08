@@ -131,7 +131,7 @@ export default function Footer() {
             }}>
               <p style={{ marginBottom: '0.5rem' }}>
                 <strong>전화:</strong> 032-724-8501<br />
-                <strong>휴대폰:</strong> 010-7924-8501
+                <strong>휴대폰:</strong> 010-7923-8501
               </p>
               <p>
                 <strong>문의:</strong> 상담 예약 및 문의는<br />

@@ -7,6 +7,7 @@ import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { getTenantId } from '../../utils/apiHeaders';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -70,20 +71,75 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setSuccessMessage(null);
 
+    const transactionType = (formData.transactionType || '').trim();
+    const category = (formData.category || '').trim();
+    const transactionDate = (formData.transactionDate || '').trim();
+    const rawAmount = formData.amount === '' || formData.amount === null || formData.amount === undefined
+      ? ''
+      : String(formData.amount);
+    const normalizedAmount = rawAmount.replace(/,/g, '').trim();
+
+    if (!transactionType) {
+      const msg = '거래 유형을 선택해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+    if (!category) {
+      const msg = '카테고리를 선택해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+    if (!normalizedAmount) {
+      const msg = '금액을 입력해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+    const amount = Number(normalizedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      const msg = '금액은 0 이상의 유효한 숫자로 입력해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+    if (!transactionDate) {
+      const msg = '거래일을 입력해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+
+    const tenantIdResolved = await getTenantId(true);
+    if (!tenantIdResolved || !String(tenantIdResolved).trim()) {
+      const msg = '테넌트 정보를 확인할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const payload = {
-        transactionType: formData.transactionType,
-        category: formData.category,
-        subcategory: formData.subcategory || undefined,
-        amount: formData.amount === '' ? undefined : Number(formData.amount),
-        description: formData.description ? formData.description : undefined,
-        transactionDate: formData.transactionDate,
-        taxIncluded: formData.taxIncluded
+        transactionType,
+        category,
+        amount,
+        transactionDate,
+        taxIncluded: !!formData.taxIncluded
       };
+      const subTrim = (formData.subcategory || '').trim();
+      if (subTrim) {
+        payload.subcategory = subTrim;
+      }
+      const descTrim = (formData.description || '').trim();
+      if (descTrim) {
+        payload.description = descTrim;
+      }
 
       const response = await csrfTokenManager.post('/api/v1/erp/finance/transactions', payload);
       const body = await response.json().catch(() => ({}));

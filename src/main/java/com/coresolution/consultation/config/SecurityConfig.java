@@ -149,6 +149,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
                     .requestMatchers("/api/v1/admin/**").authenticated() // 관리자 API v1은 인증 필요
                     .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
+                    .requestMatchers("/api/v1/erp/**").authenticated() // ERP API v1은 인증 필요
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
                     .requestMatchers("/api/v1/schedules/**").authenticated() // 스케줄 API v1은 인증 필요
                     .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요

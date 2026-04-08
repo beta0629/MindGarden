@@ -41,7 +41,17 @@ const TENANT_ISOLATED_CODE_GROUPS = [
     'ITEM_CATEGORY',
     'SALARY_TYPE',
     'SALARY_OPTION_TYPE',
-    'SALARY_PAY_DAY'
+    'SALARY_PAY_DAY',
+    // 재무·ERP (FinancialCommonCodeInitializer·통합재무 UI) — 코어 생성 권한 대신 테넌트 API 사용
+    'TRANSACTION_TYPE',
+    'INCOME_CATEGORY',
+    'INCOME_SUBCATEGORY',
+    'EXPENSE_CATEGORY',
+    'EXPENSE_SUBCATEGORY',
+    'FINANCIAL_SUBCATEGORY',
+    'VAT_APPLICABLE',
+    'TAX_TYPE',
+    'SALARY_GRADE'
 ];
 
 const isTenantIsolatedGroup = (codeGroup) =>

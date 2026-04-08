@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
@@ -94,8 +95,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     }
 
     @Test
-    @DisplayName("실패: users tenantId 불일치면 clients 저장 전에 실패 응답을 반환한다")
-    void createUserFromSocial_tenantMismatch_returnsFailureResponse() {
+    @DisplayName("실패: users tenantId 불일치면 IllegalStateException이 발생하고 clients는 저장하지 않는다")
+    void createUserFromSocial_tenantMismatch_throwsBeforeClientSave() {
         SocialSignupRequest request = SocialSignupRequest.builder()
             .email("social-user@test.com")
             .name("홍길동")
@@ -114,10 +115,9 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             return user;
         });
 
-        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
-
-        assertThat(response.isSuccess()).isFalse();
-        assertThat(response.getMessage()).contains("회원가입 처리 중 오류");
+        assertThatThrownBy(() -> socialAuthService.createUserFromSocial(request))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("tenantId");
         verify(clientRepository, never()).saveAndFlush(any(Client.class));
     }
 }

@@ -81,7 +81,7 @@ public class SocialAuthController {
             log.error("소셜 회원가입 처리 중 오류 발생", e);
             SocialSignupResponse errorResponse = SocialSignupResponse.builder()
                 .success(false)
-                .message("회원가입 처리 중 오류가 발생했습니다: " + e.getMessage())
+                .message("회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
                 .build();
             return ResponseEntity.internalServerError().body(errorResponse);
         }

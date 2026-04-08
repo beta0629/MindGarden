@@ -1,6 +1,8 @@
 package com.coresolution.consultation.dto;
 
 import java.time.LocalDate;
+import java.util.Locale;
+import com.coresolution.consultation.util.SocialProvider;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -130,6 +132,13 @@ public class SocialUserInfo {
                 this.gender = "OTHER";
             }
         }
+
+        if (this.email != null) {
+            String trimmedEmail = this.email.trim();
+            this.email = trimmedEmail.isEmpty() ? trimmedEmail : trimmedEmail.toLowerCase(Locale.ROOT);
+        }
+
+        this.provider = SocialProvider.normalize(this.provider);
     }
     
     /**

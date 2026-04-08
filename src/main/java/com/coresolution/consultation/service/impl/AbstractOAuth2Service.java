@@ -17,11 +17,13 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -211,17 +213,22 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected Long findExistingUserByEmail(String email) {
         log.info("이메일로 사용자 찾기: email={}", email);
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        String normalizedEmail = SocialProvider.normalizeEmail(email);
+        if (!StringUtils.hasText(normalizedEmail)) {
+            log.info("이메일 정규화 결과 비어 있어 조회를 생략합니다.");
+            return null;
+        }
         
         try {
             // 같은 이메일로 여러 계정이 있을 수 있으므로 모두 조회
-            List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, email);
+            List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, normalizedEmail);
             
             if (users == null || users.isEmpty()) {
-                log.info("이메일로 사용자를 찾지 못함: email={}, tenantId={}", email, tenantId);
+                log.info("이메일로 사용자를 찾지 못함: email={}, tenantId={}", normalizedEmail, tenantId);
                 return null;
             }
             
-            log.info("이메일로 찾은 사용자 수: email={}, tenantId={}, count={}", email, tenantId, users.size());
+            log.info("이메일로 찾은 사용자 수: email={}, tenantId={}, count={}", normalizedEmail, tenantId, users.size());
             
             // 여러 계정이 있는 경우 가장 적절한 계정 선택
             User selectedUser = selectBestMatchingUser(users);
@@ -246,11 +253,11 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             }
             
             log.warn("이메일로 사용자를 찾았지만 선택할 수 없음: email={}, tenantId={}, count={}", 
-                    email, tenantId, users.size());
+                    normalizedEmail, tenantId, users.size());
             return null;
             
         } catch (Exception e) {
-            log.error("이메일로 사용자 찾기 중 오류 발생: email={}, error={}", email, e.getMessage(), e);
+            log.error("이메일로 사용자 찾기 중 오류 발생: email={}, error={}", normalizedEmail, e.getMessage(), e);
             return null;
         }
     }
@@ -324,13 +331,17 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Transactional(rollbackFor = Exception.class)
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        String normalizedLoginEmail = SocialProvider.normalizeEmail(socialUserInfo.getEmail());
+        if (!StringUtils.hasText(normalizedLoginEmail)) {
+            throw new IllegalStateException("소셜 사용자 이메일이 비어 있어 저장할 수 없습니다.");
+        }
         // 표준화 원칙: users 선저장/flush 후 clients 저장 (FK 정합성 보장)
         // 소셜 전용 더미 비밀번호 — 정책 없이 BCrypt만 적용
         User user = User.builder()
                 .userId("social_" + socialUserInfo.getProviderUserId())
                 .password(passwordService.encodeSecret(generateTemporaryPassword()))
                 .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
-                .email(encryptionUtil.safeEncrypt(socialUserInfo.getEmail()))
+                .email(encryptionUtil.safeEncrypt(normalizedLoginEmail))
                 .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)
                 .role(UserRole.CLIENT)
                 .branchCode(null)

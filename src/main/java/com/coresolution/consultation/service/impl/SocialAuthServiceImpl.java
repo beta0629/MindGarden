@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,12 +80,21 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     @Override
     @Transactional
     public SocialSignupResponse createUserFromSocial(SocialSignupRequest request) {
-        log.info("소셜 회원가입 시작: email={}, provider={}", request.getEmail(), request.getProvider());
+        String normalizedEmail = SocialProvider.normalizeEmail(request.getEmail());
+        if (!StringUtils.hasText(normalizedEmail)) {
+            log.warn("이메일 누락 또는 공백");
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message("이메일을 입력해주세요.")
+                .build();
+        }
+        String normalizedProvider = SocialProvider.normalize(request.getProvider());
+        log.info("소셜 회원가입 시작: email={}, provider={}", normalizedEmail, normalizedProvider);
         String tenantId = TenantContextHolder.getRequiredTenantId();
             
         // 이메일 중복 확인 (tenantId 필터링)
-        if (userRepository.existsByTenantIdAndEmail(tenantId, request.getEmail())) {
-            log.warn("이미 가입된 이메일: {}", request.getEmail());
+        if (userRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
+            log.warn("이미 가입된 이메일: {}", normalizedEmail);
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("이미 가입된 이메일입니다.")
@@ -112,7 +122,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         // 개인정보 동의 검증
         if (!request.isPrivacyConsent()) {
-            log.warn("개인정보 처리방침 동의 필요: email={}", request.getEmail());
+            log.warn("개인정보 처리방침 동의 필요: email={}", normalizedEmail);
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("개인정보 처리방침에 동의해주세요.")
@@ -120,7 +130,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         }
             
         if (!request.isTermsConsent()) {
-            log.warn("이용약관 동의 필요: email={}", request.getEmail());
+            log.warn("이용약관 동의 필요: email={}", normalizedEmail);
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("이용약관에 동의해주세요.")
@@ -148,7 +158,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         log.info("User 엔티티 생성 시작");
             
         // userId 생성 (이메일 기반)
-        String userId = generateUserIdFromEmail(request.getEmail());
+        String userId = generateUserIdFromEmail(normalizedEmail);
             
         // 지점 정보 검증 (레거시 시스템, 테넌트 시스템에서는 불필요)
         Branch branch = null;
@@ -174,7 +184,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .userId(userId)
                 .password(passwordService.encodePassword(request.getPassword()))
                 .name(request.getName())
-                .email(request.getEmail())
+                .email(normalizedEmail)
                 .phone(phone)
                 .role(UserRole.CLIENT)
                 .branchCode(validatedBranchCode) // 지점코드 (테넌트 시스템에서는 NULL)
@@ -217,20 +227,20 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         log.info("Client 엔티티 저장 완료: clientId={}", client.getId());
             
         // 소셜 계정 정보 저장 (개인정보 암호화)
-        if (request.getProvider() != null && !request.getProvider().trim().isEmpty()) {
+        if (normalizedProvider != null) {
             log.info("소셜 계정 정보 저장 시작: provider={}, providerUserId={}, providerUsername={}", 
-                    request.getProvider(), request.getProviderUserId(), request.getProviderUsername());
+                    normalizedProvider, request.getProviderUserId(), request.getProviderUsername());
                 
             // 이미 생성된 User 객체 사용
                 
-            String plainProviderUsername = resolvePlainProviderUsername(request);
+            String plainProviderUsername = resolvePlainProviderUsername(request, normalizedEmail);
             String storedProviderUsername = StringUtils.hasText(plainProviderUsername)
                 ? encryptionUtil.encrypt(truncateForEncryptedUsername(plainProviderUsername))
                 : "";
 
             UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(user)
-                .provider(request.getProvider()) // 제공자명은 암호화하지 않음
+                .provider(normalizedProvider) // 제공자명은 암호화하지 않음 (대문자 정규형)
                 .providerUserId(request.getProviderUserId()) // 소셜 측 고유 ID (평문 저장)
                 .providerUsername(storedProviderUsername) // 표시명 등(평문은 resolvePlainProviderUsername 경유)
                 .providerProfileImage(request.getProviderProfileImage()) // 프로필 이미지 URL은 암호화하지 않음
@@ -239,7 +249,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 
             userSocialAccountRepository.save(socialAccount);
             log.info("소셜 계정 정보 저장 완료: userId={}, provider={}, providerUserId={}", 
-                    client.getId(), request.getProvider(), socialAccount.getProviderUserId());
+                    client.getId(), normalizedProvider, socialAccount.getProviderUserId());
                 
             log.info("소셜 회원가입 완료 (세션 생성 대기): userId={}", client.getId());
         } else {
@@ -275,7 +285,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
      * @param request 소셜 회원가입 요청
      * @return 트림된 평문 (빈 문자열 가능)
      */
-    private String resolvePlainProviderUsername(SocialSignupRequest request) {
+    private String resolvePlainProviderUsername(SocialSignupRequest request, String normalizedEmail) {
         String username = request.getProviderUsername();
         if (StringUtils.hasText(username)) {
             return username.trim();
@@ -283,8 +293,8 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         if (StringUtils.hasText(request.getName())) {
             return request.getName().trim();
         }
-        if (StringUtils.hasText(request.getEmail())) {
-            return request.getEmail().trim();
+        if (StringUtils.hasText(normalizedEmail)) {
+            return normalizedEmail;
         }
         return "";
     }

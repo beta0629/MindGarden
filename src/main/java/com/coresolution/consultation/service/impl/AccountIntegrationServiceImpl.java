@@ -15,6 +15,7 @@ import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AccountIntegrationService;
+import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
@@ -73,8 +74,16 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     public AccountIntegrationResponse integrateAccountsByEmail(AccountIntegrationRequest request) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
+            String normalizedProvider = SocialProvider.normalize(request.getProvider());
             log.info("계정 통합 시작: existingEmail={}, socialEmail={}, provider={}", 
-                    request.getExistingEmail(), request.getSocialEmail(), request.getProvider());
+                    request.getExistingEmail(), request.getSocialEmail(), normalizedProvider);
+
+            if (normalizedProvider == null) {
+                return AccountIntegrationResponse.failure(
+                    "SNS 제공자 정보가 올바르지 않습니다.",
+                    AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
+                );
+            }
             
             // 1. 기존 계정 존재 확인
             Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmail(tenantId, request.getExistingEmail());
@@ -89,12 +98,12 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             
             // 2. 이미 SNS 계정이 연결되어 있는지 확인
             boolean hasSocialAccount = userSocialAccountRepository
-                .findByUserAndProviderAndIsDeletedFalse(existingUser, request.getProvider())
+                .findByUserAndProviderAndIsDeletedFalse(existingUser, normalizedProvider)
                 .isPresent();
             
             if (hasSocialAccount) {
                 return AccountIntegrationResponse.failure(
-                    "이미 " + request.getProvider() + " 계정이 연결되어 있습니다.", 
+                    "이미 " + normalizedProvider + " 계정이 연결되어 있습니다.", 
                     AccountIntegrationResponse.IntegrationStatus.ALREADY_INTEGRATED
                 );
             }
@@ -120,7 +129,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             // 5. SNS 계정 정보 생성
             UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(existingUser)
-                .provider(request.getProvider())
+                .provider(normalizedProvider)
                 .providerUserId(request.getProviderUserId())
                 .providerUsername(request.getFinalNickname())
                 .providerProfileImage(null) // 필요시 추가
@@ -152,9 +161,9 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             emailVerificationCodes.remove(request.getExistingEmail());
             
             // 9. 계정 통합 완료 이메일 발송
-            sendAccountIntegrationSuccessEmail(existingUser.getEmail(), existingUser.getName(), request.getProvider());
+            sendAccountIntegrationSuccessEmail(existingUser.getEmail(), existingUser.getName(), normalizedProvider);
             
-            log.info("계정 통합 완료: userId={}, provider={}", existingUser.getId(), request.getProvider());
+            log.info("계정 통합 완료: userId={}, provider={}", existingUser.getId(), normalizedProvider);
             
             return AccountIntegrationResponse.success(
                 "계정 통합이 완료되었습니다.",
@@ -244,26 +253,32 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     public boolean linkSocialAccount(Long existingUserId, String provider, String providerUserId) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
+            String normalizedProvider = SocialProvider.normalize(provider);
+            if (normalizedProvider == null) {
+                log.warn("SNS 제공자 정보가 비어 있음: userId={}", existingUserId);
+                return false;
+            }
+
             log.info("SNS 계정 연결: userId={}, provider={}, providerUserId={}", 
-                    existingUserId, provider, providerUserId);
+                    existingUserId, normalizedProvider, providerUserId);
             
             User user = userRepository.findByTenantIdAndId(tenantId, existingUserId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + existingUserId));
             
             // 이미 연결된 SNS 계정이 있는지 확인
             boolean alreadyLinked = userSocialAccountRepository
-                .findByUserAndProviderAndIsDeletedFalse(user, provider)
+                .findByUserAndProviderAndIsDeletedFalse(user, normalizedProvider)
                 .isPresent();
             
             if (alreadyLinked) {
-                log.warn("이미 연결된 SNS 계정: userId={}, provider={}", existingUserId, provider);
+                log.warn("이미 연결된 SNS 계정: userId={}, provider={}", existingUserId, normalizedProvider);
                 return false;
             }
             
             // SNS 계정 정보 생성
             UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(user)
-                .provider(provider)
+                .provider(normalizedProvider)
                 .providerUserId(providerUserId)
                 .isPrimary(false)
                 .isVerified(true)
@@ -272,7 +287,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             
             userSocialAccountRepository.save(socialAccount);
             
-            log.info("SNS 계정 연결 완료: userId={}, provider={}", existingUserId, provider);
+            log.info("SNS 계정 연결 완료: userId={}, provider={}", existingUserId, normalizedProvider);
             return true;
             
         } catch (Exception e) {

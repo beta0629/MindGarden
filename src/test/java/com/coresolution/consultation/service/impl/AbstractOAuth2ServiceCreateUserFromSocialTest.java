@@ -1,6 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
@@ -21,12 +24,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +59,7 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId("tenant-oauth-ut");
-        when(passwordService.encodeSecret(anyString())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
+        lenient().when(passwordService.encodeSecret(anyString())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
         oauth2Service = new TestOAuth2Service(
             userRepository,
             clientRepository,
@@ -125,6 +129,61 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         verify(clientRepository, never()).saveAndFlush(any(Client.class));
     }
 
+    @Test
+    @DisplayName("findExistingUserByEmail은 소문자 정규형으로 저장소를 조회한다")
+    void findExistingUserByEmail_usesNormalizedEmailForRepository() {
+        User existing = User.builder()
+            .userId("oauth-user-55")
+            .email("a@b.com")
+            .password("password123")
+            .name("n")
+            .role(UserRole.CLIENT)
+            .build();
+        existing.setId(55L);
+        existing.setCreatedAt(LocalDateTime.now());
+
+        when(userRepository.findAllByTenantIdAndEmail("tenant-oauth-ut", "a@b.com"))
+            .thenReturn(Collections.singletonList(existing));
+
+        Long found = oauth2Service.exposeFindExistingUserByEmail("A@B.Com");
+
+        assertThat(found).isEqualTo(55L);
+        verify(userRepository).findAllByTenantIdAndEmail("tenant-oauth-ut", "a@b.com");
+    }
+
+    @Test
+    @DisplayName("findExistingUserByEmail: 빈 이메일이면 저장소를 호출하지 않는다")
+    void findExistingUserByEmail_blankEmail_skipsRepository() {
+        assertThat(oauth2Service.exposeFindExistingUserByEmail("  ")).isNull();
+        verify(userRepository, never()).findAllByTenantIdAndEmail(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("createUserFromSocial: 혼합 대소문자 이메일은 암호화 전 소문자로 정규화된다")
+    void createUserFromSocial_encryptsNormalizedLowercaseEmail() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("provider-333")
+            .email("OAuth@Test.COM")
+            .name("oauth-name")
+            .nickname("oauth-nick")
+            .profileImageUrl("https://profile")
+            .accessToken("token-1")
+            .build();
+
+        when(encryptionUtil.safeEncrypt(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(9101L);
+            return user;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Long userId = oauth2Service.createUserFromSocial(socialUserInfo);
+
+        assertThat(userId).isEqualTo(9101L);
+        verify(encryptionUtil).safeEncrypt(eq("oauth@test.com"));
+    }
+
     private static class TestOAuth2Service extends AbstractOAuth2Service {
         TestOAuth2Service(
             UserRepository userRepository,
@@ -157,6 +216,10 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         @Override
         protected SocialUserInfo convertToSocialUserInfo(Map<String, Object> rawUserInfo) {
             return SocialUserInfo.builder().providerUserId("provider-user").build();
+        }
+
+        Long exposeFindExistingUserByEmail(String email) {
+            return findExistingUserByEmail(email);
         }
     }
 }

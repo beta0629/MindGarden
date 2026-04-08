@@ -20,6 +20,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -155,5 +156,64 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("tenantId");
         verify(clientRepository, never()).saveAndFlush(any(Client.class));
+    }
+
+    @Test
+    @DisplayName("성공: provider·이메일 대소문자 혼합 입력 시 저장은 대문자·소문자 정규형")
+    void createUserFromSocial_normalizesProviderAndEmail() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("User@Test.COM")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("naver")
+            .providerUserId("nv-1")
+            .providerUsername("nv-name")
+            .providerProfileImage("https://img")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .marketingConsent(false)
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "user@test.com")).thenReturn(false);
+        when(passwordService.encodePassword(anyString())).thenReturn("encoded");
+        when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(7003L);
+            return user;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        ArgumentCaptor<User> userCap = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).saveAndFlush(userCap.capture());
+        assertThat(userCap.getValue().getEmail()).isEqualTo("user@test.com");
+
+        ArgumentCaptor<UserSocialAccount> socialCap = ArgumentCaptor.forClass(UserSocialAccount.class);
+        verify(userSocialAccountRepository).save(socialCap.capture());
+        assertThat(socialCap.getValue().getProvider()).isEqualTo("NAVER");
+    }
+
+    @Test
+    @DisplayName("실패: 이메일이 공백뿐이면 검증 실패 응답")
+    void createUserFromSocial_blankEmail_returnsFailure() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("   ")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("KAKAO")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .build();
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isFalse();
+        verify(userRepository, never()).existsByTenantIdAndEmail(anyString(), anyString());
     }
 }

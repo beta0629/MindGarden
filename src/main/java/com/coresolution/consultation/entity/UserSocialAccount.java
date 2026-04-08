@@ -1,12 +1,15 @@
 package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
+import com.coresolution.consultation.util.SocialProvider;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -226,6 +229,15 @@ public class UserSocialAccount extends BaseEntity {
     public boolean needsTokenRefresh() {
         return tokenExpiresAt != null && LocalDateTime.now().isAfter(tokenExpiresAt.minusMinutes(30));
     }
+
+    /**
+     * 빌더 등으로 필드가 직접 채워진 경우에도 DB 저장 시 provider 대문자 정규형을 보장한다.
+     */
+    @PrePersist
+    @PreUpdate
+    private void normalizeProviderForPersistence() {
+        this.provider = SocialProvider.normalize(this.provider);
+    }
     
     // Getter & Setter
     public Long getUserId() {
@@ -237,7 +249,7 @@ public class UserSocialAccount extends BaseEntity {
     }
     
     public void setProvider(String provider) {
-        this.provider = provider;
+        this.provider = SocialProvider.normalize(provider);
     }
     
     public String getProviderUserId() {

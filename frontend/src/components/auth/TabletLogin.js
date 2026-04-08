@@ -444,6 +444,7 @@ const TabletLogin = () => {
         const urlEmail = urlParams.get('email');
         const urlName = urlParams.get('name');
         const urlNickname = urlParams.get('nickname');
+        const urlProviderUserId = urlParams.get('providerUserId') || '';
         
         console.log('📋 URL에서 파싱된 사용자 정보:', {
           provider: urlProvider,
@@ -460,7 +461,7 @@ const TabletLogin = () => {
         email: urlEmail || '',
         name: urlName || '',
         nickname: urlNickname || '',
-        providerUserId: '',
+        providerUserId: urlProviderUserId,
         profileImageUrl: ''
       };
         
@@ -492,11 +493,13 @@ const TabletLogin = () => {
       const email = urlParams.get('email');
       const name = urlParams.get('name');
       const nickname = urlParams.get('nickname');
+      const providerUserIdFromUrl = urlParams.get('providerUserId') || '';
       
       console.log('📋 URL에서 파싱된 사용자 정보:', {
         email: email || '없음',
         name: name || '없음',
-        nickname: nickname || '없음'
+        nickname: nickname || '없음',
+        providerUserId: providerUserIdFromUrl ? '있음' : '없음'
       });
       
       const socialUserInfo = {
@@ -504,7 +507,7 @@ const TabletLogin = () => {
         email: email || '',
         name: name || '',
         nickname: nickname || '',
-        providerUserId: '', // URL에서 전달할 수 없으므로 빈 값
+        providerUserId: providerUserIdFromUrl,
         profileImageUrl: ''
       };
       

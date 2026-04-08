@@ -1561,6 +1561,11 @@ public class OAuth2Controller extends BaseApiController {
                     String nickname = response.getSocialUserInfo() != null
                             ? response.getSocialUserInfo().getNickname()
                             : "";
+                    String providerUserIdForSignup =
+                            response.getSocialUserInfo() != null
+                                    && response.getSocialUserInfo().getProviderUserId() != null
+                                            ? response.getSocialUserInfo().getProviderUserId()
+                                            : "";
 
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     if (redirectTenantId == null || redirectTenantId.isEmpty()) {
@@ -1576,7 +1581,10 @@ public class OAuth2Controller extends BaseApiController {
                                     + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                                     + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
                                     + "&nickname="
-                                    + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+                                    + URLEncoder.encode(nickname, StandardCharsets.UTF_8)
+                                    + "&providerUserId="
+                                    + URLEncoder.encode(providerUserIdForSignup,
+                                            StandardCharsets.UTF_8);
 
                     log.info("네이버 OAuth2 회원가입 리다이렉트 URL: {}", signupUrl);
                     return ResponseEntity.status(302).header("Location", signupUrl).build();
@@ -1827,6 +1835,11 @@ public class OAuth2Controller extends BaseApiController {
                 String nickname = response.getSocialUserInfo() != null
                         ? response.getSocialUserInfo().getNickname()
                         : "";
+                String providerUserIdForSignup =
+                        response.getSocialUserInfo() != null
+                                && response.getSocialUserInfo().getProviderUserId() != null
+                                        ? response.getSocialUserInfo().getProviderUserId()
+                                        : "";
 
                 String signupUrl =
                         frontendUrl + "/login?" + "signup=required" + "&provider=naver"
@@ -1835,7 +1848,10 @@ public class OAuth2Controller extends BaseApiController {
                                 + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                                 + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
                                 + "&nickname="
-                                + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+                                + URLEncoder.encode(nickname, StandardCharsets.UTF_8)
+                                + "&providerUserId="
+                                + URLEncoder.encode(providerUserIdForSignup,
+                                        StandardCharsets.UTF_8);
 
                 log.info("네이버 OAuth2 회원가입 리다이렉트 URL: {}", signupUrl);
 
@@ -1872,7 +1888,9 @@ public class OAuth2Controller extends BaseApiController {
         String signupUrl = frontendUrl + "/login?" + "signup=required" + "&provider=kakao"
                 + "&email=" + URLEncoder.encode("test@example.com", StandardCharsets.UTF_8)
                 + "&name=" + URLEncoder.encode("테스트사용자", StandardCharsets.UTF_8) + "&nickname="
-                + URLEncoder.encode("테스트닉네임", StandardCharsets.UTF_8);
+                + URLEncoder.encode("테스트닉네임", StandardCharsets.UTF_8)
+                + "&providerUserId="
+                + URLEncoder.encode("test_sns_provider_user_id", StandardCharsets.UTF_8);
 
         log.info("테스트용 간편 회원가입 URL로 리다이렉트: {}", signupUrl);
 
@@ -2488,6 +2506,11 @@ public class OAuth2Controller extends BaseApiController {
                 String nickname = response.getSocialUserInfo() != null
                         ? response.getSocialUserInfo().getNickname()
                         : "";
+                String providerUserIdForSignup =
+                        response.getSocialUserInfo() != null
+                                && response.getSocialUserInfo().getProviderUserId() != null
+                                        ? response.getSocialUserInfo().getProviderUserId()
+                                        : "";
 
                 String redirectTenantId = resolveTenantIdForRedirect(session, state);
                 if (redirectTenantId == null || redirectTenantId.isEmpty()) {
@@ -2501,7 +2524,10 @@ public class OAuth2Controller extends BaseApiController {
                                 + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                                 + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
                                 + "&nickname="
-                                + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+                                + URLEncoder.encode(nickname, StandardCharsets.UTF_8)
+                                + "&providerUserId="
+                                + URLEncoder.encode(providerUserIdForSignup,
+                                        StandardCharsets.UTF_8);
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {

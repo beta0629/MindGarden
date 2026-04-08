@@ -6,8 +6,16 @@ export const QUILL_FONT_WHITELIST = [
   'noto-sans-kr',
   'pretendard',
   'nanum-gothic',
+  /* 젊은 층에서 자주 쓰는 무료 폰트 */
+  'nanum-square-neo',
+  'ibm-plex-sans-kr',
+  'suit',
+  'jua',
+  'do-hyeon',
+  /* 명조·신문 바탕 */
   'nanum-myeongjo',
   'noto-serif-kr',
+  'kopub-batang',
   'serif',
   'monospace',
 ] as const;

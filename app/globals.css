@@ -7,6 +7,10 @@
 /* Quill 에디터 추가 폰트 (나눔·노토 세리프) */
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
 
+/* Quill: 젊은 층 인기 고딕·디스플레이 + 신문명조(KoPub 바탕) */
+@import url('https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Jua&family=KoPub+Batang:wght@400;700&family=Nanum+Square+Neo:wght@400;700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT@v2/fonts/static/woff2/SUIT.css');
+
 /* CSS Reset & Variables */
 :root {
     /* 따뜻한 톤 - 상담소에 맞는 부드러운 색상 */
@@ -75,6 +79,24 @@
 .ql-font-noto-serif-kr {
     font-family: 'Noto Serif KR', 'Nanum Myeongjo', Georgia, serif;
 }
+.ql-font-nanum-square-neo {
+    font-family: 'Nanum Square Neo', 'Noto Sans KR', sans-serif;
+}
+.ql-font-ibm-plex-sans-kr {
+    font-family: 'IBM Plex Sans KR', 'Noto Sans KR', sans-serif;
+}
+.ql-font-suit {
+    font-family: 'SUIT', 'Pretendard', 'Noto Sans KR', sans-serif;
+}
+.ql-font-jua {
+    font-family: 'Jua', 'Noto Sans KR', sans-serif;
+}
+.ql-font-do-hyeon {
+    font-family: 'Do Hyeon', 'Noto Sans KR', sans-serif;
+}
+.ql-font-kopub-batang {
+    font-family: 'KoPub Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif;
+}
 .ql-font-serif {
     font-family: Georgia, 'Times New Roman', 'Noto Serif KR', serif;
 }
@@ -84,7 +106,7 @@
 
 /* Quill 툴바 폰트 드롭다운 (블로그·후기·팝업·상담진 등 모든 BlogEditor 공통) */
 .ql-snow .ql-picker.ql-font {
-    width: 11.5rem;
+    width: 13.5rem;
 }
 .ql-snow .ql-picker.ql-font .ql-picker-label::before,
 .ql-snow .ql-picker.ql-font .ql-picker-item::before {
@@ -109,6 +131,30 @@
 .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='noto-serif-kr']::before,
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='noto-serif-kr']::before {
     content: '노토 세리프';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='nanum-square-neo']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='nanum-square-neo']::before {
+    content: '나눔스퀘어 네오';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='ibm-plex-sans-kr']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='ibm-plex-sans-kr']::before {
+    content: 'IBM Plex Sans';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='suit']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='suit']::before {
+    content: 'SUIT';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='jua']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='jua']::before {
+    content: '주아';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='do-hyeon']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='do-hyeon']::before {
+    content: '도현';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='kopub-batang']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='kopub-batang']::before {
+    content: '신문명조 (KoPub)';
 }
 .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='serif']::before,
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='serif']::before {

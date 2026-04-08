@@ -491,6 +491,8 @@ jobs:
     # 참고: 메뉴 구조 업데이트는 필요할 때만 수동으로 실행
     # sudo mysql -u root -p'!QAZ2wsx#EDC4rfv' mindgarden < /tmp/update_all_role_menus.sql
         
+    # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
+    # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.
     - name: 🔄 서비스 재시작
       uses: appleboy/ssh-action@master
       with:
@@ -502,6 +504,21 @@ jobs:
         command_timeout: 5m
         script: |
           cd /var/www/mindgarden
+          
+          # /etc/mindgarden/prod.env 가 있을 때만 검사 (grep/test 는 이 SSH 블록 안에서만)
+          PROD_ENV_FILE="/etc/mindgarden/prod.env"
+          if [ -f "$PROD_ENV_FILE" ]; then
+            if grep -qE '^[[:space:]]*SESSION_COOKIE_DOMAIN[[:space:]]*=' "$PROD_ENV_FILE" 2>/dev/null; then
+              scd_raw=$(grep -E '^[[:space:]]*SESSION_COOKIE_DOMAIN[[:space:]]*=' "$PROD_ENV_FILE" | tail -n1 | sed -n 's/^[^=]*=//p' | tr -d '\r')
+              scd_val=$(printf '%s' "$scd_raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              scd_val=$(printf '%s' "$scd_val" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+              if [ -z "$scd_val" ]; then
+                echo "::warning title=SESSION_COOKIE_DOMAIN empty::${PROD_ENV_FILE} 에 SESSION_COOKIE_DOMAIN 값이 비어 있습니다. 운영 반영: SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음). deployment/mindgarden.prod-env.example 참고."
+              fi
+            else
+              echo "::warning title=SESSION_COOKIE_DOMAIN missing::${PROD_ENV_FILE} 에 SESSION_COOKIE_DOMAIN 키가 없습니다. 운영 반영: SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음). deployment/mindgarden.prod-env.example 참고."
+            fi
+          fi
           
           # JAR 파일명 변경
           if [ -f consultation-management-system-1.0.0.jar ]; then

@@ -177,7 +177,7 @@ const TenantCodeManagement = () => {
 
         try {
             const { deleteCommonCode } = await import('../../utils/commonCodeApi');
-            await deleteCommonCode(codeId);
+            await deleteCommonCode(codeId, { codeGroup: selectedGroup });
             notificationManager.show(NOTIFICATION_MESSAGES.DELETE_SUCCESS, 'success');
             loadCodes(selectedGroup);
         } catch (error) {

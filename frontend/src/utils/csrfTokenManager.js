@@ -150,6 +150,17 @@ class CsrfTokenManager {
     }
 
 /**
+     * PATCH 요청 헬퍼
+     */
+    async patch(url, data, options = {}) {
+        return this.fetchWithCsrf(url, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+            ...options
+        });
+    }
+
+/**
      * DELETE 요청 헬퍼
      */
     async delete(url, options = {}) {

@@ -12,9 +12,11 @@
  * @since 2025-01-XX
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from './ajax';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './ajax';
 
 const API_BASE = '/api/v1/common-codes';
+/** 테넌트 컨텍스트로 생성·수정·삭제 (TenantCommonCodeController) */
+const TENANT_CODES_WRITE_BASE = '/api/v1/tenant/common-codes';
 
 /**
  * 테넌트별 독립 코드 그룹 목록
@@ -41,6 +43,41 @@ const TENANT_ISOLATED_CODE_GROUPS = [
     'SALARY_OPTION_TYPE',
     'SALARY_PAY_DAY'
 ];
+
+const isTenantIsolatedGroup = (codeGroup) =>
+    Boolean(codeGroup) && TENANT_ISOLATED_CODE_GROUPS.includes(codeGroup);
+
+const resolveCodeGroupForRoute = (codeData, routeOpts = {}) =>
+    routeOpts.codeGroup ?? codeData?.codeGroup ?? null;
+
+/**
+ * apiPost/apiPut/apiPatch가 ApiResponse면 data 추출, 이미 unwrap된 엔티티면 그대로 반환
+ */
+const normalizeMutationResponse = (response, failMessage) => {
+    if (response == null) {
+        throw new Error(failMessage);
+    }
+    if (typeof response === 'object' && 'success' in response) {
+        if (response.success && response.data !== undefined && response.data !== null) {
+            return response.data;
+        }
+        throw new Error(response.message || failMessage);
+    }
+    return response;
+};
+
+const normalizeDeleteResponse = (response, failMessage) => {
+    if (response == null) {
+        throw new Error(failMessage);
+    }
+    if (typeof response === 'object' && 'success' in response) {
+        if (response.success) {
+            return true;
+        }
+        throw new Error(response.message || failMessage);
+    }
+    return true;
+};
 
 /**
  * 코어 코드 그룹 목록 (시스템 전역)
@@ -74,7 +111,7 @@ export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
         // forceTenant가 명시되지 않았으면 코드 그룹 타입에 따라 자동 판단
         let useTenantApi = forceTenant;
         if (useTenantApi === null && codeGroup) {
-            useTenantApi = TENANT_ISOLATED_CODE_GROUPS.includes(codeGroup);
+            useTenantApi = isTenantIsolatedGroup(codeGroup);
         }
         
         let url;
@@ -203,13 +240,15 @@ export const getCommonCodeById = async (id) => {
  */
 export const createCommonCode = async (codeData) => {
     try {
-        const response = await apiPost(API_BASE, codeData);
-        
-        if (response.success && response.data) {
-            return response.data;
+        const group = codeData?.codeGroup;
+        const useTenant = isTenantIsolatedGroup(group);
+        const payload = { ...codeData };
+        if (useTenant && Object.hasOwn(payload, 'tenantId')) {
+            delete payload.tenantId;
         }
-        
-        throw new Error(response.message || '공통코드 생성에 실패했습니다.');
+        const url = useTenant ? TENANT_CODES_WRITE_BASE : API_BASE;
+        const response = await apiPost(url, payload);
+        return normalizeMutationResponse(response, '공통코드 생성에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 생성 실패:', error);
         throw error;
@@ -225,15 +264,16 @@ export const createCommonCode = async (codeData) => {
 /**
  * @returns {Promise<Object|null>} 수정된 공통코드
  */
-export const updateCommonCode = async (id, codeData) => {
+/**
+ * @param {Object} [routeOpts] - 테넌트 격리 그룹 수정 시 codeGroup 전달 (codeData에 없을 때 필수)
+ */
+export const updateCommonCode = async (id, codeData, routeOpts = {}) => {
     try {
-        const response = await apiPut(`${API_BASE}/${id}`, codeData);
-        
-        if (response.success && response.data) {
-            return response.data;
-        }
-        
-        throw new Error(response.message || '공통코드 수정에 실패했습니다.');
+        const group = resolveCodeGroupForRoute(codeData, routeOpts);
+        const useTenant = isTenantIsolatedGroup(group);
+        const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
+        const response = await apiPut(url, codeData);
+        return normalizeMutationResponse(response, '공통코드 수정에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 수정 실패:', error);
         throw error;
@@ -247,15 +287,16 @@ export const updateCommonCode = async (id, codeData) => {
 /**
  * @returns {Promise<boolean>} 삭제 성공 여부
  */
-export const deleteCommonCode = async (id) => {
+/**
+ * @param {Object} [routeOpts] - { codeGroup } 테넌트 격리 그룹 삭제 시 필수
+ */
+export const deleteCommonCode = async (id, routeOpts = {}) => {
     try {
-        const response = await apiDelete(`${API_BASE}/${id}`);
-        
-        if (response.success) {
-            return true;
-        }
-        
-        throw new Error(response.message || '공통코드 삭제에 실패했습니다.');
+        const group = routeOpts.codeGroup ?? null;
+        const useTenant = isTenantIsolatedGroup(group);
+        const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
+        const response = await apiDelete(url);
+        return normalizeDeleteResponse(response, '공통코드 삭제에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 삭제 실패:', error);
         throw error;
@@ -269,15 +310,26 @@ export const deleteCommonCode = async (id) => {
 /**
  * @returns {Promise<Object|null>} 수정된 공통코드
  */
-export const toggleCommonCodeStatus = async (id) => {
+/**
+ * @param {Object} [routeOpts] - 테넌트 격리: { codeGroup, currentIsActive } 필수
+ */
+export const toggleCommonCodeStatus = async (id, routeOpts = {}) => {
     try {
-        const response = await apiPut(`${API_BASE}/${id}/toggle-status`, {});
-        
-        if (response.success && response.data) {
-            return response.data;
+        const group = routeOpts.codeGroup ?? null;
+        const useTenant = isTenantIsolatedGroup(group);
+        if (useTenant) {
+            const cur = routeOpts.currentIsActive;
+            if (typeof cur !== 'boolean') {
+                throw new TypeError('테넌트 코드 상태 변경에는 현재 활성 여부가 필요합니다.');
+            }
+            const response = await apiPatch(
+                `${TENANT_CODES_WRITE_BASE}/${id}/active`,
+                { isActive: !cur }
+            );
+            return normalizeMutationResponse(response, '공통코드 상태 변경에 실패했습니다.');
         }
-        
-        throw new Error(response.message || '공통코드 상태 변경에 실패했습니다.');
+        const response = await apiPut(`${API_BASE}/${id}/toggle-status`, {});
+        return normalizeMutationResponse(response, '공통코드 상태 변경에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 상태 변경 실패:', error);
         throw error;

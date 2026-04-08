@@ -405,7 +405,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            await deleteCommonCode(codeId);
+            await deleteCommonCode(codeId, { codeGroup: selectedGroup });
             notificationManager.success('코드가 삭제되었습니다!');
             loadGroupCodes(selectedGroup);
         } catch (error) {
@@ -423,7 +423,10 @@ const CommonCodeManagement = () => {
     const handleToggleStatus = async (codeId, currentStatus) => {
         try {
             setLoading(true);
-            await toggleCommonCodeStatus(codeId);
+            await toggleCommonCodeStatus(codeId, {
+                codeGroup: selectedGroup,
+                currentIsActive: currentStatus
+            });
             notificationManager.success('코드 상태가 변경되었습니다!');
             loadGroupCodes(selectedGroup);
         } catch (error) {
@@ -478,7 +481,9 @@ const CommonCodeManagement = () => {
                 colorCode: newCodeData.colorCode
             };
             
-            await updateCommonCode(editingCode.id, updateData);
+            await updateCommonCode(editingCode.id, updateData, {
+                codeGroup: editingCode?.codeGroup || selectedGroup
+            });
             notificationManager.success('코드가 수정되었습니다!');
             setShowAddForm(false);
             setEditingCode(null);

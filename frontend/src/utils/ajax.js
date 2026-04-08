@@ -470,6 +470,61 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
   }
 };
 
+// PATCH 요청 (CSRF 토큰 자동 포함)
+export const apiPatch = async (endpoint, data = {}, options = {}) => {
+  try {
+    const response = await csrfTokenManager.patch(endpoint, data, {
+      ...options,
+      headers: { ...getDefaultHeaders(), ...options.headers }
+    });
+
+    let jsonData;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          jsonData = JSON.parse(text);
+        } catch (parseError) {
+          console.error('JSON 파싱 오류:', parseError, 'Response text:', text);
+          jsonData = {};
+        }
+      } else {
+        jsonData = {};
+      }
+    } else {
+      jsonData = {};
+    }
+
+    if (!response.ok) {
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null;
+      }
+      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
+        ? String(jsonData.message)
+        : getErrorMessage(response.status);
+      const err = new Error(serverMessage);
+      err.status = response.status;
+      err.response = { data: jsonData };
+      throw err;
+    }
+
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      const inner = jsonData.data;
+      if (inner !== null && inner !== undefined) {
+        return inner;
+      }
+      return jsonData;
+    }
+
+    return jsonData;
+  } catch (error) {
+    console.error('PATCH 요청 오류:', error);
+    throw error;
+  }
+};
+
 // POST 요청 (FormData)
 export const apiPostFormData = async (endpoint, formData, options = {}) => {
   try {

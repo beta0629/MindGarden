@@ -103,6 +103,18 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   useEffect(() => {
     if (reviews.length === 0) return;
 
+    // 후기 2개 이하: 큰 베스트 블록을 쓰지 않고 캐러셀에만 모두 표시 (한 건은 위·한 건만 아래처럼 쪼개지지 않음)
+    if (reviews.length <= 2) {
+      setBestReview(null);
+      const sorted = [...reviews].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setLatestReviews(
+        sorted.length > 1 ? [...sorted, ...sorted] : sorted
+      );
+      return;
+    }
+
     // 베스트 후기: overall 점수가 가장 높거나, 없으면 좋아요 수가 가장 많은 것
     const best = [...reviews].sort((a, b) => {
       const aScore = a.ratings?.overall || 0;

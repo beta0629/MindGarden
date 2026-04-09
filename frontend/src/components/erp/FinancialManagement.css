@@ -93,34 +93,35 @@ h3.mg-v2-erp-financial-section-title {
   min-width: 0;
 }
 
-/* 거래 카드 (퍼블: 악센트 바 + 본문) */
+/* 거래 카드: 외곽 큰 카드(흰색)와 대비되도록 배경·그림자·좌측 악센트 */
 .mg-v2-erp-financial-tx-card {
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   padding: var(--spacing-md);
-  padding-top: var(--spacing-md);
   border-radius: var(--border-radius-lg);
-  background: var(--mg-color-surface-main);
+  /* 부모 ContentCard(--ad-b0kla-card-bg)와 동일 톤이면 카드가 ‘사라진’ 것처럼 보임 */
+  background: var(--mg-gray-50, var(--mg-color-background-main, var(--mg-color-surface-main)));
   border: 1px solid var(--mg-color-border-main);
-  box-shadow: var(--mg-shadow-sm, none);
+  box-shadow: var(--mg-shadow-sm, var(--ad-b0kla-shadow));
   transition: box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
 .mg-v2-erp-financial-tx-card:hover {
-  box-shadow: var(--mg-shadow-md);
+  box-shadow: var(--mg-shadow-md, var(--ad-b0kla-shadow));
   transform: translateY(calc(var(--spacing-xs) * -1));
 }
 
+/* 좌측 4px 악센트(상단 얇은 띠는 눈에 잘 안 띔) */
 .mg-v2-erp-financial-tx-card::before {
   content: '';
   position: absolute;
   top: 0;
+  bottom: 0;
   left: 0;
-  right: 0;
-  height: var(--spacing-xs);
-  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  width: 4px;
+  border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
   background: var(--mg-color-border-main);
 }
 

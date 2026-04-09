@@ -8,11 +8,21 @@ import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { getTenantId } from '../../utils/apiHeaders';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
 
 /**
- * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
+ * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
+ *
+ * @param {'create'|'edit'} mode 등록 또는 수정
+ * @param {object} [initialTransaction] 수정 시 단건 데이터(id·관련 엔티티 등 포함)
  */
-const FinancialTransactionForm = ({ onClose, onSuccess }) => {
+const FinancialTransactionForm = ({
+  onClose,
+  onSuccess,
+  mode = 'create',
+  initialTransaction = null
+}) => {
   const [formData, setFormData] = useState({
     transactionType: 'EXPENSE',
     category: '',
@@ -39,6 +49,29 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   useEffect(() => {
     loadCommonCodes();
   }, []);
+
+  useEffect(() => {
+    if (mode !== 'edit' || !initialTransaction) {
+      return;
+    }
+    const tx = initialTransaction;
+    const dateRaw = tx.transactionDate;
+    const dateStr = dateRaw
+      ? String(dateRaw).slice(0, 10)
+      : new Date().toISOString().split('T')[0];
+    setFormData({
+      transactionType: tx.transactionType || 'EXPENSE',
+      category: tx.category || '',
+      subcategory: tx.subcategory || '',
+      amount: tx.amount != null && tx.amount !== '' ? String(tx.amount) : '',
+      description: tx.description || '',
+      transactionDate: dateStr,
+      taxIncluded: !!tx.taxIncluded
+    });
+  }, [mode, initialTransaction]);
+
+  const isApprovedReadOnly =
+    mode === 'edit' && String(initialTransaction?.status || '').toUpperCase() === 'APPROVED';
 
   const loadCommonCodes = async () => {
     try {
@@ -114,6 +147,13 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
       return;
     }
 
+    if (isApprovedReadOnly) {
+      const msg = '승인된 거래는 수정할 수 없습니다.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
+      return;
+    }
+
     const tenantIdResolved = await getTenantId(true);
     if (!tenantIdResolved || !String(tenantIdResolved).trim()) {
       const msg = '테넌트 정보를 확인할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.';
@@ -141,58 +181,50 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
         payload.description = descTrim;
       }
 
-      const response = await csrfTokenManager.post('/api/v1/erp/finance/transactions', payload);
-      const body = await response.json().catch(() => ({}));
-      const ok = response.ok && (body.success === true || (body.success === undefined && response.status === 200));
+      if (mode === 'edit' && initialTransaction?.id != null) {
+        if (initialTransaction.relatedEntityId != null) {
+          payload.relatedEntityId = initialTransaction.relatedEntityId;
+        }
+        if (initialTransaction.relatedEntityType) {
+          payload.relatedEntityType = initialTransaction.relatedEntityType;
+        }
+        if (initialTransaction.taxAmount != null) {
+          payload.taxAmount = initialTransaction.taxAmount;
+        }
+        if (initialTransaction.amountBeforeTax != null) {
+          payload.amountBeforeTax = initialTransaction.amountBeforeTax;
+        }
+        if (initialTransaction.department) {
+          payload.department = initialTransaction.department;
+        }
+        if (initialTransaction.projectCode) {
+          payload.projectCode = initialTransaction.projectCode;
+        }
+        if (initialTransaction.remarks) {
+          payload.remarks = initialTransaction.remarks;
+        }
 
-      if (ok) {
+        const data = await StandardizedApi.put(
+          ERP_API.FINANCE_TRANSACTION_BY_ID(initialTransaction.id),
+          payload
+        );
+        setSuccessMessage('수정되었습니다.');
+        notificationManager.show('거래가 수정되었습니다.', 'success', 3000);
+        setTimeout(() => {
+          onSuccess?.(data);
+          onClose?.();
+        }, 800);
+      } else {
+        const data = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTIONS, payload);
         setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
         notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
         setTimeout(() => {
-          onSuccess?.(body?.data ?? body);
+          onSuccess?.(data);
           onClose?.();
         }, 1200);
-      } else {
-        const normalizeDetails = (raw) => {
-          if (raw == null || raw === '') return '';
-          if (typeof raw === 'string') return raw.trim();
-          if (typeof raw === 'object') {
-            if (Array.isArray(raw)) return raw.filter(Boolean).map(String).join(', ');
-            try {
-              return Object.entries(raw)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join(', ');
-            } catch {
-              return '';
-            }
-          }
-          return String(raw).trim();
-        };
-
-        const baseMessage = typeof body.message === 'string' ? body.message.trim() : '';
-        const detailsText = normalizeDetails(body.details);
-        const errorCode = body.errorCode;
-
-        let msg;
-        if (errorCode === 'TENANT_ID_REQUIRED' || /tenant\s*id/i.test(baseMessage)) {
-          msg = '테넌트 정보가 없습니다. 다시 로그인 후 시도해 주세요.';
-        } else if (response.status === 403 && !baseMessage) {
-          msg = '요청이 거부되었습니다. 로그인 상태와 보안(CSRF) 설정을 확인해 주세요.';
-        } else {
-          const head = baseMessage || '등록에 실패했습니다.';
-          if (!detailsText) {
-            msg = head;
-          } else {
-            const withParens = `${head} (${detailsText})`;
-            msg = withParens.length > 200 ? `${head} · ${detailsText}` : withParens;
-          }
-        }
-
-        setError(msg);
-        notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      const msg = err?.message || '거래 등록 중 오류가 발생했습니다.';
+      const msg = err?.message || (mode === 'edit' ? '거래 수정 중 오류가 발생했습니다.' : '거래 등록 중 오류가 발생했습니다.');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
     } finally {
@@ -218,7 +250,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     <ErpModal
       isOpen={true}
       onClose={onClose}
-      title="수입/지출 등록"
+      title={mode === 'edit' ? '거래 수정' : '수입/지출 등록'}
       size="medium"
     >
 
@@ -232,6 +264,21 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             fontWeight: 500
           }}>
             ✓ {successMessage}
+          </div>
+        )}
+        {isApprovedReadOnly && (
+          <div
+            className="mg-v2-form-error"
+            role="alert"
+            style={{
+              padding: 'var(--spacing-sm)',
+              marginBottom: 'var(--spacing-md)',
+              backgroundColor: 'var(--status-warning-border, var(--mg-color-border-main))',
+              color: 'var(--status-warning-dark, var(--mg-color-text-primary))',
+              borderRadius: 'var(--radius-sm)'
+            }}
+          >
+            승인된 거래는 수정할 수 없습니다.
           </div>
         )}
         {error && (
@@ -263,6 +310,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   value="INCOME"
                   checked={formData.transactionType === 'INCOME'}
                   onChange={handleInputChange}
+                  disabled={isApprovedReadOnly}
                   style={{ cursor: 'pointer' }}
                 />
                 <span>수입</span>
@@ -274,6 +322,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   value="EXPENSE"
                   checked={formData.transactionType === 'EXPENSE'}
                   onChange={handleInputChange}
+                  disabled={isApprovedReadOnly}
                   style={{ cursor: 'pointer' }}
                 />
                 <span>지출</span>
@@ -301,7 +350,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 }))
               ]}
               placeholder="카테고리를 선택하세요"
-              disabled={loadingCodes}
+              disabled={loadingCodes || isApprovedReadOnly}
               className="mg-v2-form-badge-select"
             />
             {loadingCodes && (
@@ -327,7 +376,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 }))
               ]}
               placeholder="세부 카테고리를 선택하세요"
-              disabled={!formData.category || loadingCodes}
+              disabled={!formData.category || loadingCodes || isApprovedReadOnly}
               className="mg-v2-form-badge-select"
             />
             {!formData.category && (
@@ -352,6 +401,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               step="1"
               placeholder="금액을 입력하세요"
               className="mg-v2-form-input"
+              disabled={isApprovedReadOnly}
             />
           </div>
 
@@ -367,6 +417,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               className="mg-v2-form-input"
+              disabled={isApprovedReadOnly}
             />
           </div>
 
@@ -382,6 +433,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               rows="3"
               placeholder="거래에 대한 추가 설명을 입력하세요"
               className="mg-v2-form-textarea"
+              disabled={isApprovedReadOnly}
             />
           </div>
 
@@ -393,6 +445,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 name="taxIncluded"
                 checked={formData.taxIncluded}
                 onChange={handleInputChange}
+                disabled={isApprovedReadOnly}
                 style={{ cursor: 'pointer' }}
               />
               <span>세금 포함</span>
@@ -420,10 +473,11 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               type="submit"
               variant="primary"
               loading={loading}
-              loadingText="등록 중..."
+              loadingText={mode === 'edit' ? '저장 중...' : '등록 중...'}
               preventDoubleClick={false}
+              disabled={isApprovedReadOnly}
             >
-              등록하기
+              {mode === 'edit' ? '저장하기' : '등록하기'}
             </MGButton>
           </div>
         </form>

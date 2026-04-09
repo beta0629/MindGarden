@@ -8,8 +8,9 @@ import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
-import ConfirmModal from '../common/ConfirmModal';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import FinancialTransactionForm from './FinancialTransactionForm';
+import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
 import { ViewModeToggle } from '../common';
@@ -79,12 +80,13 @@ const FinancialManagement = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
-  const [confirmModal, setConfirmModal] = useState({
+  const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
-    title: '',
-    message: '',
-    type: 'default',
-    onConfirm: null
+    transaction: null
+  });
+  const [editModal, setEditModal] = useState({
+    open: false,
+    transaction: null
   });
   
   const [dashboardStats, setDashboardStats] = useState({
@@ -314,33 +316,29 @@ const FinancialManagement = () => {
     }
   };
 
-  const handleDeleteTransaction = async (transaction) => {
-    setConfirmModal({
-      isOpen: true,
-      title: '거래 삭제 확인',
-      message: `정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${toDisplayString(transaction.id)}\n금액: ${toSafeNumber(transaction.amount).toLocaleString()}원`,
-      type: 'danger',
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/v1/erp/finance/transactions/${transaction.id}`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            notificationManager.success('거래가 성공적으로 삭제되었습니다.');
-            loadData(); // 데이터 새로고침
-          } else {
-            notificationManager.error(`거래 삭제에 실패했습니다: ${toErrorMessage(result.message)}`);
-          }
-        } catch (error) {
-          console.error('거래 삭제 실패:', error);
-          notificationManager.error('거래 삭제 중 오류가 발생했습니다.');
-        }
+  const handleDeleteTransaction = (transaction) => {
+    setDeleteModal({ isOpen: true, transaction });
+  };
+
+  const confirmDeleteTransaction = async () => {
+    const transaction = deleteModal.transaction;
+    if (!transaction?.id) {
+      setDeleteModal({ isOpen: false, transaction: null });
+      return;
+    }
+    try {
+      const result = await StandardizedApi.delete(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
+      if (result?.success === false) {
+        notificationManager.error(`거래 삭제에 실패했습니다: ${toErrorMessage(result.message)}`);
+        return;
       }
-    });
+      notificationManager.success('거래가 성공적으로 삭제되었습니다.');
+      setDeleteModal({ isOpen: false, transaction: null });
+      loadData();
+    } catch (error) {
+      console.error('거래 삭제 실패:', error);
+      notificationManager.error(toErrorMessage(error.message) || '거래 삭제 중 오류가 발생했습니다.');
+    }
   };
   
   const handleViewTransaction = (transaction) => {
@@ -348,8 +346,16 @@ const FinancialManagement = () => {
     setShowDetailModal(true);
   };
   
-  const handleEditTransaction = (transaction) => {
-    notificationManager.info('거래 수정 기능은 준비중입니다.');
+  const handleEditTransaction = async (transaction) => {
+    try {
+      const data = await StandardizedApi.get(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
+      const resolved =
+        data && typeof data === 'object' && data.id != null ? data : transaction;
+      setEditModal({ open: true, transaction: resolved });
+    } catch (e) {
+      console.warn('거래 단건 조회 실패, 목록 행으로 폼을 채웁니다.', e);
+      setEditModal({ open: true, transaction });
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -952,15 +958,62 @@ const FinancialManagement = () => {
           />
         )}
 
-        {/* 컨펌 모달 */}
-        <ConfirmModal
-          isOpen={confirmModal.isOpen}
-          onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
-          onConfirm={confirmModal.onConfirm}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          type={confirmModal.type}
-        />
+        {deleteModal.isOpen && deleteModal.transaction && (
+          <UnifiedModal
+            isOpen
+            onClose={() => setDeleteModal({ isOpen: false, transaction: null })}
+            title="거래 삭제"
+            size="medium"
+            variant="confirm"
+            showCloseButton
+            className="mg-v2-ad-b0kla"
+            actions={
+              <>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button-secondary"
+                  onClick={() => setDeleteModal({ isOpen: false, transaction: null })}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button--danger"
+                  onClick={confirmDeleteTransaction}
+                >
+                  삭제
+                </button>
+              </>
+            }
+          >
+            <p style={{ marginBottom: 'var(--spacing-md, 1rem)' }}>
+              이 작업은 되돌릴 수 없습니다. 아래 거래를 영구 삭제할까요?
+            </p>
+            <ul className="mg-v2-text-list" style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                거래 번호: #{toDisplayString(deleteModal.transaction.id)}
+              </li>
+              <li>
+                금액:{' '}
+                <SafeText fallback="-">
+                  {`${toSafeNumber(deleteModal.transaction.amount).toLocaleString()}원`}
+                </SafeText>
+              </li>
+            </ul>
+          </UnifiedModal>
+        )}
+
+        {editModal.open && editModal.transaction && (
+          <FinancialTransactionForm
+            mode="edit"
+            initialTransaction={editModal.transaction}
+            onClose={() => setEditModal({ open: false, transaction: null })}
+            onSuccess={() => {
+              loadData();
+              setEditModal({ open: false, transaction: null });
+            }}
+          />
+        )}
       </Fragment>
     </AdminCommonLayout>
   );

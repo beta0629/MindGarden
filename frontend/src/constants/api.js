@@ -314,6 +314,10 @@ export const ERP_API = {
   FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
   FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report',
 
+  /** 재무 거래 (수입/지출 직접 등록·조회·수정·삭제 — ErpController) */
+  FINANCE_TRANSACTIONS: '/api/v1/erp/finance/transactions',
+  FINANCE_TRANSACTION_BY_ID: (id) => `/api/v1/erp/finance/transactions/${id}`,
+
   /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
   BUDGETS: '/api/v1/erp/budgets',
   BUDGET_BY_ID: (id) => `/api/v1/erp/budgets/${id}`

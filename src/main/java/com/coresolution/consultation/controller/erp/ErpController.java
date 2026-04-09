@@ -1870,6 +1870,107 @@ public class ErpController extends BaseApiController {
     }
 
     /**
+     * 수입/지출 거래 단건 조회 (테넌트 격리, 관리자 전용)
+     *
+     * @param id 거래 ID
+     * @param session HTTP 세션
+     * @return 거래 상세
+     * @author CoreSolution
+     * @since 2026-04-09
+     */
+    @GetMapping("/finance/transactions/{id}")
+    public ResponseEntity<Map<String, Object>> getFinancialTransaction(@PathVariable Long id,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                        currentUser != null ? currentUser.getRole() : "null");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
+            }
+
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
+
+            FinancialTransactionResponse data = financialTransactionService.getTransaction(id);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "거래를 조회했습니다.");
+            result.put("data", data);
+            result.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            log.error("재무 거래 단건 조회 실패: id={}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("재무 거래 단건 조회 실패: id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "거래 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 수입/지출 거래 수정 (등록 API와 동일한 관리자·테넌트 검증)
+     *
+     * @param id 거래 ID
+     * @param request 수정 요청 본문
+     * @param session HTTP 세션
+     * @return 수정된 거래
+     * @author CoreSolution
+     * @since 2026-04-09
+     */
+    @PutMapping("/finance/transactions/{id}")
+    public ResponseEntity<Map<String, Object>> updateFinancialTransaction(@PathVariable Long id,
+            @Valid @RequestBody FinancialTransactionRequest request, HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                        currentUser != null ? currentUser.getRole() : "null");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
+            }
+
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
+            if (request.getBranchCode() != null) {
+                request.setBranchCode(null);
+            }
+
+            log.info("수입/지출 거래 수정 요청: 사용자={}, tenantId={}, id={}", currentUser.getEmail(),
+                    tenantId, id);
+
+            FinancialTransactionResponse response =
+                    financialTransactionService.updateTransaction(id, request, currentUser);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "거래가 수정되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            log.error("재무 거래 수정 실패: id={}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("재무 거래 수정 실패: id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "거래 수정 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
      * 모든 수입/지출 거래 조회 (지점별 필터링 적용)
      */
     @GetMapping("/finance/transactions")

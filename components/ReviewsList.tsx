@@ -134,13 +134,19 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 10);
 
-    // 롤링을 위해 두 번 반복
-    setLatestReviews([...finalLatest, ...finalLatest]);
+    // 무한 롤링은 동일 카드 2열 노출을 막기 위해 2개 이상일 때만 복제
+    setLatestReviews(
+      finalLatest.length > 1
+        ? [...finalLatest, ...finalLatest]
+        : finalLatest
+    );
   }, [reviews]);
 
   // 무한 롤링 애니메이션 (항상 롤링)
   useEffect(() => {
     if (!containerRef.current || latestReviews.length === 0) return;
+    // 복제 없이 1장만 있으면 자동 가로 스크롤 루프 비활성 (동일 카드 2개 이슈와 동일 원인 방지)
+    if (latestReviews.length === 1) return;
 
     const container = containerRef.current;
     const scrollSpeed = 0.5; // 픽셀/프레임
@@ -306,10 +312,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     );
   }
 
-  // 중복 제거 (롤링을 위해 두 번 반복했으므로)
-  const uniqueReviews = latestReviews.length > 0 
-    ? latestReviews.slice(0, latestReviews.length / 2)
-    : [];
+  // 롤링용 복제본이 있으면 절반만 논리적 목록 (섹션 노출 여부 등)
+  const uniqueReviews =
+    latestReviews.length > 0
+      ? latestReviews.length === 1
+        ? latestReviews
+        : latestReviews.slice(0, latestReviews.length / 2)
+      : [];
 
   return (
     <div style={{

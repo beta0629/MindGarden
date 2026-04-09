@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { QUILL_FONT_WHITELIST, registerQuillFontsOnce } from '@/lib/quill-font';
+import { IMAGE_FILE_ACCEPT, isLikelyImageFile } from '@/lib/upload-file-types';
+import { heicToJpegIfNeeded } from '@/lib/heicToJpeg';
 
 // React Quill을 동적으로 로드
 let ReactQuill: any = null;
@@ -112,8 +114,14 @@ export default function BlogEditor({
     return null;
   }, []);
 
-  // 이미지를 base64로 변환하는 헬퍼 함수 (공통 사용)
-  const convertImageToBase64 = useCallback((file: File, maxWidth: number = 1920, maxHeight: number = 1080, quality: number = 0.9): Promise<string> => {
+  // 이미지를 base64로 변환 (HEIC는 heic2any로 JPEG 변환 후 처리)
+  const convertImageToBase64 = useCallback(async (
+    file: File,
+    maxWidth: number = 1920,
+    maxHeight: number = 1080,
+    quality: number = 0.9
+  ): Promise<string> => {
+    const prepared = await heicToJpegIfNeeded(file);
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -121,8 +129,7 @@ export default function BlogEditor({
         img.onload = () => {
           let width = img.width;
           let height = img.height;
-          
-          // 비율 유지하며 최대 크기로 리사이징
+
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           if (ratio < 1) {
             width = width * ratio;
@@ -133,23 +140,20 @@ export default function BlogEditor({
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          
+
           if (!ctx) {
             reject(new Error('Canvas context를 가져올 수 없습니다.'));
             return;
           }
 
           ctx.drawImage(img, 0, 0, width, height);
-          
-          // base64로 변환
-          const base64 = canvas.toDataURL('image/jpeg', quality);
-          resolve(base64);
+          resolve(canvas.toDataURL('image/jpeg', quality));
         };
         img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
         img.src = e.target?.result as string;
       };
       reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(prepared);
     });
   }, []);
 
@@ -157,16 +161,28 @@ export default function BlogEditor({
     const imageHandler = useCallback(async () => {
       const input = document.createElement('input');
       input.setAttribute('type', 'file');
-      input.setAttribute('accept', 'image/*');
+      input.setAttribute('accept', IMAGE_FILE_ACCEPT);
       input.click();
 
       input.onchange = async () => {
-        const file = input.files?.[0];
+        let file = input.files?.[0];
         if (!file) return;
 
         // 파일 크기 확인 (10MB 제한)
         if (file.size > 10 * 1024 * 1024) {
           alert('이미지 크기는 10MB 이하여야 합니다.');
+          return;
+        }
+
+        if (!isLikelyImageFile(file)) {
+          alert('이미지 파일만 업로드 가능합니다. (JPEG, PNG, HEIC 등)');
+          return;
+        }
+
+        try {
+          file = await heicToJpegIfNeeded(file);
+        } catch (e: any) {
+          alert(e?.message || 'HEIC 이미지 처리에 실패했습니다.');
           return;
         }
 
@@ -263,7 +279,9 @@ export default function BlogEditor({
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      isLikelyImageFile(file)
+    );
     
     if (files.length === 0) {
       console.warn('드롭된 파일 중 이미지가 없습니다.');
@@ -289,13 +307,20 @@ export default function BlogEditor({
     }
 
 
-    for (const file of files) {
+    for (let file of files) {
       try {
         console.log('이미지 업로드 시작:', file.name, file.type, file.size);
         
         // 파일 크기 확인 (10MB 제한)
         if (file.size > 10 * 1024 * 1024) {
           alert(`${file.name}: 이미지 크기는 10MB 이하여야 합니다.`);
+          continue;
+        }
+
+        try {
+          file = await heicToJpegIfNeeded(file);
+        } catch (convErr: any) {
+          alert(`${file.name}: ${convErr?.message || '이미지 변환에 실패했습니다.'}`);
           continue;
         }
 

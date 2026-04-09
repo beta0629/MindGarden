@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { getDbConnection } from '@/lib/db';
+import { isLikelyImageFile } from '@/lib/upload-file-types';
 
 // 블로그 이미지 업로드
 export async function POST(request: NextRequest) {
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 파일 타입 확인
-    if (!file.type.startsWith('image/')) {
+    if (!isLikelyImageFile(file)) {
       return NextResponse.json(
         { success: false, error: '이미지 파일만 업로드 가능합니다.' },
         { status: 400 }

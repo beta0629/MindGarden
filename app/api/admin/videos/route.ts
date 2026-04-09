@@ -4,6 +4,7 @@ import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getDbConnection } from '@/lib/db';
+import { isLikelyVideoFile } from '@/lib/upload-file-types';
 
 const execAsync = promisify(exec);
 
@@ -97,10 +98,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 파일 타입 확인
-    if (!file.type.startsWith('video/')) {
+    if (!isLikelyVideoFile(file)) {
       return NextResponse.json(
-        { success: false, error: '비디오 파일만 업로드 가능합니다.' },
+        { success: false, error: '비디오 파일만 업로드 가능합니다. (MOV·MP4 등)' },
         { status: 400 }
       );
     }

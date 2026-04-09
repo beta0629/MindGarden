@@ -16,6 +16,7 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
+    "heic2any": "^0.0.4",
     "isomorphic-dompurify": "^2.35.0",
     "mysql2": "^3.6.5",
     "next": "^14.2.0",

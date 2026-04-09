@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { CameraGlyph } from '@/components/icons/UiGlyphs';
+import { IMAGE_FILE_ACCEPT, isLikelyImageFile } from '@/lib/upload-file-types';
+import { heicToJpegIfNeeded } from '@/lib/heicToJpeg';
 
 interface ImageUploaderProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -117,13 +119,21 @@ export default function ImageUploader({
 
   // 자동 리사이징 및 업로드 (리사이징 옵션 UI 없이)
   const autoResizeAndUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      onError?.('이미지 파일만 업로드 가능합니다.');
+    if (!isLikelyImageFile(file)) {
+      onError?.('이미지 파일만 업로드 가능합니다. (HEIC 포함)');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
       onError?.('이미지 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    let workFile: File;
+    try {
+      workFile = await heicToJpegIfNeeded(file);
+    } catch (e: any) {
+      onError?.(e?.message || 'HEIC 변환에 실패했습니다.');
       return;
     }
 
@@ -223,7 +233,7 @@ export default function ImageUploader({
           setUploading(false);
         }
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(workFile);
     } catch (error: any) {
       onError?.(error.message || '이미지 업로드에 실패했습니다.');
       console.error('Auto resize upload error:', error);
@@ -243,8 +253,8 @@ export default function ImageUploader({
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      onError?.('이미지 파일만 업로드 가능합니다.');
+    if (!isLikelyImageFile(file)) {
+      onError?.('이미지 파일만 업로드 가능합니다. (HEIC 포함)');
       return;
     }
 
@@ -253,8 +263,16 @@ export default function ImageUploader({
       return;
     }
 
+    let workFile: File;
+    try {
+      workFile = await heicToJpegIfNeeded(file);
+    } catch (e: any) {
+      onError?.(e?.message || 'HEIC 변환에 실패했습니다.');
+      return;
+    }
+
     // 원본 파일 저장
-    originalFileRef.current = file;
+    originalFileRef.current = workFile;
     setIsResizing(true);
     setShowResizeOptions(true);
 
@@ -303,7 +321,7 @@ export default function ImageUploader({
     reader.onerror = () => {
       onError?.('파일을 읽을 수 없습니다.');
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(workFile);
   };
 
   // 리사이징 적용 및 업로드
@@ -407,7 +425,7 @@ export default function ImageUploader({
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    const files = Array.from(e.dataTransfer.files).filter((f) => isLikelyImageFile(f));
     if (files.length > 0) {
       await processFile(files[0]);
     }
@@ -459,7 +477,7 @@ export default function ImageUploader({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_FILE_ACCEPT}
             onChange={handleFileSelect}
             style={{ display: 'none' }}
           />

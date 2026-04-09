@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BlogEditor from '@/components/BlogEditor';
 import AdminNavigation from '@/components/AdminNavigation';
+import { isLikelyImageFile } from '@/lib/upload-file-types';
+import { heicToJpegIfNeeded } from '@/lib/heicToJpeg';
 
 interface Popup {
   id: number;
@@ -97,21 +99,15 @@ export default function PopupsAdminPage() {
 
   // BlogEditor에서 이미지 업로드 시 base64로 변환 (편집 편의성 향상)
   const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<{ imageUrl: string }> => {
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('이미지 크기는 10MB 이하여야 합니다.');
+    }
+    if (!isLikelyImageFile(file)) {
+      throw new Error('이미지 파일만 업로드 가능합니다. (HEIC 포함)');
+    }
+    const workFile = await heicToJpegIfNeeded(file);
+
     return new Promise((resolve, reject) => {
-      // 파일 크기 확인 (10MB 제한)
-      if (file.size > 10 * 1024 * 1024) {
-        reject(new Error('이미지 크기는 10MB 이하여야 합니다.'));
-        return;
-      }
-
-      // 파일 타입 확인
-      if (!file.type.startsWith('image/')) {
-        reject(new Error('이미지 파일만 업로드 가능합니다.'));
-        return;
-      }
-
-      // 클라이언트 사이드 리사이징 후 base64로 변환 (팝업 이미지: 최대 1200x675, 품질 0.75)
-      // base64 크기를 줄이기 위해 크기와 품질을 낮춤
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -160,7 +156,7 @@ export default function PopupsAdminPage() {
         img.src = e.target?.result as string;
       };
       reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(workFile);
     });
   }, []);
 

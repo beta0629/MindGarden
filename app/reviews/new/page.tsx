@@ -6,20 +6,25 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import BlogEditor from '@/components/BlogEditor';
 import { HeartGlyph } from '@/components/icons/ReviewHearts';
+import { isLikelyImageFile } from '@/lib/upload-file-types';
+import { heicToJpegIfNeeded } from '@/lib/heicToJpeg';
 
 // BlogEditor에서 이미지 업로드 시 base64로 변환하는 헬퍼 함수
-const convertImageToBase64 = (file: File, maxWidth: number = 1200, maxHeight: number = 675, quality: number = 0.75): Promise<string> => {
+const convertImageToBase64 = async (
+  file: File,
+  maxWidth: number = 1200,
+  maxHeight: number = 675,
+  quality: number = 0.75
+): Promise<string> => {
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('이미지 크기는 10MB 이하여야 합니다.');
+  }
+  if (!isLikelyImageFile(file)) {
+    throw new Error('이미지 파일만 업로드 가능합니다. (HEIC 포함)');
+  }
+  const workFile = await heicToJpegIfNeeded(file);
+
   return new Promise((resolve, reject) => {
-    if (file.size > 10 * 1024 * 1024) {
-      reject(new Error('이미지 크기는 10MB 이하여야 합니다.'));
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      reject(new Error('이미지 파일만 업로드 가능합니다.'));
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -53,7 +58,7 @@ const convertImageToBase64 = (file: File, maxWidth: number = 1200, maxHeight: nu
       img.src = e.target?.result as string;
     };
     reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(workFile);
   });
 };
 

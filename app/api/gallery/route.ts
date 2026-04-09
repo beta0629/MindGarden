@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { isLikelyImageFile } from '@/lib/upload-file-types';
 
 // 갤러리 이미지 목록 조회
 export async function GET(request: NextRequest) {
@@ -134,8 +135,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // 파일 타입 확인
-      if (!file.type.startsWith('image/')) {
+      // 파일 타입 확인 (HEIC·MIME 누락 대비 확장자 허용)
+      if (!isLikelyImageFile(file)) {
         return NextResponse.json(
           { success: false, error: '이미지 파일만 업로드 가능합니다.' },
           { status: 400 }

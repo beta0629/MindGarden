@@ -7,6 +7,8 @@ import BlogEditor from '@/components/BlogEditor';
 import { getApiService } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { IMAGE_FILE_ACCEPT, isLikelyImageFile } from '@/lib/upload-file-types';
+import { heicToJpegIfNeeded } from '@/lib/heicToJpeg';
 
 export default function BlogEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -70,11 +72,11 @@ export default function BlogEditPage({ params }: { params: { id: string } }) {
   }, [params.id, router]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setError('이미지 파일만 업로드 가능합니다.');
+    if (!isLikelyImageFile(file)) {
+      setError('이미지 파일만 업로드 가능합니다. (HEIC 포함)');
       return;
     }
 
@@ -87,6 +89,7 @@ export default function BlogEditPage({ params }: { params: { id: string } }) {
     setError(null);
 
     try {
+      file = await heicToJpegIfNeeded(file);
       const apiService = getApiService();
       const result = await apiService.uploadBlogImage(file);
       setFormData(prev => ({
@@ -347,7 +350,7 @@ export default function BlogEditPage({ params }: { params: { id: string } }) {
                 <input
                   type="file"
                   id="thumbnail"
-                  accept="image/*"
+                  accept={IMAGE_FILE_ACCEPT}
                   onChange={handleImageUpload}
                   disabled={uploading}
                   style={{ marginBottom: '8px' }}

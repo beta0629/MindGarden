@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminNavigation from '@/components/AdminNavigation';
+import { VIDEO_FILE_ACCEPT, isLikelyVideoFile } from '@/lib/upload-file-types';
 
 interface Video {
   id: number;
@@ -110,8 +111,8 @@ export default function VideoManagementPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('video/')) {
-      setError('비디오 파일만 업로드 가능합니다.');
+    if (!isLikelyVideoFile(file)) {
+      setError('비디오 파일만 업로드 가능합니다. (MOV·MP4 등)');
       return;
     }
 
@@ -303,7 +304,7 @@ export default function VideoManagementPage() {
               </label>
               <input
                 type="file"
-                accept="video/*"
+                accept={VIDEO_FILE_ACCEPT}
                 onChange={handleVideoSelect}
                 style={{
                   width: '100%',

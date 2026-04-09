@@ -40,6 +40,7 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
+import { ErpFilterToolbar } from './common';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -456,145 +457,157 @@ const FinancialManagement = () => {
               }
               filterSlot={
                 activeTab === 'transactions' && !loading && !error ? (
-                  <div className="mg-v2-filter-section">
-                    <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
-                      <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">기간</label>
-                        <select
-                          value={String(filters.dateRange || 'MONTH')}
-                          onChange={(e) =>
-                            setFilters((prev) => ({ ...prev, dateRange: String(e.target.value) }))
-                          }
-                          className="mg-v2-form-select"
-                          style={{ minWidth: '140px' }}
-                        >
-                          <option value="ALL">전체</option>
-                          <option value="TODAY">오늘</option>
-                          <option value="WEEK">이번 주</option>
-                          <option value="MONTH">이번 달</option>
-                          <option value="CUSTOM">직접 입력</option>
-                        </select>
-                        {filters.dateRange === 'CUSTOM' && (
-                          <div className="mg-v2-form-group mg-v2-form-group--inline" style={{ marginTop: 8 }}>
-                            <input
-                              type="date"
-                              value={filters.startDate}
-                              onChange={(e) =>
-                                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
-                              }
-                              className="mg-v2-form-select"
-                              style={{ marginRight: 8 }}
-                            />
-                            <span style={{ color: 'var(--mg-color-text-secondary)' }}>~</span>
-                            <input
-                              type="date"
-                              value={filters.endDate}
-                              onChange={(e) =>
-                                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
-                              }
-                              className="mg-v2-form-select"
-                              style={{ marginLeft: 8 }}
-                            />
+                  <ErpFilterToolbar
+                    ariaLabel="재무 거래 필터"
+                    primaryRow={(
+                      <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
+                        <div className="mg-v2-form-group">
+                          <label className="mg-v2-form-label" htmlFor="financial-filter-date-range">
+                            기간
+                          </label>
+                          <select
+                            id="financial-filter-date-range"
+                            value={String(filters.dateRange || 'MONTH')}
+                            onChange={(e) =>
+                              setFilters((prev) => ({ ...prev, dateRange: String(e.target.value) }))
+                            }
+                            className="mg-v2-form-select mg-v2-erp-filter-toolbar__period-select"
+                          >
+                            <option value="ALL">전체</option>
+                            <option value="TODAY">오늘</option>
+                            <option value="WEEK">이번 주</option>
+                            <option value="MONTH">이번 달</option>
+                            <option value="CUSTOM">직접 입력</option>
+                          </select>
+                          {filters.dateRange === 'CUSTOM' && (
+                            <div className="mg-v2-form-group mg-v2-form-group--inline mg-v2-erp-filter-toolbar__custom-range">
+                              <input
+                                type="date"
+                                value={filters.startDate}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+                                }
+                                className="mg-v2-form-select mg-v2-erp-filter-toolbar__date-input--start"
+                                aria-label="시작일"
+                              />
+                              <span className="mg-v2-erp-filter-toolbar__date-separator" aria-hidden>
+                                ~
+                              </span>
+                              <input
+                                type="date"
+                                value={filters.endDate}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+                                }
+                                className="mg-v2-form-select mg-v2-erp-filter-toolbar__date-input--end"
+                                aria-label="종료일"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div className="mg-v2-form-group">
+                          <span className="mg-v2-form-label">거래 유형</span>
+                          <div className="mg-erp-filter-badge-group">
+                            {[
+                              { value: 'ALL', label: '전체' },
+                              { value: 'INCOME', label: '수입' },
+                              { value: 'EXPENSE', label: '지출' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                className={`mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
+                                onClick={() =>
+                                  setFilters((prev) => ({ ...prev, transactionType: opt.value }))
+                                }
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                      <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">거래 유형</label>
-                        <div className="mg-erp-filter-badge-group">
-                          {[
-                            { value: 'ALL', label: '전체' },
-                            { value: 'INCOME', label: '수입' },
-                            { value: 'EXPENSE', label: '지출' }
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              className={`mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
-                              onClick={() =>
-                                setFilters((prev) => ({ ...prev, transactionType: opt.value }))
-                              }
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                        </div>
+                        <div className="mg-v2-form-group">
+                          <span className="mg-v2-form-label">카테고리</span>
+                          <div className="mg-erp-filter-badge-group">
+                            {[
+                              { value: 'ALL', label: '전체' },
+                              { value: 'CONSULTATION', label: '상담료' },
+                              { value: 'SALARY', label: '급여' },
+                              { value: 'RENT', label: '임대료' },
+                              { value: 'UTILITY', label: '관리비' },
+                              { value: 'OFFICE_SUPPLIES', label: '사무용품' },
+                              { value: 'OTHER', label: '기타' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                className={`mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
+                                onClick={() =>
+                                  setFilters((prev) => ({ ...prev, category: opt.value }))
+                                }
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">카테고리</label>
-                        <div className="mg-erp-filter-badge-group">
-                          {[
-                            { value: 'ALL', label: '전체' },
-                            { value: 'CONSULTATION', label: '상담료' },
-                            { value: 'SALARY', label: '급여' },
-                            { value: 'RENT', label: '임대료' },
-                            { value: 'UTILITY', label: '관리비' },
-                            { value: 'OFFICE_SUPPLIES', label: '사무용품' },
-                            { value: 'OTHER', label: '기타' }
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              className={`mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
-                              onClick={() =>
-                                setFilters((prev) => ({ ...prev, category: opt.value }))
-                              }
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                    )}
+                    secondaryRow={(
+                      <div className="mg-v2-filter-grid mg-v2-filter-grid--row2">
+                        <div className="mg-v2-form-group">
+                          <label className="mg-v2-form-label" htmlFor="financial-filter-search">
+                            검색
+                          </label>
+                          <input
+                            id="financial-filter-search"
+                            type="text"
+                            placeholder="상담사명, 내담자명, 설명 검색..."
+                            value={filters.searchText}
+                            onChange={(e) =>
+                              setFilters((prev) => ({ ...prev, searchText: e.target.value }))
+                            }
+                            className="mg-v2-form-select"
+                          />
+                        </div>
+                        <div className="mg-v2-form-group mg-financial-filter-actions">
+                          <button
+                            type="button"
+                            onClick={() => setShowAdvancedFilter((v) => !v)}
+                            className="mg-v2-button mg-v2-button-secondary"
+                          >
+                            고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFilters({
+                                transactionType: 'ALL',
+                                category: 'ALL',
+                                relatedEntityType: 'ALL',
+                                dateRange: 'MONTH',
+                                startDate: '',
+                                endDate: '',
+                                searchText: ''
+                              })
+                            }
+                            className="mg-v2-button mg-v2-button-secondary"
+                          >
+                            <RefreshCw size={16} aria-hidden /> 필터 초기화
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loadData()}
+                            className="mg-v2-button mg-v2-button-primary"
+                          >
+                            <Search size={16} aria-hidden /> 검색
+                          </button>
                         </div>
                       </div>
-                    </div>
-                    <div className="mg-v2-filter-grid mg-v2-filter-grid--row2">
+                    )}
+                    expandedSlot={showAdvancedFilter ? (
                       <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">검색</label>
-                        <input
-                          type="text"
-                          placeholder="상담사명, 내담자명, 설명 검색..."
-                          value={filters.searchText}
-                          onChange={(e) =>
-                            setFilters((prev) => ({ ...prev, searchText: e.target.value }))
-                          }
-                          className="mg-v2-form-select"
-                        />
-                      </div>
-                      <div className="mg-v2-form-group mg-financial-filter-actions">
-                        <button
-                          type="button"
-                          onClick={() => setShowAdvancedFilter((v) => !v)}
-                          className="mg-v2-button mg-v2-button-secondary"
-                        >
-                          고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFilters({
-                              transactionType: 'ALL',
-                              category: 'ALL',
-                              relatedEntityType: 'ALL',
-                              dateRange: 'MONTH',
-                              startDate: '',
-                              endDate: '',
-                              searchText: ''
-                            })
-                          }
-                          className="mg-v2-button mg-v2-button-secondary"
-                        >
-                          <RefreshCw size={16} aria-hidden /> 필터 초기화
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => loadData()}
-                          className="mg-v2-button mg-v2-button-primary"
-                        >
-                          <Search size={16} aria-hidden /> 검색
-                        </button>
-                      </div>
-                    </div>
-                    {showAdvancedFilter && (
-                      <div className="mg-v2-form-group" style={{ marginTop: 12 }}>
-                        <label className="mg-v2-form-label">연동 유형</label>
+                        <span className="mg-v2-form-label">연동 유형</span>
                         <div className="mg-v2-tag-group">
                           {[
                             { value: 'ALL', label: '전체' },
@@ -617,8 +630,8 @@ const FinancialManagement = () => {
                           ))}
                         </div>
                       </div>
-                    )}
-                  </div>
+                    ) : null}
+                  />
                 ) : null
               }
             >

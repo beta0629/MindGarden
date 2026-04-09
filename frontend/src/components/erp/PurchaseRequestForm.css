@@ -1,0 +1,293 @@
+/**
+ * 구매 요청 폼 — 디자인 토큰 전용 (인라인 스타일 대체)
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
+.mg-v2-purchase-request-form__inner {
+  width: 100%;
+  max-width: min(100%, 52rem);
+  margin-inline: auto;
+}
+
+.mg-v2-purchase-request-form__panel {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.mg-v2-purchase-request-form__panel-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-purchase-request-form__item-grid {
+  max-height: 25rem;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.75rem, 1fr));
+  gap: var(--spacing-md);
+}
+
+.mg-v2-purchase-item-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--mg-gray-200);
+  border-radius: var(--border-radius-lg);
+  cursor: pointer;
+  background-color: var(--mg-white);
+  font: inherit;
+  text-align: inherit;
+  color: inherit;
+  appearance: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.mg-v2-purchase-item-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(calc(-1 * var(--spacing-xs)));
+}
+
+.mg-v2-purchase-item-card--selected {
+  border-width: 2px;
+  border-color: var(--mg-primary-500);
+  background-color: var(--mg-primary-50);
+  box-shadow: var(--cs-shadow-primary);
+  transform: translateY(calc(-1 * var(--spacing-xs)));
+}
+
+.mg-v2-purchase-item-card--selected:hover {
+  box-shadow: var(--cs-shadow-primary);
+}
+
+.mg-v2-purchase-item-card__check {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: var(--mg-primary-500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-white);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.mg-v2-purchase-item-card__name {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-sm);
+  color: var(--mg-gray-900);
+  line-height: var(--line-height-tight);
+}
+
+.mg-v2-purchase-item-card__category {
+  font-size: var(--font-size-xs);
+  color: var(--mg-secondary-500);
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+  font-weight: var(--font-weight-medium);
+}
+
+.mg-v2-purchase-item-card__price {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--mg-primary-500);
+  margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-purchase-item-card__stock {
+  font-size: var(--font-size-sm);
+  color: var(--mg-secondary-500);
+  background-color: var(--mg-gray-100);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
+  font-weight: var(--font-weight-medium);
+}
+
+.mg-v2-purchase-item-card__stock-label {
+  margin-right: var(--spacing-xs);
+}
+
+.mg-v2-purchase-qty-section__label {
+  display: block;
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-gray-800);
+  font-size: var(--font-size-base);
+}
+
+.mg-v2-purchase-qty-list {
+  display: grid;
+  gap: var(--spacing-md);
+  max-height: 18.75rem;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+}
+
+.mg-v2-purchase-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--mg-gray-200);
+}
+
+.mg-v2-purchase-qty-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-purchase-qty-row__name {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-v2-purchase-qty-row__calc {
+  font-size: var(--font-size-sm);
+  color: var(--mg-secondary-500);
+}
+
+.mg-v2-purchase-qty-row__calc .mg-v2-purchase-qty-row__mul {
+  margin: 0 var(--spacing-xs);
+}
+
+.mg-v2-purchase-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.mg-v2-purchase-qty-btn {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mg-gray-300);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--mg-white);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.mg-v2-purchase-qty-input {
+  width: 3.75rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--mg-gray-300);
+  border-radius: var(--border-radius-sm);
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.mg-v2-purchase-request-form__textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--mg-gray-300);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.mg-v2-purchase-request-form__summary {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--mg-gray-200);
+}
+
+.mg-v2-purchase-request-form__summary-kpi {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-v2-purchase-request-form__summary-title {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--mg-gray-800);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mg-v2-purchase-request-form__summary-list {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.mg-v2-purchase-request-form__summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--mg-white);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--mg-gray-200);
+  gap: var(--spacing-sm);
+}
+
+.mg-v2-purchase-request-form__summary-row-total {
+  color: var(--mg-primary-500);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.mg-v2-purchase-request-form__summary-grand {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--cs-blue-50);
+  border-radius: var(--border-radius-md);
+  text-align: right;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  color: var(--mg-secondary-600);
+}
+
+.mg-v2-purchase-request-form__error-wrap {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-v2-purchase-request-form__actions {
+  text-align: right;
+}
+
+.mg-v2-purchase-modal-success {
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.mg-v2-purchase-modal-success__icon {
+  font-size: var(--font-size-xxxl);
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-v2-purchase-modal-success__title {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--mg-success-500);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mg-v2-purchase-modal-success__desc {
+  color: var(--mg-gray-600);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}

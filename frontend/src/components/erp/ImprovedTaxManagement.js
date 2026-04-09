@@ -2,7 +2,7 @@
  * App.js에는 현재 import·라우트로 연결되지 않음(제거된 상태).
  * 세무 전용 개선 UI 참고 및 향후 Salary/ERP 흐름에 통합할 때 재사용하기 위해 저장소에 유지.
  */
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -15,26 +15,46 @@ import {
   TAX_BREAKDOWN_LABELS,
   TAX_TYPE
 } from '../../constants/salaryConstants';
+import { COMMON_CODE_API } from '../../constants/api';
+import { formatCurrency } from '../../utils/formatUtils';
 import {
   Calculator,
   LayoutDashboard,
   FileText,
   Settings,
-  DollarSign,
-  CheckCircle,
   Plus,
   RefreshCw,
   FilePlus,
   FileCheck
 } from 'lucide-react';
 import './ErpCommon.css';
+import './ImprovedTaxManagement.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import ErpPageShell from './shell/ErpPageShell';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import {
+  ErpKpiStatCard,
+  ErpEmptyState,
+  ErpSafeText,
+  ErpSafeNumber,
+  ERP_NUMBER_FORMAT,
+  ERP_KPI_STAT_VARIANT
+} from './common';
+
+/** 신고 탭 데모 문구(백엔드 연동 전) */
+const REPORT_TAB_COPY = {
+  VAT_NEXT_DATE: '2026-01-25',
+  INCOME_RANGE_START: '2026-01-01',
+  INCOME_RANGE_END: '2026-12-31'
+};
+
+const DATE_PAD_LEN = 2;
 
 /** 현재 월 YYYY-MM */
 const getDefaultPeriod = () => {
   const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(DATE_PAD_LEN, '0')}`;
 };
 
 /** period(YYYY-MM) → 해당 월의 startDate, endDate (YYYY-MM-DD) */
@@ -42,8 +62,28 @@ const periodToDateRange = (period) => {
   const [y, m] = period.split('-').map(Number);
   const startDate = `${period}-01`;
   const lastDay = new Date(y, m, 0).getDate();
-  const endDate = `${period}-${String(lastDay).padStart(2, '0')}`;
+  const endDate = `${period}-${String(lastDay).padStart(DATE_PAD_LEN, '0')}`;
   return { startDate, endDate };
+};
+
+/**
+ * 공통코드 extraData에서 세율 표시 문자열
+ * @param {object} category
+ * @returns {string}
+ */
+const getCategoryTaxRateLabel = (category) => {
+  try {
+    if (category?.extraData) {
+      const extraData = JSON.parse(category.extraData);
+      const rate = extraData?.taxRate;
+      if (rate != null && rate !== '') {
+        return `${rate}%`;
+      }
+    }
+  } catch {
+    return 'N/A';
+  }
+  return 'N/A';
 };
 
 /**
@@ -151,7 +191,7 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxSettings = async () => {
     try {
-      const response = await StandardizedApi.get('/api/v1/common-codes', {
+      const response = await StandardizedApi.get(COMMON_CODE_API.BASE, {
         codeGroup: 'TAX_CATEGORY'
       });
       const data = response?.data ?? response ?? [];
@@ -202,98 +242,136 @@ const ImprovedTaxManagement = () => {
 
   /* 백엔드 PUT/DELETE /api/v1/admin/salary/tax/* 미지원. 기획 확정 시 추가 후 연동 */
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
-  };
+  const renderBreakdownTable = (breakdown) => (
+    <div className="im-tax-mgmt__breakdown-wrap">
+      <h3 className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__breakdown-title">세목별 breakdown</h3>
+      <table className="im-tax-mgmt__table salary-table">
+        <thead>
+          <tr>
+            <th className="im-tax-mgmt__th" scope="col">
+              세목
+            </th>
+            <th className="im-tax-mgmt__th im-tax-mgmt__th--numeric" scope="col">
+              금액
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {TAX_BREAKDOWN_ORDER.map((key) => (
+            <tr key={key}>
+              <td className="im-tax-mgmt__td">
+                <ErpSafeText value={TAX_BREAKDOWN_LABELS[key] || key} />
+              </td>
+              <td className="im-tax-mgmt__td im-tax-mgmt__td--numeric">
+                <ErpSafeNumber value={breakdown[key]} formatType={ERP_NUMBER_FORMAT.CURRENCY} tag="span" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
       <AdminCommonLayout title="세무 관리">
-        <div className="erp-error">
-          <h3>로그인이 필요합니다.</h3>
-          <p>세무 관리 기능을 사용하려면 로그인해주세요.</p>
-        </div>
+        <ContentArea className="erp-system erp-container" ariaLabel="세무 관리">
+          <ErpPageShell mainAriaLabel="세무 관리 로그인 안내">
+            <div className="im-tax-mgmt__login-hint">
+              <ErpEmptyState
+                title="로그인이 필요합니다."
+                description="세무 관리 기능을 사용하려면 로그인해 주세요."
+              />
+            </div>
+          </ErpPageShell>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="세무 관리">
-      <ContentHeader
-        title="세무 관리"
-        subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
-        actions={
-          <>
-            <label className="mg-v2-content-header__period" style={{ marginRight: 'var(--mg-layout-gap)' }}>
-              <span style={{ marginRight: 8 }}>기간</span>
-              <input
-                type="month"
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="mg-v2-ad-b0kla__input"
-                style={{ padding: '6px 10px', borderRadius: 8 }}
-              />
-            </label>
-            {activeTab === 'calculations' && (
+      <ContentArea className="erp-system erp-container" ariaLabel="세무 관리 콘텐츠">
+        <ErpPageShell
+          mainAriaLabel="세무 관리 본문"
+          headerSlot={
+            <ContentHeader
+              title="세무 관리"
+              subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
+              actions={
+                <>
+                  <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
+                    <span className="im-tax-mgmt__header-period-label">기간</span>
+                    <input
+                      type="month"
+                      value={selectedPeriod}
+                      onChange={(e) => setSelectedPeriod(e.target.value)}
+                      className="mg-v2-ad-b0kla__input im-tax-mgmt__month-input"
+                    />
+                  </label>
+                  {activeTab === 'calculations' && (
+                    <button
+                      type="button"
+                      className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                      onClick={() => setShowCreateModal(true)}
+                    >
+                      <Plus size={16} aria-hidden />
+                      추가 세금 계산
+                    </button>
+                  )}
+                </>
+              }
+            />
+          }
+          tabsSlot={
+            <div className="mg-v2-ad-b0kla__pill-group" role="tablist">
               <button
                 type="button"
-                className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
-                onClick={() => setShowCreateModal(true)}
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setActiveTab('overview')}
               >
-                <Plus size={16} />
-                추가 세금 계산
+                <LayoutDashboard size={18} aria-hidden />
+                개요
               </button>
-            )}
-          </>
-        }
-      />
-      <ContentArea className="erp-system erp-container">
-        <div className="mg-v2-ad-b0kla__pill-group" role="tablist">
-          <button
-            type="button"
-            className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <LayoutDashboard size={18} />
-            개요
-          </button>
-          <button
-            type="button"
-            className={`mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            onClick={() => setActiveTab('calculations')}
-          >
-            <Calculator size={18} />
-            세금 계산
-          </button>
-          <button
-            type="button"
-            className={`mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            <FileText size={18} />
-            신고서
-          </button>
-          <button
-            type="button"
-            className={`mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            <Settings size={18} />
-            설정
-          </button>
-        </div>
-
-        <div className="erp-content">
-          {loading && (
-              <UnifiedLoading type="inline" text="로딩 중..." />
-          )}
+              <button
+                type="button"
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setActiveTab('calculations')}
+              >
+                <Calculator size={18} aria-hidden />
+                세금 계산
+              </button>
+              <button
+                type="button"
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setActiveTab('reports')}
+              >
+                <FileText size={18} aria-hidden />
+                신고서
+              </button>
+              <button
+                type="button"
+                className={`mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setActiveTab('settings')}
+              >
+                <Settings size={18} aria-hidden />
+                설정
+              </button>
+            </div>
+          }
+        >
+          <div className="im-tax-mgmt__shell-body">
+            {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
 
             {error && (
-              <div className="erp-error">
+              <div className="im-tax-mgmt__error-block erp-error">
                 <SafeErrorDisplay error={error} variant="banner" />
-                <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline" onClick={loadData}>
-                  <RefreshCw size={16} />
+                <button
+                  type="button"
+                  className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
+                  onClick={loadData}
+                >
+                  <RefreshCw size={16} aria-hidden />
                   다시 시도
                 </button>
               </div>
@@ -302,331 +380,315 @@ const ImprovedTaxManagement = () => {
             {!loading && !error && (
               <>
                 {activeTab === 'overview' && (
-                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
-                    <h2 className="mg-v2-ad-b0kla__chart-title">세무 개요</h2>
-                    <div className="mg-v2-ad-b0kla__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">총 세금액</h3>
-                          <DollarSign size={20} style={{ color: 'var(--mg-color-primary-main)' }} />
+                  <section className="im-tax-mgmt__section" aria-labelledby="im-tax-overview-heading">
+                    <h2 id="im-tax-overview-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
+                      세무 개요
+                    </h2>
+                    {statistics ? (
+                      <>
+                        <div className="im-tax-mgmt__kpi-grid">
+                          <ErpKpiStatCard
+                            title="총 세금액"
+                            value={statistics.totalTaxAmount}
+                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                            variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+                            trend={{ direction: 'neutral', label: selectedPeriod }}
+                          />
+                          <ErpKpiStatCard
+                            title="계산 건수"
+                            value={statistics.totalCalculations ?? 0}
+                            formatType={ERP_NUMBER_FORMAT.COUNT}
+                            trend={{ direction: 'neutral', label: '급여 계산 기준' }}
+                          />
+                          <ErpKpiStatCard
+                            title="총 급여"
+                            value={statistics.totalGrossSalary}
+                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                            trend={{ direction: 'neutral', label: '총 지급액' }}
+                          />
+                          <ErpKpiStatCard
+                            title="실지급액"
+                            value={statistics.totalNetSalary}
+                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                            trend={{ direction: 'neutral', label: '공제 후' }}
+                          />
                         </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>
-                            {formatCurrency(statistics?.totalTaxAmount)}
-                          </div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>{selectedPeriod}</small>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">계산 건수</h3>
-                          <CheckCircle size={20} style={{ color: 'var(--mg-color-success-main, #22c55e)' }} />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-success-main, #22c55e)', fontWeight: 600 }}>
-                            {statistics?.totalCalculations ?? 0}건
-                          </div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>급여 계산 기준</small>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">총 급여</h3>
-                          <DollarSign size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
-                            {formatCurrency(statistics?.totalGrossSalary)}
-                          </div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>총 지급액</small>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">실지급액</h3>
-                          <DollarSign size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
-                            {formatCurrency(statistics?.totalNetSalary)}
-                          </div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>공제 후</small>
-                        </div>
-                      </div>
-                    </div>
-                    {statistics?.breakdown && (
-                      <div style={{ marginTop: 'var(--mg-layout-section-padding)' }}>
-                        <h3 className="mg-v2-ad-b0kla__chart-title" style={{ marginBottom: 12 }}>세목별 breakdown</h3>
-                        <table className="salary-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr style={{ borderBottom: '1px solid var(--mg-color-border-main)' }}>
-                              <th style={{ textAlign: 'left', padding: 8 }}>세목</th>
-                              <th style={{ textAlign: 'right', padding: 8 }}>금액</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {TAX_BREAKDOWN_ORDER.map((key) => (
-                              <tr key={key} style={{ borderBottom: '1px solid var(--mg-color-border-sub)' }}>
-                                <td style={{ padding: 8 }}>{TAX_BREAKDOWN_LABELS[key] || key}</td>
-                                <td style={{ textAlign: 'right', padding: 8 }}>{formatCurrency(statistics.breakdown[key])}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                        {statistics.breakdown ? renderBreakdownTable(statistics.breakdown) : null}
+                      </>
+                    ) : (
+                      <ErpEmptyState
+                        title="해당 기간 데이터가 없습니다."
+                        description="다른 기간을 선택하거나 급여·세금 계산을 먼저 진행해 주세요."
+                      />
                     )}
                   </section>
                 )}
 
                 {activeTab === 'calculations' && (
-                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
-                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 계산 · 기간별 통계</h2>
+                  <section className="im-tax-mgmt__section" aria-labelledby="im-tax-calc-heading">
+                    <h2 id="im-tax-calc-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
+                      세금 계산 · 기간별 통계
+                    </h2>
                     {statistics ? (
                       <>
-                        <div className="mg-v2-ad-b0kla__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--mg-layout-grid-gap)', marginBottom: 24 }}>
-                          <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                            <div className="mg-v2-ad-b0kla__chart-body">
-                              <div style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)' }}>총 세금</div>
-                              <div style={{ fontWeight: 600 }}>{formatCurrency(statistics.totalTaxAmount)}</div>
-                            </div>
-                          </div>
-                          <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                            <div className="mg-v2-ad-b0kla__chart-body">
-                              <div style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)' }}>계산 건수</div>
-                              <div style={{ fontWeight: 600 }}>{statistics.totalCalculations ?? 0}건</div>
-                            </div>
-                          </div>
+                        <div className="im-tax-mgmt__kpi-grid im-tax-mgmt__kpi-grid--tight">
+                          <ErpKpiStatCard
+                            title="총 세금"
+                            value={statistics.totalTaxAmount}
+                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                            variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+                          />
+                          <ErpKpiStatCard
+                            title="계산 건수"
+                            value={statistics.totalCalculations ?? 0}
+                            formatType={ERP_NUMBER_FORMAT.COUNT}
+                          />
                         </div>
-                        {statistics.breakdown && (
-                          <table className="salary-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                              <tr style={{ borderBottom: '1px solid var(--mg-color-border-main)' }}>
-                                <th style={{ textAlign: 'left', padding: 8 }}>세목</th>
-                                <th style={{ textAlign: 'right', padding: 8 }}>금액</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {TAX_BREAKDOWN_ORDER.map((key) => (
-                                <tr key={key} style={{ borderBottom: '1px solid var(--mg-color-border-sub)' }}>
-                                  <td style={{ padding: 8 }}>{TAX_BREAKDOWN_LABELS[key] || key}</td>
-                                  <td style={{ textAlign: 'right', padding: 8 }}>{formatCurrency(statistics.breakdown[key])}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-                        <p style={{ marginTop: 16, fontSize: 14, color: 'var(--mg-color-text-secondary)' }}>
+                        {statistics.breakdown ? renderBreakdownTable(statistics.breakdown) : null}
+                        <p className="im-tax-mgmt__hint">
                           상단 「추가 세금 계산」으로 급여 계산에 추가 세금을 반영할 수 있습니다.
                         </p>
                       </>
                     ) : (
-                      <div className="mg-tax-empty" style={{ textAlign: 'center', padding: 'var(--mg-layout-section-padding)', color: 'var(--mg-color-text-secondary)' }}>
-                        <Calculator size={48} style={{ marginBottom: 'var(--mg-layout-gap)' }} />
-                        <p className="mg-tax-empty__text">해당 기간 데이터가 없습니다.</p>
-                      </div>
+                      <ErpEmptyState
+                        title="해당 기간 데이터가 없습니다."
+                        description="통계를 불러올 수 없거나 급여 계산 데이터가 없습니다."
+                      />
                     )}
                   </section>
                 )}
 
                 {activeTab === 'reports' && (
-                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
-                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 신고서</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">부가가치세 신고</h3>
-                          <FileText size={20} style={{ color: 'var(--mg-color-primary-main)' }} />
+                  <section className="im-tax-mgmt__section" aria-labelledby="im-tax-report-heading">
+                    <h2 id="im-tax-report-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
+                      세금 신고서
+                    </h2>
+                    <div className="im-tax-mgmt__report-grid">
+                      <article className="im-tax-mgmt__report-card">
+                        <div className="im-tax-mgmt__report-card-head">
+                          <h3 className="im-tax-mgmt__report-card-title">부가가치세 신고</h3>
+                          <FileText className="im-tax-mgmt__report-icon--primary" size={20} aria-hidden />
                         </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>분기별 부가가치세 신고서 작성 및 제출</p>
-                          <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
-                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>다음 신고일:</span> 2025-01-25</div>
-                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>상태:</span> 준비 중</div>
+                        <p className="im-tax-mgmt__report-desc">분기별 부가가치세 신고서 작성 및 제출</p>
+                        <div className="im-tax-mgmt__report-meta">
+                          <div className="im-tax-mgmt__report-meta-row">
+                            <span className="im-tax-mgmt__report-meta-label">다음 신고일:</span>
+                            <ErpSafeText value={REPORT_TAB_COPY.VAT_NEXT_DATE} />
+                          </div>
+                          <div className="im-tax-mgmt__report-meta-row">
+                            <span className="im-tax-mgmt__report-meta-label">상태:</span>
+                            <ErpSafeText value="준비 중" />
                           </div>
                         </div>
-                        <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                        <div className="im-tax-mgmt__report-actions">
                           <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
-                            <FilePlus size={16} />
+                            <FilePlus size={16} aria-hidden />
                             신고서 작성
                           </button>
                         </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">소득세 신고</h3>
-                          <FileText size={20} style={{ color: 'var(--mg-color-success-main, #22c55e)' }} />
+                      </article>
+                      <article className="im-tax-mgmt__report-card">
+                        <div className="im-tax-mgmt__report-card-head">
+                          <h3 className="im-tax-mgmt__report-card-title">소득세 신고</h3>
+                          <FileText className="im-tax-mgmt__report-icon--success" size={20} aria-hidden />
                         </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>연말정산 및 소득세 신고서 작성</p>
-                          <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
-                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>신고 기간:</span> 2025-01-01 ~ 2025-12-31</div>
-                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>상태:</span> 진행 중</div>
+                        <p className="im-tax-mgmt__report-desc">연말정산 및 소득세 신고서 작성</p>
+                        <div className="im-tax-mgmt__report-meta">
+                          <div className="im-tax-mgmt__report-meta-row">
+                            <span className="im-tax-mgmt__report-meta-label">신고 기간:</span>
+                            <ErpSafeText
+                              value={`${REPORT_TAB_COPY.INCOME_RANGE_START} ~ ${REPORT_TAB_COPY.INCOME_RANGE_END}`}
+                            />
+                          </div>
+                          <div className="im-tax-mgmt__report-meta-row">
+                            <span className="im-tax-mgmt__report-meta-label">상태:</span>
+                            <ErpSafeText value="진행 중" />
                           </div>
                         </div>
-                        <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                        <div className="im-tax-mgmt__report-actions">
                           <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
-                            <FileCheck size={16} />
+                            <FileCheck size={16} aria-hidden />
                             신고서 확인
                           </button>
                         </div>
-                      </div>
+                      </article>
                     </div>
                   </section>
                 )}
 
                 {activeTab === 'settings' && (
-                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
-                    <h2 className="mg-v2-ad-b0kla__chart-title">세무 설정</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
-                      {taxCategories.map((category) => (
-                        <div key={category.id} className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
-                          <div className="mg-v2-ad-b0kla__chart-header">
-                            <h3 className="mg-v2-ad-b0kla__chart-title">{category.codeLabel}</h3>
-                            <span style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)' }}>활성</span>
-                          </div>
-                          <div className="mg-v2-ad-b0kla__chart-body">
-                            <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>{category.codeDescription}</p>
-                            <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
-                              <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>코드:</span> {category.codeValue}</div>
+                  <section className="im-tax-mgmt__section" aria-labelledby="im-tax-settings-heading">
+                    <h2 id="im-tax-settings-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
+                      세무 설정
+                    </h2>
+                    {taxCategories.length === 0 ? (
+                      <ErpEmptyState
+                        title="등록된 세금 카테고리가 없습니다."
+                        description="공통코드(TAX_CATEGORY)를 확인하거나 관리자에게 문의해 주세요."
+                      />
+                    ) : (
+                      <div className="im-tax-mgmt__settings-grid">
+                        {taxCategories.map((category) => (
+                          <article key={category.id} className="im-tax-mgmt__settings-card">
+                            <div className="im-tax-mgmt__settings-card-head">
+                              <h3 className="im-tax-mgmt__settings-card-title">
+                                <ErpSafeText value={category.codeLabel} />
+                              </h3>
+                              <span className="im-tax-mgmt__settings-badge">
+                                <ErpSafeText value="활성" />
+                              </span>
+                            </div>
+                            <p className="im-tax-mgmt__settings-desc">
+                              <ErpSafeText value={category.codeDescription} fallback="-" />
+                            </p>
+                            <div className="im-tax-mgmt__settings-meta">
                               <div>
-                                <span style={{ color: 'var(--mg-color-text-secondary)' }}>세율:</span>{' '}
-                                {(() => {
-                                  try {
-                                    if (category.extraData) {
-                                      const extraData = JSON.parse(category.extraData);
-                                      return (extraData.taxRate || 'N/A') + '%';
-                                    }
-                                    return 'N/A';
-                                  } catch {
-                                    return 'N/A';
-                                  }
-                                })()}
+                                <span className="im-tax-mgmt__report-meta-label">코드:</span>
+                                <ErpSafeText value={category.codeValue} fallback="-" />
+                              </div>
+                              <div>
+                                <span className="im-tax-mgmt__report-meta-label">세율:</span>
+                                <ErpSafeText value={getCategoryTaxRateLabel(category)} />
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 )}
               </>
             )}
-        </div>
+          </div>
+        </ErpPageShell>
       </ContentArea>
 
-      {/* 추가 세금 계산 모달 (POST /api/v1/admin/salary/tax/calculate) */}
-          {showCreateModal && (
-            <div className="modal show d-block tax-management-modal-backdrop">
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title">추가 세금 계산</h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      onClick={() => setShowCreateModal(false)}
-                      aria-label="닫기"
-                    />
-                  </div>
-                  <div className="modal-body">
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-calculationId">급여 계산 *</label>
-                      <select
-                        id="tax-modal-calculationId"
-                        className="form-select"
-                        value={newTaxItem.calculationId}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, calculationId: e.target.value })}
-                      >
-                        <option value="">선택</option>
-                        {calculationsList.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            ID {c.id} · {c.consultant?.name ?? c.consultantId ?? '-'} · {formatCurrency(c.grossSalary)}
-                          </option>
-                        ))}
-                      </select>
-                      {calculationsList.length === 0 && (
-                        <small className="text-muted">해당 기간 급여 계산이 없습니다. 급여 관리에서 먼저 계산해 주세요.</small>
-                      )}
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-grossAmount">과세 기준 금액 *</label>
-                      <input
-                        id="tax-modal-grossAmount"
-                        type="number"
-                        min="0"
-                        step="1"
-                        className="form-control"
-                        value={newTaxItem.grossAmount}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, grossAmount: e.target.value })}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-taxType">세금 유형 *</label>
-                      <select
-                        id="tax-modal-taxType"
-                        className="form-select"
-                        value={newTaxItem.taxType}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxType: e.target.value })}
-                      >
-                        {Object.entries(TAX_TYPE).map(([k, v]) => (
-                          <option key={k} value={v}>{v}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-taxRate">세율 (%) *</label>
-                      <input
-                        id="tax-modal-taxRate"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="form-control"
-                        value={newTaxItem.taxRate}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxRate: e.target.value })}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-taxName">세금명 (선택)</label>
-                      <input
-                        id="tax-modal-taxName"
-                        type="text"
-                        className="form-control"
-                        value={newTaxItem.taxName}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxName: e.target.value })}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" htmlFor="tax-modal-description">설명 (선택)</label>
-                      <textarea
-                        id="tax-modal-description"
-                        className="form-control"
-                        rows={2}
-                        value={newTaxItem.description}
-                        onChange={(e) => setNewTaxItem({ ...newTaxItem, description: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowCreateModal(false)}
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={handleCreateTaxItem}
-                      disabled={loading}
-                    >
-                      {loading ? '계산 중...' : '계산 반영'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <UnifiedModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="추가 세금 계산"
+        subtitle="급여 계산에 추가 세금을 반영합니다."
+        size="medium"
+        variant="form"
+        backdropClick={!loading}
+        showCloseButton
+        loading={loading}
+        className="mg-v2-ad-b0kla"
+        actions={
+          <>
+            <button
+              type="button"
+              className="mg-v2-button mg-v2-button-secondary"
+              onClick={() => setShowCreateModal(false)}
+              disabled={loading}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="mg-v2-button mg-v2-button--primary"
+              onClick={handleCreateTaxItem}
+              disabled={loading}
+            >
+              {loading ? '계산 중...' : '계산 반영'}
+            </button>
+          </>
+        }
+      >
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-calculationId">
+            급여 계산 *
+          </label>
+          <select
+            id="tax-modal-calculationId"
+            className="mg-v2-select"
+            value={newTaxItem.calculationId}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, calculationId: e.target.value })}
+          >
+            <option value="">선택</option>
+            {calculationsList.map((c) => (
+              <option key={c.id} value={c.id}>
+                ID {c.id} · {c.consultant?.name ?? c.consultantId ?? '-'} ·{' '}
+                {formatCurrency(c.grossSalary, { showCurrency: true })}
+              </option>
+            ))}
+          </select>
+          {calculationsList.length === 0 && (
+            <small className="im-tax-mgmt-modal__hint">
+              해당 기간 급여 계산이 없습니다. 급여 관리에서 먼저 계산해 주세요.
+            </small>
           )}
+        </div>
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-grossAmount">
+            과세 기준 금액 *
+          </label>
+          <input
+            id="tax-modal-grossAmount"
+            type="number"
+            min="0"
+            step="1"
+            className="mg-v2-ad-b0kla__input"
+            value={newTaxItem.grossAmount}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, grossAmount: e.target.value })}
+          />
+        </div>
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxType">
+            세금 유형 *
+          </label>
+          <select
+            id="tax-modal-taxType"
+            className="mg-v2-select"
+            value={newTaxItem.taxType}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, taxType: e.target.value })}
+          >
+            {Object.entries(TAX_TYPE).map(([k, v]) => (
+              <option key={k} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxRate">
+            세율 (%) *
+          </label>
+          <input
+            id="tax-modal-taxRate"
+            type="number"
+            min="0"
+            step="0.01"
+            className="mg-v2-ad-b0kla__input"
+            value={newTaxItem.taxRate}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, taxRate: e.target.value })}
+          />
+        </div>
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxName">
+            세금명 (선택)
+          </label>
+          <input
+            id="tax-modal-taxName"
+            type="text"
+            className="mg-v2-ad-b0kla__input"
+            value={newTaxItem.taxName}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, taxName: e.target.value })}
+          />
+        </div>
+        <div className="im-tax-mgmt-modal__field">
+          <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-description">
+            설명 (선택)
+          </label>
+          <textarea
+            id="tax-modal-description"
+            className="mg-v2-ad-b0kla__input"
+            rows={2}
+            value={newTaxItem.description}
+            onChange={(e) => setNewTaxItem({ ...newTaxItem, description: e.target.value })}
+          />
+        </div>
+      </UnifiedModal>
     </AdminCommonLayout>
   );
 };

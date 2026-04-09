@@ -125,7 +125,6 @@ const AdminApprovalDashboard = () => {
 
   return (
     <ApprovalHubLayout
-      layoutTitle="승인 관리"
       headerTitle="관리자 승인 대시보드"
       headerSubtitle="구매 요청 승인 및 거부"
       loading={loading}

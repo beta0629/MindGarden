@@ -17,7 +17,15 @@ import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import ErpModal from './common/ErpModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import StatCard from '../ui/Card/StatCard';
+import {
+  ErpEmptyState,
+  ErpKpiStatCard,
+  ErpSafeNumber,
+  ErpSafeText,
+  ERP_KPI_STAT_VARIANT,
+  ERP_KPI_TREND_DIRECTION,
+  ERP_NUMBER_FORMAT
+} from './common';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton';
 import notificationManager from '../../utils/notification';
@@ -26,10 +34,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { 
   TrendingUp, 
   TrendingDown, 
-  DollarSign, 
-  Package, 
-  Clock, 
-  ShoppingCart,
+  DollarSign,
   BarChart3,
   PieChart,
   Calendar,
@@ -518,10 +523,16 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 // 개요 탭 컴포넌트
 const OverviewTab = ({ data }) => {
   const navigate = useNavigate();
-  
-  if (!data) return <div>데이터가 없습니다.</div>;
 
-  // 실제 재무 데이터 추출
+  if (!data) {
+    return (
+      <ErpEmptyState
+        title="데이터가 없습니다"
+        description="재무 개요를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요."
+      />
+    );
+  }
+
   const financialData = data.financialData || {};
   const totalIncome = financialData.totalIncome || 0;
   const totalExpense = financialData.totalExpense || 0;
@@ -529,8 +540,6 @@ const OverviewTab = ({ data }) => {
   const incomeByCategory = financialData.incomeByCategory || {};
   const expenseByCategory = financialData.expenseByCategory || {};
 
-  // 카테고리별 수입/지출 설명 생성 (한글 라벨로 표시)
-  // API가 CONSULTATION·상담료 등 동의 키를 동시에 내려줄 때 동일 라벨이 중복되지 않도록 정리
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
     if (categories.length === 0) return '상담료, 기타수입';
@@ -545,67 +554,76 @@ const OverviewTab = ({ data }) => {
     return [...new Set(labels)].join(', ');
   };
 
+  const budgetUsageRaw = data.erpStats?.budgetUsage;
+  const budgetPctParsed = (() => {
+    if (budgetUsageRaw == null || budgetUsageRaw === '') return 0;
+    if (typeof budgetUsageRaw === 'number') return budgetUsageRaw;
+    const s = String(budgetUsageRaw).replace(/%/g, '').trim();
+    const n = Number.parseFloat(s);
+    return Number.isFinite(n) ? n : 0;
+  })();
+
   return (
     <div>
       <DashboardSection
         title="재무 개요"
         icon={<BarChart3 size={24} />}
       >
-        {/* KPI 카드들 */}
         <div className="mg-dashboard-stats">
-          <StatCard
-            icon={<Package />}
-            value={(data.erpStats?.totalItems || 0).toLocaleString()}
-            label="총 아이템 수"
-            change="등록된 비품 수"
+          <ErpKpiStatCard
+            title="총 아이템 수"
+            value={data.erpStats?.totalItems || 0}
+            formatType={ERP_NUMBER_FORMAT.COUNT}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: '등록된 비품 수' }}
           />
-          <StatCard
-            icon={<Clock />}
-            value={(data.erpStats?.pendingRequests || 0).toLocaleString()}
-            label="승인 대기 요청"
-            change="관리자 승인 대기"
-            changeType="negative"
+          <ErpKpiStatCard
+            title="승인 대기 요청"
+            value={data.erpStats?.pendingRequests || 0}
+            formatType={ERP_NUMBER_FORMAT.COUNT}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.DOWN, label: '관리자 승인 대기' }}
           />
-          <StatCard
-            icon={<ShoppingCart />}
-            value={(data.erpStats?.totalOrders || 0).toLocaleString()}
-            label="총 주문 수"
-            change="완료된 구매 주문"
-            changeType="positive"
+          <ErpKpiStatCard
+            title="총 주문 수"
+            value={data.erpStats?.totalOrders || 0}
+            formatType={ERP_NUMBER_FORMAT.COUNT}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.UP, label: '완료된 구매 주문' }}
           />
-          <StatCard
-            icon={<DollarSign />}
-            value={data.erpStats?.budgetUsage || '0%'}
-            label="예산 사용률"
-            change={`${formatCurrency(data.erpStats?.budgetUsed || 0)} / ${formatCurrency(data.erpStats?.budgetTotal || 0)}`}
+          <ErpKpiStatCard
+            title="예산 사용률"
+            value={budgetPctParsed}
+            formatType={ERP_NUMBER_FORMAT.PERCENT}
+            trend={{
+              direction: ERP_KPI_TREND_DIRECTION.NEUTRAL,
+              label: `${formatCurrency(data.erpStats?.budgetUsed || 0)} / ${formatCurrency(data.erpStats?.budgetTotal || 0)}`
+            }}
           />
         </div>
       </DashboardSection>
-      
-      {/* 매핑 연동 상태 섹션 */}
+
       <DashboardSection
         title="매핑시스템 연동 상태"
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-dashboard-stats">
-          <StatCard
-            icon={<TrendingUp />}
-            value={formatCurrency(financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.['상담료'] ?? 0)}
-            label="매핑 입금확인 수입"
+          <ErpKpiStatCard
+            title="매핑 입금확인 수입"
+            value={financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.['상담료'] ?? 0}
+            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            variant={ERP_KPI_STAT_VARIANT.PRIMARY}
           />
-          <StatCard
-            icon={<TrendingDown />}
-            value={formatCurrency(financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.['기타'] ?? 0)}
-            label="매핑 환불처리 지출"
-            changeType="negative"
+          <ErpKpiStatCard
+            title="매핑 환불처리 지출"
+            value={financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.['기타'] ?? 0}
+            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            variant={ERP_KPI_STAT_VARIANT.WARNING}
           />
-          <StatCard
-            icon={<BarChart3 />}
-            value={(financialData.transactionCount || 0).toLocaleString()}
-            label="총 연동 거래 건수"
+          <ErpKpiStatCard
+            title="총 연동 거래 건수"
+            value={financialData.transactionCount || 0}
+            formatType={ERP_NUMBER_FORMAT.COUNT}
           />
-          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div className="mg-v2-ad-b0kla__chart-title" style={{ marginBottom: '0.25rem' }}>
+          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-mapping-cta">
+            <div className="mg-v2-ad-b0kla__chart-title integrated-finance-mapping-cta__title">
               실시간 연동
             </div>
             <div className="mg-v2-ad-b0kla__chart-desc">
@@ -623,45 +641,32 @@ const OverviewTab = ({ data }) => {
         </div>
       </DashboardSection>
 
-      {/* 수입/지출 요약: B0KlA 카드·토큰 — 수입/지출/순이익 3카드 동일 그리드 */}
       <DashboardSection
         title="수입/지출 요약"
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--summary">
-          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
-            <div className="mg-v2-ad-b0kla__chart-header">
-              <h3 className="mg-v2-ad-b0kla__chart-title">수입</h3>
-              <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
-            </div>
-            <div className="mg-v2-ad-b0kla__chart-body">
-              <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">{formatCurrency(totalIncome)}</div>
-              <span className="mg-v2-ad-b0kla__kpi-label">{getIncomeDescription()}</span>
-            </div>
-          </div>
-          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
-            <div className="mg-v2-ad-b0kla__chart-header">
-              <h3 className="mg-v2-ad-b0kla__chart-title">지출</h3>
-              <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
-            </div>
-            <div className="mg-v2-ad-b0kla__chart-body">
-              <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">{formatCurrency(totalExpense)}</div>
-              <span className="mg-v2-ad-b0kla__kpi-label">{getExpenseDescription()}</span>
-              <p className="mg-v2-ad-b0kla__kpi-hint">항목별 비용 내역은 <strong>손익 현황</strong> 탭에서 확인할 수 있습니다.</p>
-            </div>
-          </div>
-          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-net-income-card">
-            <div className="mg-v2-ad-b0kla__chart-header">
-              <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
-              <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
-            </div>
-            <div className="mg-v2-ad-b0kla__chart-body">
-              <div className={`mg-v2-ad-b0kla__kpi-value ${netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
-                {formatCurrency(netProfit)}
-              </div>
-              <span className="mg-v2-ad-b0kla__kpi-label">수입 - 지출</span>
-            </div>
-          </div>
+          <ErpKpiStatCard
+            title="수입"
+            value={totalIncome}
+            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getIncomeDescription() }}
+          />
+          <ErpKpiStatCard
+            title="지출"
+            value={totalExpense}
+            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            variant={ERP_KPI_STAT_VARIANT.WARNING}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getExpenseDescription() }}
+          />
+          <ErpKpiStatCard
+            title="순이익"
+            value={netProfit}
+            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            variant={netProfit >= 0 ? ERP_KPI_STAT_VARIANT.PRIMARY : ERP_KPI_STAT_VARIANT.WARNING}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: '수입 − 지출 · 손익 현황 탭에서 항목별 비용 확인' }}
+          />
         </div>
       </DashboardSection>
     </div>
@@ -713,7 +718,7 @@ const BalanceSheetTab = () => {
             <label className="mg-v2-label">기준일자</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
-          <div className="finance-statement-block" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)' }}>
+          <div className="finance-statement-panel">
             <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
           </div>
         </DashboardSection>
@@ -729,11 +734,15 @@ const BalanceSheetTab = () => {
             <label className="mg-v2-label">기준일자</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
-          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>데이터를 불러오지 못했습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.</p>
-            <MGButton variant="primary" onClick={fetchBalanceSheet} className="mg-v2-button-primary" style={{ marginTop: 16 }}>다시 불러오기</MGButton>
-          </div>
+          <ErpEmptyState
+            title="데이터를 불러오지 못했습니다"
+            description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
+            actionSlot={
+              <MGButton variant="primary" onClick={fetchBalanceSheet} className="mg-v2-button-primary mg-v2-mt-md">
+                다시 불러오기
+              </MGButton>
+            }
+          />
         </DashboardSection>
       </div>
     );
@@ -747,10 +756,10 @@ const BalanceSheetTab = () => {
             <label className="mg-v2-label">기준일자</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
-          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기준일자에 등록된 내역이 없습니다.</p>
-          </div>
+          <ErpEmptyState
+            title="해당 기간 데이터가 없습니다"
+            description="선택한 기준일자에 등록된 내역이 없습니다."
+          />
         </DashboardSection>
       </div>
     );
@@ -772,11 +781,11 @@ const BalanceSheetTab = () => {
           <label className="mg-v2-label">기준일자</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
         </div>
-        <p className="mg-v2-caption integrated-finance-balance-sheet-hint" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+        <p className="mg-v2-caption integrated-finance-balance-sheet-hint integrated-finance-caption-box">
           임대료·비용 내역은 <strong>손익 현황</strong> 탭에서 확인할 수 있습니다. 대차대조표는 자산·부채·자본만 표시됩니다.
         </p>
         {allZero && (
-          <p className="mg-v2-caption" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+          <p className="mg-v2-caption integrated-finance-caption-box">
             기준일자까지 등록된 거래가 없어 금액이 0으로 표시됩니다.
           </p>
         )}
@@ -790,11 +799,16 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {assetsItems.length > 0 ? assetsItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    {': '}
+                    <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
                 )) : <div className="balance-sheet-item">자산 항목 없음</div>}
               </div>
-              <div className="balance-sheet-grand-total">자산 합계: {formatCurrency(assetsTotal)}</div>
+              <div className="balance-sheet-grand-total">
+                자산 합계:{' '}
+                <ErpSafeNumber value={assetsTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--liabilities mg-v2-ad-b0kla__card-accent--orange">
@@ -806,11 +820,16 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {liabilitiesItems.length > 0 ? liabilitiesItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    {': '}
+                    <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
                 )) : <div className="balance-sheet-item">부채 항목 없음</div>}
               </div>
-              <div className="balance-sheet-grand-total">부채 합계: {formatCurrency(liabilitiesTotal)}</div>
+              <div className="balance-sheet-grand-total">
+                부채 합계:{' '}
+                <ErpSafeNumber value={liabilitiesTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--equity mg-v2-ad-b0kla__card-accent--blue">
@@ -822,20 +841,39 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {equityItems.length > 0 ? equityItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    {': '}
+                    <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
                 )) : <div className="balance-sheet-item">자본 항목 없음</div>}
               </div>
-              <div className="balance-sheet-grand-total">자본 합계: {formatCurrency(equityTotal)}</div>
+              <div className="balance-sheet-grand-total">
+                자본 합계:{' '}
+                <ErpSafeNumber value={equityTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
             </div>
           </div>
         </div>
         <div className={`mg-v2-ad-b0kla__card balance-sheet-card balance-verification-card ${isBalanced ? 'mg-v2-ad-b0kla__card-accent' : 'mg-v2-ad-b0kla__card-accent--orange'}`}>
           <h4 className="balance-sheet-card-title">{isBalanced ? '대차대조표 균형' : '대차대조표 불균형'}</h4>
           <div className="balance-sheet-items balance-verification-content">
-            자산 총계: <strong>{formatCurrency(balanceCheck.assets ?? assetsTotal)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceCheck.liabilitiesPlusEquity ?? (liabilitiesTotal + equityTotal))}</strong>
+            자산 총계:{' '}
+            <strong>
+              <ErpSafeNumber value={balanceCheck.assets ?? assetsTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+            </strong>
+            {' '}
+            = 부채 + 자본:{' '}
+            <strong>
+              <ErpSafeNumber
+                value={balanceCheck.liabilitiesPlusEquity ?? (liabilitiesTotal + equityTotal)}
+                formatType={ERP_NUMBER_FORMAT.CURRENCY}
+              />
+            </strong>
             {!isBalanced && balanceCheck.difference != null && (
-              <div className="balance-sheet-total">차이: {formatCurrency(balanceCheck.difference)}</div>
+              <div className="balance-sheet-total">
+                차이:{' '}
+                <ErpSafeNumber value={balanceCheck.difference} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
             )}
           </div>
         </div>
@@ -902,7 +940,7 @@ const IncomeStatementTab = () => {
               </div>
             </div>
           </div>
-          <div className="finance-statement-block" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)' }}>
+          <div className="finance-statement-panel">
             <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
           </div>
         </DashboardSection>
@@ -926,11 +964,15 @@ const IncomeStatementTab = () => {
               </div>
             </div>
           </div>
-          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>데이터를 불러오지 못했습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.</p>
-            <MGButton variant="primary" onClick={fetchIncomeStatement} className="mg-v2-button-primary" style={{ marginTop: 16 }}>다시 불러오기</MGButton>
-          </div>
+          <ErpEmptyState
+            title="데이터를 불러오지 못했습니다"
+            description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
+            actionSlot={
+              <MGButton variant="primary" onClick={fetchIncomeStatement} className="mg-v2-button-primary mg-v2-mt-md">
+                다시 불러오기
+              </MGButton>
+            }
+          />
         </DashboardSection>
       </div>
     );
@@ -952,10 +994,10 @@ const IncomeStatementTab = () => {
               </div>
             </div>
           </div>
-          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기간에 등록된 내역이 없습니다.</p>
-          </div>
+          <ErpEmptyState
+            title="해당 기간 데이터가 없습니다"
+            description="선택한 기간에 등록된 내역이 없습니다."
+          />
         </DashboardSection>
       </div>
     );
@@ -970,7 +1012,7 @@ const IncomeStatementTab = () => {
   return (
     <div>
       <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
-        <p className="mg-v2-caption" style={{ fontSize: 13, color: 'var(--mg-color-text-secondary)', marginBottom: 12 }}>
+        <p className="mg-v2-caption integrated-finance-caption--lead">
           비용·수익 항목별 내역은 아래 카드에서 확인할 수 있습니다. (ERP 원장 기준)
         </p>
         <div className="mg-v2-mb-md">
@@ -986,7 +1028,7 @@ const IncomeStatementTab = () => {
           </div>
         </div>
         {allZero && (
-          <p className="mg-v2-caption" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+          <p className="mg-v2-caption integrated-finance-caption-box">
             선택한 기간에 등록된 거래가 없어 금액이 0으로 표시됩니다.
           </p>
         )}
@@ -999,14 +1041,21 @@ const IncomeStatementTab = () => {
             <div className="income-statement-items">
               {revenueItems.length > 0 ? revenueItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
-                  <span>{item.accountName || '계정'}:</span>
-                  <span className="income-statement-item-value">{formatCurrency(item.amount ?? 0)}</span>
+                  <span>
+                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    :
+                  </span>
+                  <span className="income-statement-item-value">
+                    <ErpSafeNumber value={item.amount ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </span>
                 </div>
               )) : <div className="income-statement-item">수익 항목 없음</div>}
               <div className="income-statement-total">
                 <div className="income-statement-total-row">
                   <span>수익 총계:</span>
-                  <span>{formatCurrency(revenueTotal)}</span>
+                  <span>
+                    <ErpSafeNumber value={revenueTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -1019,14 +1068,21 @@ const IncomeStatementTab = () => {
             <div className="income-statement-items">
               {expensesItems.length > 0 ? expensesItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
-                  <span>{item.accountName || '계정'}:</span>
-                  <span className="income-statement-item-value">{formatCurrency(item.amount ?? 0)}</span>
+                  <span>
+                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    :
+                  </span>
+                  <span className="income-statement-item-value">
+                    <ErpSafeNumber value={item.amount ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </span>
                 </div>
               )) : <div className="income-statement-item">비용 항목 없음</div>}
               <div className="income-statement-total">
                 <div className="income-statement-total-row">
                   <span>비용 총계:</span>
-                  <span>{formatCurrency(expensesTotal)}</span>
+                  <span>
+                    <ErpSafeNumber value={expensesTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -1039,7 +1095,9 @@ const IncomeStatementTab = () => {
             <DollarSign className="net-income-icon" size={32} />
             당기순이익
           </h3>
-          <div className="net-income-value">{formatCurrency(netIncome)}</div>
+          <div className="net-income-value">
+            <ErpSafeNumber value={netIncome} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+          </div>
           <div className="net-income-subtitle">수익 총계 - 비용 총계</div>
         </div>
       </DashboardSection>
@@ -1439,7 +1497,7 @@ const MonthlyReportTab = ({ period }) => {
     <div>
       <DashboardSection
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+          <div className="integrated-finance-report-title-row">
             <MGButton
               variant="outline"
               size="small"
@@ -1598,7 +1656,7 @@ const YearlyReportTab = ({ period }) => {
     <div>
       <DashboardSection
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+          <div className="integrated-finance-report-title-row">
             <MGButton
               variant="outline"
               size="small"
@@ -1737,63 +1795,36 @@ const JournalEntriesTab = () => {
     <section className="mg-v2-section">
       <DashboardSection title="거래 정리" icon={<Receipt size={20} />}>
         {/* 분개 설명 섹션 */}
-        <div className="mg-v2-mb-md" style={{ 
-          backgroundColor: 'var(--color-bg-secondary)', 
-          borderRadius: 'var(--border-radius-md)',
-          padding: 'var(--spacing-md)',
-          border: '1px solid var(--color-border-light)'
-        }}>
+        <div className="mg-v2-mb-md integrated-finance-journal-help">
           <button
+            type="button"
+            className="integrated-finance-journal-help-toggle"
             onClick={() => setShowHelp(!showHelp)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-sm)',
-              width: '100%',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              color: 'var(--color-text-primary)',
-              fontWeight: 600
-            }}
           >
             <Info size={18} />
             <span>거래 정리란?</span>
             {showHelp ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {showHelp && (
-            <div style={{ 
-              marginTop: 'var(--spacing-md)',
-              paddingTop: 'var(--spacing-md)',
-              borderTop: '1px solid var(--color-border-light)',
-              color: 'var(--color-text-secondary)',
-              lineHeight: 1.6
-            }}>
-              <div style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong style={{ color: 'var(--color-text-primary)' }}>거래(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
+            <div className="integrated-finance-journal-help-body">
+              <div className="mg-v2-mb-sm">
+                <strong>거래(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
               </div>
-              <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)' }}>
-                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+              <ul className="integrated-finance-journal-help-list">
+                <li>
                   <strong>차변(Debit):</strong> 자산 증가, 비용 발생, 부채 감소, 자본 감소를 의미합니다.
                 </li>
-                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                <li>
                   <strong>대변(Credit):</strong> 자산 감소, 수익 발생, 부채 증가, 자본 증가를 의미합니다.
                 </li>
-                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                <li>
                   <strong>복식부기 원칙:</strong> 모든 거래는 차변 합계와 대변 합계가 반드시 일치해야 합니다.
                 </li>
-                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                <li>
                   <strong>처리 순서:</strong> 작성 → 승인 → 반영 순서로 진행됩니다.
                 </li>
               </ul>
-              <div style={{ 
-                marginTop: 'var(--spacing-md)',
-                padding: 'var(--spacing-sm)',
-                backgroundColor: 'var(--color-info-light)',
-                borderRadius: 'var(--border-radius-sm)',
-                fontSize: 'var(--font-size-sm)'
-              }}>
+              <div className="integrated-finance-journal-help-example">
                 <strong>예시:</strong> 현금 100만원으로 사무용품을 구매한 경우<br />
                 &nbsp;&nbsp;&nbsp;&nbsp;차변: 사무용품비 100만원 / 대변: 현금 100만원
               </div>
@@ -1961,7 +1992,7 @@ const LedgersTab = () => {
     <section className="mg-v2-section">
       <DashboardSection title="계정별 내역" icon={<BookOpen size={20} />}>
         <div className="mg-v2-form-group mg-v2-mb-md">
-          <div className="mg-v2-flex mg-v2-gap-sm" style={{ flexWrap: 'wrap' }}>
+          <div className="mg-v2-flex mg-v2-gap-sm integrated-finance-flex-wrap">
             <select
               className="mg-v2-input"
               value={selectedAccountId ?? ''}
@@ -2016,9 +2047,9 @@ const LedgersTab = () => {
               </thead>
               <tbody>
                 {ledgers.map((ledger, idx) => (
-                  <tr 
+                  <tr
                     key={idx}
-                    style={{ cursor: 'pointer' }}
+                    className="integrated-finance-table-row--clickable"
                     onClick={() => { setSelectedLedger(ledger); setShowLedgerDetailModal(true); }}
                   >
                     <td data-label="계정과목">{ledger.accountId}</td>
@@ -2555,20 +2586,12 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   return (
     <ErpModal isOpen={true} onClose={onClose} title="거래 등록" size="xl">
       {/* 거래 등록 가이드 — B0KlA·디자인 토큰 준수 */}
-      <div className="mg-v2-ad-b0kla__card" style={{
-        marginBottom: 'var(--spacing-md)',
-        padding: 'var(--spacing-md)',
-        backgroundColor: 'var(--ad-b0kla-surface-muted, var(--mg-color-background-muted))',
-        borderRadius: 'var(--radius-md)',
-        fontSize: 'var(--font-size-sm)',
-        color: 'var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary))',
-        lineHeight: 1.5
-      }}>
-        <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
-          <Info size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
+      <div className="mg-v2-ad-b0kla__card integrated-finance-journal-modal-guide">
+        <div className="integrated-finance-journal-modal-guide__row">
+          <Info size={16} className="integrated-finance-journal-modal-guide__icon" />
           <div>
-            <strong style={{ color: 'var(--color-text-primary)' }}>거래 등록 가이드:</strong>
-            <ul style={{ margin: 'var(--spacing-xs) 0 0 0', paddingLeft: 'var(--spacing-md)' }}>
+            <strong>거래 등록 가이드:</strong>
+            <ul>
               <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
               <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
               <li>최소 2개 이상의 라인이 필요합니다.</li>
@@ -2611,12 +2634,12 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
             </MGButton>
           </div>
           {accountTypesError && (
-            <div className="mg-v2-text-danger mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
+            <div className="mg-v2-text-danger mg-v2-mb-sm integrated-finance-journal-inline-hint">
               {accountTypesError}
             </div>
           )}
           {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
-            <div className="mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
+            <div className="mg-v2-mb-sm integrated-finance-journal-inline-hint--muted">
               계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
             </div>
           )}
@@ -3241,12 +3264,12 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
             </MGButton>
           </div>
           {accountTypesError && (
-            <div className="mg-v2-text-danger mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
+            <div className="mg-v2-text-danger mg-v2-mb-sm integrated-finance-journal-inline-hint">
               {accountTypesError}
             </div>
           )}
           {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
-            <div className="mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
+            <div className="mg-v2-mb-sm integrated-finance-journal-inline-hint--muted">
               계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
             </div>
           )}

@@ -6,6 +6,11 @@
   min-height: 0;
 }
 
+/* ErpPageShell main 내부 본문 래퍼 */
+.approval-hub-main-region {
+  min-width: 0;
+}
+
 /* ApprovalHubLayout — B0KlA pill 위 여백 */
 .approval-hub-mode-wrap {
   padding: 0 var(--mg-layout-section-padding, 16px);

@@ -876,3 +876,146 @@
   align-items: center;
   gap: var(--mg-space-2, var(--spacing-sm));
 }
+
+/* 재무제표 패널·캡션·리포트 제목 (인라인 스타일 제거용) */
+.finance-statement-panel {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--border-radius-lg);
+  padding: var(--mg-spacing-24);
+  box-sizing: border-box;
+}
+
+.finance-statement-panel--center {
+  text-align: center;
+}
+
+.integrated-finance-caption-box {
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  background: var(--mg-color-surface-main);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-finance-caption--lead {
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.integrated-finance-report-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.integrated-finance-mapping-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.integrated-finance-mapping-cta__title {
+  margin-bottom: var(--spacing-xs);
+}
+
+.integrated-finance-journal-help {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.integrated-finance-journal-help-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.integrated-finance-journal-help-body {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.integrated-finance-journal-help-body strong {
+  color: var(--color-text-primary);
+}
+
+.integrated-finance-journal-help-list {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.integrated-finance-journal-help-list li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.integrated-finance-journal-help-example {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: var(--color-info-light);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.integrated-finance-table-row--clickable {
+  cursor: pointer;
+}
+
+.integrated-finance-journal-modal-guide {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--ad-b0kla-surface-muted, var(--mg-color-background-muted));
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  line-height: 1.5;
+}
+
+.integrated-finance-journal-modal-guide__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.integrated-finance-journal-modal-guide__icon {
+  margin-top: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.integrated-finance-journal-modal-guide ul {
+  margin: var(--spacing-xs) 0 0 0;
+  padding-left: var(--spacing-md);
+}
+
+.integrated-finance-journal-modal-guide strong {
+  color: var(--color-text-primary);
+}
+
+.integrated-finance-journal-inline-hint {
+  font-size: var(--font-size-sm);
+}
+
+.integrated-finance-journal-inline-hint--muted {
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-finance-flex-wrap {
+  flex-wrap: wrap;
+}

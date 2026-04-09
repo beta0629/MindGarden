@@ -1,0 +1,40 @@
+/**
+ * 환불 이력 테이블 — 토큰 기반 레이아웃
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
+.mg-v2-erp-refund-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-erp-refund-history__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-erp-table-wrapper {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.mg-v2-erp-refund-history__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.mg-v2-erp-refund-history__page-indicator {
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+}

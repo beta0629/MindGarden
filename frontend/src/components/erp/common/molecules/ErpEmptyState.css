@@ -1,0 +1,46 @@
+/**
+ * ERP 공통 빈 상태 — 토큰 기반
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
+.mg-v2-erp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  text-align: center;
+  box-sizing: border-box;
+  min-height: 0;
+  color: var(--mg-color-text-secondary);
+  background: var(--mg-color-surface-main);
+  border: 1px dashed var(--mg-color-border-main);
+  border-radius: var(--border-radius-lg);
+}
+
+.mg-v2-erp-empty-state__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-erp-empty-state__description {
+  margin: 0;
+  max-width: 100%;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-erp-empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}

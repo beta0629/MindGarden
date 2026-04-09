@@ -1,0 +1,43 @@
+/* ERP 필터 툴바 — BEM 접두 mg-v2-erp-filter-toolbar */
+
+.mg-v2-erp-filter-toolbar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0;
+}
+
+.mg-v2-erp-filter-toolbar__primary {
+  width: 100%;
+}
+
+.mg-v2-erp-filter-toolbar__secondary {
+  width: 100%;
+}
+
+.mg-v2-erp-filter-toolbar__expanded {
+  width: 100%;
+  margin-top: var(--mg-spacing-md, var(--spacing-sm));
+}
+
+/* 기간 셀렉트 — 인라인 min-width 대체 */
+.mg-v2-erp-filter-toolbar__period-select {
+  min-width: calc(var(--spacing-md) * 6);
+}
+
+/* 사용자 지정 기간 행 */
+.mg-v2-erp-filter-toolbar__custom-range {
+  margin-top: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-v2-erp-filter-toolbar__date-input--start {
+  margin-right: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-v2-erp-filter-toolbar__date-separator {
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-erp-filter-toolbar__date-input--end {
+  margin-left: var(--mg-spacing-xs, var(--spacing-xs));
+}

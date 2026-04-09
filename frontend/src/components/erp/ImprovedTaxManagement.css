@@ -1,0 +1,270 @@
+/**
+ * ImprovedTaxManagement — BEM (블록: im-tax-mgmt)
+ * 디자인 토큰만 사용 (인라인 스타일 금지)
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
+.im-tax-mgmt__login-hint {
+  padding: var(--spacing-lg);
+}
+
+.im-tax-mgmt__header-period {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-right: var(--mg-layout-gap, var(--spacing-sm));
+}
+
+.im-tax-mgmt__header-period-label {
+  color: var(--mg-color-text-secondary);
+}
+
+.im-tax-mgmt__month-input {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md, var(--spacing-xs));
+}
+
+.im-tax-mgmt__shell-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.im-tax-mgmt__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.im-tax-mgmt__section {
+  background: var(--mg-layout-section-bg);
+  border: 1px solid var(--mg-layout-section-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--mg-layout-section-padding);
+  box-sizing: border-box;
+}
+
+.im-tax-mgmt__section-title {
+  margin: 0 0 var(--spacing-md);
+}
+
+.im-tax-mgmt__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--stat-card-min-width, 12.5rem), 1fr)
+  );
+  gap: var(--mg-layout-grid-gap, var(--spacing-md));
+}
+
+.im-tax-mgmt__kpi-grid--tight {
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--management-card-min-width, 10rem), 1fr)
+  );
+  margin-bottom: var(--spacing-lg);
+}
+
+.im-tax-mgmt__breakdown-wrap {
+  margin-top: var(--mg-layout-section-padding);
+}
+
+.im-tax-mgmt__breakdown-title {
+  margin: 0 0 var(--spacing-sm);
+}
+
+.im-tax-mgmt__hint {
+  margin: var(--spacing-md) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.im-tax-mgmt__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.im-tax-mgmt__table thead tr {
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.im-tax-mgmt__table tbody tr {
+  border-bottom: 1px solid var(--mg-color-border-sub);
+}
+
+.im-tax-mgmt__th {
+  text-align: left;
+  padding: var(--spacing-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.im-tax-mgmt__th--numeric {
+  text-align: right;
+}
+
+.im-tax-mgmt__td {
+  padding: var(--spacing-xs);
+  color: var(--mg-color-text-main);
+}
+
+.im-tax-mgmt__td--numeric {
+  text-align: right;
+}
+
+.im-tax-mgmt__report-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--management-card-min-width, 17.5rem), 1fr)
+  );
+  gap: var(--mg-layout-grid-gap, var(--spacing-md));
+}
+
+.im-tax-mgmt__report-card {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-left: var(--spacing-xs) solid var(--mg-color-primary-main);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.im-tax-mgmt__report-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.im-tax-mgmt__report-card-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.im-tax-mgmt__report-icon--primary {
+  color: var(--mg-color-primary-main);
+  flex-shrink: 0;
+}
+
+.im-tax-mgmt__report-icon--success {
+  color: var(--mg-color-success-main);
+  flex-shrink: 0;
+}
+
+.im-tax-mgmt__report-desc {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.im-tax-mgmt__report-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.im-tax-mgmt__report-meta-row {
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-main);
+}
+
+.im-tax-mgmt__report-meta-label {
+  color: var(--mg-color-text-secondary);
+  margin-right: var(--spacing-xs);
+}
+
+.im-tax-mgmt__report-actions {
+  margin-top: var(--spacing-xs);
+}
+
+.im-tax-mgmt__settings-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--management-card-min-width, 16rem), 1fr)
+  );
+  gap: var(--mg-layout-grid-gap, var(--spacing-md));
+}
+
+.im-tax-mgmt__settings-card {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-left: var(--spacing-xs) solid var(--mg-color-primary-main);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-sizing: border-box;
+}
+
+.im-tax-mgmt__settings-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.im-tax-mgmt__settings-card-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.im-tax-mgmt__settings-badge {
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.im-tax-mgmt__settings-desc {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.im-tax-mgmt__settings-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.im-tax-mgmt__error-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+/* UnifiedModal 폼 필드 */
+.im-tax-mgmt-modal__field {
+  margin-bottom: var(--spacing-md);
+}
+
+.im-tax-mgmt-modal__label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.im-tax-mgmt-modal__hint {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+}

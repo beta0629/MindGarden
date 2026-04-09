@@ -11,6 +11,8 @@
     "test:admin": "playwright test tests/admin",
     "test:consultant": "playwright test tests/consultant",
     "test:client": "playwright test tests/client",
+    "test:erp:chromium": "playwright test tests/erp/erp-legacy-path-redirects.spec.ts --project=chromium && playwright test tests/erp/erp-approval-hub-redirect.spec.ts --grep \"super-approvals\" --project=chromium",
+    "test:erp:chromium:all": "playwright test tests/erp --project=chromium",
     "test:dev": "BASE_URL=https://mindgarden.dev.core-solution.co.kr playwright test tests/admin/psych-assessments-after-login.spec.ts --config=playwright.manual.config.ts --project=chromium"
   },
   "devDependencies": {

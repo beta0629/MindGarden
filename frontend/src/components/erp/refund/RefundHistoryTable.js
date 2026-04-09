@@ -1,110 +1,140 @@
 import React from 'react';
-import ErpCard from '../common/ErpCard';
+import PropTypes from 'prop-types';
+import { toSafeNumber } from '../../../utils/safeDisplay';
 import ErpButton from '../common/ErpButton';
 import ErpStatusBadge from '../common/ErpStatusBadge';
+import ErpSafeText from '../common/atoms/ErpSafeText';
+import ErpSafeNumber, { ERP_NUMBER_FORMAT } from '../common/atoms/ErpSafeNumber';
+import ErpEmptyState from '../common/molecules/ErpEmptyState';
+import './RefundHistoryTable.css';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
-const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
-    };
+const RefundHistoryTable = ({
+  refundHistory = [],
+  pageInfo = {},
+  onPageChange
+}) => {
+  const rows = Array.isArray(refundHistory) ? refundHistory : [];
+  const totalPages = pageInfo?.totalPages ?? 0;
+  const currentPage = pageInfo?.currentPage ?? 0;
+  const hasPrevious = pageInfo?.hasPrevious ?? false;
+  const hasNext = pageInfo?.hasNext ?? false;
 
-    return (
-        <ErpCard title="환불 이력">
-            {refundHistory.length > 0 ? (
-                <>
-                    <div className="mg-v2-table-container">
-                        <table className="mg-v2-table">
-                            <thead>
-                                <tr>
-                                    <th>환불일시</th>
-                                    <th>내담자</th>
-                                    <th>상담사</th>
-                                    <th>패키지</th>
-                                    <th>환불 회기</th>
-                                    <th>환불 금액</th>
-                                    <th>환불 사유</th>
-                                    <th>ERP 상태</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {refundHistory.map((refund, index) => (
-                                    <tr key={`${refund.mappingId}-${refund.terminatedAt}-${index}`} className={index % 2 === 0 ? 'mg-v2-table-row' : 'mg-v2-table-row-alt'}>
-                                        <td>
-                                            {refund.terminatedAt}
-                                        </td>
-                                        <td>
-                                            {refund.clientName}
-                                        </td>
-                                        <td>
-                                            {refund.consultantName}
-                                        </td>
-                                        <td>
-                                            {refund.packageName}
-                                        </td>
-                                        <td className="mg-v2-table-cell">
-                                            {refund.refundedSessions}회
-                                        </td>
-                                        <td className="mg-v2-table-cell mg-v2-text-right">
-                                            {formatCurrency(refund.refundAmount)}
-                                        </td>
-                                        <td>
-                                            {refund.standardizedReason}
-                                        </td>
-                                        <td className="mg-v2-table-cell">
-                                            <ErpStatusBadge status={refund.erpStatus} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+  const pageLabel = `${currentPage + 1} / ${totalPages} 페이지`;
 
-                    {/* 페이징 */}
-                    {pageInfo.totalPages > 1 && (
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center',
-                            gap: '10px',
-                            marginTop: '20px'
-                        }}>
-                            <ErpButton
-                                variant="secondary"
-                                disabled={!pageInfo.hasPrevious}
-                                onClick={() => onPageChange(pageInfo.currentPage - 1)}
-                            >
-                                이전
-                            </ErpButton>
-                            
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-gray-500)' }}>
-                                {pageInfo.currentPage + 1} / {pageInfo.totalPages} 페이지
-                            </span>
-                            
-                            <ErpButton
-                                variant="secondary"
-                                disabled={!pageInfo.hasNext}
-                                onClick={() => onPageChange(pageInfo.currentPage + 1)}
-                            >
-                                다음
-                            </ErpButton>
-                        </div>
-                    )}
-                </>
-            ) : (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px',
-                    color: 'var(--mg-gray-500)',
-                    fontSize: 'var(--font-size-base)'
-                }}>
-                    선택한 기간에 환불 이력이 없습니다.
-                </div>
-            )}
-        </ErpCard>
-    );
+  return (
+    <section
+      className="mg-v2-erp-refund-history"
+      aria-labelledby="refund-history-table-title"
+    >
+      <h2 id="refund-history-table-title" className="mg-v2-erp-refund-history__title">
+        환불 이력
+      </h2>
+      {rows.length > 0 ? (
+        <>
+          <div className="mg-v2-erp-table-wrapper">
+            <div className="mg-v2-table-container">
+              <table className="mg-v2-table">
+                <thead>
+                  <tr>
+                    <th>환불일시</th>
+                    <th>내담자</th>
+                    <th>상담사</th>
+                    <th>패키지</th>
+                    <th>환불 회기</th>
+                    <th>환불 금액</th>
+                    <th>환불 사유</th>
+                    <th>ERP 상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((refund, index) => (
+                    <tr
+                      key={`${refund.mappingId}-${refund.terminatedAt}-${index}`}
+                      className={
+                        index % 2 === 0 ? 'mg-v2-table-row' : 'mg-v2-table-row-alt'
+                      }
+                    >
+                      <td>
+                        <ErpSafeText value={refund.terminatedAt} />
+                      </td>
+                      <td>
+                        <ErpSafeText value={refund.clientName} />
+                      </td>
+                      <td>
+                        <ErpSafeText value={refund.consultantName} />
+                      </td>
+                      <td>
+                        <ErpSafeText value={refund.packageName} />
+                      </td>
+                      <td className="mg-v2-table-cell">
+                        <ErpSafeText
+                          value={`${new Intl.NumberFormat('ko-KR').format(
+                            toSafeNumber(refund.refundedSessions)
+                          )}회`}
+                        />
+                      </td>
+                      <td className="mg-v2-table-cell mg-v2-text-right">
+                        <ErpSafeNumber
+                          value={refund.refundAmount}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        />
+                      </td>
+                      <td>
+                        <ErpSafeText value={refund.standardizedReason} />
+                      </td>
+                      <td className="mg-v2-table-cell">
+                        <ErpStatusBadge status={refund.erpStatus} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mg-v2-erp-refund-history__pagination">
+              <ErpButton
+                variant="secondary"
+                disabled={!hasPrevious}
+                onClick={() => onPageChange(currentPage - 1)}
+              >
+                이전
+              </ErpButton>
+
+              <span className="mg-v2-erp-refund-history__page-indicator">
+                <ErpSafeText value={pageLabel} />
+              </span>
+
+              <ErpButton
+                variant="secondary"
+                disabled={!hasNext}
+                onClick={() => onPageChange(currentPage + 1)}
+              >
+                다음
+              </ErpButton>
+            </div>
+          )}
+        </>
+      ) : (
+        <ErpEmptyState title="선택한 기간에 환불 이력이 없습니다." />
+      )}
+    </section>
+  );
+};
+
+RefundHistoryTable.propTypes = {
+  refundHistory: PropTypes.arrayOf(PropTypes.object),
+  pageInfo: PropTypes.shape({
+    totalPages: PropTypes.number,
+    currentPage: PropTypes.number,
+    hasPrevious: PropTypes.bool,
+    hasNext: PropTypes.bool
+  }),
+  onPageChange: PropTypes.func.isRequired
 };
 
 export default RefundHistoryTable;

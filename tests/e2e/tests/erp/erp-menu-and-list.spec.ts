@@ -1,5 +1,6 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { loginErpUser } from '../../helpers/erp-login';
 
 /**
  * ERP 메뉴 접근 및 목록 조회 E2E 시나리오
@@ -7,16 +8,6 @@ import { test, expect, Page } from '@playwright/test';
  * ERP 권한이 있는 사용자로 로그인한 뒤 메뉴·화면 접근 및 목록 노출 검증
  */
 test.describe('ERP 메뉴 및 목록 조회', () => {
-  const TEST_USERNAME = ((process as any).env.TEST_USERNAME as string) || 'superadmin@mindgarden.com';
-  const TEST_PASSWORD = ((process as any).env.TEST_PASSWORD as string) || 'admin123';
-
-  async function loginErpUser(page: Page) {
-    await page.goto('/login');
-    await page.fill('input[name="username"], input[type="email"], input[placeholder*="아이디"], input[placeholder*="이메일"]', TEST_USERNAME);
-    await page.fill('input[name="password"], input[type="password"]', TEST_PASSWORD);
-    await page.click('button[type="submit"], button:has-text("로그인"), button:has-text("Login")');
-    await page.waitForURL(/dashboard|admin|home/, { timeout: 10000 });
-  }
 
   test('E2E-1: ERP 메뉴 접근 — LNB에서 ERP 진입 후 URL/영역 확인', async ({ page }: { page: Page }) => {
     await loginErpUser(page);

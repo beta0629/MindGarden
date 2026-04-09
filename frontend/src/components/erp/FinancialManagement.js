@@ -19,7 +19,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
+import '../layout/DashboardSection.css';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { ViewModeToggle } from '../common';
 import Badge from '../common/Badge';
 import {
@@ -38,7 +39,8 @@ import {
   Eye,
   Pencil,
   Trash2,
-  Inbox
+  Inbox,
+  MoreVertical
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -95,6 +97,8 @@ const FinancialManagement = () => {
     open: false,
     transaction: null
   });
+  /** 거래 카드 케밥 메뉴 (한 번에 하나만 열림) */
+  const [openTxMenuId, setOpenTxMenuId] = useState(null);
   
   const [dashboardStats, setDashboardStats] = useState({
     totalIncome: 0,
@@ -121,6 +125,37 @@ const FinancialManagement = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [filters, sessionLoading, isLoggedIn, user?.id, activeTab]);
+
+  useEffect(() => {
+    if (openTxMenuId == null) {
+      return undefined;
+    }
+    const doc = globalThis.document;
+    const onDocMouseDown = (e) => {
+      const t = e.target;
+      if (!t || typeof t.closest !== 'function') {
+        return;
+      }
+      const insideOpen = t.closest(
+        `[data-tx-card-menu-root][data-tx-open-id="${String(openTxMenuId)}"]`
+      );
+      if (insideOpen) {
+        return;
+      }
+      setOpenTxMenuId(null);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setOpenTxMenuId(null);
+      }
+    };
+    doc.addEventListener('mousedown', onDocMouseDown);
+    doc.addEventListener('keydown', onKeyDown);
+    return () => {
+      doc.removeEventListener('mousedown', onDocMouseDown);
+      doc.removeEventListener('keydown', onKeyDown);
+    };
+  }, [openTxMenuId]);
 
   const loadData = async () => {
     try {
@@ -672,11 +707,16 @@ const FinancialManagement = () => {
               )}
 
               {activeTab === 'transactions' && (
-                <ContentSection noCard className="mg-v2-mapping-list-block">
-                  <ContentCard
-                    className="mg-v2-mapping-list-block__card mg-financial-management-mapping-card"
-                  >
-                    <section className="mg-v2-erp-financial-kpi-strip" aria-label="이번 달 요약">
+                <section
+                  className="mg-dashboard-section mg-dashboard-section--card mg-v2-ad-b0kla mg-financial-management-transactions-l1"
+                  aria-label="재무 거래 탭 본문"
+                  data-testid="erp-financial-transactions-l1"
+                >
+                    <section
+                      className="mg-v2-erp-financial-kpi-strip"
+                      aria-label="이번 달 요약"
+                      data-testid="erp-financial-kpi-strip"
+                    >
                       <div className="mg-v2-erp-financial-kpi-strip__grid">
                         <ErpKpiStatCard
                           title="수입 합계"
@@ -713,7 +753,9 @@ const FinancialManagement = () => {
                     </section>
 
                     <header className="mg-v2-erp-financial-ledger-header">
-                      <h2 className="mg-v2-erp-financial-ledger-header__title">재무 거래 내역</h2>
+                      <h2 className="mg-v2-erp-financial-ledger-header__title mg-v2-ad-b0kla__section-title">
+                        재무 거래 내역
+                      </h2>
                       <div className="mg-v2-erp-financial-ledger-header__actions">
                         <ViewModeToggle
                           viewMode={transactionViewMode}
@@ -815,25 +857,62 @@ const FinancialManagement = () => {
                             <div className="mg-v2-erp-financial-tx-card__actions">
                               <button
                                 type="button"
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className="mg-v2-button mg-v2-button-secondary mg-v2-erp-financial-tx-card__action-view"
                                 onClick={() => handleViewTransaction(transaction)}
                               >
                                 <Eye size={14} aria-hidden /> 보기
                               </button>
-                              <button
-                                type="button"
-                                className="mg-v2-button mg-v2-button-secondary"
-                                onClick={() => handleEditTransaction(transaction)}
+                              <div
+                                className="mg-v2-erp-financial-tx-card__menu-wrap"
+                                data-tx-card-menu-root
+                                data-tx-open-id={String(transaction.id)}
                               >
-                                <Pencil size={14} aria-hidden /> 수정
-                              </button>
-                              <button
-                                type="button"
-                                className="mg-v2-button mg-v2-button-secondary"
-                                onClick={() => handleDeleteTransaction(transaction)}
-                              >
-                                <Trash2 size={14} aria-hidden /> 삭제
-                              </button>
+                                <button
+                                  type="button"
+                                  className="mg-v2-erp-financial-tx-card__menu-trigger"
+                                  data-testid="erp-financial-tx-menu-trigger"
+                                  aria-label={`거래 #${toDisplayString(transaction.id)} 추가 작업`}
+                                  aria-haspopup="menu"
+                                  aria-expanded={openTxMenuId === transaction.id}
+                                  onClick={() =>
+                                    setOpenTxMenuId((prev) =>
+                                      prev === transaction.id ? null : transaction.id
+                                    )
+                                  }
+                                >
+                                  <MoreVertical size={18} aria-hidden />
+                                </button>
+                                {openTxMenuId === transaction.id && (
+                                  <div
+                                    className="mg-v2-erp-financial-tx-card__menu"
+                                    role="menu"
+                                    aria-orientation="vertical"
+                                  >
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      className="mg-v2-erp-financial-tx-card__menu-item"
+                                      onClick={() => {
+                                        setOpenTxMenuId(null);
+                                        handleEditTransaction(transaction);
+                                      }}
+                                    >
+                                      <Pencil size={14} aria-hidden /> 수정
+                                    </button>
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      className="mg-v2-erp-financial-tx-card__menu-item mg-v2-erp-financial-tx-card__menu-item--danger"
+                                      onClick={() => {
+                                        setOpenTxMenuId(null);
+                                        handleDeleteTransaction(transaction);
+                                      }}
+                                    >
+                                      <Trash2 size={14} aria-hidden /> 삭제
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </article>
@@ -888,8 +967,7 @@ const FinancialManagement = () => {
                       </nav>
                     </div>
                   )}
-                  </ContentCard>
-                </ContentSection>
+                </section>
               )}
 
               {activeTab === 'dashboard' && (

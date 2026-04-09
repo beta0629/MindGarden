@@ -1,0 +1,189 @@
+<!--
+  ERP 재무 관리 — 거래 탭 본문 마크업 스니펫 (퍼블리셔 제안 구조)
+  참고: FinancialManagement.js 거래 탭, mg-dashboard-section--card, ErpKpiStatCard
+-->
+<section
+  class="mg-dashboard-section mg-dashboard-section--card mg-v2-ad-b0kla mg-financial-management-transactions-l1"
+  aria-label="재무 거래 탭 본문"
+  data-testid="erp-financial-transactions-l1"
+>
+  <section
+    class="mg-v2-erp-financial-kpi-strip"
+    aria-label="이번 달 요약"
+    data-testid="erp-financial-kpi-strip"
+  >
+    <div class="mg-v2-erp-financial-kpi-strip__grid">
+      <article class="mg-v2-erp-stat-card mg-v2-erp-stat-card--primary">
+        <h3 class="mg-v2-erp-stat-card__title">수입 합계</h3>
+        <div class="mg-v2-erp-stat-card__value-row">
+          <p class="mg-v2-erp-stat-card__value"><span>₩1,250,000</span></p>
+          <span class="mg-v2-erp-stat-card__unit">이번 달</span>
+        </div>
+      </article>
+      <article class="mg-v2-erp-stat-card mg-v2-erp-stat-card--warning">
+        <h3 class="mg-v2-erp-stat-card__title">지출 합계</h3>
+        <div class="mg-v2-erp-stat-card__value-row">
+          <p class="mg-v2-erp-stat-card__value"><span>₩480,000</span></p>
+          <span class="mg-v2-erp-stat-card__unit">이번 달</span>
+        </div>
+      </article>
+      <article class="mg-v2-erp-stat-card mg-v2-erp-stat-card--primary">
+        <h3 class="mg-v2-erp-stat-card__title">순이익</h3>
+        <div class="mg-v2-erp-stat-card__value-row">
+          <p class="mg-v2-erp-stat-card__value"><span>₩770,000</span></p>
+          <span class="mg-v2-erp-stat-card__unit">이번 달</span>
+        </div>
+      </article>
+      <article class="mg-v2-erp-stat-card">
+        <h3 class="mg-v2-erp-stat-card__title">거래 건수</h3>
+        <div class="mg-v2-erp-stat-card__value-row">
+          <p class="mg-v2-erp-stat-card__value"><span>24</span></p>
+          <span class="mg-v2-erp-stat-card__unit">이번 달</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <header class="mg-v2-erp-financial-ledger-header">
+    <h2 class="mg-v2-erp-financial-ledger-header__title mg-v2-ad-b0kla__section-title">재무 거래 내역</h2>
+    <div class="mg-v2-erp-financial-ledger-header__actions">
+      <button type="button" class="mg-btn mg-btn--outline mg-btn--secondary">보내기</button>
+    </div>
+  </header>
+
+  <div class="mg-v2-erp-financial-list">
+    <article class="mg-v2-erp-financial-tx-card mg-v2-erp-financial-tx-card--income">
+      <div class="mg-v2-erp-financial-tx-card__header">
+        <div class="mg-v2-erp-financial-tx-card__id-row">
+          <button type="button" class="mg-v2-erp-financial-tx-card__id-button">#1001</button>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__date">2026-04-01</div>
+      </div>
+      <div class="mg-v2-erp-financial-tx-card__body">
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">유형</span>
+          <span>수입</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">카테고리</span>
+          <span>상담료</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">금액</span>
+          <span class="mg-v2-erp-financial-tx-card__amount mg-v2-erp-financial-tx-card__amount--income">+₩120,000</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">상태</span>
+          <span>완료</span>
+        </div>
+      </div>
+      <div class="mg-v2-erp-financial-tx-card__footer">
+        <div class="mg-v2-erp-financial-tx-card__actions">
+          <button type="button" class="mg-v2-button mg-v2-button-secondary mg-v2-erp-financial-tx-card__action-view">보기</button>
+          <div class="mg-v2-erp-financial-tx-card__menu-wrap">
+            <button
+              type="button"
+              class="mg-v2-erp-financial-tx-card__menu-trigger"
+              aria-label="거래 #1001 추가 작업"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              data-testid="erp-financial-tx-menu-trigger"
+            >
+              케밥
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="mg-v2-erp-financial-tx-card mg-v2-erp-financial-tx-card--expense">
+      <div class="mg-v2-erp-financial-tx-card__header">
+        <div class="mg-v2-erp-financial-tx-card__id-row">
+          <button type="button" class="mg-v2-erp-financial-tx-card__id-button">#1002</button>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__date">2026-04-02</div>
+      </div>
+      <div class="mg-v2-erp-financial-tx-card__body">
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">유형</span>
+          <span>지출</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">카테고리</span>
+          <span>임대료</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">금액</span>
+          <span class="mg-v2-erp-financial-tx-card__amount mg-v2-erp-financial-tx-card__amount--expense">−₩350,000</span>
+        </div>
+        <div class="mg-v2-erp-financial-tx-card__field">
+          <span class="mg-v2-erp-financial-tx-card__label">상태</span>
+          <span>대기</span>
+        </div>
+      </div>
+      <div class="mg-v2-erp-financial-tx-card__footer">
+        <div class="mg-v2-erp-financial-tx-card__actions">
+          <button type="button" class="mg-v2-button mg-v2-button-secondary mg-v2-erp-financial-tx-card__action-view">보기</button>
+          <div class="mg-v2-erp-financial-tx-card__menu-wrap">
+            <button
+              type="button"
+              class="mg-v2-erp-financial-tx-card__menu-trigger"
+              aria-label="거래 #1002 추가 작업"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              data-testid="erp-financial-tx-menu-trigger"
+            >
+              케밥
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="mg-v2-erp-financial-pagination d-flex justify-content-center mt-4">
+    <nav aria-label="거래 목록 페이지">
+      <ul class="pagination">
+        <li class="page-item disabled">
+          <button type="button" class="page-link" disabled>이전</button>
+        </li>
+        <li class="page-item active">
+          <button type="button" class="page-link" aria-current="page">1</button>
+        </li>
+        <li class="page-item">
+          <button type="button" class="page-link">2</button>
+        </li>
+        <li class="page-item">
+          <button type="button" class="page-link">다음</button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</section>
+
+<!-- 빈 상태 예시 (목록 0건 시 대체 블록) -->
+<section
+  class="mg-dashboard-section mg-dashboard-section--card mg-v2-ad-b0kla mg-financial-management-transactions-l1"
+  aria-label="재무 거래 탭 본문 — 빈 상태 샘플"
+  hidden
+>
+  <section class="mg-v2-erp-financial-kpi-strip" aria-label="이번 달 요약">
+    <div class="mg-v2-erp-financial-kpi-strip__grid">
+      <article class="mg-v2-erp-stat-card">
+        <h3 class="mg-v2-erp-stat-card__title">거래 건수</h3>
+        <div class="mg-v2-erp-stat-card__value-row">
+          <p class="mg-v2-erp-stat-card__value"><span>0</span></p>
+          <span class="mg-v2-erp-stat-card__unit">이번 달</span>
+        </div>
+      </article>
+    </div>
+  </section>
+  <header class="mg-v2-erp-financial-ledger-header">
+    <h2 class="mg-v2-erp-financial-ledger-header__title mg-v2-ad-b0kla__section-title">재무 거래 내역</h2>
+  </header>
+  <div class="mg-v2-erp-financial-list">
+    <div class="mg-v2-erp-financial-list__empty">
+      <p class="mg-v2-erp-financial-list__empty-text">거래 내역이 없습니다.</p>
+    </div>
+  </div>
+</section>

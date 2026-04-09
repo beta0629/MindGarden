@@ -37,9 +37,21 @@
 
 .mg-v2-erp-financial-kpi-strip__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 12rem), 1fr));
+  grid-template-columns: 1fr;
   gap: var(--spacing-md);
   min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .mg-v2-erp-financial-kpi-strip__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .mg-v2-erp-financial-kpi-strip__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .mg-v2-erp-financial-kpi-strip__grid--half {
@@ -58,11 +70,9 @@
   border-bottom: 1px solid var(--mg-color-border-main);
 }
 
-.mg-v2-erp-financial-ledger-header__title {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--mg-color-text-main);
+/* B0KlA 섹션 타이틀 병용 시(좌측 4px 악센트): 여백은 헤더 블록이 담당 */
+.mg-v2-erp-financial-ledger-header__title.mg-v2-ad-b0kla__section-title {
+  margin-bottom: 0;
 }
 
 .mg-v2-erp-financial-ledger-header__actions {
@@ -167,8 +177,8 @@ h3.mg-v2-erp-financial-section-title {
 }
 
 .mg-v2-erp-financial-tx-card__id-button:focus-visible {
-  outline: 2px solid var(--mg-color-primary-main);
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .mg-v2-erp-financial-tx-card__date {
@@ -222,9 +232,108 @@ h3.mg-v2-erp-financial-section-title {
 
 .mg-v2-erp-financial-tx-card__actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.mg-v2-erp-financial-tx-card__action-view {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.mg-v2-erp-financial-tx-card__menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mg-v2-erp-financial-tx-card__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--spacing-xl);
+  min-width: var(--spacing-xl);
+  padding: var(--spacing-xs);
+  margin: 0;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+  cursor: pointer;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.mg-v2-erp-financial-tx-card__menu-trigger:hover,
+.mg-v2-erp-financial-tx-card__menu-trigger:focus-visible {
+  background: var(--mg-color-background-subtle, var(--mg-gray-50));
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-erp-financial-tx-card__menu-trigger:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.mg-v2-erp-financial-tx-card__menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: var(--z-index-popover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: var(--mg-card-min-width);
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.mg-v2-erp-financial-tx-card__menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: 0;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+}
+
+.mg-v2-erp-financial-tx-card__menu-item:hover,
+.mg-v2-erp-financial-tx-card__menu-item:focus-visible {
+  background: var(--mg-color-background-subtle, var(--mg-gray-50));
+}
+
+.mg-v2-erp-financial-tx-card__menu-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.mg-v2-erp-financial-tx-card__menu-item--danger {
+  color: var(--mg-color-error-main);
+}
+
+.mg-v2-erp-financial-tx-card__menu-item--danger:hover,
+.mg-v2-erp-financial-tx-card__menu-item--danger:focus-visible {
+  background: var(--mg-color-error-background-subtle, var(--mg-color-background-subtle));
+}
+
+/* L1: 통합 재무 대시보드와 동일 카드 셸 (DashboardSection--card) */
+.mg-financial-management-transactions-l1.mg-dashboard-section--card {
+  margin-bottom: var(--mg-spacing-xl);
 }
 
 /* 빈 상태 */
@@ -248,13 +357,6 @@ h3.mg-v2-erp-financial-section-title {
 
 /* 레거시·패널 */
 .mg-financial-management-section-panel {
-  background: var(--mg-layout-section-bg, var(--mg-color-surface-main));
-  border: 1px solid var(--mg-layout-section-border, var(--mg-color-border-main));
-  border-radius: var(--modal-border-radius);
-  padding: var(--mg-layout-section-padding, var(--spacing-md));
-}
-
-.mg-financial-management-mapping-card {
   background: var(--mg-layout-section-bg, var(--mg-color-surface-main));
   border: 1px solid var(--mg-layout-section-border, var(--mg-color-border-main));
   border-radius: var(--modal-border-radius);

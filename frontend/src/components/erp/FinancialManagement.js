@@ -7,7 +7,14 @@ import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
-import SafeText from '../common/SafeText';
+import {
+  ErpFilterToolbar,
+  ErpKpiStatCard,
+  ErpSafeNumber,
+  ErpSafeText,
+  ERP_KPI_STAT_VARIANT,
+  ERP_NUMBER_FORMAT
+} from './common';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
@@ -31,16 +38,12 @@ import {
   Eye,
   Pencil,
   Trash2,
-  Inbox,
-  TrendingUp,
-  TrendingDown,
-  Undo2
+  Inbox
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar } from './common';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -369,11 +372,6 @@ const FinancialManagement = () => {
     }));
   };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('ko-KR');
@@ -417,15 +415,25 @@ const FinancialManagement = () => {
     <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
       <Fragment>
         <ContentArea className="erp-system">
-            <ContentHeader
-              title="재무 관리"
-              subtitle="재무 거래 및 회계를 관리할 수 있습니다."
-            />
             <ErpPageShell
-              tabsSlot={
-                <>
-                  <FinancialRefundHubTabs />
-                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
+              headerSlot={(
+                <div className="mg-v2-erp-financial-page-header">
+                  <ContentHeader
+                    title="재무 관리"
+                    subtitle="재무 거래 및 회계를 관리할 수 있습니다."
+                  />
+                </div>
+              )}
+              tabsSlot={(
+                <div className="mg-v2-erp-financial-tabs">
+                  <div className="mg-v2-erp-financial-tabs__hub">
+                    <FinancialRefundHubTabs />
+                  </div>
+                  <div
+                    className="mg-v2-erp-financial-tabs__view mg-v2-ad-b0kla__pill-toggle"
+                    role="tablist"
+                    aria-label="재무 관리 보기 전환"
+                  >
                     <button
                       type="button"
                       role="tab"
@@ -454,8 +462,9 @@ const FinancialManagement = () => {
                       <LayoutDashboard size={18} aria-hidden /> 대시보드
                     </button>
                   </div>
-                </>
-              }
+                </div>
+              )}
+              mainAriaLabel="재무 관리 본문"
               filterSlot={
                 activeTab === 'transactions' && !loading && !error ? (
                   <ErpFilterToolbar
@@ -667,9 +676,45 @@ const FinancialManagement = () => {
                   <ContentCard
                     className="mg-v2-mapping-list-block__card mg-financial-management-mapping-card"
                   >
-                    <div className="mg-v2-mapping-list-block__header">
-                      <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
-                      <div className="d-flex gap-2 align-items-center">
+                    <section className="mg-v2-erp-financial-kpi-strip" aria-label="이번 달 요약">
+                      <div className="mg-v2-erp-financial-kpi-strip__grid">
+                        <ErpKpiStatCard
+                          title="수입 합계"
+                          value={dashboardStats.totalIncome}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          unit="이번 달"
+                          variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+                        />
+                        <ErpKpiStatCard
+                          title="지출 합계"
+                          value={dashboardStats.totalExpense}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          unit="이번 달"
+                          variant={ERP_KPI_STAT_VARIANT.WARNING}
+                        />
+                        <ErpKpiStatCard
+                          title="순이익"
+                          value={dashboardStats.netProfit}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          unit="이번 달"
+                          variant={
+                            dashboardStats.netProfit >= 0
+                              ? ERP_KPI_STAT_VARIANT.PRIMARY
+                              : ERP_KPI_STAT_VARIANT.WARNING
+                          }
+                        />
+                        <ErpKpiStatCard
+                          title="거래 건수"
+                          value={dashboardStats.transactionCount}
+                          formatType={ERP_NUMBER_FORMAT.COUNT}
+                          unit="이번 달"
+                        />
+                      </div>
+                    </section>
+
+                    <header className="mg-v2-erp-financial-ledger-header">
+                      <h2 className="mg-v2-erp-financial-ledger-header__title">재무 거래 내역</h2>
+                      <div className="mg-v2-erp-financial-ledger-header__actions">
                         <ViewModeToggle
                           viewMode={transactionViewMode}
                           onViewModeChange={setTransactionViewMode}
@@ -681,27 +726,33 @@ const FinancialManagement = () => {
                           <Download size={16} aria-hidden /> 내보내기
                         </button>
                       </div>
-                    </div>
+                    </header>
 
-                  {/* 거래 목록 카드: 필수만 노출(일자, 유형, 카테고리, 금액, 상태, 매핑). 상세는 모달 — 필터는 ErpPageShell.filterSlot */}
-                  <div className="mg-financial-transaction-cards-grid">
+                  <div className="mg-v2-erp-financial-list">
                     {transactions.length > 0 ? (
-                      transactions.map((transaction) => (
-                        <div
+                      transactions.map((transaction) => {
+                        const isIncome = transaction.transactionType === 'INCOME';
+                        const amt = toSafeNumber(transaction.amount);
+                        return (
+                        <article
                           key={transaction.id}
-                          className="mg-v2-ad-b0kla__card mg-financial-transaction-card"
+                          className={`mg-v2-erp-financial-tx-card ${
+                            isIncome
+                              ? 'mg-v2-erp-financial-tx-card--income'
+                              : 'mg-v2-erp-financial-tx-card--expense'
+                          }`}
                         >
-                          <div className="mg-financial-transaction-card__header">
-                            <div className="mg-financial-transaction-card__id-section">
+                          <div className="mg-v2-erp-financial-tx-card__header">
+                            <div className="mg-v2-erp-financial-tx-card__id-row">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setSelectedTransaction(transaction);
                                   setShowDetailModal(true);
                                 }}
-                                className="mg-financial-transaction-card__id-button"
+                                className="mg-v2-erp-financial-tx-card__id-button"
                               >
-                                #{toDisplayString(transaction.id)}
+                                #<ErpSafeText value={transaction.id} />
                               </button>
                               {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
@@ -710,46 +761,58 @@ const FinancialManagement = () => {
                                 <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
                               )}
                             </div>
-                            <div className="mg-financial-transaction-card__date">
-                              {formatDate(transaction.transactionDate)}
+                            <div className="mg-v2-erp-financial-tx-card__date">
+                              <ErpSafeText value={formatDate(transaction.transactionDate)} />
                             </div>
                           </div>
-                          <div className="mg-financial-transaction-card__body">
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">유형</span>
+                          <div className="mg-v2-erp-financial-tx-card__body">
+                            <div className="mg-v2-erp-financial-tx-card__field">
+                              <span className="mg-v2-erp-financial-tx-card__label">유형</span>
                               <Badge
                                 variant="status"
-                                statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
-                                label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+                                statusVariant={isIncome ? 'success' : 'danger'}
+                                label={isIncome ? '수입' : '지출'}
                                 size="sm"
                               />
                             </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <span><SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText></span>
-                            </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">금액</span>
-                              <span
-                                className={
-                                  transaction.amount >= 0
-                                    ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                                    : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-                                }
-                              >
-                                {transaction.amount >= 0 ? '+' : ''}
-                                {formatCurrency(transaction.amount)}
+                            <div className="mg-v2-erp-financial-tx-card__field">
+                              <span className="mg-v2-erp-financial-tx-card__label">카테고리</span>
+                              <span>
+                                <ErpSafeText
+                                  fallback="-"
+                                  value={
+                                    transaction.category === 'CONSULTATION'
+                                      ? '상담료'
+                                      : transaction.category
+                                  }
+                                />
                               </span>
                             </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">상태</span>
+                            <div className="mg-v2-erp-financial-tx-card__field">
+                              <span className="mg-v2-erp-financial-tx-card__label">금액</span>
+                              <span
+                                className={
+                                  isIncome
+                                    ? 'mg-v2-erp-financial-tx-card__amount mg-v2-erp-financial-tx-card__amount--income'
+                                    : 'mg-v2-erp-financial-tx-card__amount mg-v2-erp-financial-tx-card__amount--expense'
+                                }
+                              >
+                                {amt >= 0 ? '+' : '−'}
+                                <ErpSafeNumber
+                                  value={Math.abs(amt)}
+                                  formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                                />
+                              </span>
+                            </div>
+                            <div className="mg-v2-erp-financial-tx-card__field">
+                              <span className="mg-v2-erp-financial-tx-card__label">상태</span>
                               <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
-                                <SafeText>{getStatusLabel(transaction.status)}</SafeText>
+                                <ErpSafeText value={getStatusLabel(transaction.status)} />
                               </span>
                             </div>
                           </div>
-                          <div className="mg-financial-transaction-card__footer">
-                            <div className="mg-financial-transaction-card__actions">
+                          <div className="mg-v2-erp-financial-tx-card__footer">
+                            <div className="mg-v2-erp-financial-tx-card__actions">
                               <button
                                 type="button"
                                 className="mg-v2-button mg-v2-button-secondary"
@@ -773,19 +836,19 @@ const FinancialManagement = () => {
                               </button>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        </article>
+                      );
+                      })
                     ) : (
-                      <div className="mg-financial-transaction-empty">
-                        <Inbox size={48} className="mg-financial-transaction-empty__icon" aria-hidden />
-                        <p className="mg-financial-transaction-empty__text">거래 내역이 없습니다.</p>
+                      <div className="mg-v2-erp-financial-list__empty">
+                        <Inbox size={48} className="mg-v2-erp-financial-list__empty-icon" aria-hidden />
+                        <p className="mg-v2-erp-financial-list__empty-text">거래 내역이 없습니다.</p>
                       </div>
                     )}
                   </div>
 
-                  {/* 페이지네이션 */}
                   {pagination.totalPages > 1 && (
-                    <div className="d-flex justify-content-center mt-4">
+                    <div className="mg-v2-erp-financial-pagination d-flex justify-content-center mt-4">
                       <nav>
                         <ul className="pagination">
                           <li className={`page-item ${pagination.currentPage === 0 ? 'disabled' : ''}`}>
@@ -831,97 +894,80 @@ const FinancialManagement = () => {
 
               {activeTab === 'dashboard' && (
                 <section className="erp-section mg-v2-erp-section-block mg-v2-erp-dashboard-block" aria-label="재무 대시보드">
-                  <h2 className="mg-v2-ad-b0kla__section-title">재무 대시보드</h2>
+                  <h2 className="mg-v2-erp-financial-section-title">재무 대시보드</h2>
 
-                  <div className="mg-v2-erp-dashboard-kpi-area">
-                    <div className="mg-v2-erp-dashboard-kpi-grid">
-                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">수입 합계</span>
-                          <TrendingUp size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalIncome)}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">지출 합계</span>
-                          <TrendingDown size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--error" />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalExpense)}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
-                        </div>
-                      </div>
-                      <div className={`mg-v2-ad-b0kla__card ${dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__card--accent-primary' : 'mg-v2-ad-b0kla__card--accent-error'}`}>
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">순이익</span>
-                          <BarChart3 size={24} aria-hidden className={`mg-v2-erp-dashboard-kpi-icon ${dashboardStats.netProfit >= 0 ? 'mg-v2-erp-dashboard-kpi-icon--primary' : 'mg-v2-erp-dashboard-kpi-icon--error'}`} />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(Math.abs(dashboardStats.netProfit))}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-secondary">
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">거래 건수</span>
-                          <ClipboardList size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--secondary" />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{toDisplayString(dashboardStats.transactionCount)}건</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
-                        </div>
-                      </div>
+                  <section className="mg-v2-erp-financial-kpi-strip" aria-label="이번 달 지표">
+                    <div className="mg-v2-erp-financial-kpi-strip__grid">
+                      <ErpKpiStatCard
+                        title="수입 합계"
+                        value={dashboardStats.totalIncome}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        unit="이번 달"
+                        variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+                      />
+                      <ErpKpiStatCard
+                        title="지출 합계"
+                        value={dashboardStats.totalExpense}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        unit="이번 달"
+                        variant={ERP_KPI_STAT_VARIANT.WARNING}
+                      />
+                      <ErpKpiStatCard
+                        title="순이익"
+                        value={dashboardStats.netProfit}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        unit="이번 달"
+                        variant={
+                          dashboardStats.netProfit >= 0
+                            ? ERP_KPI_STAT_VARIANT.PRIMARY
+                            : ERP_KPI_STAT_VARIANT.WARNING
+                        }
+                      />
+                      <ErpKpiStatCard
+                        title="거래 건수"
+                        value={dashboardStats.transactionCount}
+                        formatType={ERP_NUMBER_FORMAT.COUNT}
+                        unit="이번 달"
+                      />
                     </div>
-                  </div>
+                  </section>
 
-                  <h3 className="mg-v2-ad-b0kla__section-title">매핑 연동 현황</h3>
-                  <div className="mg-v2-erp-dashboard-mapping-area">
-                    <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--half">
-                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">매핑 연동 수입</span>
-                          <Link2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">
-                            {formatCurrency(
-                              transactions
-                                .filter(t => t.transactionType === 'INCOME' &&
-                                  (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
-                                    t.description?.includes('상담료 입금 확인')))
-                                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                            )}
-                          </div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">자동 생성된 상담료 수입</span>
-                        </div>
-                      </div>
-                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-warning">
-                        <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">매핑 연동 환불</span>
-                          <Undo2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--warning" />
-                        </div>
-                        <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">
-                            {formatCurrency(
-                              transactions
-                                .filter(t => t.transactionType === 'EXPENSE' &&
-                                  (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-                                    t.description?.includes('상담료 환불')))
-                                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                            )}
-                          </div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">자동 생성된 환불 지출</span>
-                        </div>
-                      </div>
+                  <h3 className="mg-v2-erp-financial-section-title">매핑 연동 현황</h3>
+                  <section className="mg-v2-erp-financial-kpi-strip" aria-label="매핑 연동 요약">
+                    <div className="mg-v2-erp-financial-kpi-strip__grid mg-v2-erp-financial-kpi-strip__grid--half">
+                      <ErpKpiStatCard
+                        title="매핑 연동 수입"
+                        value={transactions
+                          .filter(
+                            (t) =>
+                              t.transactionType === 'INCOME' &&
+                              (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
+                                t.description?.includes('상담료 입금 확인'))
+                          )
+                          .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        unit="자동 생성된 상담료 수입"
+                        variant={ERP_KPI_STAT_VARIANT.PRIMARY}
+                      />
+                      <ErpKpiStatCard
+                        title="매핑 연동 환불"
+                        value={transactions
+                          .filter(
+                            (t) =>
+                              t.transactionType === 'EXPENSE' &&
+                              (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
+                                t.description?.includes('상담료 환불'))
+                          )
+                          .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                        unit="자동 생성된 환불 지출"
+                        variant={ERP_KPI_STAT_VARIANT.WARNING}
+                      />
                     </div>
-                  </div>
+                  </section>
 
-                  <h3 className="mg-v2-ad-b0kla__section-title">빠른 액션</h3>
-                  <div className="mg-v2-erp-dashboard-actions">
+                  <h3 className="mg-v2-erp-financial-section-title">빠른 액션</h3>
+                  <div className="mg-v2-erp-financial-quick-actions">
                     <button
                       type="button"
                       className="mg-v2-button mg-v2-button-primary"
@@ -1003,13 +1049,14 @@ const FinancialManagement = () => {
             </p>
             <ul className="mg-v2-text-list mg-financial-management-delete-modal-list">
               <li>
-                거래 번호: #{toDisplayString(deleteModal.transaction.id)}
+                거래 번호: #<ErpSafeText value={deleteModal.transaction.id} />
               </li>
               <li>
                 금액:{' '}
-                <SafeText fallback="-">
-                  {`${toSafeNumber(deleteModal.transaction.amount).toLocaleString()}원`}
-                </SafeText>
+                <ErpSafeNumber
+                  value={deleteModal.transaction.amount}
+                  formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                />
               </li>
             </ul>
           </UnifiedModal>
@@ -1034,11 +1081,6 @@ const FinancialManagement = () => {
 const TransactionDetailModal = ({ transaction, onClose }) => {
   const [mappingDetail, setMappingDetail] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
-  };
 
   useEffect(() => {
     if (transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && transaction.relatedEntityId) {
@@ -1119,19 +1161,23 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </div>
           <div>
             <strong>카테고리:</strong>{' '}
-            <SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText>
+            <ErpSafeText
+              fallback="-"
+              value={transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}
+            />
           </div>
           <div>
             <strong>금액:</strong>
             <span className={`mg-v2-transaction-detail-amount ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-amount--income' : 'mg-v2-transaction-detail-amount--expense'}`}>
-              {formatCurrency(transaction.amount)}
+              <ErpSafeNumber value={transaction.amount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
             </span>
           </div>
           <div>
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
           </div>
           <div className="mg-v2-transaction-detail-form-grid__item--span2">
-            <strong>설명:</strong> <SafeText fallback="-">{transaction.description}</SafeText>
+            <strong>설명:</strong>{' '}
+            <ErpSafeText fallback="-" value={transaction.description} />
           </div>
         </div>
       </div>
@@ -1151,22 +1197,26 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 <strong>매핑 ID:</strong> #{toDisplayString(mappingDetail.mappingId)}
               </div>
               <div>
-                <strong>패키지명:</strong> <SafeText fallback="-">{mappingDetail.packageName}</SafeText>
+                <strong>패키지명:</strong>{' '}
+                <ErpSafeText fallback="-" value={mappingDetail.packageName} />
               </div>
               <div>
                 <strong>총 회기수:</strong> {toDisplayString(mappingDetail.totalSessions)}회
               </div>
               <div>
-                <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
+                <strong>회기당 단가:</strong>{' '}
+                <ErpSafeNumber value={mappingDetail.pricePerSession} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
                 <strong>패키지 가격:</strong>
-                <span className="mg-v2-transaction-detail-package-price">{formatCurrency(mappingDetail.packagePrice)}</span>
+                <span className="mg-v2-transaction-detail-package-price">
+                  <ErpSafeNumber value={mappingDetail.packagePrice} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                </span>
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
                 <strong>결제 금액:</strong>
                 <span className={`mg-v2-transaction-detail-payment-amount ${mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'mg-v2-transaction-detail-payment-amount--match' : 'mg-v2-transaction-detail-payment-amount--mismatch'}`}>
-                  {formatCurrency(mappingDetail.paymentAmount)}
+                  <ErpSafeNumber value={mappingDetail.paymentAmount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
                     <span className="mg-v2-transaction-detail-message-mismatch">(패키지 가격과 다름)</span>
                   )}
@@ -1179,7 +1229,9 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                     {mappingDetail.isConsistent ? '정상' : '불일치'}
                   </span>
                   {!mappingDetail.isConsistent && (
-                    <div className="mg-v2-transaction-detail-consistency-msg"><SafeText>{mappingDetail.consistencyMessage}</SafeText></div>
+                    <div className="mg-v2-transaction-detail-consistency-msg">
+                      <ErpSafeText value={mappingDetail.consistencyMessage} />
+                    </div>
                   )}
                 </div>
               )}
@@ -1189,7 +1241,9 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <div className="mg-v2-transaction-detail-related-list">
                     {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                       <div key={index} className="mg-v2-transaction-detail-related-item">
-                        #{toDisplayString(relatedTx.id)} - <SafeText>{relatedTx.type}</SafeText> - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
+                        #<ErpSafeText value={relatedTx.id} /> — <ErpSafeText value={relatedTx.type} /> —{' '}
+                        <ErpSafeNumber value={relatedTx.amount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />{' '}
+                        (<ErpSafeText value={formatDate(relatedTx.createdAt)} />)
                       </div>
                     ))}
                   </div>
@@ -1209,7 +1263,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </h3>
           <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
             <div>
-              <strong>연동 유형:</strong> <SafeText>{transaction.relatedEntityType}</SafeText>
+              <strong>연동 유형:</strong> <ErpSafeText value={transaction.relatedEntityType} />
             </div>
             <div>
               <strong>연동 ID:</strong> #{toDisplayString(transaction.relatedEntityId)}

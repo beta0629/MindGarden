@@ -1,9 +1,23 @@
 /**
- * FinancialCalendarView — 레이아웃 유틸 (토큰/인라인 스타일 분리)
+ * FinancialCalendarView — 레이아웃 유틸 (토큰/인라イン 스타일 분리)
  *
  * @author CoreSolution
  * @since 2026-04-09
  */
+
+.mg-v2-erp-financial-calendar-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.mg-financial-calendar-monthly-stats-title.mg-v2-erp-financial-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
 
 .mg-financial-calendar-detail-item-main {
   flex: 1;

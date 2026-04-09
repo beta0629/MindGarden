@@ -438,7 +438,7 @@ const FinancialTransactionForm = ({
             <button
               type="button"
               onClick={onClose}
-              className="mg-v2-button mg-v2-button--secondary"
+              className="mg-v2-button mg-v2-button-secondary"
             >
               취소
             </button>

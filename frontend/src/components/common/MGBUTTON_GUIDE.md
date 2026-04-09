@@ -82,6 +82,9 @@ import { MGButton } from '../ui';
 </MGButton>
 ```
 
+### `type="submit"` 과 폼 `onSubmit`만 쓰는 경우
+`type="submit"` 이고 `onClick` 이 없으며, 폼의 `onSubmit`(또는 `form` 속성으로 연결된 외부 폼의 제출)만으로 저장 처리하는 경우, **중복 클릭 방지로 클릭 직후 버튼이 비활성화되면** 일부 브라우저·타이밍에서 **네이티브 submit 이 막히는** 문제가 있을 수 있습니다. `MGButton`은 이 조합에서는 `preventDoubleClick`을 적용하지 않습니다(`true`를 넘겨도 동일). 필요하면 호출부에 `preventDoubleClick={false}` 를 명시해 의도를 드러낼 수 있습니다.
+
 ## ⏳ 로딩 상태 표시
 
 ### 기본 로딩 상태
@@ -224,6 +227,7 @@ const handleSearch = async () => {
 | `onClick` | function | - | 클릭 핸들러 |
 | `className` | string | '' | 추가 CSS 클래스 |
 | `type` | string | 'button' | 버튼 타입 (button, submit, reset) |
+| `form` | string | - | 연결할 폼 `id` (폼 밖에 submit 버튼을 둘 때) |
 | `children` | ReactNode | - | 버튼 내용 |
 | `style` | object | {} | 인라인 스타일 |
 | `title` | string | '' | 툴팁 텍스트 |

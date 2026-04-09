@@ -193,7 +193,7 @@ const AccountForm = ({
               variant="primary"
               loading={loading}
               loadingText={ACCOUNT_BUTTON_TEXT.PROCESSING}
-              preventDoubleClick
+              preventDoubleClick={false}
             >
               {editingAccount ? ACCOUNT_BUTTON_TEXT.EDIT : ACCOUNT_BUTTON_TEXT.SUBMIT}
             </MGButton>

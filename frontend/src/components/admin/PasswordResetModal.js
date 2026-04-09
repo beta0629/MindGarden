@@ -80,7 +80,7 @@ const PasswordResetModal = ({
                         variant="primary"
                         loading={isSubmitting}
                         loadingText="처리 중..."
-                        preventDoubleClick
+                        preventDoubleClick={false}
                     >
                         비밀번호 초기화
                     </MGButton>

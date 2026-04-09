@@ -15,11 +15,12 @@ import './MGButton.css';
  * @param {boolean} props.disabled - 비활성화 상태
  * @param {boolean} props.loading - 로딩 상태
  * @param {string} props.loadingText - 로딩 중 표시 텍스트
- * @param {boolean} props.preventDoubleClick - 중복 클릭 방지 여부
+ * @param {boolean} props.preventDoubleClick - 중복 클릭 방지 여부 (type=submit 이고 onClick 없음·또는 form 으로 외부 폼만 제출할 때는 무시되고 끔)
  * @param {number} props.clickDelay - 클릭 후 대기 시간 (ms)
  * @param {Function} props.onClick - 클릭 핸들러
  * @param {string} props.className - 추가 CSS 클래스
  * @param {string} props.type - 버튼 타입 (button, submit, reset)
+ * @param {string} [props.form] - 연결할 폼 id (해당 폼 submit 버튼이 폼 밖에 있을 때)
  * @param {React.ReactNode} props.children - 버튼 내용
  * @param {Object} props.style - 인라인 스타일
  * @param {string} props.title - 툴팁 텍스트
@@ -41,6 +42,7 @@ const MGButton = ({
   onClick,
   className = '',
   type = 'button',
+  form,
   children,
   style = {},
   title = '',
@@ -50,6 +52,13 @@ const MGButton = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // 네이티브 폼 제출만 쓰는 경우(onClick 없음): 클릭 직후 isProcessing 으로 disabled 되면
+  // 브라우저가 submit 을 수행하지 못할 수 있음. type=submit 이거나 form 으로 외부 폼에 연결된 submit 도 동일.
+  // 이 조합에서는 props.preventDoubleClick 이 true 여도 적용하지 않음.
+  const hasFormAttr = form != null && String(form).trim() !== '';
+  const isNativeFormSubmitOnly = !onClick && (type === 'submit' || hasFormAttr);
+  const effectivePreventDoubleClick = isNativeFormSubmitOnly ? false : preventDoubleClick;
+
   const handleClick = useCallback(async (e) => {
     // 이미 처리 중이거나 비활성화된 경우 무시
     if (isProcessing || disabled || loading) {
@@ -58,7 +67,7 @@ const MGButton = ({
     }
 
     // 중복 클릭 방지 활성화
-    if (preventDoubleClick) {
+    if (effectivePreventDoubleClick) {
       setIsProcessing(true);
     }
 
@@ -71,13 +80,13 @@ const MGButton = ({
       console.error('Button click handler error:', error);
     } finally {
       // 클릭 후 대기 시간 적용
-      if (preventDoubleClick) {
+      if (effectivePreventDoubleClick) {
         setTimeout(() => {
           setIsProcessing(false);
         }, clickDelay);
       }
     }
-  }, [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]);
+  }, [isProcessing, disabled, loading, effectivePreventDoubleClick, clickDelay, onClick]);
 
   const isLoadingState = loading || isProcessing;
   const isDisabledState = disabled;
@@ -106,6 +115,7 @@ const MGButton = ({
       title={title || (isLoadingState ? '처리 중입니다...' : '')}
       aria-disabled={isButtonDisabled}
       {...props}
+      form={form}
     >
       {variant === 'progress' && (
         <div 

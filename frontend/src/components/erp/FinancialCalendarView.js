@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
-import {
-  ErpKpiStatCard,
-  ErpSafeNumber,
-  ErpSafeText,
-  ERP_KPI_STAT_VARIANT,
-  ERP_NUMBER_FORMAT
-} from './common';
+import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import './FinancialCalendarView.css';
-import './FinancialManagement.css';
 import {
   DollarSign,
   TrendingDown,
@@ -118,7 +111,7 @@ const FinancialCalendarView = () => {
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
   return (
-    <div className="financial-calendar-view-container mg-v2-erp-financial-calendar-root">
+    <div className="financial-calendar-view-container">
       <div className="mg-calendar">
         <div className="mg-calendar-header">
           <button
@@ -350,8 +343,8 @@ const FinancialCalendarView = () => {
         </div>
       )}
 
-      <section className="mg-financial-calendar-monthly-stats mg-v2-erp-financial-kpi-strip" aria-label="월 통계">
-        <h3 className="mg-v2-erp-financial-section-title mg-financial-calendar-monthly-stats-title">
+      <section className="mg-financial-calendar-monthly-stats" aria-label="월 통계">
+        <h3 className="mg-financial-calendar-monthly-stats-title">
           <BarChart3 size={20} aria-hidden /> <ErpSafeText value={currentDate.getFullYear()} />년{' '}
           <ErpSafeText value={currentDate.getMonth() + 1} />월 통계
         </h3>
@@ -364,38 +357,59 @@ const FinancialCalendarView = () => {
             0
           );
           return (
-            <div className="mg-v2-erp-financial-kpi-strip__grid mg-financial-calendar-monthly-stats__grid">
-              <ErpKpiStatCard
-                title="수입 합계"
-                value={monthlyIncome}
-                formatType={ERP_NUMBER_FORMAT.CURRENCY}
-                unit="이번 달"
-                variant={ERP_KPI_STAT_VARIANT.PRIMARY}
-              />
-              <ErpKpiStatCard
-                title="지출 합계"
-                value={monthlyExpense}
-                formatType={ERP_NUMBER_FORMAT.CURRENCY}
-                unit="이번 달"
-                variant={ERP_KPI_STAT_VARIANT.WARNING}
-              />
-              <ErpKpiStatCard
-                title="순이익"
-                value={monthlyProfit}
-                formatType={ERP_NUMBER_FORMAT.CURRENCY}
-                unit="이번 달"
-                variant={
-                  monthlyProfit >= 0
-                    ? ERP_KPI_STAT_VARIANT.PRIMARY
-                    : ERP_KPI_STAT_VARIANT.WARNING
-                }
-              />
-              <ErpKpiStatCard
-                title="거래 건수"
-                value={totalTransactions}
-                formatType={ERP_NUMBER_FORMAT.COUNT}
-                unit="이번 달"
-              />
+            <div className="mg-financial-calendar-monthly-stats__grid mg-v2-erp-dashboard-kpi-grid">
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <span className="mg-v2-ad-b0kla__chart-title">수입 합계</span>
+                  <TrendingUp size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    +
+                    <ErpSafeNumber value={monthlyIncome} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                </div>
+              </div>
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <span className="mg-v2-ad-b0kla__chart-title">지출 합계</span>
+                  <TrendingDown size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    −
+                    <ErpSafeNumber value={monthlyExpense} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                </div>
+              </div>
+              <div
+                className={`mg-v2-ad-b0kla__card ${monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__card--accent-primary' : 'mg-v2-ad-b0kla__card--accent-error'}`}
+              >
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <span className="mg-v2-ad-b0kla__chart-title">순이익</span>
+                  <CircleDollarSign size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    <ErpSafeNumber value={monthlyProfit} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                </div>
+              </div>
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-secondary">
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <span className="mg-v2-ad-b0kla__chart-title">거래 건수</span>
+                  <BarChart3 size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    <ErpSafeNumber value={totalTransactions} formatType={ERP_NUMBER_FORMAT.COUNT} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                </div>
+              </div>
             </div>
           );
         })()}

@@ -27,7 +27,7 @@ export const FinancialRefundHubTabs = () => {
   }, [navigate]);
 
   return (
-    <div className="mg-v2-financial-refund-hub" role="group" aria-label="재무·환불 허브">
+    <nav className="mg-v2-financial-refund-hub" aria-label="재무·환불 허브">
       <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
         <button
           type="button"
@@ -48,7 +48,7 @@ export const FinancialRefundHubTabs = () => {
           <Undo2 size={18} aria-hidden /> 환불·정산
         </button>
       </div>
-    </div>
+    </nav>
   );
 };
 

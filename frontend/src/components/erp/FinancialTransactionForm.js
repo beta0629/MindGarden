@@ -153,7 +153,41 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
           onClose?.();
         }, 1200);
       } else {
-        const msg = body.message || '등록에 실패했습니다.';
+        const normalizeDetails = (raw) => {
+          if (raw == null || raw === '') return '';
+          if (typeof raw === 'string') return raw.trim();
+          if (typeof raw === 'object') {
+            if (Array.isArray(raw)) return raw.filter(Boolean).map(String).join(', ');
+            try {
+              return Object.entries(raw)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ');
+            } catch {
+              return '';
+            }
+          }
+          return String(raw).trim();
+        };
+
+        const baseMessage = typeof body.message === 'string' ? body.message.trim() : '';
+        const detailsText = normalizeDetails(body.details);
+        const errorCode = body.errorCode;
+
+        let msg;
+        if (errorCode === 'TENANT_ID_REQUIRED' || /tenant\s*id/i.test(baseMessage)) {
+          msg = '테넌트 정보가 없습니다. 다시 로그인 후 시도해 주세요.';
+        } else if (response.status === 403 && !baseMessage) {
+          msg = '요청이 거부되었습니다. 로그인 상태와 보안(CSRF) 설정을 확인해 주세요.';
+        } else {
+          const head = baseMessage || '등록에 실패했습니다.';
+          if (!detailsText) {
+            msg = head;
+          } else {
+            const withParens = `${head} (${detailsText})`;
+            msg = withParens.length > 200 ? `${head} · ${detailsText}` : withParens;
+          }
+        }
+
         setError(msg);
         notificationManager.show(msg, 'error', 4000);
       }

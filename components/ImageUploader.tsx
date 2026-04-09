@@ -283,8 +283,16 @@ export default function ImageUploader({
       const img = new Image();
       img.onload = () => {
         imageRef.current = img;
-        setResizeWidth(Math.min(img.width, maxWidth));
-        setResizeHeight(Math.min(img.height, maxHeight));
+        // 각 축을 따로 min() 하면 1920×1080 박스에 맞추며 비율이 깨짐 → 캔버스 스트레치 업로드 방지
+        let w = img.width;
+        let h = img.height;
+        const scale = Math.min(maxWidth / w, maxHeight / h);
+        if (scale < 1) {
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        setResizeWidth(w);
+        setResizeHeight(h);
         
         // 권장 사이즈/비율 체크 및 경고
         if (recommendedAspectRatio || recommendedSize) {

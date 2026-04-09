@@ -26,7 +26,7 @@ export const AUTH_API = {
   REGISTER: '/api/v1/auth/register',
   LOGOUT: '/api/v1/auth/logout',
   REFRESH_TOKEN: '/api/v1/auth/refresh',
-  GET_CURRENT_USER: '/api/v1/auth/me',
+  GET_CURRENT_USER: '/api/v1/auth/current-user',
   
   // 소셜 로그인
   KAKAO_OAUTH: '/api/v1/auth/oauth2/kakao',

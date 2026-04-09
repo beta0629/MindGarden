@@ -415,12 +415,14 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             >
               취소
             </button>
+            {/* type="submit" 에서 preventDoubleClick 기본값(true)이면 클릭 직후 버튼이 비활성화되어
+                브라우저가 form submit 을 막는 경우가 있음 → onSubmit(handleSubmit) 미실행·요청 없음 */}
             <MGButton
               type="submit"
               variant="primary"
               loading={loading}
               loadingText="등록 중..."
-              preventDoubleClick
+              preventDoubleClick={false}
             >
               등록하기
             </MGButton>

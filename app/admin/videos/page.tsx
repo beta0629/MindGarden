@@ -17,6 +17,28 @@ interface Video {
   updatedAt: string;
 }
 
+/** Nginx 등에서 413 HTML을 주거나 JSON이 아닐 때 대비 */
+async function readVideoAdminJson(
+  response: Response
+): Promise<{ success: boolean; error?: string } & Record<string, unknown>> {
+  if (response.status === 413) {
+    return {
+      success: false,
+      error:
+        '업로드 용량이 프록시(Nginx) 한도를 넘었습니다. 동영상을 더 줄이거나 「브라우저에서 먼저 1080p 압축」을 사용하세요. (개발 서버는 API 경로에 512MB까지 허용되도록 맞춰 두었습니다.)',
+    };
+  }
+  const ct = response.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    await response.text().catch(() => '');
+    return {
+      success: false,
+      error: `서버 응답을 해석할 수 없습니다 (HTTP ${response.status}). 보통 용량 초과(413)일 때 HTML 오류 페이지가 옵니다.`,
+    };
+  }
+  return response.json();
+}
+
 export default function VideoManagementPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -31,7 +53,9 @@ export default function VideoManagementPage() {
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [preencodeInBrowser, setPreencodeInBrowser] = useState(true);
+  const [transcoding, setTranscoding] = useState(false);
+  const [transcodeProgress, setTranscodeProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // 인증 확인
@@ -88,6 +112,7 @@ export default function VideoManagementPage() {
     });
     setVideoFile(null);
     setPreviewUrl(null);
+    setTranscodeProgress(null);
     setEditingId(null);
     setError(null);
   };
@@ -134,22 +159,47 @@ export default function VideoManagementPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setUploadProgress(0);
-
     if (!formData.title.trim()) {
       setError('제목을 입력해주세요.');
       return;
     }
 
     try {
+      let fileToUpload: File | null = videoFile;
+      let didClientPrecompress = false;
+
+      if (videoFile && preencodeInBrowser) {
+        try {
+          setTranscoding(true);
+          setTranscodeProgress(0);
+          const { clientTranscodeHeroVideo } = await import('@/lib/clientTranscodeHeroVideo');
+          fileToUpload = await clientTranscodeHeroVideo(videoFile, (p) => setTranscodeProgress(p));
+          didClientPrecompress = true;
+          setTranscodeProgress(100);
+        } catch (err: unknown) {
+          console.error(err);
+          const msg = err instanceof Error ? err.message : '브라우저 변환 실패';
+          setTranscodeProgress(null);
+          setError(
+            `${msg}. 아래 「브라우저에서 먼저 1080p 압축」을 끄고 원본 파일을 업로드해 보세요.`
+          );
+          return;
+        } finally {
+          setTranscoding(false);
+        }
+      }
+
       const submitFormData = new FormData();
       submitFormData.append('title', formData.title);
       submitFormData.append('description', formData.description);
       submitFormData.append('isActive', formData.isActive.toString());
       submitFormData.append('displayOrder', formData.displayOrder.toString());
 
-      if (videoFile) {
-        submitFormData.append('video', videoFile);
+      if (fileToUpload) {
+        submitFormData.append('video', fileToUpload);
+        if (didClientPrecompress) {
+          submitFormData.append('clientPrecompressed', 'true');
+        }
       }
 
       let response;
@@ -171,14 +221,15 @@ export default function VideoManagementPage() {
         });
       }
 
-      const data = await response.json();
+      const data = await readVideoAdminJson(response);
 
       if (data.success) {
+        setTranscodeProgress(null);
         resetForm();
         loadVideos();
         alert(editingId ? '비디오가 수정되었습니다.' : '비디오가 등록되었습니다.');
       } else {
-        setError(data.error || '비디오 등록에 실패했습니다.');
+        setError((typeof data.error === 'string' && data.error) || '비디오 등록에 실패했습니다.');
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -316,8 +367,56 @@ export default function VideoManagementPage() {
                 required={!editingId}
               />
               <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                최대 500MB, MP4 형식 권장 (4K 동영상 지원, 자동으로 1080p로 리사이징됨)
+                최대 500MB — 옵션을 켜면 브라우저에서 1080p로 줄인 뒤 올려 업로드가 빨라집니다. 끄면 서버에서
+                FFmpeg로 변환합니다.
               </p>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem',
+                  marginTop: '0.75rem',
+                  fontSize: '0.9rem',
+                  cursor: videoFile ? 'pointer' : 'not-allowed',
+                  opacity: videoFile ? 1 : 0.6,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={preencodeInBrowser}
+                  disabled={!videoFile || transcoding}
+                  onChange={(e) => setPreencodeInBrowser(e.target.checked)}
+                  style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
+                />
+                <span>
+                  브라우저에서 먼저 1080p로 압축 후 업로드 (MOV·대용량 권장, 첫 실행 시 ffmpeg.wasm 로드에
+                  시간이 걸릴 수 있음)
+                </span>
+              </label>
+              {transcoding && transcodeProgress !== null && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div
+                    style={{
+                      height: '8px',
+                      backgroundColor: '#e5e7eb',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${transcodeProgress}%`,
+                        backgroundColor: '#3b82f6',
+                        transition: 'width 0.2s ease',
+                      }}
+                    />
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.35rem' }}>
+                    변환 중… {transcodeProgress}%
+                  </p>
+                </div>
+              )}
             </div>
 
             {previewUrl && (
@@ -372,18 +471,19 @@ export default function VideoManagementPage() {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
                 type="submit"
+                disabled={transcoding}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: transcoding ? '#93c5fd' : '#3b82f6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.5rem',
                   fontSize: '1rem',
                   fontWeight: '500',
-                  cursor: 'pointer',
+                  cursor: transcoding ? 'not-allowed' : 'pointer',
                 }}
               >
-                {editingId ? '수정' : '등록'}
+                {transcoding ? '동영상 변환 중…' : editingId ? '수정' : '등록'}
               </button>
               {editingId && (
                 <button
@@ -499,7 +599,8 @@ export default function VideoManagementPage() {
             비디오 리사이징 가이드
           </h3>
           <p style={{ color: '#1e40af', marginBottom: '0.5rem' }}>
-            비디오를 업로드하기 전에 최적의 크기로 리사이징하는 것을 권장합니다.
+            위 체크박스로 브라우저에서 바로 1080p로 줄일 수 있습니다. 끄면 원본을 올리고 서버에서 FFmpeg로
+            처리합니다.
           </p>
           <ul style={{ color: '#1e40af', marginLeft: '1.5rem', marginBottom: '1rem' }}>
             <li>권장 해상도: 1920x1080 (Full HD)</li>

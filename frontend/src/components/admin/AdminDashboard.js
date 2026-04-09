@@ -34,6 +34,7 @@ import {
   SchedulePendingList
 } from './AdminDashboard/index';
 import { useSession } from '../../contexts/SessionContext';
+import { buildErpApprovalHubPath } from '../erp/approval/erpApprovalHubRoutes';
 import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
@@ -1508,7 +1509,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">상담사 구매 요청을 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
+                        <div className="mg-management-card" onClick={() => navigate(buildErpApprovalHubPath('admin'))}>
                             <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>
@@ -1516,7 +1517,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">구매 요청을 검토하고 승인합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/erp/super-approvals')}>
+                        <div className="mg-management-card" onClick={() => navigate(buildErpApprovalHubPath('super'))}>
                             <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>

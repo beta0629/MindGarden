@@ -64,6 +64,8 @@
 - [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
 
 ### Project Management (프로젝트 관리)
+- **[ERP 도메인 리뉴얼·고도화 마스터 플랜](./project-management/ERP_DOMAIN_RENEWAL_AND_ENHANCEMENT_PLAN.md)** — 전체 흐름·범위·필요 항목·페이즈(SSOT)
+- [ERP 현황 분석 — DB·로직](./project-management/ERP_CURRENT_STATE_DB_AND_LOGIC_ANALYSIS.md) — 테이블 맵·흐름·진단·개선 후보(마스터 플랜 연계)
 - [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
 - [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
 - [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)

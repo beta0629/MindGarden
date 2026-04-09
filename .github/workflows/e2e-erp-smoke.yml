@@ -1,0 +1,60 @@
+# ERP 라우트 스모크: 로그인·백엔드 없이 리다이렉트만 검증
+name: ERP E2E smoke (redirects)
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/src/components/erp/**'
+      - 'frontend/src/App.js'
+      - 'tests/e2e/tests/erp/**'
+      - 'tests/e2e/playwright.config.ts'
+      - 'frontend/scripts/verify-erp-navigate-targets.mjs'
+      - 'frontend/scripts/verify-erp-menu-items-sync.mjs'
+      - 'frontend/src/components/dashboard-v2/constants/menuItems.js'
+      - 'frontend/package.json'
+  workflow_dispatch:
+
+jobs:
+  e2e-erp-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies (Playwright webServer)
+        working-directory: frontend
+        run: npm ci
+
+      # 정적 검증: ERP 라우트·메뉴(npm run verify:erp, 실패 시 워크플로 종료)
+      - name: Verify ERP (static)
+        working-directory: frontend
+        run: npm run verify:erp
+
+      - name: Install E2E dependencies
+        working-directory: tests/e2e
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright Chromium
+        working-directory: tests/e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Run ERP redirect smoke tests
+        working-directory: tests/e2e
+        env:
+          BASE_URL: http://localhost:3000
+        run: |
+          npx playwright test tests/erp/erp-legacy-path-redirects.spec.ts --project=chromium
+          npx playwright test tests/erp/erp-approval-hub-redirect.spec.ts --grep "super-approvals" --project=chromium

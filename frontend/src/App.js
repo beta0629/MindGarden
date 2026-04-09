@@ -22,7 +22,6 @@ import ConsultationRecordView from './components/consultant/ConsultationRecordVi
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
-import ImprovedTaxManagement from './components/erp/ImprovedTaxManagement';
 import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
@@ -71,8 +70,8 @@ import ConsultantRecords from './components/consultant/ConsultantRecords';
 import ConsultantMessages from './components/consultant/ConsultantMessages';
 import ErpDashboard from './components/erp/ErpDashboard';
 import PurchaseRequestForm from './components/erp/PurchaseRequestForm';
-import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
-import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDashboard';
+import ErpApprovalHub from './components/erp/approval/ErpApprovalHub';
+import { buildErpApprovalHubPath } from './components/erp/approval/erpApprovalHubRoutes';
 import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
 import RefundManagement from './components/erp/RefundManagement';
@@ -579,10 +578,14 @@ function AppContent() {
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
             <Route path="/erp/refund-management" element={<RefundManagement />} />
-            <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
-            <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
+            <Route path="/erp/approvals" element={<ErpApprovalHub />} />
+            <Route
+              path="/erp/super-approvals"
+              element={<Navigate to={buildErpApprovalHubPath('super')} replace />}
+            />
             <Route path="/erp/items" element={<ItemManagement />} />
-            <Route path="/erp/budgets" element={<BudgetManagement />} />
+            <Route path="/erp/inventory" element={<Navigate to="/erp/items" replace />} />
+            <Route path="/erp/budgets" element={<Navigate to="/erp/budget" replace />} />
             <Route path="/erp/salary" element={<SalaryManagement />} />
             <Route path="/erp/orders" element={
               <ComingSoon 

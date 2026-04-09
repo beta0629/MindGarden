@@ -7,7 +7,8 @@ import ErpButton from './common/ErpButton';
 import './ItemManagement.css';
 import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API, COMMON_CODE_API } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
@@ -15,6 +16,9 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ErpCommon.css';
+import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
+import ErpPageShell from './shell/ErpPageShell';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 
@@ -53,9 +57,10 @@ const ItemManagement = () => {
   const loadCategoryCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=ITEM_CATEGORY');
-      if (response && response.length > 0) {
-        const options = response.map(code => ({
+      const raw = await StandardizedApi.get(COMMON_CODE_API.BASE, { codeGroup: 'ITEM_CATEGORY' });
+      const codeList = normalizeErpListResponse(raw);
+      if (codeList.length > 0) {
+        const options = codeList.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -85,13 +90,9 @@ const ItemManagement = () => {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const response = await apiGet('/api/v1/erp/items');
-      
-      if (response?.success) {
-        setItems(response.data || []);
-      } else {
-        setError('아이템 목록을 불러오는데 실패했습니다.');
-      }
+      const raw = await StandardizedApi.get(ERP_API.ITEMS);
+      const list = normalizeErpListResponse(raw);
+      setItems(list);
     } catch (error) {
       console.error('아이템 로드 실패:', error);
       setError('아이템 목록을 불러오는데 실패했습니다.');
@@ -128,7 +129,7 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiPost('/api/v1/erp/items', {
+      const response = await StandardizedApi.post(ERP_API.ITEMS, {
         name: formData.name,
         description: formData.description,
         category: formData.category,
@@ -137,13 +138,13 @@ const ItemManagement = () => {
         supplier: formData.supplier
       });
 
-      if (response?.success) {
+      if (response != null) {
         setSuccess('아이템이 성공적으로 생성되었습니다.');
         setShowCreateModal(false);
         resetForm();
         loadItems();
       } else {
-        setError(response?.message || '아이템 생성에 실패했습니다.');
+        setError('아이템 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('아이템 생성 실패:', error);
@@ -173,7 +174,7 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiPut(`/api/v1/erp/items/${editingItem.id}`, {
+      const response = await StandardizedApi.put(ERP_API.ITEM_BY_ID(editingItem.id), {
         name: formData.name,
         description: formData.description,
         category: formData.category,
@@ -182,14 +183,14 @@ const ItemManagement = () => {
         supplier: formData.supplier
       });
 
-      if (response?.success) {
+      if (response != null) {
         setSuccess('아이템이 성공적으로 수정되었습니다.');
         setShowEditModal(false);
         setEditingItem(null);
         resetForm();
         loadItems();
       } else {
-        setError(response?.message || '아이템 수정에 실패했습니다.');
+        setError('아이템 수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('아이템 수정 실패:', error);
@@ -211,13 +212,13 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiDelete(`/api/v1/erp/items/${item.id}`);
+      const response = await StandardizedApi.delete(ERP_API.ITEM_BY_ID(item.id));
 
-      if (response?.success) {
+      if (response != null) {
         setSuccess('아이템이 성공적으로 삭제되었습니다.');
         loadItems();
       } else {
-        setError(response?.message || '아이템 삭제에 실패했습니다.');
+        setError('아이템 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('아이템 삭제 실패:', error);
@@ -244,33 +245,40 @@ const ItemManagement = () => {
       <div className="mg-v2-ad-b0kla mg-v2-item-management">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="아이템 관리 콘텐츠">
-            <ContentHeader
-              title="아이템 관리"
-              subtitle="비품 아이템을 관리하세요"
-              titleId={ITEM_MANAGEMENT_TITLE_ID}
-              actions={
-                <div className="action-buttons">
-                  <ErpButton
-                    variant="secondary"
-                    onClick={() => window.history.back()}
-                  >
-                    뒤로가기
-                  </ErpButton>
-                  <ErpButton
-                    variant="primary"
-                    onClick={() => setShowCreateModal(true)}
-                  >
-                    <Plus size={16} /> 새 아이템 추가
-                  </ErpButton>
-                </div>
+            <ErpPageShell
+              headerSlot={
+                <ContentHeader
+                  title="아이템 관리"
+                  subtitle="조달 허브에서 품목·구매 요청·조달 화면을 오갈 수 있습니다."
+                  titleId={ITEM_MANAGEMENT_TITLE_ID}
+                  actions={
+                    <div className="action-buttons">
+                      <ErpButton
+                        variant="secondary"
+                        onClick={() => window.history.back()}
+                      >
+                        뒤로가기
+                      </ErpButton>
+                      <ErpButton
+                        variant="primary"
+                        onClick={() => setShowCreateModal(true)}
+                      >
+                        <Plus size={16} /> 새 아이템 추가
+                      </ErpButton>
+                    </div>
+                  }
+                />
               }
-            />
+              tabsSlot={<PurchaseHubSubNav />}
+              mainAriaLabel="아이템 관리 목록 및 본문"
+            >
             {loading && items.length === 0 ? (
               <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
             ) : (
-              <main
+              <div
                 aria-labelledby={ITEM_MANAGEMENT_TITLE_ID}
                 className="item-management-container"
+                role="region"
               >
                 {success && (
                   <div className="success-message">
@@ -332,8 +340,9 @@ const ItemManagement = () => {
                     ))}
                   </div>
                 </ErpCard>
-              </main>
+              </div>
             )}
+            </ErpPageShell>
 
         {/* 아이템 생성 모달 */}
         <ErpModal

@@ -1,6 +1,6 @@
 /**
- * @deprecated 2026-03-16 /erp/tax 단일화로 ImprovedTaxManagement만 사용.
- * 라우트는 App.js에서 ImprovedTaxManagement로 통일됨. 실데이터 연동은 ImprovedTaxManagement 참조.
+ * @deprecated 2026-03-16 App.js에서 `/erp/tax`는 `<Navigate to="/erp/salary?tab=tax" replace />`로만 연결됨.
+ * 실제 세무 UI는 SalaryManagement(급여 화면 tax 탭) 쪽에서 제공. 본 파일은 레거시·참고용.
  */
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';

@@ -1,8 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw } from 'lucide-react';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import { useState, useEffect } from 'react';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import ErpModal from './common/ErpModal';
@@ -10,6 +6,10 @@ import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString } from '../../utils/safeDisplay';
+import ApprovalHubLayout from './approval/ApprovalHubLayout';
+import { formatApprovalCurrency, formatApprovalDate } from './approval/approvalFormatters';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
@@ -29,20 +29,20 @@ const SuperAdminApprovalDashboard = () => {
     loadPendingRequests();
   }, []);
 
-  const loadPendingRequests = async () => {
+  const loadPendingRequests = async() => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/erp/purchase-requests/pending-super-admin');
-      const data = await response.json();
-      
-      if (data.success) {
-        setRequests(data.data || []);
+      setError('');
+      const list = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS_PENDING_SUPER_ADMIN);
+      if (Array.isArray(list)) {
+        setRequests(list);
       } else {
+        setRequests([]);
         setError('승인 대기 목록을 불러오는데 실패했습니다.');
       }
-    } catch (error) {
-      console.error('승인 대기 목록 로드 실패:', error);
-      setError('승인 대기 목록을 불러오는데 실패했습니다.');
+    } catch (err) {
+      console.error('승인 대기 목록 로드 실패:', err);
+      setError(err?.message || '승인 대기 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -60,39 +60,28 @@ const SuperAdminApprovalDashboard = () => {
     setShowRejectionModal(true);
   };
 
-  const submitApproval = async () => {
+  const submitApproval = async() => {
     if (!selectedRequest) return;
 
     try {
       setProcessing(true);
       setError('');
 
-      // 현재 수퍼 관리자 ID (세션에서 가져옴)
       const superAdminId = user?.id;
-      
+
       if (!superAdminId) {
         setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
         return;
       }
 
-      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/approve-super-admin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          superAdminId: superAdminId.toString(),
-          comment: comment
-        })
-      });
+      const endpoint = `${ERP_API.PURCHASE_REQUEST_APPROVE_SUPER_ADMIN(selectedRequest.id)}?superAdminId=${encodeURIComponent(superAdminId)}&comment=${encodeURIComponent(comment ?? '')}`;
+      const data = await StandardizedApi.post(endpoint, {});
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (data?.success) {
         setShowApprovalModal(false);
         loadPendingRequests();
       } else {
-        setError(data.message || '승인 처리에 실패했습니다.');
+        setError(data?.message || '승인 처리에 실패했습니다.');
       }
     } catch (error) {
       console.error('승인 처리 실패:', error);
@@ -102,39 +91,28 @@ const SuperAdminApprovalDashboard = () => {
     }
   };
 
-  const submitRejection = async () => {
+  const submitRejection = async() => {
     if (!selectedRequest) return;
 
     try {
       setProcessing(true);
       setError('');
 
-      // 현재 수퍼 관리자 ID (세션에서 가져옴)
       const superAdminId = user?.id;
-      
+
       if (!superAdminId) {
         setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
         return;
       }
 
-      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/reject-super-admin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          superAdminId: superAdminId.toString(),
-          comment: comment
-        })
-      });
+      const endpoint = `${ERP_API.PURCHASE_REQUEST_REJECT_SUPER_ADMIN(selectedRequest.id)}?superAdminId=${encodeURIComponent(superAdminId)}&comment=${encodeURIComponent(comment ?? '')}`;
+      const data = await StandardizedApi.post(endpoint, {});
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (data?.success) {
         setShowRejectionModal(false);
         loadPendingRequests();
       } else {
-        setError(data.message || '거부 처리에 실패했습니다.');
+        setError(data?.message || '거부 처리에 실패했습니다.');
       }
     } catch (error) {
       console.error('거부 처리 실패:', error);
@@ -144,54 +122,23 @@ const SuperAdminApprovalDashboard = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  if (loading) {
-    return (
-      <AdminCommonLayout title="슈퍼 승인">
-        <UnifiedLoading type="page" text="수퍼 관리자 승인 대기 요청을 불러오는 중..." />
-      </AdminCommonLayout>
-    );
-  }
-
   return (
-    <AdminCommonLayout title="슈퍼 승인">
-      <ContentHeader
-        title="수퍼 관리자 승인 대시보드"
-        subtitle="관리자 승인된 구매 요청의 최종 승인"
-        actions={
-          <ErpButton
-            variant="primary"
-            onClick={loadPendingRequests}
-          >
-            <RefreshCw size={16} aria-hidden />
-            새로고침
-          </ErpButton>
-        }
-      />
-      <ContentArea className="approval-dashboard-container">
-        {error && (
-          <div className="approval-dashboard-error">
-            <SafeErrorDisplay error={error} variant="inline" />
-          </div>
-        )}
+    <ApprovalHubLayout
+      layoutTitle="슈퍼 승인"
+      headerTitle="수퍼 관리자 승인 대시보드"
+      headerSubtitle="관리자 승인된 구매 요청의 최종 승인"
+      loading={loading}
+      loadingText="수퍼 관리자 승인 대기 요청을 불러오는 중..."
+      onRefresh={loadPendingRequests}
+      activeMode="super"
+    >
+      {error && (
+        <div className="approval-dashboard-error">
+          <SafeErrorDisplay error={error} variant="inline" />
+        </div>
+      )}
 
-        {requests.length === 0 ? (
+      {requests.length === 0 ? (
         <ErpCard title="승인 대기 목록">
           <div className="approval-dashboard-empty">
             수퍼 관리자 승인 대기 중인 구매 요청이 없습니다.
@@ -200,18 +147,17 @@ const SuperAdminApprovalDashboard = () => {
       ) : (
         <div className="approval-dashboard-grid">
           {requests.map(request => (
-            <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
+            <ErpCard key={request.id} title={toDisplayString(`구매 요청 #${request.id}`)}>
               <div className="approval-request-info">
                 <div className="approval-request-grid">
                   <div><strong>요청자:</strong> {toDisplayString(request.requester?.name, '알 수 없음')}</div>
-                  <div><strong>요청일:</strong> {formatDate(request.createdAt)}</div>
+                  <div><strong>요청일:</strong> {toDisplayString(formatApprovalDate(request.createdAt))}</div>
                   <div><strong>아이템:</strong> {toDisplayString(request.item?.name, '알 수 없음')}</div>
                   <div><strong>수량:</strong> {request.quantity}개</div>
-                  <div><strong>단가:</strong> {formatCurrency(request.unitPrice)}</div>
-                  <div><strong>총액:</strong> {formatCurrency(request.totalAmount)}</div>
+                  <div><strong>단가:</strong> {formatApprovalCurrency(request.unitPrice)}</div>
+                  <div><strong>총액:</strong> {formatApprovalCurrency(request.totalAmount)}</div>
                 </div>
 
-                {/* 관리자 승인 정보 */}
                 {request.adminApprover && (
                   <div className="approval-admin-info">
                     <div className="approval-admin-status">
@@ -219,14 +165,14 @@ const SuperAdminApprovalDashboard = () => {
                     </div>
                     <div className="mg-v2-text-sm">
                       <div><strong>승인자:</strong> {toDisplayString(request.adminApprover?.name, '알 수 없음')}</div>
-                      <div><strong>승인일:</strong> {formatDate(request.adminApprovedAt)}</div>
+                      <div><strong>승인일:</strong> {toDisplayString(formatApprovalDate(request.adminApprovedAt))}</div>
                       {request.adminComment && (
                         <div><strong>코멘트:</strong> {toDisplayString(request.adminComment)}</div>
                       )}
                     </div>
                   </div>
                 )}
-                
+
                 {request.reason && (
                   <div className="super-admin-form-group">
                     <strong>요청 사유:</strong>
@@ -258,7 +204,6 @@ const SuperAdminApprovalDashboard = () => {
         </div>
       )}
 
-      {/* 승인 모달 */}
       <ErpModal
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
@@ -272,7 +217,7 @@ const SuperAdminApprovalDashboard = () => {
               <div className="super-admin-info-box">
                 <div><strong>아이템:</strong> {toDisplayString(selectedRequest.item?.name)}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
-                <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
+                <div><strong>총액:</strong> {formatApprovalCurrency(selectedRequest.totalAmount)}</div>
                 <div><strong>요청자:</strong> {toDisplayString(selectedRequest.requester?.name)}</div>
               </div>
             </div>
@@ -310,7 +255,6 @@ const SuperAdminApprovalDashboard = () => {
         )}
       </ErpModal>
 
-      {/* 거부 모달 */}
       <ErpModal
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
@@ -324,7 +268,7 @@ const SuperAdminApprovalDashboard = () => {
               <div className="super-admin-info-box">
                 <div><strong>아이템:</strong> {toDisplayString(selectedRequest.item?.name)}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
-                <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
+                <div><strong>총액:</strong> {formatApprovalCurrency(selectedRequest.totalAmount)}</div>
                 <div><strong>요청자:</strong> {toDisplayString(selectedRequest.requester?.name)}</div>
               </div>
             </div>
@@ -363,8 +307,7 @@ const SuperAdminApprovalDashboard = () => {
           </div>
         )}
       </ErpModal>
-      </ContentArea>
-    </AdminCommonLayout>
+    </ApprovalHubLayout>
   );
 };
 

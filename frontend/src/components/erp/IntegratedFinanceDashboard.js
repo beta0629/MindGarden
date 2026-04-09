@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { AUTH_API, ERP_API } from '../../constants/api';
-import { ACCOUNT_API_ENDPOINTS } from '../../constants/account';
 import StandardizedApi from '../../utils/standardizedApi';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ErpPageShell from './shell/ErpPageShell';
 import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
@@ -99,6 +98,22 @@ const INCOME_CATEGORY_LABELS = {
 
 const getExpenseCategoryLabel = (code) => EXPENSE_CATEGORY_LABELS[code] || code;
 const getIncomeCategoryLabel = (code) => INCOME_CATEGORY_LABELS[code] || code;
+
+/** StandardizedApi/ajax가 { success, data } 래퍼를 벗긴 뒤에도 실패 본문 전체가 올 수 있음 → axios response.data.success === false 와 동등 */
+const isApiEnvelopeFailure = (result) => {
+  return Boolean(result && typeof result === 'object' && 'success' in result && result.success === false);
+};
+
+/** 분개·목록 등: unwrap 후 배열 또는 data 배열 */
+const normalizeListPayload = (result) => {
+  if (Array.isArray(result)) {
+    return result;
+  }
+  if (result && typeof result === 'object' && Array.isArray(result.data)) {
+    return result.data;
+  }
+  return [];
+};
 
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
@@ -206,17 +221,10 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       if (!currentUser || !currentUser.role) {
         try {
           console.log('🔄 세션 API 직접 호출 시도...');
-          const response = await fetch(AUTH_API.GET_CURRENT_USER, {
-            credentials: 'include',
-            method: 'GET'
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData && userData.role) {
-              console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
-              currentUser = userData; // currentUser 업데이트
-            }
+          const userData = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
+          if (userData && userData.role) {
+            console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
+            currentUser = userData;
           }
         } catch (error) {
           console.log('❌ 세션 API 호출 실패:', error);
@@ -324,34 +332,35 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const url = ERP_API.FINANCE_DASHBOARD;
-      const response = await axios.get(url, {
-        withCredentials: true
-      });
-      
-      if (response.data.success) {
-        setDashboardData(response.data.data);
-        console.log('✅ ERP 대시보드 데이터 로드 완료:', response.data.data);
-      } else {
-        setError(response.data.message);
-        
-        // 재로그인 필요한 경우 로그인 화면으로 이동
-        if (response.data.redirectToLogin) {
+      const result = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD);
+
+      if (result == null) {
+        console.error('🔒 대시보드 데이터 없음(세션/접근)');
+        redirectToLoginPageOnce();
+        return;
+      }
+
+      if (isApiEnvelopeFailure(result)) {
+        setError(result.message);
+        if (result.redirectToLogin) {
           console.error('🔒 세션 만료 - 로그인 화면으로 이동');
           navigate('/login', { replace: true });
           return;
         }
+        return;
       }
+
+      setDashboardData(result);
+      console.log('✅ ERP 대시보드 데이터 로드 완료:', result);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
-      
-      // 401 오류인 경우 로그인 화면으로 이동
+
       if (err.response?.status === 401 || err.status === 401) {
         console.error('🔒 인증 오류 - 로그인 화면으로 이동');
         redirectToLoginPageOnce();
         return;
       }
-      
+
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -389,46 +398,49 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   return (
     <AdminCommonLayout title="수입·지출 관리">
       <ContentArea ariaLabel="수입·지출 관리 본문">
-        <ContentHeader
-          title="수입·지출 관리"
-          subtitle="거래·손익·정산을 한곳에서"
-          titleId={INTEGRATED_FINANCE_TITLE_ID}
-          actions={(
-            <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
-              <MGButton
-                variant="danger"
-                size="small"
-                onClick={() => setShowQuickExpenseForm(true)}
-                title="빠른 지출"
-                className="mg-dashboard-icon-btn"
-              >
-                <TrendingDown size={18} />
-              </MGButton>
-              <MGButton
-                variant="success"
-                size="small"
-                onClick={() => setShowTransactionForm(true)}
-                title="거래 등록"
-                className="mg-dashboard-icon-btn"
-              >
-                <DollarSign size={18} />
-              </MGButton>
-              <MGButton
-                variant="primary"
-                size="small"
-                onClick={() => {
-                  navigate('/erp/financial');
-                }}
-                title="상세 내역 보기"
-                className="mg-dashboard-icon-btn"
-              >
-                <FileText size={18} />
-              </MGButton>
-            </div>
+        <ErpPageShell
+          className="mg-dashboard-content"
+          headerSlot={(
+            <ContentHeader
+              title="수입·지출 관리"
+              subtitle="거래·손익·정산을 한곳에서"
+              titleId={INTEGRATED_FINANCE_TITLE_ID}
+              actions={(
+                <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
+                  <MGButton
+                    variant="danger"
+                    size="small"
+                    onClick={() => setShowQuickExpenseForm(true)}
+                    title="빠른 지출"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <TrendingDown size={18} />
+                  </MGButton>
+                  <MGButton
+                    variant="success"
+                    size="small"
+                    onClick={() => setShowTransactionForm(true)}
+                    title="거래 등록"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <DollarSign size={18} />
+                  </MGButton>
+                  <MGButton
+                    variant="primary"
+                    size="small"
+                    onClick={() => {
+                      navigate('/erp/financial');
+                    }}
+                    title="상세 내역 보기"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <FileText size={18} />
+                  </MGButton>
+                </div>
+              )}
+            />
           )}
-        />
-        <section aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
-            {/* 탭 메뉴: B0KlA Pill 토큰 */}
+          tabsSlot={(
             <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
               {[
                 { key: 'overview', label: '개요' },
@@ -441,7 +453,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 { key: 'daily', label: '일간 리포트' },
                 { key: 'monthly', label: '월간 리포트' },
                 { key: 'yearly', label: '연간 리포트' }
-              ].map(tab => (
+              ].map((tab) => (
                 <button
                   key={tab.key}
                   type="button"
@@ -457,21 +469,26 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 </button>
               ))}
             </div>
-
-            {/* 콘텐츠 영역 */}
-            <div className="integrated-finance-content">
-              {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
-              {activeTab === 'journal-entries' && <JournalEntriesTab />}
-              {activeTab === 'ledgers' && <LedgersTab />}
-              {activeTab === 'balance-sheet' && <BalanceSheetTab />}
-              {activeTab === 'income-statement' && <IncomeStatementTab />}
-              {activeTab === 'cash-flow' && <CashFlowStatementTab />}
-              {activeTab === 'settlement' && <SettlementTab />}
-              {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
-              {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
-              {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
-            </div>
-        </section>
+          )}
+          mainAriaLabel="수입·지출 관리 탭 본문"
+        >
+          <div
+            className="integrated-finance-content"
+            role="region"
+            aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
+          >
+            {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
+            {activeTab === 'journal-entries' && <JournalEntriesTab />}
+            {activeTab === 'ledgers' && <LedgersTab />}
+            {activeTab === 'balance-sheet' && <BalanceSheetTab />}
+            {activeTab === 'income-statement' && <IncomeStatementTab />}
+            {activeTab === 'cash-flow' && <CashFlowStatementTab />}
+            {activeTab === 'settlement' && <SettlementTab />}
+            {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
+            {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
+            {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
+          </div>
+        </ErpPageShell>
       </ContentArea>
 
       {/* 모달 컴포넌트들 */}
@@ -1231,13 +1248,11 @@ const DailyReportTab = ({ period }) => {
   const fetchDailyReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(ERP_API.FINANCE_DAILY_REPORT, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setReportData(response.data.data);
+      const result = await StandardizedApi.get(ERP_API.FINANCE_DAILY_REPORT);
+      if (isApiEnvelopeFailure(result)) {
+        setError(result.message);
       } else {
-        setError(response.data.message);
+        setReportData(result);
       }
     } catch (err) {
       setError('일간 리포트를 불러오는 중 오류가 발생했습니다.');
@@ -1363,14 +1378,14 @@ const MonthlyReportTab = ({ period }) => {
   const fetchMonthlyReport = async () => {
     try {
       setLoading(true);
-      const url = `${ERP_API.FINANCE_MONTHLY_REPORT}?year=${currentMonth.year}&month=${currentMonth.month}`;
-      const response = await axios.get(url, {
-        withCredentials: true
+      const result = await StandardizedApi.get(ERP_API.FINANCE_MONTHLY_REPORT, {
+        year: currentMonth.year,
+        month: currentMonth.month
       });
-      if (response.data.success) {
-        setReportData(response.data.data);
+      if (isApiEnvelopeFailure(result)) {
+        setError(result.message);
       } else {
-        setError(response.data.message);
+        setReportData(result);
       }
     } catch (err) {
       setError('월간 리포트를 불러오는 중 오류가 발생했습니다.');
@@ -1545,14 +1560,11 @@ const YearlyReportTab = ({ period }) => {
   const fetchYearlyReport = async () => {
     try {
       setLoading(true);
-      const url = `${ERP_API.FINANCE_YEARLY_REPORT}?year=${currentYear}`;
-      const response = await axios.get(url, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setReportData(response.data.data);
+      const result = await StandardizedApi.get(ERP_API.FINANCE_YEARLY_REPORT, { year: currentYear });
+      if (isApiEnvelopeFailure(result)) {
+        setError(result.message);
       } else {
-        setError(response.data.message);
+        setReportData(result);
       }
     } catch (err) {
       setError('년간 리포트를 불러오는 중 오류가 발생했습니다.');
@@ -1679,11 +1691,9 @@ const JournalEntriesTab = () => {
 
   const fetchJournalEntries = async () => {
     try {
-      const response = await axios.get(ERP_API.JOURNAL_ENTRIES, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setEntries(response.data.data || []);
+      const result = await StandardizedApi.get(ERP_API.JOURNAL_ENTRIES);
+      if (!isApiEnvelopeFailure(result)) {
+        setEntries(normalizeListPayload(result));
       }
     } catch (err) {
       console.error('Journal entries fetch error:', err);
@@ -1695,10 +1705,8 @@ const JournalEntriesTab = () => {
 
   const handleApprove = async (id) => {
     try {
-      const response = await axios.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {}, {
-        withCredentials: true
-      });
-      if (response.data.success) {
+      const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {});
+      if (!isApiEnvelopeFailure(result)) {
         notificationManager.show('거래가 반영되었습니다.', 'success');
         fetchJournalEntries();
       }
@@ -1710,10 +1718,8 @@ const JournalEntriesTab = () => {
 
   const handlePost = async (id) => {
     try {
-      const response = await axios.put(ERP_API.JOURNAL_ENTRY_POST(id), {}, {
-        withCredentials: true
-      });
-      if (response.data.success) {
+      const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_POST(id), {});
+      if (!isApiEnvelopeFailure(result)) {
         notificationManager.show('거래가 반영되었습니다.', 'success');
         fetchJournalEntries();
       }
@@ -1908,9 +1914,9 @@ const LedgersTab = () => {
   useEffect(() => {
     const loadAccounts = async () => {
       try {
-        const res = await axios.get(ACCOUNT_API_ENDPOINTS.ACTIVE, { withCredentials: true });
-        const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-        setAccountList(list);
+        const res = await StandardizedApi.get('/api/v1/accounts/active');
+        const list = Array.isArray(res) ? res : (res?.data ?? []);
+        setAccountList(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error('계좌 목록 로드 실패:', err);
         notificationManager.show('계좌 목록을 불러오는데 실패했습니다.', 'error');
@@ -1930,16 +1936,18 @@ const LedgersTab = () => {
     
     setLoading(true);
     try {
-      let url = ERP_API.LEDGERS_ACCOUNT(selectedAccountId);
+      let result;
       if (periodStart && periodEnd) {
-        url = `${ERP_API.LEDGERS_PERIOD}?accountId=${selectedAccountId}&startDate=${periodStart}&endDate=${periodEnd}`;
+        result = await StandardizedApi.get(ERP_API.LEDGERS_PERIOD, {
+          accountId: selectedAccountId,
+          startDate: periodStart,
+          endDate: periodEnd
+        });
+      } else {
+        result = await StandardizedApi.get(ERP_API.LEDGERS_ACCOUNT(selectedAccountId));
       }
-      
-      const response = await axios.get(url, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setLedgers(Array.isArray(response.data.data) ? response.data.data : [response.data.data]);
+      if (!isApiEnvelopeFailure(result) && result != null) {
+        setLedgers(Array.isArray(result) ? result : [result]);
       }
     } catch (err) {
       console.error('Ledger fetch error:', err);
@@ -2063,11 +2071,9 @@ const SettlementTab = () => {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(ERP_API.SETTLEMENT_RULES, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setRules(response.data.data || []);
+      const result = await StandardizedApi.get(ERP_API.SETTLEMENT_RULES);
+      if (!isApiEnvelopeFailure(result)) {
+        setRules(normalizeListPayload(result));
       }
     } catch (err) {
       console.error('Settlement rules fetch error:', err);
@@ -2080,11 +2086,9 @@ const SettlementTab = () => {
   const fetchSettlements = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(ERP_API.SETTLEMENT_RESULTS, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setSettlements(response.data.data || []);
+      const result = await StandardizedApi.get(ERP_API.SETTLEMENT_RESULTS);
+      if (!isApiEnvelopeFailure(result)) {
+        setSettlements(normalizeListPayload(result));
       }
     } catch (err) {
       console.error('Settlements fetch error:', err);
@@ -2096,10 +2100,11 @@ const SettlementTab = () => {
 
   const handleCalculate = async (period) => {
     try {
-      const response = await axios.post(`${ERP_API.SETTLEMENT_CALCULATE}?period=${period}`, {}, {
-        withCredentials: true
-      });
-      if (response.data.success) {
+      const result = await StandardizedApi.post(
+        `${ERP_API.SETTLEMENT_CALCULATE}?period=${encodeURIComponent(period)}`,
+        {}
+      );
+      if (!isApiEnvelopeFailure(result)) {
         notificationManager.show('정산이 계산되었습니다.', 'success');
         fetchSettlements();
       }
@@ -2260,10 +2265,8 @@ const SettlementTab = () => {
                               size="small"
                               onClick={async () => {
                                 try {
-                                  const response = await axios.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {}, {
-                                    withCredentials: true
-                                  });
-                                  if (response.data.success) {
+                                  const result = await StandardizedApi.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {});
+                                  if (!isApiEnvelopeFailure(result)) {
                                     notificationManager.show('정산이 승인되었습니다.', 'success');
                                     fetchSettlements();
                                   }
@@ -2310,11 +2313,9 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 
   const fetchEntryDetail = async () => {
     try {
-      const response = await axios.get(ERP_API.JOURNAL_ENTRY_DETAIL(entry.id), {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setEntryDetail(response.data.data);
+      const result = await StandardizedApi.get(ERP_API.JOURNAL_ENTRY_DETAIL(entry.id));
+      if (!isApiEnvelopeFailure(result)) {
+        setEntryDetail(result);
       }
     } catch (err) {
       console.error('Entry detail fetch error:', err);
@@ -2531,16 +2532,14 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         }))
       };
 
-      const response = await axios.post(ERP_API.JOURNAL_ENTRIES, requestData, {
-        withCredentials: true
-      });
+      const result = await StandardizedApi.post(ERP_API.JOURNAL_ENTRIES, requestData);
 
-      if (response.data.success) {
+      if (isApiEnvelopeFailure(result)) {
+        notificationManager.show(result.message || '거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
+      } else {
         notificationManager.show('거래가 등록되었습니다.', 'success');
         onRefresh();
         onClose();
-      } else {
-        notificationManager.show(response.data.message || '거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
       }
     } catch (err) {
       console.error('Create entry error:', err);
@@ -2800,16 +2799,14 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
         isActive: formData.isActive
       };
 
-      const response = await axios.post(ERP_API.SETTLEMENT_RULES, requestData, {
-        withCredentials: true
-      });
+      const result = await StandardizedApi.post(ERP_API.SETTLEMENT_RULES, requestData);
 
-      if (response.data.success) {
+      if (isApiEnvelopeFailure(result)) {
+        notificationManager.show(result.message || '정산 규칙 저장에 실패했습니다.', 'error');
+      } else {
         notificationManager.show(rule ? '정산 규칙이 수정되었습니다.' : '정산 규칙이 생성되었습니다.', 'success');
         onRefresh();
         onClose();
-      } else {
-        notificationManager.show(response.data.message || '정산 규칙 저장에 실패했습니다.', 'error');
       }
     } catch (err) {
       console.error('Settlement rule save error:', err);
@@ -2955,12 +2952,10 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     setLoadingEntries(true);
     try {
       // 해당 기간의 분개 목록 조회 (계정 ID 필터링은 백엔드에서 처리)
-      const response = await axios.get(ERP_API.JOURNAL_ENTRIES, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        // 프론트엔드에서 기간 및 계정 필터링
-        const entries = (response.data.data || []).filter(entry => {
+      const result = await StandardizedApi.get(ERP_API.JOURNAL_ENTRIES);
+      if (!isApiEnvelopeFailure(result)) {
+        const allEntries = normalizeListPayload(result);
+        const entries = allEntries.filter(entry => {
           const entryDate = new Date(entry.entryDate);
           const periodStart = new Date(ledger.periodStart);
           const periodEnd = new Date(ledger.periodEnd);
@@ -3185,16 +3180,14 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         }))
       };
 
-      const response = await axios.put(ERP_API.JOURNAL_ENTRY_UPDATE(entry.id), requestData, {
-        withCredentials: true
-      });
+      const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_UPDATE(entry.id), requestData);
 
-      if (response.data.success) {
+      if (isApiEnvelopeFailure(result)) {
+        notificationManager.show(result.message || '거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
+      } else {
         notificationManager.show('거래가 수정되었습니다.', 'success');
         onRefresh();
         onClose();
-      } else {
-        notificationManager.show(response.data.message || '거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
       }
     } catch (err) {
       console.error('Update entry error:', err);

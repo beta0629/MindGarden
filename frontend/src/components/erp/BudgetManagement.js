@@ -6,6 +6,7 @@ import { ERP_API, COMMON_CODE_API } from '../../constants/api';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import ErpPageShell from './shell/ErpPageShell';
 import ErpModal from './common/ErpModal';
 import ErpButton from './common/ErpButton';
 import { PiggyBank, List, Tag, TrendingUp, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
@@ -326,38 +327,44 @@ const BudgetManagement = () => {
   return (
     <AdminCommonLayout title="예산 관리">
       <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
-        <ContentHeader
-          title="예산 관리"
-          subtitle="예산 계획 및 관리를 할 수 있습니다."
-        />
-        <div className="erp-container">
-          <div className="erp-tabs">
-            <button
-              type="button"
-              className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
-              onClick={() => setActiveTab('budgets')}
-            >
-              <List size={18} aria-hidden />
-              예산 목록
-            </button>
-            <button
-              type="button"
-              className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
-              onClick={() => setActiveTab('categories')}
-            >
-              <Tag size={18} aria-hidden />
-              카테고리
-            </button>
-            <button
-              type="button"
-              className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
-            >
-              <TrendingUp size={18} aria-hidden />
-              보고서
-            </button>
-          </div>
-
+        <ErpPageShell
+          headerSlot={
+            <ContentHeader
+              title="예산 관리"
+              subtitle="예산 계획 및 관리를 할 수 있습니다."
+            />
+          }
+          tabsSlot={
+            <div className="erp-tabs">
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
+                onClick={() => setActiveTab('budgets')}
+              >
+                <List size={18} aria-hidden />
+                예산 목록
+              </button>
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
+                onClick={() => setActiveTab('categories')}
+              >
+                <Tag size={18} aria-hidden />
+                카테고리
+              </button>
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
+                onClick={() => setActiveTab('reports')}
+              >
+                <TrendingUp size={18} aria-hidden />
+                보고서
+              </button>
+            </div>
+          }
+          mainAriaLabel="예산 관리 목록 및 본문"
+        >
+          <div className="erp-container">
           <div className="erp-content">
             {loading && (
               <div className="budget-management-loading">
@@ -804,6 +811,7 @@ const BudgetManagement = () => {
             )}
           </div>
         </div>
+        </ErpPageShell>
       </ContentArea>
 
       <ErpModal

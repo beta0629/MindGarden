@@ -7,26 +7,10 @@
  */
 
 import React from 'react';
-import StatusBadge from '../../common/StatusBadge';
-
-const ERP_STATUS_MAP = {
-  SENT: { text: '전송완료', variant: 'success' },
-  PENDING: { text: '전송대기', variant: 'warning' },
-  FAILED: { text: '전송실패', variant: 'danger' },
-  CONFIRMED: { text: '확인완료', variant: 'neutral' }
-};
+import ErpStatusBadge from '../common/ErpStatusBadge';
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
-
-const RefundErpStatusBadge = ({ status }) => {
-  const config = ERP_STATUS_MAP[status] || { text: '알수없음', variant: 'neutral' };
-  return (
-    <StatusBadge variant={config.variant}>
-      {config.text}
-    </StatusBadge>
-  );
-};
 
 const RefundHistoryTableBlock = ({
   refundHistory,
@@ -134,7 +118,7 @@ const RefundHistoryTableBlock = ({
                     <td className="refund-management__td">{formatCurrency(refund.refundAmount)}</td>
                     <td className="refund-management__td">{refund.standardizedReason}</td>
                     <td className="refund-management__td">
-                      <RefundErpStatusBadge status={refund.erpStatus} />
+                      <ErpStatusBadge status={refund.erpStatus} />
                     </td>
                     <td className="refund-management__td refund-management__td--action">
                       <button

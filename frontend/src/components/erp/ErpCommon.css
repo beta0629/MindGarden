@@ -408,6 +408,19 @@
   background-color: var(--mg-gray-100);
 }
 
+/* NavLink 기반 탭 (조달 허브 서브네비) */
+.erp-system a.erp-tab {
+  text-decoration: none;
+}
+
+.mg-v2-purchase-hub-subnav {
+  margin-bottom: var(--mg-layout-gap);
+}
+
+.mg-v2-purchase-hub-subnav .mg-v2-purchase-hub-tabs {
+  margin-bottom: var(--mg-layout-gap);
+}
+
 /* 콘텐츠 영역 */
 .erp-system .erp-content {
   min-height: 400px;
@@ -1985,4 +1998,9 @@
   .erp-system .erp-table {
     min-width: 600px;
   }
+}
+
+/* 재무·환불 허브(일상 거래 / 환불·정산) 상단 탭 여백 */
+.mg-v2-financial-refund-hub {
+  margin-bottom: var(--spacing-md, 1rem);
 }

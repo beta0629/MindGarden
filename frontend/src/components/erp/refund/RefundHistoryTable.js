@@ -1,27 +1,14 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
-import StatusBadge from '../../common/StatusBadge';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import ErpStatusBadge from '../common/ErpStatusBadge';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
-const ERP_STATUS_MAP = {
-  SENT: { text: '전송완료', variant: 'success' },
-  PENDING: { text: '전송대기', variant: 'warning' },
-  FAILED: { text: '전송실패', variant: 'danger' },
-  CONFIRMED: { text: '확인완료', variant: 'neutral' }
-};
-
 const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
-    };
-
-    const getErpStatusBadge = (status) => {
-        const config = ERP_STATUS_MAP[status] || { text: '알수없음', variant: 'neutral' };
-        return <StatusBadge variant={config.variant}>{toDisplayString(config.text, '—')}</StatusBadge>;
     };
 
     return (
@@ -67,7 +54,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                                             {refund.standardizedReason}
                                         </td>
                                         <td className="mg-v2-table-cell">
-                                            {getErpStatusBadge(refund.erpStatus)}
+                                            <ErpStatusBadge status={refund.erpStatus} />
                                         </td>
                                     </tr>
                                 ))}

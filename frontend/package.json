@@ -74,11 +74,14 @@
     "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
     "format:check": "prettier --check src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
     "verify:quick-action-routes": "node scripts/verify-quick-action-routes.mjs",
+    "verify:erp-navigate-targets": "node scripts/verify-erp-navigate-targets.mjs",
+    "verify:erp-menu-items-sync": "node scripts/verify-erp-menu-items-sync.mjs",
+    "verify:erp": "node scripts/verify-erp-navigate-targets.mjs && node scripts/verify-erp-menu-items-sync.mjs",
     "verify:quick-action-labels": "node scripts/verify-quick-action-labels.mjs",
     "validate-css": "node scripts/validate-css-classes.js",
     "scan-css": "node scripts/scan-css-classes.js",
     "generate-css-docs": "node scripts/generate-css-docs.js",
-    "pre-commit": "npm run lint:check && npm run format:check && npm run validate-css"
+    "pre-commit": "npm run lint:check && npm run format:check && npm run validate-css && npm run verify:erp"
   },
   "browserslist": {
     "production": [

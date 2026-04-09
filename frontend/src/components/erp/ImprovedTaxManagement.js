@@ -1,3 +1,7 @@
+/**
+ * App.js에는 현재 import·라우트로 연결되지 않음(제거된 상태).
+ * 세무 전용 개선 UI 참고 및 향후 Salary/ERP 흐름에 통합할 때 재사용하기 위해 저장소에 유지.
+ */
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';

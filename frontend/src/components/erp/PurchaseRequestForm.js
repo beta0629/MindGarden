@@ -12,6 +12,11 @@ import { useSession } from '../../hooks/useSession';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
+import './ErpCommon.css';
+import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
+import ErpPageShell from './shell/ErpPageShell';
 
 const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
 
@@ -35,14 +40,9 @@ const PurchaseRequestForm = () => {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/erp/items');
-      const data = await response.json();
-      
-      if (data.success) {
-        setItems(data.data || []);
-      } else {
-        setError('아이템 목록을 불러오는데 실패했습니다.');
-      }
+      const raw = await StandardizedApi.get(ERP_API.ITEMS);
+      const list = normalizeErpListResponse(raw);
+      setItems(list);
     } catch (error) {
       console.error('아이템 로드 실패:', error);
       setError('아이템 목록을 불러오는데 실패했습니다.');
@@ -120,28 +120,20 @@ const PurchaseRequestForm = () => {
         reason: reason
       }));
 
-      // 각 요청을 순차적으로 처리
       const results = [];
       for (const request of requests) {
-        const response = await fetch('/api/v1/erp/purchase-requests', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            requesterId: request.requesterId.toString(),
-            itemId: request.itemId.toString(),
-            quantity: request.quantity.toString(),
-            reason: request.reason
-          })
-        });
-
-        const data = await response.json();
+        const formData = new FormData();
+        formData.append('requesterId', String(request.requesterId));
+        formData.append('itemId', String(request.itemId));
+        formData.append('quantity', String(request.quantity));
+        if (request.reason) {
+          formData.append('reason', request.reason);
+        }
+        const data = await StandardizedApi.postFormData(ERP_API.PURCHASE_REQUESTS, formData);
         results.push(data);
       }
 
-      // 모든 요청이 성공했는지 확인
-      const allSuccess = results.every(result => result.success);
+      const allSuccess = results.every((result) => result && result.success);
       
       if (allSuccess) {
         setShowSuccessModal(true);
@@ -175,21 +167,28 @@ const PurchaseRequestForm = () => {
       <div className="mg-v2-ad-b0kla mg-v2-purchase-request-form">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="구매 요청 본문">
-            <ContentHeader
-              title="구매 요청"
-              subtitle="필요한 비품을 요청하세요"
-              titleId={PURCHASE_REQUEST_TITLE_ID}
-              actions={
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => window.history.back()}
-                >
-                  뒤로가기
-                </MGButton>
+            <ErpPageShell
+              headerSlot={
+                <ContentHeader
+                  title="구매 요청"
+                  subtitle="조달 허브에서 조달·품목 화면과 이동할 수 있습니다. 필요한 비품을 요청하세요."
+                  titleId={PURCHASE_REQUEST_TITLE_ID}
+                  actions={
+                    <MGButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => window.history.back()}
+                    >
+                      뒤로가기
+                    </MGButton>
+                  }
+                />
               }
-            />
-            {inner}
+              tabsSlot={<PurchaseHubSubNav />}
+              mainAriaLabel="구매 요청 본문"
+            >
+              {inner}
+            </ErpPageShell>
           </ContentArea>
         </div>
       </div>
@@ -204,9 +203,10 @@ const PurchaseRequestForm = () => {
 
   return shell(
     <>
-      <main
+      <div
         aria-labelledby={PURCHASE_REQUEST_TITLE_ID}
         className="purchase-request-form-container"
+        role="region"
       >
         <div className="mg-v2-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <ErpCard title="구매 요청서 작성">
@@ -513,7 +513,7 @@ const PurchaseRequestForm = () => {
           </form>
         </ErpCard>
         </div>
-      </main>
+      </div>
 
       <ErpModal
         isOpen={showSuccessModal}

@@ -320,7 +320,24 @@ export const ERP_API = {
 
   /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
   BUDGETS: '/api/v1/erp/budgets',
-  BUDGET_BY_ID: (id) => `/api/v1/erp/budgets/${id}`
+  BUDGET_BY_ID: (id) => `/api/v1/erp/budgets/${id}`,
+
+  /** 비품·조달 (품목 / 구매 요청 / 주문 — ErpController) */
+  ITEMS: '/api/v1/erp/items',
+  ITEM_BY_ID: (id) => `/api/v1/erp/items/${id}`,
+  PURCHASE_REQUESTS: '/api/v1/erp/purchase-requests',
+  PURCHASE_ORDERS: '/api/v1/erp/purchase-orders',
+
+  /** 구매 요청 승인 허브 (ErpController — pending GET, approve/reject POST는 쿼리스트링 파라미터) */
+  PURCHASE_REQUESTS_PENDING_ADMIN: '/api/v1/erp/purchase-requests/pending-admin',
+  PURCHASE_REQUESTS_PENDING_SUPER_ADMIN: '/api/v1/erp/purchase-requests/pending-super-admin',
+  PURCHASE_REQUEST_APPROVE_ADMIN: (id) => `/api/v1/erp/purchase-requests/${id}/approve-admin`,
+  PURCHASE_REQUEST_REJECT_ADMIN: (id) => `/api/v1/erp/purchase-requests/${id}/reject-admin`,
+  PURCHASE_REQUEST_APPROVE_SUPER_ADMIN: (id) => `/api/v1/erp/purchase-requests/${id}/approve-super-admin`,
+  PURCHASE_REQUEST_REJECT_SUPER_ADMIN: (id) => `/api/v1/erp/purchase-requests/${id}/reject-super-admin`,
+
+  /** 운영 리포트 Excel 다운로드 (바이너리 응답 — StandardizedApi 외 fetch + 테넌트 헤더) */
+  REPORTS_DOWNLOAD: '/api/v1/erp/reports/download'
 };
 
 // 온보딩 관련 API

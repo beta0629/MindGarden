@@ -3,7 +3,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { Package, FileText, ShoppingCart, RefreshCw, Eye } from 'lucide-react';
@@ -11,11 +12,11 @@ import './ErpCommon.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
+import ErpPageShell from './shell/ErpPageShell';
 
 /**
- * ERP 구매 관리 페이지
-/**
- * 비품 구매 요청 및 주문 관리
+ * ERP 구매 관리 페이지 — 비품 구매 요청 및 주문 관리
  */
 const PurchaseManagement = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -26,7 +27,6 @@ const PurchaseManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 데이터 로드
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
       loadData();
@@ -61,12 +61,9 @@ const PurchaseManagement = () => {
 
   const loadItems = async () => {
     try {
-      const response = await apiGet('/api/v1/erp/items');
-      if (response.success) {
-        setItems(response.data || []);
-      } else {
-        setError(response.message || '아이템 목록을 불러올 수 없습니다.');
-      }
+      const raw = await StandardizedApi.get(ERP_API.ITEMS);
+      const list = normalizeErpListResponse(raw);
+      setItems(list);
     } catch (err) {
       console.error('아이템 로드 실패:', err);
       setError('아이템 목록을 불러오는 중 오류가 발생했습니다.');
@@ -75,12 +72,9 @@ const PurchaseManagement = () => {
 
   const loadPurchaseRequests = async () => {
     try {
-      const response = await apiGet('/api/v1/erp/purchase-requests');
-      if (response.success) {
-        setPurchaseRequests(response.data || []);
-      } else {
-        setError(response.message || '구매 요청 목록을 불러올 수 없습니다.');
-      }
+      const raw = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS);
+      const list = normalizeErpListResponse(raw);
+      setPurchaseRequests(list);
     } catch (err) {
       console.error('구매 요청 로드 실패:', err);
       setError('구매 요청 목록을 불러오는 중 오류가 발생했습니다.');
@@ -89,12 +83,9 @@ const PurchaseManagement = () => {
 
   const loadPurchaseOrders = async () => {
     try {
-      const response = await apiGet('/api/v1/erp/purchase-orders');
-      if (response.success) {
-        setPurchaseOrders(response.data || []);
-      } else {
-        setError(response.message || '구매 주문 목록을 불러올 수 없습니다.');
-      }
+      const raw = await StandardizedApi.get(ERP_API.PURCHASE_ORDERS);
+      const list = normalizeErpListResponse(raw);
+      setPurchaseOrders(list);
     } catch (err) {
       console.error('구매 주문 로드 실패:', err);
       setError('구매 주문 목록을 불러오는 중 오류가 발생했습니다.');
@@ -123,38 +114,45 @@ const PurchaseManagement = () => {
   return (
     <AdminCommonLayout title="구매 관리">
       <ContentArea className="erp-system mg-v2-content-area">
-        <ContentHeader
-          title="구매 관리"
-          subtitle="비품 구매 요청 및 주문을 관리할 수 있습니다."
-        />
-        <div className="erp-container">
-        {/* 탭 네비게이션 */}
-        <div className="erp-tabs">
-          <button
-            className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
-            onClick={() => setActiveTab('items')}
-          >
-            <Package size={18} aria-hidden />
-            비품 목록
-          </button>
-          <button
-            className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
-            onClick={() => setActiveTab('requests')}
-          >
-            <FileText size={18} aria-hidden />
-            구매 요청
-          </button>
-          <button
-            className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            <ShoppingCart size={18} aria-hidden />
-            구매 주문
-          </button>
-        </div>
+        <ErpPageShell
+          headerSlot={
+            <ContentHeader
+              title="구매 관리"
+              subtitle="조달·품목·구매 요청을 허브에서 오갈 수 있습니다. 아래에서 목록·주문을 확인하세요."
+            />
+          }
+          tabsSlot={<PurchaseHubSubNav />}
+          mainAriaLabel="구매 관리 목록 및 본문"
+        >
+          <div className="erp-container">
+            <div className="erp-tabs">
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
+                onClick={() => setActiveTab('items')}
+              >
+                <Package size={18} aria-hidden />
+                비품 목록
+              </button>
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
+                onClick={() => setActiveTab('requests')}
+              >
+                <FileText size={18} aria-hidden />
+                구매 요청
+              </button>
+              <button
+                type="button"
+                className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => setActiveTab('orders')}
+              >
+                <ShoppingCart size={18} aria-hidden />
+                구매 주문
+              </button>
+            </div>
 
-        {/* 콘텐츠 영역 */}
-        <div className="erp-content">
+            <div className="erp-content">
           {loading && (
             <div className="purchase-management-loading-container">
               <UnifiedLoading type="inline" text="로딩 중..." />
@@ -164,7 +162,7 @@ const PurchaseManagement = () => {
           {error && (
             <div className="erp-error">
               <SafeErrorDisplay error={error} variant="banner" />
-              <button className="btn btn-outline-primary" onClick={loadData}>
+              <button type="button" className="btn btn-outline-primary" onClick={loadData}>
                 <RefreshCw size={18} aria-hidden />
                 다시 시도
               </button>
@@ -207,7 +205,7 @@ const PurchaseManagement = () => {
                           </div>
                         </div>
                         <div className="erp-card-footer">
-                          <button className="btn btn-primary btn-sm">
+                          <button type="button" className="btn btn-primary btn-sm">
                             <ShoppingCart size={16} aria-hidden />
                             구매 요청
                           </button>
@@ -221,10 +219,9 @@ const PurchaseManagement = () => {
               {activeTab === 'requests' && (
                 <div className="erp-section">
                   <h2>구매 요청</h2>
-                  {/* 구매 요청 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
                   <div className="mg-purchase-request-cards-grid">
                     {purchaseRequests.map((request) => (
-                      <MGCard 
+                      <MGCard
                         key={request.id}
                         variant="default"
                         className="mg-purchase-request-card"
@@ -233,7 +230,7 @@ const PurchaseManagement = () => {
                           <div className="mg-purchase-request-card__id">#{toDisplayString(request.id)}</div>
                           <div className="mg-purchase-request-card__date"><SafeText>{request.createdAt}</SafeText></div>
                         </div>
-                        
+
                         <div className="mg-purchase-request-card__body">
                           <div className="mg-purchase-request-card__field">
                             <span className="mg-purchase-request-card__label">아이템</span>
@@ -250,7 +247,7 @@ const PurchaseManagement = () => {
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="mg-purchase-request-card__footer">
                           <Button
                             variant="outline"
@@ -270,10 +267,9 @@ const PurchaseManagement = () => {
               {activeTab === 'orders' && (
                 <div className="erp-section">
                   <h2>구매 주문</h2>
-                  {/* 구매 주문 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
                   <div className="mg-purchase-order-cards-grid">
                     {purchaseOrders.map((order) => (
-                      <MGCard 
+                      <MGCard
                         key={order.id}
                         variant="default"
                         className="mg-purchase-order-card"
@@ -282,7 +278,7 @@ const PurchaseManagement = () => {
                           <div className="mg-purchase-order-card__id">#{toDisplayString(order.orderNumber)}</div>
                           <div className="mg-purchase-order-card__date"><SafeText>{order.createdAt}</SafeText></div>
                         </div>
-                        
+
                         <div className="mg-purchase-order-card__body">
                           <div className="mg-purchase-order-card__field">
                             <span className="mg-purchase-order-card__label">공급업체</span>
@@ -301,7 +297,7 @@ const PurchaseManagement = () => {
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="mg-purchase-order-card__footer">
                           <Button
                             variant="outline"
@@ -319,8 +315,9 @@ const PurchaseManagement = () => {
               )}
             </>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </ErpPageShell>
       </ContentArea>
     </AdminCommonLayout>
   );

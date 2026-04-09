@@ -55,7 +55,10 @@ jobs:
 
     - name: 🏷️ 프론트 GNB 빠른액션 라벨 정합 (quick-action vs LNB fallback)
       run: node frontend/scripts/verify-quick-action-labels.mjs
-        
+
+    - name: 🔗 ERP 정적 검증 (Navigate + LNB 메뉴 동기화)
+      run: cd frontend && npm run verify:erp || exit 1
+
     - name: 🧪 테스트 실행
       run: |
         mvn test -Dspring.profiles.active=test || true

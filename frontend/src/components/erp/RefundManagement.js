@@ -21,6 +21,8 @@ import {
   RefundErpSyncBlock,
   RefundAccountingBlock
 } from './refund-management';
+import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
+import ErpPageShell from './shell/ErpPageShell';
 import './refund-management/RefundManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -196,52 +198,55 @@ const RefundManagement = () => {
               </button>
             }
           />
+          <FinancialRefundHubTabs />
           <ContentArea
             className="mg-v2-ad-b0kla refund-management__main"
             ariaLabel="환불 관리 콘텐츠"
           >
-            <RefundKpiBlock
-              refundStats={refundStats}
-              selectedPeriod={selectedPeriod}
-              erpSyncStatus={erpSyncStatus}
-            />
-            <RefundFilterBlock
-              selectedPeriod={selectedPeriod}
-              selectedStatus={selectedStatus}
-              onPeriodChange={handlePeriodChange}
-              onStatusChange={handleStatusChange}
-              onRefresh={loadRefundData}
-              onExportExcel={handleExportExcel}
-              onBatchReflectErp={handleBatchReflectErp}
-              selectedRowIds={selectedRowIds}
-              isLoadingReflect={isLoadingReflect}
-            />
-            <ContentSection noCard className="mg-v2-mapping-list-block">
-              <ContentCard className="mg-v2-mapping-list-block__card">
-                <div className="mg-v2-mapping-list-block__header">
-                  <div className="mg-v2-mapping-list-block__title">환불 이력</div>
-                  <ViewModeToggle
-                    viewMode={refundViewMode}
-                    onViewModeChange={setRefundViewMode}
-                    options={REFUND_VIEW_MODE_OPTIONS}
-                    className="mg-v2-mapping-list-block__toggle"
-                    ariaLabel="목록 보기 전환"
+            <ErpPageShell mainAriaLabel="환불 관리 본문">
+              <RefundKpiBlock
+                refundStats={refundStats}
+                selectedPeriod={selectedPeriod}
+                erpSyncStatus={erpSyncStatus}
+              />
+              <RefundFilterBlock
+                selectedPeriod={selectedPeriod}
+                selectedStatus={selectedStatus}
+                onPeriodChange={handlePeriodChange}
+                onStatusChange={handleStatusChange}
+                onRefresh={loadRefundData}
+                onExportExcel={handleExportExcel}
+                onBatchReflectErp={handleBatchReflectErp}
+                selectedRowIds={selectedRowIds}
+                isLoadingReflect={isLoadingReflect}
+              />
+              <ContentSection noCard className="mg-v2-mapping-list-block">
+                <ContentCard className="mg-v2-mapping-list-block__card">
+                  <div className="mg-v2-mapping-list-block__header">
+                    <div className="mg-v2-mapping-list-block__title">환불 이력</div>
+                    <ViewModeToggle
+                      viewMode={refundViewMode}
+                      onViewModeChange={setRefundViewMode}
+                      options={REFUND_VIEW_MODE_OPTIONS}
+                      className="mg-v2-mapping-list-block__toggle"
+                      ariaLabel="목록 보기 전환"
+                    />
+                  </div>
+                  <RefundHistoryTableBlock
+                    refundHistory={refundHistory}
+                    pageInfo={pageInfo}
+                    onPageChange={setCurrentPage}
+                    onReflectErp={handleReflectErp}
+                    selectedRowIds={selectedRowIds}
+                    onToggleRowSelection={handleToggleRowSelection}
+                    isLoadingReflect={isLoadingReflect}
                   />
-                </div>
-                <RefundHistoryTableBlock
-                  refundHistory={refundHistory}
-                  pageInfo={pageInfo}
-                  onPageChange={setCurrentPage}
-                  onReflectErp={handleReflectErp}
-                  selectedRowIds={selectedRowIds}
-                  onToggleRowSelection={handleToggleRowSelection}
-                  isLoadingReflect={isLoadingReflect}
-                />
-              </ContentCard>
-            </ContentSection>
-            <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
-            <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
-            <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />
+                </ContentCard>
+              </ContentSection>
+              <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
+              <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
+              <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />
+            </ErpPageShell>
           </ContentArea>
         </>
       )}

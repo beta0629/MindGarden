@@ -16,7 +16,7 @@ import {
   ShoppingCart,
   DollarSign,
   PieChart,
-  Receipt,
+  ClipboardList,
   Package
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
@@ -46,11 +46,11 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     children: [
       { to: '/erp/dashboard', icon: LayoutDashboard, label: '운영 현황', end: true },
-      { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
-      { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
+      { to: '/erp/purchase', icon: ShoppingCart, label: '조달·품목', end: true },
+      { to: '/erp/financial', icon: DollarSign, label: '거래·정산', end: true },
       { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
       { to: '/erp/salary', icon: DollarSign, label: '급여 관리', end: true },
-      { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
+      { to: '/erp/approvals', icon: ClipboardList, label: '승인 센터', end: true }
     ]
   },
   {
@@ -151,11 +151,11 @@ const CONSULTANT_MENU_ITEMS = [
 
 const ERP_MENU_ITEMS = [
   { to: '/erp/dashboard', icon: LayoutDashboard, label: '운영 현황', end: true },
-  { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
-  { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
+  { to: '/erp/purchase', icon: ShoppingCart, label: '조달·품목', end: true },
+  { to: '/erp/financial', icon: DollarSign, label: '거래·정산', end: true },
   { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
   { to: '/erp/salary', icon: DollarSign, label: '급여 관리', end: true },
-  { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
+  { to: '/erp/approvals', icon: ClipboardList, label: '승인 센터', end: true }
 ];
 
 export {

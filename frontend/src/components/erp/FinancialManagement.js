@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
+import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
+import ErpPageShell from './shell/ErpPageShell';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -417,97 +419,43 @@ const FinancialManagement = () => {
               title="재무 관리"
               subtitle="재무 거래 및 회계를 관리할 수 있습니다."
             />
-            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'transactions'}
-              className={`mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setActiveTab('transactions')}
-            >
-              <ClipboardList size={18} aria-hidden /> 거래 내역
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'calendar'}
-              className={`mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setActiveTab('calendar')}
-            >
-              <Calendar size={18} aria-hidden /> 달력 뷰
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'dashboard'}
-              className={`mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              <LayoutDashboard size={18} aria-hidden /> 대시보드
-            </button>
-          </div>
-
-          {/* 콘텐츠 영역 */}
-          <div className="erp-content">
-            {loading && (
-              <div className="financial-management-loading">
-                <UnifiedLoading type="inline" text="로딩 중..." />
-              </div>
-            )}
-
-            {error && (
-              <div className="erp-error">
-                <SafeErrorDisplay error={error} variant="banner" />
-                <button type="button" className="mg-v2-button mg-v2-button-primary" onClick={loadData}>
-                  <RefreshCw size={16} aria-hidden /> 다시 시도
-                </button>
-              </div>
-            )}
-
-            {!loading && !error && (
-              <>
-                {activeTab === 'calendar' && (
-                <section
-                  className="erp-section mg-v2-erp-section-block"
-                  style={{
-                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                    borderRadius: '16px',
-                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                  }}
-                >
-                  <FinancialCalendarView />
-                </section>
-              )}
-
-              {activeTab === 'transactions' && (
-                <ContentSection noCard className="mg-v2-mapping-list-block">
-                  <ContentCard
-                    className="mg-v2-mapping-list-block__card"
-                    style={{
-                      background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                      border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                      borderRadius: '16px',
-                      padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                    }}
-                  >
-                    <div className="mg-v2-mapping-list-block__header">
-                      <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
-                      <div className="d-flex gap-2 align-items-center">
-                        <ViewModeToggle
-                          viewMode={transactionViewMode}
-                          onViewModeChange={setTransactionViewMode}
-                          options={TRANSACTION_VIEW_MODE_OPTIONS}
-                          className="mg-v2-mapping-list-block__toggle"
-                          ariaLabel="목록 보기 전환"
-                        />
-                        <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
-                          <Download size={16} aria-hidden /> 내보내기
-                        </button>
-                      </div>
-                    </div>
-
-                  {/* 필터: 기간(필수) + 거래 유형 + 카테고리 + 검색. 연동 유형은 고급 필터 접기 */}
+            <ErpPageShell
+              tabsSlot={
+                <>
+                  <FinancialRefundHubTabs />
+                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'transactions'}
+                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      onClick={() => setActiveTab('transactions')}
+                    >
+                      <ClipboardList size={18} aria-hidden /> 거래 내역
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'calendar'}
+                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      onClick={() => setActiveTab('calendar')}
+                    >
+                      <Calendar size={18} aria-hidden /> 달력 뷰
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'dashboard'}
+                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      onClick={() => setActiveTab('dashboard')}
+                    >
+                      <LayoutDashboard size={18} aria-hidden /> 대시보드
+                    </button>
+                  </div>
+                </>
+              }
+              filterSlot={
+                activeTab === 'transactions' && !loading && !error ? (
                   <div className="mg-v2-filter-section">
                     <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
                       <div className="mg-v2-form-group">
@@ -671,8 +619,69 @@ const FinancialManagement = () => {
                       </div>
                     )}
                   </div>
-                  
-                  {/* 거래 목록 카드: 필수만 노출(일자, 유형, 카테고리, 금액, 상태, 매핑). 상세는 모달 */}
+                ) : null
+              }
+            >
+              <div className="erp-content">
+            {loading && (
+              <div className="financial-management-loading">
+                <UnifiedLoading type="inline" text="로딩 중..." />
+              </div>
+            )}
+
+            {error && (
+              <div className="erp-error">
+                <SafeErrorDisplay error={error} variant="banner" />
+                <button type="button" className="mg-v2-button mg-v2-button-primary" onClick={loadData}>
+                  <RefreshCw size={16} aria-hidden /> 다시 시도
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && (
+              <>
+                {activeTab === 'calendar' && (
+                <section
+                  className="erp-section mg-v2-erp-section-block"
+                  style={{
+                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                    borderRadius: '16px',
+                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                  }}
+                >
+                  <FinancialCalendarView />
+                </section>
+              )}
+
+              {activeTab === 'transactions' && (
+                <ContentSection noCard className="mg-v2-mapping-list-block">
+                  <ContentCard
+                    className="mg-v2-mapping-list-block__card"
+                    style={{
+                      background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                      border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                      borderRadius: '16px',
+                      padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                    }}
+                  >
+                    <div className="mg-v2-mapping-list-block__header">
+                      <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
+                      <div className="d-flex gap-2 align-items-center">
+                        <ViewModeToggle
+                          viewMode={transactionViewMode}
+                          onViewModeChange={setTransactionViewMode}
+                          options={TRANSACTION_VIEW_MODE_OPTIONS}
+                          className="mg-v2-mapping-list-block__toggle"
+                          ariaLabel="목록 보기 전환"
+                        />
+                        <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
+                          <Download size={16} aria-hidden /> 내보내기
+                        </button>
+                      </div>
+                    </div>
+
+                  {/* 거래 목록 카드: 필수만 노출(일자, 유형, 카테고리, 금액, 상태, 매핑). 상세는 모달 — 필터는 ErpPageShell.filterSlot */}
                   <div className="mg-financial-transaction-cards-grid">
                     {transactions.length > 0 ? (
                       transactions.map((transaction) => (
@@ -944,7 +953,8 @@ const FinancialManagement = () => {
               )}
             </>
           )}
-          </div>
+              </div>
+            </ErpPageShell>
         </ContentArea>
 
         {/* 거래 상세 정보 모달 */}

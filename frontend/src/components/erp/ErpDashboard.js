@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
-import { ERP_API } from '../../constants/api';
+import { AUTH_API, ERP_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatCurrency } from '../../utils/formatUtils';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -28,6 +28,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
+import ErpPageShell from './shell/ErpPageShell';
 
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
@@ -138,17 +139,10 @@ const ErpDashboard = ({ user: propUser }) => {
       if (!currentUser || !currentUser.role) {
         try {
           console.log('🔄 세션 API 직접 호출 시도...');
-          const response = await fetch('/api/v1/auth/current-user', {
-            credentials: 'include',
-            method: 'GET'
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData && userData.role) {
-              console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
-              currentUser = userData;
-            }
+          const userData = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
+          if (userData && userData.role) {
+            console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
+            currentUser = userData;
           }
         } catch (error) {
           console.log('❌ 세션 API 호출 실패:', error);
@@ -449,75 +443,80 @@ const ErpDashboard = ({ user: propUser }) => {
         className="erp-dashboard__content mg-v2-erp-dashboard-block"
         ariaLabel="운영 현황"
       >
-        <ContentHeader
-          subtitle={subtitleWithTenant}
-          actions={
-            <Button
-              variant="outline"
-              size="small"
-              onClick={() => {
-                loadDashboardData();
-                if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
-              }}
-              preventDoubleClick={true}
-            >
-              새로고침
-            </Button>
+        <ErpPageShell
+          headerSlot={
+            <ContentHeader
+              subtitle={subtitleWithTenant}
+              actions={
+                <Button
+                  variant="outline"
+                  size="small"
+                  onClick={() => {
+                    loadDashboardData();
+                    if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
+                  }}
+                  preventDoubleClick={true}
+                >
+                  새로고침
+                </Button>
+              }
+            />
           }
-        />
+          mainAriaLabel="운영 현황 본문"
+        >
+          {hasIntegratedFinanceView && (
+            <ErpIncomeExpenseSummarySection
+              financeError={financeError}
+              financeLoading={financeLoading}
+              financialData={financialData}
+            />
+          )}
 
-        {hasIntegratedFinanceView && (
-          <ErpIncomeExpenseSummarySection
-            financeError={financeError}
-            financeLoading={financeLoading}
-            financialData={financialData}
+          <ContentKpiRow items={kpiItems} />
+
+          {hasIntegratedFinanceView && !financeError && (
+            <ErpIncomeExpenseBarChartSection
+              financeLoading={financeLoading}
+              financialData={financialData}
+            />
+          )}
+
+          {hasIntegratedFinanceView && (
+            <ErpRecentTransactionsTable
+              financeLoading={financeLoading}
+              recentTransactions={recentTransactions}
+            />
+          )}
+
+          {hasIntegratedFinanceView && (
+            <ErpFinanceAdminSyncCard
+              initLoading={initLoading}
+              initResult={initResult}
+              backfillLoading={backfillLoading}
+              backfillResult={backfillResult}
+              onInitTenantErp={handleInitTenantErp}
+              onBackfillJournalEntries={handleBackfillJournalEntries}
+            />
+          )}
+
+          <ErpQuickActionsPanel
+            hasPurchaseRequestView={hasPurchaseRequestView}
+            hasApprovalManage={hasApprovalManage}
+            hasItemManage={hasItemManage}
+            hasBudgetManage={hasBudgetManage}
+            hasSalaryManage={hasSalaryManage}
+            hasTaxManage={hasTaxManage}
+            hasIntegratedFinanceView={hasIntegratedFinanceView}
+            hasRefundManage={hasRefundManage}
           />
-        )}
 
-        <ContentKpiRow items={kpiItems} />
-
-        {hasIntegratedFinanceView && !financeError && (
-          <ErpIncomeExpenseBarChartSection
-            financeLoading={financeLoading}
-            financialData={financialData}
-          />
-        )}
-
-        {hasIntegratedFinanceView && (
-          <ErpRecentTransactionsTable
-            financeLoading={financeLoading}
-            recentTransactions={recentTransactions}
-          />
-        )}
-
-        {hasIntegratedFinanceView && (
-          <ErpFinanceAdminSyncCard
-            initLoading={initLoading}
-            initResult={initResult}
-            backfillLoading={backfillLoading}
-            backfillResult={backfillResult}
-            onInitTenantErp={handleInitTenantErp}
-            onBackfillJournalEntries={handleBackfillJournalEntries}
-          />
-        )}
-
-        <ErpQuickActionsPanel
-          hasPurchaseRequestView={hasPurchaseRequestView}
-          hasApprovalManage={hasApprovalManage}
-          hasItemManage={hasItemManage}
-          hasBudgetManage={hasBudgetManage}
-          hasSalaryManage={hasSalaryManage}
-          hasTaxManage={hasTaxManage}
-          hasIntegratedFinanceView={hasIntegratedFinanceView}
-          hasRefundManage={hasRefundManage}
-        />
-
-        <div className="mg-v2-ad-b0kla__card">
-          <h2 className="mg-v2-ad-b0kla__section-title">최근 활동</h2>
-          <div className="mg-empty-state">
-            <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
+          <div className="mg-v2-ad-b0kla__card">
+            <h2 className="mg-v2-ad-b0kla__section-title">최근 활동</h2>
+            <div className="mg-empty-state">
+              <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
+            </div>
           </div>
-        </div>
+        </ErpPageShell>
       </ContentArea>
     </AdminCommonLayout>
   );

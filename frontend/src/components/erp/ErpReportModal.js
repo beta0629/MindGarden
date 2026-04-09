@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
-import { apiGet } from '../../utils/ajax';
+import { ERP_API, getApiBaseUrl } from '../../constants/api';
+import { getDefaultApiHeadersAsync } from '../../utils/apiHeaders';
+import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
@@ -43,10 +45,9 @@ const ErpReportModal = ({ isOpen, onClose }) => {
      */
     const loadBranches = async () => {
         try {
-            const response = await apiGet('/api/v1/branches');
-            if (response && response.success !== false) {
-                setBranches(response.data || []);
-            }
+            const raw = await StandardizedApi.get('/api/v1/branches');
+            const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
+            setBranches(Array.isArray(list) ? list : []);
         } catch (error) {
             console.error('지점 목록 로드 실패:', error);
         }
@@ -64,17 +65,19 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const params = new URLSearchParams({
+            const response = await StandardizedApi.get('/api/v1/erp/reports', {
                 type: reportType,
                 period: period,
                 // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
 
-            const response = await apiGet(`/api/v1/erp/reports?${params}`);
-            
-            if (response && response.success !== false) {
-                setReportData(response.data);
+            if (response && response.success === false) {
+                throw new Error(response?.message || '보고서 생성에 실패했습니다.');
+            }
+            const payload = response?.data !== undefined && response?.data !== null ? response.data : response;
+            if (payload != null && typeof payload === 'object') {
+                setReportData(payload);
                 notificationManager.success('보고서가 생성되었습니다.');
             } else {
                 throw new Error(response?.message || '보고서 생성에 실패했습니다.');
@@ -106,9 +109,12 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                 format: 'excel'
             });
 
-            const response = await fetch(`/api/v1/erp/reports/download?${params}`, {
+            const headers = await getDefaultApiHeadersAsync({}, true);
+            const requestUrl = `${getApiBaseUrl()}${ERP_API.REPORTS_DOWNLOAD}?${params}`;
+            const response = await fetch(requestUrl, {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: { ...headers }
             });
 
             if (response.ok) {

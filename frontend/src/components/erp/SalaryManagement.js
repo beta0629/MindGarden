@@ -37,6 +37,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
+import ErpPageShell from './shell/ErpPageShell';
 
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
@@ -394,57 +395,105 @@ const SalaryManagement = () => {
         <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
       ) : (
         <>
-          <ContentHeader
-            title="급여·세금 관리"
-            subtitle="상담사 급여 및 세금 계산·통계"
-            actions={
-              <>
-                <MGButton
-                  variant="outline"
-                  size="small"
-                  onClick={() => setIsConfigModalOpen(true)}
-                  aria-label="급여 기산일 설정"
-                  className="salary-management__header-btn"
-                >
-                  <Settings size={18} aria-hidden />
-                  <span className="salary-management__header-btn-text">기산일 설정</span>
-                </MGButton>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setSelectedPeriod(val);
-                    if (val) {
-                      const [y, m] = val.split('-');
-                      loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                      if (activeTab === TAB_TAX) loadTaxStatistics(val);
-                    } else {
-                      setCalculationPeriodDisplay(null);
-                    }
-                  }}
-                  className="mg-v2-select salary-management__period-select"
-                  aria-label="기간 선택"
-                >
-                  <option value="">기간 선택</option>
-                  {periodOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
-                  ))}
-                </select>
-                <MGButton
-                  variant="primary"
-                  size="small"
-                  onClick={() => setActiveTabAndUrl(TAB_CALC)}
-                  className="salary-management__header-btn salary-management__header-btn--primary mg-v2-button mg-v2-button--primary"
-                  aria-label="한 번에 계산"
-                >
-                  <Calculator size={18} aria-hidden />
-                  <span className="salary-management__header-btn-text">한 번에 계산</span>
-                </MGButton>
-              </>
-            }
-          />
           <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
-            <main className="mg-v2-ad-b0kla salary-management__main" aria-label="급여·세금 관리 콘텐츠">
+            <ErpPageShell
+              headerSlot={
+                <ContentHeader
+                  title="급여·세금 관리"
+                  subtitle="상담사 급여 및 세금 계산·통계"
+                  actions={
+                    <>
+                      <MGButton
+                        variant="outline"
+                        size="small"
+                        onClick={() => setIsConfigModalOpen(true)}
+                        aria-label="급여 기산일 설정"
+                        className="salary-management__header-btn"
+                      >
+                        <Settings size={18} aria-hidden />
+                        <span className="salary-management__header-btn-text">기산일 설정</span>
+                      </MGButton>
+                      <select
+                        value={selectedPeriod}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedPeriod(val);
+                          if (val) {
+                            const [y, m] = val.split('-');
+                            loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
+                            if (activeTab === TAB_TAX) loadTaxStatistics(val);
+                          } else {
+                            setCalculationPeriodDisplay(null);
+                          }
+                        }}
+                        className="mg-v2-select salary-management__period-select"
+                        aria-label="기간 선택"
+                      >
+                        <option value="">기간 선택</option>
+                        {periodOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
+                        ))}
+                      </select>
+                      <MGButton
+                        variant="primary"
+                        size="small"
+                        onClick={() => setActiveTabAndUrl(TAB_CALC)}
+                        className="salary-management__header-btn salary-management__header-btn--primary mg-v2-button mg-v2-button--primary"
+                        aria-label="한 번에 계산"
+                      >
+                        <Calculator size={18} aria-hidden />
+                        <span className="salary-management__header-btn-text">한 번에 계산</span>
+                      </MGButton>
+                    </>
+                  }
+                />
+              }
+              tabsSlot={
+                <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
+                  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
+                  <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === TAB_PROFILES}
+                      aria-controls="salary-profile-panel"
+                      id="tab-profiles"
+                      className={`mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
+                      onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
+                    >
+                      <Users size={18} aria-hidden />
+                      급여 프로필
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === TAB_CALC}
+                      aria-controls="salary-calc-panel"
+                      id="tab-calculations"
+                      className={`mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
+                      onClick={() => setActiveTabAndUrl(TAB_CALC)}
+                    >
+                      <Calculator size={18} aria-hidden />
+                      급여 계산
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === TAB_TAX}
+                      aria-controls="salary-tax-panel"
+                      id="tab-tax"
+                      className={`mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
+                      onClick={() => setActiveTabAndUrl(TAB_TAX)}
+                    >
+                      <Receipt size={18} aria-hidden />
+                      세금 관리
+                    </button>
+                  </div>
+                </div>
+              }
+              mainAriaLabel="급여·세금 관리 콘텐츠"
+            >
+            <div className="mg-v2-ad-b0kla salary-management__main">
             {/* 블록 1: 계산 대상 선택 */}
             <section className="mg-v2-ad-b0kla__card salary-filter-block" aria-labelledby="salary-filter-title">
               <h2 id="salary-filter-title" className="mg-v2-ad-b0kla__section-title salary-filter-block__title">
@@ -550,49 +599,6 @@ const SalaryManagement = () => {
               </div>
             </section>
 
-            {/* (3) 탭 — ARIA 탭 패턴: tablist 컨테이너는 div 사용, 접근성 유지 */}
-            <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
-              {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
-              <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === TAB_PROFILES}
-                  aria-controls="salary-profile-panel"
-                  id="tab-profiles"
-                  className={`mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
-                  onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
-                >
-                  <Users size={18} aria-hidden />
-                  급여 프로필
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === TAB_CALC}
-                  aria-controls="salary-calc-panel"
-                  id="tab-calculations"
-                  className={`mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
-                  onClick={() => setActiveTabAndUrl(TAB_CALC)}
-                >
-                  <Calculator size={18} aria-hidden />
-                  급여 계산
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === TAB_TAX}
-                  aria-controls="salary-tax-panel"
-                  id="tab-tax"
-                  className={`mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
-                  onClick={() => setActiveTabAndUrl(TAB_TAX)}
-                >
-                  <Receipt size={18} aria-hidden />
-                  세금 관리
-                </button>
-              </div>
-
-              {/* (4) 탭별 콘텐츠 */}
               {activeTab === TAB_PROFILES && (
                 <section
                   id="salary-profile-panel"
@@ -983,7 +989,7 @@ const SalaryManagement = () => {
                 </section>
               )}
             </div>
-          </main>
+            </ErpPageShell>
           </ContentArea>
         </>
       )}

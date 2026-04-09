@@ -6,6 +6,12 @@
   min-height: 0;
 }
 
+/* ApprovalHubLayout — B0KlA pill 위 여백 */
+.approval-hub-mode-wrap {
+  padding: 0 var(--mg-layout-section-padding, 16px);
+  margin-bottom: var(--mg-layout-gap);
+}
+
 .approval-dashboard-error {
   margin-bottom: var(--mg-layout-gap);
   padding: var(--mg-layout-section-padding);

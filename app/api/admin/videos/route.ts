@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('video') as File;
+    const clientPrecompressed = formData.get('clientPrecompressed') === 'true';
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const isActive = formData.get('isActive') === 'true';
@@ -105,53 +106,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 파일 읽기
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 파일명 생성 (타임스탬프 + 원본 파일명)
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileExtension = 'mp4'; // 항상 MP4로 변환
+    const fileExtension = 'mp4';
     const fileName = `hero_video_${timestamp}.${fileExtension}`;
     const uploadDir = join(process.cwd(), 'public', 'uploads', 'videos');
-    
-    // 디렉토리 생성
+
     await mkdir(uploadDir, { recursive: true });
-
-    // 임시 원본 파일 저장
-    const tempFileName = `temp_${timestamp}_${originalName}`;
-    const tempFilePath = join(uploadDir, tempFileName);
-    await writeFile(tempFilePath, buffer);
-
-    // 최종 파일 경로
     const finalFilePath = join(uploadDir, fileName);
 
-    // FFmpeg를 사용하여 비디오 리사이징 (4K → 1080p)
-    // FFmpeg가 설치되어 있으면 자동 리사이징, 없으면 원본 사용
-    try {
-      // FFmpeg 설치 확인 및 리사이징
-      await execAsync(
-        `ffmpeg -i "${tempFilePath}" -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k -r 30 -movflags +faststart -y "${finalFilePath}"`
-      );
-      console.log('Video resized successfully with FFmpeg (4K → 1080p).');
-      
-      // 임시 파일 삭제
-      try {
-        await unlink(tempFilePath);
-      } catch (unlinkError) {
-        console.error('Failed to delete temp file:', unlinkError);
-      }
-    } catch (ffmpegError: any) {
-      console.warn('FFmpeg not available or failed, using original video:', ffmpegError.message);
-      // FFmpeg가 없거나 실패하면 원본 파일을 그대로 사용
+    if (clientPrecompressed) {
       await writeFile(finalFilePath, buffer);
-      
-      // 임시 파일 삭제
+      console.log('Hero video saved as client-precompressed MP4 (skipped server FFmpeg).');
+    } else {
+      const tempFileName = `temp_${timestamp}_${originalName}`;
+      const tempFilePath = join(uploadDir, tempFileName);
+      await writeFile(tempFilePath, buffer);
+
       try {
-        await unlink(tempFilePath);
-      } catch (unlinkError) {
-        console.error('Failed to delete temp file:', unlinkError);
+        await execAsync(
+          `ffmpeg -i "${tempFilePath}" -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k -r 30 -movflags +faststart -y "${finalFilePath}"`
+        );
+        console.log('Video resized successfully with FFmpeg (4K → 1080p).');
+
+        try {
+          await unlink(tempFilePath);
+        } catch (unlinkError) {
+          console.error('Failed to delete temp file:', unlinkError);
+        }
+      } catch (ffmpegError: any) {
+        console.warn('FFmpeg not available or failed, using original video:', ffmpegError.message);
+        await writeFile(finalFilePath, buffer);
+
+        try {
+          await unlink(tempFilePath);
+        } catch (unlinkError) {
+          console.error('Failed to delete temp file:', unlinkError);
+        }
       }
     }
 

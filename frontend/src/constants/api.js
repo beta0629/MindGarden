@@ -312,7 +312,11 @@ export const ERP_API = {
   FINANCE_INCOME_STATEMENT: '/api/v1/erp/finance/income-statement',
   FINANCE_DAILY_REPORT: '/api/v1/erp/finance/daily-report',
   FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
-  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report'
+  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report',
+
+  /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
+  BUDGETS: '/api/v1/erp/budgets',
+  BUDGET_BY_ID: (id) => `/api/v1/erp/budgets/${id}`
 };
 
 // 온보딩 관련 API

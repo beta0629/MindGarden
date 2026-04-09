@@ -142,7 +142,8 @@ const ErpStatsGridWidget = ({ widget, user }) => {
         navigate('/erp/purchase-management');
         break;
       case 'budget':
-        navigate('/erp/budget-management');
+        // 앱 라우트는 /erp/budget · /erp/budgets (예산 관리 단일 화면)
+        navigate('/erp/budget');
         break;
       default:
         navigate('/erp/dashboard');

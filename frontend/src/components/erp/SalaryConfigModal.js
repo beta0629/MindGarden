@@ -6,6 +6,7 @@ import './SalaryConfigModal.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import { ErpSafeText } from './common';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -142,9 +143,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       className="mg-v2-ad-b0kla salary-config-modal"
     >
       <div className="salary-config-modal-body">
-          <p className="salary-config-modal-intro">
-            아래 설정은 급여 계산 기간과 지급·마감 일자를 정하는 데 사용됩니다. 저장 후 급여 계산·세금 조회 시 반영되므로, 한 번 설정해 두시면 됩니다.
-          </p>
+          <ErpSafeText
+            tag="p"
+            className="salary-config-modal-intro"
+            value="아래 설정은 급여 계산 기간과 지급·마감 일자를 정하는 데 사용됩니다. 저장 후 급여 계산·세금 조회 시 반영되므로, 한 번 설정해 두시면 됩니다."
+          />
           {error && (
             <SafeErrorDisplay error={error} variant="inline" className="error-message" />
           )}
@@ -222,19 +225,31 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             <h4>설정 미리보기</h4>
             <div className="preview-item">
               <span>급여 기산일:</span>
-              <span>{configs.monthlyBaseDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.monthlyBaseDay}일`}</span>
+              <ErpSafeText
+                className="preview-item__value"
+                value={configs.monthlyBaseDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.monthlyBaseDay}일`}
+              />
             </div>
             <div className="preview-item">
               <span>급여 지급일:</span>
-              <span>익월 {configs.paymentDay}일</span>
+              <ErpSafeText
+                className="preview-item__value"
+                value={`익월 ${configs.paymentDay}일`}
+              />
             </div>
             <div className="preview-item">
               <span>급여 마감일:</span>
-              <span>{configs.cutoffDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.cutoffDay}일`}</span>
+              <ErpSafeText
+                className="preview-item__value"
+                value={configs.cutoffDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.cutoffDay}일`}
+              />
             </div>
             <div className="preview-item">
               <span>배치 주기:</span>
-              <span>{configs.batchCycle === 'MONTHLY' ? '월별' : configs.batchCycle === 'SEMI_MONTHLY' ? '반월별' : '주별'}</span>
+              <ErpSafeText
+                className="preview-item__value"
+                value={configs.batchCycle === 'MONTHLY' ? '월별' : configs.batchCycle === 'SEMI_MONTHLY' ? '반월별' : '주별'}
+              />
             </div>
           </div>
         </div>

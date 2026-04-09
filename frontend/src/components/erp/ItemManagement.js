@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
-import ErpCard from './common/ErpCard';
+import CardContainer from '../common/CardContainer';
 import ErpButton from './common/ErpButton';
+import { ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import './ItemManagement.css';
 import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
@@ -21,6 +22,7 @@ import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/Purchase
 import ErpPageShell from './shell/ErpPageShell';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
+const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
 
 /**
  * 아이템 관리 컴포넌트 (관리자/수퍼어드민 전용)
@@ -228,13 +230,6 @@ const ItemManagement = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
-  };
-
   const getCategoryLabel = (category) => {
     const option = categoryOptions.find(opt => opt.value === category);
     return option ? option.label : category;
@@ -290,56 +285,63 @@ const ItemManagement = () => {
                   <SafeErrorDisplay error={error} variant="inline" className="error-message" />
                 )}
 
-                <ErpCard title={toDisplayString(`아이템 목록 (${items.length}개)`)}>
-                  <div className="item-management-grid">
-                    {items.map(item => (
-                      <div key={item.id} className="item-management-card">
-                        <div className="item-management-card-header">
-                          <h4 className="item-management-card-title"><SafeText>{item.name}</SafeText></h4>
-                          <div className="item-management-card-category">
-                            <SafeText>{getCategoryLabel(item.category)}</SafeText>
-                          </div>
-                          {item.description && (
-                            <div className="item-management-card-description">
-                              <SafeText>{item.description}</SafeText>
+                <section className="mg-v2-section" aria-labelledby={ITEM_MANAGEMENT_LIST_TITLE_ID}>
+                  <CardContainer>
+                    <h3 id={ITEM_MANAGEMENT_LIST_TITLE_ID} className="mg-h4">
+                      {toDisplayString(`아이템 목록 (${items.length}개)`)}
+                    </h3>
+                    <div className="mg-v2-card-body">
+                      <div className="item-management-grid">
+                        {items.map(item => (
+                          <div key={item.id} className="item-management-card">
+                            <div className="item-management-card-header">
+                              <h4 className="item-management-card-title"><SafeText>{item.name}</SafeText></h4>
+                              <div className="item-management-card-category">
+                                <SafeText>{getCategoryLabel(item.category)}</SafeText>
+                              </div>
+                              {item.description && (
+                                <div className="item-management-card-description">
+                                  <SafeText>{item.description}</SafeText>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        <div className="item-management-card-footer">
-                          <div className="item-management-card-price">
-                            {formatCurrency(item.unitPrice)}
-                          </div>
-                          <div className="item-management-card-stock">
-                            재고: {toDisplayString(item.stockQuantity)}개
-                          </div>
-                          {item.supplier && (
-                            <div className="item-management-card-supplier">
-                              공급업체: <SafeText>{item.supplier}</SafeText>
+                            <div className="item-management-card-footer">
+                              <div className="item-management-card-price">
+                                <ErpSafeNumber value={item.unitPrice} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                              </div>
+                              <div className="item-management-card-stock">
+                                재고: <SafeText>{item.stockQuantity}</SafeText>개
+                              </div>
+                              {item.supplier && (
+                                <div className="item-management-card-supplier">
+                                  공급업체: <SafeText>{item.supplier}</SafeText>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        <div className="item-management-card-actions">
-                          <ErpButton
-                            variant="outline-primary"
-                            size="small"
-                            onClick={() => handleEditItem(item)}
-                          >
-                            <Pencil size={14} /> 수정
-                          </ErpButton>
-                          <ErpButton
-                            variant="outline-danger"
-                            size="small"
-                            onClick={() => handleDeleteItem(item)}
-                          >
-                            <Trash2 size={14} /> 삭제
-                          </ErpButton>
-                        </div>
+                            <div className="item-management-card-actions">
+                              <ErpButton
+                                variant="outline-primary"
+                                size="small"
+                                onClick={() => handleEditItem(item)}
+                              >
+                                <Pencil size={14} /> 수정
+                              </ErpButton>
+                              <ErpButton
+                                variant="outline-danger"
+                                size="small"
+                                onClick={() => handleDeleteItem(item)}
+                              >
+                                <Trash2 size={14} /> 삭제
+                              </ErpButton>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </ErpCard>
+                    </div>
+                  </CardContainer>
+                </section>
               </div>
             )}
             </ErpPageShell>

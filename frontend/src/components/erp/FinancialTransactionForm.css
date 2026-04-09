@@ -71,7 +71,69 @@
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--ios-border-light);
+  border-top: 1px solid var(--mg-color-border-main, var(--ios-border-light));
+}
+
+.financial-transaction-form-actions--footer {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+}
+
+.financial-transaction-form-alert {
+  border-radius: var(--radius-sm);
+}
+
+.financial-transaction-form-alert--success {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-800);
+  font-weight: 500;
+}
+
+.financial-transaction-form-alert--readonly {
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  background-color: var(--mg-warning-50);
+  color: var(--mg-warning-800);
+}
+
+.financial-transaction-form-alert--error {
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  background-color: var(--status-error-border);
+  color: var(--status-error-dark);
+}
+
+.financial-transaction-form-radio-row {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.financial-transaction-form-radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.financial-transaction-form-radio-input {
+  cursor: pointer;
+}
+
+.financial-transaction-form-field-hint {
+  margin-top: var(--spacing-xs);
+}
+
+.financial-transaction-form-check-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.financial-transaction-form-check-input {
+  cursor: pointer;
 }
 
 /* 모바일 반응형 디자인 */

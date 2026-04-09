@@ -18,27 +18,27 @@
 .refund-management__section {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
 .refund-management__section-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: var(--spacing-xs) var(--spacing-sm);
   margin: 0 0 var(--mg-spacing-md, 1rem);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
 }
 
 .refund-management__section-title::before {
   content: '';
-  width: 4px;
-  min-width: 4px;
+  width: var(--spacing-xs);
+  min-width: var(--spacing-xs);
   height: 1.25em;
   background: var(--mg-color-primary-main, var(--ad-b0kla-green));
-  border-radius: 2px;
+  border-radius: var(--mg-radius-sm);
   flex-shrink: 0;
 }
 
@@ -46,7 +46,7 @@
 .refund-management__kpi-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
@@ -58,10 +58,10 @@
 }
 
 .refund-management__stat-card {
-  background: var(--ad-b0kla-card-bg, #fff);
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  border-radius: var(--mg-radius-lg);
+  padding: var(--spacing-md);
   min-width: 0;
 }
 
@@ -78,15 +78,15 @@
 }
 
 .refund-management__stat-label {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--mg-spacing-xs);
 }
 
 .refund-management__stat-value {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
   display: block;
 }
@@ -95,7 +95,7 @@
 .refund-management__filter-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
@@ -139,7 +139,7 @@
 .refund-management__table-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
@@ -151,7 +151,7 @@
 .refund-management__history-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .refund-management__history-table th,
@@ -162,10 +162,10 @@
 }
 
 .refund-management__history-table thead th {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
-  background: var(--mg-color-surface-subtle, #f8fafc);
+  background: var(--mg-gray-50);
 }
 
 .refund-management__history-table tbody td {
@@ -195,53 +195,53 @@
 
 .refund-management__empty-message {
   text-align: center;
-  padding: 2.5rem;
+  padding: var(--spacing-xl);
   color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 /* ===== 배지 (Atom) ===== */
 .refund-management__status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 }
 
 .refund-management__status-badge--success {
-  background: var(--ad-b0kla-green-bg, #ebf2ee);
-  color: var(--ad-b0kla-green, #4b745c);
+  background: var(--ad-b0kla-green-bg, var(--mg-success-100));
+  color: var(--ad-b0kla-green, var(--mg-success-700));
 }
 
 .refund-management__status-badge--warning {
-  background: var(--ad-b0kla-orange-bg, #fcf3ed);
-  color: var(--ad-b0kla-orange, #e8a87c);
+  background: var(--ad-b0kla-orange-bg, var(--mg-warning-100));
+  color: var(--ad-b0kla-orange, var(--mg-warning-700));
 }
 
 .refund-management__status-badge--danger {
-  background: var(--ad-b0kla-red-bg, #fef2f2);
-  color: var(--ad-b0kla-red, #dc3545);
+  background: var(--ad-b0kla-red-bg, var(--mg-error-100));
+  color: var(--ad-b0kla-red, var(--mg-error-600));
 }
 
 .refund-management__status-badge--neutral {
-  background: #edf2f7;
-  color: var(--ad-b0kla-text-secondary, #4a5568);
+  background: var(--mg-gray-100);
+  color: var(--mg-gray-700);
 }
 
 /* ===== 사유별 통계 ===== */
 .refund-management__reason-stats-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
 .refund-management__reason-stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .refund-management__reason-stats-table th,
@@ -252,28 +252,28 @@
 }
 
 .refund-management__reason-stats-table thead th {
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .refund-management__reason-stats-empty {
-  padding: 1.5rem;
+  padding: var(--spacing-md);
   text-align: center;
-  color: var(--mg-color-text-secondary);
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 /* ===== ERP 연동 상태 ===== */
 .refund-management__erp-sync-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
 .refund-management__erp-sync-content {
-  font-size: 14px;
-  color: var(--mg-color-text-main);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
 }
 
 .refund-management__erp-sync-content p {
@@ -284,7 +284,7 @@
 .refund-management__accounting-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: 16px;
+  border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg, 24px);
 }
 
@@ -292,8 +292,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--mg-spacing-lg, 1.5rem);
-  font-size: 14px;
-  color: var(--mg-color-text-main);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
 }
 
 .refund-management__accounting-item {
@@ -316,7 +316,7 @@
 @media (max-width: 768px) {
   .refund-management__kpi-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: var(--spacing-sm);
   }
 
   .refund-management__filter-row {
@@ -329,11 +329,11 @@
   }
 
   .refund-management__section {
-    padding: 16px;
+    padding: var(--spacing-sm);
   }
 
   .refund-management__stat-value {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
   }
 }
 

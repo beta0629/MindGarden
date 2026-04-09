@@ -7,6 +7,8 @@
  */
 
 import React from 'react';
+import { toSafeNumber } from '../../../utils/safeDisplay';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
 const PERIOD_LABELS = {
   today: '오늘',
@@ -16,18 +18,15 @@ const PERIOD_LABELS = {
   year: '최근 1년'
 };
 
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
-
-const RefundKpiBlock = ({ refundStats, selectedPeriod, erpSyncStatus }) => {
+const RefundKpiBlock = ({ refundStats = {}, selectedPeriod, erpSyncStatus = {} }) => {
   const summary = refundStats?.summary || {};
   const periodLabel = PERIOD_LABELS[selectedPeriod] || '최근 1개월';
+  const sessionsLabel = `${new Intl.NumberFormat('ko-KR').format(
+    toSafeNumber(summary.totalRefundedSessions)
+  )}회`;
 
   return (
-    <section
-      className="refund-management__kpi-block"
-      aria-labelledby="refund-kpi-heading"
-    >
+    <section className="refund-management__kpi-block" aria-labelledby="refund-kpi-heading">
       <h2 id="refund-kpi-heading" className="sr-only">
         환불 현황 요약
       </h2>
@@ -37,25 +36,31 @@ const RefundKpiBlock = ({ refundStats, selectedPeriod, erpSyncStatus }) => {
             환불 건수
           </span>
           <span className="refund-management__stat-value" aria-labelledby="refund-stat-count-label">
-            {summary.totalRefundCount ?? 0}건
+            <ErpSafeNumber value={summary.totalRefundCount} formatType={ERP_NUMBER_FORMAT.COUNT} />
           </span>
-          <span className="refund-management__stat-label">{periodLabel} 환불 처리</span>
+          <span className="refund-management__stat-label">
+            <ErpSafeText value={periodLabel} /> 환불 처리
+          </span>
         </div>
 
         <div className="refund-management__stat-card refund-management__stat-card--accent-accent">
           <span className="refund-management__stat-label">환불 금액(원)</span>
           <span className="refund-management__stat-value">
-            {formatCurrency(summary.totalRefundAmount)}
+            <ErpSafeNumber value={summary.totalRefundAmount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
           </span>
           <span className="refund-management__stat-label">
-            평균: {formatCurrency(summary.averageRefundPerCase)}
+            평균:{' '}
+            <ErpSafeNumber
+              value={summary.averageRefundPerCase}
+              formatType={ERP_NUMBER_FORMAT.CURRENCY}
+            />
           </span>
         </div>
 
         <div className="refund-management__stat-card refund-management__stat-card--accent-secondary">
           <span className="refund-management__stat-label">환불 회기</span>
           <span className="refund-management__stat-value">
-            {summary.totalRefundedSessions ?? 0}회
+            <ErpSafeText value={sessionsLabel} />
           </span>
           <span className="refund-management__stat-label">총 환불된 상담 회기</span>
         </div>
@@ -63,10 +68,14 @@ const RefundKpiBlock = ({ refundStats, selectedPeriod, erpSyncStatus }) => {
         <div className="refund-management__stat-card refund-management__stat-card--accent-primary">
           <span className="refund-management__stat-label">ERP 연동 상태</span>
           <span className="refund-management__stat-value">
-            {erpSyncStatus?.erpSystemAvailable ? '연동 완료' : '오류'}
+            <ErpSafeText value={erpSyncStatus?.erpSystemAvailable ? '연동 완료' : '오류'} />
           </span>
           <span className="refund-management__stat-label">
-            성공률: {erpSyncStatus?.erpSuccessRate ?? 0}%
+            성공률:{' '}
+            <ErpSafeNumber
+              value={erpSyncStatus?.erpSuccessRate}
+              formatType={ERP_NUMBER_FORMAT.PERCENT}
+            />
           </span>
         </div>
       </div>

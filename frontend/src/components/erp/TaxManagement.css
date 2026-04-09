@@ -21,10 +21,35 @@
 }
 
 .tax-type-indicator {
-    width: 12px;
-    height: 12px;
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
     border-radius: var(--border-radius-full, 50%);
     flex-shrink: 0;
+    background: var(--mg-gray-300);
+}
+
+.tax-type-indicator[data-color="primary"] {
+    background: var(--mg-primary-500);
+}
+
+.tax-type-indicator[data-color="success"] {
+    background: var(--mg-success-500);
+}
+
+.tax-type-indicator[data-color="error"] {
+    background: var(--mg-error-500);
+}
+
+.tax-type-indicator[data-color="info"] {
+    background: var(--mg-info-500);
+}
+
+.tax-type-indicator[data-color="neutral"] {
+    background: var(--mg-gray-500);
+}
+
+.tax-type-indicator[data-color="warning"] {
+    background: var(--mg-warning-500);
 }
 
 .tax-type-info {
@@ -84,8 +109,38 @@
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
-    color: white;
+    color: var(--color-text-on-primary);
     text-transform: uppercase;
+}
+
+.tax-type-badge[data-color="primary"] {
+    background: var(--mg-primary-500);
+    color: var(--color-text-on-primary);
+}
+
+.tax-type-badge[data-color="success"] {
+    background: var(--mg-success-500);
+    color: var(--color-text-on-primary);
+}
+
+.tax-type-badge[data-color="error"] {
+    background: var(--mg-error-500);
+    color: var(--color-text-on-primary);
+}
+
+.tax-type-badge[data-color="info"] {
+    background: var(--mg-info-500);
+    color: var(--color-text-on-primary);
+}
+
+.tax-type-badge[data-color="neutral"] {
+    background: var(--mg-gray-500);
+    color: var(--color-text-on-primary);
+}
+
+.tax-type-badge[data-color="warning"] {
+    background: var(--mg-warning-500);
+    color: var(--color-text-on-primary);
 }
 
 .tax-calculation-details {
@@ -96,7 +151,7 @@
     padding: var(--spacing-md);
     background: var(--light-beige);
     border-radius: var(--radius-sm);
-    border-left: 3px solid var(--mint-green);
+    border-left: var(--border-width-thick) solid var(--mint-green);
 }
 
 .tax-calculation-description p {
@@ -108,7 +163,7 @@
 
 /* ==================== 추가 세금 폼 ==================== */
 .tax-additional-form {
-    max-width: 600px;
+    max-width: var(--mg-modal-max-width);
     margin: 0 auto;
     padding: var(--spacing-xl);
 }
@@ -165,8 +220,8 @@
     }
     
     .tax-type-indicator {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-size-sm);
+        height: var(--icon-size-sm);
     }
     
     .tax-calculation-header {

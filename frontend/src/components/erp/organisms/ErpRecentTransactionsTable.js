@@ -5,11 +5,11 @@
  * @since 2026-04-05
  */
 
-import { formatCurrency } from '../../../utils/formatUtils';
 import {
   buildRecentTransactionRowKey,
   formatRecentTransactionDate
 } from '../../../utils/erpFinanceDisplay';
+import { ErpSafeNumber, ErpSafeText } from '../common';
 
 /**
  * @param {object} props
@@ -47,25 +47,28 @@ const ErpRecentTransactionsTable = ({ financeLoading, recentTransactions }) => (
                 tx.type === 'income' ||
                 tx.transactionType === 'INCOME' ||
                 tx.transactionType === 'income';
-              const descText = tx.description ?? tx.memo ?? tx.remarks;
-              let descDisplay = '—';
-              if (descText != null) {
-                descDisplay =
-                  typeof descText === 'object' ? JSON.stringify(descText) : String(descText);
-              }
               const rowKey = buildRecentTransactionRowKey(tx);
               return (
                 <tr key={rowKey}>
-                  <td>{formatRecentTransactionDate(tx)}</td>
-                  <td>{isIncome ? '수입' : '지출'}</td>
+                  <td>
+                    <ErpSafeText value={formatRecentTransactionDate(tx)} />
+                  </td>
+                  <td>
+                    <ErpSafeText value={isIncome ? '수입' : '지출'} />
+                  </td>
                   <td
                     className={
                       isIncome ? 'erp-finance-tx__amount--income' : 'erp-finance-tx__amount--expense'
                     }
                   >
-                    {formatCurrency(tx.amount ?? 0)}
+                    <ErpSafeNumber value={tx.amount ?? 0} />
                   </td>
-                  <td>{descDisplay}</td>
+                  <td>
+                    <ErpSafeText
+                      value={tx.description ?? tx.memo ?? tx.remarks}
+                      fallback="—"
+                    />
+                  </td>
                 </tr>
               );
             })}

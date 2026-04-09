@@ -1,74 +1,88 @@
+/**
+ * 환불 KPI 카드 그리드 — 디자인 토큰 정합
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
 .refund-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-v2-erp-refund-panel {
+  min-width: 0;
+}
+
+.mg-v2-erp-refund-panel .mg-h4 {
+  margin: 0 0 var(--spacing-xs);
 }
 
 .refund-stats-value {
-    font-size: 2rem;
-    font-weight: bold;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
 }
 
 .refund-stats-value--danger {
-    color: var(--mg-error-500);
+  color: var(--mg-error-500);
 }
 
 .refund-stats-value--purple {
-    color: #6f42c1;
+  color: var(--mg-purple-600);
 }
 
 .refund-stats-value--orange {
-    color: #fd7e14;
+  color: var(--mg-warning-600);
 }
 
 .refund-stats-label {
-    color: #666;
-    font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .refund-erp-sync-status {
-    padding: 15px;
-    border-radius: 8px;
-    border-width: 1px;
-    border-style: solid;
-    text-align: center;
+  padding: var(--spacing-sm);
+  border-radius: var(--mg-radius-lg);
+  border-width: 1px;
+  border-style: solid;
+  text-align: center;
 }
 
 .refund-erp-sync-status--available {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+  background-color: var(--mg-success-100);
+  border-color: var(--mg-success-200);
 }
 
 .refund-erp-sync-status--error {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+  background-color: var(--mg-error-100);
+  border-color: var(--mg-error-200);
 }
 
 .refund-erp-sync-status-icon {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 5px;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
 }
 
 .refund-erp-sync-status--available .refund-erp-sync-status-icon {
-    color: #155724;
+  color: var(--mg-success-800);
 }
 
 .refund-erp-sync-status--error .refund-erp-sync-status-icon {
-    color: #721c24;
+  color: var(--mg-error-800);
 }
 
 .refund-erp-sync-status-message {
-    font-size: 0.9rem;
-    font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .refund-erp-sync-status--available .refund-erp-sync-status-message {
-    color: #155724;
+  color: var(--mg-success-800);
 }
 
 .refund-erp-sync-status--error .refund-erp-sync-status-message {
-    color: #721c24;
+  color: var(--mg-error-800);
 }
-

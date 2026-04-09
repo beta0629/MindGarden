@@ -7,13 +7,12 @@
  */
 
 import React from 'react';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import ErpStatusBadge from '../common/ErpStatusBadge';
-
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
 const RefundHistoryTableBlock = ({
-  refundHistory,
+  refundHistory = [],
   pageInfo,
   onPageChange,
   onReflectErp,
@@ -96,6 +95,10 @@ const RefundHistoryTableBlock = ({
               {refundHistory.map((refund, index) => {
                 const rowKey = `${refund.mappingId}-${refund.terminatedAt}-${index}`;
                 const selected = isRowSelected(refund.mappingId, refund.terminatedAt);
+                const sessionsLabel = `${new Intl.NumberFormat('ko-KR').format(
+                  toSafeNumber(refund.refundedSessions)
+                )}회`;
+                const rowAria = `${toDisplayString(refund.clientName)} 행 선택`;
                 return (
                   <tr key={rowKey} className="refund-management__data-row">
                     {onToggleRowSelection && (
@@ -104,19 +107,36 @@ const RefundHistoryTableBlock = ({
                           type="checkbox"
                           checked={selected}
                           onChange={() => handleToggle(refund)}
-                          aria-label={`${refund.clientName} 행 선택`}
+                          aria-label={rowAria}
                         />
                       </td>
                     )}
-                    <td className="refund-management__td">{refund.terminatedAt}</td>
-                    <td className="refund-management__td">{refund.clientName}</td>
-                    <td className="refund-management__td">{refund.consultantName}</td>
-                    <td className="refund-management__td">{refund.packageName}</td>
                     <td className="refund-management__td">
-                      <span className="mg-v2-count-badge">{refund.refundedSessions}회</span>
+                      <ErpSafeText value={refund.terminatedAt} />
                     </td>
-                    <td className="refund-management__td">{formatCurrency(refund.refundAmount)}</td>
-                    <td className="refund-management__td">{refund.standardizedReason}</td>
+                    <td className="refund-management__td">
+                      <ErpSafeText value={refund.clientName} />
+                    </td>
+                    <td className="refund-management__td">
+                      <ErpSafeText value={refund.consultantName} />
+                    </td>
+                    <td className="refund-management__td">
+                      <ErpSafeText value={refund.packageName} />
+                    </td>
+                    <td className="refund-management__td">
+                      <span className="mg-v2-count-badge">
+                        <ErpSafeText value={sessionsLabel} />
+                      </span>
+                    </td>
+                    <td className="refund-management__td">
+                      <ErpSafeNumber
+                        value={refund.refundAmount}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                      />
+                    </td>
+                    <td className="refund-management__td">
+                      <ErpSafeText value={refund.standardizedReason} />
+                    </td>
                     <td className="refund-management__td">
                       <ErpStatusBadge status={refund.erpStatus} />
                     </td>
@@ -137,9 +157,7 @@ const RefundHistoryTableBlock = ({
             </tbody>
           </table>
         ) : (
-          <p className="refund-management__empty-message">
-            선택한 기간에 환불 이력이 없습니다.
-          </p>
+          <p className="refund-management__empty-message">선택한 기간에 환불 이력이 없습니다.</p>
         )}
       </div>
       {totalPages > 1 && (
@@ -156,7 +174,7 @@ const RefundHistoryTableBlock = ({
             이전
           </button>
           <span className="refund-management__pagination-info">
-            {currentPage + 1} / {totalPages} 페이지
+            <ErpSafeText value={`${currentPage + 1} / ${totalPages} 페이지`} />
           </span>
           <button
             type="button"

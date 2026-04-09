@@ -1,51 +1,60 @@
+/**
+ * 회계 처리 현황 — 토큰 정합
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
 .refund-accounting-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  gap: var(--spacing-sm);
 }
 
 .refund-accounting-card {
-    padding: 15px;
-    border-radius: 8px;
-    border-width: 1px;
-    border-style: solid;
+  padding: var(--spacing-sm);
+  border-radius: var(--mg-radius-lg);
+  border-width: 1px;
+  border-style: solid;
 }
 
 .refund-accounting-card--success {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+  background-color: var(--mg-success-100);
+  border-color: var(--mg-success-200);
 }
 
 .refund-accounting-card--warning {
-    background-color: #fff3cd;
-    border-color: #ffeaa7;
+  background-color: var(--mg-warning-100);
+  border-color: var(--mg-warning-200);
 }
 
 .refund-accounting-card--neutral {
-    background-color: #e2e3e5;
-    border-color: #d6d8db;
+  background-color: var(--mg-gray-100);
+  border-color: var(--mg-gray-300);
 }
 
 .refund-accounting-label {
-    font-weight: 600;
-    margin-bottom: 5px;
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
 }
 
 .refund-accounting-value {
-    font-size: 1.2rem;
-    font-weight: bold;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .refund-accounting-value--success {
-    color: #155724;
+  color: var(--mg-success-800);
 }
 
 .refund-accounting-value--warning {
-    color: #856404;
+  color: var(--mg-warning-800);
 }
 
 .refund-accounting-value--neutral {
-    color: #383d41;
+  color: var(--mg-gray-800);
 }
 
+.mg-v2-erp-refund-panel .mg-h4 {
+  margin: 0 0 var(--spacing-xs);
+}

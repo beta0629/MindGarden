@@ -29,7 +29,7 @@
 }
 
 .erp-system .erp-login-card {
-  background: white;
+  background: var(--mg-color-surface-main, var(--mg-gray-50));
   border-radius: 16px;
   box-shadow: 0 10px 30px var(--mg-shadow-light);
   padding: 0;

@@ -6,11 +6,11 @@
  */
 
 import React from 'react';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
-const RefundErpSyncBlock = ({ erpSyncStatus }) => {
+const RefundErpSyncBlock = ({ erpSyncStatus = {} }) => {
   const status = erpSyncStatus || {};
-  const available = status.erpSystemAvailable;
-  const lastSync = status.lastSyncTime || '정보 없음';
+  const available = Boolean(status.erpSystemAvailable);
   const pending = status.pendingErpRequests ?? 0;
   const failed = status.failedErpRequests ?? 0;
 
@@ -24,8 +24,17 @@ const RefundErpSyncBlock = ({ erpSyncStatus }) => {
       </h2>
       <div className="refund-management__erp-sync-content">
         <p>
-          {available ? '연동 정상' : '연결 오류'} · 마지막 동기화: {lastSync} · 미반영 건: {pending}건
-          {failed > 0 && ` · 실패 ${failed}건`}
+          <ErpSafeText value={available ? '연동 정상' : '연결 오류'} />
+          {' · 마지막 동기화: '}
+          <ErpSafeText value={status.lastSyncTime} fallback="정보 없음" />
+          {' · 미반영 건: '}
+          <ErpSafeNumber value={pending} formatType={ERP_NUMBER_FORMAT.COUNT} />
+          {failed > 0 ? (
+            <>
+              {' · 실패 '}
+              <ErpSafeNumber value={failed} formatType={ERP_NUMBER_FORMAT.COUNT} />
+            </>
+          ) : null}
         </p>
       </div>
     </section>

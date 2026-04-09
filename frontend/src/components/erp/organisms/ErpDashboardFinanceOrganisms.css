@@ -44,7 +44,7 @@
 .erp-finance-chart__item {
   margin: 0;
   padding: var(--mg-spacing-md, 16px);
-  background: var(--ad-b0kla-surface-muted, var(--mg-color-surface-subtle, rgba(0, 0, 0, 0.03)));
+  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
   border-radius: var(--radius-md, 8px);
 }
 
@@ -94,11 +94,11 @@
 .erp-finance-tx__table th {
   font-weight: 600;
   color: var(--mg-color-text-secondary);
-  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.02));
+  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
 }
 
 .erp-finance-tx__table tbody tr:hover {
-  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.02));
+  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
 }
 
 .erp-finance-tx__amount--income {
@@ -142,7 +142,7 @@
 .erp-finance-sync__auto {
   margin: var(--mg-spacing-md, 0.75rem) 0 0;
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
-  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.03));
+  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
   border-radius: var(--radius-md, 6px);
   font-size: 0.85rem;
 }
@@ -180,6 +180,10 @@
   font-size: 0.9rem;
   padding: 0.35rem var(--mg-spacing-sm, 0.5rem);
   border-radius: var(--radius-md, 8px);
+}
+
+.erp-finance-sync__result-prefix {
+  font-weight: 600;
 }
 
 .erp-finance-sync__result--success {

@@ -6,11 +6,13 @@
  */
 
 import React from 'react';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
 const RefundReasonStatsBlock = ({ refundReasonStats }) => {
-  const entries = refundReasonStats && typeof refundReasonStats === 'object'
-    ? Object.entries(refundReasonStats)
-    : [];
+  const entries =
+    refundReasonStats && typeof refundReasonStats === 'object'
+      ? Object.entries(refundReasonStats)
+      : [];
   const total = entries.reduce((sum, [, count]) => sum + (Number(count) || 0), 0);
 
   return (
@@ -33,21 +35,25 @@ const RefundReasonStatsBlock = ({ refundReasonStats }) => {
           <tbody>
             {entries.map(([reason, count]) => {
               const num = Number(count) || 0;
-              const ratio = total > 0 ? ((num / total) * 100).toFixed(1) : '0';
+              const ratioNum = total > 0 ? (num / total) * 100 : 0;
               return (
                 <tr key={reason}>
-                  <td>{reason}</td>
-                  <td>{num}건</td>
-                  <td>{ratio}%</td>
+                  <td>
+                    <ErpSafeText value={reason} />
+                  </td>
+                  <td>
+                    <ErpSafeNumber value={num} formatType={ERP_NUMBER_FORMAT.COUNT} />
+                  </td>
+                  <td>
+                    <ErpSafeNumber value={ratioNum} formatType={ERP_NUMBER_FORMAT.PERCENT} />
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       ) : (
-        <p className="refund-management__reason-stats-empty">
-          환불 사유별 통계가 없습니다.
-        </p>
+        <p className="refund-management__reason-stats-empty">환불 사유별 통계가 없습니다.</p>
       )}
     </section>
   );

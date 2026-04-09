@@ -20,7 +20,7 @@
 
 /* ==================== 모달 콘텐츠 ==================== */
 .consultant-profile-modal-content {
-  background: white;
+  background: var(--mg-white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   max-width: var(--schedule-modal-max-width, 1400px);
@@ -202,7 +202,7 @@
   font-size: var(--font-size-md);
   color: var(--dark-gray);
   transition: all var(--transition-duration, 0.2s) ease;
-  background: white;
+  background: var(--mg-white);
 }
 
 .consultant-profile-form-input:hover,
@@ -216,7 +216,7 @@
 .consultant-profile-form-textarea:focus {
   outline: none;
   border-color: var(--mint-green);
-  box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
+  box-shadow: 0 0 0 var(--spacing-xs) var(--mg-success-100);
   background: var(--light-cream);
 }
 

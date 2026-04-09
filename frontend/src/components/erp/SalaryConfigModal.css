@@ -20,7 +20,7 @@
 
 /* ==================== 모달 콘텐츠 ==================== */
 .salary-config-modal {
-  background: white;
+  background: var(--mg-white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   width: 90%;
@@ -79,7 +79,7 @@
 
 .close-button:hover {
   background: var(--olive-green);
-  color: white;
+  color: var(--mg-white);
 }
 
 /* ==================== 모달 바디 ==================== */
@@ -90,26 +90,26 @@
 .salary-config-modal-intro {
   margin: 0 0 var(--spacing-lg) 0;
   padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--light-cream, #f8f9fa);
+  background: var(--light-cream);
   border-radius: var(--radius-md);
-  border-left: 4px solid var(--mint-green, #98fb98);
+  border-left: 4px solid var(--mint-green);
   font-size: var(--font-size-sm);
-  color: var(--dark-gray, #333);
+  color: var(--dark-gray);
   line-height: 1.5;
 }
 
 .config-section-desc {
   margin: 0 0 var(--spacing-md) 0;
   font-size: var(--font-size-sm);
-  color: var(--dark-gray, #555);
+  color: var(--dark-gray);
   line-height: 1.5;
 }
 
 .config-item-hint {
   display: block;
   margin-bottom: var(--spacing-xs);
-  font-size: 0.8125rem;
-  color: var(--dark-gray, #666);
+  font-size: var(--font-size-xs);
+  color: var(--medium-gray);
   line-height: 1.4;
 }
 
@@ -154,7 +154,7 @@
   border: 1px solid var(--light-beige);
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);
-  background: white;
+  background: var(--mg-white);
   color: var(--dark-gray);
   transition: all var(--transition-duration, 0.2s) ease;
   position: relative;
@@ -168,7 +168,7 @@
 .config-item select:focus {
   outline: none;
   border-color: var(--mint-green);
-  box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
+  box-shadow: 0 0 0 var(--spacing-xs) var(--mg-success-100);
   background: var(--light-cream);
   position: relative;
   z-index: 9999;
@@ -207,7 +207,7 @@
   color: var(--dark-gray);
 }
 
-.preview-item span:last-child {
+.preview-item .preview-item__value {
   font-weight: var(--font-weight-semibold, 600);
   color: var(--olive-green);
   background: var(--mint-green);
@@ -257,7 +257,7 @@
 
 .cancel-button:hover:not(:disabled) {
   background: var(--medium-gray);
-  color: white;
+  color: var(--mg-white);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -270,7 +270,7 @@
 
 .save-button:hover:not(:disabled) {
   background: var(--olive-green);
-  color: white;
+  color: var(--mg-white);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }

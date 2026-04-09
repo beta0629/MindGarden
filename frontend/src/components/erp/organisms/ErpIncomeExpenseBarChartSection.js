@@ -7,7 +7,37 @@
 
 import { useMemo } from 'react';
 import MGChart from '../../common/MGChart';
-import { ERP_INCOME_EXPENSE_CHART_HEX } from '../../../constants/charts';
+
+const ERP_INCOME_EXPENSE_CHART_CSS_TOKENS = {
+  INCOME_FILL: '--mg-success-400',
+  INCOME_BORDER: '--mg-success-600',
+  EXPENSE_FILL: '--mg-error-500',
+  EXPENSE_BORDER: '--mg-error-600'
+};
+
+/**
+ * Chart.js Canvas는 var(--token) 문자열을 해석하지 못함 → :root 계산값으로 해석.
+ * @returns {{ incomeFill: string, incomeBorder: string, expenseFill: string, expenseBorder: string }}
+ */
+function readIncomeExpenseChartColorsFromTokens() {
+  if (typeof document === 'undefined') {
+    return {
+      incomeFill: '',
+      incomeBorder: '',
+      expenseFill: '',
+      expenseBorder: ''
+    };
+  }
+  const root = document.documentElement;
+  const pick = (varName) =>
+    getComputedStyle(root).getPropertyValue(varName).trim() || '';
+  return {
+    incomeFill: pick(ERP_INCOME_EXPENSE_CHART_CSS_TOKENS.INCOME_FILL),
+    incomeBorder: pick(ERP_INCOME_EXPENSE_CHART_CSS_TOKENS.INCOME_BORDER),
+    expenseFill: pick(ERP_INCOME_EXPENSE_CHART_CSS_TOKENS.EXPENSE_FILL),
+    expenseBorder: pick(ERP_INCOME_EXPENSE_CHART_CSS_TOKENS.EXPENSE_BORDER)
+  };
+}
 
 /**
  * @param {object} props
@@ -15,6 +45,8 @@ import { ERP_INCOME_EXPENSE_CHART_HEX } from '../../../constants/charts';
  * @param {{ totalIncome?: number, totalExpense?: number }|null} props.financialData
  */
 const ErpIncomeExpenseBarChartSection = ({ financeLoading, financialData }) => {
+  const chartColors = useMemo(() => readIncomeExpenseChartColorsFromTokens(), []);
+
   const incomeExpenseChartData = useMemo(() => {
     const income = financialData?.totalIncome ?? 0;
     const expense = financialData?.totalExpense ?? 0;
@@ -24,19 +56,13 @@ const ErpIncomeExpenseBarChartSection = ({ financeLoading, financialData }) => {
         {
           label: '금액',
           data: [income, expense],
-          backgroundColor: [
-            ERP_INCOME_EXPENSE_CHART_HEX.INCOME_FILL,
-            ERP_INCOME_EXPENSE_CHART_HEX.EXPENSE_FILL
-          ],
-          borderColor: [
-            ERP_INCOME_EXPENSE_CHART_HEX.INCOME_BORDER,
-            ERP_INCOME_EXPENSE_CHART_HEX.EXPENSE_BORDER
-          ],
+          backgroundColor: [chartColors.incomeFill, chartColors.expenseFill],
+          borderColor: [chartColors.incomeBorder, chartColors.expenseBorder],
           borderWidth: 1
         }
       ]
     };
-  }, [financialData?.totalIncome, financialData?.totalExpense]);
+  }, [financialData?.totalIncome, financialData?.totalExpense, chartColors]);
 
   return (
     <section

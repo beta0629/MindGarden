@@ -18,7 +18,7 @@
 
 /* 모달 컨테이너 */
 .quick-expense-modal {
-  background: white;
+  background: var(--mg-color-surface-main, var(--mg-white));
   border-radius: var(--radius-lg);
   max-width: 800px;
   width: 100%;
@@ -32,9 +32,9 @@
 /* ErpModal(UnifiedModal) 사용 시: 빠른 지출 모달에 카드 테두리 적용 */
 .mg-modal-overlay:has(.quick-expense-amount-form) .mg-modal,
 .mg-modal-overlay:has(.quick-expense-categories) .mg-modal {
-  border: 1px solid var(--light-beige, #e8e6e3);
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
   border-radius: var(--radius-lg, 12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--droplet-shadow, var(--shadow-xl));
 }
 
 /* 모달 헤더 */
@@ -75,12 +75,12 @@
 
 /* 에러 메시지 */
 .quick-expense-error {
-  background-color: var(--status-error-border, #fee);
-  color: var(--status-error-dark, #c33);
+  background-color: var(--status-error-border);
+  color: var(--status-error-dark);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
   border-radius: var(--radius-sm);
-  border-left: 4px solid var(--status-error-dark, #c33);
+  border-left: 4px solid var(--status-error-dark);
 }
 
 /* 금액 입력 폼 (버튼 클릭 후) */
@@ -117,12 +117,12 @@
 
 /* 빠른 지출 등록 버튼: 배경색 보장 (테마 변수 미적용 시 fallback) */
 .quick-expense-amount-actions .mg-button--primary {
-  background-color: var(--mg-color-primary-main, var(--ad-b0kla-green, #2d5a3d));
-  border-color: var(--mg-color-primary-main, var(--ad-b0kla-green, #2d5a3d));
+  background-color: var(--mg-color-primary-main, var(--ad-b0kla-green));
+  border-color: var(--mg-color-primary-main, var(--ad-b0kla-green));
 }
 .quick-expense-amount-actions .mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-primary-light, #3d6b4d);
-  border-color: var(--mg-color-primary-light, #3d6b4d);
+  background-color: var(--mg-color-primary-light, var(--mg-primary-400));
+  border-color: var(--mg-color-primary-light, var(--mg-primary-400));
 }
 
 /* 로딩 */
@@ -142,7 +142,7 @@
 
 /* 카테고리 버튼 */
 .quick-expense-category-btn {
-  background: white;
+  background: var(--mg-color-surface-main, var(--mg-white));
   border: 2px solid var(--light-beige);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
@@ -157,7 +157,7 @@
 
 .quick-expense-category-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm, var(--cs-shadow-md));
   border-color: var(--mint-green);
 }
 
@@ -207,7 +207,7 @@
 .quick-expense-close-btn {
   padding: var(--spacing-sm) var(--spacing-xl);
   background: var(--medium-gray);
-  color: white;
+  color: var(--mg-white);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;

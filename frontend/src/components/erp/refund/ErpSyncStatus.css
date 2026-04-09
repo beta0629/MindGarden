@@ -1,70 +1,78 @@
+/**
+ * ERP 동기화 상태 — 토큰 정합
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
 .erp-sync-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  gap: var(--spacing-sm);
 }
 
 .erp-sync-card {
-    padding: 15px;
-    border-radius: 8px;
-    border-width: 1px;
-    border-style: solid;
+  padding: var(--spacing-sm);
+  border-radius: var(--mg-radius-lg);
+  border-width: 1px;
+  border-style: solid;
 }
 
 .erp-sync-card--success {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+  background-color: var(--mg-success-100);
+  border-color: var(--mg-success-200);
 }
 
 .erp-sync-card--error {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+  background-color: var(--mg-error-100);
+  border-color: var(--mg-error-200);
 }
 
 .erp-sync-card--info {
-    background-color: #d1ecf1;
-    border-color: #bee5eb;
+  background-color: var(--mg-info-100);
+  border-color: var(--mg-info-200);
 }
 
 .erp-sync-card--warning {
-    background-color: #fff3cd;
-    border-color: #ffeaa7;
+  background-color: var(--mg-warning-100);
+  border-color: var(--mg-warning-200);
 }
 
 .erp-sync-label {
-    font-weight: 600;
-    margin-bottom: 5px;
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
 }
 
 .erp-sync-value {
-    font-size: 1.2rem;
-    font-weight: bold;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .erp-sync-value--success {
-    color: #155724;
+  color: var(--mg-success-800);
 }
 
 .erp-sync-value--error {
-    color: #721c24;
+  color: var(--mg-error-800);
 }
 
 .erp-sync-value--info {
-    color: #0c5460;
+  color: var(--mg-info-800);
 }
 
 .erp-sync-value--warning {
-    color: #856404;
+  color: var(--mg-warning-800);
 }
 
 .erp-sync-footer {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    color: var(--mg-secondary-500);
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
+.mg-v2-erp-refund-panel .mg-h4 {
+  margin: 0 0 var(--spacing-xs);
+}

@@ -1,0 +1,26 @@
+/**
+ * FinancialManagement 전용 — 레이아웃 패널·모달 문구 (디자인 토큰만 사용)
+ */
+
+.mg-financial-management-section-panel {
+  background: var(--mg-layout-section-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-layout-section-border, var(--mg-color-border-main));
+  border-radius: var(--modal-border-radius);
+  padding: var(--mg-layout-section-padding, var(--spacing-md));
+}
+
+.mg-financial-management-mapping-card {
+  background: var(--mg-layout-section-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-layout-section-border, var(--mg-color-border-main));
+  border-radius: var(--modal-border-radius);
+  padding: var(--mg-layout-section-padding, var(--spacing-md));
+}
+
+.mg-financial-management-delete-modal-text {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-financial-management-delete-modal-list {
+  margin: 0;
+  padding-left: var(--base-unit-xl);
+}

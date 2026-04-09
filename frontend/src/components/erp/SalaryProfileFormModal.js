@@ -8,7 +8,7 @@ import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import './SalaryProfileFormModal.css';
-import SafeText from '../common/SafeText';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
@@ -465,9 +465,16 @@ const SalaryProfileFormModal = ({
                 {/* 기본 정보 */}
                 <div className="salary-profile-form__section consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
-                        <p className="consultant-info-item"><strong>이름:</strong> <SafeText>{consultant.name}</SafeText></p>
-                        <p className="consultant-info-item"><strong>현재 등급:</strong> <SafeText>{gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')}</SafeText></p>
-                        <p className="consultant-info-item"><strong>기본 급여:</strong> {displayBaseSalary != null ? displayBaseSalary.toLocaleString() : '—'}원</p>
+                        <p className="consultant-info-item"><strong>이름:</strong> <ErpSafeText value={consultant.name} /></p>
+                        <p className="consultant-info-item"><strong>현재 등급:</strong> <ErpSafeText value={gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')} /></p>
+                        <p className="consultant-info-item">
+                            <strong>기본 급여:</strong>{' '}
+                            {displayBaseSalary != null ? (
+                                <ErpSafeNumber value={displayBaseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                            ) : (
+                                <ErpSafeText value="—" />
+                            )}
+                        </p>
                     </div>
 
                     {/* 상담사 등급 선택 */}
@@ -506,7 +513,7 @@ const SalaryProfileFormModal = ({
                             {gradeTableData.map((grade, index) => (
                                 <div key={grade.code} className="grade-table-row">
                                     <div className="grade-table-cell grade-table-cell--name">
-                                        <SafeText>{grade.name}</SafeText>
+                                        <ErpSafeText value={grade.name} />
                                         {grade.code === formData.grade && (
                                             <span className="grade-selected-badge">
                                                 선택됨
@@ -514,16 +521,26 @@ const SalaryProfileFormModal = ({
                                         )}
                                     </div>
                                     <div className="grade-table-cell--right">
-                                        {grade.baseSalary.toLocaleString()}원
+                                        <ErpSafeNumber value={grade.baseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                                     </div>
                                     <div className="grade-table-cell--right">
-                                        {grade.options && grade.options[0] ? grade.options[0].amount.toLocaleString() : '0'}원
+                                        <ErpSafeNumber
+                                            value={grade.options && grade.options[0] ? grade.options[0].amount : 0}
+                                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                                        />
                                     </div>
                                     <div className="grade-table-cell--right">
-                                        {grade.options && grade.options[1] ? grade.options[1].amount.toLocaleString() : '0'}원
+                                        <ErpSafeNumber
+                                            value={grade.options && grade.options[1] ? grade.options[1].amount : 0}
+                                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                                        />
                                     </div>
                                     <div className={`grade-table-cell--right ${grade.multiplier > 1 ? 'grade-table-cell--highlight' : ''}`}>
-                                        {grade.multiplier > 1 ? `+${((grade.multiplier - 1) * 2000).toLocaleString()}원` : '-'}
+                                        {grade.multiplier > 1 ? (
+                                            <ErpSafeText value={`+${((grade.multiplier - 1) * 2000).toLocaleString()}원`} />
+                                        ) : (
+                                            <ErpSafeText value="-" />
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -642,7 +659,7 @@ const SalaryProfileFormModal = ({
                             </MGButton>
                         </div>
                         <p className="option-description">
-                            <SafeText>{getGradeOptionsDescription(formData.grade || consultant.grade)}</SafeText>
+                            <ErpSafeText value={getGradeOptionsDescription(formData.grade || consultant.grade)} />
                         </p>
                         
                         {selectedOptions.map((option, index) => (

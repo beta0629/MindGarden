@@ -6,11 +6,9 @@
  */
 
 import React from 'react';
+import { ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
-
-const RefundAccountingBlock = ({ erpSyncStatus }) => {
+const RefundAccountingBlock = ({ erpSyncStatus = {} }) => {
   const accounting = erpSyncStatus?.accountingStatus || {};
   const processedToday = accounting.processedToday ?? 0;
   const pendingApproval = accounting.pendingApproval ?? 0;
@@ -26,13 +24,16 @@ const RefundAccountingBlock = ({ erpSyncStatus }) => {
       </h2>
       <div className="refund-management__accounting-content">
         <span className="refund-management__accounting-item">
-          반영 완료 {processedToday}건
+          반영 완료{' '}
+          <ErpSafeNumber value={processedToday} formatType={ERP_NUMBER_FORMAT.COUNT} />
         </span>
         <span className="refund-management__accounting-item">
-          대기 {pendingApproval}건
+          대기{' '}
+          <ErpSafeNumber value={pendingApproval} formatType={ERP_NUMBER_FORMAT.COUNT} />
         </span>
         <span className="refund-management__accounting-item">
-          총 환불 금액 {formatCurrency(totalRefundAmount)}
+          총 환불 금액{' '}
+          <ErpSafeNumber value={totalRefundAmount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
         </span>
         <span className="refund-management__accounting-item refund-management__accounting-item--muted">
           (기간 내 기준)

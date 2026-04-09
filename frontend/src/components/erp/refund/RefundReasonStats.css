@@ -1,32 +1,40 @@
+/**
+ * 환불 사유별 통계 — 토큰 정합
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
 .refund-reason-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  gap: var(--spacing-sm);
 }
 
 .refund-reason-stat-card {
-    padding: 15px;
-    background-color: var(--mg-gray-100);
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+  padding: var(--spacing-sm);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--mg-gray-200);
 }
 
 .refund-reason-stat-label {
-    font-weight: 600;
-    margin-bottom: 5px;
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
 }
 
 .refund-reason-stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--mg-primary-500);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--mg-primary-500);
 }
 
 .refund-reason-stats-empty {
-    text-align: center;
-    color: #666;
-    padding: 20px;
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-md);
 }
 
+.mg-v2-erp-refund-panel .mg-h4 {
+  margin: 0 0 var(--spacing-xs);
+}

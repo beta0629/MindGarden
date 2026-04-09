@@ -9,16 +9,16 @@
 
 /* Glass 효과 적용 */
 .erp-card--glass {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--cs-glass-light-subtle);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-border);
 }
 
 .erp-card--glass .erp-card-title {
   color: var(--ios-text-primary-light);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid var(--glass-border);
   text-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
@@ -52,7 +52,7 @@
 }
 
 .erp-card--glass:hover {
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+  box-shadow: var(--shadow-glass-strong);
 }
 
 /* 모바일 반응형 디자인 */

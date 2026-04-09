@@ -28,9 +28,9 @@
 }
 
 .erp-stat-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: color-mix(in srgb, var(--mg-color-surface-main) 60%, transparent);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid color-mix(in srgb, var(--mg-white) 50%, transparent);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   display: flex;
@@ -42,7 +42,7 @@
 
 .erp-stat-card:hover {
   transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--mg-color-surface-main) 70%, transparent);
   box-shadow: 0 12px 40px var(--mg-shadow-medium);
 }
 

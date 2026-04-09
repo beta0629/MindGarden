@@ -3,19 +3,14 @@ import PropTypes from 'prop-types';
 import { toSafeNumber } from '../../../utils/safeDisplay';
 import ErpButton from '../common/ErpButton';
 import ErpStatusBadge from '../common/ErpStatusBadge';
-import ErpSafeText from '../common/atoms/ErpSafeText';
-import ErpSafeNumber, { ERP_NUMBER_FORMAT } from '../common/atoms/ErpSafeNumber';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 import ErpEmptyState from '../common/molecules/ErpEmptyState';
 import './RefundHistoryTable.css';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
-const RefundHistoryTable = ({
-  refundHistory = [],
-  pageInfo = {},
-  onPageChange
-}) => {
+const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange }) => {
   const rows = Array.isArray(refundHistory) ? refundHistory : [];
   const totalPages = pageInfo?.totalPages ?? 0;
   const currentPage = pageInfo?.currentPage ?? 0;
@@ -25,10 +20,7 @@ const RefundHistoryTable = ({
   const pageLabel = `${currentPage + 1} / ${totalPages} 페이지`;
 
   return (
-    <section
-      className="mg-v2-erp-refund-history"
-      aria-labelledby="refund-history-table-title"
-    >
+    <section className="mg-v2-erp-refund-history" aria-labelledby="refund-history-table-title">
       <h2 id="refund-history-table-title" className="mg-v2-erp-refund-history__title">
         환불 이력
       </h2>
@@ -50,46 +42,45 @@ const RefundHistoryTable = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((refund, index) => (
-                    <tr
-                      key={`${refund.mappingId}-${refund.terminatedAt}-${index}`}
-                      className={
-                        index % 2 === 0 ? 'mg-v2-table-row' : 'mg-v2-table-row-alt'
-                      }
-                    >
-                      <td>
-                        <ErpSafeText value={refund.terminatedAt} />
-                      </td>
-                      <td>
-                        <ErpSafeText value={refund.clientName} />
-                      </td>
-                      <td>
-                        <ErpSafeText value={refund.consultantName} />
-                      </td>
-                      <td>
-                        <ErpSafeText value={refund.packageName} />
-                      </td>
-                      <td className="mg-v2-table-cell">
-                        <ErpSafeText
-                          value={`${new Intl.NumberFormat('ko-KR').format(
-                            toSafeNumber(refund.refundedSessions)
-                          )}회`}
-                        />
-                      </td>
-                      <td className="mg-v2-table-cell mg-v2-text-right">
-                        <ErpSafeNumber
-                          value={refund.refundAmount}
-                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
-                        />
-                      </td>
-                      <td>
-                        <ErpSafeText value={refund.standardizedReason} />
-                      </td>
-                      <td className="mg-v2-table-cell">
-                        <ErpStatusBadge status={refund.erpStatus} />
-                      </td>
-                    </tr>
-                  ))}
+                  {rows.map((refund, index) => {
+                    const sessionsLabel = `${new Intl.NumberFormat('ko-KR').format(
+                      toSafeNumber(refund.refundedSessions)
+                    )}회`;
+                    return (
+                      <tr
+                        key={`${refund.mappingId}-${refund.terminatedAt}-${index}`}
+                        className={index % 2 === 0 ? 'mg-v2-table-row' : 'mg-v2-table-row-alt'}
+                      >
+                        <td>
+                          <ErpSafeText value={refund.terminatedAt} />
+                        </td>
+                        <td>
+                          <ErpSafeText value={refund.clientName} />
+                        </td>
+                        <td>
+                          <ErpSafeText value={refund.consultantName} />
+                        </td>
+                        <td>
+                          <ErpSafeText value={refund.packageName} />
+                        </td>
+                        <td className="mg-v2-table-cell">
+                          <ErpSafeText value={sessionsLabel} />
+                        </td>
+                        <td className="mg-v2-table-cell mg-v2-text-right">
+                          <ErpSafeNumber
+                            value={refund.refundAmount}
+                            formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          />
+                        </td>
+                        <td>
+                          <ErpSafeText value={refund.standardizedReason} />
+                        </td>
+                        <td className="mg-v2-table-cell">
+                          <ErpStatusBadge status={refund.erpStatus} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

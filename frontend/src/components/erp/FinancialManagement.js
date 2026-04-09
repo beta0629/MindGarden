@@ -44,6 +44,7 @@ import { ErpFilterToolbar } from './common';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
+import './FinancialManagement.css';
 
 /** 거래 내역 보기 전환 옵션: 카드 / 테이블 (테이블 뷰는 추후 구현, 현재 동일 카드 뷰) */
 const TRANSACTION_VIEW_MODE_OPTIONS = [
@@ -655,13 +656,7 @@ const FinancialManagement = () => {
               <>
                 {activeTab === 'calendar' && (
                 <section
-                  className="erp-section mg-v2-erp-section-block"
-                  style={{
-                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                    borderRadius: '16px',
-                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                  }}
+                  className="erp-section mg-v2-erp-section-block mg-financial-management-section-panel"
                 >
                   <FinancialCalendarView />
                 </section>
@@ -670,13 +665,7 @@ const FinancialManagement = () => {
               {activeTab === 'transactions' && (
                 <ContentSection noCard className="mg-v2-mapping-list-block">
                   <ContentCard
-                    className="mg-v2-mapping-list-block__card"
-                    style={{
-                      background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                      border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                      borderRadius: '16px',
-                      padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                    }}
+                    className="mg-v2-mapping-list-block__card mg-financial-management-mapping-card"
                   >
                     <div className="mg-v2-mapping-list-block__header">
                       <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
@@ -1009,10 +998,10 @@ const FinancialManagement = () => {
               </>
             }
           >
-            <p style={{ marginBottom: 'var(--spacing-md, 1rem)' }}>
+            <p className="mg-financial-management-delete-modal-text">
               이 작업은 되돌릴 수 없습니다. 아래 거래를 영구 삭제할까요?
             </p>
-            <ul className="mg-v2-text-list" style={{ margin: 0, paddingLeft: '1.25rem' }}>
+            <ul className="mg-v2-text-list mg-financial-management-delete-modal-list">
               <li>
                 거래 번호: #{toDisplayString(deleteModal.transaction.id)}
               </li>

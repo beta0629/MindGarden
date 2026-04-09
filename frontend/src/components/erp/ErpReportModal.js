@@ -7,6 +7,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
+import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -315,27 +316,30 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     <DollarSign size={20} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">총 수익</span>
                                     <span className="mg-v2-info-value mg-v2-color-success">
-                                        {reportData.summary?.totalRevenue?.toLocaleString() || 0}원
+                                        <ErpSafeNumber value={reportData.summary?.totalRevenue} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <DollarSign size={20} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">총 지출</span>
                                     <span className="mg-v2-info-value mg-v2-color-danger">
-                                        {reportData.summary?.totalExpenses?.toLocaleString() || 0}원
+                                        <ErpSafeNumber value={reportData.summary?.totalExpenses} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <TrendingUp size={20} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">순이익</span>
                                     <span className="mg-v2-info-value mg-v2-color-primary">
-                                        {reportData.summary?.netProfit?.toLocaleString() || 0}원
+                                        <ErpSafeNumber value={reportData.summary?.netProfit} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <span className="mg-v2-info-label">거래 건수</span>
                                     <span className="mg-v2-info-value">
-                                        {reportData.summary?.transactionCount || 0}건
+                                        <ErpSafeNumber
+                                            value={reportData.summary?.transactionCount}
+                                            formatType={ERP_NUMBER_FORMAT.COUNT}
+                                        />
                                     </span>
                                 </div>
                             </div>
@@ -348,11 +352,13 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                         {reportData.categoryBreakdown.map((item, index) => (
                                             <div key={index} className="mg-v2-list-item">
                                                 <div className="mg-v2-list-item-content">
-                                                    <div className="mg-v2-list-item-title">{item.category}</div>
+                                                    <div className="mg-v2-list-item-title">
+                                                        <ErpSafeText value={item.category} />
+                                                    </div>
                                                 </div>
                                                 <div className="mg-v2-list-item-action">
                                                     <span className="mg-v2-info-value">
-                                                        {item.amount?.toLocaleString() || 0}원
+                                                        <ErpSafeNumber value={item.amount} />
                                                     </span>
                                                 </div>
                                             </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
+import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
+import './FinancialCalendarView.css';
 import {
   DollarSign,
   TrendingDown,
@@ -77,11 +79,6 @@ const FinancialCalendarView = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0';
-    return new Intl.NumberFormat('ko-KR').format(amount);
-  };
-
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -126,7 +123,8 @@ const FinancialCalendarView = () => {
             <ChevronLeft size={20} aria-hidden />
           </button>
           <h3 className="mg-calendar-title">
-            {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+            <ErpSafeText value={currentDate.getFullYear()} />년{' '}
+            <ErpSafeText value={currentDate.getMonth() + 1} />월
           </h3>
           <button
             type="button"
@@ -201,16 +199,33 @@ const FinancialCalendarView = () => {
                   <div className="mg-calendar-day-summary">
                     {dayData.income > 0 && (
                       <span className="mg-calendar-day-income">
-                        <TrendingUp size={10} aria-hidden /> +{formatCurrency(dayData.income)}
+                        <TrendingUp size={10} aria-hidden /> +
+                        <ErpSafeNumber
+                          value={dayData.income}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          tag="span"
+                          className="mg-financial-calendar-inline-amount"
+                        />
                       </span>
                     )}
                     {dayData.expense > 0 && (
                       <span className="mg-calendar-day-expense">
-                        <TrendingDown size={10} aria-hidden /> -{formatCurrency(dayData.expense)}
+                        <TrendingDown size={10} aria-hidden /> −
+                        <ErpSafeNumber
+                          value={dayData.expense}
+                          formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                          tag="span"
+                          className="mg-financial-calendar-inline-amount"
+                        />
                       </span>
                     )}
                     {dayData.transactions.length > 0 && (
-                      <span className="mg-calendar-day-count">{dayData.transactions.length}건</span>
+                      <span className="mg-calendar-day-count">
+                        <ErpSafeNumber
+                          value={dayData.transactions.length}
+                          formatType={ERP_NUMBER_FORMAT.COUNT}
+                        />
+                      </span>
                     )}
                     {hasMapping && <span className="mg-calendar-day-mapping-dot" aria-hidden />}
                   </div>
@@ -225,7 +240,8 @@ const FinancialCalendarView = () => {
         <div className="mg-financial-calendar-detail-panel">
           <div className="mg-financial-calendar-detail-header">
             <h3 className="mg-financial-calendar-detail-title">
-              <BarChart3 size={20} aria-hidden /> {selectedDate} 거래 상세
+              <BarChart3 size={20} aria-hidden />{' '}
+              <ErpSafeText value={selectedDate} /> 거래 상세
             </h3>
             <button
               type="button"
@@ -238,20 +254,29 @@ const FinancialCalendarView = () => {
           </div>
           <div className="mg-financial-calendar-detail-summary-grid">
             <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--income">
-              <div className="mg-financial-calendar-detail-summary-value">+{formatCurrency(dayDetail.income)}원</div>
+              <div className="mg-financial-calendar-detail-summary-value">
+                +
+                <ErpSafeNumber value={dayDetail.income} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
               <div className="mg-financial-calendar-detail-summary-label">
                 <DollarSign size={12} aria-hidden /> 총 수입
               </div>
             </div>
             <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--expense">
-              <div className="mg-financial-calendar-detail-summary-value">-{formatCurrency(dayDetail.expense)}원</div>
+              <div className="mg-financial-calendar-detail-summary-value">
+                −
+                <ErpSafeNumber value={dayDetail.expense} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+              </div>
               <div className="mg-financial-calendar-detail-summary-label">
                 <TrendingDown size={12} aria-hidden /> 총 지출
               </div>
             </div>
             <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--profit">
               <div className="mg-financial-calendar-detail-summary-value">
-                {formatCurrency(dayDetail.income - dayDetail.expense)}원
+                <ErpSafeNumber
+                  value={dayDetail.income - dayDetail.expense}
+                  formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                />
               </div>
               <div className="mg-financial-calendar-detail-summary-label">
                 <CircleDollarSign size={12} aria-hidden /> 순이익
@@ -260,7 +285,8 @@ const FinancialCalendarView = () => {
           </div>
           <div>
             <h4 className="mg-financial-calendar-detail-list-title">
-              <ClipboardList size={16} aria-hidden /> 거래 내역 ({dayDetail.transactions.length}건)
+              <ClipboardList size={16} aria-hidden /> 거래 내역 (
+              <ErpSafeNumber value={dayDetail.transactions.length} formatType={ERP_NUMBER_FORMAT.COUNT} />)
             </h4>
             {dayDetail.transactions.length > 0 ? (
               <div className="mg-financial-calendar-detail-list">
@@ -269,12 +295,12 @@ const FinancialCalendarView = () => {
                     key={transaction.id}
                     className={`mg-financial-calendar-detail-item ${index % 2 === 0 ? 'mg-financial-calendar-detail-item--even' : 'mg-financial-calendar-detail-item--odd'}`}
                   >
-                    <div style={{ flex: 1 }}>
+                    <div className="mg-financial-calendar-detail-item-main">
                       <div className="mg-financial-calendar-detail-item-top">
                         <span
                           className={`mg-financial-calendar-detail-type-badge ${transaction.transactionType === 'INCOME' ? 'mg-financial-calendar-detail-type-badge--income' : 'mg-financial-calendar-detail-type-badge--expense'}`}
                         >
-                          #{transaction.id}
+                          #<ErpSafeText value={transaction.id} />
                         </span>
                         {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                           transaction.description?.includes('상담료 입금 확인')) && (
@@ -284,17 +310,28 @@ const FinancialCalendarView = () => {
                         )}
                       </div>
                       <div className="mg-financial-calendar-detail-item-category">
-                        {(transaction.category === 'CONSULTATION' ? '상담료' : transaction.category) || '-'} - {transaction.subcategory || ''}
+                        <ErpSafeText
+                          value={
+                            transaction.category === 'CONSULTATION'
+                              ? '상담료'
+                              : transaction.category
+                          }
+                          fallback="—"
+                        />{' '}
+                        - <ErpSafeText value={transaction.subcategory} fallback="" />
                       </div>
                       <div className="mg-financial-calendar-detail-item-desc">
-                        {transaction.description || '-'}
+                        <ErpSafeText value={transaction.description} fallback="—" />
                       </div>
                     </div>
                     <div
                       className={`mg-financial-calendar-detail-item-amount ${transaction.transactionType === 'INCOME' ? 'mg-financial-calendar-detail-item-amount--income' : 'mg-financial-calendar-detail-item-amount--expense'}`}
                     >
-                      {transaction.transactionType === 'INCOME' ? '+' : '-'}
-                      {formatCurrency(transaction.amount)}원
+                      {transaction.transactionType === 'INCOME' ? '+' : '−'}
+                      <ErpSafeNumber
+                        value={transaction.amount}
+                        formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                      />
                     </div>
                   </div>
                 ))}
@@ -308,7 +345,8 @@ const FinancialCalendarView = () => {
 
       <section className="mg-financial-calendar-monthly-stats" aria-label="월 통계">
         <h3 className="mg-financial-calendar-monthly-stats-title">
-          <BarChart3 size={20} aria-hidden /> {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
+          <BarChart3 size={20} aria-hidden /> <ErpSafeText value={currentDate.getFullYear()} />년{' '}
+          <ErpSafeText value={currentDate.getMonth() + 1} />월 통계
         </h3>
         {(() => {
           const monthlyIncome = Object.values(calendarData).reduce((sum, day) => sum + day.income, 0);
@@ -326,7 +364,10 @@ const FinancialCalendarView = () => {
                   <TrendingUp size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value">+{formatCurrency(monthlyIncome)}원</div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    +
+                    <ErpSafeNumber value={monthlyIncome} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
@@ -336,7 +377,10 @@ const FinancialCalendarView = () => {
                   <TrendingDown size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value">-{formatCurrency(monthlyExpense)}원</div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    −
+                    <ErpSafeNumber value={monthlyExpense} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
@@ -348,7 +392,9 @@ const FinancialCalendarView = () => {
                   <CircleDollarSign size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value">{formatCurrency(monthlyProfit)}원</div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    <ErpSafeNumber value={monthlyProfit} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                  </div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
@@ -358,7 +404,9 @@ const FinancialCalendarView = () => {
                   <BarChart3 size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value">{totalTransactions}건</div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">
+                    <ErpSafeNumber value={totalTransactions} formatType={ERP_NUMBER_FORMAT.COUNT} />
+                  </div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>

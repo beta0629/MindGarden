@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import ErpCard from './common/ErpCard';
+import CardContainer from '../common/CardContainer';
 import ErpButton from './common/ErpButton';
+import { ErpSafeText } from './common';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
@@ -139,52 +140,68 @@ const AdminApprovalDashboard = () => {
       )}
 
       {requests.length === 0 ? (
-        <ErpCard title="승인 대기 목록">
-          <div className="approval-dashboard-empty">
-            승인 대기 중인 구매 요청이 없습니다.
-          </div>
-        </ErpCard>
+        <section className="mg-v2-section" aria-labelledby="approval-admin-empty-title">
+          <CardContainer>
+            <h3 id="approval-admin-empty-title" className="mg-h4">승인 대기 목록</h3>
+            <div className="mg-v2-card-body">
+              <div className="approval-dashboard-empty">
+                승인 대기 중인 구매 요청이 없습니다.
+              </div>
+            </div>
+          </CardContainer>
+        </section>
       ) : (
         <div className="approval-dashboard-grid">
           {requests.map(request => (
-            <ErpCard key={request.id} title={toDisplayString(`구매 요청 #${request.id}`)}>
-              <div className="approval-request-info">
-                <div className="approval-request-grid">
-                  <div><strong>요청자:</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
-                  <div><strong>요청일:</strong> {toDisplayString(formatApprovalDate(request.createdAt))}</div>
-                  <div><strong>아이템:</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
-                  <div><strong>수량:</strong> {toDisplayString(request.quantity)}개</div>
-                  <div><strong>단가:</strong> {formatApprovalCurrency(request.unitPrice)}</div>
-                  <div><strong>총액:</strong> {formatApprovalCurrency(request.totalAmount)}</div>
-                </div>
+            <section
+              key={request.id}
+              className="mg-v2-section"
+              aria-labelledby={`approval-admin-req-title-${request.id}`}
+            >
+              <CardContainer>
+                <h3 id={`approval-admin-req-title-${request.id}`} className="mg-h4">
+                  {toDisplayString(`구매 요청 #${request.id}`)}
+                </h3>
+                <div className="mg-v2-card-body">
+                  <div className="approval-request-info">
+                    <div className="approval-request-grid">
+                      <div><strong>요청자:</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
+                      <div><strong>요청일:</strong> <ErpSafeText value={formatApprovalDate(request.createdAt)} /></div>
+                      <div><strong>아이템:</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
+                      <div><strong>수량:</strong> <ErpSafeText value={request.quantity} />개</div>
+                      <div><strong>단가:</strong> <ErpSafeText value={formatApprovalCurrency(request.unitPrice)} /></div>
+                      <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(request.totalAmount)} /></div>
+                    </div>
 
-                {request.reason && (
-                  <div className="approval-request-reason">
-                    <strong>사유:</strong>
-                    <div className="approval-request-reason-text">
-                      <SafeText>{request.reason}</SafeText>
+                    {request.reason && (
+                      <div className="approval-request-reason">
+                        <strong>사유:</strong>
+                        <div className="approval-request-reason-text">
+                          <SafeText>{request.reason}</SafeText>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="approval-request-actions">
+                      <ErpButton
+                        variant="success"
+                        size="small"
+                        onClick={() => handleApprove(request)}
+                      >
+                        승인
+                      </ErpButton>
+                      <ErpButton
+                        variant="danger"
+                        size="small"
+                        onClick={() => handleReject(request)}
+                      >
+                        거부
+                      </ErpButton>
                     </div>
                   </div>
-                )}
-
-                <div className="approval-request-actions">
-                  <ErpButton
-                    variant="success"
-                    size="small"
-                    onClick={() => handleApprove(request)}
-                  >
-                    승인
-                  </ErpButton>
-                  <ErpButton
-                    variant="danger"
-                    size="small"
-                    onClick={() => handleReject(request)}
-                  >
-                    거부
-                  </ErpButton>
                 </div>
-              </div>
-            </ErpCard>
+              </CardContainer>
+            </section>
           ))}
         </div>
       )}
@@ -201,8 +218,8 @@ const AdminApprovalDashboard = () => {
               <h4>승인할 구매 요청</h4>
               <div className="approval-request-info-box">
                 <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
-                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
-                <div><strong>총액:</strong> {formatApprovalCurrency(selectedRequest.totalAmount)}</div>
+                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
+                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
               </div>
             </div>
 
@@ -251,8 +268,8 @@ const AdminApprovalDashboard = () => {
               <h4>거부할 구매 요청</h4>
               <div className="approval-request-info-box">
                 <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
-                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
-                <div><strong>총액:</strong> {formatApprovalCurrency(selectedRequest.totalAmount)}</div>
+                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
+                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
               </div>
             </div>
 

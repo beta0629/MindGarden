@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { ErpSafeText } from './common';
 
 /**
  * 빠른 지출 등록 컴포넌트 (ErpModal + 모달 내 금액 입력)
@@ -158,12 +159,14 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
 
       {loadingCodes ? (
         <div className="quick-expense-loading">
-          공통 코드 로딩 중...
+          <ErpSafeText value="공통 코드 로딩 중..." />
         </div>
       ) : selectedExpense ? (
         <div className="quick-expense-amount-form">
           <p className="quick-expense-selected-label">
-            {getLucideIcon(selectedExpense.icon, { size: 20 })} {selectedExpense.displayName} &gt; {selectedExpense.subDisplayName}
+            {getLucideIcon(selectedExpense.icon, { size: 20 })}{' '}
+            <ErpSafeText value={selectedExpense.displayName} /> &gt;{' '}
+            <ErpSafeText value={selectedExpense.subDisplayName} />
           </p>
           <p className="quick-expense-amount-hint">
             {isVatApplicable ? '부가세 포함 금액(원)을 입력하세요.' : '금액(원)을 입력하세요. (급여는 부가세 없음)'}
@@ -216,10 +219,10 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   {getLucideIcon(expense.icon, { size: 20 })}
                 </div>
                 <div className="quick-expense-category-name">
-                  {expense.displayName}
+                  <ErpSafeText value={expense.displayName} />
                 </div>
                 <div className="quick-expense-category-subname">
-                  {expense.subDisplayName}
+                  <ErpSafeText value={expense.subDisplayName} />
                 </div>
               </MGButton>
             ))}

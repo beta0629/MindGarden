@@ -1,0 +1,15 @@
+/**
+ * FinancialCalendarView — 레이아웃 유틸 (토큰/인라인 스타일 분리)
+ *
+ * @author CoreSolution
+ * @since 2026-04-09
+ */
+
+.mg-financial-calendar-detail-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-financial-calendar-inline-amount {
+  display: inline;
+}

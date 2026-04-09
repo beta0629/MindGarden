@@ -17,7 +17,7 @@
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
 }
 
 .mg-v2-erp-table-wrapper {
@@ -36,5 +36,5 @@
 
 .mg-v2-erp-refund-history__page-indicator {
   font-size: var(--font-size-sm);
-  color: var(--mg-color-text-secondary);
+  color: var(--color-text-secondary);
 }

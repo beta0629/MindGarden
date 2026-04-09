@@ -7,6 +7,7 @@
 
 import { Settings2, RefreshCw, HelpCircle } from 'lucide-react';
 import Button from '../../ui/Button/Button';
+import { ErpSafeText } from '../common';
 
 /**
  * @param {object} props
@@ -82,14 +83,16 @@ const ErpFinanceAdminSyncCard = ({
           <div
             className={`erp-finance-sync__result ${initResult.ok ? 'erp-finance-sync__result--success' : 'erp-finance-sync__result--error'}`}
           >
-            init: {initResult.message}
+            <span className="erp-finance-sync__result-prefix">init:</span>{' '}
+            <ErpSafeText value={initResult.message} fallback="—" />
           </div>
         )}
         {backfillResult && (
           <div
             className={`erp-finance-sync__result ${backfillResult.ok ? 'erp-finance-sync__result--success' : 'erp-finance-sync__result--error'}`}
           >
-            backfill: {backfillResult.message}
+            <span className="erp-finance-sync__result-prefix">backfill:</span>{' '}
+            <ErpSafeText value={backfillResult.message} fallback="—" />
           </div>
         )}
       </div>

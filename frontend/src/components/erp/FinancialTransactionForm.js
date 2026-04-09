@@ -10,6 +10,7 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { getTenantId } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API } from '../../constants/api';
+import { ErpSafeText } from './common';
 
 /**
  * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
@@ -255,43 +256,23 @@ const FinancialTransactionForm = ({
     >
 
         {successMessage && (
-          <div className="mg-v2-form-success" role="alert" style={{
-            padding: 'var(--spacing-md)',
-            marginBottom: 'var(--spacing-md)',
-            backgroundColor: 'var(--mg-success-100, #dcfce7)',
-            color: 'var(--mg-success-800, #166534)',
-            borderRadius: 'var(--radius-sm)',
-            fontWeight: 500
-          }}>
-            ✓ {successMessage}
+          <div
+            className="financial-transaction-form-alert financial-transaction-form-alert--success"
+            role="alert"
+          >
+            ✓ <ErpSafeText value={successMessage} />
           </div>
         )}
         {isApprovedReadOnly && (
           <div
-            className="mg-v2-form-error"
+            className="financial-transaction-form-alert financial-transaction-form-alert--readonly"
             role="alert"
-            style={{
-              padding: 'var(--spacing-sm)',
-              marginBottom: 'var(--spacing-md)',
-              backgroundColor: 'var(--status-warning-border, var(--mg-color-border-main))',
-              color: 'var(--status-warning-dark, var(--mg-color-text-primary))',
-              borderRadius: 'var(--radius-sm)'
-            }}
           >
             승인된 거래는 수정할 수 없습니다.
           </div>
         )}
         {error && (
-          <div
-            className="mg-v2-form-error"
-            style={{
-              padding: 'var(--spacing-sm)',
-              marginBottom: 'var(--spacing-md)',
-              backgroundColor: 'var(--status-error-border)',
-              color: 'var(--status-error-dark)',
-              borderRadius: 'var(--radius-sm)'
-            }}
-          >
+          <div className="financial-transaction-form-alert financial-transaction-form-alert--error">
             <SafeErrorDisplay error={error} variant="inline" />
           </div>
         )}
@@ -302,8 +283,8 @@ const FinancialTransactionForm = ({
             <label className="mg-v2-form-label">
               거래 유형
             </label>
-            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+            <div className="financial-transaction-form-radio-row">
+              <label className="financial-transaction-form-radio-label">
                 <input
                   type="radio"
                   name="transactionType"
@@ -311,11 +292,11 @@ const FinancialTransactionForm = ({
                   checked={formData.transactionType === 'INCOME'}
                   onChange={handleInputChange}
                   disabled={isApprovedReadOnly}
-                  style={{ cursor: 'pointer' }}
+                  className="financial-transaction-form-radio-input"
                 />
                 <span>수입</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+              <label className="financial-transaction-form-radio-label">
                 <input
                   type="radio"
                   name="transactionType"
@@ -323,7 +304,7 @@ const FinancialTransactionForm = ({
                   checked={formData.transactionType === 'EXPENSE'}
                   onChange={handleInputChange}
                   disabled={isApprovedReadOnly}
-                  style={{ cursor: 'pointer' }}
+                  className="financial-transaction-form-radio-input"
                 />
                 <span>지출</span>
               </label>
@@ -354,7 +335,7 @@ const FinancialTransactionForm = ({
               className="mg-v2-form-badge-select"
             />
             {loadingCodes && (
-              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
+              <div className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
                 공통 코드 로딩 중...
               </div>
             )}
@@ -380,7 +361,7 @@ const FinancialTransactionForm = ({
               className="mg-v2-form-badge-select"
             />
             {!formData.category && (
-              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
+              <div className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
                 먼저 카테고리를 선택해주세요
               </div>
             )}
@@ -439,28 +420,21 @@ const FinancialTransactionForm = ({
 
           {/* 세금 포함 */}
           <div className="mg-v2-form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+            <label className="financial-transaction-form-check-row">
               <input
                 type="checkbox"
                 name="taxIncluded"
                 checked={formData.taxIncluded}
                 onChange={handleInputChange}
                 disabled={isApprovedReadOnly}
-                style={{ cursor: 'pointer' }}
+                className="financial-transaction-form-check-input"
               />
               <span>세금 포함</span>
             </label>
           </div>
 
           {/* 버튼들 */}
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--spacing-sm)', 
-            justifyContent: 'flex-end',
-            marginTop: 'var(--spacing-lg)',
-            paddingTop: 'var(--spacing-md)',
-            borderTop: '1px solid var(--color-border-light)'
-          }}>
+          <div className="financial-transaction-form-actions financial-transaction-form-actions--footer">
             <button
               type="button"
               onClick={onClose}

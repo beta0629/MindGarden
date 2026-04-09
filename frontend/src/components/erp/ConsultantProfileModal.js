@@ -5,6 +5,8 @@ import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUti
 import ErpModal from './common/ErpModal';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const ConsultantProfileModal = ({ 
     isOpen, 
@@ -190,8 +192,12 @@ const ConsultantProfileModal = ({
                 }
             }
             
-            // 등급에 따른 기본 급여 계산 (이미 계산된 값 사용)
-            const calculatedBaseSalary = salaryFormData.baseSalary || calculateBaseSalaryByGrade(salaryFormData.grade);
+            let calculatedBaseSalary = salaryFormData.baseSalary;
+            const missingBase =
+                calculatedBaseSalary === '' || calculatedBaseSalary == null;
+            if (missingBase && salaryFormData.grade) {
+                calculatedBaseSalary = await calculateBaseSalaryByGrade(salaryFormData.grade);
+            }
             
             const profileData = {
                 consultantId: consultant.id,
@@ -227,7 +233,7 @@ const ConsultantProfileModal = ({
         <ErpModal
             isOpen={isOpen}
             onClose={onClose}
-            title={`급여 프로필 - ${consultant.name}`}
+            title={toDisplayString(`급여 프로필 - ${consultant.name}`)}
             size="large"
             className="mg-v2-ad-b0kla consultant-profile-modal-content"
         >
@@ -247,51 +253,69 @@ const ConsultantProfileModal = ({
                     </div>
                         
                         {loading ? (
-                            <div className="consultant-profile-loading">로딩 중...</div>
+                            <div className="consultant-profile-loading"><ErpSafeText value="로딩 중..." /></div>
                         ) : salaryProfile ? (
                             <div className="consultant-profile-info-grid">
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">급여 유형</label>
                                     <span className="consultant-profile-info-value">
-                                        {salaryProfile.salaryType === 'FREELANCE' ? '프리랜서' : 
-                                         salaryProfile.salaryType === 'REGULAR' ? '정규직' : salaryProfile.salaryType}
+                                        <ErpSafeText
+                                            value={
+                                                salaryProfile.salaryType === 'FREELANCE' ? '프리랜서'
+                                                    : salaryProfile.salaryType === 'REGULAR' ? '정규직' : salaryProfile.salaryType
+                                            }
+                                        />
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">상담사 등급</label>
                                     <span className="consultant-profile-info-value">
-                                        {grades.find(g => g.codeValue === salaryProfile.grade)?.codeLabel || salaryProfile.grade || '미설정'}
+                                        <ErpSafeText
+                                            value={
+                                                grades.find((g) => g.codeValue === salaryProfile.grade)?.codeLabel
+                                                || salaryProfile.grade || '미설정'
+                                            }
+                                        />
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">기본 급여</label>
                                     <span className="consultant-profile-info-value">
-                                        {salaryProfile.baseSalary ? new Intl.NumberFormat('ko-KR').format(salaryProfile.baseSalary) + '원' : '미설정'}
+                                        {salaryProfile.baseSalary ? (
+                                            <ErpSafeNumber value={salaryProfile.baseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                                        ) : (
+                                            <ErpSafeText value="미설정" />
+                                        )}
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">사업자 등록</label>
                                     <span className="consultant-profile-info-value">
-                                        {salaryProfile.isBusinessRegistered ? 
-                                            '사업자 등록 (부가세 10% + 원천징수 3.3%)' : 
-                                            '일반 프리랜서 (원천징수 3.3%만)'
-                                        }
+                                        <ErpSafeText
+                                            value={
+                                                salaryProfile.isBusinessRegistered
+                                                    ? '사업자 등록 (부가세 10% + 원천징수 3.3%)'
+                                                    : '일반 프리랜서 (원천징수 3.3%만)'
+                                            }
+                                        />
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">옵션 유형</label>
                                     <span className="consultant-profile-info-value">
-                                        상담 완료 시 자동 적용
+                                        <ErpSafeText value="상담 완료 시 자동 적용" />
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item consultant-profile-info-item--full-width">
                                     <label className="consultant-profile-info-label">계약 조건</label>
-                                    <span className="consultant-profile-info-value">{salaryProfile.contractTerms || '정보 없음'}</span>
+                                    <span className="consultant-profile-info-value">
+                                        <ErpSafeText value={salaryProfile.contractTerms || '정보 없음'} />
+                                    </span>
                                 </div>
                             </div>
                         ) : (
                             <div className="consultant-profile-empty">
-                                급여 프로필이 없습니다. 생성 버튼을 클릭해주세요.
+                                <ErpSafeText value="급여 프로필이 없습니다. 생성 버튼을 클릭해주세요." />
                             </div>
                         )}
 
@@ -327,21 +351,14 @@ const ConsultantProfileModal = ({
                                     </div>
                                     <div className="consultant-profile-form-item">
                                         <label className="consultant-profile-form-label">상담사 등급 *</label>
-                                        {console.log('현재 선택된 등급:', salaryFormData.grade)}
                                         <select
                                             value={salaryFormData.grade || ''}
                                             onChange={(e) => {
                                                 const handleGradeChange = async () => {
                                                     const selectedGrade = e.target.value;
-                                                    console.log('선택된 등급:', selectedGrade);
-                                                    console.log('현재 등급 목록:', grades);
-                                                    
-                                                    // 등급에 따른 기본급여 계산
-                                                    const calculatedBaseSalary = calculateBaseSalaryByGrade(selectedGrade);
-                                                    console.log('계산된 기본급여:', calculatedBaseSalary);
-                                                    
+                                                    const calculatedBaseSalary = await calculateBaseSalaryByGrade(selectedGrade);
                                                     setSalaryFormData({
-                                                        ...salaryFormData, 
+                                                        ...salaryFormData,
                                                         grade: selectedGrade,
                                                         baseSalary: calculatedBaseSalary
                                                     });
@@ -352,23 +369,21 @@ const ConsultantProfileModal = ({
                                             required
                                         >
                                             <option key="grade-default" value="">등급 선택</option>
-                                            {grades.map((grade, index) => {
-                                                console.log('등급 옵션:', grade.codeValue, grade.codeLabel);
-                                                return (
-                                                    <option key={`grade-${grade.codeValue}-${index}`} value={grade.codeValue}>
-                                                        {grade.codeLabel}
-                                                    </option>
-                                                );
-                                            })}
+                                            {grades.map((grade, index) => (
+                                                <option key={`grade-${grade.codeValue}-${index}`} value={grade.codeValue}>
+                                                    {grade.codeLabel}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div className="consultant-profile-form-item">
                                         <label className="consultant-profile-form-label">기본 급여</label>
                                         <div className="consultant-profile-form-readonly">
-                                            {salaryFormData.baseSalary ? 
-                                                `${new Intl.NumberFormat('ko-KR').format(salaryFormData.baseSalary)}원` : 
-                                                '등급을 선택하세요'
-                                            }
+                                            {salaryFormData.baseSalary ? (
+                                                <ErpSafeNumber value={salaryFormData.baseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                                            ) : (
+                                                <ErpSafeText value="등급을 선택하세요" />
+                                            )}
                                         </div>
                                     </div>
                                     <div className="consultant-profile-form-item">

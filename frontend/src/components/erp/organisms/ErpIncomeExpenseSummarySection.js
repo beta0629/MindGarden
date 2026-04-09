@@ -6,7 +6,7 @@
  */
 
 import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
-import { formatCurrency } from '../../../utils/formatUtils';
+import { ErpSafeNumber, ErpSafeText } from '../common';
 
 /**
  * @param {object} props
@@ -28,7 +28,7 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
       </h2>
       {financeError && (
         <div className="erp-finance-summary__error" role="alert">
-          {financeError}
+          <ErpSafeText value={financeError} />
         </div>
       )}
       {!financeError && (
@@ -44,11 +44,11 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             </div>
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
-                {financeLoading
-                  ? '—'
-                  : financialData != null
-                    ? formatCurrency(financialData.totalIncome ?? 0)
-                    : '0원'}
+                {financeLoading ? (
+                  <ErpSafeText value="—" />
+                ) : (
+                  <ErpSafeNumber value={financialData != null ? financialData.totalIncome ?? 0 : 0} />
+                )}
               </div>
               <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
             </div>
@@ -64,11 +64,11 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             </div>
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
-                {financeLoading
-                  ? '—'
-                  : financialData != null
-                    ? formatCurrency(financialData.totalExpense ?? 0)
-                    : '0원'}
+                {financeLoading ? (
+                  <ErpSafeText value="—" />
+                ) : (
+                  <ErpSafeNumber value={financialData != null ? financialData.totalExpense ?? 0 : 0} />
+                )}
               </div>
               <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
             </div>
@@ -86,11 +86,11 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             </div>
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
-                {financeLoading
-                  ? '—'
-                  : financialData != null
-                    ? formatCurrency(Math.abs(financialData.netProfit ?? 0))
-                    : '0원'}
+                {financeLoading ? (
+                  <ErpSafeText value="—" />
+                ) : (
+                  <ErpSafeNumber value={financialData != null ? Math.abs(financialData.netProfit ?? 0) : 0} />
+                )}
               </div>
               <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
             </div>

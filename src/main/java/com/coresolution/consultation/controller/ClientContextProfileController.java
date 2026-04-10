@@ -15,6 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -97,6 +99,68 @@ public class ClientContextProfileController extends BaseApiController {
             log.error("내담자 context-profile 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("내담자 정보 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 내담자 메모(notes) 저장 — 맥락 프로필과 동일 권한, 표시 등급 FULL 또는 STANDARD에서 수정(상담사·일정·상담기록 연계).
+     * PUT /api/v1/clients/{clientId}/context-profile/notes
+     *
+     * @param clientId     내담자 ID
+     * @param consultantId 상담사(CONSULTANT)일 때 필수, 로그인 사용자와 일치
+     * @param body         {@code { "notes": "..." }}
+     */
+    @PutMapping("/{clientId}/context-profile/notes")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateContextNotes(
+            @PathVariable Long clientId,
+            @RequestParam(value = "consultantId", required = false) Long consultantId,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        tenantId = tenantId.trim();
+
+        UserRole role = currentUser.getRole();
+        if (role != null && role.isConsultant()) {
+            if (consultantId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("상담사는 consultantId 쿼리 파라미터가 필요합니다."));
+            }
+            if (!consultantId.equals(currentUser.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("consultantId가 로그인 사용자와 일치하지 않습니다."));
+            }
+        }
+
+        String notes = null;
+        if (body != null && body.get("notes") != null) {
+            notes = String.valueOf(body.get("notes"));
+        }
+
+        try {
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            Map<String, Object> data = clientStatsService.updateClientContextNotes(tenantId, clientId, currentUser, notes);
+            return success(data);
+        } catch (AccessDeniedException e) {
+            log.warn("내담자 메모 저장 거부: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("내담자 메모 저장 실패: clientId={}, error={}", clientId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("메모 저장에 실패했습니다: " + e.getMessage()));
         }
     }
 }

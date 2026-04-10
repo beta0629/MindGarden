@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -24,8 +26,10 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +52,7 @@ class ClientStatsServiceImplTest {
     private static final String TENANT = "TENANT-MAIN001";
     private static final String VEHICLE_PLATE = "12가3456";
     private static final Long CLIENT_USER_ID = 71L;
+    private static final Long CONSULTANT_USER_ID = 5L;
 
     @Mock
     private UserRepository userRepository;
@@ -61,6 +66,9 @@ class ClientStatsServiceImplTest {
     private ConsultationRecordRepository consultationRecordRepository;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
+
+    @Mock
+    private UserPersonalDataCacheService userPersonalDataCacheService;
 
     @InjectMocks
     private ClientStatsServiceImpl clientStatsService;
@@ -76,6 +84,10 @@ class ClientStatsServiceImplTest {
             anyString(), anyLong(), anyLong())).thenReturn(false);
         lenient().when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
             anyString(), anyLong(), anyLong())).thenReturn(false);
+        lenient().when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            anyString(), anyLong(), anyLong())).thenReturn(Optional.empty());
+        lenient().when(userRepository.saveAndFlush(any(User.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @AfterEach
@@ -298,5 +310,142 @@ class ClientStatsServiceImplTest {
 
         assertThrows(EntityNotFoundException.class,
             () -> clientStatsService.getClientWithStats(TENANT, CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("updateClientContextNotes: 관리자는 FULL 등급으로 메모 저장 가능")
+    void updateClientContextNotes_admin_fullTier_savesNotes() {
+        User clientUser = buildClientUserForContext();
+        User admin = User.builder()
+            .userId("admin1")
+            .email("a@test.com")
+            .password("pw")
+            .name("관리자")
+            .role(UserRole.ADMIN)
+            .build();
+        admin.setId(200L);
+        admin.setTenantId(TENANT);
+
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);
+
+        String notes = "관리자가 저장한 메모";
+        Map<String, Object> out = clientStatsService.updateClientContextNotes(TENANT, CLIENT_USER_ID, admin, notes);
+
+        assertEquals(CLIENT_USER_ID, out.get("clientId"));
+        assertEquals(notes, out.get("notes"));
+        verify(userPersonalDataCacheService).evictUserPersonalDataCache(eq(TENANT), eq(CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("updateClientContextNotes: 상담사 매칭(FULL)이면 메모 저장 가능")
+    void updateClientContextNotes_consultant_mappingFull_savesNotes() {
+        User clientUser = buildClientUserForContext();
+        User consultant = User.builder()
+            .userId("co1")
+            .email("co@test.com")
+            .password("pw")
+            .name("상담사")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(CONSULTANT_USER_ID);
+        consultant.setTenantId(TENANT);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        mapping.setConsultant(consultant);
+
+        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.of(mapping));
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);
+
+        String notes = "매칭 상담사 메모";
+        Map<String, Object> out = clientStatsService.updateClientContextNotes(
+            TENANT, CLIENT_USER_ID, consultant, notes);
+
+        assertEquals(CLIENT_USER_ID, out.get("clientId"));
+        assertEquals(notes, out.get("notes"));
+        verify(userPersonalDataCacheService).evictUserPersonalDataCache(eq(TENANT), eq(CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("updateClientContextNotes: 상담사 일정 연계만(STANDARD)이어도 메모 저장 가능")
+    void updateClientContextNotes_consultant_scheduleStandardTier_savesNotes() {
+        User clientUser = buildClientUserForContext();
+        User consultant = User.builder()
+            .userId("co1")
+            .email("co@test.com")
+            .password("pw")
+            .name("상담사")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(CONSULTANT_USER_ID);
+        consultant.setTenantId(TENANT);
+
+        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(true);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);
+
+        String notes = "일정 연계 메모";
+        Map<String, Object> out = clientStatsService.updateClientContextNotes(
+            TENANT, CLIENT_USER_ID, consultant, notes);
+
+        assertEquals(CLIENT_USER_ID, out.get("clientId"));
+        assertEquals(notes, out.get("notes"));
+        verify(userPersonalDataCacheService).evictUserPersonalDataCache(eq(TENANT), eq(CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("updateClientContextNotes: 상담사 매칭·일정·상담기록 없으면 AccessDenied")
+    void updateClientContextNotes_consultant_noLink_throwsAccessDenied() {
+        User consultant = User.builder()
+            .userId("co1")
+            .email("co@test.com")
+            .password("pw")
+            .name("상담사")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(CONSULTANT_USER_ID);
+        consultant.setTenantId(TENANT);
+
+        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(false);
+        when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+            () -> clientStatsService.updateClientContextNotes(TENANT, CLIENT_USER_ID, consultant, "x"));
+    }
+
+    private User buildClientUserForContext() {
+        User user = User.builder()
+            .userId("c1")
+            .email("e@test.com")
+            .password("pw")
+            .name("내담자")
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(CLIENT_USER_ID);
+        user.setTenantId(TENANT);
+        user.setIsActive(true);
+        return user;
     }
 }

@@ -2,17 +2,20 @@ import React from 'react';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
-import { isRestrictedClientProfileTier } from '../../../constants/clientProfileContext';
+import {
+  isRestrictedClientProfileTier,
+  isMemoEditableInContextProfileTier
+} from '../../../constants/clientProfileContext';
 import ClientSummaryField from '../molecules/ClientSummaryField';
 import ConsultationLogPsychSummaryPanel from './ConsultationLogPsychSummaryPanel';
 
 const TRIGGER_ID = 'consultation-log-accordion-profile-trigger';
 const PANEL_ID = 'consultation-log-accordion-profile-panel';
 
-const NOTES_PREVIEW_MAX = 80;
+const MEMO_TEXTAREA_ID = 'consultation-log-client-memo-draft';
 
 /**
- * 내담자 프로필 + (선택) 심리검사 요약 아코디언 패널
+ * 내담자 프로필 + 메모(P1) + (선택) 심리검사 요약 아코디언 패널
  */
 const ConsultationLogClientProfilePanel = ({
   expanded,
@@ -23,11 +26,15 @@ const ConsultationLogClientProfilePanel = ({
   loading,
   hasValidScheduleClientId,
   psychDocuments,
-  loadingPsych
+  loadingPsych,
+  memoDraft,
+  onMemoChange,
+  memoDirty
 }) => {
   const renderBody = () => {
     if (client) {
       const hideContactDetail = isRestrictedClientProfileTier(visibilityTier);
+      const showMemoSection = isMemoEditableInContextProfileTier(visibilityTier);
       const gradeLabel = client.grade === 'BRONZE'
         ? '브론즈'
         : client.grade === 'SILVER'
@@ -43,13 +50,6 @@ const ConsultationLogClientProfilePanel = ({
       else if (gradeLabel) gradeStatus = gradeLabel;
       else if (statusLabel) gradeStatus = statusLabel;
 
-      const notesPreview = hideContactDetail
-        ? null
-        : (client.notes
-          ? (client.notes.length > NOTES_PREVIEW_MAX
-            ? `${client.notes.slice(0, NOTES_PREVIEW_MAX)}…`
-            : client.notes)
-          : null);
       const displayPhone = hideContactDetail ? '—' : toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—');
       const displayGender = hideContactDetail ? '—' : (client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—');
       const displayAddress = hideContactDetail
@@ -62,7 +62,9 @@ const ConsultationLogClientProfilePanel = ({
             {hideContactDetail && (
               <ClientSummaryField label="표시 안내" className="mg-v2-consultation-log-modal__detail-span">
                 <span className="mg-v2-text-secondary mg-v2-text-sm">
-                  정책에 따라 연락처·이메일·주소·메모는 표시되지 않습니다.
+                  {showMemoSection
+                    ? '정책에 따라 연락처·이메일·주소는 제한 표시됩니다. 메모 요약은 상담 기록 작성에 맞게 편집할 수 있습니다.'
+                    : '정책에 따라 연락처·이메일·주소·메모는 표시되지 않습니다.'}
                 </span>
               </ClientSummaryField>
             )}
@@ -79,11 +81,6 @@ const ConsultationLogClientProfilePanel = ({
               {displayGender}
             </ClientSummaryField>
             <ClientSummaryField label="등급/상태">{gradeStatus}</ClientSummaryField>
-            <ClientSummaryField label="메모 요약" className="mg-v2-consultation-log-modal__detail-span">
-              <span className="mg-v2-consultation-log-modal__notes-ellipsis">
-                {notesPreview || '—'}
-              </span>
-            </ClientSummaryField>
             <ClientSummaryField label="주소 요약" className="mg-v2-consultation-log-modal__detail-span">
               {displayAddress}
             </ClientSummaryField>
@@ -100,6 +97,36 @@ const ConsultationLogClientProfilePanel = ({
               </ClientSummaryField>
             )}
           </dl>
+          {showMemoSection && (
+            <section
+              className="mg-v2-consultation-log__memo-p1"
+              aria-labelledby="consultation-log-memo-heading"
+            >
+              <div className="mg-v2-consultation-log__memo-p1-head">
+                <span className="mg-v2-consultation-log__memo-accent" aria-hidden="true" />
+                <h4 id="consultation-log-memo-heading" className="mg-v2-consultation-log__memo-p1-title">
+                  메모 요약
+                </h4>
+              </div>
+              <label className="mg-v2-consultation-log__memo-p1-label" htmlFor={MEMO_TEXTAREA_ID}>
+                내담자 메모
+              </label>
+              <textarea
+                id={MEMO_TEXTAREA_ID}
+                name="clientMemoDraft"
+                value={memoDraft != null ? memoDraft : ''}
+                onChange={onMemoChange}
+                rows={5}
+                className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea mg-v2-consultation-log__memo-textarea"
+                aria-labelledby="consultation-log-memo-heading"
+              />
+              {memoDirty && (
+                <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-consultation-log__memo-dirty-hint">
+                  저장 시 내담자 메모가 함께 반영됩니다.
+                </p>
+              )}
+            </section>
+          )}
           {(psychDocuments.length > 0 || loadingPsych) && (
             <div className="mg-v2-consultation-log-modal__psych-summary">
               <h3 className="mg-v2-message-title mg-v2-consultation-log-modal__psych-title">심리검사 요약</h3>

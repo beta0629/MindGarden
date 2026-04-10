@@ -5,6 +5,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { isRestrictedClientProfileTier } from '../../constants/clientProfileContext';
 import notificationManager from '../../utils/notification';
+import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import '../schedule/ScheduleB0KlA.css';
@@ -12,6 +13,7 @@ import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClient
 import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecautionsPanel';
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
+import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
 
 /** PRIORITY 공통코드가 비어 있거나 로드 실패 시 — 목표 달성도와 동일하게 칩으로 바로 선택 */
 const DEFAULT_RISK_LEVEL_OPTIONS = [
@@ -64,6 +66,8 @@ const ConsultationLogModal = ({
   const [importantComments, setImportantComments] = useState([]);
   const [accordionProfileOpen, setAccordionProfileOpen] = useState(true);
   const [accordionPrecautionsOpen, setAccordionPrecautionsOpen] = useState(true);
+  const [memoDraft, setMemoDraft] = useState('');
+  const [memoDirty, setMemoDirty] = useState(false);
 
   /** 뷰포트 높이 ≤768px 일 때 상단 아코디언 기본 접힘 */
   useEffect(() => {
@@ -73,6 +77,17 @@ const ConsultationLogModal = ({
     setAccordionProfileOpen(!shortViewport);
     setAccordionPrecautionsOpen(!shortViewport);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!client) {
+      setMemoDraft('');
+      setMemoDirty(false);
+      return;
+    }
+    const raw = client.notes;
+    setMemoDraft(raw != null ? toDisplayString(raw, '') : '');
+    setMemoDirty(false);
+  }, [client]);
 
   const loadPriorityCodes = useCallback(async () => {
     try {
@@ -469,11 +484,6 @@ const ConsultationLogModal = ({
       }
 
       const comments = [];
-      const clientForNotes = withStatsData?.client || null;
-      const tierRestricted = isRestrictedClientProfileTier(withStatsData?.visibilityTier);
-      if (!tierRestricted && clientForNotes?.notes && String(clientForNotes.notes).trim()) {
-        comments.push({ source: '내담자 메모', text: clientForNotes.notes });
-      }
       if (scheduleData?.notes && String(scheduleData.notes).trim()) {
         comments.push({ source: '일정 메모', text: scheduleData.notes });
       }
@@ -487,6 +497,35 @@ const ConsultationLogModal = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMemoChange = (e) => {
+    // BadgeSelect 등과 동일하게 stopPropagation 생략 가능
+    setMemoDraft(e?.target?.value ?? '');
+    setMemoDirty(true);
+  };
+
+  const persistClientNotesIfNeeded = async () => {
+    if (!memoDirty || !client?.id) {
+      return;
+    }
+    if (isRestrictedClientProfileTier(clientWithStats?.visibilityTier)) {
+      return;
+    }
+    const cid = Number(client.id);
+    if (Number.isNaN(cid)) {
+      return;
+    }
+    const base = `/api/v1/clients/${cid}/context-profile/notes`;
+    const q = !isAdmin && user?.id != null ? `?consultantId=${encodeURIComponent(String(user.id))}` : '';
+    const res = await StandardizedApi.put(`${base}${q}`, { notes: memoDraft });
+    const nextNotes = res?.notes != null ? String(res.notes) : memoDraft;
+    setClient((prev) => (prev ? { ...prev, notes: nextNotes } : prev));
+    setClientWithStats((prev) => {
+      if (!prev?.client) return prev;
+      return { ...prev, client: { ...prev.client, notes: nextNotes } };
+    });
+    setMemoDirty(false);
   };
 
   const handleInputChange = (e) => {
@@ -554,6 +593,13 @@ const ConsultationLogModal = ({
     try {
       setSaving(true);
 
+      try {
+        await persistClientNotesIfNeeded();
+      } catch (memoErr) {
+        notificationManager.show(toErrorMessage(memoErr, '메모 저장에 실패했습니다.'), 'error');
+        return;
+      }
+
       const consultationId = scheduleData?.id
         ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
             ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
@@ -608,6 +654,13 @@ const ConsultationLogModal = ({
 
     try {
       setSaving(true);
+
+      try {
+        await persistClientNotesIfNeeded();
+      } catch (memoErr) {
+        notificationManager.show(toErrorMessage(memoErr, '메모 저장에 실패했습니다.'), 'error');
+        return;
+      }
 
       const consultationId = scheduleData?.id
         ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
@@ -725,42 +778,63 @@ const ConsultationLogModal = ({
           className="mg-v2-modal-body"
           aria-label="상담일지 본문"
         >
-          <section
-            className="mg-v2-ad-modal__section mg-v2-consultation-log-modal__top-context"
-            aria-label="상담 컨텍스트"
-          >
-            <div className="mg-accordion mg-v2-consultation-log-modal__accordion">
-              <ConsultationLogClientProfilePanel
-                expanded={accordionProfileOpen}
-                onExpandedChange={setAccordionProfileOpen}
-                client={client}
-                clientWithStats={clientWithStats}
-                visibilityTier={clientWithStats?.visibilityTier}
-                loading={loading}
-                hasValidScheduleClientId={hasValidScheduleClientId}
-                psychDocuments={psychDocuments}
-                loadingPsych={loadingPsych}
-              />
-              <ConsultationLogPrecautionsPanel
-                expanded={accordionPrecautionsOpen}
-                onExpandedChange={setAccordionPrecautionsOpen}
-                importantComments={importantComments}
-              />
-            </div>
-          </section>
-
-          <ConsultationLogRequiredFieldsNotice />
-
-          <ConsultationLogFormPanel
-            formData={formData}
-            handleInputChange={handleInputChange}
-            setFormData={setFormData}
-            validationErrors={validationErrors}
-            riskLevels={riskLevels}
-            goalAchievementLevels={goalAchievementLevels}
-            completionStatusOptions={completionStatusOptions}
-            loadingCodes={loadingCodes}
+          <ConsultationLogSessionHeaderMeta
+            sessionNumber={formData.sessionNumber}
+            sessionDateLabel={formData.sessionDate}
           />
+
+          <div className="mg-v2-consultation-log__layout">
+            <aside className="mg-v2-consultation-log__sidebar">
+              <div className="mg-v2-consultation-log__sidebar-inner">
+                <div className="mg-v2-consultation-log__memo-sticky">
+                  <div className="mg-accordion mg-v2-consultation-log-modal__accordion">
+                    <ConsultationLogClientProfilePanel
+                      expanded={accordionProfileOpen}
+                      onExpandedChange={setAccordionProfileOpen}
+                      client={client}
+                      clientWithStats={clientWithStats}
+                      visibilityTier={clientWithStats?.visibilityTier}
+                      loading={loading}
+                      hasValidScheduleClientId={hasValidScheduleClientId}
+                      psychDocuments={psychDocuments}
+                      loadingPsych={loadingPsych}
+                      memoDraft={memoDraft}
+                      onMemoChange={handleMemoChange}
+                      memoDirty={memoDirty}
+                    />
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <div className="mg-v2-consultation-log__main">
+              <ConsultationLogFormPanel
+                formData={formData}
+                handleInputChange={handleInputChange}
+                setFormData={setFormData}
+                validationErrors={validationErrors}
+                riskLevels={riskLevels}
+                goalAchievementLevels={goalAchievementLevels}
+                completionStatusOptions={completionStatusOptions}
+                loadingCodes={loadingCodes}
+              />
+
+              <ConsultationLogRequiredFieldsNotice />
+
+              <section
+                className="mg-v2-ad-modal__section mg-v2-consultation-log-modal__precautions-wrap"
+                aria-label="주의사항"
+              >
+                <div className="mg-accordion mg-v2-consultation-log-modal__accordion">
+                  <ConsultationLogPrecautionsPanel
+                    expanded={accordionPrecautionsOpen}
+                    onExpandedChange={setAccordionPrecautionsOpen}
+                    importantComments={importantComments}
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
         </section>
       </div>
     </UnifiedModal>

@@ -21,6 +21,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.access.AccessDeniedException;
@@ -59,6 +60,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     private final ScheduleRepository scheduleRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserPersonalDataCacheService userPersonalDataCacheService;
 
     @Override
     @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId")
@@ -150,6 +152,38 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                 tenantId, consultantUserId, clientId);
         throw new AccessDeniedException(
                 "해당 내담자에 대한 매칭·일정·상담기록 연결이 없어 조회할 수 없습니다.");
+    }
+
+    @Override
+    @Transactional(readOnly = false)
+    @Caching(evict = {
+        @CacheEvict(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId"),
+        @CacheEvict(value = "clientCurrentConsultants", key = "'client:' + #clientId")
+    })
+    public Map<String, Object> updateClientContextNotes(String tenantId, Long clientId, User caller, String notes) {
+        Map<String, Object> profile = getClientContextProfile(tenantId, clientId, caller);
+        String tier = (String) profile.get(ClientProfileContextFields.VISIBILITY_TIER);
+        // FULL: 매칭 등 전면 표시. STANDARD: 일정·상담기록 연결만 있는 상담사도 상담일지·메모 편집에 필요.
+        if (!ClientProfileContextFields.TIER_FULL.equals(tier)
+                && !ClientProfileContextFields.TIER_STANDARD.equals(tier)) {
+            throw new AccessDeniedException("메모 편집은 이 내담자에 대한 표시 등급이 부족합니다. (매칭·일정·상담기록 연결이 필요합니다)");
+        }
+        User clientUser = userRepository
+                .findByTenantIdAndId(tenantId, clientId)
+                .orElseThrow(() -> new EntityNotFoundException("내담자", clientId));
+        if (clientUser.getRole() != UserRole.CLIENT) {
+            throw new IllegalArgumentException("해당 사용자는 내담자가 아닙니다.");
+        }
+        String trimmed = notes == null ? "" : notes.trim();
+        clientUser.setNotes(trimmed.isEmpty() ? null : trimmed);
+        userRepository.saveAndFlush(clientUser);
+        if (tenantId != null && !tenantId.isBlank()) {
+            userPersonalDataCacheService.evictUserPersonalDataCache(tenantId, clientId);
+        }
+        Map<String, Object> out = new HashMap<>();
+        out.put("clientId", clientId);
+        out.put("notes", resolveDisplayNotes(clientUser));
+        return out;
     }
 
     /**

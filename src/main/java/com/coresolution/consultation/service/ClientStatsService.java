@@ -46,6 +46,17 @@ public interface ClientStatsService {
     Map<String, Object> getClientContextProfile(String tenantId, Long clientId, User caller);
 
     /**
+     * 내담자 메모(notes) 갱신 — 맥락 프로필과 동일 접근 규칙, {@code FULL} 등급에서만 수정 가능.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 사용자 ID
+     * @param caller   현재 사용자
+     * @param notes    저장할 메모(빈 문자열이면 null 저장)
+     * @return 갱신 요약(clientId, notes 표시값)
+     */
+    Map<String, Object> updateClientContextNotes(String tenantId, Long clientId, User caller, String notes);
+
+    /**
      * 내담자 목록 + 통계 정보 일괄 조회
      * 
      * @return 내담자 목록 + 통계 정보

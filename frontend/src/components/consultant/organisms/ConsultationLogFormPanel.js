@@ -3,7 +3,8 @@ import { FileText } from 'lucide-react';
 import BadgeSelect from '../../common/BadgeSelect';
 
 /**
- * 상담일지 작성 폼 그리드 (state·핸들러는 부모)
+ * 상담일지 작성 폼 — 상담 내용 슈퍼블록(안 B) + 추가 기록 그리드
+ * (state·핸들러는 부모)
  */
 const ConsultationLogFormPanel = ({
   formData,
@@ -19,10 +20,97 @@ const ConsultationLogFormPanel = ({
     className="mg-v2-form-section mg-v2-consultation-log-modal__form-panel"
     aria-label="상담일지 작성"
   >
-    <h3 className="mg-v2-text-lg mg-v2-font-bold mg-flex mg-v2-items-center mg-v2-gap-sm mg-v2-mb-lg mg-v2-border-b mg-v2-pb-sm">
-      <FileText size={20} className="mg-v2-text-primary" aria-hidden="true" />
-      상담일지 작성
-    </h3>
+    <section
+      className="mg-v2-consultation-log__content-superblock"
+      aria-labelledby="consultation-log-superblock-title"
+    >
+      <div className="mg-v2-consultation-log__superblock-head">
+        <span className="mg-v2-consultation-log__superblock-accent" aria-hidden="true" />
+        <h3
+          id="consultation-log-superblock-title"
+          className="mg-v2-consultation-log__superblock-title"
+        >
+          <FileText size={20} className="mg-v2-text-primary" aria-hidden="true" />
+          상담 내용
+        </h3>
+      </div>
+      <div className="mg-v2-consultation-log__superblock-stack">
+        <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
+          <label className="mg-v2-label" htmlFor="consultation-log-client-condition">내담자 상태 *</label>
+          <textarea
+            id="consultation-log-client-condition"
+            name="clientCondition"
+            value={formData.clientCondition}
+            onChange={handleInputChange}
+            placeholder="내담자의 현재 상태를 기록해주세요."
+            className={[
+              'mg-v2-input',
+              'mg-v2-w-full',
+              'mg-v2-consultation-log-modal__textarea',
+              'mg-v2-consultation-log__textarea--primary',
+              validationErrors.clientCondition ? 'mg-v2-consultation-log-modal__input-error' : ''
+            ].filter(Boolean).join(' ')}
+            required
+          />
+        </div>
+
+        <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
+          <label className="mg-v2-label" htmlFor="consultation-log-main-issues">주요 이슈 *</label>
+          <textarea
+            id="consultation-log-main-issues"
+            name="mainIssues"
+            value={formData.mainIssues}
+            onChange={handleInputChange}
+            placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
+            className={[
+              'mg-v2-input',
+              'mg-v2-w-full',
+              'mg-v2-consultation-log-modal__textarea',
+              validationErrors.mainIssues ? 'mg-v2-consultation-log-modal__input-error' : ''
+            ].filter(Boolean).join(' ')}
+            required
+          />
+        </div>
+
+        <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
+          <label className="mg-v2-label" htmlFor="consultation-log-intervention">개입 방법 *</label>
+          <textarea
+            id="consultation-log-intervention"
+            name="interventionMethods"
+            value={formData.interventionMethods}
+            onChange={handleInputChange}
+            placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
+            className={[
+              'mg-v2-input',
+              'mg-v2-w-full',
+              'mg-v2-consultation-log-modal__textarea',
+              validationErrors.interventionMethods ? 'mg-v2-consultation-log-modal__input-error' : ''
+            ].filter(Boolean).join(' ')}
+            required
+          />
+        </div>
+
+        <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
+          <label className="mg-v2-label" htmlFor="consultation-log-client-response">내담자 반응 *</label>
+          <textarea
+            id="consultation-log-client-response"
+            name="clientResponse"
+            value={formData.clientResponse}
+            onChange={handleInputChange}
+            placeholder="내담자의 반응이나 변화를 기록해주세요."
+            className={[
+              'mg-v2-input',
+              'mg-v2-w-full',
+              'mg-v2-consultation-log-modal__textarea',
+              validationErrors.clientResponse ? 'mg-v2-consultation-log-modal__input-error' : ''
+            ].filter(Boolean).join(' ')}
+            required
+          />
+        </div>
+      </div>
+    </section>
+
+    <h3 className="mg-v2-consultation-log__section-heading">추가 기록·세션 메타</h3>
 
     <div className="mg-v2-form-grid mg-v2-consultation-log-modal__form-grid">
       <div className="mg-v2-form-group">
@@ -36,20 +124,6 @@ const ConsultationLogFormPanel = ({
           className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__input-readonly"
           required
           disabled
-        />
-      </div>
-
-      <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-session-number">세션 번호</label>
-        <input
-          id="consultation-log-session-number"
-          type="number"
-          name="sessionNumber"
-          value={formData.sessionNumber}
-          onChange={handleInputChange}
-          min="1"
-          disabled
-          className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__input-readonly"
         />
       </div>
 
@@ -81,78 +155,6 @@ const ConsultationLogFormPanel = ({
           placeholder="선택하세요"
           className="mg-v2-form-badge-select mg-v2-w-full"
           disabled
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-client-condition">내담자 상태 *</label>
-        <textarea
-          id="consultation-log-client-condition"
-          name="clientCondition"
-          value={formData.clientCondition}
-          onChange={handleInputChange}
-          placeholder="내담자의 현재 상태를 기록해주세요."
-          className={[
-            'mg-v2-input',
-            'mg-v2-w-full',
-            'mg-v2-consultation-log-modal__textarea',
-            validationErrors.clientCondition ? 'mg-v2-consultation-log-modal__input-error' : ''
-          ].filter(Boolean).join(' ')}
-          required
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-main-issues">주요 이슈 *</label>
-        <textarea
-          id="consultation-log-main-issues"
-          name="mainIssues"
-          value={formData.mainIssues}
-          onChange={handleInputChange}
-          placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
-          className={[
-            'mg-v2-input',
-            'mg-v2-w-full',
-            'mg-v2-consultation-log-modal__textarea',
-            validationErrors.mainIssues ? 'mg-v2-consultation-log-modal__input-error' : ''
-          ].filter(Boolean).join(' ')}
-          required
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-intervention">개입 방법 *</label>
-        <textarea
-          id="consultation-log-intervention"
-          name="interventionMethods"
-          value={formData.interventionMethods}
-          onChange={handleInputChange}
-          placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
-          className={[
-            'mg-v2-input',
-            'mg-v2-w-full',
-            'mg-v2-consultation-log-modal__textarea',
-            validationErrors.interventionMethods ? 'mg-v2-consultation-log-modal__input-error' : ''
-          ].filter(Boolean).join(' ')}
-          required
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-client-response">내담자 반응 *</label>
-        <textarea
-          id="consultation-log-client-response"
-          name="clientResponse"
-          value={formData.clientResponse}
-          onChange={handleInputChange}
-          placeholder="내담자의 반응이나 변화를 기록해주세요."
-          className={[
-            'mg-v2-input',
-            'mg-v2-w-full',
-            'mg-v2-consultation-log-modal__textarea',
-            validationErrors.clientResponse ? 'mg-v2-consultation-log-modal__input-error' : ''
-          ].filter(Boolean).join(' ')}
-          required
         />
       </div>
 

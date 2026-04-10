@@ -30,6 +30,7 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
 const ItemManagement = () => {
   const [loading, setLoading] = useState(false);
   const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const [itemsInitialFetchDone, setItemsInitialFetchDone] = useState(false);
   const [items, setItems] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -105,6 +106,7 @@ const ItemManagement = () => {
       console.error('아이템 로드 실패:', error);
       setError('아이템 목록을 불러오는데 실패했습니다.');
     } finally {
+      setItemsInitialFetchDone(true);
       if (silent) {
         setSilentRefreshing(false);
       } else {
@@ -245,6 +247,9 @@ const ItemManagement = () => {
     return option ? option.label : category;
   };
 
+  const showInitialInlineLoad =
+    loading && items.length === 0 && !itemsInitialFetchDone;
+
   return (
     <AdminCommonLayout title="아이템 관리">
       <div className="mg-v2-ad-b0kla mg-v2-item-management">
@@ -277,8 +282,10 @@ const ItemManagement = () => {
               tabsSlot={<PurchaseHubSubNav />}
               mainAriaLabel="아이템 관리 목록 및 본문"
             >
-            {loading && items.length === 0 ? (
-              <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
+            {showInitialInlineLoad ? (
+              <div className="item-management__initial-load" role="status" aria-live="polite">
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+              </div>
             ) : (
               <div
                 aria-labelledby={ITEM_MANAGEMENT_TITLE_ID}

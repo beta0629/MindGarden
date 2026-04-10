@@ -1,5 +1,13 @@
 /* ItemManagement 스타일 - 새로운 디자인 시스템 적용 */
 
+.item-management__initial-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+}
+
 .item-management-container {
   padding: var(--spacing-xl);
   background: var(--ios-bg-primary);

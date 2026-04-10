@@ -5,7 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 
 /**
@@ -160,10 +160,10 @@ const ConsultantVacationModal = ({
             loading={loading}
             actions={
                 <>
-                    <Button variant="outline" size="medium" onClick={onClose} disabled={loading} preventDoubleClick={false}>
+                    <MGButton variant="outline" size="medium" onClick={onClose} disabled={loading} preventDoubleClick={false}>
                         취소
-                    </Button>
-                    <Button
+                    </MGButton>
+                    <MGButton
                         variant="primary"
                         size="medium"
                         onClick={handleSubmit}
@@ -172,8 +172,8 @@ const ConsultantVacationModal = ({
                         loadingText="등록 중..."
                         preventDoubleClick={false}
                     >
-                        {loading ? '등록 중...' : '휴가 등록'}
-                    </Button>
+                        휴가 등록
+                    </MGButton>
                 </>
             }
         >

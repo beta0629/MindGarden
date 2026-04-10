@@ -5,7 +5,7 @@ import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from './MGButton';
 import SafeText from './SafeText';
 
 const DuplicateLoginModal = () => {
@@ -102,14 +102,14 @@ const DuplicateLoginModal = () => {
       zIndex={10000}
       actions={
         <>
-          <Button variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
+          <MGButton variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </Button>
-          <Button variant="primary" size="medium" onClick={handleConfirm} preventDoubleClick={false}>
+          </MGButton>
+          <MGButton variant="primary" size="medium" onClick={handleConfirm} preventDoubleClick={false}>
             <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인
-          </Button>
+          </MGButton>
         </>
       }
     >

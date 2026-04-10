@@ -3,7 +3,8 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import { Button, Modal, Form, Badge } from 'react-bootstrap';
+import { Button, Form, Badge } from 'react-bootstrap';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SafeText from '../common/SafeText';
@@ -199,98 +200,104 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 </div>
 
             {/* 상담사 등록 모달 */}
-            <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>상담사 등록</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>사용자 ID</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={form.userId}
-                                onChange={(e) => setForm({...form, userId: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이메일</Form.Label>
-                            <Form.Control
-                                type="email"
-                                value={form.email}
-                                onChange={(e) => setForm({...form, email: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>비밀번호</Form.Label>
-                            <Form.Control
-                                type="password"
-                                value={form.password}
-                                onChange={(e) => setForm({...form, password: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이름</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={form.name}
-                                onChange={(e) => setForm({...form, name: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>전화번호</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                value={form.phone}
-                                onChange={(e) => setForm({...form, phone: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>전문분야</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={form.specialization}
-                                onChange={(e) => setForm({...form, specialization: e.target.value})}
-                            />
-                        </Form.Group>
-                        <div className="d-flex justify-content-end gap-2">
-                            <Button variant="secondary" onClick={() => setShowModal(false)}>
-                                취소
-                            </Button>
-                            <Button variant="primary" type="submit">
-                                등록
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
+            <UnifiedModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title="상담사 등록"
+                size="large"
+                className="mg-v2-ad-b0kla"
+                backdropClick
+                showCloseButton
+            >
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>사용자 ID</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={form.userId}
+                            onChange={(e) => setForm({...form, userId: e.target.value})}
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>이메일</Form.Label>
+                        <Form.Control
+                            type="email"
+                            value={form.email}
+                            onChange={(e) => setForm({...form, email: e.target.value})}
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>비밀번호</Form.Label>
+                        <Form.Control
+                            type="password"
+                            value={form.password}
+                            onChange={(e) => setForm({...form, password: e.target.value})}
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>이름</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={form.name}
+                            onChange={(e) => setForm({...form, name: e.target.value})}
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>전화번호</Form.Label>
+                        <Form.Control
+                            type="tel"
+                            value={form.phone}
+                            onChange={(e) => setForm({...form, phone: e.target.value})}
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>전문분야</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={form.specialization}
+                            onChange={(e) => setForm({...form, specialization: e.target.value})}
+                        />
+                    </Form.Group>
+                    <div className="d-flex justify-content-end gap-2">
+                        <Button variant="secondary" onClick={() => setShowModal(false)}>
+                            취소
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            등록
+                        </Button>
+                    </div>
+                </Form>
+            </UnifiedModal>
 
             {/* 상담사 상세 정보 모달 */}
-            <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>상담사 상세 정보</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {selectedConsultant && (
-                        <div>
-                            <p><strong>이름:</strong> <SafeText tag="span">{selectedConsultant.name}</SafeText></p>
-                            <p><strong>이메일:</strong> <SafeText>{selectedConsultant.email}</SafeText></p>
-                            <p><strong>전화번호:</strong> <SafeText>{selectedConsultant.phone}</SafeText></p>
-                            <p><strong>전문분야:</strong> <SafeText fallback="미설정">{selectedConsultant.specialty ?? selectedConsultant.specialization}</SafeText></p>
-                            <p><strong>상태:</strong> 
-                                <Badge bg={selectedConsultant.isActive ? 'success' : 'secondary'} className="ms-2">
-                                    {selectedConsultant.isActive ? '활성' : '비활성'}
-                                </Badge>
-                            </p>
-                        </div>
-                    )}
-                </Modal.Body>
-            </Modal>
+            <UnifiedModal
+                isOpen={showDetailModal}
+                onClose={() => setShowDetailModal(false)}
+                title="상담사 상세 정보"
+                size="medium"
+                className="mg-v2-ad-b0kla"
+                backdropClick
+                showCloseButton
+            >
+                {selectedConsultant && (
+                    <div>
+                        <p><strong>이름:</strong> <SafeText tag="span">{selectedConsultant.name}</SafeText></p>
+                        <p><strong>이메일:</strong> <SafeText>{selectedConsultant.email}</SafeText></p>
+                        <p><strong>전화번호:</strong> <SafeText>{selectedConsultant.phone}</SafeText></p>
+                        <p><strong>전문분야:</strong> <SafeText fallback="미설정">{selectedConsultant.specialty ?? selectedConsultant.specialization}</SafeText></p>
+                        <p><strong>상태:</strong>
+                            <Badge bg={selectedConsultant.isActive ? 'success' : 'secondary'} className="ms-2">
+                                {selectedConsultant.isActive ? '활성' : '비활성'}
+                            </Badge>
+                        </p>
+                    </div>
+                )}
+            </UnifiedModal>
             </div>
         </AdminCommonLayout>
     );

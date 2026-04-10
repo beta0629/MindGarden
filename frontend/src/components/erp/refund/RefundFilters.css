@@ -1,34 +1,63 @@
 /**
- * 환불 필터 — 토큰 정합
+ * 환불 필터 — ErpFilterToolbar 정합 (RefundFilterBlock 계열)
  *
  * @author CoreSolution
  * @since 2026-04-09
  */
 
-.refund-filters-container {
+.mg-v2-erp-refund-panel .mg-v2-erp-filter-toolbar {
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-erp-refund-panel .mg-v2-erp-filter-toolbar__secondary {
   display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
+  justify-content: flex-end;
+}
+
+.refund-filters__fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
 }
 
-.refund-filter-group {
+.refund-filters__field {
   display: flex;
   align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
 }
 
-.refund-filter-label {
-  margin-right: var(--spacing-xs);
-  font-weight: var(--font-weight-semibold);
+.refund-filters__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
 }
 
-.refund-filter-select {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--mg-gray-300);
-  border-radius: var(--mg-radius-md);
-  font-size: var(--font-size-sm);
+.refund-filters__actions .mg-v2-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
 }
 
 .mg-v2-erp-refund-panel .mg-h4 {
   margin: 0 0 var(--spacing-xs);
+}
+
+@media (max-width: 768px) {
+  .refund-filters__fieldset {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mg-v2-erp-refund-panel .mg-v2-erp-filter-toolbar__secondary {
+    justify-content: stretch;
+  }
+
+  .refund-filters__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

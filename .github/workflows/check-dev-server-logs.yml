@@ -138,6 +138,30 @@ jobs:
           sudo cat /etc/systemd/system/mindgarden-dev.service 2>/dev/null || echo "서비스 파일 없음"
           echo ""
           
+          # 운영→개발 DB 일일 동기화 (D-1) — docs/project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md
+          echo "📋 D-1 운영→개발 DB 동기화 배치 (prod-to-dev-daily.sh):"
+          echo "=========================================="
+          SYNC_SCRIPT="/opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh"
+          SYNC_ENV="/etc/mindgarden/prod-to-dev-sync.env"
+          if sudo test -x "$SYNC_SCRIPT"; then
+            echo "✅ 스크립트 존재 및 실행 가능: $SYNC_SCRIPT"
+          else
+            echo "❌ 스크립트 없음 또는 비실행: $SYNC_SCRIPT (런북대로 배포·chmod +x 필요)"
+          fi
+          if sudo test -f "$SYNC_ENV"; then
+            echo "✅ 설정 파일 존재: $SYNC_ENV"
+          else
+            echo "❌ 설정 파일 없음: $SYNC_ENV (example 복사 후 chmod 600)"
+          fi
+          echo "--- crontab (mindgarden / prod-to-dev 관련 줄) ---"
+          (sudo crontab -l 2>/dev/null || true; crontab -l 2>/dev/null || true) | grep -E "prod-to-dev|mindgarden.*sync|database/sync" || echo "(등록된 prod-to-dev cron 줄 없음 — crontab.example 참고)"
+          echo "--- 최근 cron 로그 (있으면) ---"
+          sudo tail -80 /var/log/mindgarden/prod-to-dev-cron.log 2>/dev/null || echo "prod-to-dev-cron.log 없음"
+          echo "--- 최근 동기화 스크립트 로그 (LOG_DIR 기본) ---"
+          sudo ls -lt /var/log/mindgarden/prod-to-dev-sync_*.log 2>/dev/null | head -5 || echo "prod-to-dev-sync_*.log 없음"
+          sudo tail -40 /var/log/mindgarden/prod-to-dev-sync_*.log 2>/dev/null | tail -40 || true
+          echo ""
+          
           echo "=========================================="
           echo "✅ 로그 확인 완료"
           echo "=========================================="

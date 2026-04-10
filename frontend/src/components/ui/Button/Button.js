@@ -1,129 +1,115 @@
 /**
- * Buttons Component
-/**
- * 
-/**
- * Core Solution 디자인 시스템 표준 컴포넌트
-/**
- * 
-/**
+ * ui/Button — `common/MGButton` 단일 진실 원천 래퍼
+ * - variant 별칭(error→danger, ghost/link→outline)
+ * - 아이콘·테마 role(ui 레거시) 지원
+ *
  * @author Core Solution Team
-/**
- * @version 2.0.0
-/**
- * @since 2025-11-28
+ * @since 2026-04-11
  */
 
-import React, { useState, useCallback } from 'react';
+/* eslint-disable no-restricted-syntax -- MGButton·MGButton.css 계약(mg-button *) */
+import React from 'react';
 import PropTypes from 'prop-types';
+
+import MGButton from '../../common/MGButton';
+import Icon from '../Icon/Icon';
+
+/**
+ * @typedef {Object} ButtonProps
+ * @property {string} [variant] — MGButton variant + 별칭: error→danger, ghost|link→outline
+ * @property {'small'|'medium'|'large'} [size]
+ * @property {string} [icon] — Icon name (ICONS 레지스트리)
+ * @property {'left'|'right'} [iconPosition]
+ * @property {'CLIENT'|'CONSULTANT'|'ADMIN'} [role] — `data-role` 테마(HTML `role`과 별개)
+ * @property {import('react').ReactNode} [children]
+ * — 이하 MGButton과 동일: disabled, loading, loadingText, onClick, className, type, form, fullWidth, progress 등
+ */
+
+const VARIANT_ALIASES = {
+  error: 'danger',
+  ghost: 'outline',
+  link: 'outline'
+};
+
+const THEME_ROLES = new Set(['CLIENT', 'CONSULTANT', 'ADMIN']);
+
+const ICON_SIZE_BY_BUTTON = {
+  small: 'SM',
+  medium: 'MD',
+  large: 'LG'
+};
+
+function buildIconModifierClasses(icon, iconPosition) {
+  if (!icon) {
+    return '';
+  }
+  const positionClass = iconPosition === 'right' ? 'mg-button--icon-right' : 'mg-button--icon-left';
+  return ['mg-button--with-icon', positionClass].join(' ');
+}
 
 const Button = ({
   variant = 'primary',
   size = 'medium',
-  disabled = false,
-  loading = false,
-  loadingText = '처리 중...',
-  preventDoubleClick = true,
-  clickDelay = 1000, // 1초 대기
-  onClick,
-  className = '',
-  type = 'button',
+  icon,
+  iconPosition = 'left',
+  role: themeRole,
   children,
-  style = {},
-  title = '',
-  fullWidth = false,
-  ...props
+  className = '',
+  ...rest
 }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const resolvedVariant = VARIANT_ALIASES[variant] || variant;
+  const iconSize = ICON_SIZE_BY_BUTTON[size] || 'MD';
 
-  const handleClick = useCallback(async (e) => {
-    // 이미 처리 중이거나 비활성화된 경우 무시
-    if (isProcessing || disabled || loading) {
-      e.preventDefault();
-      return;
+  const iconClasses = [buildIconModifierClasses(icon, iconPosition), className].filter(Boolean).join(' ');
+
+  let content = children;
+  if (icon) {
+    const iconEl = <Icon name={icon} size={iconSize} />;
+    if (iconPosition === 'right') {
+      content = (
+        <>
+          {children}
+          {iconEl}
+        </>
+      );
+    } else {
+      content = (
+        <>
+          {iconEl}
+          {children}
+        </>
+      );
     }
+  }
 
-    // 중복 클릭 방지 활성화
-    if (preventDoubleClick) {
-      setIsProcessing(true);
-    }
-
-    try {
-      // onClick 핸들러 실행
-      if (onClick) {
-        await onClick(e);
-      }
-    } catch (error) {
-      console.error('Button click handler error:', error);
-    } finally {
-      // 클릭 후 대기 시간 적용
-      if (preventDoubleClick) {
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, clickDelay);
-      }
-    }
-  }, [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]);
-
-  // 버튼 클래스 구성
-  const buttonClasses = [
-    'mg-button',
-    `mg-button--${variant}`,
-    `mg-button--${size}`,
-    disabled || loading || isProcessing ? 'mg-button--disabled' : '',
-    fullWidth ? 'mg-button--full-width' : '',
-    className
-  ].filter(Boolean).join(' ');
-
-  // 버튼 상태 확인
-  const isDisabled = disabled || loading || isProcessing;
+  const dataRoleProp =
+    themeRole && THEME_ROLES.has(themeRole) ? { 'data-role': themeRole } : {};
 
   return (
-    <button
-      type={type}
-      className={buttonClasses}
-      disabled={isDisabled}
-      onClick={handleClick}
-      style={style}
-      title={title || (isProcessing ? '처리 중입니다...' : '')}
-      aria-disabled={isDisabled}
-      {...props}
+    <MGButton
+      {...rest}
+      variant={resolvedVariant}
+      size={size}
+      className={iconClasses}
+      {...dataRoleProp}
     >
-      <span className="mg-button__content">
-        {/* 로딩 상태 표시 */}
-        {loading && (
-          <span className="mg-button__loading">
-            <span className="mg-button__spinner">⏳</span>
-          </span>
-        )}
-        
-        {/* 버튼 텍스트/내용 */}
-        <span className={`mg-button__text ${loading ? 'mg-button__text--loading' : ''}`}>
-          {loading ? loadingText : children}
-        </span>
-      </span>
-      
-      {/* 처리 중 오버레이 */}
-      {isProcessing && !loading && (
-        <span className="mg-button__processing-overlay">
-          <span className="mg-button__spinner">⏳</span>
-        </span>
-      )}
-    </button>
+      {content}
+    </MGButton>
   );
 };
 
 Button.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'success', 'warning', 'info', 'ghost']),
+  variant: PropTypes.string,
   size: PropTypes.oneOf(['small', 'medium', 'large']),
   disabled: PropTypes.bool,
   loading: PropTypes.bool,
   onClick: PropTypes.func,
-  type: PropTypes.string
+  type: PropTypes.string,
+  icon: PropTypes.string,
+  iconPosition: PropTypes.oneOf(['left', 'right']),
+  role: PropTypes.oneOf(['CLIENT', 'CONSULTANT', 'ADMIN'])
 };
-
-// defaultProps 제거 - 함수 매개변수에서 기본값 사용 (React 18+ 권장)
 
 export default Button;

@@ -44,13 +44,15 @@ const Icon = ({name,
     className].filter(Boolean).join(' ');
 
   // 스타일 객체
-  const iconStyle = {width: `${iconSize}px`,
+  const iconStyle = {
+    width: `${iconSize}px`,
     height: `${iconSize}px`,
     color: iconColor.color,
     backgroundColor: iconColor.background,
     cursor: onClick && !disabled ? 'pointer' : 'default',
-    opacity: disabled ? COLOR_CONSTANTS.ALPHA_TRANSPARENT.LOGGING_CONSTANTS.MAX_LOG_FILES : DEFAULT_VALUES.CURRENT_PAGE,
-    transition: 'all COLOR_CONSTANTS.ALPHA_TRANSPARENT.2s ease-in-out'};
+    opacity: disabled ? 0.5 : 1,
+    transition: 'all 0.2s ease-in-out'
+  };
 
   // 클릭 핸들러
   const handleClick = (event) => {if (onClick && !disabled && !loading) {onClick(event);}};
@@ -65,7 +67,7 @@ const Icon = ({name,
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role={onClick ? 'button' : 'img'}
-      tabIndex={onClick && !disabled ? COLOR_CONSTANTS.ALPHA_TRANSPARENT : -DEFAULT_VALUES.CURRENT_PAGE}
+      tabIndex={onClick && !disabled ? 0 : -1}
       aria-label={props['aria-label'] || name}
       aria-disabled={disabled}
       {...props}

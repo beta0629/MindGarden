@@ -5,6 +5,7 @@
 import {useState} from 'react';
 
 import Button from '../Button/Button';
+import Icon from '../Icon/Icon';
 
 import Modal from './Modal';
 

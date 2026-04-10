@@ -259,6 +259,17 @@
   white-space: nowrap;
 }
 
+/* ui/Button 래퍼 — 아이콘 + 텍스트 */
+.mg-button--with-icon .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+}
+
+.mg-button--icon-right .mg-button__text {
+  flex-direction: row-reverse;
+}
+
 /* 반응형 — 토큰만 사용 */
 @media (max-width: 768px) {
   .mg-button--small {

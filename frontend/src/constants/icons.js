@@ -26,14 +26,16 @@ import { CONSTANTS } from '../constants/magicNumbers';
 /**
  * 아이콘 크기 상수
  */
-export const ICON_SIZES = {XS: DATE_CONSTANTS.MONTHS_IN_YEAR,    // 매우 작음
-  SM: 14,    // 작음
-  MD: 16,    // 기본
-  LG: 18,    // 큼
-  XL: BUSINESS_CONSTANTS.PAGINATION_SIZE,    // 매우 큼
-  XXL: SECURITY_CONSTANTS.TOKEN_EXPIRY,   // 특대
-  XXXL: 32,  // 초대
-  HUGE: 48   // 거대};
+export const ICON_SIZES = {
+  XS: 12, // 매우 작음
+  SM: 14, // 작음
+  MD: 16, // 기본
+  LG: 18, // 큼
+  XL: 20, // 매우 큼
+  XXL: 24, // 특대
+  XXXL: 32, // 초대
+  HUGE: 48 // 거대
+};
 
 /**
  * 아이콘 색상 상수

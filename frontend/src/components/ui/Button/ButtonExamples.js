@@ -2,7 +2,9 @@
  * Button 컴포넌트 사용 예시
  */
 
-import {useState} from 'react';
+import { useState } from 'react';
+
+import { FORM_CONSTANTS } from '../../../constants/magicNumbers';
 
 import Button from './Button';
 
@@ -25,7 +27,7 @@ const ButtonExamples = () => {const [loading, setLoading] = useState(false);
       <div className="mg-v2-v2-v2-section-header">
         <h2 className="mg-v2-v2-v2-section-title">Button 컴포넌트 예시</h2>
         <p className="mg-v2-v2-v2-section-subtitle">
-          MGButton을 확장한 v2.COLOR_CONSTANTS.ALPHA_TRANSPARENT 버튼 컴포넌트의 다양한 사용법
+          공통 MGButton을 래핑한 ui/Button — 동일 스타일·동작의 다양한 사용 예시
         </p>
       </div>
 
@@ -204,9 +206,13 @@ const ButtonExamples = () => {const [loading, setLoading] = useState(false);
             <h3>역할별 테마</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
+            {/* theme role → data-role only (not HTML ARIA role) */}
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
+              {/* eslint-disable-next-line jsx-a11y/aria-role */}
               <Button role="CLIENT" icon="HEART">내담자 테마</Button>
+              {/* eslint-disable-next-line jsx-a11y/aria-role */}
               <Button role="CONSULTANT" icon="USERS">상담사 테마</Button>
+              {/* eslint-disable-next-line jsx-a11y/aria-role */}
               <Button role="ADMIN" icon="SETTINGS">관리자 테마</Button>
             </div>
           </div>

@@ -619,16 +619,28 @@ const FinancialManagement = () => {
                             }
                             className="mg-v2-button mg-v2-button-secondary"
                             disabled={silentRefreshing}
+                            aria-busy={silentRefreshing}
                           >
-                            <RefreshCw size={16} aria-hidden /> 필터 초기화
+                            <RefreshCw
+                              size={16}
+                              aria-hidden
+                              className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                            />{' '}
+                            필터 초기화
                           </button>
                           <button
                             type="button"
                             onClick={() => loadData({ silent: true })}
                             className="mg-v2-button mg-v2-button-primary"
                             disabled={silentRefreshing}
+                            aria-busy={silentRefreshing}
                           >
-                            <Search size={16} aria-hidden /> 검색
+                            <Search
+                              size={16}
+                              aria-hidden
+                              className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                            />{' '}
+                            검색
                           </button>
                         </div>
                       </div>

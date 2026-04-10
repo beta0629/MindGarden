@@ -400,8 +400,13 @@ const BudgetManagement = () => {
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => loadData({ silent: true })}
                     disabled={loading || silentRefreshing}
+                    aria-busy={silentRefreshing}
                   >
-                    <RefreshCw size={16} aria-hidden />
+                    <RefreshCw
+                      size={16}
+                      aria-hidden
+                      className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                    />
                     목록 새로고침
                   </button>
                 </div>
@@ -428,8 +433,13 @@ const BudgetManagement = () => {
                   className="btn btn-outline-primary"
                   onClick={() => loadData({ silent: true })}
                   disabled={silentRefreshing}
+                  aria-busy={silentRefreshing}
                 >
-                  <RefreshCw size={18} aria-hidden />
+                  <RefreshCw
+                    size={18}
+                    aria-hidden
+                    className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                  />
                   다시 시도
                 </button>
               </div>

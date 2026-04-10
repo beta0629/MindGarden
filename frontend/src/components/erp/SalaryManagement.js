@@ -35,6 +35,7 @@ import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import './ErpCommon.css';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import ErpPageShell from './shell/ErpPageShell';
@@ -615,8 +616,13 @@ const SalaryManagement = () => {
                       onClick={handleDataRefresh}
                       disabled={silentRefreshing || loading}
                       aria-label="데이터 새로고침"
+                      aria-busy={silentRefreshing}
                     >
-                      <RefreshCw size={16} aria-hidden />
+                      <RefreshCw
+                        size={16}
+                        aria-hidden
+                        className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                      />
                       데이터 새로고침
                     </button>
                     <MGButton

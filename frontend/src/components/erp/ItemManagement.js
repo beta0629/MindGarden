@@ -306,8 +306,18 @@ const ItemManagement = () => {
                   ariaLabel="아이템 목록 도구"
                   secondaryRow={
                     <div className="item-management__toolbar-actions">
-                      <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadItems({ silent: true })} disabled={loading || silentRefreshing}>
-                        <RefreshCw size={16} aria-hidden />
+                      <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button--secondary"
+                        onClick={() => loadItems({ silent: true })}
+                        disabled={loading || silentRefreshing}
+                        aria-busy={silentRefreshing}
+                      >
+                        <RefreshCw
+                          size={16}
+                          aria-hidden
+                          className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                        />
                         목록 새로고침
                       </button>
                     </div>

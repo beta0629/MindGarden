@@ -513,8 +513,13 @@ const ErpDashboard = ({ user: propUser }) => {
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={handleSilentRefresh}
                   disabled={refreshingToolbar}
+                  aria-busy={refreshingToolbar}
                 >
-                  <RefreshCw size={16} aria-hidden />
+                  <RefreshCw
+                    size={16}
+                    aria-hidden
+                    className={refreshingToolbar ? 'erp-refresh-icon--spin' : undefined}
+                  />
                   데이터 새로고침
                 </button>
               </div>

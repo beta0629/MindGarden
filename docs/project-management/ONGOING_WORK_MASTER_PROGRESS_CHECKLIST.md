@@ -32,6 +32,8 @@
 | **G7-B6a** | `Button.stories.js`, `Modal.stories.js`, `Table.stories.js` — `MGButton` | core-coder | ☑ | `develop` · `d8cae5efa` (2026-04-11) |
 | **G7-B6b** | `ui/Button`→`MGButton` 래퍼·`MGButton.css` 아이콘 행·예제/테스트/`index.js` Flow 제거·`icons.js`·`Icon.js` 런타임 상수 수정 | core-coder | ☑ | `develop` · `f92553e31` (2026-04-11) |
 | **CL-B1** | 상담사 콘솔 **상담일지** — 회기(순번) 메타·「상담 내용」슈퍼블록·2열/스티키 메모·`PUT .../context-profile/notes`·**FULL/STANDARD** 메모 편집·화면설계 `SCREEN_SPEC_CONSULTATION_LOG_ORDER_MEMO.md` | core-coder | ☑ | `develop`·`main` · `89e03b2b9` (2026-04-11) |
+| **G8-B1a** | 전역 확대 **G-01** — 미사용 `ErpModal`·`ErpModal.css`·`BaseModal` 제거, `base/index` export 정리 | core-coder | ☑ | `develop` · `d53398a4e` (2026-04-11) |
+| **G8-B2a** | **G-01** — `homepage/Homepage.js`, `auth/TabletLogin.js` 네이티브 버튼 → `MGButton` | core-coder | ☑ | `develop` · `903e96644` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -42,6 +44,10 @@
 **G7-B6a 파일**: `ui/Button/Button.stories.js`, `ui/Modal/Modal.stories.js`, `ui/Table/Table.stories.js`
 
 **CL-B1 파일·문서**: `consultant/ConsultationLogModal.js`, `organisms/ConsultationLogFormPanel.js`, `organisms/ConsultationLogClientProfilePanel.js`, `molecules/ConsultationLogSessionHeaderMeta.js`, `schedule/ScheduleB0KlA.css`, `constants/clientProfileContext.js`(+ 테스트), `ClientContextProfileController.java`, `ClientStatsService`/`Impl`, `docs/design-system/SCREEN_SPEC_CONSULTATION_LOG_ORDER_MEMO.md`
+
+**G8-B1a**: 삭제 `erp/common/ErpModal.js`, `ErpModal.css`, `common/modals/BaseModal.js`; 주석 보정 `QuickExpenseForm.css`, `FinancialTransactionForm.css`
+
+**G8-B2a**: `homepage/Homepage.js`, `auth/TabletLogin.js`
 
 ---
 
@@ -142,7 +148,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7-B1~B6b·CL-B1** ☑; **G-01~G-07** 행별 상태 표는 미작성(다음: explore 인벤토리 → 배치표).
+- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a/B2a** 일부 ☑; **G-01** 잔여(예: `UnifiedNotification`, 드롭다운·`AccountForm` 오버레이 등 explore 목록).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -200,3 +206,4 @@
 | 2026-04-11 | **ERP-P4-05a/b** 병렬 위임(core-coder) — MGButton 7파일, 커밋 `9c84e2f24`; **G-01** explore 인벤토리·G8-B1/B2 블록 제안 |
 | 2026-04-11 | develop/main 배포·운영 `deploy-production` 트리거; **ERP-P4-05c/d** 병렬 MGButton 6파일 `e4e4a2f6f` |
 | 2026-04-11 | **ERP-P4-05e/f** 병렬 MGButton 11파일 `c13e3480e` |
+| 2026-04-11 | **G8-B1a** 데드 코드 제거 `d53398a4e`, **G8-B2a** Homepage·TabletLogin MGButton `903e96644` |

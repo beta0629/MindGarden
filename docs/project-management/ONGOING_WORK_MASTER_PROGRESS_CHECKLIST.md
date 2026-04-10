@@ -19,6 +19,8 @@
 | **ERP-B3** | `ImprovedTaxManagement.js`; 환불·승인(`RefundFilters.js`, `RefundFilterBlock.js`, `ApprovalHubLayout.js`) — 무음 새로고침 `MGButton` 통일 | core-coder | ☑ | `develop` · `65e5e5339` (2026-04-11) |
 | **ERP-B4a** | `FinancialManagement.js` — 에러 배너 **다시 시도** 네이티브 버튼 → `MGButton` (`loading`·`BudgetManagement`와 동일 계약) | core-coder | ☑ | `develop` · `9dc04b1d1` (2026-04-11) |
 | **ERP-B4b** | `organisms/ErpFinanceAdminSyncCard.js` — `Button`(ui) 2곳 → `MGButton`, `initLoading`/`backfillLoading` 연동 | core-coder | ☑ | 동일 커밋 |
+| **ERP-B5a** | 승인 대시보드 `AdminApprovalDashboard.js`, `SuperAdminApprovalDashboard.js` — `ErpModal` → `UnifiedModal` 직접 사용(UI-02) | core-coder | ☑ | `develop` · `72e36631b` (2026-04-11) |
+| **ERP-B5b** | `QuickExpenseForm.js`, `FinancialTransactionForm.js` — 동일 `ErpModal` → `UnifiedModal` | core-coder | ☑ | 동일 커밋 |
 
 ---
 
@@ -64,7 +66,7 @@
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
 | UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | 1차 병렬 적용 이력 있음 — 잔여 점검 |
-| UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | ☐ | |
+| UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | ERP-B5a/B5b 진행 — 승인·간편지출·거래 폼 |
 | UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리 |
 
 ---
@@ -128,3 +130,5 @@
 | 2026-04-11 | ERP-B3 커밋 `65e5e5339`, 체크리스트 ☑ |
 | 2026-04-11 | ERP-B4a/B4b 병렬 위임 (재무 오류 재시도·동기화 카드) |
 | 2026-04-11 | ERP-B4 커밋 `9dc04b1d1`, 체크리스트 ☑ |
+| 2026-04-11 | ERP-B5a/B5b 병렬 위임 — ErpModal→UnifiedModal (승인·폼) |
+| 2026-04-11 | ERP-B5 커밋 `72e36631b`, 체크리스트 ☑ |

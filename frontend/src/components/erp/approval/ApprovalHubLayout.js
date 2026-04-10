@@ -71,8 +71,13 @@ const ApprovalHubLayout = ({
           variant="primary"
           onClick={onRefresh}
           disabled={loading || refreshing}
+          aria-busy={refreshing}
         >
-          <RefreshCw size={16} aria-hidden />
+          <RefreshCw
+            size={16}
+            aria-hidden
+            className={refreshing ? 'erp-refresh-icon--spin' : undefined}
+          />
           새로고침
         </ErpButton>
       </div>

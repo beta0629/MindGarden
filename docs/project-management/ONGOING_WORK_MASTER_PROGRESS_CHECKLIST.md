@@ -26,6 +26,12 @@
 | **ERP-B6c** | `SalaryConfigModal.js`, `SalaryProfileFormModal.js`, `ConsultantProfileModal.js` — 동일 | core-coder | ☑ | 동일 커밋 |
 | **G7-B1** | `admin/ConsultantManagement.js` — react-bootstrap `Modal` → `UnifiedModal` (앱 내 유일 BS Modal) | core-coder | ☑ | `develop` · `e79a2f281` (2026-04-11) |
 | **G7-B2** | `DuplicateLoginModal.js`, `consultant/ConsultantVacationModal.js` — `ui/Button` → `MGButton` | core-coder | ☑ | 동일 커밋 |
+| **G7-B3** | 상담사·모달·기록 8파일 — `ui/Button` → `MGButton` | core-coder | ☑ | `develop` · `0246b4033` (2026-04-11) |
+| **G7-B4** | 관리자·설정·대시보드 8파일 — 동일 | core-coder | ☑ | 동일 커밋 |
+
+**G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
+
+**G7-B4 파일**: `admin/SystemConfigManagement.js`, `AdminDashboard.js`, `DashboardFormModal.js`, `StaffManagement.js`, `WidgetConfigModal.js`, `ConsultantComprehensiveManagement.js`, `MappingCreationModal.js`, `ui/TenantCommonCodeManagerUI.js`
 
 ---
 
@@ -169,3 +175,5 @@
 | 2026-04-11 | 섹션 6 추가 — ERP 완료 후 전역 확대 검토(G-01~G-07)·절차 |
 | 2026-04-11 | G7-B1/B2 병렬 위임(ConsultantManagement·DuplicateLogin·ConsultantVacation) |
 | 2026-04-11 | G7-B1/B2 커밋 `e79a2f281`, 체크리스트 ☑ |
+| 2026-04-11 | G7-B3/B4 병렬 위임(ui/Button→MGButton 16파일) |
+| 2026-04-11 | G7-B3/B4 커밋 `0246b4033`, 체크리스트 ☑ |

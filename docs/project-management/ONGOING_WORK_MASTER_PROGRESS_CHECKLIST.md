@@ -29,7 +29,7 @@
 | **G7-B3** | 상담사·모달·기록 8파일 — `ui/Button` → `MGButton` | core-coder | ☑ | `develop` · `0246b4033` (2026-04-11) |
 | **G7-B4** | 관리자·설정·대시보드 8파일 — 동일 | core-coder | ☑ | 동일 커밋 |
 | **G7-B5** | 앱·UI 17파일 — `ui/Button` → `MGButton`; `WelcomeWidget.js.js` 중복 제거 | core-coder | ☑ | `develop` · `7fe0b1890` (2026-04-11) |
-| **G7-B6a** | (스토리 3개 제외 블록 — 본 배치와 파일 비겹침) | core-coder | ☑ | `develop` · `f92553e31` (2026-04-11) — B6b와 동일 커밋 |
+| **G7-B6a** | `Button.stories.js`, `Modal.stories.js`, `Table.stories.js` — `MGButton` | core-coder | ☑ | `develop` · `d8cae5efa` (2026-04-11) |
 | **G7-B6b** | `ui/Button`→`MGButton` 래퍼·`MGButton.css` 아이콘 행·예제/테스트/`index.js` Flow 제거·`icons.js`·`Icon.js` 런타임 상수 수정 | core-coder | ☑ | `develop` · `f92553e31` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
@@ -37,6 +37,8 @@
 **G7-B4 파일**: `admin/SystemConfigManagement.js`, `AdminDashboard.js`, `DashboardFormModal.js`, `StaffManagement.js`, `WidgetConfigModal.js`, `ConsultantComprehensiveManagement.js`, `MappingCreationModal.js`, `ui/TenantCommonCodeManagerUI.js`
 
 **G7-B5 파일**: `admin/mapping/PartialRefundModal.js`, `dashboard/DynamicDashboard.js`, `settings/UserSettings.js`, `ClientComprehensiveManagement/ClientMappingTab.js`, `ClientOverviewTab.js`, `ClientConsultationTab.js`, `billing/SubscriptionManagement.js`, `dashboard/widgets/WelcomeWidget.js`, `super-admin/PaymentManagement.js`, `admin/mapping-management/pages/MappingManagementPage.js`, `erp/PurchaseManagement.js`, `admin/system/SystemTools.js`, `admin/system/SystemStatus.js`, `schedule/DateActionModal.js`, `ui/ConsultantDetailModal.js`, `ui/ThemeSelector/ThemeSelector.js`, `ui/Card/ConsultantCard.js` (+ `widgets/WelcomeWidget.js.js` 삭제)
+
+**G7-B6a 파일**: `ui/Button/Button.stories.js`, `ui/Modal/Modal.stories.js`, `ui/Table/Table.stories.js`
 
 ---
 
@@ -184,3 +186,4 @@
 | 2026-04-11 | G7-B3/B4 커밋 `0246b4033`, 체크리스트 ☑ |
 | 2026-04-11 | G7-B5 `ui/Button`→`MGButton` 17파일·`WelcomeWidget.js.js` 삭제, 커밋 `7fe0b1890` |
 | 2026-04-11 | G7-B6a/B6b 커밋 `f92553e31` — Button MGButton 래퍼, Examples/테스트, `index`, `icons.js`/`Icon` 보정 |
+| 2026-04-11 | G7-B6a 스토리 3파일 후속 커밋 `d8cae5efa` (병렬 에이전트 산출물 미커밋 보완) |

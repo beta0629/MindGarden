@@ -11,6 +11,7 @@ import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/s
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay';
+import MGButton from '../common/MGButton';
 import './BranchLogin.css';
 
 /**
@@ -176,20 +177,24 @@ const BranchLogin = () => {
 
           {/* 로그인 유형 선택 */}
           <div className="login-type-selector">
-            <button
+            <MGButton
               type="button"
+              variant="outline"
               className={`type-button ${loginType === 'HEADQUARTERS' ? 'active' : ''}`}
               onClick={() => handleLoginTypeChange('HEADQUARTERS')}
+              preventDoubleClick={false}
             >
               🏢 본사 로그인
-            </button>
-            <button
+            </MGButton>
+            <MGButton
               type="button"
+              variant="outline"
               className={`type-button ${loginType === 'BRANCH' ? 'active' : ''}`}
               onClick={() => handleLoginTypeChange('BRANCH')}
+              preventDoubleClick={false}
             >
               🏪 지점 로그인
-            </button>
+            </MGButton>
           </div>
 
           <form onSubmit={handleBranchLogin} className="login-form">
@@ -244,24 +249,31 @@ const BranchLogin = () => {
                   placeholder="비밀번호를 입력하세요"
                   required
                 />
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  size="small"
                   className="password-toggle"
                   onClick={togglePassword}
+                  preventDoubleClick={false}
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
+                </MGButton>
               </div>
             </div>
 
             {/* 로그인 버튼 */}
-            <button
+            <MGButton
               type="submit"
+              variant="primary"
               className="login-button"
               disabled={isLoading}
+              loading={isLoading}
+              loadingText="로그인 중..."
+              preventDoubleClick={false}
             >
-              {isLoading ? '로그인 중...' : '로그인'}
-            </button>
+              로그인
+            </MGButton>
           </form>
 
           {/* 로그인 유형별 안내 */}
@@ -289,13 +301,15 @@ const BranchLogin = () => {
 
           {/* 기존 로그인 링크 */}
           <div className="login-links">
-            <button
+            <MGButton
               type="button"
+              variant="outline"
               className="link-button"
               onClick={() => navigate('/login')}
+              preventDoubleClick={false}
             >
               기존 로그인 페이지로 이동
-            </button>
+            </MGButton>
           </div>
         </div>
       </div>

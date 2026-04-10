@@ -11,6 +11,7 @@ import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay';
+import MGButton from '../common/MGButton';
 import './BranchLogin.css';
 
 /**
@@ -184,20 +185,24 @@ const HeadquartersLogin = () => {
               <h3>본사 정보를 불러올 수 없습니다</h3>
               <p>{error}</p>
               <div className="error-actions">
-                <button
+                <MGButton
                   type="button"
+                  variant="primary"
                   className="retry-button"
                   onClick={loadHeadquartersInfo}
+                  preventDoubleClick={false}
                 >
                   다시 시도
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
+                  variant="outline"
                   className="link-button"
                   onClick={() => navigate('/login')}
+                  preventDoubleClick={false}
                 >
                   메인 로그인으로 이동
-                </button>
+                </MGButton>
               </div>
             </div>
           </div>
@@ -272,24 +277,31 @@ const HeadquartersLogin = () => {
                   placeholder="비밀번호를 입력하세요"
                   required
                 />
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  size="small"
                   className="password-toggle"
                   onClick={togglePassword}
+                  preventDoubleClick={false}
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
+                </MGButton>
               </div>
             </div>
 
             {/* 로그인 버튼 */}
-            <button
+            <MGButton
               type="submit"
+              variant="primary"
               className="login-button"
               disabled={isLoading}
+              loading={isLoading}
+              loadingText="로그인 중..."
+              preventDoubleClick={false}
             >
-              {isLoading ? '로그인 중...' : '로그인'}
-            </button>
+              로그인
+            </MGButton>
           </form>
 
           {/* 본사 로그인 안내 */}
@@ -307,20 +319,24 @@ const HeadquartersLogin = () => {
 
           {/* 다른 로그인 옵션 */}
           <div className="login-links">
-            <button
+            <MGButton
               type="button"
+              variant="outline"
               className="link-button"
               onClick={() => navigate('/login/branch')}
+              preventDoubleClick={false}
             >
               지점 로그인
-            </button>
-            <button
+            </MGButton>
+            <MGButton
               type="button"
+              variant="outline"
               className="link-button"
               onClick={() => navigate('/login')}
+              preventDoubleClick={false}
             >
               메인 로그인으로 이동
-            </button>
+            </MGButton>
           </div>
         </div>
       </div>

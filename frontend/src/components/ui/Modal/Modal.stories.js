@@ -4,8 +4,8 @@
 
 import {useState} from 'react';
 
-import Button from '../../components/ui/Button/Button';
-import Modal from '../../components/ui/Modal/Modal';
+import MGButton from '../../common/MGButton';
+import Modal from './Modal';
 
 export default {title: 'UI Components/Modal',
   component: Modal,
@@ -35,9 +35,9 @@ export default {title: 'UI Components/Modal',
 const Template = (args) => {const [isOpen, setIsOpen] = useState(false);
   
   return (<div className="story-container">
-      <Button onClick={() => setIsOpen(true)}>
+      <MGButton onClick={() => setIsOpen(true)}>
         모달 열기
-      </Button>
+      </MGButton>
       <Modal
         {...args}
         isOpen={isOpen}
@@ -48,9 +48,9 @@ const Template = (args) => {const [isOpen, setIsOpen] = useState(false);
           <p style={{marginBottom: '20px'}}>
             이것은 모달의 내용입니다. 오버레이를 클릭하거나 ESC 키를 눌러 닫을 수 있습니다.
           </p>
-          <Button onClick={() => setIsOpen(false)}>
+          <MGButton onClick={() => setIsOpen(false)}>
             확인
-          </Button>
+          </MGButton>
         </div>
       </Modal>
     </div>);};
@@ -73,10 +73,10 @@ export const Sizes = () => {const [modals, setModals] = useState({small: false,
       <div className="story-section">
         <h3>모달 크기</h3>
         <div className="story-flex">
-          <Button onClick={() => openModal('small')}>Small</Button>
-          <Button onClick={() => openModal('medium')}>Medium</Button>
-          <Button onClick={() => openModal('large')}>Large</Button>
-          <Button onClick={() => openModal('extraLarge')}>Extra Large</Button>
+          <MGButton onClick={() => openModal('small')}>Small</MGButton>
+          <MGButton onClick={() => openModal('medium')}>Medium</MGButton>
+          <MGButton onClick={() => openModal('large')}>Large</MGButton>
+          <MGButton onClick={() => openModal('extraLarge')}>Extra Large</MGButton>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export const Sizes = () => {const [modals, setModals] = useState({small: false,
       >
         <div style={{textAlign: 'center'}}>
           <p>작은 크기의 모달입니다.</p>
-          <Button onClick={() => closeModal('small')}>확인</Button>
+          <MGButton onClick={() => closeModal('small')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -100,7 +100,7 @@ export const Sizes = () => {const [modals, setModals] = useState({small: false,
       >
         <div style={{textAlign: 'center'}}>
           <p>중간 크기의 모달입니다.</p>
-          <Button onClick={() => closeModal('medium')}>확인</Button>
+          <MGButton onClick={() => closeModal('medium')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -112,7 +112,7 @@ export const Sizes = () => {const [modals, setModals] = useState({small: false,
       >
         <div style={{textAlign: 'center'}}>
           <p>큰 크기의 모달입니다.</p>
-          <Button onClick={() => closeModal('large')}>확인</Button>
+          <MGButton onClick={() => closeModal('large')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -124,7 +124,7 @@ export const Sizes = () => {const [modals, setModals] = useState({small: false,
       >
         <div style={{textAlign: 'center'}}>
           <p>매우 큰 크기의 모달입니다.</p>
-          <Button onClick={() => closeModal('extraLarge')}>확인</Button>
+          <MGButton onClick={() => closeModal('extraLarge')}>확인</MGButton>
         </div>
       </Modal>
     </div>);};
@@ -142,10 +142,10 @@ export const Variants = () => {const [modals, setModals] = useState({default: fa
       <div className="story-section">
         <h3>모달 변형</h3>
         <div className="story-flex">
-          <Button onClick={() => openModal('default')}>Default</Button>
-          <Button onClick={() => openModal('centered')}>Centered</Button>
-          <Button onClick={() => openModal('fullscreen')}>Fullscreen</Button>
-          <Button onClick={() => openModal('drawer')}>Drawer</Button>
+          <MGButton onClick={() => openModal('default')}>Default</MGButton>
+          <MGButton onClick={() => openModal('centered')}>Centered</MGButton>
+          <MGButton onClick={() => openModal('fullscreen')}>Fullscreen</MGButton>
+          <MGButton onClick={() => openModal('drawer')}>Drawer</MGButton>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ export const Variants = () => {const [modals, setModals] = useState({default: fa
       >
         <div style={{textAlign: 'center'}}>
           <p>기본 모달입니다.</p>
-          <Button onClick={() => closeModal('default')}>확인</Button>
+          <MGButton onClick={() => closeModal('default')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -169,7 +169,7 @@ export const Variants = () => {const [modals, setModals] = useState({default: fa
       >
         <div style={{textAlign: 'center'}}>
           <p>중앙 정렬 모달입니다.</p>
-          <Button onClick={() => closeModal('centered')}>확인</Button>
+          <MGButton onClick={() => closeModal('centered')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -181,7 +181,7 @@ export const Variants = () => {const [modals, setModals] = useState({default: fa
       >
         <div style={{textAlign: 'center'}}>
           <p>전체 화면 모달입니다.</p>
-          <Button onClick={() => closeModal('fullscreen')}>확인</Button>
+          <MGButton onClick={() => closeModal('fullscreen')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -193,7 +193,7 @@ export const Variants = () => {const [modals, setModals] = useState({default: fa
       >
         <div style={{textAlign: 'center'}}>
           <p>드로어 모달입니다.</p>
-          <Button onClick={() => closeModal('drawer')}>확인</Button>
+          <MGButton onClick={() => closeModal('drawer')}>확인</MGButton>
         </div>
       </Modal>
     </div>);};
@@ -210,9 +210,9 @@ export const CloseOptions = () => {const [modals, setModals] = useState({noClose
       <div className="story-section">
         <h3>닫기 옵션</h3>
         <div className="story-flex">
-          <Button onClick={() => openModal('noCloseButton')}>닫기 버튼 없음</Button>
-          <Button onClick={() => openModal('noOverlayClose')}>오버레이 클릭 비활성화</Button>
-          <Button onClick={() => openModal('noEscapeClose')}>ESC 키 비활성화</Button>
+          <MGButton onClick={() => openModal('noCloseButton')}>닫기 버튼 없음</MGButton>
+          <MGButton onClick={() => openModal('noOverlayClose')}>오버레이 클릭 비활성화</MGButton>
+          <MGButton onClick={() => openModal('noEscapeClose')}>ESC 키 비활성화</MGButton>
         </div>
       </div>
 
@@ -224,7 +224,7 @@ export const CloseOptions = () => {const [modals, setModals] = useState({noClose
       >
         <div style={{textAlign: 'center'}}>
           <p>이 모달은 닫기 버튼이 없습니다. 오버레이 클릭이나 ESC 키로만 닫을 수 있습니다.</p>
-          <Button onClick={() => closeModal('noCloseButton')}>확인</Button>
+          <MGButton onClick={() => closeModal('noCloseButton')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -236,7 +236,7 @@ export const CloseOptions = () => {const [modals, setModals] = useState({noClose
       >
         <div style={{textAlign: 'center'}}>
           <p>이 모달은 오버레이 클릭으로 닫을 수 없습니다. 닫기 버튼이나 ESC 키를 사용하세요.</p>
-          <Button onClick={() => closeModal('noOverlayClose')}>확인</Button>
+          <MGButton onClick={() => closeModal('noOverlayClose')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -248,7 +248,7 @@ export const CloseOptions = () => {const [modals, setModals] = useState({noClose
       >
         <div style={{textAlign: 'center'}}>
           <p>이 모달은 ESC 키로 닫을 수 없습니다. 닫기 버튼이나 오버레이 클릭을 사용하세요.</p>
-          <Button onClick={() => closeModal('noEscapeClose')}>확인</Button>
+          <MGButton onClick={() => closeModal('noEscapeClose')}>확인</MGButton>
         </div>
       </Modal>
     </div>);};
@@ -267,11 +267,11 @@ export const States = () => {const [modals, setModals] = useState({loading: fals
       <div className="story-section">
         <h3>상태별 모달</h3>
         <div className="story-flex">
-          <Button onClick={() => openModal('loading')}>로딩</Button>
-          <Button onClick={() => openModal('error')}>에러</Button>
-          <Button onClick={() => openModal('success')}>성공</Button>
-          <Button onClick={() => openModal('warning')}>경고</Button>
-          <Button onClick={() => openModal('info')}>정보</Button>
+          <MGButton onClick={() => openModal('loading')}>로딩</MGButton>
+          <MGButton onClick={() => openModal('error')}>에러</MGButton>
+          <MGButton onClick={() => openModal('success')}>성공</MGButton>
+          <MGButton onClick={() => openModal('warning')}>경고</MGButton>
+          <MGButton onClick={() => openModal('info')}>정보</MGButton>
         </div>
       </div>
 
@@ -295,7 +295,7 @@ export const States = () => {const [modals, setModals] = useState({loading: fals
       >
         <div style={{textAlign: 'center'}}>
           <p>오류가 발생했습니다. 다시 시도해주세요.</p>
-          <Button onClick={() => closeModal('error')}>확인</Button>
+          <MGButton onClick={() => closeModal('error')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -307,7 +307,7 @@ export const States = () => {const [modals, setModals] = useState({loading: fals
       >
         <div style={{textAlign: 'center'}}>
           <p>작업이 성공적으로 완료되었습니다.</p>
-          <Button onClick={() => closeModal('success')}>확인</Button>
+          <MGButton onClick={() => closeModal('success')}>확인</MGButton>
         </div>
       </Modal>
 
@@ -320,8 +320,8 @@ export const States = () => {const [modals, setModals] = useState({loading: fals
         <div style={{textAlign: 'center'}}>
           <p>이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?</p>
           <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px'}}>
-            <Button variant="outline" onClick={() => closeModal('warning')}>취소</Button>
-            <Button variant="warning" onClick={() => closeModal('warning')}>계속</Button>
+            <MGButton variant="outline" onClick={() => closeModal('warning')}>취소</MGButton>
+            <MGButton variant="warning" onClick={() => closeModal('warning')}>계속</MGButton>
           </div>
         </div>
       </Modal>
@@ -334,7 +334,7 @@ export const States = () => {const [modals, setModals] = useState({loading: fals
       >
         <div style={{textAlign: 'center'}}>
           <p>이 기능에 대한 추가 정보입니다.</p>
-          <Button onClick={() => closeModal('info')}>확인</Button>
+          <MGButton onClick={() => closeModal('info')}>확인</MGButton>
         </div>
       </Modal>
     </div>);};

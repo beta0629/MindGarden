@@ -1,167 +1,241 @@
 /**
- * Button 컴포넌트 스토리
+ * Button 컴포넌트 스토리 (MGButton)
  */
 
+import React from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Heart,
+  Pencil,
+  Plus,
+  Save,
+  Search,
+  Settings,
+  Trash2,
+  Upload,
+  Users
+} from 'lucide-react';
 
-import Button from '../../components/ui/Button/Button';
+import MGButton from '../../common/MGButton';
 
-export default {title: 'UI Components/Button',
-  component: Button,
-  parameters: {docs: {description: {component: 'MGButton을 확장한 v2.COLOR_CONSTANTS.ALPHA_TRANSPARENT 버튼 컴포넌트'}}},
-  argTypes: {variant: {control: 'select',
-      options: ['primary', 'secondary', 'success', 'warning', 'error', 'info', 'outline', 'ghost', 'link'],
-      description: '버튼 스타일 변형'},
-    size: {control: 'select',
+export default {
+  title: 'UI Components/Button',
+  component: MGButton,
+  parameters: {
+    docs: {
+      description: { component: '공통 MGButton 컴포넌트 (로딩·중복 클릭 방지)' }
+    }
+  },
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['primary', 'secondary', 'success', 'warning', 'danger', 'info', 'outline', 'progress'],
+      description: '버튼 스타일 변형'
+    },
+    size: {
+      control: 'select',
       options: ['small', 'medium', 'large'],
-      description: '버튼 크기'},
-    disabled: {control: 'boolean',
-      description: '비활성화 상태'},
-    loading: {control: 'boolean',
-      description: '로딩 상태'},
-    fullWidth: {control: 'boolean',
-      description: '전체 너비 사용 여부'},
-    icon: {control: 'text',
-      description: '아이콘 이름'},
-    iconPosition: {control: 'select',
-      options: ['left', 'right'],
-      description: '아이콘 위치'},
-    role: {control: 'select',
-      options: ['CLIENT', 'CONSULTANT', 'ADMIN'],
-      description: '사용자 역할 (테마 적용)'},
-    onClick: {action: 'clicked',
-      description: '클릭 핸들러'}}};
+      description: '버튼 크기'
+    },
+    disabled: { control: 'boolean', description: '비활성화 상태' },
+    loading: { control: 'boolean', description: '로딩 상태' },
+    loadingText: { control: 'text', description: '로딩 중 표시 텍스트' },
+    fullWidth: { control: 'boolean', description: '전체 너비 사용 여부' },
+    preventDoubleClick: { control: 'boolean', description: '중복 클릭 방지' },
+    onClick: { action: 'clicked', description: '클릭 핸들러' }
+  }
+};
 
-const Template = (args) => <Button {...args}>Button</Button>;
+const Template = (args) => <MGButton {...args}>Button</MGButton>;
 
 export const Default = Template.bind({});
-Default.args = {variant: 'primary',
-  size: 'medium'};
+Default.args = { variant: 'primary', size: 'medium' };
 
-export const Variants = () => (<div className="story-container">
+export const Variants = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>색상 변형</h3>
       <div className="story-flex">
-        <Button variant="primary">Primary</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="success">Success</Button>
-        <Button variant="warning">Warning</Button>
-        <Button variant="error">Error</Button>
-        <Button variant="info">Info</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="ghost">Ghost</Button>
-        <Button variant="link">Link</Button>
+        <MGButton variant="primary">Primary</MGButton>
+        <MGButton variant="secondary">Secondary</MGButton>
+        <MGButton variant="success">Success</MGButton>
+        <MGButton variant="warning">Warning</MGButton>
+        <MGButton variant="danger">Danger</MGButton>
+        <MGButton variant="info">Info</MGButton>
+        <MGButton variant="outline">Outline</MGButton>
+        <MGButton variant="outline">Ghost (outline)</MGButton>
+        <MGButton variant="info">Link (info)</MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const Sizes = () => (<div className="story-container">
+export const Sizes = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>크기 변형</h3>
       <div className="story-flex">
-        <Button size="small">Small</Button>
-        <Button size="medium">Medium</Button>
-        <Button size="large">Large</Button>
+        <MGButton size="small">Small</MGButton>
+        <MGButton size="medium">Medium</MGButton>
+        <MGButton size="large">Large</MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const WithIcons = () => (<div className="story-container">
+const iconSizeSmall = 14;
+const iconSizeMd = 16;
+
+export const WithIcons = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>아이콘 버튼</h3>
       <div className="story-flex">
-        <Button icon="PLUS">추가</Button>
-        <Button icon="EDIT" variant="secondary">편집</Button>
-        <Button icon="TRASH" variant="error">삭제</Button>
-        <Button icon="SAVE" variant="success">저장</Button>
-        <Button icon="SEARCH" variant="outline">검색</Button>
+        <MGButton variant="primary">
+          <Plus size={iconSizeMd} aria-hidden /> 추가
+        </MGButton>
+        <MGButton variant="secondary">
+          <Pencil size={iconSizeMd} aria-hidden /> 편집
+        </MGButton>
+        <MGButton variant="danger">
+          <Trash2 size={iconSizeMd} aria-hidden /> 삭제
+        </MGButton>
+        <MGButton variant="success">
+          <Save size={iconSizeMd} aria-hidden /> 저장
+        </MGButton>
+        <MGButton variant="outline">
+          <Search size={iconSizeMd} aria-hidden /> 검색
+        </MGButton>
       </div>
     </div>
     <div className="story-section">
       <h3>아이콘 위치</h3>
       <div className="story-flex">
-        <Button icon="CHEVRON_LEFT" iconPosition="left">이전</Button>
-        <Button icon="CHEVRON_RIGHT" iconPosition="right">다음</Button>
-        <Button icon="DOWNLOAD" iconPosition="left" variant="outline">다운로드</Button>
-        <Button icon="UPLOAD" iconPosition="right" variant="outline">업로드</Button>
+        <MGButton variant="primary">
+          <ChevronLeft size={iconSizeMd} aria-hidden /> 이전
+        </MGButton>
+        <MGButton variant="primary">
+          다음 <ChevronRight size={iconSizeMd} aria-hidden />
+        </MGButton>
+        <MGButton variant="outline">
+          <Download size={iconSizeMd} aria-hidden /> 다운로드
+        </MGButton>
+        <MGButton variant="outline">
+          업로드 <Upload size={iconSizeMd} aria-hidden />
+        </MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const States = () => (<div className="story-container">
+export const States = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>상태별 버튼</h3>
       <div className="story-flex">
-        <Button>정상</Button>
-        <Button disabled>비활성화</Button>
-        <Button loading>로딩 중</Button>
-        <Button loading loadingText="처리 중...">로딩 중 (커스텀 텍스트)</Button>
+        <MGButton>정상</MGButton>
+        <MGButton disabled>비활성화</MGButton>
+        <MGButton loading>로딩 중</MGButton>
+        <MGButton loading loadingText="처리 중...">
+          로딩 중 (커스텀 텍스트)
+        </MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const FullWidth = () => (<div className="story-container">
+export const FullWidth = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>전체 너비 버튼</h3>
-      <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-        <Button fullWidth>전체 너비 버튼</Button>
-        <Button fullWidth variant="outline">전체 너비 아웃라인</Button>
-        <Button fullWidth variant="ghost">전체 너비 고스트</Button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <MGButton fullWidth>전체 너비 버튼</MGButton>
+        <MGButton fullWidth variant="outline">
+          전체 너비 아웃라인
+        </MGButton>
+        <MGButton fullWidth variant="outline">
+          전체 너비 고스트 (outline)
+        </MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const ButtonGroup = () => (<div className="story-container">
+export const ButtonGroup = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>버튼 그룹</h3>
       <div className="mg-v2-v2-v2-button-group">
-        <Button variant="outline">왼쪽</Button>
-        <Button variant="outline">가운데</Button>
-        <Button variant="outline">오른쪽</Button>
+        <MGButton variant="outline">왼쪽</MGButton>
+        <MGButton variant="outline">가운데</MGButton>
+        <MGButton variant="outline">오른쪽</MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const ButtonToolbar = () => (<div className="story-container">
+export const ButtonToolbar = () => (
+  <div className="story-container">
     <div className="story-section">
       <h3>버튼 툴바</h3>
       <div className="mg-v2-v2-v2-button-toolbar">
-        <Button icon="PLUS" size="small">추가</Button>
-        <Button icon="EDIT" size="small" variant="secondary">편집</Button>
-        <Button icon="TRASH" size="small" variant="error">삭제</Button>
-        <Button icon="SAVE" size="small" variant="success">저장</Button>
+        <MGButton size="small">
+          <Plus size={iconSizeSmall} aria-hidden /> 추가
+        </MGButton>
+        <MGButton size="small" variant="secondary">
+          <Pencil size={iconSizeSmall} aria-hidden /> 편집
+        </MGButton>
+        <MGButton size="small" variant="danger">
+          <Trash2 size={iconSizeSmall} aria-hidden /> 삭제
+        </MGButton>
+        <MGButton size="small" variant="success">
+          <Save size={iconSizeSmall} aria-hidden /> 저장
+        </MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const RoleThemes = () => (<div className="story-container">
+export const RoleThemes = () => (
+  <div className="story-container">
     <div className="story-section">
-      <h3>역할별 테마</h3>
+      <h3>역할별 테마 (데모: 아이콘+라벨)</h3>
       <div className="story-flex">
-        <Button role="CLIENT" icon="HEART">내담자 테마</Button>
-        <Button role="CONSULTANT" icon="USERS">상담사 테마</Button>
-        <Button role="ADMIN" icon="SETTINGS">관리자 테마</Button>
+        <MGButton variant="primary">
+          <Heart size={iconSizeMd} aria-hidden /> 내담자
+        </MGButton>
+        <MGButton variant="primary">
+          <Users size={iconSizeMd} aria-hidden /> 상담사
+        </MGButton>
+        <MGButton variant="primary">
+          <Settings size={iconSizeMd} aria-hidden /> 관리자
+        </MGButton>
       </div>
     </div>
-  </div>);
+  </div>
+);
 
-export const Interactive = () => {const [clicked, setClicked] = React.useState(null);
-  
-  return (<div className="story-container">
+export const Interactive = () => {
+  const [clicked, setClicked] = React.useState(null);
+
+  return (
+    <div className="story-container">
       <div className="story-section">
         <h3>인터랙티브 버튼</h3>
         <div className="story-flex">
-          <Button onClick={() => setClicked('normal')}>
-            일반 클릭
-          </Button>
-          <Button 
-            onClick={() => setClicked('prevent')}
-            preventDoubleClick={true}
-          >
+          <MGButton onClick={() => setClicked('normal')}>일반 클릭</MGButton>
+          <MGButton onClick={() => setClicked('prevent')} preventDoubleClick>
             중복 클릭 방지
-          </Button>
+          </MGButton>
         </div>
-        {clicked && (<p style={{marginTop: '15px', color: 'var(--mg-v2-text)'}}>
+        {clicked && (
+          <p style={{ marginTop: '15px', color: 'var(--mg-v2-text)' }}>
             {clicked} 버튼이 클릭되었습니다!
-          </p>)}
+          </p>
+        )}
       </div>
-    </div>);};
+    </div>
+  );
+};

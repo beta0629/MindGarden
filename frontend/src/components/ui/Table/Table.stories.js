@@ -3,7 +3,9 @@
  */
 
 import React from 'react';
-import Button from '../Button/Button';
+import { Pencil, Trash2 } from 'lucide-react';
+
+import MGButton from '../../common/MGButton';
 import Table from './Table';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -88,8 +90,12 @@ const customColumns = [
     header: '액션',
     render: () => (
       <div style={{ display: 'flex', gap: '5px' }}>
-        <Button size="small" icon="EDIT" variant="outline" />
-        <Button size="small" icon="TRASH" variant="error" />
+        <MGButton size="small" variant="outline" title="편집" aria-label="편집">
+          <Pencil size={14} aria-hidden />
+        </MGButton>
+        <MGButton size="small" variant="danger" title="삭제" aria-label="삭제">
+          <Trash2 size={14} aria-hidden />
+        </MGButton>
       </div>
     )
   }

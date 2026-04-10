@@ -17,6 +17,7 @@ import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucid
 import './TaxManagement.css';
 import './ErpCommon.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpFilterToolbar } from './common';
+import MGButton from '../common/MGButton';
 
 const TaxManagement = () => {
     const [taxCalculations, setTaxCalculations] = useState([]);
@@ -184,25 +185,28 @@ const TaxManagement = () => {
                     <div className="mg-dashboard-main">
                         {/* 탭 네비게이션 */}
                         <div className="mg-tabs">
-                            <button 
+                            <button
+                                type="button"
                                 className={`mg-tab ${activeTab === 'statistics' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('statistics')}
                             >
-                                <TrendingUp size={18} />
+                                <TrendingUp size={18} aria-hidden />
                                 세금 통계
                             </button>
-                            <button 
+                            <button
+                                type="button"
                                 className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('calculations')}
                             >
-                                <Receipt size={18} />
+                                <Receipt size={18} aria-hidden />
                                 세금 내역
                             </button>
-                            <button 
+                            <button
+                                type="button"
                                 className={`mg-tab ${activeTab === 'additional' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('additional')}
                             >
-                                <Plus size={18} />
+                                <Plus size={18} aria-hidden />
                                 추가 세금
                             </button>
                         </div>
@@ -215,14 +219,17 @@ const TaxManagement = () => {
                                 <>
                                     <div className="mg-dashboard-section-header">
                                         <h3 className="mg-dashboard-section-title">세금 유형별 내역</h3>
-                                        <button 
+                                        <MGButton
+                                            variant="primary"
+                                            size="medium"
+                                            type="button"
                                             className="mg-v2-button mg-v2-button-primary"
                                             onClick={() => loadTaxStatistics(selectedPeriod)}
                                             disabled={!selectedPeriod}
                                         >
-                                            <FileText size={16} />
+                                            <FileText size={16} aria-hidden />
                                             통계 조회
-                                        </button>
+                                        </MGButton>
                                     </div>
                                     
                                     {taxStatistics && (taxStatistics.breakdown || taxStatistics.taxByType) && (
@@ -399,10 +406,16 @@ const TaxManagement = () => {
                                                     />
                                                 </div>
                                                 <div className="mg-v2-form-group">
-                                                    <button className="mg-v2-button mg-v2-button-primary mg-v2-button-full">
-                                                        <Calculator size={16} />
+                                                    <MGButton
+                                                        variant="primary"
+                                                        size="medium"
+                                                        type="button"
+                                                        fullWidth
+                                                        className="mg-v2-button mg-v2-button-primary mg-v2-button-full"
+                                                    >
+                                                        <Calculator size={16} aria-hidden />
                                                         세금 계산
-                                                    </button>
+                                                    </MGButton>
                                                 </div>
                                             </div>
                                         </div>

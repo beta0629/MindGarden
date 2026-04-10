@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -11,6 +12,7 @@ import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeD
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
 import { ViewModeToggle } from '../common';
@@ -61,6 +63,7 @@ const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
  * 재무 거래 및 회계 관리
  */
 const FinancialManagement = () => {
+  const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState([]);
@@ -97,6 +100,8 @@ const FinancialManagement = () => {
     open: false,
     transaction: null
   });
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState(null);
   
   const [dashboardStats, setDashboardStats] = useState({
     totalIncome: 0,
@@ -327,6 +332,7 @@ const FinancialManagement = () => {
       return;
     }
     try {
+      setDeleteSubmitting(true);
       const result = await StandardizedApi.delete(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
       if (result?.success === false) {
         notificationManager.error(`거래 삭제에 실패했습니다: ${toErrorMessage(result.message)}`);
@@ -338,6 +344,8 @@ const FinancialManagement = () => {
     } catch (error) {
       console.error('거래 삭제 실패:', error);
       notificationManager.error(toErrorMessage(error.message) || '거래 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setDeleteSubmitting(false);
     }
   };
   
@@ -347,6 +355,7 @@ const FinancialManagement = () => {
   };
   
   const handleEditTransaction = async (transaction) => {
+    setPendingEditId(transaction.id);
     try {
       const data = await StandardizedApi.get(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
       const resolved =
@@ -355,6 +364,8 @@ const FinancialManagement = () => {
     } catch (e) {
       console.warn('거래 단건 조회 실패, 목록 행으로 폼을 채웁니다.', e);
       setEditModal({ open: true, transaction });
+    } finally {
+      setPendingEditId(null);
     }
   };
 
@@ -427,14 +438,17 @@ const FinancialManagement = () => {
 
   const pageHeaderActions =
     activeTab === 'transactions' ? (
-      <button
+      <MGButton
         type="button"
+        variant="secondary"
+        size="small"
         className="mg-v2-button mg-v2-button-secondary"
         onClick={() => {}}
         aria-label="거래 목록 내보내기"
+        preventDoubleClick={false}
       >
         <Download size={16} aria-hidden /> 내보내기
-      </button>
+      </MGButton>
     ) : null;
 
   return (
@@ -451,33 +465,39 @@ const FinancialManagement = () => {
                 <div className="mg-v2-financial-page-hub-tabs">
                   <FinancialRefundHubTabs />
                   <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="재무 뷰 전환">
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'transactions'}
                       className={`mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('transactions')}
+                      preventDoubleClick={false}
                     >
                       <ClipboardList size={18} aria-hidden /> 거래 내역
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'calendar'}
                       className={`mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('calendar')}
+                      preventDoubleClick={false}
                     >
                       <Calendar size={18} aria-hidden /> 달력 뷰
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'dashboard'}
                       className={`mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('dashboard')}
+                      preventDoubleClick={false}
                     >
                       <LayoutDashboard size={18} aria-hidden /> 대시보드
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
               }
@@ -539,16 +559,19 @@ const FinancialManagement = () => {
                               { value: 'INCOME', label: '수입' },
                               { value: 'EXPENSE', label: '지출' }
                             ].map((opt) => (
-                              <button
+                              <MGButton
                                 key={opt.value}
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
                                 onClick={() =>
                                   setFilters((prev) => ({ ...prev, transactionType: opt.value }))
                                 }
+                                preventDoubleClick={false}
                               >
                                 {opt.label}
-                              </button>
+                              </MGButton>
                             ))}
                           </div>
                         </div>
@@ -564,16 +587,19 @@ const FinancialManagement = () => {
                               { value: 'OFFICE_SUPPLIES', label: '사무용품' },
                               { value: 'OTHER', label: '기타' }
                             ].map((opt) => (
-                              <button
+                              <MGButton
                                 key={opt.value}
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
                                 onClick={() =>
                                   setFilters((prev) => ({ ...prev, category: opt.value }))
                                 }
+                                preventDoubleClick={false}
                               >
                                 {opt.label}
-                              </button>
+                              </MGButton>
                             ))}
                           </div>
                         </div>
@@ -597,16 +623,23 @@ const FinancialManagement = () => {
                           />
                         </div>
                         <div className="mg-v2-form-group mg-financial-filter-actions">
-                          <button
+                          <MGButton
                             type="button"
-                            onClick={() => setShowAdvancedFilter((v) => !v)}
+                            variant="secondary"
+                            size="small"
                             className="mg-v2-button mg-v2-button-secondary"
+                            onClick={() => setShowAdvancedFilter((v) => !v)}
                             disabled={silentRefreshing}
+                            preventDoubleClick={false}
                           >
                             고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
-                          </button>
-                          <button
+                          </MGButton>
+                          {/* 필터 상태만 초기화(전역 재조회 트리거 아님) — loading 미부여 */}
+                          <MGButton
                             type="button"
+                            variant="outline"
+                            size="small"
+                            className="mg-v2-button mg-v2-button-secondary"
                             onClick={() =>
                               setFilters({
                                 transactionType: 'ALL',
@@ -618,12 +651,12 @@ const FinancialManagement = () => {
                                 searchText: ''
                               })
                             }
-                            className="mg-v2-button mg-v2-button-secondary"
                             disabled={silentRefreshing}
                             aria-busy={silentRefreshing}
+                            preventDoubleClick={false}
                           >
                             <RefreshCw size={16} aria-hidden /> 필터 초기화
-                          </button>
+                          </MGButton>
                           <MGButton
                             variant="primary"
                             size="small"
@@ -649,16 +682,19 @@ const FinancialManagement = () => {
                             { value: 'SALARY_CALCULATION', label: '급여' },
                             { value: 'PURCHASE_REQUEST', label: '구매' }
                           ].map((opt) => (
-                            <button
+                            <MGButton
                               key={opt.value}
                               type="button"
+                              variant="outline"
+                              size="small"
                               className={`mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`}
                               onClick={() =>
                                 setFilters((prev) => ({ ...prev, relatedEntityType: opt.value }))
                               }
+                              preventDoubleClick={false}
                             >
                               {opt.label}
-                            </button>
+                            </MGButton>
                           ))}
                         </div>
                       </div>
@@ -680,7 +716,7 @@ const FinancialManagement = () => {
                 <MGButton
                   variant="outline"
                   size="small"
-                  className="btn btn-outline-primary"
+                  className="mg-v2-button mg-v2-button-outline"
                   onClick={() => loadData({ silent: true })}
                   loading={silentRefreshing}
                   loadingText="새로고침 중..."
@@ -730,16 +766,19 @@ const FinancialManagement = () => {
                         >
                           <div className="mg-financial-transaction-card__header">
                             <div className="mg-financial-transaction-card__id-section">
-                              <button
+                              <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 onClick={() => {
                                   setSelectedTransaction(transaction);
                                   setShowDetailModal(true);
                                 }}
                                 className="mg-financial-transaction-card__id-button"
+                                preventDoubleClick={false}
                               >
                                 #{toDisplayString(transaction.id)}
-                              </button>
+                              </MGButton>
                               {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
                                 transaction.description?.includes('상담료 입금 확인') ||
@@ -787,27 +826,38 @@ const FinancialManagement = () => {
                           </div>
                           <div className="mg-financial-transaction-card__footer">
                             <div className="mg-financial-transaction-card__actions">
-                              <button
+                              <MGButton
                                 type="button"
+                                variant="secondary"
+                                size="small"
                                 className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleViewTransaction(transaction)}
+                                preventDoubleClick={false}
                               >
                                 <Eye size={14} aria-hidden /> 보기
-                              </button>
-                              <button
+                              </MGButton>
+                              <MGButton
                                 type="button"
+                                variant="secondary"
+                                size="small"
                                 className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleEditTransaction(transaction)}
+                                loading={pendingEditId === transaction.id}
+                                loadingText="불러오는 중..."
+                                preventDoubleClick={false}
                               >
                                 <Pencil size={14} aria-hidden /> 수정
-                              </button>
-                              <button
+                              </MGButton>
+                              <MGButton
                                 type="button"
+                                variant="secondary"
+                                size="small"
                                 className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleDeleteTransaction(transaction)}
+                                preventDoubleClick={false}
                               >
                                 <Trash2 size={14} aria-hidden /> 삭제
-                              </button>
+                              </MGButton>
                             </div>
                           </div>
                         </div>
@@ -826,37 +876,49 @@ const FinancialManagement = () => {
                       <nav>
                         <ul className="pagination">
                           <li className={`page-item ${pagination.currentPage === 0 ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
+                            <MGButton
+                              type="button"
+                              variant="outline"
+                              size="small"
+                              className="page-link"
                               onClick={() => handlePageChange(pagination.currentPage - 1)}
                               disabled={pagination.currentPage === 0}
+                              preventDoubleClick={false}
                             >
                               이전
-                            </button>
+                            </MGButton>
                           </li>
                           
                           {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                             const page = i;
                             return (
                               <li key={page} className={`page-item ${pagination.currentPage === page ? 'active' : ''}`}>
-                                <button 
-                                  className="page-link" 
+                                <MGButton
+                                  type="button"
+                                  variant="outline"
+                                  size="small"
+                                  className="page-link"
                                   onClick={() => handlePageChange(page)}
+                                  preventDoubleClick={false}
                                 >
                                   {page + 1}
-                                </button>
+                                </MGButton>
                               </li>
                             );
                           })}
                           
                           <li className={`page-item ${pagination.currentPage === pagination.totalPages - 1 ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
+                            <MGButton
+                              type="button"
+                              variant="outline"
+                              size="small"
+                              className="page-link"
                               onClick={() => handlePageChange(pagination.currentPage + 1)}
                               disabled={pagination.currentPage === pagination.totalPages - 1}
+                              preventDoubleClick={false}
                             >
                               다음
-                            </button>
+                            </MGButton>
                           </li>
                         </ul>
                       </nav>
@@ -959,34 +1021,46 @@ const FinancialManagement = () => {
 
                   <h3 className="mg-v2-ad-b0kla__section-title">빠른 액션</h3>
                   <div className="mg-v2-erp-dashboard-actions">
-                    <button
+                    <MGButton
                       type="button"
+                      variant="primary"
+                      size="small"
                       className="mg-v2-button mg-v2-button-primary"
                       onClick={() => setActiveTab('transactions')}
+                      preventDoubleClick={false}
                     >
                       <ClipboardList size={16} aria-hidden /> 거래 내역 보기
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="secondary"
+                      size="small"
                       className="mg-v2-button mg-v2-button-secondary"
                       onClick={() => setActiveTab('calendar')}
+                      preventDoubleClick={false}
                     >
                       <Calendar size={16} aria-hidden /> 달력 뷰 보기
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="secondary"
+                      size="small"
                       className="mg-v2-button mg-v2-button-secondary"
-                      onClick={() => { window.location.href = '/branch_super_admin/mapping-management'; }}
+                      onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
+                      preventDoubleClick={false}
                     >
                       <Link2 size={16} aria-hidden /> 매핑 시스템 확인
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="secondary"
+                      size="small"
                       className="mg-v2-button mg-v2-button-secondary"
-                      onClick={() => { window.location.href = '/erp/finance-dashboard'; }}
+                      onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}
+                      preventDoubleClick={false}
                     >
                       <Building2 size={16} aria-hidden /> 통합 재무 대시보드
-                    </button>
+                    </MGButton>
                   </div>
                 </section>
               )}
@@ -1018,20 +1092,28 @@ const FinancialManagement = () => {
             className="mg-v2-ad-b0kla"
             actions={
               <>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
+                  size="small"
                   className="mg-v2-button mg-v2-button-secondary"
                   onClick={() => setDeleteModal({ isOpen: false, transaction: null })}
+                  disabled={deleteSubmitting}
+                  preventDoubleClick={false}
                 >
                   취소
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
+                  variant="danger"
+                  size="small"
                   className="mg-v2-button mg-v2-button--danger"
                   onClick={confirmDeleteTransaction}
+                  loading={deleteSubmitting}
+                  loadingText="삭제 중..."
                 >
                   삭제
-                </button>
+                </MGButton>
               </>
             }
           >
@@ -1115,19 +1197,31 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
     </>
   );
 
+  const mappingDetailUrl = `${ADMIN_ROUTES.MAPPING_MANAGEMENT}?mappingId=${encodeURIComponent(String(transaction.relatedEntityId ?? ''))}`;
+
   const modalActions = (
     <>
-      <button type="button" onClick={onClose} className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--secondary">
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        onClick={onClose}
+        className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--secondary"
+        preventDoubleClick={false}
+      >
         닫기
-      </button>
+      </MGButton>
       {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-        <button
+        <MGButton
           type="button"
-          onClick={() => window.open(`/branch_super_admin/mapping-management?mappingId=${transaction.relatedEntityId}`, '_blank')}
+          variant="primary"
+          size="small"
+          onClick={() => window.open(mappingDetailUrl, '_blank')}
           className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--primary"
+          preventDoubleClick={false}
         >
           매핑 보기
-        </button>
+        </MGButton>
       )}
     </>
   );

@@ -326,14 +326,14 @@ const BudgetManagement = () => {
                     <span>Core Solution</span>
                   </div>
                   <div className="erp-login-actions">
-                    <button type="button" className="btn btn-outline-primary">
-                      <i className="bi bi-arrow-clockwise" />
+                    <MGButton variant="outline" size="medium" type="button">
+                      <i className="bi bi-arrow-clockwise" aria-hidden />
                       세션 새로고침
-                    </button>
-                    <button type="button" className="btn btn-primary">
-                      <i className="bi bi-box-arrow-in-right" />
+                    </MGButton>
+                    <MGButton variant="primary" size="medium" type="button">
+                      <i className="bi bi-box-arrow-in-right" aria-hidden />
                       로그인
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
                 <div className="erp-login-content">
@@ -430,7 +430,7 @@ const BudgetManagement = () => {
                 <MGButton
                   variant="outline"
                   size="small"
-                  className="btn btn-outline-primary"
+                  className="mg-v2-button mg-v2-button--outline"
                   onClick={() => loadData({ silent: true })}
                   loading={silentRefreshing}
                   loadingText="새로고침 중..."
@@ -506,14 +506,16 @@ const BudgetManagement = () => {
                         <p>등록된 예산을 관리하고 모니터링할 수 있습니다.</p>
                       </div>
                       {canManageBudget && (
-                        <button
+                        <MGButton
+                          variant="primary"
+                          size="medium"
                           type="button"
-                          className="btn btn-primary erp-btn-primary"
+                          className="erp-btn-primary"
                           onClick={() => setShowCreateModal(true)}
                         >
-                          <i className="bi bi-plus-circle" />
+                          <i className="bi bi-plus-circle" aria-hidden />
                           새 예산 추가
-                        </button>
+                        </MGButton>
                       )}
                     </div>
 
@@ -538,22 +540,26 @@ const BudgetManagement = () => {
                                   </div>
                                   {canManageBudget && (
                                     <div className="erp-budget-actions">
-                                      <button
+                                      <MGButton
+                                        variant="outline"
+                                        size="small"
                                         type="button"
-                                        className="btn btn-sm btn-outline-primary"
                                         onClick={() => openEditModal(budget)}
                                         title="수정"
+                                        aria-label="예산 수정"
                                       >
-                                        <i className="bi bi-pencil" />
-                                      </button>
-                                      <button
+                                        <i className="bi bi-pencil" aria-hidden />
+                                      </MGButton>
+                                      <MGButton
+                                        variant="danger"
+                                        size="small"
                                         type="button"
-                                        className="btn btn-sm btn-outline-danger"
                                         onClick={() => handleDeleteBudget(budget.id)}
                                         title="삭제"
+                                        aria-label="예산 삭제"
                                       >
-                                        <i className="bi bi-trash" />
-                                      </button>
+                                        <i className="bi bi-trash" aria-hidden />
+                                      </MGButton>
                                     </div>
                                   )}
                                 </div>
@@ -619,14 +625,15 @@ const BudgetManagement = () => {
                           <h3>예산이 없습니다</h3>
                           <p>새로운 예산을 추가하여 시작해보세요.</p>
                           {canManageBudget && (
-                            <button
+                            <MGButton
+                              variant="primary"
+                              size="medium"
                               type="button"
-                              className="btn btn-primary"
                               onClick={() => setShowCreateModal(true)}
                             >
-                              <i className="bi bi-plus-circle" />
+                              <i className="bi bi-plus-circle" aria-hidden />
                               첫 번째 예산 추가
-                            </button>
+                            </MGButton>
                           )}
                         </div>
                       )}
@@ -686,10 +693,10 @@ const BudgetManagement = () => {
                         <h3>예산 카테고리가 없습니다</h3>
                         <p>로그인 후 예산 카테고리를 확인할 수 있습니다.</p>
                         {!isLoggedIn && (
-                          <button type="button" className="btn btn-primary">
-                            <i className="bi bi-box-arrow-in-right" />
+                          <MGButton variant="primary" size="medium" type="button">
+                            <i className="bi bi-box-arrow-in-right" aria-hidden />
                             로그인하기
-                          </button>
+                          </MGButton>
                         )}
                       </div>
                     )}

@@ -5,6 +5,7 @@ import { getDefaultApiHeadersAsync } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
@@ -271,26 +272,30 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="mg-v2-modal-footer">
-                            <button 
+                            <MGButton
+                                variant="secondary"
+                                size="medium"
+                                type="button"
                                 className="mg-v2-button mg-v2-button--secondary"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 disabled={loading}
                             >
-                                <XCircle size={20} className="mg-v2-icon-inline" />
+                                <XCircle size={20} className="mg-v2-icon-inline" aria-hidden />
                                 취소
-                            </button>
-                            <button 
+                            </MGButton>
+                            <MGButton
+                                variant="primary"
+                                size="medium"
+                                type="button"
                                 className="mg-v2-button mg-v2-button--primary"
                                 onClick={handleGenerateReport}
                                 disabled={loading || !period}
+                                loading={loading}
+                                loadingText="로딩 중..."
                             >
-                                {loading ? <div className="mg-loading">로딩중...</div> : (
-                                    <>
-                                        <TrendingUp size={20} className="mg-v2-icon-inline" />
-                                        보고서 생성
-                                    </>
-                                )}
-                            </button>
+                                <TrendingUp size={20} className="mg-v2-icon-inline" aria-hidden />
+                                보고서 생성
+                            </MGButton>
                         </div>
                     </div>
 
@@ -302,13 +307,16 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     <FileBarChart size={20} className="mg-v2-section-title-icon" />
                                     보고서 결과
                                 </h4>
-                                <button 
+                                <MGButton
+                                    variant="success"
+                                    size="medium"
+                                    type="button"
                                     className="mg-v2-button mg-v2-button--success"
                                     onClick={handleDownloadReport}
                                 >
-                                    <Download size={20} className="mg-v2-icon-inline" />
+                                    <Download size={20} className="mg-v2-icon-inline" aria-hidden />
                                     다운로드
-                                </button>
+                                </MGButton>
                             </div>
 
                             <div className="mg-v2-info-grid mg-v2-mt-md">

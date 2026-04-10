@@ -449,9 +449,10 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       }`}
     >
       {INTEGRATED_FINANCE_TAB_ITEMS.map((tab) => (
-        <button
+        <MGButton
           key={tab.key}
           type="button"
+          variant="outline"
           disabled={tabsDisabled}
           aria-disabled={tabsDisabled}
           onClick={
@@ -465,9 +466,10 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 }
           }
           className={`mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          preventDoubleClick={false}
         >
           {tab.label}
-        </button>
+        </MGButton>
       ))}
     </div>
   );
@@ -1863,15 +1865,19 @@ const JournalEntriesTab = () => {
       <DashboardSection title="거래 정리" icon={<Receipt size={20} />}>
         {/* 분개 설명 섹션 */}
         <div className="mg-v2-mb-md integrated-finance-journal-help">
-          <button
+          {/* 로컬 도움말 토글(비동기 재조회 아님) — loading 미부여 */}
+          <MGButton
             type="button"
+            variant="outline"
+            size="small"
             className="integrated-finance-journal-help-toggle"
             onClick={() => setShowHelp(!showHelp)}
+            preventDoubleClick={false}
           >
             <Info size={18} />
             <span>거래 정리란?</span>
             {showHelp ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+          </MGButton>
           {showHelp && (
             <div className="integrated-finance-journal-help-body">
               <div className="mg-v2-mb-sm">
@@ -2222,18 +2228,26 @@ const SettlementTab = () => {
     <section className="mg-v2-section">
       <DashboardSection title="정산" icon={<Calculator size={20} />}>
         <div className="mg-v2-tabs">
-          <button 
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className={`mg-v2-tab ${activeSubTab === 'rules' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
             onClick={() => setActiveSubTab('rules')}
+            preventDoubleClick={false}
           >
             정산 규칙
-          </button>
-          <button 
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className={`mg-v2-tab ${activeSubTab === 'results' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
             onClick={() => setActiveSubTab('results')}
+            preventDoubleClick={false}
           >
             정산 결과
-          </button>
+          </MGButton>
         </div>
 
         {activeSubTab === 'rules' && (

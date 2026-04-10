@@ -325,14 +325,16 @@ const ImprovedTaxManagement = () => {
                       />
                     </label>
                     {activeTab === 'calculations' && (
-                      <button
+                      <MGButton
+                        variant="primary"
+                        size="medium"
                         type="button"
                         className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
                         onClick={() => setShowCreateModal(true)}
                       >
                         <Plus size={16} aria-hidden />
                         추가 세금 계산
-                      </button>
+                      </MGButton>
                     )}
                   </div>
                 )}
@@ -401,7 +403,6 @@ const ImprovedTaxManagement = () => {
                 <MGButton
                   variant="outline"
                   size="small"
-                  className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
                   onClick={() => loadData({})}
                   loading={loading}
                   loadingText="로딩 중..."
@@ -517,10 +518,15 @@ const ImprovedTaxManagement = () => {
                           </div>
                         </div>
                         <div className="im-tax-mgmt__report-actions">
-                          <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
+                          <MGButton
+                            variant="primary"
+                            size="medium"
+                            type="button"
+                            className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                          >
                             <FilePlus size={16} aria-hidden />
                             신고서 작성
-                          </button>
+                          </MGButton>
                         </div>
                       </article>
                       <article className="im-tax-mgmt__report-card">
@@ -542,10 +548,15 @@ const ImprovedTaxManagement = () => {
                           </div>
                         </div>
                         <div className="im-tax-mgmt__report-actions">
-                          <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
+                          <MGButton
+                            variant="primary"
+                            size="medium"
+                            type="button"
+                            className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                          >
                             <FileCheck size={16} aria-hidden />
                             신고서 확인
-                          </button>
+                          </MGButton>
                         </div>
                       </article>
                     </div>
@@ -612,22 +623,27 @@ const ImprovedTaxManagement = () => {
         className="mg-v2-ad-b0kla"
         actions={
           <>
-            <button
+            <MGButton
+              variant="secondary"
+              size="medium"
               type="button"
               className="mg-v2-button mg-v2-button-secondary"
               onClick={() => setShowCreateModal(false)}
               disabled={loading}
             >
               취소
-            </button>
-            <button
+            </MGButton>
+            <MGButton
+              variant="primary"
+              size="medium"
               type="button"
               className="mg-v2-button mg-v2-button--primary"
               onClick={handleCreateTaxItem}
-              disabled={loading}
+              loading={loading}
+              loadingText="계산 중..."
             >
-              {loading ? '계산 중...' : '계산 반영'}
-            </button>
+              계산 반영
+            </MGButton>
           </>
         }
       >

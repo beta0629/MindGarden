@@ -214,7 +214,7 @@ const PurchaseManagement = () => {
               <MGButton
                 variant="outline"
                 size="small"
-                className="btn btn-outline-primary"
+                className="mg-v2-button mg-v2-button--outline"
                 onClick={() => loadData({ silent: true })}
                 loading={silentRefreshing}
                 loadingText="새로고침 중..."
@@ -262,10 +262,10 @@ const PurchaseManagement = () => {
                           </div>
                         </div>
                         <div className="erp-card-footer">
-                          <button type="button" className="btn btn-primary btn-sm">
+                          <MGButton variant="primary" size="small" type="button">
                             <ShoppingCart size={16} aria-hidden />
                             구매 요청
-                          </button>
+                          </MGButton>
                         </div>
                       </div>
                     ))}

@@ -1,4 +1,14 @@
 /* 상담사 상담 가능 시간 관리 스타일 */
+
+/* 세션 로딩: AdminCommonLayout 유지, 본문만 인라인 로더 */
+.consultant-availability__session-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--spacing-xl) * 6);
+}
+
 .consultant-availability-container {
   padding: 20px;
   max-width: 1200px;

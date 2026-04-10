@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { API_BASE_URL } from '../../constants/api';
 import AdminCommonLayout from '../../components/layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../../components/dashboard-v2/constants/menuItems';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import './ActivityHistory.css';
 
 const ActivityHistory = () => {
@@ -126,14 +126,6 @@ const ActivityHistory = () => {
     return `${Math.floor(diffDays / 30)}개월 전`;
   };
 
-  if (loading) {
-    return (
-      <AdminCommonLayout title="활동 내역" loading={true} loadingText="활동 내역을 불러오는 중...">
-        <div />
-      </AdminCommonLayout>
-    );
-  }
-
   return (
     <AdminCommonLayout title="활동 내역">
       <div className="activity-history-container">
@@ -157,6 +149,16 @@ const ActivityHistory = () => {
           </button>
         </div>
 
+        {loading ? (
+          <div
+            className="activity-history-loading"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <UnifiedLoading type="inline" text="활동 내역을 불러오는 중..." />
+          </div>
+        ) : (
+          <>
       {/* 필터 */}
       <div className="activity-history-filters">
         <div className="btn-group" role="group">
@@ -253,6 +255,8 @@ const ActivityHistory = () => {
           <p className="activity-history-stat-description">완료된 활동</p>
         </div>
       </div>
+          </>
+        )}
       </div>
     </AdminCommonLayout>
   );

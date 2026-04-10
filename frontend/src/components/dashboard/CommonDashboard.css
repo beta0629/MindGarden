@@ -11,6 +11,15 @@
 /* ===== Import 공통 스타일 및 테마 ===== */
 @import '../../styles/dashboard-tokens-extension.css';
 
+/* 세션 로딩: AdminCommonLayout(LNB/GNB) 유지, 본문만 인라인 로더 */
+.common-dashboard__session-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--spacing-xl) * 6);
+}
+
 /* ===== 공통 대시보드 레이아웃 ===== */
 .mg-dashboard-layout,
 .dashboard-container {

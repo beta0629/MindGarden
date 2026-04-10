@@ -15,6 +15,7 @@ import {
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
 import './TaxManagement.css';
+import './ErpCommon.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 
 const TaxManagement = () => {
@@ -108,7 +109,7 @@ const TaxManagement = () => {
     ];
 
     return (
-        <AdminCommonLayout title="세금 관리" loading={loading} loadingText="세금 데이터를 불러오는 중...">
+        <AdminCommonLayout title="세금 관리">
             <ContentHeader
                 title="세무 관리"
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
@@ -126,7 +127,13 @@ const TaxManagement = () => {
                     </select>
                 }
             />
-            <ContentArea className="mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
+            <ContentArea className="erp-system mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
+                {loading ? (
+                    <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+                        <UnifiedLoading type="inline" text="세금 데이터를 불러오는 중..." />
+                    </div>
+                ) : (
+                    <>
                 {/* 통계 카드 그리드 */}
                 {taxStatistics && (
                     <div className="mg-dashboard-stats">
@@ -397,16 +404,11 @@ const TaxManagement = () => {
                                     </div>
                                 </>
                             )}
-
-                            {loading && (
-                                <div>
-                                    <UnifiedLoading type="inline" text="로딩 중..." />
-                                    <p><ErpSafeText value="데이터를 불러오는 중..." /></p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
+                    </>
+                )}
             </ContentArea>
         </AdminCommonLayout>
     );

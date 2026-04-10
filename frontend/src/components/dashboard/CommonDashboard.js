@@ -31,7 +31,7 @@ import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import ErpPurchaseRequestWidget from './widgets/ErpPurchaseRequestWidget';
 import SystemNotificationSection from './SystemNotificationSection';
 import SystemNotificationWidget from './widgets/SystemNotificationWidget';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import PersonalizedMessagesWidget from './widgets/PersonalizedMessagesWidget';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
@@ -725,18 +725,13 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   };
 
-  if (sessionLoading) {
-    return (
-      <div className="tablet-dashboard-page">
-        <div className="loading-container">
-          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <AdminCommonLayout title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
+    <AdminCommonLayout title="대시보드">
+      {sessionLoading ? (
+        <div className="common-dashboard__session-load" aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
+        </div>
+      ) : (
       <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 - 위젯으로 업그레이드 */}
@@ -1104,6 +1099,7 @@ const CommonDashboard = ({ user: propUser }) => {
           </div>
         )}
       </div>
+      )}
     </AdminCommonLayout>
   );
 };

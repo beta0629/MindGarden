@@ -1,3 +1,12 @@
+/* 세션 로딩: AdminCommonLayout 유지, 본문만 인라인 로더 (CommonDashboard 패턴과 동일) */
+.consultant-records__session-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--spacing-xl) * 6);
+}
+
 /* 상담사 상담 기록 관리 스타일 */
 .consultant-records-container {
   padding: var(--spacing-lg);

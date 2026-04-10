@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
@@ -101,7 +102,7 @@ const CacheMonitoringDashboard = () => {
   };
 
   return (
-    <AdminCommonLayout title="캐시 성능 모니터링" loading={loading} loadingText="캐시 통계를 불러오는 중...">
+    <AdminCommonLayout title="캐시 성능 모니터링">
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="캐시 성능 모니터링 본문">
@@ -162,91 +163,96 @@ const CacheMonitoringDashboard = () => {
               aria-labelledby={CACHE_MONITOR_TITLE_ID}
               className="cache-monitoring-dashboard"
             >
+              {loading ? (
+                <UnifiedLoading type="inline" text="캐시 통계를 불러오는 중..." />
+              ) : (
+                <>
+                  {lastUpdated && (
+                    <div className="last-updated">
+                      <FaClock />
+                      마지막 업데이트: {lastUpdated.toLocaleString()}
+                    </div>
+                  )}
 
-      {lastUpdated && (
-        <div className="last-updated">
-          <FaClock />
-          마지막 업데이트: {lastUpdated.toLocaleString()}
-        </div>
-      )}
+                  <div className="cache-stats-grid">
+                    {Object.entries(cacheStats).map(([cacheName, stats]) => (
+                      <div key={cacheName} className="cache-stat-card">
+                        <div className="cache-card-header">
+                          <h3>{cacheName}</h3>
+                          <div className="cache-efficiency">
+                            <FaChartLine />
+                            {calculateEfficiency(stats)}% 효율
+                          </div>
+                        </div>
 
-      <div className="cache-stats-grid">
-        {Object.entries(cacheStats).map(([cacheName, stats]) => (
-          <div key={cacheName} className="cache-stat-card">
-            <div className="cache-card-header">
-              <h3>{cacheName}</h3>
-              <div className="cache-efficiency">
-                <FaChartLine />
-                {calculateEfficiency(stats)}% 효율
-              </div>
-            </div>
-            
-            <div className="cache-metrics">
-              <div className="metric">
-                <FaMemory className="metric-icon" />
-                <div className="metric-info">
-                  <span className="metric-label">캐시 크기</span>
-                  <span className="metric-value">{stats.size || 0}</span>
-                </div>
-              </div>
-              
-              <div className="metric">
-                <div className="metric-info">
-                  <span className="metric-label">히트</span>
-                  <span className="metric-value hit-count">{stats.hits || 0}</span>
-                </div>
-              </div>
-              
-              <div className="metric">
-                <div className="metric-info">
-                  <span className="metric-label">미스</span>
-                  <span className="metric-value miss-count">{stats.misses || 0}</span>
-                </div>
-              </div>
-              
-              <div className="metric">
-                <div className="metric-info">
-                  <span className="metric-label">총 요청</span>
-                  <span className="metric-value">{(stats.hits || 0) + (stats.misses || 0)}</span>
-                </div>
-              </div>
-            </div>
+                        <div className="cache-metrics">
+                          <div className="metric">
+                            <FaMemory className="metric-icon" />
+                            <div className="metric-info">
+                              <span className="metric-label">캐시 크기</span>
+                              <span className="metric-value">{stats.size || 0}</span>
+                            </div>
+                          </div>
 
-            <div className="cache-progress-bar">
-              <div 
-                className={`cache-progress-fill ${getEfficiencyClass(calculateEfficiency(stats))}`}
-                style={{ width: `${calculateEfficiency(stats)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+                          <div className="metric">
+                            <div className="metric-info">
+                              <span className="metric-label">히트</span>
+                              <span className="metric-value hit-count">{stats.hits || 0}</span>
+                            </div>
+                          </div>
 
-      {Object.keys(cacheStats).length === 0 && !loading && (
-        <div className="no-cache-data">
-          <FaDatabase size={48} />
-          <p>캐시 데이터가 없습니다.</p>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            onClick={async () => {
-              setRetryLoading(true);
-              try {
-                await fetchCacheStats();
-              } finally {
-                setRetryLoading(false);
-              }
-            }}
-            loading={retryLoading}
-            loadingText="다시 시도 중..."
-            preventDoubleClick
-            className="retry-button"
-          >
-            다시 시도
-          </MGButton>
-        </div>
-      )}
+                          <div className="metric">
+                            <div className="metric-info">
+                              <span className="metric-label">미스</span>
+                              <span className="metric-value miss-count">{stats.misses || 0}</span>
+                            </div>
+                          </div>
+
+                          <div className="metric">
+                            <div className="metric-info">
+                              <span className="metric-label">총 요청</span>
+                              <span className="metric-value">{(stats.hits || 0) + (stats.misses || 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="cache-progress-bar">
+                          <div
+                            className={`cache-progress-fill ${getEfficiencyClass(calculateEfficiency(stats))}`}
+                            style={{ width: `${calculateEfficiency(stats)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {Object.keys(cacheStats).length === 0 && (
+                    <div className="no-cache-data">
+                      <FaDatabase size={48} />
+                      <p>캐시 데이터가 없습니다.</p>
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        onClick={async () => {
+                          setRetryLoading(true);
+                          try {
+                            await fetchCacheStats();
+                          } finally {
+                            setRetryLoading(false);
+                          }
+                        }}
+                        loading={retryLoading}
+                        loadingText="다시 시도 중..."
+                        preventDoubleClick
+                        className="retry-button"
+                      >
+                        다시 시도
+                      </MGButton>
+                    </div>
+                  )}
+                </>
+              )}
             </main>
           </ContentArea>
         </div>

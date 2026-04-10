@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -63,8 +63,10 @@ const ConsultationRecordView = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="상담기록 조회" loading={true} loadingText="로딩중...">
-        <div />
+      <AdminCommonLayout title="상담기록 조회">
+        <div aria-busy="true" aria-live="polite" className="mg-v2-record-view">
+          <UnifiedLoading type="inline" text="로딩중..." />
+        </div>
       </AdminCommonLayout>
     );
   }

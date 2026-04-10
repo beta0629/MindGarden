@@ -16,6 +16,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Upload, Save, RotateCcw, Eye, AlertCircle, X } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
 import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
@@ -295,7 +296,7 @@ const BrandingManagement = ({ onClose }) => {
   };
 
   return (
-    <AdminCommonLayout title="브랜딩 관리" loading={isLoading} loadingText="브랜딩 정보를 불러오는 중...">
+    <AdminCommonLayout title="브랜딩 관리">
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="브랜딩 관리 본문">
@@ -305,6 +306,10 @@ const BrandingManagement = ({ onClose }) => {
               titleId={BRANDING_MGMT_TITLE_ID}
             />
             <main aria-labelledby={BRANDING_MGMT_TITLE_ID} className="branding-management">
+      {isLoading ? (
+        <UnifiedLoading type="inline" text="브랜딩 정보를 불러오는 중..." />
+      ) : (
+      <>
       <div className="branding-management__content">
         {/* 로고 업로드 섹션 */}
         <div className="branding-management__section">
@@ -516,6 +521,8 @@ const BrandingManagement = ({ onClose }) => {
           brandingData={getPreviewData()}
           onClose={() => setShowPreview(false)}
         />
+      )}
+      </>
       )}
             </main>
           </ContentArea>

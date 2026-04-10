@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getLucideIcon } from '../../utils/iconUtils';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
@@ -412,8 +412,20 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
-        <div />
+      <AdminCommonLayout title="메시지">
+        <div className="mg-dashboard-layout">
+          <div className="mg-dashboard-header">
+            <h1 className="mg-dashboard-title">
+              💬 내담자에게 메시지 전송
+            </h1>
+            <p className="mg-dashboard-subtitle">
+              상담일지 작성이 완료되었습니다. 내담자에게 메시지를 전송하거나 건너뛸 수 있습니다.
+            </p>
+          </div>
+          <div aria-busy="true" aria-live="polite" className="mg-mt-lg">
+            <UnifiedLoading type="inline" text="로딩중..." />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut, apiPost } from '../../utils/ajax';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -189,14 +189,6 @@ const ClientMessageScreen = () => {
   const importantCount = messages.filter(m => m.isImportant).length;
   const urgentCount = messages.filter(m => m.isUrgent).length;
 
-  if (loading) {
-    return (
-      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
-        <div />
-      </AdminCommonLayout>
-    );
-  }
-
   return (
     <AdminCommonLayout title="메시지">
       <ContentArea ariaLabel="상담사 메시지">
@@ -205,6 +197,15 @@ const ClientMessageScreen = () => {
           subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
           titleId={CLIENT_MESSAGE_TITLE_ID}
         />
+        {loading ? (
+          <div
+            className="client-message-screen-loading"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <UnifiedLoading type="inline" text="로딩중..." />
+          </div>
+        ) : (
       <div className="client-message-screen-container">
       {/* 통계 카드 */}
       <div className="client-message-screen-stats-card">
@@ -335,6 +336,7 @@ const ClientMessageScreen = () => {
         </div>
       )}
       </div>
+        )}
       </ContentArea>
     </AdminCommonLayout>
   );

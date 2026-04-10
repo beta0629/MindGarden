@@ -4,6 +4,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
@@ -131,29 +132,25 @@ const ConsultantRecords = () => {
     setModalRecordId(null);
   };
 
-  if (sessionLoading) {
-    return (
-      <AdminCommonLayout title="상담 기록" loading={true} loadingText="세션 정보를 불러오는 중...">
-        <div />
-      </AdminCommonLayout>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <AdminCommonLayout title="상담 기록">
+  const renderContent = () => {
+    if (sessionLoading) {
+      return (
+        <div className="consultant-records__session-load" aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+        </div>
+      );
+    }
+    if (!isLoggedIn) {
+      return (
         <ContentArea>
           <div className="consultant-records-login-required" style={{ textAlign: 'center', padding: '3rem' }}>
             <h3>로그인이 필요합니다.</h3>
             <p>상담 기록을 보려면 로그인해주세요.</p>
           </div>
         </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
-
-  return (
-    <AdminCommonLayout title="상담 기록">
+      );
+    }
+    return (
       <div className="mg-v2-ad-b0kla mg-v2-consultation-log-view">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea>
@@ -216,6 +213,12 @@ const ConsultantRecords = () => {
           isAdmin={false}
         />
       </div>
+    );
+  };
+
+  return (
+    <AdminCommonLayout title="상담 기록">
+      {renderContent()}
     </AdminCommonLayout>
   );
 };

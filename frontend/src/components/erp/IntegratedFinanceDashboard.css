@@ -72,12 +72,6 @@
   vertical-align: middle;
 }
 
-.finance-empty-state {
-  text-align: center;
-  padding: var(--spacing-xl);
-  color: var(--status-error);
-}
-
 .finance-section-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);

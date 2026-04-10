@@ -1327,9 +1327,10 @@ const DailyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div className="finance-empty-state">
-        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
-      </div>
+      <ErpEmptyState
+        title="리포트를 불러오지 못했습니다"
+        actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
+      />
     );
   }
 
@@ -1488,9 +1489,10 @@ const MonthlyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div className="finance-empty-state">
-        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
-      </div>
+      <ErpEmptyState
+        title="리포트를 불러오지 못했습니다"
+        actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
+      />
     );
   }
 
@@ -1647,9 +1649,10 @@ const YearlyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div className="finance-empty-state">
-        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
-      </div>
+      <ErpEmptyState
+        title="리포트를 불러오지 못했습니다"
+        actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
+      />
     );
   }
 

@@ -24,6 +24,8 @@
 | **ERP-B6a** | `BudgetManagement.js`, `ItemManagement.js`, `PurchaseRequestForm.js` — `ErpModal` → `UnifiedModal` | core-coder | ☑ | `develop` · `c4331820f` (2026-04-11) |
 | **ERP-B6b** | `IntegratedFinanceDashboard.js` — 동일 (대용량·모달만 치환) | core-coder | ☑ | 동일 커밋 |
 | **ERP-B6c** | `SalaryConfigModal.js`, `SalaryProfileFormModal.js`, `ConsultantProfileModal.js` — 동일 | core-coder | ☑ | 동일 커밋 |
+| **G7-B1** | `admin/ConsultantManagement.js` — react-bootstrap `Modal` → `UnifiedModal` (앱 내 유일 BS Modal) | core-coder | ☑ | `develop` · `e79a2f281` (2026-04-11) |
+| **G7-B2** | `DuplicateLoginModal.js`, `consultant/ConsultantVacationModal.js` — `ui/Button` → `MGButton` | core-coder | ☑ | 동일 커밋 |
 
 ---
 
@@ -123,7 +125,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: ☐ 미착수 — 착수 시 🔄, G-01~G-07 합의 완료 시 ☑.
+- **전역 확대 검토 상태**: 🔄 착수 — G7-B1·G7-B2 배치 진행 중; G-01~G-07 전부 ☑ 후 본 항목 ☑.
 
 ---
 
@@ -165,3 +167,5 @@
 | 2026-04-11 | ERP-B6a/B6b/B6c 병렬 위임 — ErpModal→UnifiedModal 잔여 7파일 |
 | 2026-04-11 | ERP-B6 완료 시 체크리스트·UI-02 비고 갱신 |
 | 2026-04-11 | 섹션 6 추가 — ERP 완료 후 전역 확대 검토(G-01~G-07)·절차 |
+| 2026-04-11 | G7-B1/B2 병렬 위임(ConsultantManagement·DuplicateLogin·ConsultantVacation) |
+| 2026-04-11 | G7-B1/B2 커밋 `e79a2f281`, 체크리스트 ☑ |

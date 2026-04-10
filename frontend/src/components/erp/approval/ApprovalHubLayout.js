@@ -86,24 +86,28 @@ const ApprovalHubLayout = ({
     <div className="approval-hub-mode-wrap">
       <div className="mg-v2-financial-refund-hub">
         <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="승인 구역 전환">
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             role="tab"
             aria-selected={isAdminActive}
             className={`mg-v2-ad-b0kla__pill ${isAdminActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
             onClick={goAdmin}
+            preventDoubleClick={false}
           >
             일반 승인
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
+            variant="outline"
             role="tab"
             aria-selected={isSuperActive}
             className={`mg-v2-ad-b0kla__pill ${isSuperActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
             onClick={goSuper}
+            preventDoubleClick={false}
           >
             상위 승인
-          </button>
+          </MGButton>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ClipboardList, Undo2 } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
 
@@ -29,24 +30,28 @@ export const FinancialRefundHubTabs = () => {
   return (
     <div className="mg-v2-financial-refund-hub" aria-label="재무·환불 허브">
       <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
-        <button
+        <MGButton
           type="button"
+          variant="outline"
           role="tab"
           aria-selected={isFinancial}
           className={`mg-v2-ad-b0kla__pill ${isFinancial ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
           onClick={goFinancial}
+          preventDoubleClick={false}
         >
           <ClipboardList size={18} aria-hidden /> 일상 거래
-        </button>
-        <button
+        </MGButton>
+        <MGButton
           type="button"
+          variant="outline"
           role="tab"
           aria-selected={isRefund}
           className={`mg-v2-ad-b0kla__pill ${isRefund ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
           onClick={goRefund}
+          preventDoubleClick={false}
         >
           <Undo2 size={18} aria-hidden /> 환불·정산
-        </button>
+        </MGButton>
       </div>
     </div>
   );

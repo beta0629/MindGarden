@@ -7,6 +7,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, LayoutDashboard } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 /**
  * @param {object} props
@@ -36,121 +37,139 @@ const ErpQuickActionsPanel = ({
       <h2 className="mg-v2-ad-b0kla__section-title">빠른 액션</h2>
       <div className="mg-v2-ad-b0kla__admin-grid">
         {hasPurchaseRequestView && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/purchase-requests')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <ShoppingCart size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">구매 요청하기</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상품 및 비품 구매 요청을 제출합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasApprovalManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/approvals')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
               <Clock size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">승인 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">구매 요청 승인 및 거부를 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasItemManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/items')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <Package size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">아이템 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">등록된 비품 및 상품을 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasBudgetManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/budget')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <TrendingUp size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">예산 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지점별 예산을 설정하고 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasSalaryManage && hasTaxManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/salary')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <DollarSign size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">급여 세금 통합관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">급여 계산·세금 통계를 한 화면에서 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasSalaryManage && !hasTaxManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/salary')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <DollarSign size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">급여 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사 급여 계산 및 지급을 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {!hasSalaryManage && hasTaxManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/tax')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <LayoutDashboard size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">세금 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">원천징수 및 세금 관련 업무를 관리합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasIntegratedFinanceView && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/admin/erp/financial')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <TrendingUp size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">수입·지출 한눈에</span>
             <span className="mg-v2-ad-b0kla__admin-desc">거래·손익·정산을 한곳에서 확인합니다</span>
-          </button>
+          </MGButton>
         )}
         {hasRefundManage && (
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/erp/refund-management')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
               <Clock size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">환불 관리 시스템</span>
             <span className="mg-v2-ad-b0kla__admin-desc">환불 요청 및 처리 내역을 관리합니다</span>
-          </button>
+          </MGButton>
         )}
       </div>
     </div>

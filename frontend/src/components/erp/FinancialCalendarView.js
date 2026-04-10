@@ -127,15 +127,18 @@ const FinancialCalendarView = () => {
     <div className="financial-calendar-view-container">
       <div className="mg-calendar">
         <div className="mg-calendar-header">
-          <button
+          <MGButton
             type="button"
-            onClick={() => navigateMonth(-1)}
+            variant="outline"
+            size="small"
             className="mg-calendar-nav-btn"
+            onClick={() => navigateMonth(-1)}
             aria-label="이전 달"
             disabled={calendarRefreshing || loading}
+            preventDoubleClick={false}
           >
             <ChevronLeft size={20} aria-hidden />
-          </button>
+          </MGButton>
           <div className="mg-financial-calendar-header-title-row">
             <h3 className="mg-calendar-title">
               <ErpSafeText value={currentDate.getFullYear()} />년{' '}
@@ -154,15 +157,18 @@ const FinancialCalendarView = () => {
               새로고침
             </MGButton>
           </div>
-          <button
+          <MGButton
             type="button"
-            onClick={() => navigateMonth(1)}
+            variant="outline"
+            size="small"
             className="mg-calendar-nav-btn"
+            onClick={() => navigateMonth(1)}
             aria-label="다음 달"
             disabled={calendarRefreshing || loading}
+            preventDoubleClick={false}
           >
             <ChevronRight size={20} aria-hidden />
-          </button>
+          </MGButton>
         </div>
 
         <div className="mg-financial-calendar-legend">
@@ -268,14 +274,17 @@ const FinancialCalendarView = () => {
               <BarChart3 size={20} aria-hidden />{' '}
               <ErpSafeText value={selectedDate} /> 거래 상세
             </h3>
-            <button
+            <MGButton
               type="button"
-              onClick={() => setSelectedDate(null)}
+              variant="outline"
+              size="small"
               className="mg-financial-calendar-detail-close"
+              onClick={() => setSelectedDate(null)}
               aria-label="닫기"
+              preventDoubleClick={false}
             >
               <X size={20} aria-hidden />
-            </button>
+            </MGButton>
           </div>
           <div className="mg-financial-calendar-detail-summary-grid">
             <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--income">

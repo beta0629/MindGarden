@@ -438,13 +438,15 @@ const FinancialTransactionForm = ({
 
           {/* 버튼들 */}
           <div className="financial-transaction-form-actions financial-transaction-form-actions--footer">
-            <button
+            <MGButton
               type="button"
+              variant="secondary"
+              className="mg-v2-button mg-v2-button-secondary"
               onClick={onClose}
-              className="mg-v2-button mg-v2-button--secondary"
+              preventDoubleClick={false}
             >
               취소
-            </button>
+            </MGButton>
             {/* MGButton은 네이티브 submit 전용일 때 중복클릭 방지를 끄지만, 폼 의도를 드러내기 위해 명시 유지 */}
             <MGButton
               type="submit"

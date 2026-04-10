@@ -3,7 +3,6 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
-import ErpButton from './common/ErpButton';
 import UnifiedModal from '../common/modals/UnifiedModal.js';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -314,14 +313,16 @@ const PurchaseRequestForm = () => {
                             </div>
                           </div>
                           <div className="mg-v2-purchase-qty-controls">
-                            <button
+                            <MGButton
                               type="button"
+                              variant="outline"
                               className="mg-v2-purchase-qty-btn"
                               aria-label="수량 감소"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) - 1)}
+                              preventDoubleClick={false}
                             >
                               -
-                            </button>
+                            </MGButton>
                             <input
                               type="number"
                               className="mg-v2-purchase-qty-input"
@@ -330,14 +331,16 @@ const PurchaseRequestForm = () => {
                               onChange={(e) => handleQuantityChange(item.id, Number.parseInt(e.target.value, 10) || 1)}
                               aria-label={`${toDisplayString(item.name)} 수량`}
                             />
-                            <button
+                            <MGButton
                               type="button"
+                              variant="outline"
                               className="mg-v2-purchase-qty-btn"
                               aria-label="수량 증가"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) + 1)}
+                              preventDoubleClick={false}
                             >
                               +
-                            </button>
+                            </MGButton>
                           </div>
                         </div>
                       ))}
@@ -414,15 +417,18 @@ const PurchaseRequestForm = () => {
                 )}
 
                 <div className="mg-v2-purchase-request-form__actions">
-                  <ErpButton
+                  <MGButton
                     type="submit"
                     variant="primary"
                     size="large"
+                    className="mg-v2-button mg-v2-button-primary"
                     loading={loading}
+                    loadingText="제출 중..."
                     disabled={selectedItems.length === 0}
+                    preventDoubleClick={false}
                   >
                     구매 요청 제출
-                  </ErpButton>
+                  </MGButton>
                 </div>
               </form>
             </section>
@@ -450,12 +456,15 @@ const PurchaseRequestForm = () => {
           <p className="mg-v2-purchase-modal-success__desc">
             관리자 승인 후 구매가 진행됩니다.
           </p>
-          <ErpButton
+          <MGButton
+            type="button"
             variant="primary"
+            className="mg-v2-button mg-v2-button-primary"
             onClick={() => setShowSuccessModal(false)}
+            preventDoubleClick={false}
           >
             확인
-          </ErpButton>
+          </MGButton>
         </div>
       </UnifiedModal>
     </>

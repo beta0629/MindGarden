@@ -57,6 +57,7 @@ const BudgetManagement = () => {
   const [budgets, setBudgets] = useState([]);
   const [budgetCategories, setBudgetCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
@@ -88,9 +89,14 @@ const BudgetManagement = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 탭·세션 변경 시에만 목록 재조회
   }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async () => {
+  const loadData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       setHasDataError(false);
 
@@ -112,7 +118,11 @@ const BudgetManagement = () => {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
       setHasDataError(true);
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -370,7 +380,12 @@ const BudgetManagement = () => {
               ariaLabel="예산 목록 도구"
               secondaryRow={
                 <div className="budget-management__toolbar-actions">
-                  <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadData()} disabled={loading}>
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--secondary"
+                    onClick={() => loadData({ silent: true })}
+                    disabled={loading || silentRefreshing}
+                  >
                     <RefreshCw size={16} aria-hidden />
                     목록 새로고침
                   </button>
@@ -387,7 +402,12 @@ const BudgetManagement = () => {
             {error && hasDataError && (
               <div className="erp-error">
                 <SafeErrorDisplay error={error} variant="banner" iconSize={18} />
-                <button type="button" className="btn btn-outline-primary" onClick={loadData}>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary"
+                  onClick={() => loadData({ silent: true })}
+                  disabled={silentRefreshing}
+                >
                   <RefreshCw size={18} aria-hidden />
                   다시 시도
                 </button>

@@ -128,7 +128,10 @@
 
 .salary-filter-block__run-calc {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
   width: 100%;
 }
 

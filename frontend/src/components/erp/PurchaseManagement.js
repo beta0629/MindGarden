@@ -26,6 +26,7 @@ const PurchaseManagement = () => {
   const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -34,9 +35,14 @@ const PurchaseManagement = () => {
     }
   }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async () => {
+  const loadData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       switch (activeTab) {
@@ -56,7 +62,11 @@ const PurchaseManagement = () => {
       console.error('데이터 로드 실패:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -160,8 +170,8 @@ const PurchaseManagement = () => {
                   <button
                     type="button"
                     className="mg-v2-button mg-v2-button--secondary"
-                    onClick={() => loadData()}
-                    disabled={loading}
+                    onClick={() => loadData({ silent: true })}
+                    disabled={loading || silentRefreshing}
                   >
                     <RefreshCw size={16} aria-hidden />
                     목록 새로고침
@@ -180,7 +190,12 @@ const PurchaseManagement = () => {
           {error && (
             <div className="erp-error">
               <SafeErrorDisplay error={error} variant="banner" />
-              <button type="button" className="btn btn-outline-primary" onClick={loadData}>
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={() => loadData({ silent: true })}
+                disabled={silentRefreshing}
+              >
                 <RefreshCw size={18} aria-hidden />
                 다시 시도
               </button>

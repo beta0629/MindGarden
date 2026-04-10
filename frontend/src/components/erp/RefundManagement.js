@@ -53,9 +53,12 @@ const RefundManagement = () => {
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [refundViewMode, setRefundViewMode] = useState('table');
 
-  const loadRefundData = useCallback(async () => {
-    try {
+  const loadRefundData = useCallback(async (options = {}) => {
+    const silent = options.silent === true;
+    if (!silent) {
       setLoading(true);
+    }
+    try {
       const [statsRes, historyRes, syncRes] = await Promise.all([
         StandardizedApi.get(REFUND_STATISTICS_ENDPOINT, { period: selectedPeriod }),
         StandardizedApi.get(REFUND_HISTORY_ENDPOINT, {
@@ -77,7 +80,9 @@ const RefundManagement = () => {
       console.error('환불 데이터 로드 실패:', error);
       notificationManager.show('환불 데이터를 불러오는데 실패했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [currentPage, selectedPeriod, selectedStatus]);
 
@@ -107,7 +112,7 @@ const RefundManagement = () => {
         setIsLoadingReflect(true);
         await StandardizedApi.post(REFLECT_ERP_REFUND_ENDPOINT(mappingId), {});
         notificationManager.show('ERP 환불 반영 요청이 완료되었습니다.', 'success');
-        loadRefundData();
+        loadRefundData({ silent: true });
       } catch (err) {
         if (err?.response?.status === 404 || err?.message?.includes('404')) {
           notificationManager.show('ERP 환불 반영 API는 추후 연동 예정입니다.', 'info');
@@ -134,7 +139,7 @@ const RefundManagement = () => {
       } catch (firstErr) {
         const is404 =
           firstErr?.response?.status === 404 ||
-          (firstErr?.message && firstErr.message.includes('404'));
+          Boolean(firstErr?.message?.includes('404'));
         if (is404) {
           notificationManager.show('ERP 환불 반영 API는 추후 연동 예정입니다.', 'info');
           return;
@@ -157,7 +162,7 @@ const RefundManagement = () => {
         `${successCount}건 ERP 환불 반영 요청을 보냈습니다.`,
         'success'
       );
-      loadRefundData();
+      loadRefundData({ silent: true });
       setSelectedRowIds([]);
     } catch (err) {
       notificationManager.show(err?.message || '일괄 반영에 실패했습니다.', 'error');
@@ -179,77 +184,81 @@ const RefundManagement = () => {
 
   return (
     <AdminCommonLayout title="환불 관리">
-      {loading ? (
-        <UnifiedLoading type="page" text="환불 데이터를 불러오는 중..." />
-      ) : (
-        <>
-          <ContentHeader
-            title="환불 관리 시스템"
-            subtitle="상담 환불 현황 및 환불·결제 연동"
-            actions={
-              <button
-                type="button"
-                className="mg-v2-button mg-v2-button-outline refund-management__nav-back"
-                onClick={() => navigate('/erp/dashboard')}
-                aria-label="운영 현황으로 돌아가기"
-              >
-                <ArrowLeft size={16} aria-hidden />
-                <span>운영 현황으로 돌아가기</span>
-              </button>
-            }
-          />
-          <FinancialRefundHubTabs />
-          <ContentArea
-            className="mg-v2-ad-b0kla refund-management__main"
-            ariaLabel="환불 관리 콘텐츠"
+      <ContentHeader
+        title="환불 관리 시스템"
+        subtitle="상담 환불 현황 및 환불·결제 연동"
+        actions={
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-outline refund-management__nav-back"
+            onClick={() => navigate('/erp/dashboard')}
+            aria-label="운영 현황으로 돌아가기"
           >
-            <ErpPageShell mainAriaLabel="환불 관리 본문">
-              <RefundKpiBlock
-                refundStats={refundStats}
-                selectedPeriod={selectedPeriod}
-                erpSyncStatus={erpSyncStatus}
-              />
-              <RefundFilterBlock
-                selectedPeriod={selectedPeriod}
-                selectedStatus={selectedStatus}
-                onPeriodChange={handlePeriodChange}
-                onStatusChange={handleStatusChange}
-                onRefresh={loadRefundData}
-                onExportExcel={handleExportExcel}
-                onBatchReflectErp={handleBatchReflectErp}
+            <ArrowLeft size={16} aria-hidden />
+            <span>운영 현황으로 돌아가기</span>
+          </button>
+        }
+      />
+      <FinancialRefundHubTabs />
+      <ContentArea
+        className="mg-v2-ad-b0kla refund-management__main"
+        ariaLabel="환불 관리 콘텐츠"
+      >
+        <ErpPageShell mainAriaLabel="환불 관리 본문">
+          <RefundKpiBlock
+            refundStats={refundStats}
+            selectedPeriod={selectedPeriod}
+            erpSyncStatus={erpSyncStatus}
+          />
+          <RefundFilterBlock
+            selectedPeriod={selectedPeriod}
+            selectedStatus={selectedStatus}
+            onPeriodChange={handlePeriodChange}
+            onStatusChange={handleStatusChange}
+            onRefresh={() => loadRefundData({ silent: true })}
+            onExportExcel={handleExportExcel}
+            onBatchReflectErp={handleBatchReflectErp}
+            selectedRowIds={selectedRowIds}
+            isLoadingReflect={isLoadingReflect}
+          />
+          {loading ? (
+            <div
+              className="refund-management__inline-loading"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <UnifiedLoading type="inline" text="환불 데이터를 불러오는 중..." />
+            </div>
+          ) : null}
+          <ContentSection noCard className="mg-v2-mapping-list-block">
+            <ContentCard className="mg-v2-mapping-list-block__card">
+              <div className="mg-v2-mapping-list-block__header">
+                <div className="mg-v2-mapping-list-block__title">환불 이력</div>
+                <ViewModeToggle
+                  viewMode={refundViewMode}
+                  onViewModeChange={setRefundViewMode}
+                  options={REFUND_VIEW_MODE_OPTIONS}
+                  className="mg-v2-mapping-list-block__toggle"
+                  ariaLabel="목록 보기 전환"
+                />
+              </div>
+              <RefundHistoryTableBlock
+                refundHistory={refundHistory}
+                pageInfo={pageInfo}
+                onPageChange={setCurrentPage}
+                onReflectErp={handleReflectErp}
                 selectedRowIds={selectedRowIds}
+                onToggleRowSelection={handleToggleRowSelection}
                 isLoadingReflect={isLoadingReflect}
               />
-              <ContentSection noCard className="mg-v2-mapping-list-block">
-                <ContentCard className="mg-v2-mapping-list-block__card">
-                  <div className="mg-v2-mapping-list-block__header">
-                    <div className="mg-v2-mapping-list-block__title">환불 이력</div>
-                    <ViewModeToggle
-                      viewMode={refundViewMode}
-                      onViewModeChange={setRefundViewMode}
-                      options={REFUND_VIEW_MODE_OPTIONS}
-                      className="mg-v2-mapping-list-block__toggle"
-                      ariaLabel="목록 보기 전환"
-                    />
-                  </div>
-                  <RefundHistoryTableBlock
-                    refundHistory={refundHistory}
-                    pageInfo={pageInfo}
-                    onPageChange={setCurrentPage}
-                    onReflectErp={handleReflectErp}
-                    selectedRowIds={selectedRowIds}
-                    onToggleRowSelection={handleToggleRowSelection}
-                    isLoadingReflect={isLoadingReflect}
-                  />
-                </ContentCard>
-              </ContentSection>
-              <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
-              <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
-              <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />
-            </ErpPageShell>
-          </ContentArea>
-        </>
-      )}
+            </ContentCard>
+          </ContentSection>
+          <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
+          <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
+          <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />
+        </ErpPageShell>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

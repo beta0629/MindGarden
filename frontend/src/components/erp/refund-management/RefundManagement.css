@@ -15,6 +15,19 @@
   min-width: 0;
 }
 
+/* 필터·KPI 유지 시 목록 재조회 인라인 로딩 */
+.refund-management__inline-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--mg-spacing-md, 1rem);
+  margin: 0;
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+  min-height: var(--mg-spacing-3xl, 4rem);
+}
+
 .refund-management__section {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));

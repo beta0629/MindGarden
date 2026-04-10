@@ -29,6 +29,7 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
  */
 const ItemManagement = () => {
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -89,9 +90,14 @@ const ItemManagement = () => {
     }
   };
 
-  const loadItems = async () => {
+  const loadItems = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const raw = await StandardizedApi.get(ERP_API.ITEMS);
       const list = normalizeErpListResponse(raw);
       setItems(list);
@@ -99,7 +105,11 @@ const ItemManagement = () => {
       console.error('아이템 로드 실패:', error);
       setError('아이템 목록을 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -289,7 +299,7 @@ const ItemManagement = () => {
                   ariaLabel="아이템 목록 도구"
                   secondaryRow={
                     <div className="item-management__toolbar-actions">
-                      <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadItems()} disabled={loading}>
+                      <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadItems({ silent: true })} disabled={loading || silentRefreshing}>
                         <RefreshCw size={16} aria-hidden />
                         목록 새로고침
                       </button>

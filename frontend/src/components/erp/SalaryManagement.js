@@ -7,10 +7,10 @@
  * @since 2025-03-16
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { Settings, Users, Calculator, Receipt, HelpCircle } from 'lucide-react';
+import { Settings, Users, Calculator, Receipt, HelpCircle, RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -63,6 +63,7 @@ const SalaryManagement = () => {
   const [selectedPayDay, setSelectedPayDay] = useState('TENTH');
   const [payDayOptions, setPayDayOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCalculation, setSelectedCalculation] = useState(null);
   const [previewResult, setPreviewResult] = useState(null);
@@ -127,9 +128,10 @@ const SalaryManagement = () => {
 
   /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats).
    * API 반환형 { consultant: { id, name, ... }, ... } → item.consultant 기준 평탄화 후 setConsultants (ConsultantManagement/VacationManagementModal과 동일). */
-  const loadConsultants = async () => {
+  const loadConsultants = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const list = await getAllConsultantsWithStats();
       const raw = Array.isArray(list) ? list : [];
       const flattened = raw.map((item) => {
@@ -159,13 +161,14 @@ const SalaryManagement = () => {
       setConsultants([]);
       showNotification('상담사 목록을 불러오는데 실패했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  const loadSalaryProfiles = async () => {
+  const loadSalaryProfiles = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
       if (!response) {
         setSalaryProfiles([]);
@@ -186,7 +189,7 @@ const SalaryManagement = () => {
       setSalaryProfiles([]);
       showNotification('급여 프로필을 불러오는데 실패했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -328,9 +331,10 @@ const SalaryManagement = () => {
     setSelectedConsultant(null);
   };
 
-  const loadSalaryCalculations = async (consultantId) => {
+  const loadSalaryCalculations = async (consultantId, options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await StandardizedApi.get(`${SALARY_API_ENDPOINTS.CALCULATIONS}/${consultantId}`);
       if (Array.isArray(response)) {
         setSalaryCalculations(response);
@@ -345,16 +349,17 @@ const SalaryManagement = () => {
       console.error('급여 계산 내역 로드 실패:', error);
       showNotification('급여 계산 내역을 불러오는데 실패했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  const loadTaxStatistics = async (period) => {
+  const loadTaxStatistics = async (period, options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       if (!period || period.trim() === '') {
         showNotification('세금 통계를 조회하려면 기간을 먼저 선택해주세요.', 'warning');
-        setLoading(false);
+        if (!silent) setLoading(false);
         return;
       }
       const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, { period });
@@ -367,9 +372,32 @@ const SalaryManagement = () => {
       console.error('세금 통계 로드 실패:', error);
       showNotification('세금 통계를 불러오는데 실패했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  const handleDataRefresh = useCallback(async () => {
+    setSilentRefreshing(true);
+    try {
+      const silent = { silent: true };
+      if (activeTab === TAB_PROFILES) {
+        await Promise.all([
+          loadConsultants(silent),
+          loadSalaryProfiles(silent),
+          loadPayDayOptions()
+        ]);
+      } else if (activeTab === TAB_CALC) {
+        await Promise.all([loadConsultants(silent), loadSalaryProfiles(silent)]);
+        if (selectedConsultant?.id) {
+          await loadSalaryCalculations(selectedConsultant.id, silent);
+        }
+      } else if (activeTab === TAB_TAX) {
+        await loadTaxStatistics(selectedPeriod, silent);
+      }
+    } finally {
+      setSilentRefreshing(false);
+    }
+  }, [activeTab, selectedConsultant, selectedPeriod]);
 
   useEffect(() => {
     loadConsultants();
@@ -591,11 +619,27 @@ const SalaryManagement = () => {
                 )}
                 secondaryRow={(
                   <div className="salary-filter-block__run-calc">
+                    <button
+                      type="button"
+                      className="mg-v2-button mg-v2-button--secondary"
+                      onClick={handleDataRefresh}
+                      disabled={silentRefreshing || loading}
+                      aria-label="데이터 새로고침"
+                    >
+                      <RefreshCw size={16} aria-hidden />
+                      데이터 새로고침
+                    </button>
                     <MGButton
                       variant="primary"
                       size="medium"
                       onClick={executeSalaryCalculation}
-                      disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
+                      disabled={
+                        loading ||
+                        silentRefreshing ||
+                        !selectedConsultant ||
+                        !selectedPeriod ||
+                        salaryProfiles.length === 0
+                      }
                       loading={loading}
                       loadingText="계산 중..."
                       className="mg-v2-button mg-v2-button--primary"
@@ -945,7 +989,7 @@ const SalaryManagement = () => {
                       variant="primary"
                       size="small"
                       onClick={() => loadTaxStatistics(selectedPeriod)}
-                      disabled={!selectedPeriod || loading}
+                      disabled={!selectedPeriod || loading || silentRefreshing}
                       className="mg-v2-button mg-v2-button--primary"
                     >
                       세금 통계 조회

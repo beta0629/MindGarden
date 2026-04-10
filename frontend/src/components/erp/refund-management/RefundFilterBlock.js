@@ -112,24 +112,31 @@ const RefundFilterBlock = ({
             >
               새로고침
             </MGButton>
-            <button
+            <MGButton
               type="button"
+              variant="secondary"
+              size="small"
               className="mg-v2-button mg-v2-button--secondary"
               onClick={onExportExcel}
               aria-label="엑셀 내보내기"
+              preventDoubleClick={false}
             >
               <Download size={16} aria-hidden />
               엑셀 내보내기
-            </button>
-            <button
+            </MGButton>
+            <MGButton
               type="button"
+              variant="outline"
+              size="small"
               className="mg-v2-button mg-v2-button--outline"
               onClick={onBatchReflectErp}
               disabled={!hasSelection || isLoadingReflect}
+              loading={isLoadingReflect}
+              loadingText="반영 중..."
               aria-label="선택 건 ERP 환불 반영"
             >
               선택 건 ERP 환불 반영
-            </button>
+            </MGButton>
           </div>
         )}
       />

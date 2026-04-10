@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
+import MGButton from '../../common/MGButton';
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 
@@ -141,15 +142,19 @@ const RefundHistoryTableBlock = ({
                       <ErpStatusBadge status={refund.erpStatus} />
                     </td>
                     <td className="refund-management__td refund-management__td--action">
-                      <button
+                      <MGButton
                         type="button"
+                        variant="secondary"
+                        size="small"
                         className="mg-v2-button mg-v2-button--secondary mg-v2-button--small"
                         onClick={() => onReflectErp(refund)}
                         disabled={isLoadingReflect}
+                        loading={isLoadingReflect}
+                        loadingText="반영 중..."
                         aria-label="해당 건 ERP 환불 반영"
                       >
                         ERP 반영
-                      </button>
+                      </MGButton>
                     </td>
                   </tr>
                 );
@@ -165,25 +170,31 @@ const RefundHistoryTableBlock = ({
           className="refund-management__pagination"
           aria-label="환불 이력 페이지 네비게이션"
         >
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
+            size="small"
             className="mg-v2-button mg-v2-button--secondary"
             disabled={!hasPrevious}
             onClick={() => onPageChange(currentPage - 1)}
+            preventDoubleClick={false}
           >
             이전
-          </button>
+          </MGButton>
           <span className="refund-management__pagination-info">
             <ErpSafeText value={`${currentPage + 1} / ${totalPages} 페이지`} />
           </span>
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
+            size="small"
             className="mg-v2-button mg-v2-button--secondary"
             disabled={!hasNext}
             onClick={() => onPageChange(currentPage + 1)}
+            preventDoubleClick={false}
           >
             다음
-          </button>
+          </MGButton>
         </nav>
       )}
     </section>

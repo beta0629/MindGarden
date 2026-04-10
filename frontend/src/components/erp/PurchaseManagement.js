@@ -149,30 +149,39 @@ const PurchaseManagement = () => {
         >
           <div className="erp-container">
             <div className="erp-tabs">
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
                 onClick={() => setActiveTab('items')}
+                preventDoubleClick={false}
               >
                 <Package size={18} aria-hidden />
                 비품 목록
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
                 onClick={() => setActiveTab('requests')}
+                preventDoubleClick={false}
               >
                 <FileText size={18} aria-hidden />
                 구매 요청
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
                 onClick={() => setActiveTab('orders')}
+                preventDoubleClick={false}
               >
                 <ShoppingCart size={18} aria-hidden />
                 구매 주문
-              </button>
+              </MGButton>
             </div>
 
             <ErpFilterToolbar

@@ -359,38 +359,50 @@ const ImprovedTaxManagement = () => {
           }
           tabsSlot={
             <div className="mg-v2-ad-b0kla__pill-group" role="tablist">
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('overview')}
+                preventDoubleClick={false}
               >
                 <LayoutDashboard size={18} aria-hidden />
                 개요
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('calculations')}
+                preventDoubleClick={false}
               >
                 <Calculator size={18} aria-hidden />
                 세금 계산
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('reports')}
+                preventDoubleClick={false}
               >
                 <FileText size={18} aria-hidden />
                 신고서
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('settings')}
+                preventDoubleClick={false}
               >
                 <Settings size={18} aria-hidden />
                 설정
-              </button>
+              </MGButton>
             </div>
           }
         >

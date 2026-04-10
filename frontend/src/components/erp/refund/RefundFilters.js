@@ -105,15 +105,18 @@ const RefundFilters = ({
                 >
                   새로고침
                 </MGButton>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
+                  size="small"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={onExportExcel}
                   aria-label="엑셀 내보내기"
+                  preventDoubleClick={false}
                 >
                   <Download size={16} aria-hidden />
                   엑셀 내보내기
-                </button>
+                </MGButton>
               </div>
             )}
           />

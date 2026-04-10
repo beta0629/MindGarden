@@ -363,30 +363,39 @@ const BudgetManagement = () => {
           }
           tabsSlot={
             <div className="erp-tabs">
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
                 onClick={() => setActiveTab('budgets')}
+                preventDoubleClick={false}
               >
                 <List size={18} aria-hidden />
                 예산 목록
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
                 onClick={() => setActiveTab('categories')}
+                preventDoubleClick={false}
               >
                 <Tag size={18} aria-hidden />
                 카테고리
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
                 onClick={() => setActiveTab('reports')}
+                preventDoubleClick={false}
               >
                 <TrendingUp size={18} aria-hidden />
                 보고서
-              </button>
+              </MGButton>
             </div>
           }
           mainAriaLabel="예산 관리 목록 및 본문"

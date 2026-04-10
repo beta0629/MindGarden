@@ -185,30 +185,39 @@ const TaxManagement = () => {
                     <div className="mg-dashboard-main">
                         {/* 탭 네비게이션 */}
                         <div className="mg-tabs">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="medium"
                                 className={`mg-tab ${activeTab === 'statistics' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('statistics')}
+                                preventDoubleClick={false}
                             >
                                 <TrendingUp size={18} aria-hidden />
                                 세금 통계
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="medium"
                                 className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('calculations')}
+                                preventDoubleClick={false}
                             >
                                 <Receipt size={18} aria-hidden />
                                 세금 내역
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="medium"
                                 className={`mg-tab ${activeTab === 'additional' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('additional')}
+                                preventDoubleClick={false}
                             >
                                 <Plus size={18} aria-hidden />
                                 추가 세금
-                            </button>
+                            </MGButton>
                         </div>
 
                         {/* 탭 콘텐츠 영역 */}

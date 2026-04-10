@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, List } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea, ContentSection, ContentCard } from '../dashboard-v2/content';
 import { ViewModeToggle } from '../common';
@@ -193,15 +194,17 @@ const RefundManagement = () => {
         title="환불 관리 시스템"
         subtitle="상담 환불 현황 및 환불·결제 연동"
         actions={
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-button mg-v2-button-outline refund-management__nav-back"
             onClick={() => navigate('/erp/dashboard')}
             aria-label="운영 현황으로 돌아가기"
+            preventDoubleClick={false}
           >
             <ArrowLeft size={16} aria-hidden />
             <span>운영 현황으로 돌아가기</span>
-          </button>
+          </MGButton>
         }
       />
       <FinancialRefundHubTabs />

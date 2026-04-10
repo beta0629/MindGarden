@@ -259,32 +259,38 @@ const PurchaseRequestForm = () => {
                     className="mg-v2-purchase-request-form__item-grid"
                   >
                     {items.map((item) => (
-                      <button
+                      <MGButton
                         key={item.id}
                         type="button"
+                        variant="outline"
+                        size="medium"
+                        fullWidth
+                        preventDoubleClick={false}
                         className={`mg-v2-purchase-item-card${isItemSelected(item) ? ' mg-v2-purchase-item-card--selected' : ''}`}
                         onClick={() => handleItemSelect(item)}
                       >
-                        {isItemSelected(item) && (
-                          <div className="mg-v2-purchase-item-card__check" aria-hidden>
-                            ✓
+                        <div className="mg-flex mg-flex-col mg-w-full">
+                          {isItemSelected(item) && (
+                            <div className="mg-v2-purchase-item-card__check" aria-hidden>
+                              ✓
+                            </div>
+                          )}
+                          <div className="mg-v2-purchase-item-card__name">
+                            <ErpSafeText value={item.name} />
                           </div>
-                        )}
-                        <div className="mg-v2-purchase-item-card__name">
-                          <ErpSafeText value={item.name} />
+                          <div className="mg-v2-purchase-item-card__category">
+                            <ErpSafeText value={item.category} />
+                          </div>
+                          <div className="mg-v2-purchase-item-card__price">
+                            <ErpSafeNumber value={item.unitPrice} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+                          </div>
+                          <div className="mg-v2-purchase-item-card__stock">
+                            <span className="mg-v2-purchase-item-card__stock-label">재고:</span>
+                            <ErpSafeText value={item.stockQuantity} />
+                            <span>개</span>
+                          </div>
                         </div>
-                        <div className="mg-v2-purchase-item-card__category">
-                          <ErpSafeText value={item.category} />
-                        </div>
-                        <div className="mg-v2-purchase-item-card__price">
-                          <ErpSafeNumber value={item.unitPrice} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
-                        </div>
-                        <div className="mg-v2-purchase-item-card__stock">
-                          <span className="mg-v2-purchase-item-card__stock-label">재고:</span>
-                          <ErpSafeText value={item.stockQuantity} />
-                          <span>개</span>
-                        </div>
-                      </button>
+                      </MGButton>
                     ))}
                   </div>
                 </div>

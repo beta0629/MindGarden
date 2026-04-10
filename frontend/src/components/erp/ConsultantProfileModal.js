@@ -3,6 +3,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
@@ -242,13 +243,15 @@ const ConsultantProfileModal = ({
                     <div className="consultant-profile-info-header">
                         <h4 className="consultant-profile-info-title">급여 프로필</h4>
                         {!showSalaryForm && (
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                size="medium"
                                 className="mg-v2-button mg-v2-button--primary consultant-profile-edit-btn"
                                 onClick={() => setShowSalaryForm(true)}
                             >
                                 {salaryProfile ? '수정' : '생성'}
-                            </button>
+                            </MGButton>
                         )}
                     </div>
                         
@@ -456,20 +459,26 @@ const ConsultantProfileModal = ({
                                     </div>
                                 </div>
                                 <div className="salary-profile-form__actions consultant-profile-form-actions">
-                                    <button
+                                    <MGButton
                                         type="button"
+                                        variant="outline"
+                                        size="medium"
                                         className="mg-v2-button mg-v2-button--outline"
                                         onClick={() => setShowSalaryForm(false)}
                                     >
                                         취소
-                                    </button>
-                                    <button
+                                    </MGButton>
+                                    <MGButton
                                         type="submit"
+                                        variant="primary"
+                                        size="medium"
                                         className="mg-v2-button mg-v2-button--primary"
                                         disabled={loading}
+                                        loading={loading}
+                                        loadingText="저장 중..."
                                     >
-                                        {loading ? '저장 중...' : '저장'}
-                                    </button>
+                                        저장
+                                    </MGButton>
                                 </div>
                             </form>
                         )}
@@ -477,13 +486,15 @@ const ConsultantProfileModal = ({
             </div>
 
             <div className="consultant-profile-modal-footer">
-                <button
+                <MGButton
                     type="button"
+                    variant="outline"
+                    size="medium"
                     className="mg-v2-button mg-v2-button--outline"
                     onClick={onClose}
                 >
                     닫기
-                </button>
+                </MGButton>
             </div>
         </UnifiedModal>
     );

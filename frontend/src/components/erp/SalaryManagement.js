@@ -72,6 +72,7 @@ const SalaryManagement = () => {
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
   const [isConsultantPickerOpen, setIsConsultantPickerOpen] = useState(false);
   const [profileViewMode, setProfileViewMode] = useState('largeCard');
+  const [confirmSalaryLoading, setConfirmSalaryLoading] = useState(false);
   /** 최초 상담사 목록 페치 1회 완료 여부(초기 인라인 로딩 vs 이후 로딩 오버레이 구분). */
   const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
 
@@ -466,42 +467,48 @@ const SalaryManagement = () => {
                 <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
                   {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
                   <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === TAB_PROFILES}
                       aria-controls="salary-profile-panel"
                       id="tab-profiles"
                       className={`mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
                       onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
+                      preventDoubleClick={false}
                     >
                       <Users size={18} aria-hidden />
                       급여 프로필
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === TAB_CALC}
                       aria-controls="salary-calc-panel"
                       id="tab-calculations"
                       className={`mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
                       onClick={() => setActiveTabAndUrl(TAB_CALC)}
+                      preventDoubleClick={false}
                     >
                       <Calculator size={18} aria-hidden />
                       급여 계산
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="outline"
                       role="tab"
                       aria-selected={activeTab === TAB_TAX}
                       aria-controls="salary-tax-panel"
                       id="tab-tax"
                       className={`mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
                       onClick={() => setActiveTabAndUrl(TAB_TAX)}
+                      preventDoubleClick={false}
                     >
                       <Receipt size={18} aria-hidden />
                       세금 관리
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
               }
@@ -561,16 +568,19 @@ const SalaryManagement = () => {
                                 return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
                               })()}
                         </span>
-                        <button
+                        <MGButton
                           type="button"
+                          variant="outline"
+                          size="small"
                           className="salary-filter-block__period-link"
                           onClick={() => setIsConfigModalOpen(true)}
                           title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
                           aria-label="기산일 설정"
+                          preventDoubleClick={false}
                         >
                           <HelpCircle size={14} aria-hidden />
                           <span className="sr-only">기산일 설정</span>
-                        </button>
+                        </MGButton>
                       </div>
                     )}
                     <div className="salary-filter-block__field">
@@ -848,6 +858,7 @@ const SalaryManagement = () => {
                                 return;
                               }
                               try {
+                                setConfirmSalaryLoading(true);
                                 setLoading(true);
                                 const confirmParams = new URLSearchParams({
                                   consultantId: previewResult.consultantId,
@@ -868,10 +879,13 @@ const SalaryManagement = () => {
                               } catch (err) {
                                 showNotification('확정 처리 중 오류가 발생했습니다.', 'error');
                               } finally {
+                                setConfirmSalaryLoading(false);
                                 setLoading(false);
                               }
                             }}
-                            disabled={loading}
+                            disabled={loading || confirmSalaryLoading}
+                            loading={confirmSalaryLoading}
+                            loadingText="확정 중..."
                             className="mg-v2-button mg-v2-button--primary"
                           >
                             확정
@@ -1063,16 +1077,19 @@ const SalaryManagement = () => {
           <ul className="mg-v2-list-container">
             {consultants.map((consultant) => (
               <li key={consultant.id}>
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  fullWidth
                   className="mg-v2-list-item mg-v2-list-item--clickable salary-consultant-picker-item"
                   onClick={() => handleConsultantPickForProfile(consultant)}
+                  preventDoubleClick={false}
                 >
                   <span className="mg-v2-list-item-title"><SafeText>{consultant.name}</SafeText></span>
                   {consultant.email && (
                     <span className="mg-v2-list-item-subtitle"><SafeText>{consultant.email}</SafeText></span>
                   )}
-                </button>
+                </MGButton>
               </li>
             ))}
           </ul>

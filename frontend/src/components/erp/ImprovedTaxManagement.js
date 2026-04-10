@@ -23,7 +23,6 @@ import {
   FileText,
   Settings,
   Plus,
-  RefreshCw,
   FilePlus,
   FileCheck
 } from 'lucide-react';
@@ -31,6 +30,7 @@ import './ErpCommon.css';
 import './ImprovedTaxManagement.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import MGButton from '../common/MGButton';
 import ErpPageShell from './shell/ErpPageShell';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
@@ -338,21 +338,18 @@ const ImprovedTaxManagement = () => {
                 )}
                 secondaryRow={(
                   <div className="im-tax-mgmt__filter-toolbar-row">
-                    <button
-                      type="button"
-                      className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
+                    <MGButton
+                      variant="secondary"
+                      size="small"
+                      className="mg-v2-button mg-v2-button--secondary"
                       onClick={() => loadData({ silent: true })}
+                      loading={silentRefreshing}
+                      loadingText="새로고침 중..."
                       disabled={loading || silentRefreshing}
-                      aria-busy={silentRefreshing}
                       aria-label="데이터 새로고침"
                     >
-                      <RefreshCw
-                        className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                        size={16}
-                        aria-hidden
-                      />
                       데이터 새로고침
-                    </button>
+                    </MGButton>
                   </div>
                 )}
               />
@@ -401,14 +398,18 @@ const ImprovedTaxManagement = () => {
             {error && (
               <div className="im-tax-mgmt__error-block erp-error">
                 <SafeErrorDisplay error={error} variant="banner" />
-                <button
-                  type="button"
+                <MGButton
+                  variant="outline"
+                  size="small"
                   className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
                   onClick={() => loadData({})}
+                  loading={loading}
+                  loadingText="로딩 중..."
+                  disabled={loading || silentRefreshing}
+                  aria-label="다시 시도"
                 >
-                  <RefreshCw size={16} aria-hidden />
                   다시 시도
-                </button>
+                </MGButton>
               </div>
             )}
 

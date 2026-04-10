@@ -1,7 +1,7 @@
 // 현재 앱 라우트에서 미사용일 수 있으나 ErpFilterToolbar 패턴 SSOT 유지용으로 보관합니다.
-import React from 'react';
-import { RefreshCw, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import CardContainer from '../../common/CardContainer';
+import MGButton from '../../common/MGButton';
 import { ErpFilterToolbar } from '../common';
 import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -94,21 +94,17 @@ const RefundFilters = ({
             )}
             secondaryRow={(
               <div className="refund-filters__actions mg-v2-card-actions">
-                <button
-                  type="button"
+                <MGButton
+                  variant="secondary"
+                  size="small"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={onRefresh}
-                  disabled={silentRefreshing}
-                  aria-busy={silentRefreshing}
+                  loading={silentRefreshing}
+                  loadingText="새로고침 중..."
                   aria-label="새로고침"
                 >
-                  <RefreshCw
-                    size={16}
-                    aria-hidden
-                    className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                  />
                   새로고침
-                </button>
+                </MGButton>
                 <button
                   type="button"
                   className="mg-v2-button mg-v2-button--secondary"

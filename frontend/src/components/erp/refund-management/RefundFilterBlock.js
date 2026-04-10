@@ -6,8 +6,8 @@
  * @since 2025-03-16
  */
 
-import React from 'react';
-import { RefreshCw, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 import { ErpFilterToolbar } from '../common';
 import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -101,21 +101,17 @@ const RefundFilterBlock = ({
         )}
         secondaryRow={(
           <div className="refund-management__filter-actions mg-v2-card-actions">
-            <button
-              type="button"
+            <MGButton
+              variant="secondary"
+              size="small"
               className="mg-v2-button mg-v2-button--secondary"
               onClick={onRefresh}
-              disabled={silentRefreshing}
-              aria-busy={silentRefreshing}
+              loading={silentRefreshing}
+              loadingText="새로고침 중..."
               aria-label="새로고침"
             >
-              <RefreshCw
-                size={16}
-                aria-hidden
-                className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-              />
               새로고침
-            </button>
+            </MGButton>
             <button
               type="button"
               className="mg-v2-button mg-v2-button--secondary"

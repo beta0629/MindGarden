@@ -1,11 +1,10 @@
 import { useCallback, useId } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
 import '../../dashboard-v2/content/ContentHeader.css';
 import ErpPageShell from '../shell/ErpPageShell';
-import ErpButton from '../common/ErpButton';
 import { buildErpApprovalHubPath } from './erpApprovalHubRoutes';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
@@ -67,19 +66,18 @@ const ApprovalHubLayout = ({
         ) : null}
       </div>
       <div className="mg-v2-content-header__right">
-        <ErpButton
+        <MGButton
           variant="primary"
+          size="small"
+          className="mg-v2-button mg-v2-button-primary"
           onClick={onRefresh}
-          disabled={loading || refreshing}
-          aria-busy={refreshing}
+          disabled={loading}
+          loading={refreshing}
+          loadingText="새로고침 중..."
+          aria-label="새로고침"
         >
-          <RefreshCw
-            size={16}
-            aria-hidden
-            className={refreshing ? 'erp-refresh-icon--spin' : undefined}
-          />
           새로고침
-        </ErpButton>
+        </MGButton>
       </div>
     </div>
   );

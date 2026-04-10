@@ -14,12 +14,13 @@ import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { Plus, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import ErpPageShell from './shell/ErpPageShell';
+import MGButton from '../common/MGButton';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
@@ -306,20 +307,18 @@ const ItemManagement = () => {
                   ariaLabel="아이템 목록 도구"
                   secondaryRow={
                     <div className="item-management__toolbar-actions">
-                      <button
-                        type="button"
+                      <MGButton
+                        variant="secondary"
+                        size="small"
                         className="mg-v2-button mg-v2-button--secondary"
                         onClick={() => loadItems({ silent: true })}
-                        disabled={loading || silentRefreshing}
-                        aria-busy={silentRefreshing}
+                        loading={silentRefreshing}
+                        loadingText="새로고침 중..."
+                        disabled={loading}
+                        aria-label="목록 새로고침"
                       >
-                        <RefreshCw
-                          size={16}
-                          aria-hidden
-                          className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                        />
                         목록 새로고침
-                      </button>
+                      </MGButton>
                     </div>
                   }
                 />

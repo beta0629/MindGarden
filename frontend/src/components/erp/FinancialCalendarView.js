@@ -3,6 +3,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
+import MGButton from '../common/MGButton';
 import './FinancialCalendarView.css';
 import './ErpCommon.css';
 import {
@@ -15,8 +16,7 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  RefreshCw
+  TrendingUp
 } from 'lucide-react';
 
 /**
@@ -141,21 +141,18 @@ const FinancialCalendarView = () => {
               <ErpSafeText value={currentDate.getFullYear()} />년{' '}
               <ErpSafeText value={currentDate.getMonth() + 1} />월
             </h3>
-            <button
-              type="button"
+            <MGButton
+              variant="secondary"
+              size="small"
               className="mg-v2-button mg-v2-button--secondary"
               onClick={() => loadCalendarData({ silent: true })}
-              disabled={calendarRefreshing || loading}
-              aria-busy={calendarRefreshing}
+              loading={calendarRefreshing}
+              loadingText="새로고침 중..."
+              disabled={loading}
               aria-label="달력 데이터 새로고침"
             >
-              <RefreshCw
-                size={16}
-                aria-hidden
-                className={calendarRefreshing ? 'erp-refresh-icon--spin' : undefined}
-              />
               새로고침
-            </button>
+            </MGButton>
           </div>
           <button
             type="button"

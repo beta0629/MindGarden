@@ -48,8 +48,7 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  ChevronRight,
-  RefreshCw
+  ChevronRight
 } from 'lucide-react';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -533,20 +532,17 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               ariaLabel="수입·지출 도구"
               secondaryRow={(
                 <div className="integrated-finance__toolbar-actions">
-                  <button
-                    type="button"
+                  <MGButton
+                    variant="secondary"
+                    size="small"
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => fetchDashboardData({ silent: true })}
-                    disabled={refreshingDashboard}
-                    aria-busy={refreshingDashboard}
+                    loading={refreshingDashboard}
+                    loadingText="새로고침 중..."
+                    aria-label="데이터 새로고침"
                   >
-                    <RefreshCw
-                      size={16}
-                      aria-hidden
-                      className={refreshingDashboard ? 'erp-refresh-icon--spin' : undefined}
-                    />
                     데이터 새로고침
-                  </button>
+                  </MGButton>
                 </div>
               )}
             />

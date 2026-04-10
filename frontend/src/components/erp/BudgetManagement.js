@@ -9,8 +9,9 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import ErpModal from './common/ErpModal';
 import ErpButton from './common/ErpButton';
+import MGButton from '../common/MGButton';
 import { ErpFilterToolbar } from './common';
-import { PiggyBank, List, Tag, TrendingUp, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
+import { PiggyBank, List, Tag, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
@@ -395,20 +396,18 @@ const BudgetManagement = () => {
               ariaLabel="예산 목록 도구"
               secondaryRow={
                 <div className="budget-management__toolbar-actions">
-                  <button
-                    type="button"
+                  <MGButton
+                    variant="secondary"
+                    size="small"
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => loadData({ silent: true })}
-                    disabled={loading || silentRefreshing}
-                    aria-busy={silentRefreshing}
+                    loading={silentRefreshing}
+                    loadingText="새로고침 중..."
+                    disabled={loading}
+                    aria-label="목록 새로고침"
                   >
-                    <RefreshCw
-                      size={16}
-                      aria-hidden
-                      className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                    />
                     목록 새로고침
-                  </button>
+                  </MGButton>
                 </div>
               }
             />
@@ -428,20 +427,18 @@ const BudgetManagement = () => {
             {error && hasDataError && (
               <div className="erp-error">
                 <SafeErrorDisplay error={error} variant="banner" iconSize={18} />
-                <button
-                  type="button"
+                <MGButton
+                  variant="outline"
+                  size="small"
                   className="btn btn-outline-primary"
                   onClick={() => loadData({ silent: true })}
-                  disabled={silentRefreshing}
-                  aria-busy={silentRefreshing}
+                  loading={silentRefreshing}
+                  loadingText="새로고침 중..."
+                  disabled={loading}
+                  aria-label="다시 시도"
                 >
-                  <RefreshCw
-                    size={18}
-                    aria-hidden
-                    className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                  />
                   다시 시도
-                </button>
+                </MGButton>
               </div>
             )}
 

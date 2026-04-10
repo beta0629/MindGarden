@@ -14,7 +14,7 @@ import {
   ContentHeader,
   ContentKpiRow
 } from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp, RefreshCw } from 'lucide-react';
+import { Package, Clock, ShoppingCart, TrendingUp } from 'lucide-react';
 import {
   ErpIncomeExpenseSummarySection,
   ErpIncomeExpenseBarChartSection,
@@ -30,6 +30,7 @@ import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
 import { ErpEmptyState, ErpFilterToolbar } from './common';
+import MGButton from '../common/MGButton';
 
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
 
@@ -508,20 +509,17 @@ const ErpDashboard = ({ user: propUser }) => {
             ariaLabel="운영 현황 도구"
             secondaryRow={(
               <div className="erp-dashboard__toolbar-actions">
-                <button
-                  type="button"
+                <MGButton
+                  variant="secondary"
+                  size="small"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={handleSilentRefresh}
-                  disabled={refreshingToolbar}
-                  aria-busy={refreshingToolbar}
+                  loading={refreshingToolbar}
+                  loadingText="새로고침 중..."
+                  aria-label="데이터 새로고침"
                 >
-                  <RefreshCw
-                    size={16}
-                    aria-hidden
-                    className={refreshingToolbar ? 'erp-refresh-icon--spin' : undefined}
-                  />
                   데이터 새로고침
-                </button>
+                </MGButton>
               </div>
             )}
           />

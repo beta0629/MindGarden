@@ -7,7 +7,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { Package, FileText, ShoppingCart, RefreshCw, Eye } from 'lucide-react';
+import { Package, FileText, ShoppingCart, Eye } from 'lucide-react';
 import './ErpCommon.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
@@ -15,6 +15,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import { ErpFilterToolbar } from './common';
 import ErpPageShell from './shell/ErpPageShell';
+import MGButton from '../common/MGButton';
 
 /**
  * ERP 구매 관리 페이지 — 비품 구매 요청 및 주문 관리
@@ -179,20 +180,18 @@ const PurchaseManagement = () => {
               ariaLabel="구매 목록 도구"
               secondaryRow={
                 <div className="purchase-management__toolbar-actions">
-                  <button
-                    type="button"
+                  <MGButton
+                    variant="secondary"
+                    size="small"
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => loadData({ silent: true })}
-                    disabled={loading || silentRefreshing}
-                    aria-busy={silentRefreshing}
+                    loading={silentRefreshing}
+                    loadingText="새로고침 중..."
+                    disabled={loading}
+                    aria-label="목록 새로고침"
                   >
-                    <RefreshCw
-                      size={16}
-                      aria-hidden
-                      className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                    />
                     목록 새로고침
-                  </button>
+                  </MGButton>
                 </div>
               }
             />
@@ -213,20 +212,18 @@ const PurchaseManagement = () => {
           {error && (
             <div className="erp-error">
               <SafeErrorDisplay error={error} variant="banner" />
-              <button
-                type="button"
+              <MGButton
+                variant="outline"
+                size="small"
                 className="btn btn-outline-primary"
                 onClick={() => loadData({ silent: true })}
-                disabled={silentRefreshing}
-                aria-busy={silentRefreshing}
+                loading={silentRefreshing}
+                loadingText="새로고침 중..."
+                disabled={loading}
+                aria-label="다시 시도"
               >
-                <RefreshCw
-                  size={18}
-                  aria-hidden
-                  className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                />
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           )}
 

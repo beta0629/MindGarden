@@ -53,7 +53,8 @@
   letter-spacing: -0.5px;
 }
 
-.simple-hamburger-close {
+/* MGButton(.mg-button) 기본 variant보다 우선하도록 부모·복합 선택자 사용 */
+.simple-hamburger-menu .simple-hamburger-close.mg-button {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   font-size: var(--font-size-xl);
@@ -64,12 +65,13 @@
   transition: all 0.2s ease;
   width: 36px;
   height: 36px;
+  min-height: unset;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.simple-hamburger-close:hover {
+.simple-hamburger-menu .simple-hamburger-close.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.05);
 }
@@ -401,7 +403,7 @@
 }
 
 /* 푸터 버튼 스타일 */
-.simple-logout-btn {
+.simple-hamburger-menu .simple-logout-btn.mg-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -417,7 +419,13 @@
   transition: background 0.2s ease;
 }
 
-.simple-logout-btn:hover {
+.simple-hamburger-menu .simple-logout-btn.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.simple-hamburger-menu .simple-logout-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: #c82333;
 }
 
@@ -448,7 +456,7 @@
   color: var(--mg-error-500);
 }
 
-.retry-btn {
+.simple-hamburger-menu .retry-btn.mg-button {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
   background: var(--mg-primary-500);
@@ -459,7 +467,7 @@
   font-size: 0.875rem;
 }
 
-.retry-btn:hover {
+.simple-hamburger-menu .retry-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: #0056b3;
 }
 

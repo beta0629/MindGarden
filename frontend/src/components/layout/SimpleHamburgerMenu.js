@@ -5,6 +5,7 @@ import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '.
 import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import { fetchUserPermissions } from '../../utils/permissionUtils';
 import ConfirmModal from '../common/ConfirmModal';
+import MGButton from '../common/MGButton';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -193,9 +194,14 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               <div className="user-name">{user?.name || '사용자'}</div>
               <div className="user-role">{user?.role || 'USER'}</div>
             </div>
-            <button className="simple-hamburger-close" onClick={onClose}>
+            <MGButton
+              type="button"
+              className="simple-hamburger-close"
+              onClick={onClose}
+              preventDoubleClick={false}
+            >
               <i className="bi bi-x"></i>
-            </button>
+            </MGButton>
           </div>
           
           <div className="simple-hamburger-content">
@@ -219,21 +225,28 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               <div className="user-name">{user?.name || '사용자'}</div>
               <div className="user-role">{user?.role || 'USER'}</div>
             </div>
-            <button className="simple-hamburger-close" onClick={onClose}>
+            <MGButton
+              type="button"
+              className="simple-hamburger-close"
+              onClick={onClose}
+              preventDoubleClick={false}
+            >
               <i className="bi bi-x"></i>
-            </button>
+            </MGButton>
           </div>
           
           <div className="simple-hamburger-content">
             <div className="error-message">
               <i className="bi bi-exclamation-triangle text-warning"></i>
               <span>{error}</span>
-              <button 
+              <MGButton
+                type="button"
                 className="retry-btn"
                 onClick={() => window.location.reload()}
+                preventDoubleClick={false}
               >
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>
@@ -270,9 +283,14 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           })()}
         </div>
           </div>
-          <button className="simple-hamburger-close" onClick={onClose}>
+          <MGButton
+            type="button"
+            className="simple-hamburger-close"
+            onClick={onClose}
+            preventDoubleClick={false}
+          >
             <i className="bi bi-x"></i>
-          </button>
+          </MGButton>
         </div>
 
         {/* 메뉴 콘텐츠 */}
@@ -334,10 +352,16 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
         {/* 푸터 영역 */}
         <div className="simple-hamburger-footer">
-          <button className="simple-logout-btn" onClick={handleLogout}>
+          <MGButton
+            type="button"
+            className="simple-logout-btn"
+            onClick={handleLogout}
+            preventDoubleClick={false}
+            fullWidth
+          >
             <i className="bi bi-box-arrow-right"></i>
             <span>로그아웃</span>
-          </button>
+          </MGButton>
           
           {/* 메뉴 정보 (개발 환경에서만) */}
           {process.env.NODE_ENV === 'development' && menuStructure && (

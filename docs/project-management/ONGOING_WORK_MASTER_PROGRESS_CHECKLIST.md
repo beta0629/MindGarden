@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11  
+**최종 갱신**: 2026-04-11 (CL-B1·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -31,6 +31,7 @@
 | **G7-B5** | 앱·UI 17파일 — `ui/Button` → `MGButton`; `WelcomeWidget.js.js` 중복 제거 | core-coder | ☑ | `develop` · `7fe0b1890` (2026-04-11) |
 | **G7-B6a** | `Button.stories.js`, `Modal.stories.js`, `Table.stories.js` — `MGButton` | core-coder | ☑ | `develop` · `d8cae5efa` (2026-04-11) |
 | **G7-B6b** | `ui/Button`→`MGButton` 래퍼·`MGButton.css` 아이콘 행·예제/테스트/`index.js` Flow 제거·`icons.js`·`Icon.js` 런타임 상수 수정 | core-coder | ☑ | `develop` · `f92553e31` (2026-04-11) |
+| **CL-B1** | 상담사 콘솔 **상담일지** — 회기(순번) 메타·「상담 내용」슈퍼블록·2열/스티키 메모·`PUT .../context-profile/notes`·**FULL/STANDARD** 메모 편집·화면설계 `SCREEN_SPEC_CONSULTATION_LOG_ORDER_MEMO.md` | core-coder | ☑ | `develop`·`main` · `89e03b2b9` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -39,6 +40,8 @@
 **G7-B5 파일**: `admin/mapping/PartialRefundModal.js`, `dashboard/DynamicDashboard.js`, `settings/UserSettings.js`, `ClientComprehensiveManagement/ClientMappingTab.js`, `ClientOverviewTab.js`, `ClientConsultationTab.js`, `billing/SubscriptionManagement.js`, `dashboard/widgets/WelcomeWidget.js`, `super-admin/PaymentManagement.js`, `admin/mapping-management/pages/MappingManagementPage.js`, `erp/PurchaseManagement.js`, `admin/system/SystemTools.js`, `admin/system/SystemStatus.js`, `schedule/DateActionModal.js`, `ui/ConsultantDetailModal.js`, `ui/ThemeSelector/ThemeSelector.js`, `ui/Card/ConsultantCard.js` (+ `widgets/WelcomeWidget.js.js` 삭제)
 
 **G7-B6a 파일**: `ui/Button/Button.stories.js`, `ui/Modal/Modal.stories.js`, `ui/Table/Table.stories.js`
+
+**CL-B1 파일·문서**: `consultant/ConsultationLogModal.js`, `organisms/ConsultationLogFormPanel.js`, `organisms/ConsultationLogClientProfilePanel.js`, `molecules/ConsultationLogSessionHeaderMeta.js`, `schedule/ScheduleB0KlA.css`, `constants/clientProfileContext.js`(+ 테스트), `ClientContextProfileController.java`, `ClientStatsService`/`Impl`, `docs/design-system/SCREEN_SPEC_CONSULTATION_LOG_ORDER_MEMO.md`
 
 ---
 
@@ -86,6 +89,7 @@
 | UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | 1차 병렬 적용 이력 있음 — 잔여 점검 |
 | UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | ERP 소비자 파일 `ErpModal` 제거: B5·B6 ☑ (`common/ErpModal.js` 래퍼는 유지) |
 | UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리 |
+| UI-04 | 상담사 콘솔 **상담일지** — 레이아웃·메모·맥락 API (`UnifiedModal`·토큰) | ☑ | 병렬 블록 **CL-B1** · 커밋 `89e03b2b9` |
 
 ---
 
@@ -138,7 +142,12 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 착수 — G7-B1·G7-B2 배치 진행 중; G-01~G-07 전부 ☑ 후 본 항목 ☑.
+- **전역 확대 검토 상태**: 🔄 — **G7-B1~B6b·CL-B1** ☑; **G-01~G-07** 행별 상태 표는 미작성(다음: explore 인벤토리 → 배치표).
+
+**권장 다음 단계 (마스터 진행)**  
+1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
+2) **G-01** — `ErpModal`/레거시 모달 미적용 화면 explore → 파일 충돌 없게 G8-Bn 블록 나누기.  
+3) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
 
 ---
 
@@ -148,11 +157,11 @@
 
 | 구역 | 완료 / 전체 (대략) | 메모 |
 |------|-------------------|------|
-| 1. ERP | 0 / 5 (세부는 표 참고) | P4-04 일부 완료 시 비고에 날짜 기입 |
-| 2. 공통 UI | (채우기) | |
-| 3. 보안 | 0 / 1 | |
-| 4. 검증 | (채우기) | |
-| 5. 운영 | (채우기) | |
+| 1. ERP | 0 / 5 (세부는 표 참고) | B1~B6·MGButton 배치 ☑; P4 전부 ☐ 아님 — 잔여 🔄 |
+| 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영 |
+| 3. 보안 | 0 / 1 | SEC-01 ☐ |
+| 4. 검증 | (진행형) | QA-01 배치별, QA-02 ☐ |
+| 5. 운영 | 0 / 2 | OPS 배포·체크리스트 별도 |
 
 ---
 
@@ -187,3 +196,4 @@
 | 2026-04-11 | G7-B5 `ui/Button`→`MGButton` 17파일·`WelcomeWidget.js.js` 삭제, 커밋 `7fe0b1890` |
 | 2026-04-11 | G7-B6a/B6b 커밋 `f92553e31` — Button MGButton 래퍼, Examples/테스트, `index`, `icons.js`/`Icon` 보정 |
 | 2026-04-11 | G7-B6a 스토리 3파일 후속 커밋 `d8cae5efa` (병렬 에이전트 산출물 미커밋 보완) |
+| 2026-04-11 | **CL-B1** 상담일지·메모 API·STANDARD 권한 — 커밋 `89e03b2b9`, 병렬 블록·구역2(UI-04)·스냅샷·섹션6 다음 단계 반영 |

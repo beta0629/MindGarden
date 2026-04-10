@@ -1,4 +1,4 @@
-/* FinancialTransactionForm 스타일 - ErpModal 패턴 재사용 */
+/* FinancialTransactionForm 스타일 - UnifiedModal 패턴 재사용 */
 
 .financial-transaction-form-error {
   background-color: var(--ios-red-light);

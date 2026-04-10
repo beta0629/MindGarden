@@ -29,7 +29,7 @@
   z-index: 10000;
 }
 
-/* ErpModal(UnifiedModal) 사용 시: 빠른 지출 모달에 카드 테두리 적용 */
+/* UnifiedModal 사용 시: 빠른 지출 모달에 카드 테두리 적용 */
 .mg-modal-overlay:has(.quick-expense-amount-form) .mg-modal,
 .mg-modal-overlay:has(.quick-expense-categories) .mg-modal {
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));

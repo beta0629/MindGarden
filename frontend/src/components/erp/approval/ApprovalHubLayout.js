@@ -116,7 +116,7 @@ const ApprovalHubLayout = ({
       <section
         className={`approval-hub-main-region${loading ? ' approval-hub-main-region--loading' : ''}`}
         aria-labelledby={titleId}
-        aria-busy={loading}
+        aria-busy={loading || refreshing}
       >
         {loading ? (
           <UnifiedLoading type="inline" text={loadingText} />

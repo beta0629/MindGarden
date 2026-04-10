@@ -538,8 +538,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => fetchDashboardData({ silent: true })}
                     disabled={refreshingDashboard}
+                    aria-busy={refreshingDashboard}
                   >
-                    <RefreshCw size={16} aria-hidden />
+                    <RefreshCw
+                      size={16}
+                      aria-hidden
+                      className={refreshingDashboard ? 'erp-refresh-icon--spin' : undefined}
+                    />
                     데이터 새로고침
                   </button>
                 </div>

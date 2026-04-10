@@ -17,15 +17,16 @@ import React from 'react';
 /**
  * @param {string} type - 버튼 타입 (button, submit, reset)
  */
-const ErpButton = ({ 
-  children, 
-  onClick, 
-  variant = 'primary', 
-  size = 'md', 
-  disabled = false, 
+const ErpButton = ({
+  children,
+  onClick,
+  variant = 'primary',
+  size = 'md',
+  disabled = false,
   loading = false,
   className = '',
-  type = 'button'
+  type = 'button',
+  'aria-busy': ariaBusy
 }) => {
   // Core Solution 디자인 시스템의 mg-v2-button 클래스 활용
   const buttonClasses = [
@@ -48,6 +49,7 @@ const ErpButton = ({
       className={buttonClasses}
       onClick={handleClick}
       disabled={disabled || loading}
+      aria-busy={ariaBusy}
     >
       {loading ? '처리중...' : children}
     </button>

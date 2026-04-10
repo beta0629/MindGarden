@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B1b/B2b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B3a/B3b·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -36,6 +36,8 @@
 | **G8-B2a** | **G-01** — `homepage/Homepage.js`, `auth/TabletLogin.js` 네이티브 버튼 → `MGButton` | core-coder | ☑ | `develop` · `903e96644` (2026-04-11) |
 | **G8-B1b** | **G-01** — 미사용 `SessionModals.js`·`common/MGModal.js`·`ui/MgModal/` 제거; 주석 보정(`PsychAiReportModalContent`, `ScheduleB0KlA.css`) | core-coder | ☑ | `develop` · `317aadd3f` (2026-04-11) |
 | **G8-B2b** | **G-01** — `layout/SimpleHamburgerMenu.js` 네이티브 버튼 → `MGButton` (+ CSS 선택자 보정) | core-coder | ☑ | `develop` · `d5c12ca5b` (2026-04-11) |
+| **G8-B3a** | **G-01** — `auth/BranchLogin.js`, `auth/HeadquartersLogin.js` → `MGButton` | core-coder | ☑ | `develop` · `9830a8462` (2026-04-11) |
+| **G8-B3b** | **G-01** — `auth/BranchSpecificLogin.js`, `auth/UnifiedLogin.js` → `MGButton` | core-coder | ☑ | `develop` · `445c4a9af` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -54,6 +56,10 @@
 **G8-B1b**: 삭제 `common/SessionModals.js`, `common/MGModal.js`, `ui/MgModal/*`; 주석 `psych-assessment/.../PsychAiReportModalContent.js`, `schedule/ScheduleB0KlA.css`
 
 **G8-B2b**: `layout/SimpleHamburgerMenu.js`, `layout/SimpleHamburgerMenu.css`
+
+**G8-B3a**: `auth/BranchLogin.js`, `auth/HeadquartersLogin.js`
+
+**G8-B3b**: `auth/BranchSpecificLogin.js`, `auth/UnifiedLogin.js`
 
 ---
 
@@ -154,7 +160,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B2b** 일부 ☑; **G-01** 잔여(예: `ui/dialog.jsx`·인증·위젯 경로 네이티브 버튼 explore).
+- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B3b** 일부 ☑; **G-01** 잔여(예: `AccountIntegrationModal`·`ResetPassword` 등 인증 잔여·위젯).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -214,3 +220,4 @@
 | 2026-04-11 | **ERP-P4-05e/f** 병렬 MGButton 11파일 `c13e3480e` |
 | 2026-04-11 | **G8-B1a** 데드 코드 제거 `d53398a4e`, **G8-B2a** Homepage·TabletLogin MGButton `903e96644` |
 | 2026-04-11 | **G8-B1b** SessionModals·MGModal·ui/MgModal 제거 `317aadd3f`, **G8-B2b** SimpleHamburgerMenu MGButton `d5c12ca5b` |
+| 2026-04-11 | **G8-B3a** Branch·HQ 로그인 MGButton `9830a8462`, **G8-B3b** BranchSpecific·UnifiedLogin MGButton `445c4a9af` |

@@ -677,9 +677,18 @@ const FinancialManagement = () => {
             {error && (
               <div className="erp-error">
                 <SafeErrorDisplay error={error} variant="banner" />
-                <button type="button" className="mg-v2-button mg-v2-button-primary" onClick={loadData}>
-                  <RefreshCw size={16} aria-hidden /> 다시 시도
-                </button>
+                <MGButton
+                  variant="outline"
+                  size="small"
+                  className="btn btn-outline-primary"
+                  onClick={() => loadData({ silent: true })}
+                  loading={silentRefreshing}
+                  loadingText="새로고침 중..."
+                  disabled={loading}
+                  aria-label="다시 시도"
+                >
+                  다시 시도
+                </MGButton>
               </div>
             )}
 

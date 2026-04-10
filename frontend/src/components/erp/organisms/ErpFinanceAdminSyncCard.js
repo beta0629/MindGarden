@@ -6,7 +6,7 @@
  */
 
 import { Settings2, RefreshCw, HelpCircle } from 'lucide-react';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import { ErpSafeText } from '../common';
 
 /**
@@ -54,29 +54,31 @@ const ErpFinanceAdminSyncCard = ({
     <div className="erp-finance-sync__urls">
       <div className="erp-finance-sync__url-item">
         <code>POST /api/v1/erp/accounting/init-tenant-erp</code>
-        <Button
+        <MGButton
           variant="primary"
           size="small"
           onClick={onInitTenantErp}
           disabled={initLoading}
+          loading={initLoading}
+          loadingText="실행 중..."
           preventDoubleClick={true}
-          aria-busy={initLoading}
         >
-          {initLoading ? '실행 중...' : '실행'}
-        </Button>
+          실행
+        </MGButton>
       </div>
       <div className="erp-finance-sync__url-item">
         <code>POST /api/v1/erp/accounting/backfill-journal-entries</code>
-        <Button
+        <MGButton
           variant="primary"
           size="small"
           onClick={onBackfillJournalEntries}
           disabled={backfillLoading}
+          loading={backfillLoading}
+          loadingText="실행 중..."
           preventDoubleClick={true}
-          aria-busy={backfillLoading}
         >
-          {backfillLoading ? '실행 중...' : '실행'}
-        </Button>
+          실행
+        </MGButton>
       </div>
     </div>
     {(initResult || backfillResult) && (

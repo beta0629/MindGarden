@@ -2004,3 +2004,11 @@
 .mg-v2-financial-refund-hub {
   margin-bottom: var(--spacing-md, 1rem);
 }
+
+/* 구매 관리 — 필터 툴바 secondary 정렬 */
+.erp-system .erp-container .purchase-management__toolbar-actions,
+.erp-system .erp-container .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

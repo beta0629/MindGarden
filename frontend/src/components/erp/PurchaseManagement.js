@@ -13,6 +13,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
+import { ErpFilterToolbar } from './common';
 import ErpPageShell from './shell/ErpPageShell';
 
 /**
@@ -151,6 +152,23 @@ const PurchaseManagement = () => {
                 구매 주문
               </button>
             </div>
+
+            <ErpFilterToolbar
+              ariaLabel="구매 목록 도구"
+              secondaryRow={
+                <div className="purchase-management__toolbar-actions">
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--secondary"
+                    onClick={() => loadData()}
+                    disabled={loading}
+                  >
+                    <RefreshCw size={16} aria-hidden />
+                    목록 새로고침
+                  </button>
+                </div>
+              }
+            />
 
             <div className="erp-content">
           {loading && (

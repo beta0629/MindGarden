@@ -86,7 +86,7 @@ const ComplianceDashboard = () => {
         refreshDisabled
         onRefresh={loadComplianceData}
       >
-        <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
+        <UnifiedLoading type="inline" text="컴플라이언스 데이터를 불러오는 중..." />
       </ComplianceDashboardShell>
     );
   }

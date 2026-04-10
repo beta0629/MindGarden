@@ -272,7 +272,9 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   if (loading) {
     return (
       <AdminCommonLayout>
-        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+        </div>
       </AdminCommonLayout>
     );
   }

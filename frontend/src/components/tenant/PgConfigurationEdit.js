@@ -77,7 +77,7 @@ const PgConfigurationEdit = () => {
       <AdminCommonLayout title="PG 설정 수정">
         <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="PG 설정을 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text="PG 설정을 불러오는 중..." variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>
@@ -103,7 +103,7 @@ const PgConfigurationEdit = () => {
       <AdminCommonLayout title="PG 설정 수정">
         <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="상세 화면으로 이동합니다..." variant="pulse" />
+            <UnifiedLoading type="inline" text="상세 화면으로 이동합니다..." variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>

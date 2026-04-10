@@ -91,7 +91,9 @@ const SimpleLayout = ({
           )}
           
           {loading ? (
-            <UnifiedLoading type="page" text={loadingText} />
+            <div className="loading-container" role="status" aria-live="polite">
+              <UnifiedLoading type="inline" text={loadingText} />
+            </div>
           ) : (
             children
           )}

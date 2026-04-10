@@ -335,8 +335,8 @@ const SystemConfigManagement = () => {
     return (
       <AdminCommonLayout title="시스템 설정 관리">
         <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="설정을 불러오는 중..." variant="pulse" />
+          <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="설정을 불러오는 중..." variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>

@@ -331,7 +331,7 @@ const PgApprovalManagement = () => {
     return (
       <AdminCommonLayout title="PG 설정 승인 관리">
         <ContentArea ariaLabel="PG 설정 승인 관리">
-          <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
+          <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." />
         </ContentArea>
       </AdminCommonLayout>
     );

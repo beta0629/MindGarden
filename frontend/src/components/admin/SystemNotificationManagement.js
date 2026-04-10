@@ -57,7 +57,9 @@ const SystemNotificationManagement = () => {
   if (permissionsLoading) {
     return (
       <AdminCommonLayout title="시스템 공지 관리" loading loadingText="권한을 확인하는 중...">
-        <UnifiedLoading type="page" text="권한을 확인하는 중..." />
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="권한을 확인하는 중..." />
+        </div>
       </AdminCommonLayout>
     );
   }

@@ -428,7 +428,7 @@ const PaymentManagement = () => {
   if (loading) {
     return (
       <AdminCommonLayout title="결제 관리">
-        <UnifiedLoading type="page" text="결제 내역을 불러오는 중..." />
+        <UnifiedLoading type="inline" text="결제 내역을 불러오는 중..." />
       </AdminCommonLayout>
     );
   }

@@ -154,7 +154,9 @@ const StatisticsDashboard = () => {
 
   if (loading && !error) {
     return shell(
-      <UnifiedLoading type="page" text="통계 데이터를 불러오는 중..." />
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="통계 데이터를 불러오는 중..." />
+      </div>
     );
   }
 

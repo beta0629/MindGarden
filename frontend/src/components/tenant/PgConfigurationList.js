@@ -160,7 +160,7 @@ const PgConfigurationList = () => {
     return (
       <AdminCommonLayout title="PG 설정 목록">
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
-          <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
+          <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
         </ContentArea>
       </AdminCommonLayout>
     );

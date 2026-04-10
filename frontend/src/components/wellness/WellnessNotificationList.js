@@ -98,7 +98,7 @@ const WellnessNotificationList = () => {
     return (
       <AdminCommonLayout title="웰니스 알림">
         <ContentArea ariaLabel="웰니스 알림 로딩">
-          <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
+          <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
         </ContentArea>
       </AdminCommonLayout>
     );

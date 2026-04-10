@@ -265,7 +265,7 @@ const TenantProfile = () => {
       <AdminCommonLayout title="테넌트 프로필">
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text="테넌트 정보를 불러오는 중..." variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>
@@ -292,7 +292,7 @@ const TenantProfile = () => {
       <AdminCommonLayout title="테넌트 프로필">
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text="테넌트 프로필을 불러오는 중..." variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>

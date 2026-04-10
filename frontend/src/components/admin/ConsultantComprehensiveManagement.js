@@ -984,12 +984,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />;
+            return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
         }
         return (
             <AdminCommonLayout>
                 <ContentArea>
-                    <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
                 </ContentArea>
             </AdminCommonLayout>
         );

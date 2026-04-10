@@ -110,7 +110,9 @@ const AdminCommonLayout = ({
   };
 
   const content = loading ? (
-    <UnifiedLoading type="page" text={loadingText} />
+    <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
+      <UnifiedLoading type="inline" text={loadingText} />
+    </div>
   ) : (
     children
   );

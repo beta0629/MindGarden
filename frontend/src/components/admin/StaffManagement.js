@@ -496,11 +496,17 @@ const StaffManagement = ({ embedded = false }) => {
 
   if (loading && staffList.length === 0) {
     if (embedded) {
-      return <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />;
+      return (
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+        </div>
+      );
     }
     return (
       <ContentArea>
-        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+        </div>
       </ContentArea>
     );
   }

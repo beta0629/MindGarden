@@ -465,12 +465,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />;
+            return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
         }
         return (
             <AdminCommonLayout title="내담자 종합관리">
                 <ContentArea>
-                    <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
                 </ContentArea>
             </AdminCommonLayout>
         );

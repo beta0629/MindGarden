@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../utils/session';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -20,7 +20,11 @@ const ProfileEdit = () => {
     navigate(`/${rolePath}/mypage`, { replace: true });
   }, [navigate]);
 
-  return <UnifiedLoading type="page" text="마이페이지로 이동 중..." />;
+  return (
+    <main className="mg-v2-px-xxl mg-v2-pt-xl" role="status" aria-live="polite">
+      <UnifiedLoading type="inline" text="마이페이지로 이동 중..." />
+    </main>
+  );
 };
 
 export default ProfileEdit;

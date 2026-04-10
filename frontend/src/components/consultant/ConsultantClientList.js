@@ -232,7 +232,7 @@ const ConsultantClientList = () => {
     return (
       <AdminCommonLayout title="내담자 목록">
         {authShell(
-          <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
+          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
         )}
       </AdminCommonLayout>
     );

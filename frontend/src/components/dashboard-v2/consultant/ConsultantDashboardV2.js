@@ -606,7 +606,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     return (
       <AdminCommonLayout title="상담사 대시보드">
         {dashboardShell(
-          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+          <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
         )}
       </AdminCommonLayout>
     );

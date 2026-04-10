@@ -270,7 +270,9 @@ const ClientDashboard = () => {
     return (
       <AdminCommonLayout title="대시보드">
         {pageShell(
-          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
+          </div>
         )}
       </AdminCommonLayout>
     );

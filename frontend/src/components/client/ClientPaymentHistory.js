@@ -166,7 +166,9 @@ const ClientPaymentHistory = () => {
     return (
       <AdminCommonLayout title="결제 내역">
         {pageShell(
-          <UnifiedLoading type="page" text="결제 이력을 불러오는 중..." />
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="결제 이력을 불러오는 중..." />
+          </div>
         )}
       </AdminCommonLayout>
     );

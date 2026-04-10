@@ -192,7 +192,7 @@ const ConsultationHistory = () => {
     return (
       <AdminCommonLayout title="상담 내역">
         {pageShell(
-          <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+          <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
         )}
       </AdminCommonLayout>
     );
@@ -202,7 +202,7 @@ const ConsultationHistory = () => {
     return (
       <AdminCommonLayout title="상담 내역">
         {pageShell(
-          <UnifiedLoading type="page" text="상담 내역을 불러오는 중..." />
+          <UnifiedLoading type="inline" text="상담 내역을 불러오는 중..." />
         )}
       </AdminCommonLayout>
     );

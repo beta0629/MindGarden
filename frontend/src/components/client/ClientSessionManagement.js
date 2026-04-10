@@ -134,7 +134,9 @@ const ClientSessionManagement = () => {
     return (
       <AdminCommonLayout title="회기 관리">
         {pageShell(
-          <UnifiedLoading type="page" text="회기 데이터를 불러오는 중..." />
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="회기 데이터를 불러오는 중..." />
+          </div>
         )}
       </AdminCommonLayout>
     );

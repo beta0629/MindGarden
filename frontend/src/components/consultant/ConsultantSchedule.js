@@ -44,7 +44,7 @@ const ConsultantSchedule = () => {
     return (
       <AdminCommonLayout title="스케줄">
         {pageShell(
-          <UnifiedLoading type="page" text="스케줄 정보를 불러오는 중..." />
+          <UnifiedLoading type="inline" text="스케줄 정보를 불러오는 중..." />
         )}
       </AdminCommonLayout>
     );
@@ -55,7 +55,7 @@ const ConsultantSchedule = () => {
     return (
       <AdminCommonLayout title="스케줄">
         {pageShell(
-          <UnifiedLoading type="page" text="사용자 정보를 확인하는 중..." />
+          <UnifiedLoading type="inline" text="사용자 정보를 확인하는 중..." />
         )}
       </AdminCommonLayout>
     );

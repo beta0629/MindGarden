@@ -84,7 +84,9 @@ const ClientSettings = () => {
     return (
       <AdminCommonLayout title="설정">
         {pageShell(
-          <UnifiedLoading type="page" text="로딩중..." />
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="로딩중..." />
+          </div>
         )}
       </AdminCommonLayout>
     );

@@ -677,7 +677,7 @@
   box-shadow: var(--cs-shadow-soft);
 }
 
-/* 상담일지 모달: MgModal(full) 사용 — 포탈 렌더로 스크롤/투명 이슈 해결 */
+/* 상담일지 모달: full 레이아웃 — 포탈 렌더로 스크롤/투명 이슈 해결 */
 .mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal,
 .mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal .mg-v2-modal-body,
 .mg-v2-ad-modal--full .mg-v2-ad-modal__body .mg-v2-consultation-log-modal .mg-v2-consultation-log-sticky {

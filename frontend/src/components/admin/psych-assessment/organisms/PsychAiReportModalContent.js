@@ -1,6 +1,6 @@
 /**
  * PsychAiReportModalContent - AI 분석 결과 모달 본문 (Organism)
- * 제목은 MGModal title로 전달, 본문만 담당: 로딩 | 메타 + 마크다운 블록
+ * 제목은 UnifiedModal title로 전달, 본문만 담당: 로딩 | 메타 + 마크다운 블록
  *
  * @author Core Solution
  * @since 2026-03-02

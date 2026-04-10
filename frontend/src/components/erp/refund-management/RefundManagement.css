@@ -99,11 +99,13 @@
   padding: var(--mg-spacing-lg, 24px);
 }
 
-.refund-management__filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+.refund-management__filter-block .mg-v2-erp-filter-toolbar {
   gap: var(--mg-spacing-md, 1rem);
+}
+
+.refund-management__filter-block .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .refund-management__filter-fieldset {
@@ -126,7 +128,6 @@
   display: flex;
   align-items: center;
   gap: var(--mg-spacing-md, 1rem);
-  margin-left: auto;
 }
 
 .refund-management__filter-actions .mg-v2-button {
@@ -312,13 +313,17 @@
     gap: var(--spacing-sm);
   }
 
-  .refund-management__filter-row {
+  .refund-management__filter-fieldset {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .refund-management__filter-block .mg-v2-erp-filter-toolbar__secondary {
+    justify-content: flex-start;
+  }
+
   .refund-management__filter-actions {
-    margin-left: 0;
+    flex-wrap: wrap;
   }
 
   .refund-management__section {

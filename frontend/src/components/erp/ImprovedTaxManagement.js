@@ -39,7 +39,8 @@ import {
   ErpSafeText,
   ErpSafeNumber,
   ERP_NUMBER_FORMAT,
-  ERP_KPI_STAT_VARIANT
+  ERP_KPI_STAT_VARIANT,
+  ErpFilterToolbar
 } from './common';
 
 /** 신고 탭 데모 문구(백엔드 연동 전) */
@@ -295,33 +296,38 @@ const ImprovedTaxManagement = () => {
         <ErpPageShell
           mainAriaLabel="세무 관리 본문"
           headerSlot={
-            <ContentHeader
-              title="세무 관리"
-              subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
-              actions={
-                <>
-                  <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
-                    <span className="im-tax-mgmt__header-period-label">기간</span>
-                    <input
-                      type="month"
-                      value={selectedPeriod}
-                      onChange={(e) => setSelectedPeriod(e.target.value)}
-                      className="mg-v2-ad-b0kla__input im-tax-mgmt__month-input"
-                    />
-                  </label>
-                  {activeTab === 'calculations' && (
-                    <button
-                      type="button"
-                      className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
-                      onClick={() => setShowCreateModal(true)}
-                    >
-                      <Plus size={16} aria-hidden />
-                      추가 세금 계산
-                    </button>
-                  )}
-                </>
-              }
-            />
+            <>
+              <ContentHeader
+                title="세무 관리"
+                subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
+              />
+              <ErpFilterToolbar
+                ariaLabel="세무 조회 필터"
+                primaryRow={(
+                  <div className="im-tax-mgmt__filter-toolbar-row">
+                    <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
+                      <span className="im-tax-mgmt__header-period-label">기간</span>
+                      <input
+                        type="month"
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="mg-v2-ad-b0kla__input im-tax-mgmt__month-input"
+                      />
+                    </label>
+                    {activeTab === 'calculations' && (
+                      <button
+                        type="button"
+                        className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                        onClick={() => setShowCreateModal(true)}
+                      >
+                        <Plus size={16} aria-hidden />
+                        추가 세금 계산
+                      </button>
+                    )}
+                  </div>
+                )}
+              />
+            </>
           }
           tabsSlot={
             <div className="mg-v2-ad-b0kla__pill-group" role="tablist">

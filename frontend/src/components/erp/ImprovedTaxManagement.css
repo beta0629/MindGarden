@@ -10,6 +10,17 @@
   padding: var(--spacing-lg);
 }
 
+.im-tax-mgmt__filter-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.im-tax-mgmt__filter-toolbar-row .im-tax-mgmt__header-period {
+  margin-right: 0;
+}
+
 .im-tax-mgmt__header-period {
   display: inline-flex;
   align-items: center;

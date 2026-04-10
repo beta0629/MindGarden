@@ -447,27 +447,6 @@ const SalaryManagement = () => {
                         <Settings size={18} aria-hidden />
                         <span className="salary-management__header-btn-text">기산일 설정</span>
                       </MGButton>
-                      <select
-                        value={selectedPeriod}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setSelectedPeriod(val);
-                          if (val) {
-                            const [y, m] = val.split('-');
-                            loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                            if (activeTab === TAB_TAX) loadTaxStatistics(val);
-                          } else {
-                            setCalculationPeriodDisplay(null);
-                          }
-                        }}
-                        className="mg-v2-select salary-management__period-select"
-                        aria-label="기간 선택"
-                      >
-                        <option value="">기간 선택</option>
-                        {periodOptions.map(opt => (
-                          <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
-                        ))}
-                      </select>
                       <MGButton
                         variant="primary"
                         size="small"

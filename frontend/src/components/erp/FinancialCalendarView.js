@@ -4,6 +4,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import './FinancialCalendarView.css';
+import './ErpCommon.css';
 import {
   DollarSign,
   TrendingDown,
@@ -145,9 +146,14 @@ const FinancialCalendarView = () => {
               className="mg-v2-button mg-v2-button--secondary"
               onClick={() => loadCalendarData({ silent: true })}
               disabled={calendarRefreshing || loading}
+              aria-busy={calendarRefreshing}
               aria-label="달력 데이터 새로고침"
             >
-              <RefreshCw size={16} aria-hidden />
+              <RefreshCw
+                size={16}
+                aria-hidden
+                className={calendarRefreshing ? 'erp-refresh-icon--spin' : undefined}
+              />
               새로고침
             </button>
           </div>

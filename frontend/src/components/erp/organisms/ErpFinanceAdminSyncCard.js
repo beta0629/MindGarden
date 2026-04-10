@@ -60,6 +60,7 @@ const ErpFinanceAdminSyncCard = ({
           onClick={onInitTenantErp}
           disabled={initLoading}
           preventDoubleClick={true}
+          aria-busy={initLoading}
         >
           {initLoading ? '실행 중...' : '실행'}
         </Button>
@@ -72,6 +73,7 @@ const ErpFinanceAdminSyncCard = ({
           onClick={onBackfillJournalEntries}
           disabled={backfillLoading}
           preventDoubleClick={true}
+          aria-busy={backfillLoading}
         >
           {backfillLoading ? '실행 중...' : '실행'}
         </Button>

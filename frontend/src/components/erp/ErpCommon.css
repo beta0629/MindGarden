@@ -2005,9 +2005,18 @@
   margin-bottom: var(--spacing-md, 1rem);
 }
 
-/* 구매 관리 — 필터 툴바 secondary 정렬 */
+/* 구매·예산 관리 — 필터 툴바 secondary 정렬 */
 .erp-system .erp-container .purchase-management__toolbar-actions,
+.erp-system .erp-container .budget-management__toolbar-actions,
 .erp-system .erp-container .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* 아이템 관리 — 필터 툴바 secondary 정렬 (.erp-container 미사용) */
+.mg-v2-item-management .item-management__toolbar-actions,
+.mg-v2-item-management .mg-v2-erp-filter-toolbar__secondary {
   display: flex;
   justify-content: flex-end;
   width: 100%;

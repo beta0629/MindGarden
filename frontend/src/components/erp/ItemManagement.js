@@ -4,7 +4,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import CardContainer from '../common/CardContainer';
 import ErpButton from './common/ErpButton';
-import { ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import { ErpFilterToolbar, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import './ItemManagement.css';
 import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
@@ -14,7 +14,7 @@ import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
@@ -284,6 +284,18 @@ const ItemManagement = () => {
                 {error && (
                   <SafeErrorDisplay error={error} variant="inline" className="error-message" />
                 )}
+
+                <ErpFilterToolbar
+                  ariaLabel="아이템 목록 도구"
+                  secondaryRow={
+                    <div className="item-management__toolbar-actions">
+                      <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadItems()} disabled={loading}>
+                        <RefreshCw size={16} aria-hidden />
+                        목록 새로고침
+                      </button>
+                    </div>
+                  }
+                />
 
                 <section className="mg-v2-section" aria-labelledby={ITEM_MANAGEMENT_LIST_TITLE_ID}>
                   <CardContainer>

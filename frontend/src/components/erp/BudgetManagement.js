@@ -9,6 +9,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import ErpModal from './common/ErpModal';
 import ErpButton from './common/ErpButton';
+import { ErpFilterToolbar } from './common';
 import { PiggyBank, List, Tag, TrendingUp, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
@@ -365,7 +366,18 @@ const BudgetManagement = () => {
           mainAriaLabel="예산 관리 목록 및 본문"
         >
           <div className="erp-container">
-          <div className="erp-content">
+            <ErpFilterToolbar
+              ariaLabel="예산 목록 도구"
+              secondaryRow={
+                <div className="budget-management__toolbar-actions">
+                  <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={() => loadData()} disabled={loading}>
+                    <RefreshCw size={16} aria-hidden />
+                    목록 새로고침
+                  </button>
+                </div>
+              }
+            />
+            <div className="erp-content">
             {loading && (
               <div className="budget-management-loading">
                 <UnifiedLoading type="inline" text="로딩 중..." />

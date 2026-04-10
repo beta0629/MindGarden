@@ -14,8 +14,8 @@
 
 | 블록 ID | 범위 (파일·주제) | 담당 | 상태 | 비고 |
 |---------|------------------|------|------|------|
-| **ERP-B1** | `ErpDashboard.js`, `IntegratedFinanceDashboard.js`, `FinancialCalendarView.js` — 무음 새로고침 트리거를 `MGButton` `loading` 패턴으로 통일 | core-coder | 🔄 | **로컬 패치 적용됨(미커밋)** — 검수·커밋·`core-tester` 통과 후 ☑ 및 커밋 해시 기입 |
-| **ERP-B2** | `ItemManagement.js`, `BudgetManagement.js`, `PurchaseManagement.js` — 무음 재조회 트리거를 `MGButton` `loading`/`loadingText` 패턴으로 통일 | core-coder | 🔄 | **로컬 패치 적용됨(미커밋)** — 동일 |
+| **ERP-B1** | `ErpDashboard.js`, `IntegratedFinanceDashboard.js`, `FinancialCalendarView.js` — 무음 새로고침 트리거를 `MGButton` `loading` 패턴으로 통일 | core-coder | ☑ | `develop` · `68fbd5dfd` (2026-04-11) |
+| **ERP-B2** | `ItemManagement.js`, `BudgetManagement.js`, `PurchaseManagement.js` — 무음 재조회 트리거를 `MGButton` `loading`/`loadingText` 패턴으로 통일 | core-coder | ☑ | 동일 커밋 |
 | **ERP-B3** | (예약) `ImprovedTaxManagement.js`, 환불·승인 허브(`RefundFilters.js`, `ApprovalHubLayout.js` 등) — B1/B2 머지 후 착수 | — | ☐ | |
 
 ---
@@ -51,7 +51,7 @@
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | 🔄 | |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
 | ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10) |
-| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | 병렬 블록 ERP-B1·B2 진행 중 (위 표) |
+| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | ERP-B1·B2 ☑ (`68fbd5dfd`); 잔여 ERP-B3 등 |
 
 ---
 
@@ -121,3 +121,4 @@
 | 2026-04-10 | 최초 작성 — ERP P4 무음 조회·MGButton 일부 반영, 온보딩·레이아웃·검증·운영 구역 추가 |
 | 2026-04-10 | 병렬 블록 ERP-B1·B2 표 추가, ERP-P4-05 진행 중 반영 |
 | 2026-04-11 | ERP-B1·B2 `core-coder` 병렬 위임; 체크리스트는 커밋 전까지 🔄·미커밋 명시 |
+| 2026-04-11 | ERP-B1/B2 커밋 `68fbd5dfd` 반영, develop·main 푸시 |

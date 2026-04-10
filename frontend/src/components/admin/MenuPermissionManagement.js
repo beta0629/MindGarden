@@ -208,7 +208,7 @@ const MenuPermissionManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title="메뉴 권한 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="메뉴 권한 관리">
             <div className="mg-v2-ad-b0kla mg-v2-menu-permission-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="메뉴 권한 관리 본문">
@@ -229,16 +229,22 @@ const MenuPermissionManagement = () => {
                             }
                         />
                         <main aria-labelledby="menu-permission-management-title">
-                            <MenuPermissionManagementUI
-                                roles={roles}
-                                selectedRole={selectedRole}
-                                menuPermissions={menuPermissions}
-                                loading={loading}
-                                error={error}
-                                onRoleSelect={handleRoleSelect}
-                                onPermissionChange={handlePermissionChange}
-                                onBatchSave={handleBatchSave}
-                            />
+                            {loading && !selectedRole ? (
+                                <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
+                                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                                </div>
+                            ) : (
+                                <MenuPermissionManagementUI
+                                    roles={roles}
+                                    selectedRole={selectedRole}
+                                    menuPermissions={menuPermissions}
+                                    loading={loading}
+                                    error={error}
+                                    onRoleSelect={handleRoleSelect}
+                                    onPermissionChange={handlePermissionChange}
+                                    onBatchSave={handleBatchSave}
+                                />
+                            )}
                         </main>
                     </ContentArea>
                 </div>

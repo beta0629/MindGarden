@@ -111,7 +111,7 @@ const ApiPerformanceMonitoring = () => {
   };
 
   return (
-    <AdminCommonLayout title="API 성능 모니터링" loading={false}>
+    <AdminCommonLayout title="API 성능 모니터링">
       <ContentArea>
         <ContentHeader 
           title="API 성능 및 트래픽 모니터링" 

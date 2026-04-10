@@ -110,7 +110,7 @@ const SecurityMonitoringDashboard = () => {
   };
 
   return (
-    <AdminCommonLayout title="보안 모니터링 대시보드" loading={false}>
+    <AdminCommonLayout title="보안 모니터링 대시보드">
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="보안 모니터링 본문">

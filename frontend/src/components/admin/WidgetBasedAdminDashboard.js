@@ -325,17 +325,15 @@ const WidgetBasedAdminDashboard = () => {
         );
     };
 
-    if (sessionLoading || loading) {
-        return (
-            <AdminCommonLayout title="위젯 기반 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
-                <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
-            </AdminCommonLayout>
-        );
-    }
-
-    if (error) {
-        return (
-            <AdminCommonLayout title="위젯 기반 대시보드">
+    return (
+        <AdminCommonLayout title="위젯 기반 대시보드">
+            {sessionLoading || loading ? (
+                <div className="widget-based-dashboard">
+                    <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
+                        <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
+                    </div>
+                </div>
+            ) : error ? (
                 <div className="error-container">
                     <h2>오류 발생</h2>
                     <p>{error}</p>
@@ -348,12 +346,7 @@ const WidgetBasedAdminDashboard = () => {
                         </button>
                     </div>
                 </div>
-            </AdminCommonLayout>
-        );
-    }
-
-    return (
-        <AdminCommonLayout title="위젯 기반 대시보드" loading={false}>
+            ) : (
             <div className="widget-based-dashboard">
                 {/* 헤더 */}
                 <div className="dashboard-header">
@@ -424,6 +417,7 @@ const WidgetBasedAdminDashboard = () => {
                     </div>
                 </div>
             </div>
+            )}
         </AdminCommonLayout>
     );
 };

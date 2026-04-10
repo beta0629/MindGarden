@@ -21,6 +21,7 @@ import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { sessionManager } from '../../utils/sessionManager';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -306,14 +307,8 @@ const WellnessManagement = () => {
         return seasons[season] || season;
     };
 
-    if (loading) {
-        return (
-            <AdminCommonLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중..." />
-        );
-    }
-
     return (
-        <AdminCommonLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="웰니스 알림 관리">
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="웰니스 알림 관리 본문">
@@ -360,6 +355,12 @@ const WellnessManagement = () => {
                         />
 
                         <main aria-labelledby="wellness-management-title">
+                {loading ? (
+                    <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
+                        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                    </div>
+                ) : (
+                    <>
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
                     <div className="mg-v2-stat-card">
@@ -545,6 +546,8 @@ const WellnessManagement = () => {
                     </div>
                     </div>
                 </div>
+                    </>
+                )}
                         </main>
                     </ContentArea>
                 </div>

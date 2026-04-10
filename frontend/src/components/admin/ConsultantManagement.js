@@ -123,8 +123,67 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         }
     };
 
+    const renderConsultantPanelBody = () => {
+        if (loading && consultants.length === 0) {
+            return (
+                <div aria-busy="true" className="consultant-management-loading">
+                    <UnifiedLoading type="inline" text="상담사 목록을 불러오는 중..." />
+                </div>
+            );
+        }
+        if (consultants.length === 0) {
+            return (
+                <div className="text-center py-4 text-muted">
+                    <FaUserTie className="mb-3 consultant-management-empty-icon" />
+                    <p>등록된 상담사가 없습니다.</p>
+                </div>
+            );
+        }
+        return (
+            <div className="consultant-list">
+                {consultants.slice(0, 5).map((consultant) => (
+                    <div key={consultant.id} className="summary-item">
+                        <div className="summary-icon">
+                            <FaUserTie />
+                        </div>
+                        <div className="summary-info">
+                            <SafeText className="summary-label" tag="div">{consultant.name}</SafeText>
+                            <div className="summary-value"><SafeText>{consultant.email}</SafeText></div>
+                        </div>
+                        <div className="d-flex gap-1">
+                            <Button
+                                size="sm"
+                                variant="outline-primary"
+                                onClick={() => {
+                                    setSelectedConsultant(consultant);
+                                    setShowDetailModal(true);
+                                }}
+                            >
+                                <FaEye />
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline-danger"
+                                onClick={() => handleDelete(consultant.id)}
+                            >
+                                <FaTrash />
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+                {consultants.length > 5 && (
+                    <div className="text-center mt-2">
+                        <small className="text-muted">
+                            외 {consultants.length - 5}명 더...
+                        </small>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
-        <AdminCommonLayout title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
+        <AdminCommonLayout title="상담사 관리">
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">
@@ -136,55 +195,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     </Button>
                 </div>
                 <div className="panel-content">
-                    {loading ? (
-                        <UnifiedLoading type="inline" text="로딩 중..." />
-                    ) : consultants.length === 0 ? (
-                    <div className="text-center py-4 text-muted">
-                        <FaUserTie className="mb-3 consultant-management-empty-icon" />
-                        <p>등록된 상담사가 없습니다.</p>
-                    </div>
-                ) : (
-                    <div className="consultant-list">
-                        {consultants.slice(0, 5).map((consultant) => (
-                            <div key={consultant.id} className="summary-item">
-                                <div className="summary-icon">
-                                    <FaUserTie />
-                                </div>
-                                <div className="summary-info">
-                                    <SafeText className="summary-label" tag="div">{consultant.name}</SafeText>
-                                    <div className="summary-value"><SafeText>{consultant.email}</SafeText></div>
-                                </div>
-                                <div className="d-flex gap-1">
-                                    <Button 
-                                        size="sm" 
-                                        variant="outline-primary"
-                                        onClick={() => {
-                                            setSelectedConsultant(consultant);
-                                            setShowDetailModal(true);
-                                        }}
-                                    >
-                                        <FaEye />
-                                    </Button>
-                                    <Button 
-                                        size="sm" 
-                                        variant="outline-danger"
-                                        onClick={() => handleDelete(consultant.id)}
-                                    >
-                                        <FaTrash />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                        {consultants.length > 5 && (
-                            <div className="text-center mt-2">
-                                <small className="text-muted">
-                                    외 {consultants.length - 5}명 더...
-                                </small>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                    {renderConsultantPanelBody()}
+                </div>
 
             {/* 상담사 등록 모달 */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">

@@ -7,6 +7,7 @@ import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AccountManagement.css';
+import UnifiedLoading from '../common/UnifiedLoading';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
 import { ACCOUNT_CSS_CLASSES } from '../../constants/css';
@@ -246,7 +247,7 @@ const AccountManagement = () => {
   );
 
   return (
-    <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
+    <AdminCommonLayout title="계좌 관리">
       <div className={`mg-v2-ad-b0kla ${ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}`}>
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="계좌 관리 콘텐츠">
@@ -257,33 +258,41 @@ const AccountManagement = () => {
               titleId="account-management-page-title"
             />
 
-            <AccountForm
-              showForm={showForm}
-              editingAccount={editingAccount}
-              formData={formData}
-              loading={loading}
-              onClose={resetForm}
-              onSubmit={handleSubmit}
-              onBankChange={handleBankChange}
-              onFormDataChange={handleFormDataChange}
-            />
+            {loading && accounts.length === 0 ? (
+              <div aria-busy="true" className="account-management-initial-loading">
+                <UnifiedLoading type="inline" text="계좌 목록을 불러오는 중..." />
+              </div>
+            ) : (
+              <>
+                <AccountForm
+                  showForm={showForm}
+                  editingAccount={editingAccount}
+                  formData={formData}
+                  loading={loading}
+                  onClose={resetForm}
+                  onSubmit={handleSubmit}
+                  onBankChange={handleBankChange}
+                  onFormDataChange={handleFormDataChange}
+                />
 
-            <section
-              className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_LIST_SECTION}`}
-              aria-labelledby="account-registered-list-title"
-            >
-              <h2 id="account-registered-list-title" className="mg-v2-ad-b0kla__section-title">
-                {ACCOUNT_SECTION_TITLES.REGISTERED_LIST}
-              </h2>
-              <AccountTable
-                accounts={accounts}
-                loading={loading}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onToggleStatus={handleToggleStatus}
-                onSetPrimary={handleSetPrimary}
-              />
-            </section>
+                <section
+                  className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_LIST_SECTION}`}
+                  aria-labelledby="account-registered-list-title"
+                >
+                  <h2 id="account-registered-list-title" className="mg-v2-ad-b0kla__section-title">
+                    {ACCOUNT_SECTION_TITLES.REGISTERED_LIST}
+                  </h2>
+                  <AccountTable
+                    accounts={accounts}
+                    loading={loading}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
+                    onSetPrimary={handleSetPrimary}
+                  />
+                </section>
+              </>
+            )}
           </ContentArea>
         </div>
       </div>

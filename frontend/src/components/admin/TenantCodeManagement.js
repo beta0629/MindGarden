@@ -268,9 +268,11 @@ const TenantCodeManagement = () => {
             );
         }
 
-        if (loading) {
+        if (loading && codes.length === 0) {
             return (
-                <UnifiedLoading type="inline" text={UI_TEXT.LOADING_CODES} />
+                <div aria-busy="true" className="tenant-code-list-loading">
+                    <UnifiedLoading type="inline" text={UI_TEXT.LOADING_CODES} />
+                </div>
             );
         }
 
@@ -408,7 +410,7 @@ const TenantCodeManagement = () => {
     const isTenantModal = selectedGroup && TENANT_CODE_GROUPS.includes(selectedGroup);
 
     return (
-        <AdminCommonLayout title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
+        <AdminCommonLayout title="테넌트 코드 관리">
             <ContentArea ariaLabel="테넌트 및 코어 공통 코드 관리">
                 <ContentHeader
                     title={UI_TEXT.PAGE_TITLE}

@@ -277,14 +277,11 @@ const SessionManagement = () => {
         loadMappingStatusCodes();
     }, [loadData, loadMappingStatusCodes]);
 
-    if (loading && mappings.length === 0) {
-        return (
-            <AdminCommonLayout title="회기 관리" loading={true} loadingText="데이터를 불러오는 중..." />
-        );
-    }
+    const showSessionBodyLoader =
+        (loading && mappings.length === 0) || (loading && clients.length === 0);
 
     return (
-        <AdminCommonLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="회기 관리">
             <div className="mg-v2-ad-b0kla mg-v2-session-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="회기 관리 본문">
@@ -294,7 +291,12 @@ const SessionManagement = () => {
                             titleId="session-management-title"
                         />
                         <main aria-labelledby="session-management-title" className="mg-dashboard-layout">
-
+                {showSessionBodyLoader ? (
+                    <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
+                        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                    </div>
+                ) : (
+                    <>
                 {/* 통계 카드 그리드 */}
                 <div className="mg-dashboard-stats">
                     <StatCard
@@ -674,6 +676,8 @@ const SessionManagement = () => {
                     mapping={selectedMapping}
                     onSessionExtensionRequested={handleSessionExtensionRequested}
                 />
+                    </>
+                )}
                         </main>
                     </ContentArea>
                 </div>

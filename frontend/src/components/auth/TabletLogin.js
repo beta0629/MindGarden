@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import MGButton from '../common/MGButton';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import DuplicateLoginModal from '../common/DuplicateLoginModal';
@@ -692,20 +693,26 @@ const TabletLogin = () => {
           </div>
 
           <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>
-            <button 
-              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${!smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''}`}
+            <MGButton
+              type="button"
+              variant="outline"
+              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${!smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
               onClick={() => setSmsMode(false)}
+              preventDoubleClick={false}
             >
               <i className="bi bi-envelope"></i>
               이메일 로그인
-            </button>
-            <button 
-              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''}`}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
+              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
               onClick={() => setSmsMode(true)}
+              preventDoubleClick={false}
             >
               <i className="bi bi-phone"></i>
               SMS 로그인
-            </button>
+            </MGButton>
           </div>
 
           {!smsMode ? (
@@ -742,47 +749,50 @@ const TabletLogin = () => {
                     placeholder="비밀번호를 입력하세요"
                     required
                   />
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     className={TABLET_LOGIN_CSS.PASSWORD_TOGGLE}
                     onClick={togglePassword}
+                    preventDoubleClick={false}
+                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
                     <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                  </button>
+                  </MGButton>
                 </div>
               </div>
 
-              <button
+              <MGButton
                 type="submit"
+                variant="primary"
                 className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_PRIMARY}`}
                 disabled={isLoading}
+                loading={isLoading}
+                loadingText="로그인 중..."
+                preventDoubleClick={false}
               >
-                {isLoading ? (
-                  <>
-                    <span className={TABLET_LOGIN_CSS.LOADING}></span>
-                    로그인 중...
-                  </>
-                ) : (
-                  '로그인'
-                )}
-              </button>
+                로그인
+              </MGButton>
               
               {/* 비밀번호 찾기 링크 */}
               <div className="tablet-login-forgot-password">
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
                   onClick={() => navigate('/forgot-password')}
                   className="tablet-login-forgot-password-btn"
+                  preventDoubleClick={false}
                   onMouseEnter={(e) => {
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a67d8 -> var(--mg-custom-5a67d8)
-                    e.target.style.color = '#5a67d8';
+                    e.currentTarget.style.color = '#5a67d8';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.color = 'var(--mg-primary-500)';
+                    e.currentTarget.style.color = 'var(--mg-primary-500)';
                   }}
                 >
                   비밀번호를 잊으셨나요?
-                </button>
+                </MGButton>
               </div>
             </form>
           ) : (
@@ -802,17 +812,19 @@ const TabletLogin = () => {
                     placeholder="010-0000-0000"
                     maxLength="13"
                   />
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
                     className={TABLET_LOGIN_CSS.SMS_BUTTON}
                     onClick={sendVerificationCode}
                     disabled={isCodeSent && countdown > 0}
+                    preventDoubleClick={false}
                   >
-                    {isCodeSent && countdown > 0 
+                    {isCodeSent && countdown > 0
                       ? `${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}`
                       : '인증번호 전송'
                     }
-                  </button>
+                  </MGButton>
                 </div>
               </div>
 
@@ -831,24 +843,28 @@ const TabletLogin = () => {
                       placeholder="6자리 인증 코드"
                       maxLength="6"
                     />
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
                       className={TABLET_LOGIN_CSS.VERIFICATION_BUTTON}
                       onClick={verifyCode}
+                      preventDoubleClick={false}
                     >
                       인증
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
               )}
 
-              <button
+              <MGButton
                 type="button"
+                variant="secondary"
                 className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_SECONDARY}`}
                 disabled={!isCodeSent || !verificationCode}
+                preventDoubleClick={false}
               >
                 SMS 로그인
-              </button>
+              </MGButton>
             </div>
           )}
 
@@ -857,34 +873,42 @@ const TabletLogin = () => {
           </div>
 
           <div className={TABLET_LOGIN_CSS.SOCIAL_BUTTONS}>
-            <button
-              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} kakao`}
+            <MGButton
+              type="button"
+              variant="outline"
+              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} kakao mg-button--with-icon`}
               onClick={handleKakaoLogin}
               disabled={!oauth2Config?.kakao}
+              preventDoubleClick={false}
             >
               <i className="bi bi-chat-dots"></i>
               카카오로 로그인
-            </button>
-            <button
-              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} naver`}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
+              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} naver mg-button--with-icon`}
               onClick={handleNaverLogin}
               disabled={!oauth2Config?.naver}
+              preventDoubleClick={false}
             >
               <i className="bi bi-n"></i>
               네이버로 로그인
-            </button>
+            </MGButton>
           </div>
 
           <div className={TABLET_LOGIN_CSS.FOOTER}>
             <p className="register-link">
               계정이 없으신가요?{' '}
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
                 className={TABLET_LOGIN_CSS.FOOTER_LINK}
                 onClick={() => navigate('/register')}
+                preventDoubleClick={false}
               >
                 회원가입
-              </button>
+              </MGButton>
             </p>
           </div>
         </div>

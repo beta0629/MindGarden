@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import MGButton from '../common/MGButton';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 import UnifiedHeader from '../common/UnifiedHeader';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
@@ -94,12 +95,35 @@ const Homepage = () => {
             !user && (
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <nav className="mg-v2-homepage-nav desktop-only">
-                  <button className="mg-v2-btn-text" onClick={handleLogin}>로그인</button>
-                  <button className="mg-v2-btn-primary" onClick={handleRegister}>회원가입</button>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    className="mg-v2-btn-text"
+                    onClick={handleLogin}
+                    preventDoubleClick={false}
+                  >
+                    로그인
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    className="mg-v2-btn-primary"
+                    onClick={handleRegister}
+                    preventDoubleClick={false}
+                  >
+                    회원가입
+                  </MGButton>
                 </nav>
-                <button className="mg-v2-homepage-hamburger mobile-only" onClick={handleHamburgerToggle}>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="mg-v2-homepage-hamburger mobile-only"
+                  onClick={handleHamburgerToggle}
+                  preventDoubleClick={false}
+                  aria-label="메뉴 열기"
+                >
                   <i className="bi bi-list"></i>
-                </button>
+                </MGButton>
               </div>
             )
           }
@@ -111,56 +135,78 @@ const Homepage = () => {
             <div className="hamburger-menu" onClick={(e) => e.stopPropagation()}>
               <div className="hamburger-menu-header">
                 <h3>메뉴</h3>
-                <button 
+                <MGButton
+                  type="button"
+                  variant="outline"
                   className="hamburger-menu-close"
                   onClick={() => setIsMenuOpen(false)}
+                  preventDoubleClick={false}
+                  aria-label="메뉴 닫기"
                 >
                   <i className="bi bi-x"></i>
-                </button>
+                </MGButton>
               </div>
               <div className="hamburger-menu-content">
-                <button 
-                  className="hamburger-menu-item"
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.HOME)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-house"></i>
                   홈
-                </button>
-                <button 
-                  className="hamburger-menu-item"
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.ABOUT)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-info-circle"></i>
                   소개
-                </button>
-                <button 
-                  className="hamburger-menu-item"
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.SERVICES)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-heart"></i>
                   서비스
-                </button>
-                <button 
-                  className="hamburger-menu-item"
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.CONTACT)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-telephone"></i>
                   문의
-                </button>
-                <button 
-                  className="hamburger-menu-item"
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-box-arrow-in-right"></i>
                   로그인
-                </button>
-                <button 
-                  className="hamburger-menu-item"
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  className="hamburger-menu-item mg-button--with-icon"
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
+                  preventDoubleClick={false}
                 >
                   <i className="bi bi-person-plus"></i>
                   회원가입
-                </button>
+                </MGButton>
               </div>
             </div>
           </div>
@@ -172,8 +218,11 @@ const Homepage = () => {
           <div className="mg-v2-homepage-hero-content">
             <h1 className="mg-v2-homepage-hero-title">비즈니스의 핵심을 솔루션하다</h1>
             <p className="mg-v2-homepage-hero-subtitle">Core Solution과 함께 비즈니스의 모든 과정을 통합하고 자동화하여 혁신적인 성장을 경험하세요.</p>
-            <button 
-              className="mg-v2-btn-primary-large" 
+            <MGButton
+              type="button"
+              variant="primary"
+              size="large"
+              className="mg-v2-btn-primary-large"
               onClick={async () => {
                 if (user) {
                   if (user?.role) {
@@ -189,9 +238,10 @@ const Homepage = () => {
                   handleLogin();
                 }
               }}
+              preventDoubleClick={false}
             >
               무료로 시작하기
-            </button>
+            </MGButton>
           </div>
           <div className="mg-v2-homepage-scroll-indicator" aria-hidden="true">
             <span className="mg-v2-homepage-scroll-indicator__text">SCROLL</span>
@@ -236,14 +286,30 @@ const Homepage = () => {
             <span className="mg-v2-homepage-split-subtitle">SEAMLESS INTEGRATION</span>
             <h2 className="mg-v2-homepage-split-title">모든 데이터를 한 곳에서 투명하게 관리하세요</h2>
             <p className="mg-v2-homepage-split-desc">흩어져 있던 재무, 인사, 운영 데이터를 통합하여 하나의 대시보드에서 효율적으로 관리하고 비즈니스 인사이트를 도출합니다.</p>
-            <button className="mg-v2-btn-text-link" onClick={handleRegister}>자세히 알아보기 →</button>
+            <MGButton
+              type="button"
+              variant="outline"
+              className="mg-v2-btn-text-link"
+              onClick={handleRegister}
+              preventDoubleClick={false}
+            >
+              자세히 알아보기 →
+            </MGButton>
           </div>
         </section>
 
         {/* Bottom CTA & Footer */}
         <section className="mg-v2-homepage-bottom-cta">
           <h2 className="mg-v2-homepage-bottom-cta-title">지금 바로 비즈니스의 핵심을 바꿔보세요.</h2>
-          <button className="mg-v2-btn-white" onClick={handleRegister}>회원가입 하고 시작하기</button>
+          <MGButton
+            type="button"
+            variant="outline"
+            className="mg-v2-btn-white"
+            onClick={handleRegister}
+            preventDoubleClick={false}
+          >
+            회원가입 하고 시작하기
+          </MGButton>
         </section>
 
         <footer className="mg-v2-homepage-footer">

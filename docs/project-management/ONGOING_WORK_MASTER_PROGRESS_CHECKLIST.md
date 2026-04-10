@@ -76,7 +76,7 @@
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | 🔄 | |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
 | ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10) |
-| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | B1~B4 주요 패치 ☑; `components/erp` 내 `RefreshCw`는 필터 초기화·안내 아이콘 등 소수 잔여 |
+| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | B1~B4·**P4-05a/b** ☑ `9c84e2f24` — Financial·Integrated·Budget·Purchase·Tax·ImprovedTax·ErpReportModal MGButton; 잔여 `RefreshCw`/기타 ERP 파일은 소수 |
 
 ---
 
@@ -197,3 +197,4 @@
 | 2026-04-11 | G7-B6a/B6b 커밋 `f92553e31` — Button MGButton 래퍼, Examples/테스트, `index`, `icons.js`/`Icon` 보정 |
 | 2026-04-11 | G7-B6a 스토리 3파일 후속 커밋 `d8cae5efa` (병렬 에이전트 산출물 미커밋 보완) |
 | 2026-04-11 | **CL-B1** 상담일지·메모 API·STANDARD 권한 — 커밋 `89e03b2b9`, 병렬 블록·구역2(UI-04)·스냅샷·섹션6 다음 단계 반영 |
+| 2026-04-11 | **ERP-P4-05a/b** 병렬 위임(core-coder) — MGButton 7파일, 커밋 `9c84e2f24`; **G-01** explore 인벤토리·G8-B1/B2 블록 제안 |

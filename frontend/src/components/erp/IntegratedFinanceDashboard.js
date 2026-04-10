@@ -564,7 +564,7 @@ const OverviewTab = ({ data }) => {
   })();
 
   return (
-    <div>
+    <div className="integrated-finance-overview">
       <DashboardSection
         title="재무 개요"
         icon={<BarChart3 size={24} />}

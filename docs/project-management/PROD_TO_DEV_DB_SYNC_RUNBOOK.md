@@ -9,7 +9,7 @@
 
 | 모드 | 설명 |
 |------|------|
-| `SYNC_MODE=dump_live` (기본) | 실행 시점의 운영 DB 일관 스냅샷(`mysqldump --single-transaction`)을 개발 DB에 복원. 스케줄을 **새벽(예: 03:15 KST)** 에 두면 전일 업무 데이터에 가깝다. |
+| `SYNC_MODE=dump_live` (기본) | 실행 시점의 운영 DB 일관 스냅샷(`mysqldump --single-transaction`)을 개발 DB에 복원. 스케줄을 **새벽(예: 03:30 KST)** 에 두면 전일 업무 데이터에 가깝다. |
 | `SYNC_MODE=from_file` | **전일(어제) 캘린더 날짜**가 파일명에 포함된 덤프만 사용. 예: `mind_garden_20260408.sql.gz` 은 **실행일이 2026-04-09** 일 때 선택. 운영 측에서 **매일 전일분 덤프 파일**을 먼저 저장해야 한다. |
 
 > “전일 데이터만”을 법적으로 엄밀히 맞추려면 운영에서 **일일 덤프 + `from_file`** 조합을 권장한다.
@@ -47,7 +47,7 @@ CRON_TZ=Asia/Seoul
 30 3 * * * NON_INTERACTIVE=1 /opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh >> /var/log/mindgarden/prod-to-dev-cron.log 2>&1
 ```
 
-- **시각 변경**: 분·시만 바꾸면 됨 (예: `15 3` → 매일 03:15).
+- **시각 변경**: 분·시만 바꾸면 됨 (예: `30 3` → 매일 03:30 KST, `crontab.example` 과 동일).
 - **타임존**: OS가 이미 `Asia/Seoul` 이면 `CRON_TZ` 생략 가능. 그 외에는 `date` 로 확인 후 `CRON_TZ` 유지.
 - 로그: 스크립트 자체가 `LOG_DIR` 아래 `prod-to-dev-sync_*.log` 에도 기록한다 (기본 `/var/log/mindgarden`).
 

@@ -167,6 +167,37 @@
   margin-top: var(--spacing-lg);
 }
 
+/*
+ * 개요 탭 — ERP 대시보드와 통일: 바깥 DashboardSection(L1) vs KPI 스트립 배경(L2) vs ErpKpiStatCard(L3)
+ */
+.integrated-finance-overview .mg-dashboard-section--card {
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.integrated-finance-overview .mg-dashboard-section-content .mg-dashboard-stats,
+.integrated-finance-overview .mg-dashboard-section-content .mg-v2-erp-dashboard-kpi-grid {
+  background: var(--mg-gray-50);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--border-radius-lg);
+  padding: var(--mg-spacing-md);
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.integrated-finance-overview .mg-dashboard-stats .mg-v2-erp-stat-card,
+.integrated-finance-overview .mg-v2-erp-dashboard-kpi-grid .mg-v2-erp-stat-card {
+  background: var(--mg-color-surface-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.integrated-finance-overview .mg-dashboard-stats .integrated-finance-mapping-cta {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 7rem;
+}
+
 /* 섹션 제목 */
 .finance-section-title {
   font-size: 1.5rem;

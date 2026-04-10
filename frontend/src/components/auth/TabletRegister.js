@@ -12,6 +12,7 @@ import {
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
@@ -425,14 +426,16 @@ const TabletRegister = () => {
                     }}
                   />
                 </div>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
                   onClick={handleEmailDuplicateCheck}
                   disabled={isCheckingEmail || !formData.email?.trim()}
                   className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                  preventDoubleClick={false}
                 >
                   {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                </button>
+                </MGButton>
               </div>
               {emailCheckStatus === 'duplicate' && (
                 <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
@@ -458,13 +461,17 @@ const TabletRegister = () => {
                     required
                     minLength="8"
                   />
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     className="mg-v2-password-toggle"
                     onClick={() => togglePassword('password')}
+                    preventDoubleClick={false}
+                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
                     {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
+                  </MGButton>
                 </div>
                 {errors.password && <span className="mg-v2-error-text">{errors.password}</span>}
               </div>
@@ -483,13 +490,17 @@ const TabletRegister = () => {
                     required
                     minLength="8"
                   />
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     className="mg-v2-password-toggle"
                     onClick={() => togglePassword('confirmPassword')}
+                    preventDoubleClick={false}
+                    aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
                     {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
+                  </MGButton>
                 </div>
                 {errors.confirmPassword && <span className="mg-v2-error-text">{errors.confirmPassword}</span>}
               </div>
@@ -518,14 +529,16 @@ const TabletRegister = () => {
                     maxLength="13"
                   />
                 </div>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
                   onClick={handlePhoneDuplicateCheck}
                   disabled={isCheckingPhone || !formData.phone?.trim()}
                   className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                  preventDoubleClick={false}
                 >
                   {isCheckingPhone ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                </button>
+                </MGButton>
               </div>
               {phoneCheckStatus === 'duplicate' && (
                 <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.PHONE_EXISTS}</small>
@@ -546,9 +559,16 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreeTerms">
-                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  className="mg-v2-link-button"
+                  onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}
+                  preventDoubleClick={false}
+                >
                   이용약관
-                </button>
+                </MGButton>
                 {' '}에 동의합니다
               </label>
             </div>
@@ -568,9 +588,16 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreePrivacy">
-                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  className="mg-v2-link-button"
+                  onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}
+                  preventDoubleClick={false}
+                >
                   개인정보처리방침
-                </button>
+                </MGButton>
                 {' '}에 동의합니다
               </label>
             </div>
@@ -580,17 +607,17 @@ const TabletRegister = () => {
               </span>
             )}
 
-            <button type="submit" className="mg-v2-button-primary" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <span className="mg-v2-spinner" aria-hidden="true" />
-                  {' '}
-                  회원가입 중...
-                </>
-              ) : (
-                '회원가입'
-              )}
-            </button>
+            <MGButton
+              type="submit"
+              variant="primary"
+              className="mg-v2-button-primary"
+              disabled={isLoading}
+              loading={isLoading}
+              loadingText="회원가입 중..."
+              preventDoubleClick={false}
+            >
+              회원가입
+            </MGButton>
           </form>
 
           <Link to="/login" className="mg-v2-link-text">

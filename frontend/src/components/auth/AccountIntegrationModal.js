@@ -4,6 +4,7 @@ import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './AccountIntegrationModal.css';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
@@ -237,19 +238,27 @@ const AccountIntegrationModal = ({
                             </div>
 
                             <div className="modal-actions">
-                                <button 
-                                    className="btn btn-secondary" 
+                                <MGButton
+                                    type="button"
+                                    variant="secondary"
+                                    className="btn btn-secondary"
                                     onClick={handleClose}
+                                    preventDoubleClick={false}
                                 >
                                     취소
-                                </button>
-                                <button 
-                                    className="btn btn-primary" 
+                                </MGButton>
+                                <MGButton
+                                    type="button"
+                                    variant="primary"
+                                    className="btn btn-primary"
                                     onClick={handleSendVerificationCode}
                                     disabled={isLoading || !formData.existingEmail}
+                                    loading={isLoading}
+                                    loadingText="발송 중..."
+                                    preventDoubleClick={false}
                                 >
-                                    {isLoading ? '발송 중...' : '인증 코드 발송'}
-                                </button>
+                                    인증 코드 발송
+                                </MGButton>
                             </div>
                         </div>
                     )}
@@ -288,26 +297,37 @@ const AccountIntegrationModal = ({
                             </div>
 
                             <div className="modal-actions">
-                                <button 
-                                    className="btn btn-secondary" 
+                                <MGButton
+                                    type="button"
+                                    variant="secondary"
+                                    className="btn btn-secondary"
                                     onClick={() => setStep(1)}
+                                    preventDoubleClick={false}
                                 >
                                     이전
-                                </button>
-                                <button 
-                                    className="btn btn-link" 
+                                </MGButton>
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
+                                    className="btn btn-link"
                                     onClick={handleSendVerificationCode}
                                     disabled={countdown > 0}
+                                    preventDoubleClick={false}
                                 >
                                     {countdown > 0 ? `재발송 (${formatTime(countdown)})` : '인증 코드 재발송'}
-                                </button>
-                                <button 
-                                    className="btn btn-primary" 
+                                </MGButton>
+                                <MGButton
+                                    type="button"
+                                    variant="primary"
+                                    className="btn btn-primary"
                                     onClick={handleVerifyCode}
                                     disabled={isLoading || !formData.verificationCode}
+                                    loading={isLoading}
+                                    loadingText="확인 중..."
+                                    preventDoubleClick={false}
                                 >
-                                    {isLoading ? '확인 중...' : '인증 확인'}
-                                </button>
+                                    인증 확인
+                                </MGButton>
                             </div>
                         </div>
                     )}
@@ -377,19 +397,27 @@ const AccountIntegrationModal = ({
                             </div>
 
                             <div className="modal-actions">
-                                <button 
-                                    className="btn btn-secondary" 
+                                <MGButton
+                                    type="button"
+                                    variant="secondary"
+                                    className="btn btn-secondary"
                                     onClick={() => setStep(2)}
+                                    preventDoubleClick={false}
                                 >
                                     이전
-                                </button>
-                                <button 
-                                    className="btn btn-primary" 
+                                </MGButton>
+                                <MGButton
+                                    type="button"
+                                    variant="primary"
+                                    className="btn btn-primary"
                                     onClick={handleIntegrateAccounts}
                                     disabled={isLoading || !formData.existingPassword}
+                                    loading={isLoading}
+                                    loadingText="통합 중..."
+                                    preventDoubleClick={false}
                                 >
-                                    {isLoading ? '통합 중...' : '계정 통합'}
-                                </button>
+                                    계정 통합
+                                </MGButton>
                             </div>
                         </div>
                     )}
@@ -407,12 +435,15 @@ const AccountIntegrationModal = ({
                                 </p>
                             </div>
                             <div className="modal-actions">
-                                <button 
-                                    className="btn btn-primary" 
+                                <MGButton
+                                    type="button"
+                                    variant="primary"
+                                    className="btn btn-primary"
                                     onClick={handleClose}
+                                    preventDoubleClick={false}
                                 >
                                     완료
-                                </button>
+                                </MGButton>
                             </div>
                         </div>
                     )}

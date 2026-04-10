@@ -487,14 +487,17 @@ const SocialSignupModal = ({
                       minLength="8"
                       autoComplete="new-password"
                     />
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="social-signup-modal__password-toggle"
                       onClick={() => togglePassword('password')}
+                      preventDoubleClick={false}
                       aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
                       <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`} aria-hidden />
-                    </button>
+                    </MGButton>
                   </div>
                   {errors.password && (
                     <span className="social-signup-modal__error-text">
@@ -522,17 +525,20 @@ const SocialSignupModal = ({
                       minLength="8"
                       autoComplete="new-password"
                     />
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="social-signup-modal__password-toggle"
                       onClick={() => togglePassword('confirmPassword')}
+                      preventDoubleClick={false}
                       aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
                       <i
                         className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}
                         aria-hidden
                       />
-                    </button>
+                    </MGButton>
                   </div>
                   {errors.confirmPassword && (
                     <span className="social-signup-modal__error-text">

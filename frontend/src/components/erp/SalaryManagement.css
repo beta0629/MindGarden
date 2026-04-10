@@ -11,6 +11,14 @@
   padding: var(--mg-spacing-lg);
 }
 
+.salary-management__initial-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+}
+
 .salary-management__header-btn {
   display: inline-flex;
   align-items: center;

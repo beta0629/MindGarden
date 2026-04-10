@@ -71,6 +71,8 @@ const SalaryManagement = () => {
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
   const [isConsultantPickerOpen, setIsConsultantPickerOpen] = useState(false);
   const [profileViewMode, setProfileViewMode] = useState('largeCard');
+  /** 최초 상담사 목록 페치 1회 완료 여부(초기 인라인 로딩 vs 이후 로딩 오버레이 구분). */
+  const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -161,6 +163,7 @@ const SalaryManagement = () => {
       setConsultants([]);
       showNotification('상담사 목록을 불러오는데 실패했습니다.', 'error');
     } finally {
+      setConsultantsInitialFetchDone(true);
       if (!silent) setLoading(false);
     }
   };
@@ -418,13 +421,15 @@ const SalaryManagement = () => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
   };
 
+  /** 최초 로드 중·상담사 목록 없음: 본문은 인라인 로더만(헤더·탭은 유지). 이후 동일 조건은 세금 조회 등과 겹치지 않도록 fetch 완료 후에는 사용하지 않음. */
+  const showInitialInlineLoad =
+    loading && consultants.length === 0 && !consultantsInitialFetchDone;
+  /** 초기 인라인과 중복되지 않는 전역 로딩 오버레이(계산·탭 데이터 로드 등). silent 새로고침은 loading을 켜지 않음. */
+  const showLoadingOverlay = loading && !showInitialInlineLoad;
+
   return (
     <AdminCommonLayout title="급여 관리">
-      {loading && consultants.length === 0 ? (
-        <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
-      ) : (
-        <>
-          <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
+      <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
             <ErpPageShell
               headerSlot={
                 <ContentHeader
@@ -523,6 +528,12 @@ const SalaryManagement = () => {
               mainAriaLabel="급여·세금 관리 콘텐츠"
             >
             <div className="mg-v2-ad-b0kla salary-management__main">
+            {showInitialInlineLoad ? (
+              <div className="salary-management__initial-load" role="status" aria-live="polite">
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+              </div>
+            ) : (
+              <>
             {/* 블록 1: 계산 대상 선택 */}
             <section className="mg-v2-ad-b0kla__card salary-filter-block" aria-labelledby="salary-filter-title">
               <h2 id="salary-filter-title" className="mg-v2-ad-b0kla__section-title salary-filter-block__title">
@@ -1040,13 +1051,13 @@ const SalaryManagement = () => {
                   )}
                 </section>
               )}
+            </>
+            )}
             </div>
             </ErpPageShell>
           </ContentArea>
-        </>
-      )}
 
-      {loading && (
+      {showLoadingOverlay && (
         <div className="salary-management-loading-overlay" aria-hidden>
           <UnifiedLoading type="inline" text="로딩 중..." />
         </div>

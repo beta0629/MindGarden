@@ -42,6 +42,7 @@ const REFLECT_ERP_REFUND_ENDPOINT = (mappingId) =>
 const RefundManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [isLoadingReflect, setIsLoadingReflect] = useState(false);
   const [refundStats, setRefundStats] = useState({});
   const [refundHistory, setRefundHistory] = useState([]);
@@ -55,10 +56,12 @@ const RefundManagement = () => {
 
   const loadRefundData = useCallback(async (options = {}) => {
     const silent = options.silent === true;
-    if (!silent) {
-      setLoading(true);
-    }
     try {
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const [statsRes, historyRes, syncRes] = await Promise.all([
         StandardizedApi.get(REFUND_STATISTICS_ENDPOINT, { period: selectedPeriod }),
         StandardizedApi.get(REFUND_HISTORY_ENDPOINT, {
@@ -80,7 +83,9 @@ const RefundManagement = () => {
       console.error('환불 데이터 로드 실패:', error);
       notificationManager.show('환불 데이터를 불러오는데 실패했습니다.', 'error');
     } finally {
-      if (!silent) {
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
         setLoading(false);
       }
     }
@@ -220,6 +225,7 @@ const RefundManagement = () => {
             onBatchReflectErp={handleBatchReflectErp}
             selectedRowIds={selectedRowIds}
             isLoadingReflect={isLoadingReflect}
+            silentRefreshing={silentRefreshing}
           />
           {loading ? (
             <div

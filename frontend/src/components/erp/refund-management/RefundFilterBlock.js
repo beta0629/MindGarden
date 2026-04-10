@@ -9,6 +9,7 @@
 import React from 'react';
 import { RefreshCw, Download } from 'lucide-react';
 import { ErpFilterToolbar } from '../common';
+import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const PERIOD_OPTIONS = [
@@ -35,7 +36,8 @@ const RefundFilterBlock = ({
   onExportExcel,
   onBatchReflectErp,
   selectedRowIds = [],
-  isLoadingReflect = false
+  isLoadingReflect = false,
+  silentRefreshing = false
 }) => {
   const hasSelection = Array.isArray(selectedRowIds) && selectedRowIds.length > 0;
 
@@ -103,9 +105,15 @@ const RefundFilterBlock = ({
               type="button"
               className="mg-v2-button mg-v2-button--secondary"
               onClick={onRefresh}
+              disabled={silentRefreshing}
+              aria-busy={silentRefreshing}
               aria-label="새로고침"
             >
-              <RefreshCw size={16} aria-hidden />
+              <RefreshCw
+                size={16}
+                aria-hidden
+                className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+              />
               새로고침
             </button>
             <button

@@ -257,11 +257,22 @@ const ConsultantMessages = () => {
     return (
       <AdminCommonLayout title="메시지">
         <ContentArea ariaLabel="메시지 페이지 로딩">
-          <UnifiedLoading 
-            type="page"
-            text="세션 정보를 불러오는 중..."
-            variant="pulse"
+          <ContentHeader
+            title="메시지 관리"
+            subtitle="세션 정보를 불러오는 중입니다. 잠시만 기다려 주세요."
+            titleId={CONSULTANT_MESSAGES_TITLE_ID}
           />
+          <div
+            className="consultant-messages__session-load"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <UnifiedLoading
+              type="inline"
+              text="세션 정보를 불러오는 중..."
+              variant="pulse"
+            />
+          </div>
         </ContentArea>
       </AdminCommonLayout>
     );
@@ -327,13 +338,19 @@ const ConsultantMessages = () => {
           </button>
         </div>
 
-        {/* 로딩 상태 */}
+        {/* 로딩 상태 — 목록 영역만 인라인 로더 (헤더·검색은 유지) */}
         {loading && (
-          <UnifiedLoading 
-            type="page"
-            text="메시지를 불러오는 중..."
-            variant="pulse"
-          />
+          <div
+            className="consultant-messages__list-load"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <UnifiedLoading
+              type="inline"
+              text="메시지를 불러오는 중..."
+              variant="pulse"
+            />
+          </div>
         )}
 
         {/* 메시지 목록 */}

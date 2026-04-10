@@ -1,5 +1,15 @@
 /* ConsultantMessages 스타일 - 디자인 시스템 적용 */
 
+/* 세션/목록 로딩: 인라인 로더 영역 최소 높이 (ConsultantRecords session-load와 동일 패턴) */
+.consultant-messages__session-load,
+.consultant-messages__list-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--spacing-xl) * 6);
+}
+
 .consultant-messages-container {
   padding: var(--spacing-lg);
   max-width: var(--container-max-width);

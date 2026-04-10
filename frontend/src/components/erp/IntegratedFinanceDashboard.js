@@ -16,7 +16,7 @@ import ErpPageShell from './shell/ErpPageShell';
 import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import {
   ErpEmptyState,
@@ -2425,7 +2425,14 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 
   return (
     <>
-      <ErpModal isOpen={true} onClose={onClose} title="거래 상세" size="xl">
+      <UnifiedModal
+        isOpen={true}
+        onClose={onClose}
+        title="거래 상세"
+        size="large"
+        backdropClick={true}
+        className="mg-v2-ad-b0kla"
+      >
         {loading ? (
           <UnifiedLoading text="거래 정보를 불러오는 중..." size="medium" type="inline" />
         ) : entryDetail ? (
@@ -2490,7 +2497,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             </MGButton>
           )}
         </div>
-      </ErpModal>
+      </UnifiedModal>
       {showEditModal && entryDetail && (
         <JournalEntryEditModal
           entry={entryDetail}
@@ -2651,7 +2658,14 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   const isBalanced = totalDebit === totalCredit;
 
   return (
-    <ErpModal isOpen={true} onClose={onClose} title="거래 등록" size="xl">
+    <UnifiedModal
+      isOpen={true}
+      onClose={onClose}
+      title="거래 등록"
+      size="large"
+      backdropClick={true}
+      className="mg-v2-ad-b0kla"
+    >
       {/* 거래 등록 가이드 — B0KlA·디자인 토큰 준수 */}
       <div className="mg-v2-ad-b0kla__card integrated-finance-journal-modal-guide">
         <div className="integrated-finance-journal-modal-guide__row">
@@ -2822,7 +2836,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           저장
         </MGButton>
       </div>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 
@@ -2907,11 +2921,13 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
   };
 
   return (
-    <ErpModal
+    <UnifiedModal
       isOpen={true}
       onClose={onClose}
       title={rule ? '정산 규칙 수정' : '정산 규칙 생성'}
-      size="md"
+      size="medium"
+      backdropClick={true}
+      className="mg-v2-ad-b0kla"
     >
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
@@ -3023,7 +3039,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           저장
         </MGButton>
       </div>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 
@@ -3063,7 +3079,14 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
   };
 
   return (
-    <ErpModal isOpen={true} onClose={onClose} title="계정별 내역 상세" size="xl">
+    <UnifiedModal
+      isOpen={true}
+      onClose={onClose}
+      title="계정별 내역 상세"
+      size="large"
+      backdropClick={true}
+      className="mg-v2-ad-b0kla"
+    >
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">계정과목</label>
@@ -3131,7 +3154,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
       <div className="mg-v2-modal-footer">
         <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
       </div>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 
@@ -3291,7 +3314,14 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   const isBalanced = totalDebit === totalCredit;
 
   return (
-    <ErpModal isOpen={true} onClose={onClose} title="거래 수정" size="xl">
+    <UnifiedModal
+      isOpen={true}
+      onClose={onClose}
+      title="거래 수정"
+      size="large"
+      backdropClick={true}
+      className="mg-v2-ad-b0kla"
+    >
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
@@ -3452,7 +3482,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           저장
         </MGButton>
       </div>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 

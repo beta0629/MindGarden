@@ -7,7 +7,7 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal.js';
 import ErpButton from './common/ErpButton';
 import MGButton from '../common/MGButton';
 import { ErpFilterToolbar } from './common';
@@ -874,14 +874,17 @@ const BudgetManagement = () => {
         </ErpPageShell>
       </ContentArea>
 
-      <ErpModal
+      <UnifiedModal
         isOpen={showCreateModal}
         onClose={() => {
           setShowCreateModal(false);
           resetNewBudgetForm();
         }}
         title="새 예산 추가"
-        size="md"
+        size="medium"
+        showCloseButton
+        backdropClick
+        className="mg-v2-ad-b0kla"
       >
         <form onSubmit={handleCreateBudget}>
           <div className="mg-v2-form-group">
@@ -994,13 +997,16 @@ const BudgetManagement = () => {
             </ErpButton>
           </div>
         </form>
-      </ErpModal>
+      </UnifiedModal>
 
-      <ErpModal
+      <UnifiedModal
         isOpen={!!editingBudget}
         onClose={() => setEditingBudget(null)}
         title="예산 수정"
-        size="md"
+        size="medium"
+        showCloseButton
+        backdropClick
+        className="mg-v2-ad-b0kla"
       >
         {editingBudget && (
           <form onSubmit={handleSaveEdit}>
@@ -1116,7 +1122,7 @@ const BudgetManagement = () => {
             </div>
           </form>
         )}
-      </ErpModal>
+      </UnifiedModal>
     </AdminCommonLayout>
   );
 };

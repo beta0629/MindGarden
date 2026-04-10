@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './SalaryConfigModal.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -135,7 +135,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <ErpModal
+    <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
       title="급여 기산일 설정"
@@ -275,7 +275,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           저장
         </MGButton>
       </div>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 

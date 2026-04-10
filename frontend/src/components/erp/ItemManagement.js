@@ -6,7 +6,7 @@ import CardContainer from '../common/CardContainer';
 import ErpButton from './common/ErpButton';
 import { ErpFilterToolbar, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import './ItemManagement.css';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal.js';
 import BadgeSelect from '../common/BadgeSelect';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API, COMMON_CODE_API } from '../../constants/api';
@@ -385,13 +385,17 @@ const ItemManagement = () => {
             </ErpPageShell>
 
         {/* 아이템 생성 모달 */}
-        <ErpModal
+        <UnifiedModal
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
             resetForm();
           }}
           title="새 아이템 추가"
+          size="auto"
+          showCloseButton
+          backdropClick
+          className="mg-v2-ad-b0kla"
         >
           <form onSubmit={handleCreateItem}>
             <div className="mg-v2-form-group">
@@ -507,10 +511,10 @@ const ItemManagement = () => {
               </ErpButton>
             </div>
           </form>
-        </ErpModal>
+        </UnifiedModal>
 
         {/* 아이템 수정 모달 */}
-        <ErpModal
+        <UnifiedModal
           isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false);
@@ -518,6 +522,10 @@ const ItemManagement = () => {
             resetForm();
           }}
           title="아이템 수정"
+          size="auto"
+          showCloseButton
+          backdropClick
+          className="mg-v2-ad-b0kla"
         >
           <form onSubmit={handleUpdateItem}>
             <div className="mg-v2-form-group">
@@ -631,7 +639,7 @@ const ItemManagement = () => {
               </ErpButton>
             </div>
           </form>
-        </ErpModal>
+        </UnifiedModal>
           </ContentArea>
         </div>
       </div>

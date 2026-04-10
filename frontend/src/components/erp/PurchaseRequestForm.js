@@ -4,7 +4,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ErpButton from './common/ErpButton';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal.js';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { useSession } from '../../hooks/useSession';
@@ -431,11 +431,14 @@ const PurchaseRequestForm = () => {
       </section>
       )}
 
-      <ErpModal
+      <UnifiedModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="구매 요청 완료"
         size="small"
+        showCloseButton
+        backdropClick
+        className="mg-v2-ad-b0kla"
       >
         <div className="mg-v2-purchase-modal-success">
           <div className="mg-v2-purchase-modal-success__icon" aria-hidden>
@@ -454,7 +457,7 @@ const PurchaseRequestForm = () => {
             확인
           </ErpButton>
         </div>
-      </ErpModal>
+      </UnifiedModal>
     </>
   );
 };

@@ -4,7 +4,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import './SalaryProfileFormModal.css';
@@ -450,7 +450,7 @@ const SalaryProfileFormModal = ({
     if (!isOpen || !consultant) return null;
 
     return (
-        <ErpModal
+        <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
             title={toDisplayString(
@@ -459,7 +459,7 @@ const SalaryProfileFormModal = ({
                     : `급여 프로필 생성 - ${consultant.name}`
             )}
             size="large"
-            className="salary-profile-modal-content mg-v2-ad-b0kla"
+            className="mg-v2-ad-b0kla salary-profile-modal-content"
         >
             <div className="salary-profile-form">
                 {/* 기본 정보 */}
@@ -731,7 +731,7 @@ const SalaryProfileFormModal = ({
                     </MGButton>
                 </div>
             </div>
-        </ErpModal>
+        </UnifiedModal>
     );
 };
 

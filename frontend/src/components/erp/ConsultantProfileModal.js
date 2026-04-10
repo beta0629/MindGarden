@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
@@ -230,7 +230,7 @@ const ConsultantProfileModal = ({
     if (!isOpen || !consultant) return null;
 
     return (
-        <ErpModal
+        <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
             title={toDisplayString(`급여 프로필 - ${consultant.name}`)}
@@ -485,7 +485,7 @@ const ConsultantProfileModal = ({
                     닫기
                 </button>
             </div>
-        </ErpModal>
+        </UnifiedModal>
     );
 };
 

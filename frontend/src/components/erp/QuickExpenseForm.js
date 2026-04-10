@@ -7,6 +7,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { ErpSafeText } from './common';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 
 /**
  * 빠른 지출 등록 컴포넌트 (ErpModal + 모달 내 금액 입력)
@@ -99,7 +100,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         subcategory: subcategoryCode,
         amount: String(amount),
         description: `${category.codeLabel} 지출`,
-        transactionDate: new Date().toISOString().split('T')[0]
+        transactionDate: formatLocalDateYmd(new Date())
       });
       const response = await csrfTokenManager.fetchWithCsrf(
         `/api/v1/erp/finance/quick-expense?${params.toString()}`,

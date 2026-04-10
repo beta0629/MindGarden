@@ -9,6 +9,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { getTenantId } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
 
@@ -30,7 +31,7 @@ const FinancialTransactionForm = ({
     subcategory: '',
     amount: '',
     description: '',
-    transactionDate: new Date().toISOString().split('T')[0],
+    transactionDate: formatLocalDateYmd(new Date()),
     taxIncluded: false
   });
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ const FinancialTransactionForm = ({
     const dateRaw = tx.transactionDate;
     const dateStr = dateRaw
       ? String(dateRaw).slice(0, 10)
-      : new Date().toISOString().split('T')[0];
+      : formatLocalDateYmd(new Date());
     setFormData({
       transactionType: tx.transactionType || 'EXPENSE',
       category: tx.category || '',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import './FinancialCalendarView.css';
 import {
@@ -95,7 +96,7 @@ const FinancialCalendarView = () => {
   const handleDateClick = (day) => {
     if (!day) return;
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const dateStr = clickedDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDateYmd(clickedDate);
     setSelectedDate(dateStr);
     setDayDetail(calendarData[dateStr] || { income: 0, expense: 0, transactions: [] });
   };
@@ -107,7 +108,7 @@ const FinancialCalendarView = () => {
   };
 
   const days = getDaysInMonth(currentDate);
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDateYmd(new Date());
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
   return (
@@ -163,13 +164,9 @@ const FinancialCalendarView = () => {
                 <div key={`empty-${index}`} className="mg-calendar-day mg-calendar-day--empty" aria-hidden />
               );
             }
-            const dateStr = new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth(),
-              day
-            )
-              .toISOString()
-              .split('T')[0];
+            const dateStr = formatLocalDateYmd(
+              new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+            );
             const dayData = calendarData[dateStr] || { income: 0, expense: 0, transactions: [] };
             const isToday = dateStr === today;
             const isSelected = selectedDate === dateStr;

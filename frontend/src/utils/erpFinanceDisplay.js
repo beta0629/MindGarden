@@ -6,6 +6,19 @@
  */
 
 /**
+ * 브라우저 로컬 캘린더 기준 `YYYY-MM-DD`. API·폼과 UTC `toISOString()` 날짜 불일치 방지.
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+export const formatLocalDateYmd = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
  * 재무 대시보드 최근 거래 행의 날짜 표시.
  * 백엔드 getBranchFinancialData는 Map에 `date`(ISO 문자열)를 쓰고, DTO 응답은 `transactionDate`를 쓸 수 있음.
  *

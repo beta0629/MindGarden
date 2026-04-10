@@ -6,6 +6,7 @@ import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { AUTH_API, ERP_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -678,7 +679,7 @@ const BalanceSheetTab = () => {
   const [balanceSheetData, setBalanceSheetData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
+  const [asOfDate, setAsOfDate] = useState(() => formatLocalDateYmd(new Date()));
 
   const fetchBalanceSheet = async () => {
     setError(null);
@@ -890,9 +891,9 @@ const IncomeStatementTab = () => {
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(1);
-    return date.toISOString().split('T')[0];
+    return formatLocalDateYmd(date);
   });
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => formatLocalDateYmd(new Date()));
 
   const fetchIncomeStatement = async () => {
     setError(null);
@@ -1112,9 +1113,9 @@ const CashFlowStatementTab = () => {
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(1); // 이번 달 1일
-    return date.toISOString().split('T')[0];
+    return formatLocalDateYmd(date);
   });
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => formatLocalDateYmd(new Date()));
 
   useEffect(() => {
     fetchCashFlowStatement();
@@ -2438,7 +2439,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 // 분개 생성 모달 컴포넌트
 const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   const [formData, setFormData] = useState({
-    entryDate: new Date().toISOString().split('T')[0],
+    entryDate: formatLocalDateYmd(new Date()),
     description: ''
   });
   const [lines, setLines] = useState([
@@ -3071,7 +3072,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
 // 분개 수정 모달 컴포넌트
 const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   const [formData, setFormData] = useState({
-    entryDate: entry.entryDate || new Date().toISOString().split('T')[0],
+    entryDate: entry.entryDate || formatLocalDateYmd(new Date()),
     description: entry.description || ''
   });
   const [lines, setLines] = useState(

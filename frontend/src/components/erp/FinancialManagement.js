@@ -41,6 +41,7 @@ import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
 import { ErpFilterToolbar } from './common';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -144,7 +145,7 @@ const FinancialManagement = () => {
 
   const getDateRangeForFilter = () => {
     const now = new Date();
-    const toStr = (d) => d.toISOString().split('T')[0];
+    const toStr = (d) => formatLocalDateYmd(d);
     switch (filters.dateRange) {
       case 'TODAY':
         return { startDate: toStr(now), endDate: toStr(now) };

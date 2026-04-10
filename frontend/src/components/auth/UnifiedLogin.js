@@ -31,6 +31,7 @@ import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import MGButton from '../common/MGButton';
 import SocialSignupModal from './SocialSignupModal';
 import TenantSelection from './TenantSelection';
 import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
@@ -757,13 +758,17 @@ const UnifiedLogin = () => {
                     placeholder="비밀번호를 입력하세요"
                     required
                   />
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     onClick={togglePassword}
                     className="mg-v2-password-toggle"
+                    preventDoubleClick={false}
+                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
                     {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
+                  </MGButton>
                 </div>
               </div>
 
@@ -773,13 +778,17 @@ const UnifiedLogin = () => {
                 </div>
               )}
 
-              <button
+              <MGButton
                 type="submit"
+                variant="primary"
                 disabled={isLoading}
+                loading={isLoading}
+                loadingText="로딩중..."
                 className="mg-v2-button-primary"
+                preventDoubleClick={false}
               >
-                {isLoading ? <div className="mg-loading">로딩중...</div> : '로그인'}
-              </button>
+                로그인
+              </MGButton>
             </form>
 
             {/* 소셜 로그인 버튼 */}
@@ -789,10 +798,12 @@ const UnifiedLogin = () => {
               </div>
 
               <div className="mg-v2-social-buttons">
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
                   onClick={handleKakaoLogin}
                   className="mg-v2-button-social mg-v2-button-kakao"
+                  preventDoubleClick={false}
                 >
                   <svg 
                     width="18" 
@@ -809,12 +820,14 @@ const UnifiedLogin = () => {
                     />
                   </svg>
                   카카오 로그인
-                </button>
+                </MGButton>
 
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
                   onClick={handleNaverLogin}
                   className="mg-v2-button-social mg-v2-button-naver"
+                  preventDoubleClick={false}
                 >
                   <svg 
                     width="18" 
@@ -829,13 +842,15 @@ const UnifiedLogin = () => {
                     />
                   </svg>
                   네이버 로그인
-                </button>
+                </MGButton>
 
                 {oauth2Config?.google && (
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
                     onClick={handleGoogleLogin}
                     className="mg-v2-button-social mg-v2-button-google"
+                    preventDoubleClick={false}
                   >
                     <svg 
                       width="18" 
@@ -850,7 +865,7 @@ const UnifiedLogin = () => {
                       <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
                     </svg>
                     구글 로그인
-                  </button>
+                  </MGButton>
                 )}
               </div>
             </div>

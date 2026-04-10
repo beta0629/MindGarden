@@ -18,6 +18,7 @@ import { ERP_API } from '../../constants/api';
 const SuperAdminApprovalDashboard = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -30,9 +31,14 @@ const SuperAdminApprovalDashboard = () => {
     loadPendingRequests();
   }, []);
 
-  const loadPendingRequests = async() => {
+  const loadPendingRequests = async(options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError('');
       const list = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS_PENDING_SUPER_ADMIN);
       if (Array.isArray(list)) {
@@ -45,7 +51,11 @@ const SuperAdminApprovalDashboard = () => {
       console.error('승인 대기 목록 로드 실패:', err);
       setError(err?.message || '승인 대기 목록을 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -80,7 +90,7 @@ const SuperAdminApprovalDashboard = () => {
 
       if (data?.success) {
         setShowApprovalModal(false);
-        loadPendingRequests();
+        loadPendingRequests({ silent: true });
       } else {
         setError(data?.message || '승인 처리에 실패했습니다.');
       }
@@ -111,7 +121,7 @@ const SuperAdminApprovalDashboard = () => {
 
       if (data?.success) {
         setShowRejectionModal(false);
-        loadPendingRequests();
+        loadPendingRequests({ silent: true });
       } else {
         setError(data?.message || '거부 처리에 실패했습니다.');
       }
@@ -129,7 +139,8 @@ const SuperAdminApprovalDashboard = () => {
       headerSubtitle="관리자 승인된 구매 요청의 최종 승인"
       loading={loading}
       loadingText="수퍼 관리자 승인 대기 요청을 불러오는 중..."
-      onRefresh={loadPendingRequests}
+      refreshing={refreshing}
+      onRefresh={() => loadPendingRequests({ silent: true })}
       activeMode="super"
     >
       {error && (

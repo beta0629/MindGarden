@@ -22,6 +22,7 @@ import '../ApprovalDashboard.css';
  * @param {string} [props.headerSubtitle] 부제
  * @param {boolean} props.loading
  * @param {string} props.loadingText
+ * @param {boolean} [props.refreshing=false] 헤더 새로고침 등 무음 재조회 중
  * @param {() => void} props.onRefresh 목록 새로고침
  * @param {ApprovalHubMode} props.activeMode 현재 모드 (세그먼트 강조)
  * @param {boolean} [props.showModeSwitcher=true] 일반/상위 승인 전환 바 표시
@@ -33,6 +34,7 @@ const ApprovalHubLayout = ({
   headerSubtitle,
   loading,
   loadingText,
+  refreshing = false,
   onRefresh,
   activeMode,
   showModeSwitcher = true,
@@ -68,6 +70,7 @@ const ApprovalHubLayout = ({
         <ErpButton
           variant="primary"
           onClick={onRefresh}
+          disabled={loading || refreshing}
         >
           <RefreshCw size={16} aria-hidden />
           새로고침
@@ -133,6 +136,7 @@ ApprovalHubLayout.propTypes = {
   headerSubtitle: PropTypes.string,
   loading: PropTypes.bool.isRequired,
   loadingText: PropTypes.string.isRequired,
+  refreshing: PropTypes.bool,
   onRefresh: PropTypes.func.isRequired,
   activeMode: PropTypes.oneOf(['admin', 'super']).isRequired,
   showModeSwitcher: PropTypes.bool,

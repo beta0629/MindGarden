@@ -19,6 +19,7 @@ import { ERP_API } from '../../constants/api';
 const AdminApprovalDashboard = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -31,9 +32,14 @@ const AdminApprovalDashboard = () => {
     loadPendingRequests();
   }, []);
 
-  const loadPendingRequests = async() => {
+  const loadPendingRequests = async(options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError('');
       const list = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS_PENDING_ADMIN);
       if (Array.isArray(list)) {
@@ -46,7 +52,11 @@ const AdminApprovalDashboard = () => {
       console.error('승인 대기 목록 로드 실패:', err);
       setError(err?.message || '승인 대기 목록을 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -81,7 +91,7 @@ const AdminApprovalDashboard = () => {
 
       if (data?.success) {
         setShowApprovalModal(false);
-        loadPendingRequests();
+        loadPendingRequests({ silent: true });
       } else {
         setError(data?.message || '승인 처리에 실패했습니다.');
       }
@@ -112,7 +122,7 @@ const AdminApprovalDashboard = () => {
 
       if (data?.success) {
         setShowRejectionModal(false);
-        loadPendingRequests();
+        loadPendingRequests({ silent: true });
       } else {
         setError(data?.message || '거부 처리에 실패했습니다.');
       }
@@ -130,7 +140,8 @@ const AdminApprovalDashboard = () => {
       headerSubtitle="구매 요청 승인 및 거부"
       loading={loading}
       loadingText="승인 대기 요청을 불러오는 중..."
-      onRefresh={loadPendingRequests}
+      refreshing={refreshing}
+      onRefresh={() => loadPendingRequests({ silent: true })}
       activeMode="admin"
     >
       {error && (

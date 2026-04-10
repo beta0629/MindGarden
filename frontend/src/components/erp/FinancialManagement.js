@@ -64,6 +64,7 @@ const FinancialManagement = () => {
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 0,
@@ -115,16 +116,21 @@ const FinancialManagement = () => {
     if (!sessionLoading && isLoggedIn && user?.id && activeTab === 'transactions') {
       const timeoutId = setTimeout(() => {
         setPagination(prev => ({ ...prev, currentPage: 0 })); // 첫 페이지로 리셋
-        loadData();
+        loadData({ silent: true });
       }, 300); // 디바운싱
       
       return () => clearTimeout(timeoutId);
     }
   }, [filters, sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async () => {
+  const loadData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       switch (activeTab) {
@@ -141,7 +147,11 @@ const FinancialManagement = () => {
       console.error('데이터 로드 실패:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -323,7 +333,7 @@ const FinancialManagement = () => {
       }
       notificationManager.success('거래가 성공적으로 삭제되었습니다.');
       setDeleteModal({ isOpen: false, transaction: null });
-      loadData();
+      loadData({ silent: true });
     } catch (error) {
       console.error('거래 삭제 실패:', error);
       notificationManager.error(toErrorMessage(error.message) || '거래 삭제 중 오류가 발생했습니다.');
@@ -469,7 +479,7 @@ const FinancialManagement = () => {
                 </div>
               }
               filterSlot={
-                activeTab === 'transactions' && !loading && !error ? (
+                activeTab === 'transactions' && !error ? (
                   <ErpFilterToolbar
                     ariaLabel="재무 거래 필터"
                     primaryRow={(
@@ -588,6 +598,7 @@ const FinancialManagement = () => {
                             type="button"
                             onClick={() => setShowAdvancedFilter((v) => !v)}
                             className="mg-v2-button mg-v2-button-secondary"
+                            disabled={silentRefreshing}
                           >
                             고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
                           </button>
@@ -605,13 +616,15 @@ const FinancialManagement = () => {
                               })
                             }
                             className="mg-v2-button mg-v2-button-secondary"
+                            disabled={silentRefreshing}
                           >
                             <RefreshCw size={16} aria-hidden /> 필터 초기화
                           </button>
                           <button
                             type="button"
-                            onClick={() => loadData()}
+                            onClick={() => loadData({ silent: true })}
                             className="mg-v2-button mg-v2-button-primary"
+                            disabled={silentRefreshing}
                           >
                             <Search size={16} aria-hidden /> 검색
                           </button>
@@ -1030,7 +1043,7 @@ const FinancialManagement = () => {
             initialTransaction={editModal.transaction}
             onClose={() => setEditModal({ open: false, transaction: null })}
             onSuccess={() => {
-              loadData();
+              loadData({ silent: true });
               setEditModal({ open: false, transaction: null });
             }}
           />

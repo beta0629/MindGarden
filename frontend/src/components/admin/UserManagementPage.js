@@ -14,6 +14,7 @@ import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ContentSection from '../dashboard-v2/content/ContentSection';
 import ConsultantComprehensiveManagement from './ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './ClientComprehensiveManagement';
 import StaffManagement from './StaffManagement';
@@ -34,7 +35,7 @@ const getTypeFromParams = (searchParams) => {
 const UserManagementPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, hasRole } = useSession();
+  const { hasRole } = useSession();
   const type = getTypeFromParams(searchParams);
 
   const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
@@ -54,46 +55,44 @@ const UserManagementPage = () => {
 
   return (
     <AdminCommonLayout>
-      <div className="mg-v2-ad-b0kla mg-v2-user-management-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
-            <ContentHeader
-              title="통합 사용자 관리"
-              subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
-              titleId="user-management-page-title"
-            />
-            <div className="mg-v2-ad-b0kla__pill-toggle">
+      <ContentHeader
+        title="통합 사용자 관리"
+        subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
+        titleId="user-management-page-title"
+      />
+      <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
+        <ContentSection noCard>
+          <div className="mg-v2-ad-b0kla__pill-toggle">
+            <button
+              type="button"
+              className={`mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              onClick={() => handleTypeChange(TYPE_CONSULTANT)}
+            >
+              상담사
+            </button>
+            {canManageClients && (
               <button
                 type="button"
-                className={`mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => handleTypeChange(TYPE_CONSULTANT)}
+                className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => handleTypeChange(TYPE_CLIENT)}
               >
-                상담사
+                내담자
               </button>
-              {canManageClients && (
-                <button
-                  type="button"
-                  className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                  onClick={() => handleTypeChange(TYPE_CLIENT)}
-                >
-                  내담자
-                </button>
-              )}
-              <button
-                type="button"
-                className={`mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => handleTypeChange(TYPE_STAFF)}
-              >
-                스태프
-              </button>
-            </div>
+            )}
+            <button
+              type="button"
+              className={`mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              onClick={() => handleTypeChange(TYPE_STAFF)}
+            >
+              스태프
+            </button>
+          </div>
+        </ContentSection>
 
-            {type === TYPE_CONSULTANT && <ConsultantComprehensiveManagement embedded />}
-            {type === TYPE_CLIENT && canManageClients && <ClientComprehensiveManagement embedded />}
-            {type === TYPE_STAFF && <StaffManagement embedded />}
-          </ContentArea>
-        </div>
-      </div>
+        {type === TYPE_CONSULTANT && <ConsultantComprehensiveManagement embedded />}
+        {type === TYPE_CLIENT && canManageClients && <ClientComprehensiveManagement embedded />}
+        {type === TYPE_STAFF && <StaffManagement embedded />}
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

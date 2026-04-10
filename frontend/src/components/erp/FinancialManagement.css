@@ -24,3 +24,18 @@
   margin: 0;
   padding-left: var(--base-unit-xl);
 }
+
+/* 허브(일상 거래/환불) + 뷰(거래·달력·대시보드) 스택 — ContentArea 내부만 */
+.mg-v2-financial-page-hub-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-grid-gap, var(--spacing-md));
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-financial-pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+}

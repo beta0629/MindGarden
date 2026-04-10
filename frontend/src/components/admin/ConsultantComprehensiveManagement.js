@@ -988,33 +988,34 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
         return (
             <AdminCommonLayout>
-                <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
-                    <div className="mg-v2-ad-b0kla__container">
-                        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-                    </div>
-                </div>
+                <ContentArea>
+                    <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+                </ContentArea>
             </AdminCommonLayout>
         );
     }
 
     const contentBlock = (
         <>
-            <ContentHeader
-                            title="상담사 관리"
-                            subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
-                            actions={
-                                <button
-                                    type="button"
-                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                                    onClick={() => handleOpenModal('create')}
-                                >
-                                    <Plus size={20} />
-                                    새 상담사 등록
-                                </button>
-                            }
-                        />
+            {!embedded && (
+                <ContentHeader
+                    title="상담사 관리"
+                    subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
+                    actions={
+                        <button
+                            type="button"
+                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                            onClick={() => handleOpenModal('create')}
+                        >
+                            <Plus size={20} />
+                            새 상담사 등록
+                        </button>
+                    }
+                />
+            )}
 
-                        <div className="mg-v2-ad-b0kla__pill-toggle">
+            <ContentSection noCard>
+                <div className="mg-v2-ad-b0kla__pill-toggle">
                             <button
                                 type="button"
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
@@ -1030,6 +1031,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 기본관리
                             </button>
                         </div>
+            </ContentSection>
 
                         {mainTab === 'comprehensive' ? (
                             <>
@@ -1084,6 +1086,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             />
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
+                                            {embedded && (
+                                                <button
+                                                    type="button"
+                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                                    onClick={() => handleOpenModal('create')}
+                                                    style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
+                                                >
+                                                    <Plus size={16} style={{ marginRight: '4px' }} />
+                                                    새 상담사 등록
+                                                </button>
+                                            )}
                                             {consultantFilterOptions.map((opt) => (
                                                 <button
                                                     key={opt.value}
@@ -1298,6 +1311,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             />
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
+                                            {embedded && (
+                                                <button
+                                                    type="button"
+                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                                    onClick={() => handleOpenModal('create')}
+                                                    style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
+                                                >
+                                                    <Plus size={16} style={{ marginRight: '4px' }} />
+                                                    새 상담사 등록
+                                                </button>
+                                            )}
                                             {consultantFilterOptions.map((opt) => (
                                                 <button
                                                     key={opt.value}
@@ -1992,14 +2016,10 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     return (
         <AdminCommonLayout>
-            <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
-                <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea>
-                        {contentBlock}
-                    </ContentArea>
-                    {modalsBlock}
-                </div>
-            </div>
+            <ContentArea>
+                {contentBlock}
+            </ContentArea>
+            {modalsBlock}
         </AdminCommonLayout>
     );
 };

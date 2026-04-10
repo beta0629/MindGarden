@@ -507,10 +507,12 @@ const StaffManagement = ({ embedded = false }) => {
 
   return (
     <>
-      <ContentHeader
-        title="스태프 관리"
-        subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
-      />
+      {!embedded && (
+        <ContentHeader
+          title="스태프 관리"
+          subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
+        />
+      )}
 
       <ContentSection noCard className="mg-v2-mapping-kpi-section">
         <div className="mg-v2-mapping-kpi-section__grid">

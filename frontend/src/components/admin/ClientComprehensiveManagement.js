@@ -469,33 +469,34 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
         return (
             <AdminCommonLayout title="내담자 종합관리">
-                <div className="mg-v2-ad-b0kla mg-v2-client-management">
-                    <div className="mg-v2-ad-b0kla__container">
-                        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-                    </div>
-                </div>
+                <ContentArea>
+                    <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+                </ContentArea>
             </AdminCommonLayout>
         );
     }
 
     const contentBlock = (
         <>
-            <ContentHeader
-                            title="내담자 관리"
-                            subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
-                            actions={
-                                <button
-                                    type="button"
-                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                                    onClick={handleCreateClient}
-                                >
-                                    <Plus size={20} />
-                                    새 내담자 등록
-                                </button>
-                            }
-                        />
+            {!embedded && (
+                <ContentHeader
+                    title="내담자 관리"
+                    subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                    actions={
+                        <button
+                            type="button"
+                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                            onClick={handleCreateClient}
+                        >
+                            <Plus size={20} />
+                            새 내담자 등록
+                        </button>
+                    }
+                />
+            )}
 
-                        <div className="mg-v2-ad-b0kla__pill-toggle">
+            <ContentSection noCard>
+                <div className="mg-v2-ad-b0kla__pill-toggle">
                             <button
                                 type="button"
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
@@ -525,6 +526,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 통계
                             </button>
                         </div>
+            </ContentSection>
 
                         <ContentSection noCard className="mg-v2-mapping-kpi-section">
                             <div className="mg-v2-mapping-kpi-section__grid">
@@ -577,6 +579,17 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     />
                                 </div>
                                 <div className="mg-v2-mapping-search-section__chips">
+                                    {embedded && (
+                                        <button
+                                            type="button"
+                                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                            onClick={handleCreateClient}
+                                            style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
+                                        >
+                                            <Plus size={16} style={{ marginRight: '4px' }} />
+                                            새 내담자 등록
+                                        </button>
+                                    )}
                                     {clientFilterOptions.map((opt) => (
                                         <button
                                             key={opt.value}
@@ -783,14 +796,10 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     return (
         <AdminCommonLayout title="내담자 종합관리">
-            <div className="mg-v2-ad-b0kla mg-v2-client-management">
-                <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea>
-                        {contentBlock}
-                    </ContentArea>
-                    {modalsBlock}
-                </div>
-            </div>
+            <ContentArea>
+                {contentBlock}
+            </ContentArea>
+            {modalsBlock}
         </AdminCommonLayout>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -7,7 +7,6 @@ import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
-import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
@@ -40,8 +39,9 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar } from './common';
+import { ErpFilterToolbar, ErpSafeText } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -52,6 +52,8 @@ const TRANSACTION_VIEW_MODE_OPTIONS = [
   { value: 'card', icon: LayoutGrid, label: '카드' },
   { value: 'table', icon: List, label: '테이블' }
 ];
+
+const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
 
 /**
  * ERP 재무 관리 페이지
@@ -184,13 +186,11 @@ const FinancialManagement = () => {
       if (user?.branchCode) params.branchCode = user.branchCode;
 
       const response = await StandardizedApi.get('/api/v1/admin/financial-transactions', params);
-      console.log('📡 API 응답:', response);
-      
+
       // apiGet이 {success, data} 형태면 data만 반환하므로, 배열인지 객체인지 확인
       if (Array.isArray(response)) {
         // apiGet이 data 배열만 반환한 경우
         let filteredTransactions = response || [];
-        console.log('📊 조회된 거래 데이터 (배열):', filteredTransactions.length, '건');
         
         if (filters.searchText) {
           const searchLower = filters.searchText.toLowerCase();
@@ -214,9 +214,7 @@ const FinancialManagement = () => {
         // apiGet이 전체 응답 객체를 반환한 경우
         if (response.success) {
           let filteredTransactions = response.data || [];
-          console.log('📊 조회된 거래 데이터 (객체):', filteredTransactions.length, '건');
-          console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
-          
+
           if (filters.searchText) {
             const searchLower = filters.searchText.toLowerCase();
             filteredTransactions = filteredTransactions.filter(transaction => 
@@ -238,25 +236,23 @@ const FinancialManagement = () => {
         } else {
           // 실제 API 에러인 경우
           const errorMessage = response?.message || '재무 거래 목록을 불러올 수 없습니다.';
-          console.error('❌ API 에러:', errorMessage, response);
+          console.error('API 오류:', errorMessage, response);
           setError(errorMessage);
           
           if (response?.redirectToLogin) {
-            console.error('🔒 세션 만료 - 로그인 화면으로 이동');
+            console.error('세션 만료 — 로그인 화면으로 이동');
             redirectToLoginPageOnce();
             return;
           }
         }
       } else {
-        // 응답이 null이거나 예상치 못한 형태
-        console.warn('⚠️ 예상치 못한 응답 형태:', response);
         setError('재무 거래 목록을 불러올 수 없습니다.');
       }
     } catch (err) {
       console.error('재무 거래 로드 실패:', err);
       
       if (err.response?.status === 401 || err.status === 401) {
-        console.error('🔒 인증 오류 - 로그인 화면으로 이동');
+        console.error('인증 오류 — 로그인 화면으로 이동');
         redirectToLoginPageOnce();
         return;
       }
@@ -265,7 +261,7 @@ const FinancialManagement = () => {
       const errorMessage = err.response?.data?.message || 
                           err.message || 
                           '재무 거래 목록을 불러오는 중 오류가 발생했습니다. 서버 연결을 확인해주세요.';
-      console.error('❌ 네트워크/서버 에러:', errorMessage);
+      console.error('네트워크/서버 오류:', errorMessage);
       setError(errorMessage);
     }
   };
@@ -303,22 +299,10 @@ const FinancialManagement = () => {
       branchCode: user?.branchCode || '',
       branchName: branchName
     });
-    
-    console.log('📊 대시보드 통계 업데이트:', {
-      이번달거래수: thisMonthTransactions.length,
-      총수입: totalIncome,
-      총지출: totalExpense,
-      순이익: totalIncome - totalExpense
-    });
   };
 
   const loadDashboard = async () => {
-    try {
-      console.log('대시보드 데이터 로드');
-    } catch (err) {
-      console.error('대시보드 로드 실패:', err);
-      setError('대시보드 데이터를 불러오는 중 오류가 발생했습니다.');
-    }
+    // 대시보드 전용 API 연동 시 이곳에서 로드
   };
 
   const handleDeleteTransaction = (transaction) => {
@@ -393,8 +377,13 @@ const FinancialManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="재무 관리">
-        <ContentArea className="erp-system">
+      <AdminCommonLayout>
+        <ContentHeader
+          title="재무 관리"
+          subtitle="세션 정보를 확인하는 중입니다."
+          titleId={FINANCIAL_PAGE_TITLE_ID}
+        />
+        <ContentArea className="erp-system" ariaLabel="재무 관리">
           <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
         </ContentArea>
       </AdminCommonLayout>
@@ -403,8 +392,13 @@ const FinancialManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-        <ContentArea className="erp-system">
+      <AdminCommonLayout>
+        <ContentHeader
+          title="재무 관리"
+          subtitle="재무 거래 및 회계를 관리하려면 로그인해주세요."
+          titleId={FINANCIAL_PAGE_TITLE_ID}
+        />
+        <ContentArea className="erp-system" ariaLabel="재무 관리">
           <div className="erp-error">
             <h3>로그인이 필요합니다.</h3>
             <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -414,19 +408,36 @@ const FinancialManagement = () => {
     );
   }
 
+  const financialPageSubtitle = dashboardStats.branchName
+    ? `재무 거래 및 회계를 관리합니다. (${dashboardStats.branchName})`
+    : '재무 거래 및 회계를 관리할 수 있습니다.';
+
+  const pageHeaderActions =
+    activeTab === 'transactions' ? (
+      <button
+        type="button"
+        className="mg-v2-button mg-v2-button-secondary"
+        onClick={() => {}}
+        aria-label="거래 목록 내보내기"
+      >
+        <Download size={16} aria-hidden /> 내보내기
+      </button>
+    ) : null;
+
   return (
-    <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-      <Fragment>
-        <ContentArea className="erp-system">
-            <ContentHeader
-              title="재무 관리"
-              subtitle="재무 거래 및 회계를 관리할 수 있습니다."
-            />
-            <ErpPageShell
+    <AdminCommonLayout>
+      <ContentHeader
+        title="재무 관리"
+        subtitle={financialPageSubtitle}
+        actions={pageHeaderActions}
+        titleId={FINANCIAL_PAGE_TITLE_ID}
+      />
+      <ContentArea className="erp-system" ariaLabel="재무 관리">
+        <ErpPageShell
               tabsSlot={
-                <>
+                <div className="mg-v2-financial-page-hub-tabs">
                   <FinancialRefundHubTabs />
-                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
+                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="재무 뷰 전환">
                     <button
                       type="button"
                       role="tab"
@@ -455,7 +466,7 @@ const FinancialManagement = () => {
                       <LayoutDashboard size={18} aria-hidden /> 대시보드
                     </button>
                   </div>
-                </>
+                </div>
               }
               filterSlot={
                 activeTab === 'transactions' && !loading && !error ? (
@@ -670,7 +681,7 @@ const FinancialManagement = () => {
                   >
                     <div className="mg-v2-mapping-list-block__header">
                       <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
-                      <div className="d-flex gap-2 align-items-center">
+                      <div className="mg-v2-flex mg-v2-gap-sm mg-v2-items-center">
                         <ViewModeToggle
                           viewMode={transactionViewMode}
                           onViewModeChange={setTransactionViewMode}
@@ -678,9 +689,6 @@ const FinancialManagement = () => {
                           className="mg-v2-mapping-list-block__toggle"
                           ariaLabel="목록 보기 전환"
                         />
-                        <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
-                          <Download size={16} aria-hidden /> 내보내기
-                        </button>
                       </div>
                     </div>
 
@@ -727,7 +735,7 @@ const FinancialManagement = () => {
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <span><SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText></span>
+                              <span><ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</ErpSafeText></span>
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">금액</span>
@@ -745,7 +753,7 @@ const FinancialManagement = () => {
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">상태</span>
                               <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
-                                <SafeText>{getStatusLabel(transaction.status)}</SafeText>
+                                <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
                               </span>
                             </div>
                           </div>
@@ -786,7 +794,7 @@ const FinancialManagement = () => {
 
                   {/* 페이지네이션 */}
                   {pagination.totalPages > 1 && (
-                    <div className="d-flex justify-content-center mt-4">
+                    <div className="mg-financial-pagination-wrap">
                       <nav>
                         <ul className="pagination">
                           <li className={`page-item ${pagination.currentPage === 0 ? 'disabled' : ''}`}>
@@ -958,7 +966,7 @@ const FinancialManagement = () => {
           )}
               </div>
             </ErpPageShell>
-        </ContentArea>
+      </ContentArea>
 
         {/* 거래 상세 정보 모달 */}
         {showDetailModal && selectedTransaction && (
@@ -1008,9 +1016,9 @@ const FinancialManagement = () => {
               </li>
               <li>
                 금액:{' '}
-                <SafeText fallback="-">
+                <ErpSafeText fallback="-">
                   {`${toSafeNumber(deleteModal.transaction.amount).toLocaleString()}원`}
-                </SafeText>
+                </ErpSafeText>
               </li>
             </ul>
           </UnifiedModal>
@@ -1027,7 +1035,6 @@ const FinancialManagement = () => {
             }}
           />
         )}
-      </Fragment>
     </AdminCommonLayout>
   );
 };
@@ -1120,7 +1127,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </div>
           <div>
             <strong>카테고리:</strong>{' '}
-            <SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText>
+            <ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</ErpSafeText>
           </div>
           <div>
             <strong>금액:</strong>
@@ -1132,7 +1139,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
           </div>
           <div className="mg-v2-transaction-detail-form-grid__item--span2">
-            <strong>설명:</strong> <SafeText fallback="-">{transaction.description}</SafeText>
+            <strong>설명:</strong> <ErpSafeText fallback="-">{transaction.description}</ErpSafeText>
           </div>
         </div>
       </div>
@@ -1152,7 +1159,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 <strong>매핑 ID:</strong> #{toDisplayString(mappingDetail.mappingId)}
               </div>
               <div>
-                <strong>패키지명:</strong> <SafeText fallback="-">{mappingDetail.packageName}</SafeText>
+                <strong>패키지명:</strong> <ErpSafeText fallback="-">{mappingDetail.packageName}</ErpSafeText>
               </div>
               <div>
                 <strong>총 회기수:</strong> {toDisplayString(mappingDetail.totalSessions)}회
@@ -1180,7 +1187,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                     {mappingDetail.isConsistent ? '정상' : '불일치'}
                   </span>
                   {!mappingDetail.isConsistent && (
-                    <div className="mg-v2-transaction-detail-consistency-msg"><SafeText>{mappingDetail.consistencyMessage}</SafeText></div>
+                    <div className="mg-v2-transaction-detail-consistency-msg"><ErpSafeText>{mappingDetail.consistencyMessage}</ErpSafeText></div>
                   )}
                 </div>
               )}
@@ -1190,7 +1197,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <div className="mg-v2-transaction-detail-related-list">
                     {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                       <div key={index} className="mg-v2-transaction-detail-related-item">
-                        #{toDisplayString(relatedTx.id)} - <SafeText>{relatedTx.type}</SafeText> - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
+                        #{toDisplayString(relatedTx.id)} - <ErpSafeText>{relatedTx.type}</ErpSafeText> - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
                       </div>
                     ))}
                   </div>
@@ -1210,7 +1217,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </h3>
           <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
             <div>
-              <strong>연동 유형:</strong> <SafeText>{transaction.relatedEntityType}</SafeText>
+              <strong>연동 유형:</strong> <ErpSafeText>{transaction.relatedEntityType}</ErpSafeText>
             </div>
             <div>
               <strong>연동 ID:</strong> #{toDisplayString(transaction.relatedEntityId)}

@@ -1,5 +1,7 @@
 # 디자인 시스템 문서
 
+**🚨 [MindGarden Design SSOT (단일 진입점)](./MINDGARDEN_DESIGN_SSOT.md)**: 디자인 토큰·레이아웃·패턴의 최상위 기준 문서입니다.
+
 **위치**: `docs/design-system/`  
 **용도**: 디자인 시스템·토큰·컴포넌트 스펙 및 관련 가이드.  
 **표준 문서**: `docs/standards/` (표준·가이드 전반) 참조.

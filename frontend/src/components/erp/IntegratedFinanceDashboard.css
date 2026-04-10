@@ -1044,3 +1044,11 @@
 .integrated-finance-flex-wrap {
   flex-wrap: wrap;
 }
+
+/* P4 ErpFilterToolbar — 대시보드 새로고침 secondary 우측 정렬 (구매·예산과 동일) */
+.integrated-finance-content .integrated-finance__toolbar-actions,
+.integrated-finance-content .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

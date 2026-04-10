@@ -20,6 +20,7 @@ import ErpModal from './common/ErpModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import {
   ErpEmptyState,
+  ErpFilterToolbar,
   ErpKpiStatCard,
   ErpSafeNumber,
   ErpSafeText,
@@ -47,7 +48,8 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -204,7 +206,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);
-  
+  const [refreshingDashboard, setRefreshingDashboard] = useState(false);
+
   // 권한 체크 중복 실행 방지
   const permissionCheckedRef = useRef(false);
 
@@ -335,9 +338,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setRefreshingDashboard(true);
+      } else {
+        setLoading(true);
+      }
       const result = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD);
 
       if (result == null) {
@@ -369,7 +377,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setRefreshingDashboard(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -483,6 +495,22 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             role="region"
             aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
           >
+            <ErpFilterToolbar
+              ariaLabel="수입·지출 도구"
+              secondaryRow={(
+                <div className="integrated-finance__toolbar-actions">
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--secondary"
+                    onClick={() => fetchDashboardData({ silent: true })}
+                    disabled={refreshingDashboard}
+                  >
+                    <RefreshCw size={16} aria-hidden />
+                    데이터 새로고침
+                  </button>
+                </div>
+              )}
+            />
             {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
             {activeTab === 'journal-entries' && <JournalEntriesTab />}
             {activeTab === 'ledgers' && <LedgersTab />}
@@ -502,7 +530,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <FinancialTransactionForm
           onClose={() => setShowTransactionForm(false)}
           onSuccess={() => {
-            fetchDashboardData();
+            fetchDashboardData({ silent: true });
             setShowTransactionForm(false);
           }}
         />
@@ -512,7 +540,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <QuickExpenseForm
           onClose={() => setShowQuickExpenseForm(false)}
           onSuccess={() => {
-            fetchDashboardData();
+            fetchDashboardData({ silent: true });
             setShowQuickExpenseForm(false);
           }}
         />

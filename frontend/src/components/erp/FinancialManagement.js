@@ -6,6 +6,7 @@ import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import MGButton from '../common/MGButton';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
@@ -621,27 +622,18 @@ const FinancialManagement = () => {
                             disabled={silentRefreshing}
                             aria-busy={silentRefreshing}
                           >
-                            <RefreshCw
-                              size={16}
-                              aria-hidden
-                              className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                            />{' '}
-                            필터 초기화
+                            <RefreshCw size={16} aria-hidden /> 필터 초기화
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => loadData({ silent: true })}
+                          <MGButton
+                            variant="primary"
+                            size="small"
                             className="mg-v2-button mg-v2-button-primary"
-                            disabled={silentRefreshing}
-                            aria-busy={silentRefreshing}
+                            onClick={() => loadData({ silent: true })}
+                            loading={silentRefreshing}
+                            loadingText="검색 중..."
                           >
-                            <Search
-                              size={16}
-                              aria-hidden
-                              className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                            />{' '}
-                            검색
-                          </button>
+                            <Search size={16} aria-hidden /> 검색
+                          </MGButton>
                         </div>
                       </div>
                     )}

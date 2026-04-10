@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { Settings, Users, Calculator, Receipt, HelpCircle, RefreshCw } from 'lucide-react';
+import { Settings, Users, Calculator, Receipt, HelpCircle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -610,21 +610,18 @@ const SalaryManagement = () => {
                 )}
                 secondaryRow={(
                   <div className="salary-filter-block__run-calc">
-                    <button
-                      type="button"
-                      className="mg-v2-button mg-v2-button--secondary"
+                    <MGButton
+                      variant="secondary"
+                      size="small"
                       onClick={handleDataRefresh}
-                      disabled={silentRefreshing || loading}
+                      loading={silentRefreshing}
+                      loadingText="새로고침 중..."
+                      disabled={loading}
                       aria-label="데이터 새로고침"
-                      aria-busy={silentRefreshing}
+                      className="mg-v2-button mg-v2-button--secondary"
                     >
-                      <RefreshCw
-                        size={16}
-                        aria-hidden
-                        className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
-                      />
                       데이터 새로고침
-                    </button>
+                    </MGButton>
                     <MGButton
                       variant="primary"
                       size="medium"

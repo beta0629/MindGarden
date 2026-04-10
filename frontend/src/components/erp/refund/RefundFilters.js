@@ -3,6 +3,7 @@ import React from 'react';
 import { RefreshCw, Download } from 'lucide-react';
 import CardContainer from '../../common/CardContainer';
 import { ErpFilterToolbar } from '../common';
+import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './RefundFilters.css';
 
@@ -23,6 +24,7 @@ const STATUS_OPTIONS = [
 
 /**
  * 환불 필터 및 제어 컴포넌트
+ * 부모가 무음(silent) 재조회용 `onRefresh`를 넘기는 경우 `silentRefreshing`을 함께 연결하세요.
  */
 const RefundFilters = ({
   selectedPeriod,
@@ -30,7 +32,8 @@ const RefundFilters = ({
   onPeriodChange,
   onStatusChange,
   onRefresh,
-  onExportExcel
+  onExportExcel,
+  silentRefreshing = false
 }) => {
   return (
     <section className="mg-v2-erp-refund-panel" aria-labelledby="refund-filters-title">
@@ -95,9 +98,15 @@ const RefundFilters = ({
                   type="button"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={onRefresh}
+                  disabled={silentRefreshing}
+                  aria-busy={silentRefreshing}
                   aria-label="새로고침"
                 >
-                  <RefreshCw size={16} aria-hidden />
+                  <RefreshCw
+                    size={16}
+                    aria-hidden
+                    className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                  />
                   새로고침
                 </button>
                 <button

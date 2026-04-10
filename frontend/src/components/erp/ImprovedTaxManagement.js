@@ -101,6 +101,7 @@ const ImprovedTaxManagement = () => {
   const [calculationsList, setCalculationsList] = useState([]);
   const [taxCategories, setTaxCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -113,15 +114,14 @@ const ImprovedTaxManagement = () => {
     description: ''
   });
 
-  useEffect(() => {
-    if (sessionIsLoggedIn && sessionUser?.id) {
-      loadData();
-    }
-  }, [sessionIsLoggedIn, sessionUser?.id, activeTab, selectedPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadData = async () => {
+  const loadData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       switch (activeTab) {
@@ -144,9 +144,19 @@ const ImprovedTaxManagement = () => {
       console.error('데이터 로드 실패:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
+
+  useEffect(() => {
+    if (sessionIsLoggedIn && sessionUser?.id) {
+      loadData({});
+    }
+  }, [sessionIsLoggedIn, sessionUser?.id, activeTab, selectedPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadTaxOverview = async () => {
     try {
@@ -326,6 +336,25 @@ const ImprovedTaxManagement = () => {
                     )}
                   </div>
                 )}
+                secondaryRow={(
+                  <div className="im-tax-mgmt__filter-toolbar-row">
+                    <button
+                      type="button"
+                      className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
+                      onClick={() => loadData({ silent: true })}
+                      disabled={loading || silentRefreshing}
+                      aria-busy={silentRefreshing}
+                      aria-label="데이터 새로고침"
+                    >
+                      <RefreshCw
+                        className={silentRefreshing ? 'erp-refresh-icon--spin' : undefined}
+                        size={16}
+                        aria-hidden
+                      />
+                      데이터 새로고침
+                    </button>
+                  </div>
+                )}
               />
             </>
           }
@@ -375,7 +404,7 @@ const ImprovedTaxManagement = () => {
                 <button
                   type="button"
                   className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline"
-                  onClick={loadData}
+                  onClick={() => loadData({})}
                 >
                   <RefreshCw size={16} aria-hidden />
                   다시 시도

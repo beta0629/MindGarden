@@ -239,7 +239,8 @@ const PurchaseRequestForm = () => {
                     type="button"
                     variant="primary"
                     onClick={() => loadItems({ silent: true })}
-                    disabled={silentRefreshing}
+                    loading={silentRefreshing}
+                    loadingText="불러오는 중..."
                   >
                     다시 불러오기
                   </MGButton>

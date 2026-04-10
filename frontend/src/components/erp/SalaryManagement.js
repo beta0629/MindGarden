@@ -985,6 +985,8 @@ const SalaryManagement = () => {
                       variant="primary"
                       size="small"
                       onClick={() => loadTaxStatistics(selectedPeriod)}
+                      loading={loading && activeTab === TAB_TAX}
+                      loadingText="조회 중..."
                       disabled={!selectedPeriod || loading || silentRefreshing}
                       className="mg-v2-button mg-v2-button--primary"
                     >

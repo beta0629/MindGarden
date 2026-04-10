@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
 import { getLucideIcon } from '../../utils/iconUtils';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
@@ -10,7 +10,7 @@ import { ErpSafeText } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 
 /**
- * 빠른 지출 등록 컴포넌트 (ErpModal + 모달 내 금액 입력)
+ * 빠른 지출 등록 컴포넌트 (UnifiedModal + 모달 내 금액 입력)
  */
 const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -148,11 +148,14 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const isVatApplicable = selectedExpense ? selectedExpense.categoryCode !== 'SALARY' : false;
 
   return (
-    <ErpModal
+    <UnifiedModal
       isOpen={true}
       onClose={onClose}
       title="빠른 지출 등록"
       size="medium"
+      backdropClick={true}
+      showCloseButton={true}
+      className="mg-v2-ad-b0kla"
     >
       {error && (
         <SafeErrorDisplay error={error} variant="inline" className="quick-expense-error" />
@@ -235,7 +238,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           </div>
         </>
       )}
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 

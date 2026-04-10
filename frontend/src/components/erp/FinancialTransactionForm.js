@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
@@ -249,11 +248,14 @@ const FinancialTransactionForm = ({
   );
 
   return (
-    <ErpModal
+    <UnifiedModal
       isOpen={true}
       onClose={onClose}
       title={mode === 'edit' ? '거래 수정' : '수입/지출 등록'}
       size="medium"
+      backdropClick={true}
+      showCloseButton={true}
+      className="mg-v2-ad-b0kla"
     >
 
         {successMessage && (
@@ -456,7 +458,7 @@ const FinancialTransactionForm = ({
             </MGButton>
           </div>
         </form>
-    </ErpModal>
+    </UnifiedModal>
   );
 };
 

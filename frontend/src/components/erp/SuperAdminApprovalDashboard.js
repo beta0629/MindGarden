@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import CardContainer from '../common/CardContainer';
 import ErpButton from './common/ErpButton';
 import { ErpSafeText } from './common';
-import ErpModal from './common/ErpModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
@@ -231,11 +231,13 @@ const SuperAdminApprovalDashboard = () => {
         </div>
       )}
 
-      <ErpModal
+      <UnifiedModal
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
         title="구매 요청 최종 승인"
-        size="medium"
+        size="auto"
+        backdropClick
+        className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
           <div>
@@ -280,13 +282,15 @@ const SuperAdminApprovalDashboard = () => {
             </div>
           </div>
         )}
-      </ErpModal>
+      </UnifiedModal>
 
-      <ErpModal
+      <UnifiedModal
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
         title="구매 요청 거부"
-        size="medium"
+        size="auto"
+        backdropClick
+        className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
           <div>
@@ -333,7 +337,7 @@ const SuperAdminApprovalDashboard = () => {
             </div>
           </div>
         )}
-      </ErpModal>
+      </UnifiedModal>
     </ApprovalHubLayout>
   );
 };

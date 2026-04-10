@@ -95,6 +95,15 @@
   border-radius: 2px;
 }
 
+.salary-filter-block .mg-v2-erp-filter-toolbar {
+  gap: var(--mg-spacing-md);
+}
+
+.salary-filter-block .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .salary-filter-block__group {
   display: flex;
   flex-wrap: wrap;
@@ -118,7 +127,9 @@
 }
 
 .salary-filter-block__run-calc {
-  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .salary-filter-block__period-display {
@@ -483,8 +494,8 @@
     min-width: 100%;
   }
 
-  .salary-filter-block__run-calc {
-    margin-left: 0;
+  .salary-filter-block .mg-v2-erp-filter-toolbar__secondary {
+    justify-content: flex-start;
   }
 
   .salary-filter-block__run-calc .mg-v2-button {
@@ -538,11 +549,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     align-items: end;
-  }
-
-  .salary-filter-block__run-calc {
-    grid-column: 1 / -1;
-    margin-left: 0;
   }
 
   .mg-v2-ad-b0kla__admin-grid.salary-profile-block__grid {

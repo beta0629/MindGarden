@@ -38,6 +38,7 @@ import SafeText from '../common/SafeText';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import ErpPageShell from './shell/ErpPageShell';
+import { ErpFilterToolbar } from './common';
 
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
@@ -500,103 +501,110 @@ const SalaryManagement = () => {
                 <span className="salary-filter-block__accent" aria-hidden />
                 계산 대상 선택
               </h2>
-              <div className="salary-filter-block__group">
-                <div className="salary-filter-block__field">
-                  <label htmlFor="salary-period" className="mg-v2-form-label">기간</label>
-                  <select
-                    id="salary-period"
-                    value={selectedPeriod}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedPeriod(val);
-                      if (val) {
-                        const [y, m] = val.split('-');
-                        loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                        if (activeTab === TAB_TAX) loadTaxStatistics(val);
-                      } else {
-                        setCalculationPeriodDisplay(null);
-                      }
-                    }}
-                    className="mg-v2-select"
-                    aria-label="기간 선택"
-                  >
-                    <option value="">기간 선택</option>
-                    {periodOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
-                    ))}
-                  </select>
-                </div>
-                {selectedPeriod && (
-                  <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
-                    <span className="mg-v2-form-label">실제 계산 기간</span>
-                    <span className="salary-filter-block__period-text">
-                      {calculationPeriodDisplay
-                        ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
-                        : (() => {
-                            const [y, m] = selectedPeriod.split('-');
-                            const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
-                            return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
-                          })()}
-                    </span>
-                    <button
-                      type="button"
-                      className="salary-filter-block__period-link"
-                      onClick={() => setIsConfigModalOpen(true)}
-                      title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
-                      aria-label="기산일 설정"
-                    >
-                      <HelpCircle size={14} aria-hidden />
-                      <span className="sr-only">기산일 설정</span>
-                    </button>
+              <ErpFilterToolbar
+                ariaLabel="급여 계산 대상 선택"
+                primaryRow={(
+                  <div className="salary-filter-block__group">
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-period" className="mg-v2-form-label">기간</label>
+                      <select
+                        id="salary-period"
+                        value={selectedPeriod}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedPeriod(val);
+                          if (val) {
+                            const [y, m] = val.split('-');
+                            loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
+                            if (activeTab === TAB_TAX) loadTaxStatistics(val);
+                          } else {
+                            setCalculationPeriodDisplay(null);
+                          }
+                        }}
+                        className="mg-v2-select"
+                        aria-label="기간 선택"
+                      >
+                        <option value="">기간 선택</option>
+                        {periodOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedPeriod && (
+                      <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
+                        <span className="mg-v2-form-label">실제 계산 기간</span>
+                        <span className="salary-filter-block__period-text">
+                          {calculationPeriodDisplay
+                            ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
+                            : (() => {
+                                const [y, m] = selectedPeriod.split('-');
+                                const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
+                                return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
+                              })()}
+                        </span>
+                        <button
+                          type="button"
+                          className="salary-filter-block__period-link"
+                          onClick={() => setIsConfigModalOpen(true)}
+                          title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
+                          aria-label="기산일 설정"
+                        >
+                          <HelpCircle size={14} aria-hidden />
+                          <span className="sr-only">기산일 설정</span>
+                        </button>
+                      </div>
+                    )}
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-consultant" className="mg-v2-form-label">상담사</label>
+                      <select
+                        id="salary-consultant"
+                        value={selectedConsultant?.id || ''}
+                        onChange={(e) => {
+                          const consultant = consultants.find(c => c.id === parseInt(e.target.value, 10));
+                          setSelectedConsultant(consultant);
+                          if (consultant) loadSalaryCalculations(consultant.id);
+                        }}
+                        className="mg-v2-select"
+                        aria-label="상담사 선택"
+                      >
+                        <option value="">상담사 선택</option>
+                        {consultants.map(c => (
+                          <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-payday" className="mg-v2-form-label">급여 지급일</label>
+                      <select
+                        id="salary-payday"
+                        value={selectedPayDay}
+                        onChange={(e) => setSelectedPayDay(e.target.value)}
+                        className="mg-v2-select"
+                        aria-label="급여 지급일 선택"
+                      >
+                        {payDayOptions.map(opt => (
+                          <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
-                <div className="salary-filter-block__field">
-                  <label htmlFor="salary-consultant" className="mg-v2-form-label">상담사</label>
-                  <select
-                    id="salary-consultant"
-                    value={selectedConsultant?.id || ''}
-                    onChange={(e) => {
-                      const consultant = consultants.find(c => c.id === parseInt(e.target.value, 10));
-                      setSelectedConsultant(consultant);
-                      if (consultant) loadSalaryCalculations(consultant.id);
-                    }}
-                    className="mg-v2-select"
-                    aria-label="상담사 선택"
-                  >
-                    <option value="">상담사 선택</option>
-                    {consultants.map(c => (
-                      <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="salary-filter-block__field">
-                  <label htmlFor="salary-payday" className="mg-v2-form-label">급여 지급일</label>
-                  <select
-                    id="salary-payday"
-                    value={selectedPayDay}
-                    onChange={(e) => setSelectedPayDay(e.target.value)}
-                    className="mg-v2-select"
-                    aria-label="급여 지급일 선택"
-                  >
-                    {payDayOptions.map(opt => (
-                      <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="salary-filter-block__run-calc">
-                  <MGButton
-                    variant="primary"
-                    size="medium"
-                    onClick={executeSalaryCalculation}
-                    disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
-                    loading={loading}
-                    loadingText="계산 중..."
-                    className="mg-v2-button mg-v2-button--primary"
-                  >
-                    계산하기
-                  </MGButton>
-                </div>
-              </div>
+                secondaryRow={(
+                  <div className="salary-filter-block__run-calc">
+                    <MGButton
+                      variant="primary"
+                      size="medium"
+                      onClick={executeSalaryCalculation}
+                      disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
+                      loading={loading}
+                      loadingText="계산 중..."
+                      className="mg-v2-button mg-v2-button--primary"
+                    >
+                      계산하기
+                    </MGButton>
+                  </div>
+                )}
+              />
             </section>
 
               {activeTab === TAB_PROFILES && (

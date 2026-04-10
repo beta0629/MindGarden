@@ -29,6 +29,7 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import '../../styles/auth/TenantSelection.css';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const TenantSelection = ({ tenants, onSelect, onCancel }) => {
@@ -154,9 +155,11 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
 
             <div className="tenant-selection__list">
               {tenants.map((tenant) => (
-                <button
+                <MGButton
                   key={tenant.tenantId}
                   type="button"
+                  variant="outline"
+                  fullWidth
                   onClick={() => handleSelect(tenant.tenantId)}
                   disabled={isLoading}
                   className={`tenant-selection__item ${
@@ -164,6 +167,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                       ? 'tenant-selection__item--selected'
                       : ''
                   }`}
+                  preventDoubleClick={false}
                 >
                   <div className="tenant-selection__item-content">
                     <div className="tenant-selection__item-name"><SafeText>{tenant.tenantName ?? tenant.name}</SafeText></div>
@@ -182,27 +186,33 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                   {selectedTenantId === tenant.tenantId && (
                     <div className="tenant-selection__item-check">✓</div>
                   )}
-                </button>
+                </MGButton>
               ))}
             </div>
 
             <div className="tenant-selection__actions">
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
                 onClick={handleCancel}
                 disabled={isLoading}
                 className="tenant-selection__cancel-button"
+                preventDoubleClick={false}
               >
                 취소
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
+                variant="primary"
                 onClick={() => selectedTenantId && handleSelect(selectedTenantId)}
                 disabled={!selectedTenantId || isLoading}
                 className="tenant-selection__confirm-button"
+                loading={isLoading}
+                loadingText="로딩중..."
+                preventDoubleClick={false}
               >
-                {isLoading ? <div className="mg-loading">로딩중...</div> : '선택'}
-              </button>
+                선택
+              </MGButton>
             </div>
           </div>
         </div>

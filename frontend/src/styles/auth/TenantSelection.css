@@ -43,6 +43,16 @@
   space-y: var(--spacing-md);
 }
 
+/* MGButton 래핑 시 카드 행·다줄 레이아웃 유지 */
+.tenant-selection__item.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  white-space: normal;
+  gap: var(--spacing-md);
+}
+
 .tenant-selection__item {
   width: 100%;
   padding: var(--spacing-lg);

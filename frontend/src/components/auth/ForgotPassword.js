@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './AuthPageCommon.css';
 
 const ForgotPassword = () => {
@@ -94,20 +95,17 @@ const ForgotPassword = () => {
                   />
                 </div>
 
-                <button
+                <MGButton
                   type="submit"
+                  variant="primary"
                   className="mg-v2-button-primary"
                   disabled={isLoading || !formData.email}
+                  loading={isLoading}
+                  loadingText="발송 중..."
+                  preventDoubleClick={false}
                 >
-                  {isLoading ? (
-                    <>
-                      <span className="mg-v2-spinner" aria-hidden="true" />
-                      발송 중...
-                    </>
-                  ) : (
-                    '재설정 링크 전송'
-                  )}
-                </button>
+                  재설정 링크 전송
+                </MGButton>
               </form>
 
               <Link className="mg-v2-link-text" to="/login">
@@ -138,14 +136,16 @@ const ForgotPassword = () => {
               </div>
 
               <div className="mg-v2-auth-success-actions">
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
                   className="mg-v2-button-secondary"
                   onClick={() => setIsEmailSent(false)}
                   disabled={isLoading}
+                  preventDoubleClick={false}
                 >
                   다른 이메일로 다시 발송
-                </button>
+                </MGButton>
                 <Link className="mg-v2-button-secondary" to="/login" style={{ textDecoration: 'none' }}>
                   로그인 페이지로 돌아가기
                 </Link>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './AuthPageCommon.css';
 
 const ResetPassword = () => {
@@ -169,13 +170,16 @@ const ResetPassword = () => {
                       className="mg-v2-input"
                       disabled={isLoading}
                     />
-                    <button
+                    <MGButton
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      variant="outline"
+                      size="small"
                       className="mg-v2-password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                      preventDoubleClick={false}
                     >
                       {showPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
 
@@ -192,13 +196,16 @@ const ResetPassword = () => {
                       className="mg-v2-input"
                       disabled={isLoading}
                     />
-                    <button
+                    <MGButton
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      variant="outline"
+                      size="small"
                       className="mg-v2-password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      preventDoubleClick={false}
                     >
                       {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
 
@@ -211,20 +218,17 @@ const ResetPassword = () => {
                   </ul>
                 </div>
 
-                <button
+                <MGButton
                   type="submit"
+                  variant="primary"
                   className="mg-v2-button-primary"
                   disabled={isLoading || !formData.newPassword || !formData.confirmPassword}
+                  loading={isLoading}
+                  loadingText="변경 중..."
+                  preventDoubleClick={false}
                 >
-                  {isLoading ? (
-                    <>
-                      <span className="mg-v2-spinner"></span>
-                      변경 중...
-                    </>
-                  ) : (
-                    '비밀번호 변경'
-                  )}
-                </button>
+                  비밀번호 변경
+                </MGButton>
               </form>
             </>
           ) : (

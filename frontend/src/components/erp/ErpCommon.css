@@ -13,6 +13,29 @@
   margin: 0 auto;
 }
 
+/* 세션 로딩: 전체 화면 page 로더 대신 레이아웃 골격 유지 + 인라인 UnifiedLoading */
+.erp-system .erp-session-inline-load {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.erp-system .erp-session-inline-load__body {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  min-height: var(--spacing-3xl);
+}
+
+.erp-system .erp-session-inline-load:not(:has(.erp-session-inline-load__body)) {
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
 /* 기타 ERP 페이지용 컨테이너 (재무 관리는 mg-v2-ad-b0kla__container 사용) */
 .erp-system .erp-container {
   max-width: 1200px;

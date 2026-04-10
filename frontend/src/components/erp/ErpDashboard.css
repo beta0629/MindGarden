@@ -64,6 +64,16 @@
 및 관련 미디어쿼리 블록 전부 미사용.
 ========== */
 
+/* 인라인 로딩: 본문 영역 내 세션·데이터 로드 시 최소 높이·중앙 정렬 */
+.erp-dashboard__session-load,
+.erp-dashboard__data-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--spacing-xl) * 6);
+}
+
 /* P4 ErpFilterToolbar — 운영 현황 새로고침 secondary 우측 정렬 (예산·구매·통합재무와 동일) */
 .erp-dashboard__content .erp-dashboard__toolbar-actions,
 .erp-dashboard__content .mg-v2-erp-filter-toolbar__secondary {

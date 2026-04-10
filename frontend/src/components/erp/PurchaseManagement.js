@@ -107,8 +107,16 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="구매 관리" loading={true} loadingText="세션 정보를 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="구매 관리">
+        <ContentHeader
+          title="구매 관리"
+          subtitle="세션 확인 중"
+        />
+        <ContentArea className="erp-system mg-v2-content-area" ariaLabel="구매 관리">
+          <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }

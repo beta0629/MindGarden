@@ -394,7 +394,9 @@ const FinancialManagement = () => {
           titleId={FINANCIAL_PAGE_TITLE_ID}
         />
         <ContentArea className="erp-system" ariaLabel="재무 관리">
-          <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+          <div className="erp-session-inline-load">
+            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+          </div>
         </ContentArea>
       </AdminCommonLayout>
     );

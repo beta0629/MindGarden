@@ -120,6 +120,12 @@
   border: 1px solid var(--ad-b0kla-border);
 }
 
+/* 첫 로딩: pill 탭과 동일 레이아웃, 비활성(클릭 불가) */
+.integrated-finance-tabs--loading .mg-v2-ad-b0kla__pill:disabled {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
+}
+
 .finance-tab-navigation {
   display: flex;
   gap: var(--mg-spacing-xs, 6px);

@@ -59,6 +59,20 @@ import './IntegratedFinanceDashboard.css';
 
 const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
+/** 수입·지출 관리 pill 탭 정의 (로딩/성공 동일 목록) */
+const INTEGRATED_FINANCE_TAB_ITEMS = [
+  { key: 'overview', label: '개요' },
+  { key: 'journal-entries', label: '거래 정리' },
+  { key: 'ledgers', label: '계정별 내역' },
+  { key: 'balance-sheet', label: '자산·부채 현황' },
+  { key: 'income-statement', label: '손익 현황' },
+  { key: 'cash-flow', label: '현금 흐름' },
+  { key: 'settlement', label: '정산' },
+  { key: 'daily', label: '일간 리포트' },
+  { key: 'monthly', label: '월간 리포트' },
+  { key: 'yearly', label: '연간 리포트' }
+];
+
 // 공통 유틸리티 함수들
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('ko-KR', {
@@ -385,11 +399,99 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     }
   };
 
+  const renderIntegratedFinanceHeaderSlot = (actionsDisabled) => (
+    <ContentHeader
+      title="수입·지출 관리"
+      subtitle="거래·손익·정산을 한곳에서"
+      titleId={INTEGRATED_FINANCE_TITLE_ID}
+      actions={(
+        <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
+          <MGButton
+            variant="danger"
+            size="small"
+            onClick={() => setShowQuickExpenseForm(true)}
+            title="빠른 지출"
+            className="mg-dashboard-icon-btn"
+            disabled={actionsDisabled}
+          >
+            <TrendingDown size={18} />
+          </MGButton>
+          <MGButton
+            variant="success"
+            size="small"
+            onClick={() => setShowTransactionForm(true)}
+            title="거래 등록"
+            className="mg-dashboard-icon-btn"
+            disabled={actionsDisabled}
+          >
+            <DollarSign size={18} />
+          </MGButton>
+          <MGButton
+            variant="primary"
+            size="small"
+            onClick={() => {
+              navigate('/erp/financial');
+            }}
+            title="상세 내역 보기"
+            className="mg-dashboard-icon-btn"
+            disabled={actionsDisabled}
+          >
+            <FileText size={18} />
+          </MGButton>
+        </div>
+      )}
+    />
+  );
+
+  const renderIntegratedFinanceTabsSlot = (tabsDisabled) => (
+    <div
+      className={`mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs${
+        tabsDisabled ? ' integrated-finance-tabs--loading' : ''
+      }`}
+    >
+      {INTEGRATED_FINANCE_TAB_ITEMS.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          disabled={tabsDisabled}
+          aria-disabled={tabsDisabled}
+          onClick={
+            tabsDisabled
+              ? undefined
+              : () => {
+                  setActiveTab(tab.key);
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('tab', tab.key);
+                  setSearchParams(newSearchParams);
+                }
+          }
+          className={`mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
 
   if (loading) {
     return (
-      <AdminCommonLayout title="수입·지출 관리" loading={true} loadingText="데이터를 불러오는 중...">
-        <ContentArea ariaLabel="수입·지출 관리 본문" />
+      <AdminCommonLayout title="수입·지출 관리">
+        <ContentArea ariaLabel="수입·지출 관리 본문">
+          <ErpPageShell
+            className="mg-dashboard-content"
+            headerSlot={renderIntegratedFinanceHeaderSlot(true)}
+            tabsSlot={renderIntegratedFinanceTabsSlot(true)}
+            mainAriaLabel="수입·지출 관리 탭 본문"
+          >
+            <div
+              className="integrated-finance-content"
+              role="region"
+              aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
+            >
+              <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+            </div>
+          </ErpPageShell>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -418,76 +520,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       <ContentArea ariaLabel="수입·지출 관리 본문">
         <ErpPageShell
           className="mg-dashboard-content"
-          headerSlot={(
-            <ContentHeader
-              title="수입·지출 관리"
-              subtitle="거래·손익·정산을 한곳에서"
-              titleId={INTEGRATED_FINANCE_TITLE_ID}
-              actions={(
-                <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
-                  <MGButton
-                    variant="danger"
-                    size="small"
-                    onClick={() => setShowQuickExpenseForm(true)}
-                    title="빠른 지출"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <TrendingDown size={18} />
-                  </MGButton>
-                  <MGButton
-                    variant="success"
-                    size="small"
-                    onClick={() => setShowTransactionForm(true)}
-                    title="거래 등록"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <DollarSign size={18} />
-                  </MGButton>
-                  <MGButton
-                    variant="primary"
-                    size="small"
-                    onClick={() => {
-                      navigate('/erp/financial');
-                    }}
-                    title="상세 내역 보기"
-                    className="mg-dashboard-icon-btn"
-                  >
-                    <FileText size={18} />
-                  </MGButton>
-                </div>
-              )}
-            />
-          )}
-          tabsSlot={(
-            <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
-              {[
-                { key: 'overview', label: '개요' },
-                { key: 'journal-entries', label: '거래 정리' },
-                { key: 'ledgers', label: '계정별 내역' },
-                { key: 'balance-sheet', label: '자산·부채 현황' },
-                { key: 'income-statement', label: '손익 현황' },
-                { key: 'cash-flow', label: '현금 흐름' },
-                { key: 'settlement', label: '정산' },
-                { key: 'daily', label: '일간 리포트' },
-                { key: 'monthly', label: '월간 리포트' },
-                { key: 'yearly', label: '연간 리포트' }
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    const newSearchParams = new URLSearchParams(searchParams);
-                    newSearchParams.set('tab', tab.key);
-                    setSearchParams(newSearchParams);
-                  }}
-                  className={`mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          )}
+          headerSlot={renderIntegratedFinanceHeaderSlot(false)}
+          tabsSlot={renderIntegratedFinanceTabsSlot(false)}
           mainAriaLabel="수입·지출 관리 탭 본문"
         >
           <div

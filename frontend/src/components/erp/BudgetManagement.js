@@ -297,7 +297,17 @@ const BudgetManagement = () => {
   if (sessionLoading) {
     return (
       <AdminCommonLayout title="예산 관리">
-        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+        <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
+          <div className="erp-session-inline-load">
+            <ContentHeader
+              title="예산 관리"
+              subtitle="세션 정보를 확인하는 중입니다."
+            />
+            <div className="erp-session-inline-load__body">
+              <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            </div>
+          </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }

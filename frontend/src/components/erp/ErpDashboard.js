@@ -8,6 +8,7 @@ import { AUTH_API, ERP_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatCurrency } from '../../utils/formatUtils';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import {
   ContentArea,
   ContentHeader,
@@ -30,12 +31,16 @@ import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
 
+const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
+
+const isDevEnv = process.env.NODE_ENV === 'development';
+
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
  */
 const setDefaultPermissionsForRole = (user, setUserPermissions) => {
   if (!user || !user.role) {
-    console.warn('⚠️ 사용자 정보 없음, 기본 권한 설정 불가');
+    console.warn('사용자 정보 없음, 기본 권한 설정 불가');
     setUserPermissions([]);
     return;
   }
@@ -58,7 +63,9 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
       PERMISSIONS.REFUND_MANAGE,
       PERMISSIONS.INTEGRATED_FINANCE_VIEW
     );
-    console.log('✅ 관리자 역할 기본 권한 설정:', defaultPermissions);
+    if (isDevEnv) {
+      console.log('관리자 역할 기본 권한 설정:', defaultPermissions);
+    }
   }
 
   setUserPermissions(defaultPermissions);
@@ -129,7 +136,6 @@ const ErpDashboard = ({ user: propUser }) => {
   // 세션 체크 및 권한 확인
   useEffect(() => {
     if (sessionLoading) {
-      console.log('⏳ 세션 로딩 중...');
       return;
     }
 
@@ -138,40 +144,34 @@ const ErpDashboard = ({ user: propUser }) => {
 
       if (!currentUser || !currentUser.role) {
         try {
-          console.log('🔄 세션 API 직접 호출 시도...');
           const userData = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
           if (userData && userData.role) {
-            console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
             currentUser = userData;
           }
         } catch (error) {
-          console.log('❌ 세션 API 호출 실패:', error);
+          if (isDevEnv) {
+            console.warn('세션 API 호출 실패:', error);
+          }
         }
 
         if (!currentUser || !currentUser.role) {
           currentUser = sessionManager.getUser();
           if (!currentUser || !currentUser.role) {
-            console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
             navigate('/login', { replace: true });
             return;
           }
         }
       }
 
-      console.log('✅ ERP Dashboard 접근 허용:', currentUser?.role);
-
       // 권한 조회 시도 (실패해도 계속 진행)
       try {
         const permissions = await fetchUserPermissions(setUserPermissions);
-        if (permissions && permissions.length > 0) {
-          console.log('✅ 권한 조회 성공:', permissions);
-        } else {
-          // 권한 조회 결과가 비어있으면 기본 권한 설정
-          console.warn('⚠️ 권한 조회 결과가 비어있음, 기본 권한 설정');
+        if (!permissions || permissions.length === 0) {
+          console.warn('권한 조회 결과가 비어있음, 기본 권한 설정');
           setDefaultPermissionsForRole(currentUser, setUserPermissions);
         }
       } catch (error) {
-        console.warn('⚠️ 권한 조회 실패 (기본 권한 설정):', error);
+        console.warn('권한 조회 실패 (기본 권한 설정):', error);
         setDefaultPermissionsForRole(currentUser, setUserPermissions);
       }
 
@@ -194,12 +194,11 @@ const ErpDashboard = ({ user: propUser }) => {
           try {
             checks[code] = await hasPermission(code);
           } catch (error) {
-            console.warn(`⚠️ 권한 체크 실패 (${code}):`, error);
+            console.warn(`권한 체크 실패 (${code}):`, error);
             checks[code] = false;
           }
         }
         setPermissionChecks(checks);
-        console.log('✅ 동적 권한 체크 완료:', checks);
       }
     };
 
@@ -219,11 +218,9 @@ const ErpDashboard = ({ user: propUser }) => {
       const hasErpPermission = PermissionChecks.canAccessERP(userPermissions, currentUser) || isAdmin;
 
       if (!hasErpPermission) {
-        console.log('❌ ERP 접근 권한 없음 (동적 권한 체크), 일반 대시보드로 이동');
         navigate('/dashboard', { replace: true });
         return;
       }
-      console.log('✅ ERP 접근 권한 확인됨 (동적 권한 시스템)', isAdmin ? '(관리자 특권)' : '');
       const hasIntegratedFinanceView =
         PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser) || isAdmin;
       loadDashboardData();
@@ -246,11 +243,9 @@ const ErpDashboard = ({ user: propUser }) => {
           currentUser.role === 'OWNER';
 
         if (isAdmin) {
-          console.log('⚠️ 권한 조회 실패했으나 관리자 역할이므로 대시보드 로드 시도');
           loadDashboardData();
           loadIncomeExpenseSummary();
         } else {
-          console.log('❌ 권한 조회 실패 및 관리자 역할 아님, 일반 대시보드로 이동');
           navigate('/dashboard', { replace: true });
         }
       }
@@ -354,10 +349,34 @@ const ErpDashboard = ({ user: propUser }) => {
     return Math.round((stats.usedBudget / stats.totalBudget) * 100);
   };
 
+  const layoutContentClassName = 'erp-dashboard__content mg-v2-erp-dashboard-block';
+
+  if (sessionLoading) {
+    return (
+      <AdminCommonLayout>
+        <ContentHeader
+          title="운영 현황"
+          subtitle="세션 정보를 확인하는 중입니다."
+          titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
+        />
+        <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
+          <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+        </ContentArea>
+      </AdminCommonLayout>
+    );
+  }
+
   if (loading) {
     return (
-      <AdminCommonLayout title="운영 현황" loading={true} loadingText="불러오는 중...">
-        <div />
+      <AdminCommonLayout>
+        <ContentHeader
+          title="운영 현황"
+          subtitle="운영 지표와 재무 요약을 불러오는 중입니다."
+          titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
+        />
+        <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
+          <UnifiedLoading type="page" text="불러오는 중..." />
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -438,32 +457,27 @@ const ErpDashboard = ({ user: propUser }) => {
     isAdmin;
 
   return (
-    <AdminCommonLayout title="운영 현황">
-      <ContentArea
-        className="erp-dashboard__content mg-v2-erp-dashboard-block"
-        ariaLabel="운영 현황"
-      >
-        <ErpPageShell
-          headerSlot={
-            <ContentHeader
-              subtitle={subtitleWithTenant}
-              actions={
-                <Button
-                  variant="outline"
-                  size="small"
-                  onClick={() => {
-                    loadDashboardData();
-                    if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
-                  }}
-                  preventDoubleClick={true}
-                >
-                  새로고침
-                </Button>
-              }
-            />
-          }
-          mainAriaLabel="운영 현황 본문"
-        >
+    <AdminCommonLayout>
+      <ContentHeader
+        title="운영 현황"
+        subtitle={subtitleWithTenant}
+        titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
+        actions={
+          <Button
+            variant="outline"
+            size="small"
+            onClick={() => {
+              loadDashboardData();
+              if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
+            }}
+            preventDoubleClick={true}
+          >
+            새로고침
+          </Button>
+        }
+      />
+      <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
+        <ErpPageShell mainAriaLabel="운영 현황 본문">
           {hasIntegratedFinanceView && (
             <ErpIncomeExpenseSummarySection
               financeError={financeError}

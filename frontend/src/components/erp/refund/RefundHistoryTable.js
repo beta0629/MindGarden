@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import { toSafeNumber } from '../../../utils/safeDisplay';
 import ErpButton from '../common/ErpButton';
 import ErpStatusBadge from '../common/ErpStatusBadge';
-import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
-import ErpEmptyState from '../common/molecules/ErpEmptyState';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 import './RefundHistoryTable.css';
 
 /**

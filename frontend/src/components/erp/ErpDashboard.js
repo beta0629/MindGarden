@@ -30,6 +30,7 @@ import './ErpCommon.css';
 import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
+import { ErpEmptyState } from './common';
 
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
 
@@ -526,9 +527,7 @@ const ErpDashboard = ({ user: propUser }) => {
 
           <div className="mg-v2-ad-b0kla__card">
             <h2 className="mg-v2-ad-b0kla__section-title">최근 활동</h2>
-            <div className="mg-empty-state">
-              <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
-            </div>
+            <ErpEmptyState title="최근 활동 내역이 없습니다." />
           </div>
         </ErpPageShell>
       </ContentArea>

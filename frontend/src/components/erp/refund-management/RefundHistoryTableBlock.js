@@ -9,7 +9,7 @@
 import React from 'react';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import ErpStatusBadge from '../common/ErpStatusBadge';
-import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 
 const RefundHistoryTableBlock = ({
   refundHistory = [],
@@ -157,7 +157,7 @@ const RefundHistoryTableBlock = ({
             </tbody>
           </table>
         ) : (
-          <p className="refund-management__empty-message">선택한 기간에 환불 이력이 없습니다.</p>
+          <ErpEmptyState title="선택한 기간에 환불 이력이 없습니다." />
         )}
       </div>
       {totalPages > 1 && (

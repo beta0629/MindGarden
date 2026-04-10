@@ -17,6 +17,8 @@
 | **ERP-B1** | `ErpDashboard.js`, `IntegratedFinanceDashboard.js`, `FinancialCalendarView.js` — 무음 새로고침 트리거를 `MGButton` `loading` 패턴으로 통일 | core-coder | ☑ | `develop` · `68fbd5dfd` (2026-04-11) |
 | **ERP-B2** | `ItemManagement.js`, `BudgetManagement.js`, `PurchaseManagement.js` — 무음 재조회 트리거를 `MGButton` `loading`/`loadingText` 패턴으로 통일 | core-coder | ☑ | 동일 커밋 |
 | **ERP-B3** | `ImprovedTaxManagement.js`; 환불·승인(`RefundFilters.js`, `RefundFilterBlock.js`, `ApprovalHubLayout.js`) — 무음 새로고침 `MGButton` 통일 | core-coder | ☑ | `develop` · `65e5e5339` (2026-04-11) |
+| **ERP-B4a** | `FinancialManagement.js` — 에러 배너 **다시 시도** 네이티브 버튼 → `MGButton` (`loading`·`BudgetManagement`와 동일 계약) | core-coder | ☑ | `develop` · `9dc04b1d1` (2026-04-11) |
+| **ERP-B4b** | `organisms/ErpFinanceAdminSyncCard.js` — `Button`(ui) 2곳 → `MGButton`, `initLoading`/`backfillLoading` 연동 | core-coder | ☑ | 동일 커밋 |
 
 ---
 
@@ -51,7 +53,7 @@
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | 🔄 | |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
 | ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10) |
-| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | ERP-B1·B2·B3 주요 화면 ☑ (`68fbd5dfd`, `65e5e5339`); 잔여 인벤토리·기타 화면 |
+| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | B1~B4 주요 패치 ☑; `components/erp` 내 `RefreshCw`는 필터 초기화·안내 아이콘 등 소수 잔여 |
 
 ---
 
@@ -124,3 +126,5 @@
 | 2026-04-11 | ERP-B1/B2 커밋 `68fbd5dfd` 반영, develop·main 푸시 |
 | 2026-04-11 | ERP-B3 병렬 위임(B3a/B3b), 체크리스트 🔄 |
 | 2026-04-11 | ERP-B3 커밋 `65e5e5339`, 체크리스트 ☑ |
+| 2026-04-11 | ERP-B4a/B4b 병렬 위임 (재무 오류 재시도·동기화 카드) |
+| 2026-04-11 | ERP-B4 커밋 `9dc04b1d1`, 체크리스트 ☑ |

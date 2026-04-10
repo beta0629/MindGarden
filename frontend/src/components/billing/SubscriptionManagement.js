@@ -27,7 +27,7 @@ import {
 } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import PaymentMethodRegistration from './PaymentMethodRegistration';
@@ -239,23 +239,23 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
         <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION}>
             <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION_HEADER}>
             <h3>{BILLING_MESSAGES.SUBSCRIPTION.PAYMENT_METHODS_TITLE}</h3>
-            <Button
+            <MGButton
               variant="secondary"
               size="small"
               onClick={() => setShowPaymentMethodRegistration(true)}
             >
               {BILLING_MESSAGES.SUBSCRIPTION.ADD_PAYMENT_METHOD}
-            </Button>
+            </MGButton>
           </div>
           {paymentMethods.length === 0 ? (
             <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
               <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHODS}</p>
-              <Button
+              <MGButton
                 variant="primary"
                 onClick={() => setShowPaymentMethodRegistration(true)}
               >
                 {BILLING_MESSAGES.SUBSCRIPTION.REGISTER_PAYMENT_METHOD}
-              </Button>
+              </MGButton>
             </div>
           ) : (
             <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHODS}>
@@ -318,7 +318,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                     ))}
                   </div>
                   {selectedPlan && paymentMethods.length > 0 && (
-                    <Button
+                    <MGButton
                       variant="primary"
                       onClick={() =>
                         handleCreateSubscription(selectedPlan.planId, paymentMethods[0].paymentMethodId)
@@ -326,7 +326,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                       fullWidth
                     >
                       {BILLING_MESSAGES.SUBSCRIPTION.CREATE_SUBSCRIPTION}
-                    </Button>
+                    </MGButton>
                   )}
                   {selectedPlan && paymentMethods.length === 0 && (
                     <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.WARNING}>
@@ -369,23 +369,23 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   </div>
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_ACTIONS}>
                     {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.PENDING_ACTIVATION && (
-                      <Button
+                      <MGButton
                         variant="primary"
                         size="small"
                         onClick={() => handleActivateSubscription(subscription.subscriptionId)}
                       >
                         {BILLING_MESSAGES.SUBSCRIPTION.ACTIVATE}
-                      </Button>
+                      </MGButton>
                     )}
                     {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
                     {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
-                      <Button
+                      <MGButton
                         variant="danger"
                         size="small"
                         onClick={() => handleCancelSubscription(subscription.subscriptionId)}
                       >
                         {BILLING_MESSAGES.SUBSCRIPTION.CANCEL}
-                      </Button>
+                      </MGButton>
                     )}
                   </div>
                 </div>

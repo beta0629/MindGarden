@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
-import Button from '../Button/Button';
+import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
@@ -417,7 +417,7 @@ const ConsultantCard = ({
                 </div>
 
                 <div className="mg-consultant-card__actions mg-consultant-card__actions--schedule-select">
-                    <Button
+                    <MGButton
                         variant="primary"
                         size="small"
                         onClick={(e) => {
@@ -428,8 +428,8 @@ const ConsultantCard = ({
                         preventDoubleClick={false}
                     >
                         {selected ? '선택됨' : '선택하기'}
-                    </Button>
-                    <Button
+                    </MGButton>
+                    <MGButton
                         variant="outline"
                         size="small"
                         onClick={(e) => {
@@ -439,7 +439,7 @@ const ConsultantCard = ({
                         preventDoubleClick={false}
                     >
                         상세보기
-                    </Button>
+                    </MGButton>
                 </div>
             </div>
         </div>

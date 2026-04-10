@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../../contexts/SessionContext';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import './WelcomeWidget.css';
 
@@ -99,30 +99,30 @@ const WelcomeWidget = ({ config }) => {
             <div className="quick-actions">
                 <h3 className="actions-title">빠른 작업</h3>
                 <div className="action-buttons">
-                    <Button 
+                    <MGButton 
                         variant="primary"
                         className="action-btn primary"
                         preventDoubleClick={true}
                     >
                         <span className="btn-icon">➕</span>
                         <span className="btn-text">새 상담 등록</span>
-                    </Button>
-                    <Button 
+                    </MGButton>
+                    <MGButton 
                         variant="secondary"
                         className="action-btn secondary"
                         preventDoubleClick={true}
                     >
                         <span className="btn-icon">📊</span>
                         <span className="btn-text">통계 보기</span>
-                    </Button>
-                    <Button 
+                    </MGButton>
+                    <MGButton 
                         variant="secondary"
                         className="action-btn secondary"
                         preventDoubleClick={true}
                     >
                         <span className="btn-icon">⚙️</span>
                         <span className="btn-text">설정</span>
-                    </Button>
+                    </MGButton>
                 </div>
             </div>
 

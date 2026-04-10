@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API } from '../../constants/api';
@@ -307,14 +306,14 @@ const PurchaseManagement = () => {
                         </div>
 
                         <div className="mg-purchase-request-card__footer">
-                          <Button
+                          <MGButton
                             variant="outline"
                             size="small"
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
                             <Eye size={16} aria-hidden /> 상세
-                          </Button>
+                          </MGButton>
                         </div>
                       </MGCard>
                     ))}
@@ -357,14 +356,14 @@ const PurchaseManagement = () => {
                         </div>
 
                         <div className="mg-purchase-order-card__footer">
-                          <Button
+                          <MGButton
                             variant="outline"
                             size="small"
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
                             <Eye size={16} aria-hidden /> 상세
-                          </Button>
+                          </MGButton>
                         </div>
                       </MGCard>
                     ))}

@@ -9,7 +9,7 @@ import {useNavigate} from 'react-router-dom';
 
 import {useTheme} from '../../hooks/useTheme';
 import SimpleLayout from '../layout/SimpleLayout';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import Card from '../ui/Card/Card';
 import CardContent from '../ui/Card/CardContent';
 import CardHeader from '../ui/Card/CardHeader';
@@ -85,21 +85,21 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {
               </Card>
 
               <div className="mg-v2-v2-v2-theme-actions">
-                <Button
+                <MGButton
                   variant="primary"
                   onClick={() => setShowThemeSelector(true)}
-                  icon="PALETTE"
                 >
+                  <Icon name="PALETTE" size="LG" color="PRIMARY" />
                   테마 변경
-                </Button>
-                <Button
+                </MGButton>
+                <MGButton
                   variant="outline"
                   onClick={handleThemeReset}
-                  icon="REFRESH_CW"
                   loading={isLoading}
                 >
+                  <Icon name="REFRESH_CW" size="LG" color="PRIMARY" />
                   기본값으로 초기화
-                </Button>
+                </MGButton>
               </div>
             </div>
 
@@ -108,12 +108,15 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {
                   <CardHeader>
                     <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
                       <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">테마 선택</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <MGButton
+                        variant="outline"
+                        size="small"
                         onClick={() => setShowThemeSelector(false)}
-                        icon="X"
-                      />
+                        title="닫기"
+                        aria-label="닫기"
+                      >
+                        <Icon name="X" size="SM" />
+                      </MGButton>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -267,14 +270,14 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {
       <div className="mg-v2-v2-v2-user-settings">
         <div className="mg-v2-v2-v2-settings-header">
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md mg-v2-v2-v2-mb-md">
-            <Button
-              variant="ghost"
-              size="sm"
+            <MGButton
+              variant="outline"
+              size="small"
               onClick={() => navigate(-1)}
-              icon="ARROW_LEFT"
             >
+              <Icon name="ARROW_LEFT" size="SM" />
               뒤로가기
-            </Button>
+            </MGButton>
           </div>
           <h1 className="mg-v2-v2-v2-h1 mg-v2-v2-v2-text-primary">설정</h1>
           <p className="mg-v2-v2-v2-text-muted">계정과 환경 설정을 관리하세요</p>

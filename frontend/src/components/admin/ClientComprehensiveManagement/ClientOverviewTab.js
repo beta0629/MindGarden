@@ -1,4 +1,4 @@
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import SafeText from '../../common/SafeText';
@@ -38,20 +38,20 @@ const ClientOverviewTab = ({
                 role="group"
                 aria-label="내담자 작업"
             >
-                <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
+                <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
                     <Eye size={14} /> 상세보기
-                </Button>
-                <Button variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
+                </MGButton>
+                <MGButton variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
                     <Edit size={14} /> 수정
-                </Button>
+                </MGButton>
                 {onResetPassword && (
-                    <Button variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
+                    <MGButton variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
                         <Key size={14} /> 비밀번호 초기화
-                    </Button>
+                    </MGButton>
                 )}
-                <Button variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
+                <MGButton variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
                     <Trash2 size={14} /> 삭제
-                </Button>
+                </MGButton>
             </div>
         );
     };

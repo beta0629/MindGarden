@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaServer, FaDatabase, FaSync } from 'react-icons/fa';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
     const getStatusModifier = (status) => {
@@ -23,7 +23,7 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
         <div className="system-status-display">
             <div className="system-status-header">
                 <h4>시스템 상태</h4>
-                <Button
+                <MGButton
                     variant="outline"
                     size="small"
                     onClick={onStatusCheck}
@@ -32,7 +32,7 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                     <FaSync className={loading ? 'spinning' : ''} />
                     {' '}
                     상태 체크
-                </Button>
+                </MGButton>
             </div>
             
             <div className="system-status-content">

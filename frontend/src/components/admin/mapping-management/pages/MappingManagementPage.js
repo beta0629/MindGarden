@@ -19,7 +19,6 @@ import {
   Ban,
   FileText
 } from 'lucide-react';
-import Button from '../../../ui/Button/Button';
 import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -516,14 +515,14 @@ const MappingManagementPage = () => {
         backdropClick={!loading}
         actions={
           <>
-            <Button
+            <MGButton
               variant="secondary"
               onClick={handleCloseRefundModal}
               disabled={loading}
               preventDoubleClick
             >
               취소
-            </Button>
+            </MGButton>
             <MGButton
               variant="danger"
               onClick={handleRefundProcess}

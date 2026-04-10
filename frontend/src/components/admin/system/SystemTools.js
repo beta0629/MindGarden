@@ -1,6 +1,6 @@
 import React from 'react';
 import { RefreshCw, FileText, Trash2, Download } from 'lucide-react';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const SystemTools = ({ 
@@ -49,7 +49,7 @@ const SystemTools = ({
         <div className="mg-v2-stats-grid">
             {tools.map((tool) => (
                 <div key={tool.id} className="mg-v2-dashboard-stat-card mg-system-tool-card">
-                    <Button
+                    <MGButton
                         variant={tool.variant}
                         size="medium"
                         fullWidth
@@ -65,7 +65,7 @@ const SystemTools = ({
                             <span className="mg-v2-system-tool-label">{toDisplayString(tool.label)}</span>
                             <div className="mg-v2-system-tool-description">{toDisplayString(tool.description)}</div>
                         </div>
-                    </Button>
+                    </MGButton>
                 </div>
             ))}
         </div>

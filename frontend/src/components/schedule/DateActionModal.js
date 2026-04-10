@@ -1,7 +1,7 @@
 import React from 'react';
 import { XCircle, FileText, Umbrella } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
@@ -44,17 +44,17 @@ const DateActionModal = ({
       showCloseButton={true}
       className="mg-v2-ad-b0kla"
       actions={
-        <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+        <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
           <XCircle size={20} className="mg-v2-icon-inline" />
           취소
-        </Button>
+        </MGButton>
       }
     >
       <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>
 
       {canManageSchedule && (
         <div className="mg-v2-form-section">
-          <Button
+          <MGButton
             type="button"
             variant="primary"
             size="medium"
@@ -67,9 +67,9 @@ const DateActionModal = ({
               <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
             </div>
-          </Button>
+          </MGButton>
 
-          <Button
+          <MGButton
             type="button"
             variant="secondary"
             size="medium"
@@ -82,7 +82,7 @@ const DateActionModal = ({
               <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
             </div>
-          </Button>
+          </MGButton>
         </div>
       )}
     </UnifiedModal>

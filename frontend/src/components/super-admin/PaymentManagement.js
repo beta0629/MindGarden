@@ -5,7 +5,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
@@ -678,40 +678,36 @@ const PaymentManagement = () => {
                 
                 <div className="mg-payment-card__footer">
                   <div className="mg-payment-card__actions">
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    {/* 표준화: 상태값은 공통코드 동적 조회 권장 (STATUS_GROUP) */}
                     {payment.status === 'PENDING' && (
-                      <Button
+                      <MGButton
                         variant="success"
                         size="small"
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
                         preventDoubleClick={true}
                       >
                         승인
-                      </Button>
+                      </MGButton>
                     )}
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {payment.status === 'PENDING' && (
-                      <Button
+                      <MGButton
                         variant="danger"
                         size="small"
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
                         preventDoubleClick={true}
                       >
                         취소
-                      </Button>
+                      </MGButton>
                     )}
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {payment.status === 'APPROVED' && (
-                      <Button
+                      <MGButton
                         variant="warning"
                         size="small"
                         onClick={() => handleRefund(payment.paymentId, payment.amount)}
                         preventDoubleClick={true}
                       >
                         환불
-                      </Button>
+                      </MGButton>
                     )}
                   </div>
                 </div>

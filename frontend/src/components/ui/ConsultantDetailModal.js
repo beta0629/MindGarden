@@ -2,7 +2,7 @@ import React from 'react';
 import { User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SpecialtyDisplay from './SpecialtyDisplay';
-import Button from './Button/Button';
+import MGButton from '../common/MGButton';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 import { 
     getFormattedExperience, 
@@ -57,10 +57,10 @@ const ConsultantDetailModal = ({
             showCloseButton
             actions={(
                 <>
-                    <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+                    <MGButton variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
                         닫기
-                    </Button>
-                    <Button
+                    </MGButton>
+                    <MGButton
                         variant="primary"
                         size="medium"
                         onClick={() => {
@@ -69,7 +69,7 @@ const ConsultantDetailModal = ({
                         preventDoubleClick={false}
                     >
                         이 상담사 선택
-                    </Button>
+                    </MGButton>
                 </>
             )}
         >

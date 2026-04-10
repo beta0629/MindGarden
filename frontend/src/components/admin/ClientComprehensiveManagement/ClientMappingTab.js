@@ -1,4 +1,4 @@
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import { User, Handshake, Calendar, Eye } from 'lucide-react';
 import { StatusBadge, CardContainer } from '../../common';
 import SafeText from '../../common/SafeText';
@@ -84,12 +84,12 @@ const ClientMappingTab = ({
           </div>
         </div>
         <div className="mg-v2-card-footer">
-          <Button variant="secondary" size="small" preventDoubleClick={true}>
+          <MGButton variant="secondary" size="small" preventDoubleClick={true}>
             <Eye size={14} /> 상세보기
-          </Button>
-          <Button variant="secondary" size="small" preventDoubleClick={true}>
+          </MGButton>
+          <MGButton variant="secondary" size="small" preventDoubleClick={true}>
             수정
-          </Button>
+          </MGButton>
         </div>
       </CardContainer>
     );
@@ -107,14 +107,14 @@ const ClientMappingTab = ({
             </p>
           </div>
           <div className="mg-v2-mapping-client-block__actions">
-            <Button
+            <MGButton
               variant="secondary"
               size="small"
               onClick={() => onClientSelect(client)}
               preventDoubleClick={true}
             >
               <Eye size={14} /> 상세보기
-            </Button>
+            </MGButton>
           </div>
         </div>
         <p className="mg-v2-mapping-client-block__count">총 {clientMappings.length}건의 매칭</p>

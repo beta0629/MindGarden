@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -248,14 +248,14 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         <div className="mg-dashboard-error">
           <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
           <p className="mg-dashboard-error__message">{error}</p>
-          <Button 
+          <MGButton 
             onClick={loadDashboard}
             variant="primary"
             preventDoubleClick={true}
             className="mg-dashboard-error__retry-button"
           >
             다시 시도
-          </Button>
+          </MGButton>
         </div>
       </AdminCommonLayout>
     );

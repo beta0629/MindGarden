@@ -7,7 +7,7 @@
 import {useState, useEffect} from 'react';
 
 import {useTheme} from '../../../contexts/ThemeContext';
-import Button from '../Button/Button';
+import MGButton from '../../common/MGButton';
 import Card from '../Card/Card';
 import CardContent from '../Card/CardContent';
 import Icon from '../Icon/Icon';
@@ -100,7 +100,7 @@ const ThemeSelector = ({onThemeChange,
 
           {/* 액션 버튼들 */}
           <div className="mg-v2-v2-v2-theme-actions">
-            <Button
+            <MGButton
               variant="primary"
               onClick={handleApplyTheme}
               loading={isLoading}
@@ -108,15 +108,15 @@ const ThemeSelector = ({onThemeChange,
             >
               <Icon name="CHECK" size="SM" />
               적용하기
-            </Button>
+            </MGButton>
             
-            {previewedTheme && (<Button
+            {previewedTheme && (<MGButton
                 variant="outline"
                 onClick={handleCancelPreview}
               >
                 <Icon name="X" size="SM" />
                 미리보기 취소
-              </Button>)}
+              </MGButton>)}
           </div>
 
           {/* 현재 테마 정보 */}

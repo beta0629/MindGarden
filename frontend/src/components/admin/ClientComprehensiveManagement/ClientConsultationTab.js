@@ -1,4 +1,4 @@
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import { User, Calendar, Clock, Eye } from 'lucide-react';
 import StatusBadge from '../../common/StatusBadge';
 import SafeText from '../../common/SafeText';
@@ -65,9 +65,9 @@ const ClientConsultationTab = ({
                         </p>
                     </div>
                     <div className="mg-v2-consultation-client-block__actions">
-                        <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
+                        <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
                             <Eye size={14} /> 상세보기
-                        </Button>
+                        </MGButton>
                     </div>
                 </div>
                 <p className="mg-v2-consultation-client-block__count">총 {clientConsultations.length}건의 상담 이력</p>

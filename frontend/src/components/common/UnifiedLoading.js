@@ -4,38 +4,29 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-loading st
 /**
  * 통합 로딩 컴포넌트 (UnifiedLoading)
  * 모든 로딩 UI의 표준이 되는 공통 컴포넌트
- * 
+ *
  * 로고 확장성 고려사항:
  * - 기본 스피너와 커스텀 로고 모두 지원
  * - 로고 회전 애니메이션 지원
  * - 로고 크기 자동 조정 (responsive)
  * - 다크/라이트 모드 대응
  * - 향후 브랜딩 변경 시 쉽게 교체 가능한 구조
- * 
+ *
  * @param {Object} props - 컴포넌트 props
  * @param {string} props.text - 로딩 텍스트
  * @param {string} props.size - 로딩 크기 (small, medium, large)
  * @param {string} props.variant - 로딩 스타일 (spinner, dots, pulse, bars, logo)
- * @param {string} props.type - 로딩 타입 (inline, fullscreen, page, button)
+ * @param {string} props.type - 로딩 타입 (inline, fullscreen, page, button).
+ *   신규 화면에서는 `inline`(또는 레이아웃 내 영역) 권장. `page`·`fullscreen`은 레거시·전체 덮음 용도이며 P4(쉘 유지)와 맞지 않을 수 있음.
  * @param {boolean} props.showText - 텍스트 표시 여부
  * @param {string} props.className - 추가 CSS 클래스
-/**
  * @param {boolean} props.centered - 중앙 정렬 여부
-/**
  * @param {string} props.logoType - 로고 타입 (text, image, custom)
-/**
  * @param {string} props.logoImage - 커스텀 로고 이미지 URL 또는 HTML
-/**
  * @param {string} props.logoAlt - 로고 alt 텍스트
-/**
  * @param {boolean} props.logoRotate - 로고 회전 애니메이션 여부
-/**
- * 
-/**
  * @author Core Solution
-/**
  * @version 1.1.0
-/**
  * @since 2025-01-02
  */
 const UnifiedLoading = ({ 

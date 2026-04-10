@@ -16,7 +16,7 @@ import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
 import './TaxManagement.css';
 import './ErpCommon.css';
-import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpFilterToolbar } from './common';
 
 const TaxManagement = () => {
     const [taxCalculations, setTaxCalculations] = useState([]);
@@ -113,21 +113,26 @@ const TaxManagement = () => {
             <ContentHeader
                 title="세무 관리"
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
-                actions={
-                    <select
-                        value={selectedPeriod}
-                        onChange={(e) => setSelectedPeriod(e.target.value)}
-                        className="mg-v2-select"
-                        aria-label="기간 선택"
-                    >
-                        <option key="tax-period-default" value="">기간 선택</option>
-                        <option key="2025-01" value="2025-01">2025년 1월</option>
-                        <option key="2025-02" value="2025-02">2025년 2월</option>
-                        <option key="2025-03" value="2025-03">2025년 3월</option>
-                    </select>
-                }
             />
             <ContentArea className="erp-system mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
+                <ErpFilterToolbar
+                    ariaLabel="세금 조회 필터"
+                    primaryRow={(
+                        <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
+                            <select
+                                value={selectedPeriod}
+                                onChange={(e) => setSelectedPeriod(e.target.value)}
+                                className="mg-v2-select mg-v2-erp-filter-toolbar__period-select"
+                                aria-label="기간 선택"
+                            >
+                                <option key="tax-period-default" value="">기간 선택</option>
+                                <option key="2025-01" value="2025-01">2025년 1월</option>
+                                <option key="2025-02" value="2025-02">2025년 2월</option>
+                                <option key="2025-03" value="2025-03">2025년 3월</option>
+                            </select>
+                        </div>
+                    )}
+                />
                 {loading ? (
                     <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
                         <UnifiedLoading type="inline" text="세금 데이터를 불러오는 중..." />

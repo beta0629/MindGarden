@@ -100,6 +100,33 @@
 
 ---
 
+## 6. ERP 완료 후 전체 확대 검토 (예정)
+
+**트리거**: [ERP_DOMAIN_RENEWAL_AND_ENHANCEMENT_PLAN.md](./ERP_DOMAIN_RENEWAL_AND_ENHANCEMENT_PLAN.md) 기준 **ERP 권역 작업이 “완료”로 합의된 시점** (본 문서 구역 1·병렬 블록 B1~B6 및 ERP-P4 항목 정리 후).
+
+**목적**: ERP에만 적용했던 패턴·품질 게이트를 **`frontend/src/components/erp` 밖 전역**으로 확대해, 동일 기준의 일관성·회귀 안전을 맞춘다.
+
+| ID | 검토 축 | 범위 (요약) | 담당(권장) |
+|----|---------|-------------|------------|
+| **G-01** | 프론트·모달 | `src/components` 전역 `ErpModal`·레거시 모달·`UnifiedModal` 미적용 화면 | explore → core-coder |
+| **G-02** | 표시 경계·React #130 | `safeDisplay`·`ErpSafeText`·차트·KPI·동적 JSX | `COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`, core-component-manager → core-coder |
+| **G-03** | API·테넌트 | `StandardizedApi`·`tenantId`·`/api/v1/` 일관성 | explore + core-coder(백엔드 연계 시 `core-solution-backend` 스킬) |
+| **G-04** | 레이아웃 | `AdminCommonLayout`·ContentHeader·설정/LNB 회의 손오프 조건 잔여 | UI-01·UI-02와 통합 |
+| **G-05** | 보안·공개 API | SEC-01 온보딩·기타 공개 엔드포인트 | `TODO_ONBOARDING_PUBLIC_API_HARDENING.md` |
+| **G-06** | 검증 | E2E·스모크·회귀 범위 확대 (ERP + 핵심 사용자 플로우) | core-tester |
+| **G-07** | 운영 | `PRE_PRODUCTION_GO_LIVE_CHECKLIST`·하드코딩 CI·배포 paths | core-deployer·운영 체크리스트 |
+
+**진행 방식 (고정)**  
+1) **core-planner**: 인벤토리 범위·배치표·우선순위 1장.  
+2) **explore**: 파일·패턴별 목록(중복 최소화).  
+3) **core-coder**: 배치별 패치(파일 충돌 나누기).  
+4) **core-tester**: 배치 완료 게이트.  
+5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
+
+- **전역 확대 검토 상태**: ☐ 미착수 — 착수 시 🔄, G-01~G-07 합의 완료 시 ☑.
+
+---
+
 ## 진행률 스냅샷 (수동)
 
 **갱신 시 아래만 수정하면 된다.**
@@ -137,3 +164,4 @@
 | 2026-04-11 | ERP-B5 커밋 `72e36631b`, 체크리스트 ☑ |
 | 2026-04-11 | ERP-B6a/B6b/B6c 병렬 위임 — ErpModal→UnifiedModal 잔여 7파일 |
 | 2026-04-11 | ERP-B6 완료 시 체크리스트·UI-02 비고 갱신 |
+| 2026-04-11 | 섹션 6 추가 — ERP 완료 후 전역 확대 검토(G-01~G-07)·절차 |

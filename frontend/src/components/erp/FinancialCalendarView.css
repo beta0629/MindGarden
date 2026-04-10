@@ -13,3 +13,11 @@
 .mg-financial-calendar-inline-amount {
   display: inline;
 }
+
+.financial-calendar-view-container .mg-financial-calendar-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm, var(--spacing-sm));
+  flex-wrap: wrap;
+}

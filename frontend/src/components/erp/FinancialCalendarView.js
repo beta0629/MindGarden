@@ -14,7 +14,8 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  RefreshCw
 } from 'lucide-react';
 
 /**
@@ -25,6 +26,7 @@ const FinancialCalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [calendarRefreshing, setCalendarRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayDetail, setDayDetail] = useState(null);
 
@@ -32,9 +34,14 @@ const FinancialCalendarView = () => {
     loadCalendarData();
   }, [currentDate]);
 
-  const loadCalendarData = async () => {
+  const loadCalendarData = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setCalendarRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -76,7 +83,11 @@ const FinancialCalendarView = () => {
     } catch (err) {
       console.error('달력 데이터 로드 실패:', err);
     } finally {
-      setLoading(false);
+      if (silent) {
+        setCalendarRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -120,18 +131,32 @@ const FinancialCalendarView = () => {
             onClick={() => navigateMonth(-1)}
             className="mg-calendar-nav-btn"
             aria-label="이전 달"
+            disabled={calendarRefreshing || loading}
           >
             <ChevronLeft size={20} aria-hidden />
           </button>
-          <h3 className="mg-calendar-title">
-            <ErpSafeText value={currentDate.getFullYear()} />년{' '}
-            <ErpSafeText value={currentDate.getMonth() + 1} />월
-          </h3>
+          <div className="mg-financial-calendar-header-title-row">
+            <h3 className="mg-calendar-title">
+              <ErpSafeText value={currentDate.getFullYear()} />년{' '}
+              <ErpSafeText value={currentDate.getMonth() + 1} />월
+            </h3>
+            <button
+              type="button"
+              className="mg-v2-button mg-v2-button--secondary"
+              onClick={() => loadCalendarData({ silent: true })}
+              disabled={calendarRefreshing || loading}
+              aria-label="달력 데이터 새로고침"
+            >
+              <RefreshCw size={16} aria-hidden />
+              새로고침
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => navigateMonth(1)}
             className="mg-calendar-nav-btn"
             aria-label="다음 달"
+            disabled={calendarRefreshing || loading}
           >
             <ChevronRight size={20} aria-hidden />
           </button>
@@ -414,7 +439,7 @@ const FinancialCalendarView = () => {
 
       {loading && (
         <div className="mg-financial-calendar-loading-overlay">
-          <UnifiedLoading type="page" text="달력 데이터를 불러오는 중..." />
+          <UnifiedLoading type="inline" text="달력 데이터를 불러오는 중..." />
         </div>
       )}
     </div>

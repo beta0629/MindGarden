@@ -34,6 +34,7 @@ const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
 const PurchaseRequestForm = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [itemQuantities, setItemQuantities] = useState({});
@@ -45,9 +46,14 @@ const PurchaseRequestForm = () => {
     loadItems();
   }, []);
 
-  const loadItems = async () => {
+  const loadItems = async (options = {}) => {
+    const silent = options.silent === true;
     try {
-      setLoading(true);
+      if (silent) {
+        setSilentRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const raw = await StandardizedApi.get(ERP_API.ITEMS);
       const list = normalizeErpListResponse(raw);
       setItems(list);
@@ -55,7 +61,11 @@ const PurchaseRequestForm = () => {
       console.error('아이템 로드 실패:', err);
       setError('아이템 목록을 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -209,15 +219,25 @@ const PurchaseRequestForm = () => {
       >
         <div className="mg-v2-container mg-v2-purchase-request-form__inner">
           {items.length === 0 ? (
-            <ErpEmptyState
-              title="등록된 아이템이 없습니다"
-              description="비품 목록이 비어 있습니다. 관리자에게 문의하거나 나중에 다시 시도해 주세요."
-              actionSlot={
-                <MGButton type="button" variant="primary" onClick={() => loadItems()}>
-                  다시 불러오기
-                </MGButton>
-              }
-            />
+            <>
+              {silentRefreshing && (
+                <UnifiedLoading type="inline" text="아이템 목록을 불러오는 중..." />
+              )}
+              <ErpEmptyState
+                title="등록된 아이템이 없습니다"
+                description="비품 목록이 비어 있습니다. 관리자에게 문의하거나 나중에 다시 시도해 주세요."
+                actionSlot={
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    onClick={() => loadItems({ silent: true })}
+                    disabled={silentRefreshing}
+                  >
+                    다시 불러오기
+                  </MGButton>
+                }
+              />
+            </>
           ) : (
             <section className="mg-v2-purchase-request-form__panel" aria-label="구매 요청서 작성">
               <h2 className="mg-v2-purchase-request-form__panel-title">구매 요청서 작성</h2>

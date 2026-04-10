@@ -28,6 +28,7 @@ const PurchaseManagement = () => {
   const [loading, setLoading] = useState(false);
   const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [purchaseInitialFetchDone, setPurchaseInitialFetchDone] = useState(false);
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
@@ -62,6 +63,7 @@ const PurchaseManagement = () => {
       console.error('데이터 로드 실패:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
+      setPurchaseInitialFetchDone(true);
       if (silent) {
         setSilentRefreshing(false);
       } else {
@@ -122,6 +124,8 @@ const PurchaseManagement = () => {
     );
   }
 
+  const showInitialInlineLoad = loading && !purchaseInitialFetchDone;
+
   return (
     <AdminCommonLayout title="구매 관리">
       <ContentArea className="erp-system mg-v2-content-area">
@@ -181,7 +185,13 @@ const PurchaseManagement = () => {
             />
 
             <div className="erp-content">
-          {loading && (
+          {showInitialInlineLoad && (
+            <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+              <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+            </div>
+          )}
+
+          {loading && !showInitialInlineLoad && (
             <div className="purchase-management-loading-container">
               <UnifiedLoading type="inline" text="로딩 중..." />
             </div>
@@ -202,7 +212,7 @@ const PurchaseManagement = () => {
             </div>
           )}
 
-          {!loading && !error && (
+          {purchaseInitialFetchDone && !loading && !error && (
             <>
               {activeTab === 'items' && (
                 <div className="erp-section">

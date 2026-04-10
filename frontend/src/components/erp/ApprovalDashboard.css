@@ -11,6 +11,11 @@
   min-width: 0;
 }
 
+/* 인라인 로딩 시 본문 영역 최소 높이 (UnifiedLoading 중앙 배치 여유) */
+.approval-hub-main-region--loading {
+  min-height: var(--widget-min-height, 200px);
+}
+
 /* ApprovalHubLayout — B0KlA pill 위 여백 */
 .approval-hub-mode-wrap {
   padding: 0 var(--mg-layout-section-padding, 16px);

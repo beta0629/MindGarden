@@ -2021,3 +2021,16 @@
   justify-content: flex-end;
   width: 100%;
 }
+
+/* 구매·예산: 첫 loadData 완료 전 erp-content 전용 인라인 로딩 */
+.erp-system .erp-initial-fetch-inline {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--mg-spacing-md, 1rem);
+  margin: 0;
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  background: var(--mg-color-surface-main, var(--mg-gray-50));
+  min-height: var(--mg-spacing-3xl, 4rem);
+}

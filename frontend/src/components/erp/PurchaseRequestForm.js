@@ -35,6 +35,7 @@ const PurchaseRequestForm = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
   const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const [itemsInitialFetchDone, setItemsInitialFetchDone] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [itemQuantities, setItemQuantities] = useState({});
@@ -61,6 +62,7 @@ const PurchaseRequestForm = () => {
       console.error('아이템 로드 실패:', err);
       setError('아이템 목록을 불러오는데 실패했습니다.');
     } finally {
+      setItemsInitialFetchDone(true);
       if (silent) {
         setSilentRefreshing(false);
       } else {
@@ -205,14 +207,20 @@ const PurchaseRequestForm = () => {
     </AdminCommonLayout>
   );
 
-  if (loading && items.length === 0) {
-    return shell(
-      <UnifiedLoading type="page" text="아이템 목록을 불러오는 중..." />
-    );
-  }
+  const showInitialInlineLoad =
+    loading && items.length === 0 && !itemsInitialFetchDone;
 
   return shell(
     <>
+      {showInitialInlineLoad ? (
+        <div
+          className="purchase-request-form__initial-load"
+          role="status"
+          aria-live="polite"
+        >
+          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+        </div>
+      ) : (
       <section
         aria-labelledby={PURCHASE_REQUEST_TITLE_ID}
         className="purchase-request-form-container"
@@ -420,6 +428,7 @@ const PurchaseRequestForm = () => {
           )}
         </div>
       </section>
+      )}
 
       <ErpModal
         isOpen={showSuccessModal}

@@ -59,6 +59,7 @@ const BudgetManagement = () => {
   const [loading, setLoading] = useState(false);
   const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [budgetInitialFetchDone, setBudgetInitialFetchDone] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
   const [hasDataError, setHasDataError] = useState(false);
@@ -118,6 +119,7 @@ const BudgetManagement = () => {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
       setHasDataError(true);
     } finally {
+      setBudgetInitialFetchDone(true);
       if (silent) {
         setSilentRefreshing(false);
       } else {
@@ -335,6 +337,9 @@ const BudgetManagement = () => {
     );
   }
 
+  const showInitialInlineLoad =
+    loading && !budgetInitialFetchDone && !(error && hasDataError);
+
   return (
     <AdminCommonLayout title="예산 관리">
       <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
@@ -393,7 +398,13 @@ const BudgetManagement = () => {
               }
             />
             <div className="erp-content">
-            {loading && (
+            {showInitialInlineLoad && (
+              <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+              </div>
+            )}
+
+            {loading && !showInitialInlineLoad && (
               <div className="budget-management-loading">
                 <UnifiedLoading type="inline" text="로딩 중..." />
               </div>
@@ -414,7 +425,7 @@ const BudgetManagement = () => {
               </div>
             )}
 
-            {!loading && !(error && hasDataError) && (
+            {budgetInitialFetchDone && !loading && !(error && hasDataError) && (
               <>
                 {activeTab === 'budgets' && (
                   <div className="erp-section">

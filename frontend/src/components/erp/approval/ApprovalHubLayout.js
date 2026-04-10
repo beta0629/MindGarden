@@ -20,13 +20,13 @@ import '../ApprovalDashboard.css';
  * @param {Object} props
  * @param {string} props.headerTitle 페이지 헤더 제목
  * @param {string} [props.headerSubtitle] 부제
- * @param {boolean} props.loading
- * @param {string} props.loadingText
+ * @param {boolean} props.loading true일 때 본문에 인라인 로딩만 표시하고 children은 렌더하지 않음
+ * @param {string} props.loadingText 인라인 로딩 시 표시 문구 (UnifiedLoading text)
  * @param {boolean} [props.refreshing=false] 헤더 새로고침 등 무음 재조회 중
  * @param {() => void} props.onRefresh 목록 새로고침
  * @param {ApprovalHubMode} props.activeMode 현재 모드 (세그먼트 강조)
  * @param {boolean} [props.showModeSwitcher=true] 일반/상위 승인 전환 바 표시
- * @param {React.ReactNode} props.children 메인 본문
+ * @param {React.ReactNode} props.children loading이 false일 때만 렌더되는 메인 본문
  * @returns {React.ReactElement}
  */
 const ApprovalHubLayout = ({
@@ -106,17 +106,6 @@ const ApprovalHubLayout = ({
     </div>
   ) : null;
 
-  if (loading) {
-    return (
-      <ErpPageShell
-        className="approval-dashboard-container"
-        mainAriaLabel="승인 허브 로딩"
-      >
-        <UnifiedLoading type="page" text={loadingText} />
-      </ErpPageShell>
-    );
-  }
-
   return (
     <ErpPageShell
       className="approval-dashboard-container"
@@ -124,8 +113,16 @@ const ApprovalHubLayout = ({
       tabsSlot={tabsSlot}
       mainAriaLabel="승인 허브 본문"
     >
-      <section className="approval-hub-main-region" aria-labelledby={titleId}>
-        {children}
+      <section
+        className={`approval-hub-main-region${loading ? ' approval-hub-main-region--loading' : ''}`}
+        aria-labelledby={titleId}
+        aria-busy={loading}
+      >
+        {loading ? (
+          <UnifiedLoading type="inline" text={loadingText} />
+        ) : (
+          children
+        )}
       </section>
     </ErpPageShell>
   );
@@ -134,12 +131,15 @@ const ApprovalHubLayout = ({
 ApprovalHubLayout.propTypes = {
   headerTitle: PropTypes.string.isRequired,
   headerSubtitle: PropTypes.string,
+  /** true면 본문에 인라인 로딩만 표시, children은 렌더하지 않음 */
   loading: PropTypes.bool.isRequired,
+  /** 인라인 로딩 시 UnifiedLoading에 전달되는 문구 */
   loadingText: PropTypes.string.isRequired,
   refreshing: PropTypes.bool,
   onRefresh: PropTypes.func.isRequired,
   activeMode: PropTypes.oneOf(['admin', 'super']).isRequired,
   showModeSwitcher: PropTypes.bool,
+  /** loading이 false일 때만 렌더 */
   children: PropTypes.node
 };
 

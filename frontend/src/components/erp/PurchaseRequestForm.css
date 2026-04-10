@@ -5,6 +5,14 @@
  * @since 2026-04-09
  */
 
+.purchase-request-form__initial-load {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+}
+
 .mg-v2-purchase-request-form__inner {
   width: 100%;
   max-width: min(100%, 52rem);

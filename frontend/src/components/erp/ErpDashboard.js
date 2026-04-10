@@ -14,8 +14,7 @@ import {
   ContentHeader,
   ContentKpiRow
 } from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp } from 'lucide-react';
-import Button from '../ui/Button/Button';
+import { Package, Clock, ShoppingCart, TrendingUp, RefreshCw } from 'lucide-react';
 import {
   ErpIncomeExpenseSummarySection,
   ErpIncomeExpenseBarChartSection,
@@ -30,7 +29,7 @@ import './ErpCommon.css';
 import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpEmptyState } from './common';
+import { ErpEmptyState, ErpFilterToolbar } from './common';
 
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
 
@@ -99,11 +98,15 @@ const ErpDashboard = ({ user: propUser }) => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState(null);
+  const [refreshingToolbar, setRefreshingToolbar] = useState(false);
 
   /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
-  const loadIncomeExpenseSummary = useCallback(async () => {
+  const loadIncomeExpenseSummary = useCallback(async (options = {}) => {
+    const silent = options.silent === true;
     setFinanceError(null);
-    setFinanceLoading(true);
+    if (!silent) {
+      setFinanceLoading(true);
+    }
     try {
       const now = new Date();
       const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
@@ -130,9 +133,89 @@ const ErpDashboard = ({ user: propUser }) => {
       setFinancialData(null);
       setRecentTransactions([]);
     } finally {
-      setFinanceLoading(false);
+      if (!silent) {
+        setFinanceLoading(false);
+      }
     }
   }, []);
+
+  const loadDashboardData = useCallback(async (options = {}) => {
+    const silent = options.silent === true;
+    if (!silent) {
+      setLoading(true);
+    }
+    try {
+      const results = await Promise.allSettled([
+        StandardizedApi.get('/api/v1/erp/items'),
+        StandardizedApi.get('/api/v1/erp/purchase-requests/pending-admin'),
+        StandardizedApi.get('/api/v1/erp/purchase-orders'),
+        StandardizedApi.get('/api/v1/erp/budgets')
+      ]);
+
+      const toListAndCount = (value) => {
+        if (value == null) return { list: [], count: 0 };
+        if (Array.isArray(value)) return { list: value, count: value.length };
+        const count = value?.count ?? value?.totalItems ?? value?.totalElements ?? value?.size ?? 0;
+        const listRaw = value?.data ?? value?.content ?? [];
+        const list = Array.isArray(listRaw) ? listRaw : [];
+        return { list, count };
+      };
+
+      const items = results[0].status === 'fulfilled' ? toListAndCount(results[0].value) : { list: [], count: 0 };
+      const pending = results[1].status === 'fulfilled' ? toListAndCount(results[1].value) : { list: [], count: 0 };
+      const orders = results[2].status === 'fulfilled' ? toListAndCount(results[2].value) : { list: [], count: 0 };
+      const budgets = results[3].status === 'fulfilled' ? toListAndCount(results[3].value) : { list: [], count: 0 };
+      const budgetsList = budgets.list;
+
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`대시보드 API ${i + 1}/4 실패:`, r.reason);
+        }
+      });
+
+      const totalBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.totalBudget || 0), 0);
+      const usedBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.usedBudget || 0), 0);
+
+      setStats({
+        totalItems: items.count,
+        pendingRequests: pending.count,
+        approvedRequests: 0,
+        totalOrders: orders.count,
+        totalBudget,
+        usedBudget
+      });
+    } catch (error) {
+      console.error('대시보드 데이터 로드 실패:', error);
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  const handleSilentRefresh = useCallback(async () => {
+    setRefreshingToolbar(true);
+    try {
+      await loadDashboardData({ silent: true });
+      const cu = propUser || sessionUser;
+      const admin = cu && RoleUtils.isAdmin(cu);
+      const hasIF =
+        (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ??
+          PermissionChecks.canViewIntegratedFinance(userPermissions, cu)) || admin;
+      if (hasIF) {
+        await loadIncomeExpenseSummary({ silent: true });
+      }
+    } finally {
+      setRefreshingToolbar(false);
+    }
+  }, [
+    loadDashboardData,
+    loadIncomeExpenseSummary,
+    permissionChecks,
+    userPermissions,
+    propUser,
+    sessionUser
+  ]);
 
   // 세션 체크 및 권한 확인
   useEffect(() => {
@@ -253,56 +336,7 @@ const ErpDashboard = ({ user: propUser }) => {
     }, 3000);
 
     return () => clearTimeout(timeoutId);
-  }, [userPermissions, navigate, propUser, sessionUser, loadIncomeExpenseSummary]);
-
-  const loadDashboardData = async () => {
-    setLoading(true);
-    try {
-      const results = await Promise.allSettled([
-        StandardizedApi.get('/api/v1/erp/items'),
-        StandardizedApi.get('/api/v1/erp/purchase-requests/pending-admin'),
-        StandardizedApi.get('/api/v1/erp/purchase-orders'),
-        StandardizedApi.get('/api/v1/erp/budgets')
-      ]);
-
-      const toListAndCount = (value) => {
-        if (value == null) return { list: [], count: 0 };
-        if (Array.isArray(value)) return { list: value, count: value.length };
-        const count = value?.count ?? value?.totalItems ?? value?.totalElements ?? value?.size ?? 0;
-        const listRaw = value?.data ?? value?.content ?? [];
-        const list = Array.isArray(listRaw) ? listRaw : [];
-        return { list, count };
-      };
-
-      const items = results[0].status === 'fulfilled' ? toListAndCount(results[0].value) : { list: [], count: 0 };
-      const pending = results[1].status === 'fulfilled' ? toListAndCount(results[1].value) : { list: [], count: 0 };
-      const orders = results[2].status === 'fulfilled' ? toListAndCount(results[2].value) : { list: [], count: 0 };
-      const budgets = results[3].status === 'fulfilled' ? toListAndCount(results[3].value) : { list: [], count: 0 };
-      const budgetsList = budgets.list;
-
-      results.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          console.warn(`대시보드 API ${i + 1}/4 실패:`, r.reason);
-        }
-      });
-
-      const totalBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.totalBudget || 0), 0);
-      const usedBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.usedBudget || 0), 0);
-
-      setStats({
-        totalItems: items.count,
-        pendingRequests: pending.count,
-        approvedRequests: 0,
-        totalOrders: orders.count,
-        totalBudget,
-        usedBudget
-      });
-    } catch (error) {
-      console.error('대시보드 데이터 로드 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [userPermissions, navigate, propUser, sessionUser, loadDashboardData, loadIncomeExpenseSummary]);
 
   const handleInitTenantErp = async () => {
     setInitResult(null);
@@ -463,22 +497,25 @@ const ErpDashboard = ({ user: propUser }) => {
         title="운영 현황"
         subtitle={subtitleWithTenant}
         titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
-        actions={
-          <Button
-            variant="outline"
-            size="small"
-            onClick={() => {
-              loadDashboardData();
-              if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
-            }}
-            preventDoubleClick={true}
-          >
-            새로고침
-          </Button>
-        }
       />
       <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
         <ErpPageShell mainAriaLabel="운영 현황 본문">
+          <ErpFilterToolbar
+            ariaLabel="운영 현황 도구"
+            secondaryRow={(
+              <div className="erp-dashboard__toolbar-actions">
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button--secondary"
+                  onClick={handleSilentRefresh}
+                  disabled={refreshingToolbar}
+                >
+                  <RefreshCw size={16} aria-hidden />
+                  데이터 새로고침
+                </button>
+              </div>
+            )}
+          />
           {hasIntegratedFinanceView && (
             <ErpIncomeExpenseSummarySection
               financeError={financeError}

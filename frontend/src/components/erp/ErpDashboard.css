@@ -63,3 +63,11 @@
 .erp-empty-state { ... }
 및 관련 미디어쿼리 블록 전부 미사용.
 ========== */
+
+/* P4 ErpFilterToolbar — 운영 현황 새로고침 secondary 우측 정렬 (예산·구매·통합재무와 동일) */
+.erp-dashboard__content .erp-dashboard__toolbar-actions,
+.erp-dashboard__content .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, XCircle, Edit3, Save, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus, MapPin, Clock } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
   const [formData, setFormData] = useState({
@@ -94,29 +94,29 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
       actions={
         <>
           {mode === 'view' && !isEditing && (
-            <Button type="button" variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
+            <MGButton type="button" variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
               <Edit3 size={20} className="mg-v2-icon-inline" />
               수정
-            </Button>
+            </MGButton>
           )}
           {(mode === 'add' || isEditing) && (
             <>
-              <Button type="submit" form="client-info-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
+              <MGButton type="submit" form="client-info-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
                 <Save size={20} className="mg-v2-icon-inline" />
                 {mode === 'add' ? '등록' : '저장'}
-              </Button>
+              </MGButton>
               {isEditing && (
-                <Button type="button" variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
+                <MGButton type="button" variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
                   <XCircle size={20} className="mg-v2-icon-inline" />
                   취소
-                </Button>
+                </MGButton>
               )}
             </>
           )}
-          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <Clock size={20} className="mg-v2-icon-inline" />
             닫기
-          </Button>
+          </MGButton>
         </>
       }
     >

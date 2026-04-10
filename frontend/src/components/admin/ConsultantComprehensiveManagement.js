@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone } from 'lucide-react';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
@@ -1198,7 +1198,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         </div>
                                                         <div className="mg-v2-profile-card__footer">
                                                             <div className="mg-v2-profile-card__actions">
-                                                                <Button
+                                                                <MGButton
                                                                     variant="primary"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1208,8 +1208,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     <Edit size={14} /> 수정
-                                                                </Button>
-                                                                <Button
+                                                                </MGButton>
+                                                                <MGButton
                                                                     variant="secondary"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1221,8 +1221,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     title="비밀번호 초기화"
                                                                 >
                                                                     <Key size={14} /> 비밀번호 초기화
-                                                                </Button>
-                                                                <Button
+                                                                </MGButton>
+                                                                <MGButton
                                                                     variant="danger"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1233,7 +1233,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     <Trash2 size={14} /> 삭제
-                                                                </Button>
+                                                                </MGButton>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1423,7 +1423,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         </div>
                                                         <div className="mg-v2-profile-card__footer">
                                                             <div className="mg-v2-profile-card__actions">
-                                                                <Button
+                                                                <MGButton
                                                                     variant="primary"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1433,8 +1433,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     <Edit size={14} /> 수정
-                                                                </Button>
-                                                                <Button
+                                                                </MGButton>
+                                                                <MGButton
                                                                     variant="secondary"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1446,8 +1446,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     title="비밀번호 초기화"
                                                                 >
                                                                     <Key size={14} /> 비밀번호 초기화
-                                                                </Button>
-                                                                <Button
+                                                                </MGButton>
+                                                                <MGButton
                                                                     variant="danger"
                                                                     size="small"
                                                                     onClick={(e) => {
@@ -1458,7 +1458,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     <Trash2 size={14} /> 삭제
-                                                                </Button>
+                                                                </MGButton>
                                                             </div>
                                                         </div>
                                                     </div>

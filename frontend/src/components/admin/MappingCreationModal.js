@@ -16,7 +16,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
@@ -352,7 +352,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const renderActions = () => (
     <div className="mg-modal__actions mg-v2-mapping-creation-modal__actions">
       {step > 1 && step < 5 && (
-        <Button
+        <MGButton
           type="button"
           variant="outline"
           size="medium"
@@ -361,10 +361,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
         >
           이전
-        </Button>
+        </MGButton>
       )}
       {step < 4 && (
-        <Button
+        <MGButton
           type="button"
           variant="primary"
           size="medium"
@@ -373,10 +373,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
         >
           다음
-        </Button>
+        </MGButton>
       )}
       {step === 4 && (
-        <Button
+        <MGButton
           type="button"
           variant="primary"
           size="medium"
@@ -387,10 +387,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
         >
           {loading ? '생성 중...' : '매칭 생성'}
-        </Button>
+        </MGButton>
       )}
       {step === 5 && (
-        <Button
+        <MGButton
           type="button"
           variant="primary"
           size="medium"
@@ -399,7 +399,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         >
           <CheckCircle size={18} />
           완료
-        </Button>
+        </MGButton>
       )}
     </div>
   );
@@ -488,7 +488,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 <AlertCircle size={40} />
                 <h4>패키지 데이터가 등록되지 않았습니다</h4>
                 <p>공통코드 관리에서 패키지를 등록해주세요.</p>
-                <Button
+                <MGButton
                   type="button"
                   variant="primary"
                   size="medium"
@@ -496,7 +496,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   preventDoubleClick={false}
                 >
                   공통코드 관리로 이동
-                </Button>
+                </MGButton>
               </div>
             ) : (
               <div className="mg-v2-mapping-creation-modal__pkg-grid">

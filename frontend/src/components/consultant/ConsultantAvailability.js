@@ -7,7 +7,6 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
-import Button from '../ui/Button/Button';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -499,11 +498,11 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
       showCloseButton
       actions={(
         <>
-          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <i className="bi bi-x-circle"></i>
             취소
-          </Button>
-          <Button
+          </MGButton>
+          <MGButton
             type="submit"
             form={CONSULTANT_AVAILABILITY_FORM_ID}
             variant="primary"
@@ -512,7 +511,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
           >
             <i className="bi bi-check-circle"></i>
             {initialData ? '수정' : '추가'}
-          </Button>
+          </MGButton>
         </>
       )}
     >

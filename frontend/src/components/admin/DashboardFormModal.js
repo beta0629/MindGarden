@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -1108,7 +1108,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   const mainModalActions = !loadingRoles ? (
     <>
-      <Button
+      <MGButton
         type="button"
         variant="secondary"
         onClick={onClose}
@@ -1116,8 +1116,8 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         preventDoubleClick={true}
       >
         취소
-      </Button>
-      <Button
+      </MGButton>
+      <MGButton
         type="button"
         variant="primary"
         disabled={loading}
@@ -1143,7 +1143,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         loadingText="저장 중..."
       >
         {isEditMode ? '수정' : '생성'}
-      </Button>
+      </MGButton>
     </>
   ) : null;
 
@@ -1475,7 +1475,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           zIndex={DASHBOARD_FORM_ADD_ROLE_MODAL_Z_INDEX}
           actions={
             <>
-              <Button
+              <MGButton
                 type="button"
                 variant="outline"
                 size="medium"
@@ -1484,8 +1484,8 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 preventDoubleClick={false}
               >
                 취소
-              </Button>
-              <Button
+              </MGButton>
+              <MGButton
                 type="button"
                 variant="primary"
                 size="medium"
@@ -1496,7 +1496,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 preventDoubleClick={false}
               >
                 {loading ? '추가 중...' : '역할 추가'}
-              </Button>
+              </MGButton>
             </>
           }
         >

@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
@@ -166,7 +166,7 @@ const MessageSendModal = ({
       loading={sending}
       actions={
         <>
-          <Button
+          <MGButton
             type="button"
             variant="outline"
             size="medium"
@@ -176,8 +176,8 @@ const MessageSendModal = ({
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </Button>
-          <Button
+          </MGButton>
+          <MGButton
             type="button"
             variant="primary"
             size="medium"
@@ -189,7 +189,7 @@ const MessageSendModal = ({
           >
             <Send size={20} className="mg-v2-icon-inline" />
             메시지 전송
-          </Button>
+          </MGButton>
         </>
       }
     >

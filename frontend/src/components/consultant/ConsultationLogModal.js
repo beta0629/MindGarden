@@ -6,7 +6,7 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { isRestrictedClientProfileTier } from '../../constants/clientProfileContext';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import '../schedule/ScheduleB0KlA.css';
 import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClientProfilePanel';
 import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecautionsPanel';
@@ -658,7 +658,7 @@ const ConsultationLogModal = ({
 
   const modalFooter = (
     <>
-      <Button
+      <MGButton
         type="button"
         variant="outline"
         size="medium"
@@ -667,8 +667,8 @@ const ConsultationLogModal = ({
         preventDoubleClick={false}
       >
         취소
-      </Button>
-      <Button
+      </MGButton>
+      <MGButton
         type="button"
         variant="primary"
         size="medium"
@@ -678,9 +678,9 @@ const ConsultationLogModal = ({
         loadingText="저장중..."
         preventDoubleClick={false}
       >
-        {saving ? '저장중...' : '💾 저장'}
-      </Button>
-      <Button
+        💾 저장
+      </MGButton>
+      <MGButton
         type="button"
         variant="success"
         size="medium"
@@ -690,8 +690,8 @@ const ConsultationLogModal = ({
         loadingText="완료중..."
         preventDoubleClick={false}
       >
-        {saving ? '완료중...' : '✅ 완료'}
-      </Button>
+        ✅ 완료
+      </MGButton>
     </>
   );
 

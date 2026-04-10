@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, XCircle, Edit3, Save, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 // 내담자 상세 정보 모달 컴포넌트
 const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
@@ -69,25 +69,25 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
       actions={
         isEditing ? (
           <>
-            <Button variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
+            <MGButton variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
               <XCircle size={20} className="mg-v2-icon-inline" />
               취소
-            </Button>
-            <Button variant="primary" size="medium" onClick={handleSave} preventDoubleClick={false}>
+            </MGButton>
+            <MGButton variant="primary" size="medium" onClick={handleSave} preventDoubleClick={false}>
               <Save size={20} className="mg-v2-icon-inline" />
               저장
-            </Button>
+            </MGButton>
           </>
         ) : (
           <>
-            <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+            <MGButton variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
               <XCircle size={20} className="mg-v2-icon-inline" />
               닫기
-            </Button>
-            <Button variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
+            </MGButton>
+            <MGButton variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
               <Edit3 size={20} className="mg-v2-icon-inline" />
               수정
-            </Button>
+            </MGButton>
           </>
         )
       }

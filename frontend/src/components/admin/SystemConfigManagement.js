@@ -26,7 +26,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import { getModelPricingLabel, getModelOptionSuffix, PRICING_URLS } from './modelPricing';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -416,9 +416,9 @@ const SystemConfigManagement = () => {
                           placeholder={id === 'openai' ? 'sk-...' : 'API 키 입력'}
                           className="mg-v2-input"
                         />
-                        <Button type="button" variant="secondary" size="medium" onClick={() => toggleShowApiKey(id)} preventDoubleClick={false}>
+                        <MGButton type="button" variant="secondary" size="medium" onClick={() => toggleShowApiKey(id)} preventDoubleClick={false}>
                           {showApiKey[id] ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </Button>
+                        </MGButton>
                       </div>
                       <small className="help-text"><Shield size={14} /> API 키는 암호화되어 저장됩니다.</small>
                     </div>
@@ -438,7 +438,7 @@ const SystemConfigManagement = () => {
                       {id === 'gemini' ? (
                         <>
                           <div className="section-actions" style={{ marginBottom: 8 }}>
-                            <Button
+                            <MGButton
                               type="button"
                               variant="secondary"
                               size="medium"
@@ -450,7 +450,7 @@ const SystemConfigManagement = () => {
                             >
                               {loadingGeminiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
                               {geminiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
-                            </Button>
+                            </MGButton>
                           </div>
                           {geminiModels.length > 0 ? (
                             <select
@@ -501,7 +501,7 @@ const SystemConfigManagement = () => {
                       ) : id === 'openai' ? (
                         <>
                           <div className="section-actions" style={{ marginBottom: 8 }}>
-                            <Button
+                            <MGButton
                               variant="secondary"
                               size="medium"
                               onClick={handleLoadOpenAIModels}
@@ -512,7 +512,7 @@ const SystemConfigManagement = () => {
                             >
                               {loadingOpenaiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
                               {openaiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
-                            </Button>
+                            </MGButton>
                           </div>
                           {openaiModels.length > 0 ? (
                             <select
@@ -586,7 +586,7 @@ const SystemConfigManagement = () => {
                   {id === 'openai' && (
                     <>
                       <div className="section-actions">
-                        <Button
+                        <MGButton
                           variant="secondary"
                           size="medium"
                           onClick={handleTestOpenAI}
@@ -597,7 +597,7 @@ const SystemConfigManagement = () => {
                         >
                           {testing ? <RefreshCw size={16} className="mg-spinning" /> : <CheckCircle size={16} />}
                           API 테스트
-                        </Button>
+                        </MGButton>
                       </div>
                       {testResult && (
                         <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
@@ -614,7 +614,7 @@ const SystemConfigManagement = () => {
                   {id === 'gemini' && (
                     <>
                       <div className="section-actions">
-                        <Button
+                        <MGButton
                           variant="secondary"
                           size="medium"
                           onClick={handleTestGemini}
@@ -625,7 +625,7 @@ const SystemConfigManagement = () => {
                         >
                           {testingGemini ? <RefreshCw size={16} className="mg-spinning" /> : <CheckCircle size={16} />}
                           키 테스트
-                        </Button>
+                        </MGButton>
                       </div>
                       <p className="mg-v2-system-config__section-desc" style={{ marginTop: 8 }}>
                         Google AI Studio에서 발급한 API 키는 키만 입력하면 됩니다. 프로젝트 이름/번호는 입력할 필요 없습니다.

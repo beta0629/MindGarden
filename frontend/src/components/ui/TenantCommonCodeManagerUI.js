@@ -18,7 +18,7 @@
 
 import React from 'react';
 import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import {
@@ -146,21 +146,21 @@ const TenantCommonCodeManagerUI = ({
                                 </div>
                                 <div className="mg-codes-actions">
                                     {selectedGroup.groupName === 'CONSULTATION_PACKAGE' && (
-                                        <Button
+                                        <MGButton
                                             variant="secondary"
                                             onClick={onQuickCreatePackage}
                                             preventDoubleClick={true}
                                         >
                                             빠른 패키지 생성
-                                        </Button>
+                                        </MGButton>
                                     )}
-                                    <Button
+                                    <MGButton
                                         variant="primary"
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
                                         + 코드 추가
-                                    </Button>
+                                    </MGButton>
                                 </div>
                             </div>
 
@@ -169,13 +169,13 @@ const TenantCommonCodeManagerUI = ({
                             ) : codes.length === 0 ? (
                                 <div className="mg-empty-state">
                                     <p>등록된 코드가 없습니다.</p>
-                                    <Button 
+                                    <MGButton 
                                         variant="primary" 
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
                                         첫 코드 추가하기
-                                    </Button>
+                                    </MGButton>
                                 </div>
                             ) : (
                                 <div className="mg-codes-cards-grid">
@@ -233,22 +233,22 @@ const TenantCommonCodeManagerUI = ({
                                                 
                                                 {/* 카드 액션 */}
                                                 <div className="mg-code-card__actions">
-                                                    <Button
+                                                    <MGButton
                                                         variant="secondary"
                                                         size="small"
                                                         onClick={() => onEditCode(code)}
                                                         preventDoubleClick={true}
                                                     >
                                                         수정
-                                                    </Button>
-                                                    <Button
+                                                    </MGButton>
+                                                    <MGButton
                                                         variant="danger"
                                                         size="small"
                                                         onClick={() => onDeleteCode(code.id)}
                                                         preventDoubleClick={true}
                                                     >
                                                         삭제
-                                                    </Button>
+                                                    </MGButton>
                                                 </div>
                                             </MGCard>
                                         );
@@ -275,15 +275,15 @@ const TenantCommonCodeManagerUI = ({
                 showCloseButton
                 actions={(
                     <>
-                        <Button
+                        <MGButton
                             type="button"
                             variant="secondary"
                             onClick={onModalClose}
                             preventDoubleClick={true}
                         >
                             취소
-                        </Button>
-                        <Button
+                        </MGButton>
+                        <MGButton
                             type="submit"
                             form={TENANT_COMMON_CODE_FORM_ID}
                             variant="primary"
@@ -293,7 +293,7 @@ const TenantCommonCodeManagerUI = ({
                             preventDoubleClick={true}
                         >
                             {modalMode === 'create' ? '생성' : '수정'}
-                        </Button>
+                        </MGButton>
                     </>
                 )}
             >

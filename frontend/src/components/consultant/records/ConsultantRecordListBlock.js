@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { FileText } from 'lucide-react';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '아직 작성된 상담 기록이 없습니다. 상담 기록은 일정 관리에서 작성할 수 있습니다.';
@@ -36,13 +36,13 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
           </div>
           <h3 className="mg-v2-consultation-log-list-block__empty-title">{EMPTY_TITLE}</h3>
           <p className="mg-v2-consultation-log-list-block__empty-desc">{EMPTY_DESC}</p>
-          <Button 
+          <MGButton 
             variant="outline"
             onClick={onNavigateSchedule}
             style={{ marginTop: '1rem' }}
           >
             <i className="bi bi-calendar"></i> 일정 관리로 이동
-          </Button>
+          </MGButton>
         </div>
       );
     }
@@ -87,21 +87,21 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
               </div>
               <div style={{ padding: '1rem', borderTop: '1px solid var(--mg-gray-200)', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                 {isCompleted ? (
-                  <Button
+                  <MGButton
                     variant="outline"
                     size="small"
                     onClick={() => onViewRecord(record.id)}
                   >
                     <i className="bi bi-eye"></i> 상담일지 조회
-                  </Button>
+                  </MGButton>
                 ) : (
-                  <Button
+                  <MGButton
                     variant="primary"
                     size="small"
                     onClick={() => onWriteRecord(record.id)}
                   >
                     <i className="bi bi-pencil-square"></i> 상담일지 작성
-                  </Button>
+                  </MGButton>
                 )}
               </div>
             </div>

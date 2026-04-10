@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import './WidgetConfigModal.css';
 
@@ -175,20 +175,20 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
       backdropClick
       actions={
         <>
-          <Button
+          <MGButton
             variant="secondary"
             onClick={onClose}
             preventDoubleClick={true}
           >
             취소
-          </Button>
-          <Button
+          </MGButton>
+          <MGButton
             variant="primary"
             onClick={handleSave}
             preventDoubleClick={true}
           >
             저장
-          </Button>
+          </MGButton>
         </>
       }
     >

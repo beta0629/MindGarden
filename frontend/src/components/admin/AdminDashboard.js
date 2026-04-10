@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Button from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -650,7 +649,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <span className="mg-v2-ad-b0kla__search-placeholder">통합 검색...</span>
                     </div>
                     <div className="mg-v2-ad-b0kla__icon-group">
-                        <Button
+                        <MGButton
                             variant="outline"
                             size="small"
                             className="mg-v2-ad-b0kla__icon-btn"
@@ -659,7 +658,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             aria-label="통계"
                         >
                             <BarChart size={20} />
-                        </Button>
+                        </MGButton>
                         <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더">
                             <Calendar size={20} />
                         </button>

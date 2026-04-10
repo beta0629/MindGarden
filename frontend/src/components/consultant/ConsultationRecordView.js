@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -77,14 +77,14 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
-          <Button 
+          <MGButton 
             variant="secondary"
             className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </Button>
+          </MGButton>
         </div>
       </AdminCommonLayout>
     );
@@ -96,14 +96,14 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
-          <Button 
+          <MGButton 
             variant="secondary"
             className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </Button>
+          </MGButton>
         </div>
       </AdminCommonLayout>
     );
@@ -167,13 +167,13 @@ const ConsultationRecordView = () => {
 
         {/* 액션 버튼 */}
         <div className="mg-v2-record-actions mg-mt-lg">
-          <Button 
+          <MGButton 
             variant="secondary"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </Button>
+          </MGButton>
         </div>
       </div>
     </AdminCommonLayout>

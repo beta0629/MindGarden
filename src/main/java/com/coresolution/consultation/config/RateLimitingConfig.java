@@ -4,34 +4,46 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Rate Limiting 설정 클래스
- * Brute Force 공격 방지를 위한 API 호출 제한
- * 
+ * Rate Limiting 설정. 로그인 시도·계정 연동 공개 API·Trinity 공개 온보딩 생성 POST 등 민감 경로에만 IP 기준 제한을 적용합니다.
+ * 전역 {@code /api/*} 단일 상한(기존 사실상 비활성 값)은 제거되었습니다.
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-01-17
  */
 @Configuration
+@RequiredArgsConstructor
 public class RateLimitingConfig {
+
+    private final MindgardenSecurityProperties mindgardenSecurityProperties;
+
+    private static final ObjectMapper RATE_LIMIT_JSON = new ObjectMapper();
 
     /**
      * Rate Limiting 필터 Bean
+     *
+     * @return 필터 인스턴스
      */
     @Bean
-    public RateLimitingFilter rateLimitingFilter() {
-        return new RateLimitingFilter();
+    public RateLimitingFilter rateLimitingFilter(ObjectProvider<MeterRegistry> meterRegistryProvider) {
+        return new RateLimitingFilter(mindgardenSecurityProperties, meterRegistryProvider);
     }
 
     /**
@@ -39,193 +51,272 @@ public class RateLimitingConfig {
      */
     @Slf4j
     public static class RateLimitingFilter extends OncePerRequestFilter {
-        
-        // IP별 요청 횟수를 저장하는 맵 (간단한 구현)
+
+        private final MindgardenSecurityProperties properties;
+
         private final Map<String, RequestInfo> requestCounts = new ConcurrentHashMap<>();
-        
-        // RequestInfo 내부 클래스
-        private static class RequestInfo {
-            private int count;
-            private long lastRequestTime;
-            
-            public RequestInfo() {
-                this.count = 1;
-                this.lastRequestTime = System.currentTimeMillis();
-            }
-            
-            public void increment() {
-                this.count++;
-                this.lastRequestTime = System.currentTimeMillis();
-            }
-            
-            public int getCount() { return count; }
-            public long getLastRequestTime() { return lastRequestTime; }
+
+        private static final String RATE_KEY_SUFFIX_LOGIN = "_login";
+        private static final String RATE_KEY_SUFFIX_INTEGRATION = "_integration";
+        private static final String RATE_KEY_SUFFIX_ONBOARDING_CREATE = "_onboarding_create";
+
+        private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
+        private static final String TAG_REASON = "reason";
+        private static final String REASON_LOGIN = "login";
+        private static final String REASON_INTEGRATION = "integration";
+        private static final String REASON_ONBOARDING_CREATE = "onboarding_create";
+        private static final String REASON_UNKNOWN = "unknown";
+
+        private static final int MAX_LOGIN_ATTEMPTS = 999999;
+        private static final long LOGIN_COOLDOWN_MINUTES = 0L;
+
+        private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+
+        /**
+         * @param properties 보안·레이트리밋 설정
+         * @param meterRegistryProvider Micrometer 레지스트리(테스트 등에서 빈 없을 수 있음)
+         */
+        public RateLimitingFilter(MindgardenSecurityProperties properties,
+            ObjectProvider<MeterRegistry> meterRegistryProvider) {
+            this.properties = properties;
+            this.meterRegistryProvider = meterRegistryProvider;
         }
-        
-        // Rate Limiting 설정 (테스트용 비활성화)
-        private static final int MAX_REQUESTS_PER_MINUTE = 999999; // 분당 최대 999999회 (테스트용)
-        private static final int MAX_LOGIN_ATTEMPTS = 999999;       // 로그인 시도 최대 999999회 (테스트용)
-        private static final long LOGIN_COOLDOWN_MINUTES = 0;   // 로그인 실패 후 0분 대기 (테스트용)
-        
+
         @Override
-        protected void doFilterInternal(@NonNull HttpServletRequest request, 
-                                      @NonNull HttpServletResponse response, 
-                                      @NonNull FilterChain filterChain) throws ServletException, IOException {
-            
+        protected void doFilterInternal(@NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
+
             String clientIp = getClientIpAddress(request);
-            String requestPath = request.getRequestURI();
-            
-            // 오래된 요청 정보 정리 (1분 이상 된 것들)
+
             cleanupOldRequests();
-            
-            // Rate Limiting이 적용되는 경로들
-            if (shouldApplyRateLimit(requestPath)) {
-                if (!isAllowed(clientIp, requestPath)) {
-                    handleRateLimitExceeded(response, requestPath);
+
+            if (shouldApplyRateLimit(request)) {
+                if (!isAllowed(clientIp, request)) {
+                    handleRateLimitExceeded(response, request);
                     return;
                 }
             }
-            
-            // 요청 카운트 증가
-            incrementRequestCount(clientIp, requestPath);
-            
+
+            incrementRequestCount(clientIp, request);
+
             filterChain.doFilter(request, response);
         }
-        
-        /**
-         * Rate Limiting이 적용되어야 하는 경로인지 확인
-         */
-        private boolean shouldApplyRateLimit(String requestPath) {
-            return requestPath.startsWith("/api/auth/login") ||
-                   requestPath.startsWith("/api/auth/") ||
-                   requestPath.startsWith("/api/") ||
-                   requestPath.startsWith("/oauth2/");
+
+        private boolean shouldApplyRateLimit(HttpServletRequest request) {
+            String requestPath = request.getRequestURI();
+            return isLoginRateLimitPath(requestPath)
+                || isAccountIntegrationPublicPath(requestPath)
+                || isOnboardingCreatePublicRequest(request);
         }
-        
+
+        private boolean isLoginRateLimitPath(String requestPath) {
+            return requestPath.contains("/login");
+        }
+
+        private boolean isAccountIntegrationPublicPath(String requestPath) {
+            String prefix = properties.getRateLimit().getIntegrationPathPrefix();
+            return prefix != null && !prefix.isEmpty() && requestPath.startsWith(prefix);
+        }
+
         /**
-         * 요청이 허용되는지 확인
+         * Trinity 공개 플로우: {@code POST} 이고 URI가 {@link MindgardenSecurityProperties.RateLimit#getOnboardingCreatePath()} 와 정확히 일치할 때만.
+         * {@code /api/v1/ops/onboarding/requests} 는 여기에 해당하지 않는다.
          */
-        private boolean isAllowed(String clientIp, String requestPath) {
-            // 로그인 시도에 대한 특별한 처리
-            if (requestPath.contains("/login")) {
+        private boolean isOnboardingCreatePublicRequest(HttpServletRequest request) {
+            if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                return false;
+            }
+            String configured = properties.getRateLimit().getOnboardingCreatePath();
+            return configured != null && configured.equals(request.getRequestURI());
+        }
+
+        private boolean isAllowed(String clientIp, HttpServletRequest request) {
+            String requestPath = request.getRequestURI();
+            if (isLoginRateLimitPath(requestPath)) {
                 return isLoginAllowed(clientIp);
             }
-            
-            // 일반 API 요청에 대한 처리
-            return isGeneralApiAllowed(clientIp);
+            if (isAccountIntegrationPublicPath(requestPath)) {
+                return isIntegrationAllowed(clientIp);
+            }
+            if (isOnboardingCreatePublicRequest(request)) {
+                return isOnboardingCreateAllowed(clientIp);
+            }
+            return true;
         }
-        
-        /**
-         * 로그인 요청이 허용되는지 확인
-         */
+
         private boolean isLoginAllowed(String clientIp) {
-            RequestInfo loginInfo = requestCounts.get(clientIp + "_login");
-            
+            RequestInfo loginInfo = requestCounts.get(clientIp + RATE_KEY_SUFFIX_LOGIN);
+
             if (loginInfo == null) {
                 return true;
             }
-            
-            // 최대 시도 횟수 초과
+
             if (loginInfo.getCount() >= MAX_LOGIN_ATTEMPTS) {
                 long timeSinceLastAttempt = System.currentTimeMillis() - loginInfo.getLastRequestTime();
                 long cooldownMs = LOGIN_COOLDOWN_MINUTES * 60 * 1000;
-                
-                // 쿨다운 시간이 지났으면 리셋
+
                 if (timeSinceLastAttempt > cooldownMs) {
-                    requestCounts.remove(clientIp + "_login");
+                    requestCounts.remove(clientIp + RATE_KEY_SUFFIX_LOGIN);
                     return true;
                 }
                 return false;
             }
-            
+
             return true;
         }
-        
-        /**
-         * 일반 API 요청이 허용되는지 확인
-         */
-        private boolean isGeneralApiAllowed(String clientIp) {
-            RequestInfo apiInfo = requestCounts.get(clientIp + "_api");
-            return apiInfo == null || apiInfo.getCount() < MAX_REQUESTS_PER_MINUTE;
+
+        private boolean isIntegrationAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_INTEGRATION;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getIntegrationRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
         }
-        
-        /**
-         * 요청 카운트 증가
-         */
-        private void incrementRequestCount(String clientIp, String requestPath) {
-            if (requestPath.contains("/login")) {
-                // 로그인 시도 카운트 증가
-                RequestInfo loginInfo = requestCounts.get(clientIp + "_login");
+
+        private boolean isOnboardingCreateAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_ONBOARDING_CREATE;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getOnboardingCreateRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
+        }
+
+        private void incrementRequestCount(String clientIp, HttpServletRequest request) {
+            String requestPath = request.getRequestURI();
+            if (isLoginRateLimitPath(requestPath)) {
+                RequestInfo loginInfo = requestCounts.get(clientIp + RATE_KEY_SUFFIX_LOGIN);
                 if (loginInfo == null) {
                     loginInfo = new RequestInfo();
-                    requestCounts.put(clientIp + "_login", loginInfo);
+                    requestCounts.put(clientIp + RATE_KEY_SUFFIX_LOGIN, loginInfo);
                 } else {
                     loginInfo.increment();
                 }
-            } else {
-                // 일반 API 요청 카운트 증가
-                RequestInfo apiInfo = requestCounts.get(clientIp + "_api");
-                if (apiInfo == null) {
-                    apiInfo = new RequestInfo();
-                    requestCounts.put(clientIp + "_api", apiInfo);
+            } else if (isAccountIntegrationPublicPath(requestPath)) {
+                String key = clientIp + RATE_KEY_SUFFIX_INTEGRATION;
+                RequestInfo integrationInfo = requestCounts.get(key);
+                if (integrationInfo == null) {
+                    integrationInfo = new RequestInfo();
+                    requestCounts.put(key, integrationInfo);
                 } else {
-                    apiInfo.increment();
+                    integrationInfo.increment();
+                }
+            } else if (isOnboardingCreatePublicRequest(request)) {
+                String key = clientIp + RATE_KEY_SUFFIX_ONBOARDING_CREATE;
+                RequestInfo onboardingInfo = requestCounts.get(key);
+                if (onboardingInfo == null) {
+                    onboardingInfo = new RequestInfo();
+                    requestCounts.put(key, onboardingInfo);
+                } else {
+                    onboardingInfo.increment();
                 }
             }
         }
-        
-        /**
-         * 오래된 요청 정보 정리
-         */
+
         private void cleanupOldRequests() {
             long currentTime = System.currentTimeMillis();
-            long expireTime = 60 * 1000; // 1분
-            
-            requestCounts.entrySet().removeIf(entry -> {
-                return (currentTime - entry.getValue().getLastRequestTime()) > expireTime;
-            });
+            long expireTime = 60 * 1000L;
+
+            requestCounts.entrySet().removeIf(entry ->
+                (currentTime - entry.getValue().getLastRequestTime()) > expireTime);
         }
-        
-        /**
-         * Rate Limit 초과 시 처리
-         */
-        private void handleRateLimitExceeded(HttpServletResponse response, String requestPath) throws IOException {
+
+        private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request)
+            throws IOException {
+            recordRateLimitBlocked(request);
+
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json;charset=UTF-8");
-            
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            
-            if (requestPath.contains("/login")) {
-                errorResponse.put("message", "로그인 시도 횟수가 초과되었습니다. 15분 후 다시 시도해주세요.");
-                errorResponse.put("retryAfter", LOGIN_COOLDOWN_MINUTES * 60); // 초 단위
+
+            String requestPath = request.getRequestURI();
+            if (isLoginRateLimitPath(requestPath)) {
+                errorResponse.put("message", "로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", LOGIN_COOLDOWN_MINUTES * 60);
+            } else if (isOnboardingCreatePublicRequest(request)) {
+                errorResponse.put("message", "온보딩 생성 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
             } else {
-                errorResponse.put("message", "API 호출 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
-                errorResponse.put("retryAfter", 60); // 1분
+                errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
             }
-            
+
             errorResponse.put("timestamp", System.currentTimeMillis());
             errorResponse.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
-            
-            response.getWriter().write(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(errorResponse));
+
+            response.getWriter().write(RATE_LIMIT_JSON.writeValueAsString(errorResponse));
         }
-        
+
         /**
-         * 클라이언트 IP 주소 추출
+         * 429 차단 시 전용 카운터(알람용 태그 {@code reason}). {@link MetricsInterceptor} 의 {@code api.errors} 와 별도.
          */
+        private void recordRateLimitBlocked(HttpServletRequest request) {
+            MeterRegistry registry = meterRegistryProvider.getIfAvailable();
+            if (registry == null) {
+                return;
+            }
+            String reason = resolveBlockReason(request);
+            Counter.builder(METRIC_RATE_LIMIT_BLOCKED)
+                .tag(TAG_REASON, reason)
+                .register(registry)
+                .increment();
+        }
+
+        /**
+         * {@link #isAllowed(String, HttpServletRequest)} 분기와 동일 순서로 단일 reason 결정.
+         */
+        private String resolveBlockReason(HttpServletRequest request) {
+            String requestPath = request.getRequestURI();
+            if (isLoginRateLimitPath(requestPath)) {
+                return REASON_LOGIN;
+            }
+            if (isAccountIntegrationPublicPath(requestPath)) {
+                return REASON_INTEGRATION;
+            }
+            if (isOnboardingCreatePublicRequest(request)) {
+                return REASON_ONBOARDING_CREATE;
+            }
+            return REASON_UNKNOWN;
+        }
+
         private String getClientIpAddress(HttpServletRequest request) {
             String xForwardedFor = request.getHeader("X-Forwarded-For");
             if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
                 return xForwardedFor.split(",")[0].trim();
             }
-            
+
             String xRealIp = request.getHeader("X-Real-IP");
             if (xRealIp != null && !xRealIp.isEmpty()) {
                 return xRealIp;
             }
-            
+
             return request.getRemoteAddr();
         }
-        
+    }
+
+    /**
+     * IP(및 접미사)별 요청 횟수
+     */
+    private static class RequestInfo {
+        private int count;
+        private long lastRequestTime;
+
+        RequestInfo() {
+            this.count = 1;
+            this.lastRequestTime = System.currentTimeMillis();
+        }
+
+        void increment() {
+            this.count++;
+            this.lastRequestTime = System.currentTimeMillis();
+        }
+
+        int getCount() {
+            return count;
+        }
+
+        long getLastRequestTime() {
+            return lastRequestTime;
+        }
     }
 }

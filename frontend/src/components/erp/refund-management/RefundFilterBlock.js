@@ -37,7 +37,7 @@ const RefundFilterBlock = ({
   onBatchReflectErp,
   selectedRowIds = [],
   isLoadingReflect = false,
-  silentRefreshing = false
+  silentListRefreshing = false
 }) => {
   const hasSelection = Array.isArray(selectedRowIds) && selectedRowIds.length > 0;
 
@@ -106,7 +106,7 @@ const RefundFilterBlock = ({
               size="small"
               className="mg-v2-button mg-v2-button--secondary"
               onClick={onRefresh}
-              loading={silentRefreshing}
+              loading={silentListRefreshing}
               loadingText="새로고침 중..."
               aria-label="새로고침"
             >

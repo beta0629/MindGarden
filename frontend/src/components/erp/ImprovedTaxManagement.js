@@ -40,7 +40,8 @@ import {
   ErpSafeNumber,
   ERP_NUMBER_FORMAT,
   ERP_KPI_STAT_VARIANT,
-  ErpFilterToolbar
+  ErpFilterToolbar,
+  useErpSilentRefresh
 } from './common';
 
 /** 신고 탭 데모 문구(백엔드 연동 전) */
@@ -101,7 +102,7 @@ const ImprovedTaxManagement = () => {
   const [calculationsList, setCalculationsList] = useState([]);
   const [taxCategories, setTaxCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -118,7 +119,7 @@ const ImprovedTaxManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -145,7 +146,7 @@ const ImprovedTaxManagement = () => {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -345,9 +346,9 @@ const ImprovedTaxManagement = () => {
                       size="small"
                       className="mg-v2-button mg-v2-button--secondary"
                       onClick={() => loadData({ silent: true })}
-                      loading={silentRefreshing}
+                      loading={silentListRefreshing}
                       loadingText="새로고침 중..."
-                      disabled={loading || silentRefreshing}
+                      disabled={loading || silentListRefreshing}
                       aria-label="데이터 새로고침"
                     >
                       데이터 새로고침
@@ -418,7 +419,7 @@ const ImprovedTaxManagement = () => {
                   onClick={() => loadData({})}
                   loading={loading}
                   loadingText="로딩 중..."
-                  disabled={loading || silentRefreshing}
+                  disabled={loading || silentListRefreshing}
                   aria-label="다시 시도"
                 >
                   다시 시도

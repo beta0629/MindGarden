@@ -186,9 +186,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 Database 제거 - 모든 환경에서 개발 DB 사용 -->
-
-
+        <!-- 테스트 프로파일(@ActiveProfiles("test")) 전용 인메모리 DB: 외부 MySQL 없이 mvn test·JPA 컨텍스트 기동 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Flyway -->
         <dependency>

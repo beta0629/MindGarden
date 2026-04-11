@@ -12,7 +12,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
-import { ErpFilterToolbar } from './common';
+import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import ErpPageShell from './shell/ErpPageShell';
 import MGButton from '../common/MGButton';
 
@@ -26,7 +26,7 @@ const PurchaseManagement = () => {
   const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [error, setError] = useState(null);
   const [purchaseInitialFetchDone, setPurchaseInitialFetchDone] = useState(false);
 
@@ -40,7 +40,7 @@ const PurchaseManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -65,7 +65,7 @@ const PurchaseManagement = () => {
     } finally {
       setPurchaseInitialFetchDone(true);
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -193,7 +193,7 @@ const PurchaseManagement = () => {
                     size="small"
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => loadData({ silent: true })}
-                    loading={silentRefreshing}
+                    loading={silentListRefreshing}
                     loadingText="새로고침 중..."
                     disabled={loading}
                     aria-label="목록 새로고침"
@@ -225,7 +225,7 @@ const PurchaseManagement = () => {
                 size="small"
                 className="mg-v2-button mg-v2-button--outline"
                 onClick={() => loadData({ silent: true })}
-                loading={silentRefreshing}
+                loading={silentListRefreshing}
                 loadingText="새로고침 중..."
                 disabled={loading}
                 aria-label="다시 시도"

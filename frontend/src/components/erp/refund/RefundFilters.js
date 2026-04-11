@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
 
 /**
  * 환불 필터 및 제어 컴포넌트
- * 부모가 무음(silent) 재조회용 `onRefresh`를 넘기는 경우 `silentRefreshing`을 함께 연결하세요.
+ * 부모가 무음(silent) 재조회용 `onRefresh`를 넘기는 경우 `silentListRefreshing`을 함께 연결하세요.
  */
 const RefundFilters = ({
   selectedPeriod,
@@ -33,7 +33,7 @@ const RefundFilters = ({
   onStatusChange,
   onRefresh,
   onExportExcel,
-  silentRefreshing = false
+  silentListRefreshing = false
 }) => {
   return (
     <section className="mg-v2-erp-refund-panel" aria-labelledby="refund-filters-title">
@@ -99,7 +99,7 @@ const RefundFilters = ({
                   size="small"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={onRefresh}
-                  loading={silentRefreshing}
+                  loading={silentListRefreshing}
                   loadingText="새로고침 중..."
                   aria-label="새로고침"
                 >

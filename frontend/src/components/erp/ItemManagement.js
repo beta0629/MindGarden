@@ -3,8 +3,14 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import CardContainer from '../common/CardContainer';
-import ErpButton from './common/ErpButton';
-import { ErpFilterToolbar, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import MGButton from '../common/MGButton';
+import {
+  buildErpMgButtonClassName,
+  ERP_MG_BUTTON_LOADING_TEXT,
+  mapErpSizeToMg,
+  mapErpVariantToMg
+} from './common/erpMgButtonProps';
+import { ErpFilterToolbar, ErpSafeNumber, ERP_NUMBER_FORMAT, useErpSilentRefresh } from './common';
 import './ItemManagement.css';
 import UnifiedModal from '../common/modals/UnifiedModal.js';
 import BadgeSelect from '../common/BadgeSelect';
@@ -20,7 +26,6 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import ErpPageShell from './shell/ErpPageShell';
-import MGButton from '../common/MGButton';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
@@ -30,7 +35,7 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
  */
 const ItemManagement = () => {
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [itemsInitialFetchDone, setItemsInitialFetchDone] = useState(false);
   const [items, setItems] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -96,7 +101,7 @@ const ItemManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -109,7 +114,7 @@ const ItemManagement = () => {
     } finally {
       setItemsInitialFetchDone(true);
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -264,18 +269,26 @@ const ItemManagement = () => {
                   titleId={ITEM_MANAGEMENT_TITLE_ID}
                   actions={
                     <div className="action-buttons">
-                      <ErpButton
-                        variant="secondary"
+                      <MGButton
+                        variant={mapErpVariantToMg('secondary')}
+                        size={mapErpSizeToMg('md')}
+                        className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                         onClick={() => window.history.back()}
                       >
                         뒤로가기
-                      </ErpButton>
-                      <ErpButton
-                        variant="primary"
+                      </MGButton>
+                      <MGButton
+                        variant={mapErpVariantToMg('primary')}
+                        size={mapErpSizeToMg('md')}
+                        className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                         onClick={() => setShowCreateModal(true)}
                       >
                         <Plus size={16} /> 새 아이템 추가
-                      </ErpButton>
+                      </MGButton>
                     </div>
                   }
                 />
@@ -312,7 +325,7 @@ const ItemManagement = () => {
                         size="small"
                         className="mg-v2-button mg-v2-button--secondary"
                         onClick={() => loadItems({ silent: true })}
-                        loading={silentRefreshing}
+                        loading={silentListRefreshing}
                         loadingText="새로고침 중..."
                         disabled={loading}
                         aria-label="목록 새로고침"
@@ -359,20 +372,34 @@ const ItemManagement = () => {
                             </div>
 
                             <div className="item-management-card-actions">
-                              <ErpButton
-                                variant="outline-primary"
-                                size="small"
+                              <MGButton
+                                variant={mapErpVariantToMg('outline-primary')}
+                                size={mapErpSizeToMg('small')}
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline-primary',
+                                  size: 'small',
+                                  loading: false
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                preventDoubleClick={false}
                                 onClick={() => handleEditItem(item)}
                               >
                                 <Pencil size={14} /> 수정
-                              </ErpButton>
-                              <ErpButton
-                                variant="outline-danger"
-                                size="small"
+                              </MGButton>
+                              <MGButton
+                                variant={mapErpVariantToMg('outline-danger')}
+                                size={mapErpSizeToMg('small')}
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline-danger',
+                                  size: 'small',
+                                  loading: false
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                preventDoubleClick={false}
                                 onClick={() => handleDeleteItem(item)}
                               >
                                 <Trash2 size={14} /> 삭제
-                              </ErpButton>
+                              </MGButton>
                             </div>
                           </div>
                         ))}
@@ -492,23 +519,31 @@ const ItemManagement = () => {
             </div>
 
             <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
-              <ErpButton
+              <MGButton
                 type="button"
-                variant="secondary"
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={() => {
                   setShowCreateModal(false);
                   resetForm();
                 }}
               >
                 취소
-              </ErpButton>
-              <ErpButton
+              </MGButton>
+              <MGButton
                 type="submit"
-                variant="primary"
+                variant={mapErpVariantToMg('primary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 loading={loading}
               >
                 생성
-              </ErpButton>
+              </MGButton>
             </div>
           </form>
         </UnifiedModal>
@@ -619,9 +654,13 @@ const ItemManagement = () => {
             </div>
 
             <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
-              <ErpButton
+              <MGButton
                 type="button"
-                variant="secondary"
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingItem(null);
@@ -629,14 +668,18 @@ const ItemManagement = () => {
                 }}
               >
                 취소
-              </ErpButton>
-              <ErpButton
+              </MGButton>
+              <MGButton
                 type="submit"
-                variant="primary"
+                variant={mapErpVariantToMg('primary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 loading={loading}
               >
                 수정
-              </ErpButton>
+              </MGButton>
             </div>
           </form>
         </UnifiedModal>

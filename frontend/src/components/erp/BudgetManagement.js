@@ -8,9 +8,14 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import UnifiedModal from '../common/modals/UnifiedModal.js';
-import ErpButton from './common/ErpButton';
 import MGButton from '../common/MGButton';
-import { ErpFilterToolbar } from './common';
+import {
+  buildErpMgButtonClassName,
+  ERP_MG_BUTTON_LOADING_TEXT,
+  mapErpSizeToMg,
+  mapErpVariantToMg
+} from './common/erpMgButtonProps';
+import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { PiggyBank, List, Tag, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
@@ -58,7 +63,7 @@ const BudgetManagement = () => {
   const [budgets, setBudgets] = useState([]);
   const [budgetCategories, setBudgetCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [error, setError] = useState(null);
   const [budgetInitialFetchDone, setBudgetInitialFetchDone] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -95,7 +100,7 @@ const BudgetManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -122,7 +127,7 @@ const BudgetManagement = () => {
     } finally {
       setBudgetInitialFetchDone(true);
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -410,7 +415,7 @@ const BudgetManagement = () => {
                     size="small"
                     className="mg-v2-button mg-v2-button--secondary"
                     onClick={() => loadData({ silent: true })}
-                    loading={silentRefreshing}
+                    loading={silentListRefreshing}
                     loadingText="새로고침 중..."
                     disabled={loading}
                     aria-label="목록 새로고침"
@@ -441,7 +446,7 @@ const BudgetManagement = () => {
                   size="small"
                   className="mg-v2-button mg-v2-button--outline"
                   onClick={() => loadData({ silent: true })}
-                  loading={silentRefreshing}
+                  loading={silentListRefreshing}
                   loadingText="새로고침 중..."
                   disabled={loading}
                   aria-label="다시 시도"
@@ -998,19 +1003,31 @@ const BudgetManagement = () => {
             />
           </div>
           <div className="mg-v2-form-actions">
-            <ErpButton
+            <MGButton
               type="button"
-              variant="secondary"
+              variant={mapErpVariantToMg('secondary')}
+              size={mapErpSizeToMg('md')}
+              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick={false}
               onClick={() => {
                 setShowCreateModal(false);
                 resetNewBudgetForm();
               }}
             >
               취소
-            </ErpButton>
-            <ErpButton type="submit" variant="primary" loading={loading}>
+            </MGButton>
+            <MGButton
+              type="submit"
+              variant={mapErpVariantToMg('primary')}
+              size={mapErpSizeToMg('md')}
+              className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick={false}
+              loading={loading}
+            >
               생성
-            </ErpButton>
+            </MGButton>
           </div>
         </form>
       </UnifiedModal>
@@ -1129,12 +1146,28 @@ const BudgetManagement = () => {
               </select>
             </div>
             <div className="mg-v2-form-actions">
-              <ErpButton type="button" variant="secondary" onClick={() => setEditingBudget(null)}>
+              <MGButton
+                type="button"
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+                onClick={() => setEditingBudget(null)}
+              >
                 취소
-              </ErpButton>
-              <ErpButton type="submit" variant="primary" loading={loading}>
+              </MGButton>
+              <MGButton
+                type="submit"
+                variant={mapErpVariantToMg('primary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+                loading={loading}
+              >
                 저장
-              </ErpButton>
+              </MGButton>
             </div>
           </form>
         )}

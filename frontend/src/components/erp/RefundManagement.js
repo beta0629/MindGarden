@@ -27,6 +27,7 @@ import ErpPageShell from './shell/ErpPageShell';
 import './refund-management/RefundManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
+import { useErpSilentRefresh } from './common';
 import notificationManager from '../../utils/notification';
 
 /** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
@@ -43,7 +44,7 @@ const REFLECT_ERP_REFUND_ENDPOINT = (mappingId) =>
 const RefundManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [isLoadingReflect, setIsLoadingReflect] = useState(false);
   const [refundStats, setRefundStats] = useState({});
   const [refundHistory, setRefundHistory] = useState([]);
@@ -59,7 +60,7 @@ const RefundManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -85,7 +86,7 @@ const RefundManagement = () => {
       notificationManager.show('환불 데이터를 불러오는데 실패했습니다.', 'error');
     } finally {
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -228,7 +229,7 @@ const RefundManagement = () => {
             onBatchReflectErp={handleBatchReflectErp}
             selectedRowIds={selectedRowIds}
             isLoadingReflect={isLoadingReflect}
-            silentRefreshing={silentRefreshing}
+            silentListRefreshing={silentListRefreshing}
           />
           {loading ? (
             <div

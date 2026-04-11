@@ -22,7 +22,8 @@ import {
   ErpSafeText,
   ERP_KPI_STAT_VARIANT,
   ERP_KPI_TREND_DIRECTION,
-  ERP_NUMBER_FORMAT
+  ERP_NUMBER_FORMAT,
+  useErpSilentRefresh
 } from './common';
 
 const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
@@ -33,7 +34,7 @@ const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
 const PurchaseRequestForm = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [itemsInitialFetchDone, setItemsInitialFetchDone] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -50,7 +51,7 @@ const PurchaseRequestForm = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -63,7 +64,7 @@ const PurchaseRequestForm = () => {
     } finally {
       setItemsInitialFetchDone(true);
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -227,7 +228,7 @@ const PurchaseRequestForm = () => {
         <div className="mg-v2-container mg-v2-purchase-request-form__inner">
           {items.length === 0 ? (
             <>
-              {silentRefreshing && (
+              {silentListRefreshing && (
                 <UnifiedLoading type="inline" text="아이템 목록을 불러오는 중..." />
               )}
               <ErpEmptyState
@@ -238,7 +239,7 @@ const PurchaseRequestForm = () => {
                     type="button"
                     variant="primary"
                     onClick={() => loadItems({ silent: true })}
-                    loading={silentRefreshing}
+                    loading={silentListRefreshing}
                     loadingText="불러오는 중..."
                   >
                     다시 불러오기

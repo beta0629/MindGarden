@@ -17,7 +17,8 @@ import {
   DollarSign,
   PieChart,
   ClipboardList,
-  Package
+  Package,
+  ShieldCheck
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
@@ -64,6 +65,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/common-codes', icon: FileText, label: '공통코드', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: Package, label: '패키지 요금 관리', end: true },
       { to: '/tenant/pg-configurations', icon: CreditCard, label: 'PG 설정', end: true },
+      { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: ShieldCheck, label: 'PG 승인(운영)', end: true },
       { to: '/admin/compliance', icon: FileText, label: '컴플라이언스', end: true }
     ]
   }

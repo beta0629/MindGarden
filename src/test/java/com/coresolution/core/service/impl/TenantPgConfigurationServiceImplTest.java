@@ -3,11 +3,14 @@ package com.coresolution.core.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doNothing; // 추가
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,9 @@ import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository; // 추가
 import com.coresolution.core.service.PgConnectionTestService;
 import com.coresolution.core.service.TenantPgConfigurationHistoryService;
-import com.coresolution.consultation.service.EmailService; // 추가
+import com.coresolution.consultation.dto.EmailRequest;
+import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +43,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * TenantPgConfigurationService 단위 테스트
@@ -47,6 +55,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * @since 2025-01-XX
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("TenantPgConfigurationService 테스트")
 class TenantPgConfigurationServiceImplTest {
     
@@ -109,8 +118,9 @@ class TenantPgConfigurationServiceImplTest {
         when(tenantRepository.findByTenantIdAndIsDeletedFalse(any(String.class)))
                 .thenReturn(Optional.of(mockTenant));
 
-        // EmailService 모의 설정
-        doNothing().when(emailService).sendEmail(any());
+        // EmailService.sendEmail 은 EmailResponse 반환 (void 아님)
+        when(emailService.sendEmail(any(EmailRequest.class)))
+                .thenReturn(EmailResponse.builder().success(true).status("SENT").emailId("mock-email-id").build());
 
         // BaseEntity의 id는 JPA가 자동 생성하므로 테스트에서는 반영하지 않음
     }
@@ -207,10 +217,13 @@ class TenantPgConfigurationServiceImplTest {
         String otherTenantId = "other-tenant-id";
         when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
                 .thenReturn(Optional.of(testConfiguration));
+        doThrow(new AccessDeniedException("해당 테넌트의 PG 설정이 아닙니다"))
+                .when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, otherTenantId);
         
         // When & Then
         assertThatThrownBy(() -> service.getConfigurationDetail(otherTenantId, testConfigId))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("해당 테넌트의 PG 설정이 아닙니다");
     }
     
@@ -247,7 +260,13 @@ class TenantPgConfigurationServiceImplTest {
         verify(encryptionService).encrypt("test-api-key");
         verify(encryptionService).encrypt("test-secret-key");
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
-        verify(historyRepository).save(any(TenantPgConfigurationHistory.class));
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.CREATED),
+                isNull(),
+                eq(PgConfigurationStatus.PENDING.name()),
+                eq("test-user"),
+                eq("PG 설정 생성"));
     }
     
     @Test
@@ -351,7 +370,13 @@ class TenantPgConfigurationServiceImplTest {
         
         verify(configurationRepository).findByConfigIdAndIsDeletedFalse(testConfigId);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
-        verify(historyRepository).save(any(TenantPgConfigurationHistory.class));
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.APPROVED),
+                eq(PgConfigurationStatus.PENDING.name()),
+                eq(PgConfigurationStatus.APPROVED.name()),
+                eq("admin-user"),
+                eq("승인 완료"));
     }
     
     @Test
@@ -379,7 +404,13 @@ class TenantPgConfigurationServiceImplTest {
         
         verify(configurationRepository).findByConfigIdAndIsDeletedFalse(testConfigId);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
-        verify(historyRepository).save(any(TenantPgConfigurationHistory.class));
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.REJECTED),
+                eq(PgConfigurationStatus.PENDING.name()),
+                eq(PgConfigurationStatus.REJECTED.name()),
+                eq("admin-user"),
+                eq("테스트용 키 검증 실패 사유는 10자 이상"));
     }
     
     @Test
@@ -396,6 +427,7 @@ class TenantPgConfigurationServiceImplTest {
         
         when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
                 .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
         when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
         when(testService.supports(PgProvider.TOSS)).thenReturn(true);
         when(testService.testConnection(testConfiguration)).thenReturn(testResponse);

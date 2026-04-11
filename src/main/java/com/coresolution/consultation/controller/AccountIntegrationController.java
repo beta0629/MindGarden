@@ -2,7 +2,10 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.dto.AccountIntegrationRequest;
 import com.coresolution.consultation.dto.AccountIntegrationResponse;
+import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 import com.coresolution.consultation.service.AccountIntegrationService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,21 +39,36 @@ public class AccountIntegrationController {
     public ResponseEntity<AccountIntegrationResponse> sendVerificationCode(@RequestParam String email) {
         try {
             log.info("이메일 인증 코드 발송 요청: email={}", email);
-            
-            boolean success = accountIntegrationService.sendEmailVerificationCode(email);
-            
-            if (success) {
-                return ResponseEntity.ok(AccountIntegrationResponse.builder()
-                    .success(true)
-                    .message("인증 코드가 발송되었습니다.")
-                    .build());
-            } else {
-                return ResponseEntity.badRequest().body(AccountIntegrationResponse.builder()
-                    .success(false)
-                    .message("인증 코드 발송에 실패했습니다.")
-                    .build());
+
+            EmailVerificationSendOutcome outcome = accountIntegrationService.sendEmailVerificationCode(email);
+
+            switch (outcome.getStatus()) {
+                case SUCCESS:
+                    return ResponseEntity.ok(AccountIntegrationResponse.builder()
+                        .success(true)
+                        .message("인증 코드가 발송되었습니다.")
+                        .build());
+                case COOLDOWN:
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                        .header(HttpHeaders.RETRY_AFTER, String.valueOf(outcome.getRetryAfterSeconds()))
+                        .body(AccountIntegrationResponse.builder()
+                            .success(false)
+                            .message("재발송 요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.")
+                            .build());
+                case DAILY_LIMIT:
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                        .body(AccountIntegrationResponse.builder()
+                            .success(false)
+                            .message("오늘 인증 메일 발송 횟수를 초과했습니다. 내일 다시 시도해 주세요.")
+                            .build());
+                case EMAIL_SEND_FAILED:
+                default:
+                    return ResponseEntity.badRequest().body(AccountIntegrationResponse.builder()
+                        .success(false)
+                        .message("인증 코드 발송에 실패했습니다.")
+                        .build());
             }
-            
+
         } catch (Exception e) {
             log.error("이메일 인증 코드 발송 실패", e);
             return ResponseEntity.internalServerError().body(AccountIntegrationResponse.builder()

@@ -29,7 +29,7 @@ import './ErpCommon.css';
 import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpEmptyState, ErpFilterToolbar } from './common';
+import { ErpEmptyState, ErpFilterToolbar, useErpSilentRefresh } from './common';
 import MGButton from '../common/MGButton';
 
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
@@ -99,7 +99,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState(null);
-  const [refreshingToolbar, setRefreshingToolbar] = useState(false);
+  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
 
   /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
   const loadIncomeExpenseSummary = useCallback(async(options = {}) => {
@@ -195,8 +195,7 @@ const ErpDashboard = ({ user: propUser }) => {
   }, []);
 
   const handleSilentRefresh = useCallback(async() => {
-    setRefreshingToolbar(true);
-    try {
+    await runSilentListRefresh(async() => {
       await loadDashboardData({ silent: true });
       const cu = propUser || sessionUser;
       const admin = cu && RoleUtils.isAdmin(cu);
@@ -206,10 +205,9 @@ const ErpDashboard = ({ user: propUser }) => {
       if (hasIF) {
         await loadIncomeExpenseSummary({ silent: true });
       }
-    } finally {
-      setRefreshingToolbar(false);
-    }
+    });
   }, [
+    runSilentListRefresh,
     loadDashboardData,
     loadIncomeExpenseSummary,
     permissionChecks,
@@ -514,7 +512,7 @@ const ErpDashboard = ({ user: propUser }) => {
                   size="small"
                   className="mg-v2-button mg-v2-button--secondary"
                   onClick={handleSilentRefresh}
-                  loading={refreshingToolbar}
+                  loading={silentListRefreshing}
                   loadingText="새로고침 중..."
                   aria-label="데이터 새로고침"
                 >

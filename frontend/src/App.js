@@ -89,6 +89,7 @@ import PgConfigurationList from './components/tenant/PgConfigurationList';
 import PgConfigurationCreate from './components/tenant/PgConfigurationCreate';
 import PgConfigurationDetail from './components/tenant/PgConfigurationDetail';
 import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
+import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -518,6 +519,11 @@ function AppContent() {
             <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path="/admin/ops/pg-approval" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                <PgApprovalManagement />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
             <Route path="/admin/branding" element={<BrandingManagementPage />} />
             <Route path="/admin/messages" element={<Navigate to="/admin/notifications" replace />} />
@@ -608,9 +614,7 @@ function AppContent() {
             
             {/* 관리자 추가 메뉴 (준비중) */}
             <Route path="/admin/branches" element={
-              <AdminCommonLayout title="준비 중">
-                <ComingSoon title="준비 중" description="해당 기능은 현재 개발 중입니다." />
-              </AdminCommonLayout>
+              <ComingSoon title="준비 중" description="해당 기능은 현재 개발 중입니다." />
             } />
             <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
             <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />

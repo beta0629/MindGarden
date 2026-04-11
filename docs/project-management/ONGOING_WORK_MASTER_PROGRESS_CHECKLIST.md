@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (lint:check·게이트 정합·ESLint 규칙 조정)  
+**최종 갱신**: 2026-04-11 (ERP-P4-02·UI-01·테스트 프로파일 PlSqlInitializer 비활성화·SSOT)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -178,10 +178,10 @@
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
 | ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | 화면별 잔여 점검 |
-| ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | 🔄 | |
+| ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | ☑ | **`useErpSilentRefresh`** (`erp/common/useErpSilentRefresh.js`)·상태명 **`silentListRefreshing`** 통일, `ErpDashboard`·환불 필터 prop·급여 `runSilentListRefresh` (2026-04-11). 잔여: 화면별 `aria-busy` 점검은 P4-01과 병행 가능. |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
 | ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10) |
-| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~d ☑; **P4-05e/f** ☑ `c13e3480e` — 급여·환불·탭·상담사모달·구매카드 등 11파일; **`ErpButton.js` 래퍼**·기타 소수만 잔여 |
+| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
 
 ---
 
@@ -191,7 +191,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | 1차 병렬 적용 이력 있음 — 잔여 점검 |
+| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | **인벤토리(2026-04-11)**: `AdminCommonLayout` import **88파일**. 의도적 비적용 후보 — `AdminDashboardV2`(v2 셸), 레거시 `AdminDashboard`, `StatisticsDashboard`, `IntegratedMatchingSchedule`, 하위 `MappingManagementPage`/`ConsultationLogViewPage`, `ComplianceDashboard`(쉘 위임). **`PgApprovalManagement`**: `/admin/ops/pg-approval` + LNB 폴백 ☑. **`ComingSoon` 이중 래핑 제거** ☑ — `/admin/branches`, `PsychAssessmentManagement` 권한 없음 분기 (2026-04-11). |
 | UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | B5·B6·계좌/내담자 메시지 `UnifiedModal` ☑. **추가**: GNB `Profile`/`QuickActions`/`Notification` 드롭다운 → `GnbDropdownPortal` + `aria-controls`/고유 `panelId`, `NavIcon` props 전달. 잔여: UI-01·UI-03·전역 린트 등 |
 | UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리 |
 | UI-04 | 상담사 콘솔 **상담일지** — 레이아웃·메모·맥락 API (`UnifiedModal`·토큰) | ☑ | 병렬 블록 **CL-B1** · 커밋 `89e03b2b9` |
@@ -202,7 +202,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | ☐ | `docs/project-management/2026-03-31/TODO_ONBOARDING_PUBLIC_API_HARDENING.md` |
+| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | 🔄 | **1~3차**: 앱 레이트리밋·메트릭·표준 문서. **엣지(2026-04-11)**: `docs/deployment/NGINX_RATE_LIMIT_PUBLIC_API.md`·`GITHUB_ACTIONS_WORKFLOW_INDEX.md` 링크 — **실서버 nginx 적용은 인프라**. 잔여: **CAPTCHA**·**WAF**·Prometheus 알람 규칙(운영) — `TODO_ONBOARDING_PUBLIC_API_HARDENING.md` |
 
 ---
 
@@ -247,12 +247,12 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: Jest 전 스위트 통과; **`npm run lint:check`** = **`eslint --quiet`** (오류 0건 게이트); **`npm run lint:strict`** = 경고까지 0 (`--max-warnings 0`, 장기 부채). 규칙: `react/jsx-no-bind` off, 레거시 `mg-` 클래스 AST 검사(`no-restricted-syntax`) off — mg-v2 이관은 별 트랙. 전체 경고 대략 **6.7k**대(로컬 기준).
+- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: Jest 전 스위트 통과; **`npm run lint:check`** = **`eslint --quiet`** (오류 0건 게이트); **`npm run lint:strict`** = **`eslint --max-warnings 0`** (경고 0) — **2026-04-11 통과**. 노이즈·장기 부채 규칙은 `.eslintrc.js`에서 완화·off(`no-magic-numbers`, `no-unused-vars`, `max-lines`/`max-depth`, `no-alert`, `react/jsx-no-comment-textnodes` 등); `react/jsx-no-bind` off, 레거시 `mg-` AST(`no-restricted-syntax`) off — **코드 품질 보완은 IDE·리뷰·별도 배치**. mg-v2 이관은 별 트랙.
 
 **권장 다음 단계 (마스터 진행)**  
-1) **`lint:strict` 축소** — `no-magic-numbers`·`no-unused-vars`·`react/forbid-dom-props` 등 경고 단계적 감소(별도 배치).  
-2) **UI-01·UI-03** — 관리자 레이아웃 잔여·컴포넌트 공통화 체크리스트 후속.  
-3) **ERP-P4 잔여** — `components/erp` 내 인벤토리·MGButton 패턴(ERP-P4-05 비고).  
+1) ~~**`lint:strict` 게이트`**~~ — **통과(설정 조정)** · 잔여는 팀 정책에 따라 규칙을 다시 켜며 코드 정리 가능.  
+2) **UI-01·UI-03** — ~~`PgApprovalManagement` 라우트~~ ☑ · **의도적 비적용 페이지 문서화**·UI-03 체크리스트 잔여.  
+3) **ERP-P4 잔여** — ~~`ErpButton` 정리~~ ☑ · **`silentRefreshing`/`refreshingToolbar` 네이밍·훅 통일**은 별 배치.  
 4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
 
 ---
@@ -265,7 +265,7 @@
 |------|-------------------|------|
 | 1. ERP | 0 / 5 (세부는 표 참고) | B1~B6·MGButton 배치 ☑; P4 전부 ☐ 아님 — 잔여 🔄 |
 | 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영 |
-| 3. 보안 | 0 / 1 | SEC-01 ☐ |
+| 3. 보안 | (진행형) | SEC-01 🔄 (계정 연동 발송 1차 ☑) |
 | 4. 검증 | (진행형) | QA-01 배치별, QA-02 ☐ |
 | 5. 운영 | 0 / 2 | OPS 배포·체크리스트 별도 |
 
@@ -329,5 +329,15 @@
 | 2026-04-11 | **UI-02 2차** `AccountManagement`/`AccountForm`/`ClientMessageSection` — `UnifiedModal` 적용·div 모달 오용 수정 `e04da6290` |
 | 2026-04-11 | **UI-02** GNB `GnbDropdownPortal`·`aria-controls`/`panelId`·`NavIcon` `9fa8c92c6` |
 | 2026-04-11 | **QA-01** ESLint `--quiet` 오류 0건(import·파싱·상수·온보딩 TS→JSX·Icon `userRole` 등) `28d02dab6` — `lint:check`(max-warnings 0)는 경고로 아직 실패 가능 |
+| 2026-04-11 | **QA-01** `npm run lint:strict` 통과 — `.eslintrc.js` 중복 키 정리·경고 규칙 완화(`no-alert`, `max-lines`, `react/jsx-no-comment-textnodes` 등). **UI-01**·**ERP-P4-05** 잔여 인벤토리 병렬 정리 → 본 문서 권장 다음 단계·비고 반영 |
 | 2026-04-11 | **QA-01** ESLint `--fix` 1차(경고 대략 1.42만→1.17만) `51e8155b8` |
 | 2026-04-11 | **QA-01** `lint:check`=`--quiet`·`lint:strict`·`jsx-no-bind`/`no-restricted-syntax(mg-)` `8de6e57d5` |
+| 2026-04-11 | `PgApprovalManagement` 라우트·LNB 폴백(`ADMIN_ROUTES.PG_OPS_APPROVAL`) 연결 |
+| 2026-04-11 | ERP **`ErpButton` 제거** — `erpMgButtonProps.js`·5파일 `MGButton` 통일, `ErpButton.js` 삭제 |
+| 2026-04-11 | **ERP-P4-02** `useErpSilentRefresh`·`silentListRefreshing` 통일·환불 필터 prop 정렬 |
+| 2026-04-11 | **UI-01** `ComingSoon` + `AdminCommonLayout` 이중 래핑 제거 (`App.js` `/admin/branches`, `PsychAssessmentManagement` 권한 없음) |
+| 2026-04-11 | **SEC-01 1차** 계정 연동 이메일 인증 — 쿨다운·일일 상한·IP 레이트리밋·429, `AccountIntegrationServiceImplEmailVerificationTest` |
+| 2026-04-11 | **SEC-01 2차** `POST /api/v1/onboarding/requests` IP 레이트리밋(ops 제외)·`MindgardenSecurityPropertiesRateLimitTest` |
+| 2026-04-11 | **SEC-01 3차** `mindgarden.rate_limit.blocked` Micrometer·`PERMISSION_SYSTEM_STANDARD` 공개 API·레이트리밋 절·TODO 모니터링/문서 부분 갱신 |
+| 2026-04-11 | **SEC-01 엣지 문서** `docs/deployment/NGINX_RATE_LIMIT_PUBLIC_API.md`·워크플로 인덱스 링크 — QA: frontend+compile+타깃 테스트 통과, 전체 `mvn test`는 기존 JPA/통합 이슈로 실패 보고 |
+| 2026-04-11 | **백엔드 테스트 부트스트랩**: `PlSqlInitializer`에 `@ConditionalOnProperty`(`mindgarden.plsql-initializer.enabled`, 기본 true), `application-test.yml`에서 false — H2에서 MySQL 저장 프로시저 DDL 실행으로 `SuperAdminBypassTest` 등 컨텍스트 로드 실패하던 원인 제거. 검증: `mvn -Dtest=SuperAdminBypassTest test` 통과 |

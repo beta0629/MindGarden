@@ -130,6 +130,20 @@ spring:
   #             - basic
   #           client-name: Instagram
 
+# MindGarden 공개 API·계정 연동 보안(이메일 발송 쿨다운·일일 상한, IP 레이트리밋 등)
+# 프로파일별로 mindgarden.security.* 를 오버라이드할 수 있습니다.
+mindgarden:
+  security:
+    account-integration:
+      email-verification-cooldown-seconds: 60
+      email-verification-daily-limit: 10
+    rate-limit:
+      integration-path-prefix: /api/v1/accounts/integration/
+      integration-requests-per-minute: 20
+      # Trinity 공개 POST /api/v1/onboarding/requests 전용 (ops 경로 제외)
+      onboarding-create-requests-per-minute: 5
+      onboarding-create-path: /api/v1/onboarding/requests
+
 # JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:
   secret: ${JWT_SECRET}

@@ -42,7 +42,7 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar, ErpSafeText } from './common';
+import { ErpFilterToolbar, ErpSafeText, useErpSilentRefresh } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -68,7 +68,7 @@ const FinancialManagement = () => {
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 0,
@@ -133,7 +133,7 @@ const FinancialManagement = () => {
     const silent = options.silent === true;
     try {
       if (silent) {
-        setSilentRefreshing(true);
+        setSilentListRefreshing(true);
       } else {
         setLoading(true);
       }
@@ -154,7 +154,7 @@ const FinancialManagement = () => {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       if (silent) {
-        setSilentRefreshing(false);
+        setSilentListRefreshing(false);
       } else {
         setLoading(false);
       }
@@ -629,7 +629,7 @@ const FinancialManagement = () => {
                             size="small"
                             className="mg-v2-button mg-v2-button-secondary"
                             onClick={() => setShowAdvancedFilter((v) => !v)}
-                            disabled={silentRefreshing}
+                            disabled={silentListRefreshing}
                             preventDoubleClick={false}
                           >
                             고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
@@ -651,8 +651,8 @@ const FinancialManagement = () => {
                                 searchText: ''
                               })
                             }
-                            disabled={silentRefreshing}
-                            aria-busy={silentRefreshing}
+                            disabled={silentListRefreshing}
+                            aria-busy={silentListRefreshing}
                             preventDoubleClick={false}
                           >
                             <RefreshCw size={16} aria-hidden /> 필터 초기화
@@ -662,7 +662,7 @@ const FinancialManagement = () => {
                             size="small"
                             className="mg-v2-button mg-v2-button-primary"
                             onClick={() => loadData({ silent: true })}
-                            loading={silentRefreshing}
+                            loading={silentListRefreshing}
                             loadingText="검색 중..."
                           >
                             <Search size={16} aria-hidden /> 검색
@@ -718,7 +718,7 @@ const FinancialManagement = () => {
                   size="small"
                   className="mg-v2-button mg-v2-button-outline"
                   onClick={() => loadData({ silent: true })}
-                  loading={silentRefreshing}
+                  loading={silentListRefreshing}
                   loadingText="새로고침 중..."
                   disabled={loading}
                   aria-label="다시 시도"

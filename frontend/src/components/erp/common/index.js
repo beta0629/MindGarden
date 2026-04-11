@@ -17,3 +17,4 @@ export {
 } from './molecules/ErpKpiStatCard';
 export { default as ErpEmptyState } from './molecules/ErpEmptyState';
 export { default as ErpFilterToolbar } from './molecules/ErpFilterToolbar';
+export { useErpSilentRefresh } from './useErpSilentRefresh';

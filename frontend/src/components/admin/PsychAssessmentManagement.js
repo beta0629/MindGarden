@@ -260,12 +260,10 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return (
-      <AdminCommonLayout>
-        <ComingSoon
-          title="접근 권한이 없습니다"
-          description="관리자 권한이 필요합니다."
-        />
-      </AdminCommonLayout>
+      <ComingSoon
+        title="접근 권한이 없습니다"
+        description="관리자 권한이 필요합니다."
+      />
     );
   }
 

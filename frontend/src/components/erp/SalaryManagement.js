@@ -39,7 +39,7 @@ import './ErpCommon.css';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar } from './common';
+import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
@@ -64,7 +64,7 @@ const SalaryManagement = () => {
   const [selectedPayDay, setSelectedPayDay] = useState('TENTH');
   const [payDayOptions, setPayDayOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
+  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCalculation, setSelectedCalculation] = useState(null);
   const [previewResult, setPreviewResult] = useState(null);
@@ -382,8 +382,7 @@ const SalaryManagement = () => {
   };
 
   const handleDataRefresh = useCallback(async() => {
-    setSilentRefreshing(true);
-    try {
+    await runSilentListRefresh(async() => {
       const silent = { silent: true };
       if (activeTab === TAB_PROFILES) {
         await Promise.all([
@@ -399,10 +398,8 @@ const SalaryManagement = () => {
       } else if (activeTab === TAB_TAX) {
         await loadTaxStatistics(selectedPeriod, silent);
       }
-    } finally {
-      setSilentRefreshing(false);
-    }
-  }, [activeTab, selectedConsultant, selectedPeriod]);
+    });
+  }, [activeTab, selectedConsultant, selectedPeriod, runSilentListRefresh]);
 
   useEffect(() => {
     loadConsultants();
@@ -624,7 +621,7 @@ const SalaryManagement = () => {
                       variant="secondary"
                       size="small"
                       onClick={handleDataRefresh}
-                      loading={silentRefreshing}
+                      loading={silentListRefreshing}
                       loadingText="새로고침 중..."
                       disabled={loading}
                       aria-label="데이터 새로고침"
@@ -638,7 +635,7 @@ const SalaryManagement = () => {
                       onClick={executeSalaryCalculation}
                       disabled={
                         loading ||
-                        silentRefreshing ||
+                        silentListRefreshing ||
                         !selectedConsultant ||
                         !selectedPeriod ||
                         salaryProfiles.length === 0
@@ -998,7 +995,7 @@ const SalaryManagement = () => {
                       onClick={() => loadTaxStatistics(selectedPeriod)}
                       loading={loading && activeTab === TAB_TAX}
                       loadingText="조회 중..."
-                      disabled={!selectedPeriod || loading || silentRefreshing}
+                      disabled={!selectedPeriod || loading || silentListRefreshing}
                       className="mg-v2-button mg-v2-button--primary"
                     >
                       세금 통계 조회

@@ -1,11 +1,16 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import com.coresolution.consultation.config.MindgardenSecurityProperties;
+import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.AccountIntegrationRequest;
 import com.coresolution.consultation.dto.AccountIntegrationResponse;
@@ -27,8 +32,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 계정 통합 서비스 구현체
- * 
+ * 계정 통합 서비스 구현체.
+ * <p>
+ * 이메일 인증 발송 쿨다운·일일 상한은 인메모리 {@link java.util.concurrent.ConcurrentHashMap} 기반이며,
+ * 수평 확장(다중 인스턴스) 시 동일 이메일에 대한 일관된 제한을 위해서는 Redis 등 공유 저장소 도입이 필요합니다.
+ * </p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -45,9 +54,35 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     private final JwtService jwtService;
     private final PasswordService passwordService;
     private final EmailService emailService;
-    
+    private final MindgardenSecurityProperties mindgardenSecurityProperties;
+
     // 이메일 인증 코드 저장 (실제 운영에서는 Redis 등 사용)
     private final Map<String, EmailVerificationCode> emailVerificationCodes = new ConcurrentHashMap<>();
+
+    /**
+     * 정규화된 이메일별 발송 스로틀 상태. 멀티 인스턴스 일관성은 Redis 등으로 보강 예정(클래스 JavaDoc 참고).
+     */
+    private final Map<String, EmailThrottleEntry> emailSendThrottleByNormalizedEmail = new ConcurrentHashMap<>();
+
+    /**
+     * 동일 이메일에 대한 발송 임계 검사·코드 저장의 경쟁을 직렬화하기 위한 락
+     */
+    private final ConcurrentHashMap<String, Object> emailSendLocksByNormalizedEmail = new ConcurrentHashMap<>();
+
+    /**
+     * 이메일당 마지막 성공 발송 시각 및 당일 성공 발송 횟수(서버 {@link LocalDate}·시스템 기본 타임존)
+     */
+    private record EmailThrottleEntry(LocalDateTime lastSuccessfulSendAt, LocalDate dailyBucketDate, int dailyCount) {
+
+        static EmailThrottleEntry empty() {
+            return new EmailThrottleEntry(null, null, 0);
+        }
+
+        EmailThrottleEntry afterSuccessfulSend(LocalDate today) {
+            int newCount = (dailyBucketDate != null && dailyBucketDate.equals(today)) ? dailyCount + 1 : 1;
+            return new EmailThrottleEntry(LocalDateTime.now(), today, newCount);
+        }
+    }
     
     /**
      * 이메일 인증 코드 정보
@@ -158,7 +193,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             String refreshToken = jwtService.generateRefreshToken(existingUser.getEmail());
             
             // 8. 인증 코드 삭제
-            emailVerificationCodes.remove(request.getExistingEmail());
+            emailVerificationCodes.remove(normalizeEmail(request.getExistingEmail()));
             
             // 9. 계정 통합 완료 이메일 발송
             sendAccountIntegrationSuccessEmail(existingUser.getEmail(), existingUser.getName(), normalizedProvider);
@@ -186,63 +221,91 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     }
     
     @Override
-    public boolean sendEmailVerificationCode(String email) {
-        try {
-            log.info("이메일 인증 코드 발송: email={}", email);
-            
-            // 6자리 랜덤 코드 생성
-            String code = String.format("%06d", (int) (Math.random() * 1000000));
-            
-            // 10분 후 만료
-            LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(10);
-            
-            // 코드 저장
-            emailVerificationCodes.put(email, new EmailVerificationCode(code, expiryTime));
-            
-            // 이메일 인증 코드 이메일 발송
+    public EmailVerificationSendOutcome sendEmailVerificationCode(String email) {
+        String normalized = normalizeEmail(email);
+        if (normalized.isEmpty()) {
+            log.warn("이메일 인증 코드 발송 거부: 이메일이 비어 있거나 공백만 있음");
+            return EmailVerificationSendOutcome.emailSendFailed();
+        }
+
+        Object lock = emailSendLocksByNormalizedEmail.computeIfAbsent(normalized, k -> new Object());
+        synchronized (lock) {
             try {
-                sendEmailVerificationCodeEmail(email, code);
-                log.info("✅ 이메일 인증 코드 생성 및 발송 성공: email={}, code={}, expiryTime={}", email, code, expiryTime);
-                return true;
-            } catch (Exception emailException) {
-                log.error("❌ 이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, emailException.getMessage(), emailException);
-                // 이메일 발송 실패해도 코드는 생성되었으므로 false 반환하여 API 실패 응답
-                return false;
+                log.info("이메일 인증 코드 발송: email={}", normalized);
+
+                int cooldownSec = mindgardenSecurityProperties.getAccountIntegration().getEmailVerificationCooldownSeconds();
+                int dailyLimit = mindgardenSecurityProperties.getAccountIntegration().getEmailVerificationDailyLimit();
+                LocalDate today = LocalDate.now();
+
+                EmailThrottleEntry entry = emailSendThrottleByNormalizedEmail.getOrDefault(normalized, EmailThrottleEntry.empty());
+
+                if (entry.lastSuccessfulSendAt() != null && cooldownSec > 0) {
+                    long elapsedSec = ChronoUnit.SECONDS.between(entry.lastSuccessfulSendAt(), LocalDateTime.now());
+                    if (elapsedSec < cooldownSec) {
+                        long retryAfter = cooldownSec - elapsedSec;
+                        log.warn("이메일 인증 코드 발송 쿨다운: email={}, elapsedSec={}, cooldownSec={}",
+                            normalized, elapsedSec, cooldownSec);
+                        return EmailVerificationSendOutcome.cooldown(retryAfter);
+                    }
+                }
+
+                int todayCount = (entry.dailyBucketDate() != null && entry.dailyBucketDate().equals(today))
+                    ? entry.dailyCount() : 0;
+                if (todayCount >= dailyLimit) {
+                    log.warn("이메일 인증 코드 일일 발송 상한 초과: email={}, todayCount={}, dailyLimit={}",
+                        normalized, todayCount, dailyLimit);
+                    return EmailVerificationSendOutcome.dailyLimit();
+                }
+
+                String code = String.format("%06d", (int) (Math.random() * 1000000));
+                LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(10);
+                emailVerificationCodes.put(normalized, new EmailVerificationCode(code, expiryTime));
+
+                try {
+                    sendEmailVerificationCodeEmail(normalized, code);
+                    emailSendThrottleByNormalizedEmail.put(normalized, entry.afterSuccessfulSend(today));
+                    log.info("이메일 인증 코드 생성 및 발송 성공: email={}, expiryTime={}", normalized, expiryTime);
+                    return EmailVerificationSendOutcome.success();
+                } catch (Exception emailException) {
+                    log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}",
+                        normalized, emailException.getMessage(), emailException);
+                    return EmailVerificationSendOutcome.emailSendFailed();
+                }
+            } catch (Exception e) {
+                log.error("이메일 인증 코드 발송 실패: email={}", normalized, e);
+                return EmailVerificationSendOutcome.emailSendFailed();
             }
-            
-        } catch (Exception e) {
-            log.error("이메일 인증 코드 발송 실패: email={}", email, e);
-            return false;
         }
     }
     
     @Override
     public boolean verifyEmailCode(String email, String code) {
         try {
-            log.info("이메일 인증 코드 검증: email={}, code={}", email, code);
-            
-            EmailVerificationCode storedCode = emailVerificationCodes.get(email);
+            String normalized = normalizeEmail(email);
+            log.info("이메일 인증 코드 검증: email={}, code={}", normalized, code);
+
+            EmailVerificationCode storedCode = emailVerificationCodes.get(normalized);
             if (storedCode == null) {
-                log.warn("인증 코드를 찾을 수 없음: email={}", email);
+                log.warn("인증 코드를 찾을 수 없음: email={}", normalized);
                 return false;
             }
-            
+
             if (!storedCode.isValid()) {
-                log.warn("인증 코드가 만료됨: email={}", email);
-                emailVerificationCodes.remove(email);
+                log.warn("인증 코드가 만료됨: email={}", normalized);
+                emailVerificationCodes.remove(normalized);
                 return false;
             }
-            
+
             boolean isValid = storedCode.getCode().equals(code);
             if (isValid) {
-                log.info("이메일 인증 성공: email={}", email);
+                log.info("이메일 인증 성공: email={}", normalized);
             } else {
-                log.warn("이메일 인증 실패: email={}, 입력코드={}, 저장코드={}", 
-                        email, code, storedCode.getCode());
+                log.warn("이메일 인증 실패: email={}, 입력코드={}, 저장코드={}",
+                    normalized, code, storedCode.getCode());
             }
-            
+
             return isValid;
-            
+
         } catch (Exception e) {
             log.error("이메일 인증 코드 검증 실패: email={}", email, e);
             return false;
@@ -361,8 +424,23 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
         }
     }
     
+    // ==================== Private helpers ====================
+
+    /**
+     * 인증 코드 저장·스로틀 키로 사용하는 이메일 정규화(소문자·trim).
+     *
+     * @param email 원본 이메일
+     * @return 정규화된 이메일, null·공백만 있으면 빈 문자열
+     */
+    private static String normalizeEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
     // ==================== Private Email Methods ====================
-    
+
     /**
      * 이메일 인증 코드 발송
      */
@@ -388,14 +466,17 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             );
             
             if (response.isSuccess()) {
-                log.info("✅ 이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+                log.info("이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
             } else {
-                log.error("❌ 이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+                log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
                 throw new RuntimeException("이메일 발송 실패: " + (response.getErrorMessage() != null ? response.getErrorMessage() : "알 수 없는 오류"));
             }
-            
+
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             log.error("이메일 인증 코드 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+            throw new RuntimeException("이메일 발송 중 오류: " + e.getMessage(), e);
         }
     }
     

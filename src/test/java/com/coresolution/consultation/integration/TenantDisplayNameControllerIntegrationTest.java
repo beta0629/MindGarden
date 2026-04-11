@@ -9,37 +9,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.coresolution.core.controller.TenantDisplayNameController;
 import com.coresolution.core.dto.TenantNameUpdateRequest;
 import com.coresolution.core.dto.TenantNameUpdateResponse;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantService;
+import com.coresolution.integrationtest.tenantdisplayname.TenantDisplayNameMvcTestApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * {@link TenantDisplayNameController} MockMvc 테스트.
@@ -49,37 +35,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * @author CoreSolution
  * @since 2026-04-01
  */
-@SpringBootTest(classes = TenantDisplayNameControllerIntegrationTest.TenantDisplayNameMvcTestApplication.class)
+@SpringBootTest(classes = TenantDisplayNameMvcTestApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @DisplayName("TenantDisplayNameController 통합 테스트")
 class TenantDisplayNameControllerIntegrationTest {
-
-    @Configuration
-    @EnableAutoConfiguration(exclude = {
-            DataSourceAutoConfiguration.class,
-            HibernateJpaAutoConfiguration.class,
-            FlywayAutoConfiguration.class,
-            RedisAutoConfiguration.class,
-            RedisRepositoriesAutoConfiguration.class
-    })
-    @EnableMethodSecurity(prePostEnabled = true)
-    @Import({TenantDisplayNameController.class, AccessDeniedToForbiddenAdvice.class})
-    static class TenantDisplayNameMvcTestApplication {
-    }
-
-    /**
-     * {@code addFilters = false}이면 서블릿 필터가 AccessDenied를 403으로 바꾸지 않으므로,
-     * 메서드 시큐리티 거부를 HTTP 403으로 매핑합니다.
-     */
-    @RestControllerAdvice
-    static class AccessDeniedToForbiddenAdvice {
-
-        @ExceptionHandler(AccessDeniedException.class)
-        ResponseEntity<Void> onAccessDenied() {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-    }
 
     private static final String TENANT_ID = "test-tenant-display-name";
 

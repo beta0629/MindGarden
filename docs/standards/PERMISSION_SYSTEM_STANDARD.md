@@ -1,7 +1,7 @@
 # 권한 시스템 표준
 
-**버전**: 2.1.0  
-**최종 업데이트**: 2025-12-04  
+**버전**: 2.2.0  
+**최종 업데이트**: 2026-04-11  
 **상태**: 공식 표준 (테넌트 기반으로 전환)
 
 ---
@@ -498,11 +498,24 @@ public ResponseEntity<?> registerConsultant(
 
 ---
 
+## 공개 API·CSRF 제외·레이트리밋 (운영)
+
+로그인 전·온보딩·계정 연동 등 **공개 POST** 는 `SecurityConfig` 에서 CSRF 검증이 제외될 수 있다. 이 경우 브라우저 CSRF 토큰에 의존한 남용 방지가 되지 않으므로, **반드시** 다음을 함께 적용한다.
+
+- **앱 레이어**: `mindgarden.security.*` 설정에 따른 보호(예: 계정 연동 이메일 쿨다운·일일 상한)와 **`RateLimitingFilter`** 로 IP 기준 429 응답.
+- **엣지(선택)**: Nginx `limit_req`·WAF 등으로 동일 경로에 대한 추가 상한(이중 방어).
+
+설정 키 예: `mindgarden.security.account-integration.*`, `mindgarden.security.rate-limit.*`.
+
+**메트릭**: 앱에서 429 차단 시 Micrometer 카운터 `mindgarden.rate_limit.blocked`(태그 `reason`: `login` \| `integration` \| `onboarding_create`)를 증가시킨다. Prometheus/Grafana 알람 예: `rate(mindgarden_rate_limit_blocked_total[5m])` 가 임계값을 넘으면 알림(인프라에서 규칙 확정).
+
+---
+
 ## 📞 문의
 
 권한 시스템 관련 문의:
 - 아키텍처 팀
 - 백엔드 팀
 
-**최종 업데이트**: 2025-12-04
+**최종 업데이트**: 2026-04-11
 

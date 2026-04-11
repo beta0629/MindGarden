@@ -1,34 +1,55 @@
-# 테스트 프로파일: 카페24 등 외부 호스트·평문 DB 비밀번호를 커밋하지 않는다.
-# 통합 테스트 전에 SPRING_DATASOURCE_PASSWORD 를 설정한다(로컬: export, IDE: Run Configuration, CI: 시크릿).
-# 기본 URL은 127.0.0.1 MySQL — 원격 DB는 SPRING_DATASOURCE_URL 로만 지정.
-# Flyway: 미적용 마이그레이션만 실행. clean은 비활성(공유 DB 보호). application-local.yml과 동일 패턴.
+# 테스트 프로파일: @ActiveProfiles("test") 시 로드.
+# PlSqlInitializer 는 MySQL 저장 프로시저 DDL을 H2에서 실행할 수 없으므로 비활성화한다.
+mindgarden:
+  plsql-initializer:
+    enabled: false
+
+# 기본은 인메모리 H2(MODE=MySQL)로 mvn test 가 외부 DB 없이 JPA 컨텍스트를 기동한다.
+# 공유 MySQL로 통합 검증 시에만 환경 변수로 JDBC URL·계정을 넘긴다.
+#
+# DevTools 의 DataSource 자동구성이 동일 타입 빈을 추가하면 HibernateJpaConfiguration 의
+# @ConditionalOnSingleCandidate(DataSource) 에 걸려 entityManagerFactory 가 등록되지 않을 수 있음.
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.devtools.autoconfigure.DevToolsDataSourceAutoConfiguration
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci}
-    username: ${SPRING_DATASOURCE_USERNAME:mindgarden_dev}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 빈 문자열로 설정된 SPRING_DATASOURCE_URL 이 기본값을 덮어써 풀 미생성·JPA 비활성화되는 것을 피함.
+    # MySQL 등으로 덮어쓸 때는 IDE/CLI에서 --spring.datasource.url=... 만 사용 (빈 env 금지).
+    url: jdbc:h2:mem:mindgarden_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+    # application.yml 의 MySQL 전용 SET NAMES … 가 H2 풀 초기화를 깨므로 테스트에서는 비움
+    connection-init-sql: ""
+    hikari:
+      connection-init-sql: ""
   jpa:
     hibernate:
-      ddl-auto: none # Flyway가 스키마를 관리하므로 Hibernate의 ddl-auto는 비활성화
+      # Flyway 비활성 시 엔티티 메타데이터로 스키마 보강 (운영은 ddl-auto none + Flyway)
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
+        # application.yml 의 hbm2ddl.auto: none 과 정합 (ddl-auto update 가 실제로 적용되도록)
+        hbm2ddl:
+          auto: ${SPRING_JPA_PROPERTIES_HIBERNATE_HBM2DDL_AUTO:update}
         format_sql: true
         use_sql_comments: true
   task:
     scheduling:
-      enabled: false  # 통합 테스트에서 스케줄·공유 DB 부하·종료 시 풀 경쟁 완화 (application-local.yml과 동일 패턴)
+      enabled: false
   flyway:
-    enabled: true
+    # H2는 다수 Flyway(MySQL 전용) 마이그레이션과 호환되지 않으므로 테스트 기본은 비활성
+    enabled: ${SPRING_FLYWAY_ENABLED:false}
     locations: classpath:db/migration
     baseline-on-migrate: true
-    validate-on-migrate: false # 공유 개발 DB에서 checksum drift 허용 (로컬 프로파일과 동일)
-    clean-disabled: true # clean 금지 — 공유 DB destructive 방지
+    validate-on-migrate: false
+    clean-disabled: true
     out-of-order: false
 
-# 로깅 설정 (테스트 환경에서는 간소화)
 logging:
   level:
     root: WARN
@@ -37,7 +58,6 @@ logging:
     org.hibernate: WARN
     org.flywaydb: INFO
 
-# ERD 자동 생성 비활성화
 erd:
   auto-generation:
     enabled: false
@@ -45,31 +65,24 @@ erd:
   notification:
     enabled: false
 
-# 기타 테스트 관련 설정
 server:
-  port: 8081 # 테스트 서버 포트 충돌 방지 (선택 사항)
+  port: 8081
 
-# 테스트용 환경 변수 (필수)
-# JWT 설정
 JWT_SECRET: "test-jwt-secret-key-for-integration-test-only-minimum-32-characters-required"
 JWT_EXPIRATION: 86400000
 JWT_REFRESH_EXPIRATION: 604800000
 
-# 개인정보 암호화 설정 (테스트용)
 PERSONAL_DATA_ENCRYPTION_KEY: "test-encryption-key-32-characters-long-required"
 PERSONAL_DATA_ENCRYPTION_IV: "test-iv-16-chars"
 
-# OpenAI 설정 (테스트용 - 선택적)
 OPENAI_API_KEY: "test-openai-key"
 OPENAI_API_URL: "https://api.openai.com/v1"
 OPENAI_MODEL: "gpt-3.5-turbo"
 
-# 이메일 설정 (테스트용 - 선택적)
 email:
   block-all-outbound: true
   send-allowlist: ""
 
-# Ops Portal 관리자 설정 (테스트용)
 ops:
   admin:
     username: "test-admin@mindgarden.com"

@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.dto.AccountIntegrationRequest;
 import com.coresolution.consultation.dto.AccountIntegrationResponse;
+import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 
 /**
  * 계정 통합 서비스 인터페이스
@@ -23,11 +24,11 @@ public interface AccountIntegrationService {
     
     /**
      * 이메일 인증 코드 발송
-     * 
+     *
      * @param email 인증할 이메일
-     * @return 인증 코드 발송 결과
+     * @return 발송 결과({@link com.coresolution.consultation.dto.EmailVerificationSendOutcome.Status}로 구분)
      */
-    boolean sendEmailVerificationCode(String email);
+    EmailVerificationSendOutcome sendEmailVerificationCode(String email);
     
     /**
      * 이메일 인증 코드 검증

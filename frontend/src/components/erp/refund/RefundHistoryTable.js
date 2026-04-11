@@ -1,7 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { toSafeNumber } from '../../../utils/safeDisplay';
-import ErpButton from '../common/ErpButton';
+import MGButton from '../../common/MGButton';
+import {
+  buildErpMgButtonClassName,
+  ERP_MG_BUTTON_LOADING_TEXT,
+  mapErpSizeToMg,
+  mapErpVariantToMg
+} from '../common/erpMgButtonProps';
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 import './RefundHistoryTable.css';
@@ -87,25 +93,33 @@ const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange })
 
           {totalPages > 1 && (
             <div className="mg-v2-erp-refund-history__pagination">
-              <ErpButton
-                variant="secondary"
+              <MGButton
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 disabled={!hasPrevious}
                 onClick={() => onPageChange(currentPage - 1)}
               >
                 이전
-              </ErpButton>
+              </MGButton>
 
               <span className="mg-v2-erp-refund-history__page-indicator">
                 <ErpSafeText value={pageLabel} />
               </span>
 
-              <ErpButton
-                variant="secondary"
+              <MGButton
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 disabled={!hasNext}
                 onClick={() => onPageChange(currentPage + 1)}
               >
                 다음
-              </ErpButton>
+              </MGButton>
             </div>
           )}
         </>

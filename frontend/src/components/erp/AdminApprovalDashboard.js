@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import CardContainer from '../common/CardContainer';
-import ErpButton from './common/ErpButton';
+import MGButton from '../common/MGButton';
+import {
+  buildErpMgButtonClassName,
+  ERP_MG_BUTTON_LOADING_TEXT,
+  mapErpSizeToMg,
+  mapErpVariantToMg
+} from './common/erpMgButtonProps';
 import { ErpSafeText } from './common';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { useSession } from '../../hooks/useSession';
@@ -194,20 +200,26 @@ const AdminApprovalDashboard = () => {
                     )}
 
                     <div className="approval-request-actions">
-                      <ErpButton
-                        variant="success"
-                        size="small"
+                      <MGButton
+                        variant={mapErpVariantToMg('success')}
+                        size={mapErpSizeToMg('small')}
+                        className={buildErpMgButtonClassName({ variant: 'success', size: 'small', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                         onClick={() => handleApprove(request)}
                       >
                         승인
-                      </ErpButton>
-                      <ErpButton
-                        variant="danger"
-                        size="small"
+                      </MGButton>
+                      <MGButton
+                        variant={mapErpVariantToMg('danger')}
+                        size={mapErpSizeToMg('small')}
+                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'small', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                         onClick={() => handleReject(request)}
                       >
                         거부
-                      </ErpButton>
+                      </MGButton>
                     </div>
                   </div>
                 </div>
@@ -250,20 +262,31 @@ const AdminApprovalDashboard = () => {
             </div>
 
             <div className="approval-request-actions">
-              <ErpButton
-                variant="secondary"
+              <MGButton
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  loading: false,
+                  className: 'approval-request-approve-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={() => setShowApprovalModal(false)}
-                className="approval-request-approve-btn"
               >
                 취소
-              </ErpButton>
-              <ErpButton
-                variant="success"
+              </MGButton>
+              <MGButton
+                variant={mapErpVariantToMg('success')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'success', loading: processing })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={submitApproval}
                 loading={processing}
               >
                 승인하기
-              </ErpButton>
+              </MGButton>
             </div>
           </div>
         )}
@@ -303,21 +326,32 @@ const AdminApprovalDashboard = () => {
             </div>
 
             <div className="approval-request-actions">
-              <ErpButton
-                variant="secondary"
+              <MGButton
+                variant={mapErpVariantToMg('secondary')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  loading: false,
+                  className: 'approval-request-approve-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={() => setShowRejectionModal(false)}
-                className="approval-request-approve-btn"
               >
                 취소
-              </ErpButton>
-              <ErpButton
-                variant="danger"
+              </MGButton>
+              <MGButton
+                variant={mapErpVariantToMg('danger')}
+                size={mapErpSizeToMg('md')}
+                className={buildErpMgButtonClassName({ variant: 'danger', loading: processing })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
                 onClick={submitRejection}
                 loading={processing}
                 disabled={!comment.trim()}
               >
                 거부하기
-              </ErpButton>
+              </MGButton>
             </div>
           </div>
         )}

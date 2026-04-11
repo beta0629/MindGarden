@@ -17,11 +17,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { registerPaymentMethod } from '../../utils/billingService';
-import { formatCardLast4 } from '../../utils/billingService';
-import { getErrorMessage } from '../../utils/billingService';
-// import notificationManager from '../../utils/notification';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { registerPaymentMethod, formatCardLast4, getErrorMessage } from '../../utils/billingService';
+import notificationManager from '../../utils/notification';
+import { PG_PROVIDER } from '../../utils/paymentGateway';
+import MGButton from '../../components/common/MGButton';
 import SimpleLayout from '../../components/layout/SimpleLayout';
 import {
   BILLING_CSS,
@@ -30,7 +29,6 @@ import {
   CALLBACK_PARAMS,
   CALLBACK_STATUS,
   BILLING_ROUTES,
-  PG_PROVIDER,
 } from '../../constants/billing';
 import './BillingCallback.css';
 
@@ -160,9 +158,9 @@ const BillingCallback = () => {
               </div>
             )}
             <div className={BILLING_CSS.BILLING_CALLBACK.ACTIONS}>
-              <button className="mg-button" variant="primary" onClick={handleGoToDashboard} fullWidth>
+              <MGButton type="button" variant="primary" fullWidth onClick={handleGoToDashboard}>
                 {BILLING_MESSAGES.CALLBACK.GO_TO_DASHBOARD}
-              </button>
+              </MGButton>
             </div>
           </div>
         ) : (
@@ -179,12 +177,12 @@ const BillingCallback = () => {
               </div>
             )}
             <div className={BILLING_CSS.BILLING_CALLBACK.ACTIONS}>
-              <button className="mg-button" variant="secondary" onClick={handleRetry} fullWidth>
+              <MGButton type="button" variant="secondary" fullWidth onClick={handleRetry}>
                 {BILLING_MESSAGES.CALLBACK.RETRY}
-              </button>
-              <button className="mg-button" variant="primary" onClick={handleGoToDashboard} fullWidth>
+              </MGButton>
+              <MGButton type="button" variant="primary" fullWidth onClick={handleGoToDashboard}>
                 {BILLING_MESSAGES.CALLBACK.GO_TO_DASHBOARD}
-              </button>
+              </MGButton>
             </div>
           </div>
         )}

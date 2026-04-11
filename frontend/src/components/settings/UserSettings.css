@@ -264,6 +264,30 @@
   }
 }
 
+/* MGButton + 설정 사이드바: 레거시 mg-v2-nav-item 탭 시각 유지 */
+button.mg-v2-nav-item.mg-button {
+  width: 100%;
+  justify-content: flex-start;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-weight: var(--mg-v2-fontWeight-medium);
+  color: var(--mg-v2-text-muted);
+  min-height: unset;
+}
+
+button.mg-v2-nav-item.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  background: var(--mg-v2-background-secondary);
+  color: var(--mg-v2-text);
+}
+
+button.mg-v2-nav-item.mg-button.mg-v2-nav-item--active {
+  background: var(--mg-v2-primary-light);
+  color: var(--mg-v2-primary);
+  font-weight: var(--mg-v2-fontWeight-semibold);
+}
+
 /* 다크 모드 지원 */
 @media (prefers-color-scheme: dark) {
   .mg-v2-toggle-slider:before {

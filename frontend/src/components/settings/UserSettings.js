@@ -289,27 +289,36 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {
             <Card variant="minimal">
               <CardContent>
                 <nav className="mg-v2-v2-v2-settings-nav">
-                  <button
+                  <MGButton
+                    type="button"
+                    variant="outline"
                     className={`mg-v2-nav-item ${activeTab === 'theme' ? 'mg-v2-nav-item--active' : ''}`}
                     onClick={() => setActiveTab('theme')}
+                    preventDoubleClick={false}
                   >
                     <Icon name="PALETTE" size="SM" color={activeTab === 'theme' ? 'PRIMARY' : 'MUTED'} />
                     테마 설정
-                  </button>
-                  <button
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="outline"
                     className={`mg-v2-nav-item ${activeTab === 'notifications' ? 'mg-v2-nav-item--active' : ''}`}
                     onClick={() => setActiveTab('notifications')}
+                    preventDoubleClick={false}
                   >
                     <Icon name="BELL" size="SM" color={activeTab === 'notifications' ? 'PRIMARY' : 'MUTED'} />
                     알림 설정
-                  </button>
-                  <button
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="outline"
                     className={`mg-v2-nav-item ${activeTab === 'account' ? 'mg-v2-nav-item--active' : ''}`}
                     onClick={() => setActiveTab('account')}
+                    preventDoubleClick={false}
                   >
                     <Icon name="USER" size="SM" color={activeTab === 'account' ? 'PRIMARY' : 'MUTED'} />
                     계정 정보
-                  </button>
+                  </MGButton>
                 </nav>
               </CardContent>
             </Card>

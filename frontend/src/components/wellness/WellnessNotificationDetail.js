@@ -8,6 +8,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationDetail.css';
 
@@ -135,10 +136,16 @@ const WellnessNotificationDetail = () => {
             </div>
             <h2 className="error-title">알림을 찾을 수 없습니다</h2>
             <p className="error-message"><SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText></p>
-            <button className="mg-btn mg-btn--primary" onClick={handleBack}>
+            <MGButton
+              type="button"
+              variant="primary"
+              className="mg-btn mg-btn--primary"
+              onClick={handleBack}
+              preventDoubleClick={false}
+            >
               <ArrowLeft size={16} />
               <span>돌아가기</span>
-            </button>
+            </MGButton>
           </div>
         </div>
       </AdminCommonLayout>
@@ -150,10 +157,17 @@ const WellnessNotificationDetail = () => {
       <div className="wellness-notification-detail">
         {/* 헤더 */}
         <div className="wellness-notification-header">
-          <button className="back-button" onClick={handleBack}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className="back-button"
+            onClick={handleBack}
+            preventDoubleClick={false}
+          >
             <ArrowLeft size={20} />
             <span>목록으로</span>
-          </button>
+          </MGButton>
           
           <div className="header-badges">
             {notification.isImportant && (
@@ -204,10 +218,16 @@ const WellnessNotificationDetail = () => {
 
         {/* 하단 액션 */}
         <div className="wellness-notification-actions">
-          <button className="mg-btn mg-btn--secondary" onClick={handleBack}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            className="mg-btn mg-btn--secondary"
+            onClick={handleBack}
+            preventDoubleClick={false}
+          >
             <ArrowLeft size={16} />
             <span>목록으로 돌아가기</span>
-          </button>
+          </MGButton>
         </div>
       </div>
     </AdminCommonLayout>

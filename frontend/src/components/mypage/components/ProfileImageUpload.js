@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import notificationManager from '../../../utils/notification';
 
 const ProfileImageUpload = ({
@@ -155,13 +156,9 @@ const ProfileImageUpload = ({
               />
             </label>
             {profileImage && profileImageType === 'USER_PROFILE' && profileImage.startsWith('data:image/') ? (
-              <button
-                type="button"
-                className="mg-v2-button mg-v2-button--outline mg-v2-button--danger"
-                onClick={handleDeleteImage}
-              >
+              <MGButton type="button" variant="danger" size="small" onClick={handleDeleteImage}>
                 삭제
-              </button>
+              </MGButton>
             ) : null}
           </div>
         ) : null}
@@ -179,19 +176,20 @@ const ProfileImageUpload = ({
         showCloseButton
         actions={
           <>
-            <button
+            <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              variant="outline"
               onClick={() => {
                 setIsCropping(false);
                 setCropImage(null);
               }}
+              preventDoubleClick={false}
             >
               취소
-            </button>
-            <button type="button" className="mg-v2-button mg-v2-button--primary" onClick={handleCropImage}>
+            </MGButton>
+            <MGButton type="button" variant="primary" onClick={handleCropImage} preventDoubleClick={false}>
               적용
-            </button>
+            </MGButton>
           </>
         }
       >

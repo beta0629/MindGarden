@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
 
@@ -208,15 +209,18 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               readOnly={!!tempPassword}
               autoComplete="current-password"
             />
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="small"
               className="mg-mypage-password-form__toggle"
               onClick={() => togglePasswordVisibility('current')}
               disabled={isLoading || !!tempPassword}
               aria-label="비밀번호 표시 전환"
+              preventDoubleClick={false}
             >
               {showPassword.current ? '숨김' : '표시'}
-            </button>
+            </MGButton>
           </div>
           {!validation.currentPassword.isValid ? (
             <p className="mg-mypage-password-form__error">
@@ -241,15 +245,18 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               disabled={isLoading}
               autoComplete="new-password"
             />
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="small"
               className="mg-mypage-password-form__toggle"
               onClick={() => togglePasswordVisibility('new')}
               disabled={isLoading}
               aria-label="비밀번호 표시 전환"
+              preventDoubleClick={false}
             >
               {showPassword.new ? '숨김' : '표시'}
-            </button>
+            </MGButton>
           </div>
           {!validation.newPassword.isValid ? (
             <p className="mg-mypage-password-form__error">
@@ -277,15 +284,18 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               disabled={isLoading}
               autoComplete="new-password"
             />
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="small"
               className="mg-mypage-password-form__toggle"
               onClick={() => togglePasswordVisibility('confirm')}
               disabled={isLoading}
               aria-label="비밀번호 표시 전환"
+              preventDoubleClick={false}
             >
               {showPassword.confirm ? '숨김' : '표시'}
-            </button>
+            </MGButton>
           </div>
           {!validation.confirmPassword.isValid ? (
             <p className="mg-mypage-password-form__error">
@@ -295,12 +305,18 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         </div>
 
         <div className="mg-mypage-password-form__actions">
-          <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={onClose} disabled={isLoading}>
+          <MGButton type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             취소
-          </button>
-          <button type="submit" className="mg-v2-button mg-v2-button--primary" disabled={isLoading || !validateForm()}>
-            {isLoading ? '변경 중...' : '비밀번호 변경'}
-          </button>
+          </MGButton>
+          <MGButton
+            type="submit"
+            variant="primary"
+            loading={isLoading}
+            loadingText="변경 중..."
+            disabled={isLoading || !validateForm()}
+          >
+            비밀번호 변경
+          </MGButton>
         </div>
       </form>
     </UnifiedModal>

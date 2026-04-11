@@ -537,6 +537,20 @@
   cursor: pointer;
 }
 
+/* MGButton( outline ) + 토글: 입력란 옆 ‘표시/숨김’ 레이아웃 유지 */
+.mg-mypage-password-form__toggle.mg-button.mg-button--outline {
+  min-height: unset;
+  padding: 0 var(--mg-spacing-sm);
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-background-main);
+  color: var(--mg-color-text-main);
+  box-shadow: none;
+}
+
+.mg-mypage-password-form__toggle.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
 .mg-mypage-password-form__error {
   margin: 0;
   font-size: var(--mg-font-xs);

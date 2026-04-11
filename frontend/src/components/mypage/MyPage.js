@@ -23,6 +23,7 @@ import {
   MYPAGE_TAB_KEYS,
   getSocialProviderLabel
 } from '../../constants/mypageUi';
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPageRenewal.css';
@@ -366,16 +367,12 @@ const MyPage = () => {
               titleId={MYPAGE_TITLE_ID}
               actions={
                 <div className="mg-mypage__header-actions">
-                  <button
-                    type="button"
-                    className="mg-v2-button mg-v2-button--outline"
-                    onClick={handleSupportClick}
-                  >
+                  <MGButton type="button" variant="outline" onClick={handleSupportClick}>
                     고객센터
-                  </button>
-                  <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={handleLogoutClick}>
+                  </MGButton>
+                  <MGButton type="button" variant="outline" onClick={handleLogoutClick}>
                     로그아웃
-                  </button>
+                  </MGButton>
                 </div>
               }
             />
@@ -384,17 +381,19 @@ const MyPage = () => {
           <ul className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle" role="tablist">
             {visibleTabs.map((tabKey) => (
               <li key={tabKey} className="mg-mypage__tab-item">
-                <button
+                <MGButton
                   type="button"
                   role="tab"
                   id={TAB_IDS[tabKey]}
                   aria-selected={activeTab === tabKey}
                   aria-controls={PANEL_IDS[tabKey]}
+                  variant="outline"
                   className={`mg-v2-ad-b0kla__pill${activeTab === tabKey ? ' mg-v2-ad-b0kla__pill--active' : ''}`}
                   onClick={() => setTabInUrl(tabKey)}
+                  preventDoubleClick={false}
                 >
                   {MYPAGE_TAB_LABELS[tabKey]}
-                </button>
+                </MGButton>
               </li>
             ))}
           </ul>

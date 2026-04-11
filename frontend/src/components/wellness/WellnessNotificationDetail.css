@@ -43,6 +43,26 @@
   transform: translateX(-2px);
 }
 
+/* MGButton(outline) + 헤더 뒤로가기: 기존 .back-button 시각 유지 */
+.wellness-notification-detail button.back-button.mg-button.mg-button--outline {
+  background: var(--color-white);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  min-height: 32px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  box-shadow: none;
+}
+
+.wellness-notification-detail button.back-button.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+  border-color: #87CEEB;
+  color: var(--color-text-primary);
+  transform: translateX(-2px);
+}
+
 .wellness-notification-detail .header-badges {
   display: flex;
   gap: var(--spacing-sm);

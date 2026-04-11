@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import notificationManager from '../../../utils/notification';
+import MGButton from '../../common/MGButton';
 
 const LOCALE_OPTIONS = [
   { value: 'ko-KR', label: '한국어' },
@@ -114,9 +115,9 @@ const SettingsSection = () => {
           </li>
         </ul>
         <div className="mg-v2-card-actions">
-          <button type="button" className="mg-v2-button mg-v2-button--primary" onClick={handleSave}>
+          <MGButton type="button" variant="primary" onClick={handleSave}>
             설정 저장
-          </button>
+          </MGButton>
         </div>
       </article>
     </>

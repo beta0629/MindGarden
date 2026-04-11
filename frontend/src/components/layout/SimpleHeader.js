@@ -8,6 +8,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
 import Avatar from '../common/Avatar';
+import MGButton from '../common/MGButton';
 import { 
   HEADER_CSS_CLASSES, 
   HEADER_TEXTS, 
@@ -137,13 +138,15 @@ const SimpleHeader = () => {
         <div className={HEADER_CSS_CLASSES.HEADER_LEFT}>
           {/* 뒤로가기 버튼 (조건부 표시) */}
           {shouldShowBackButton() && (
-            <button 
-              className={HEADER_CSS_CLASSES.BACK_BUTTON} 
+            <MGButton
+              type="button"
+              className={HEADER_CSS_CLASSES.BACK_BUTTON}
               onClick={handleBackClick}
               title={HEADER_TEXTS.BACK_TITLE}
+              preventDoubleClick={false}
             >
               <i className={`bi ${HEADER_ICONS.BACK}`}></i>
-            </button>
+            </MGButton>
           )}
           
           {/* 로고 */}
@@ -187,23 +190,27 @@ const SimpleHeader = () => {
               </div>
 
               {/* 로그아웃 버튼 */}
-              <button 
+              <MGButton
+                type="button"
                 className="simple-logout-button"
                 onClick={handleLogout}
                 title="로그아웃"
+                preventDoubleClick={false}
               >
                 <i className="bi bi-box-arrow-right"></i>
                 <span>로그아웃</span>
-              </button>
+              </MGButton>
 
               {/* 햄버거 메뉴 버튼 */}
-              <button 
-                className={HEADER_CSS_CLASSES.HAMBURGER_TOGGLE} 
+              <MGButton
+                type="button"
+                className={HEADER_CSS_CLASSES.HAMBURGER_TOGGLE}
                 onClick={toggleHamburger}
                 title={HEADER_TEXTS.MENU_TITLE}
+                preventDoubleClick={false}
               >
                 <i className={`bi ${HEADER_ICONS.HAMBURGER}`}></i>
-              </button>
+              </MGButton>
             </>
           ) : (
             <>

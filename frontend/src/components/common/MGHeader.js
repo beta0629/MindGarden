@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import Avatar from './Avatar';
+import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 // 헤더 스타일은 main.css를 통해 _header.css에서 중앙화되어 로드됨
@@ -74,24 +75,28 @@ const MGHeader = ({
         </nav>
 
         {/* 모바일 햄버거 메뉴 버튼 */}
-        <button 
+        <MGButton
+          type="button"
           className="mg-header__mobile-menu-button"
           onClick={handleMobileMenuToggle}
           aria-label="메뉴 열기"
+          preventDoubleClick={false}
         >
           <span className={`mg-header__hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
             <span></span>
             <span></span>
             <span></span>
           </span>
-        </button>
+        </MGButton>
 
         {/* 사용자 액션 */}
         <div className="mg-header__actions">
           {/* 알림 */}
-          <button 
+          <MGButton
+            type="button"
             className="mg-header__notification"
             onClick={handleNotificationToggle}
+            preventDoubleClick={false}
           >
             <span className="mg-header__notification-icon">🔔</span>
             {notifications > 0 && (
@@ -99,13 +104,15 @@ const MGHeader = ({
                 {notifications > 99 ? '99+' : notifications}
               </span>
             )}
-          </button>
+          </MGButton>
 
           {/* 사용자 메뉴 */}
           <div className="mg-header__user-menu">
-            <button 
+            <MGButton
+              type="button"
               className="mg-header__user-button"
               onClick={handleUserMenuToggle}
+              preventDoubleClick={false}
             >
               <Avatar
                 profileImageUrl={user?.avatar || user?.profileImageUrl}
@@ -116,7 +123,7 @@ const MGHeader = ({
                 <SafeText fallback="사용자">{user?.name}</SafeText>
               </span>
               <span className="mg-header__user-arrow">▼</span>
-            </button>
+            </MGButton>
 
             {/* 드롭다운 메뉴 */}
             {isUserMenuOpen && (
@@ -150,10 +157,14 @@ const MGHeader = ({
                     도움말
                   </a>
                   <div className="mg-header__menu-divider"></div>
-                  <button className="mg-header__menu-item mg-header__menu-item--logout">
+                  <MGButton
+                    type="button"
+                    className="mg-header__menu-item mg-header__menu-item--logout"
+                    preventDoubleClick={false}
+                  >
                     <span className="mg-header__menu-icon">🚪</span>
                     로그아웃
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             )}
@@ -164,9 +175,13 @@ const MGHeader = ({
             <div className="mg-header__notification-dropdown">
               <div className="mg-header__notification-header">
                 <h3>알림</h3>
-                <button className="mg-header__notification-mark-all">
+                <MGButton
+                  type="button"
+                  className="mg-header__notification-mark-all"
+                  preventDoubleClick={false}
+                >
                   모두 읽음
-                </button>
+                </MGButton>
               </div>
               <div className="mg-header__notification-list">
                 <div className="mg-header__notification-item">

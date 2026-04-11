@@ -5,6 +5,7 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 // import UnifiedModal from './modals/UnifiedModal'; // 임시 비활성화
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
 import Avatar from './Avatar';
+import MGButton from './MGButton';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
@@ -289,16 +290,18 @@ const UnifiedHeader = ({
     const currentTenantName = currentTenant?.tenantName || '현재 테넌트';
 
     return (
-      <button
+      <MGButton
+        type="button"
         className="mg-header__tenant-switch"
         onClick={() => setShowTenantSwitchModal(true)}
         title="테넌트 전환"
         aria-label="테넌트 전환"
+        preventDoubleClick={false}
       >
         <i className="bi bi-building"></i>
         <span className="mg-header__tenant-name">{currentTenantName}</span>
         <i className="bi bi-chevron-down"></i>
-      </button>
+      </MGButton>
     );
   };
 
@@ -424,15 +427,17 @@ const UnifiedHeader = ({
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>
           </div>
         </div>
-        <button 
+        <MGButton
+          type="button"
           className="mg-header__hamburger"
           onClick={toggleHamburger}
           aria-label="메뉴 열기"
+          preventDoubleClick={false}
         >
           <span className="mg-header__hamburger-icon"></span>
           <span className="mg-header__hamburger-icon"></span>
           <span className="mg-header__hamburger-icon"></span>
-        </button>
+        </MGButton>
       </div>
     );
   };
@@ -452,14 +457,16 @@ const UnifiedHeader = ({
           <div className="mg-header__brand">
             {/* 백 버튼 */}
             {shouldShowBackButton() && (
-              <button 
+              <MGButton
+                type="button"
                 className="mg-header__back-button"
                 onClick={handleBackClick}
                 title="뒤로가기"
                 aria-label="뒤로가기"
+                preventDoubleClick={false}
               >
                 <i className="bi bi-arrow-left"></i>
-              </button>
+              </MGButton>
             )}
             {renderLogo()}
           </div>
@@ -504,13 +511,14 @@ const UnifiedHeader = ({
             ) : (
               <div className="tenant-switch-modal__list">
                 {accessibleTenants.map((tenant) => (
-                  <button
+                  <MGButton
                     key={tenant.tenantId}
                     type="button"
                     onClick={() => handleTenantSwitch(tenant.tenantId)}
                     className={`tenant-switch-modal__item ${
                       user?.tenantId === tenant.tenantId ? 'tenant-switch-modal__item--current' : ''
                     }`}
+                    preventDoubleClick={false}
                   >
                     <div className="tenant-switch-modal__item-content">
                       <div className="tenant-switch-modal__item-name">
@@ -531,19 +539,20 @@ const UnifiedHeader = ({
                     {user?.tenantId === tenant.tenantId && (
                       <div className="tenant-switch-modal__item-check">✓</div>
                     )}
-                  </button>
+                  </MGButton>
                 ))}
               </div>
             )}
             
             <div className="tenant-switch-modal__actions">
-              <button
+              <MGButton
                 type="button"
                 onClick={() => setShowTenantSwitchModal(false)}
                 className="tenant-switch-modal__cancel-button"
+                preventDoubleClick={false}
               >
                 취소
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>

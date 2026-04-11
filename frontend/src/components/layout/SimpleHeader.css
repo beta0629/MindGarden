@@ -94,7 +94,8 @@
 }
 
 /* 뒤로가기 버튼 */
-.simple-back-button {
+.simple-back-button,
+.simple-back-button.mg-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,12 +110,14 @@
   font-size: var(--header-icon-size);
 }
 
-.simple-back-button:hover {
+.simple-back-button:hover,
+.simple-back-button.mg-button:hover {
   background: var(--header-primary-hover);
   transform: translateX(calc(var(--spacing-xs) * -0.5));
 }
 
-.simple-back-button:active {
+.simple-back-button:active,
+.simple-back-button.mg-button:active {
   transform: translateX(calc(var(--spacing-xs) * -0.25));
 }
 
@@ -243,7 +246,8 @@
 }
 
 /* 로그아웃 버튼 - 헤더 내 위치로 수정 */
-.simple-logout-button {
+.simple-logout-button,
+.simple-logout-button.mg-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -267,14 +271,16 @@
   height: var(--icon-size-sm);
 }
 
-.simple-logout-button:hover {
+.simple-logout-button:hover,
+.simple-logout-button.mg-button:hover {
   background: var(--header-danger-hover);
   border-color: var(--header-danger-hover);
   transform: translateY(calc(var(--spacing-xs) * -0.25));
   box-shadow: var(--shadow-md);
 }
 
-.simple-logout-button:active {
+.simple-logout-button:active,
+.simple-logout-button.mg-button:active {
   background: var(--header-danger);
   border-color: var(--header-danger);
   transform: translateY(0);
@@ -283,12 +289,14 @@
 
 /* 로그아웃 버튼 애니메이션 제거 - 안정성을 위해 */
 
-.simple-logout-button i {
+.simple-logout-button i,
+.simple-logout-button.mg-button i {
   font-size: var(--font-size-base);
 }
 
 /* 햄버거 메뉴 버튼 */
-.simple-hamburger-toggle {
+.simple-hamburger-toggle,
+.simple-hamburger-toggle.mg-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +312,8 @@
   border: 1px solid var(--header-border-light);
 }
 
-.simple-hamburger-toggle:hover {
+.simple-hamburger-toggle:hover,
+.simple-hamburger-toggle.mg-button:hover {
   background: var(--header-neutral-hover);
   transform: scale(1.05);
 }
@@ -356,23 +365,27 @@
     gap: var(--header-gap-mobile);
   }
   
-  .simple-back-button {
+  .simple-back-button,
+  .simple-back-button.mg-button {
     width: var(--header-button-size-mobile);
     height: var(--header-button-size-mobile);
     font-size: var(--header-icon-size-mobile);
   }
   
-  .simple-logout-button {
+  .simple-logout-button,
+  .simple-logout-button.mg-button {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--header-button-font-size-mobile);
     margin-right: var(--spacing-xs);
   }
   
-  .simple-logout-button span {
+  .simple-logout-button span,
+  .simple-logout-button.mg-button span {
     display: none; /* 모바일에서는 텍스트 숨김 */
   }
   
-  .simple-hamburger-toggle {
+  .simple-hamburger-toggle,
+  .simple-hamburger-toggle.mg-button {
     width: var(--header-button-size-mobile);
     height: var(--header-button-size-mobile);
     font-size: var(--header-icon-size);
@@ -419,5 +432,120 @@
   .simple-login-button {
     padding: var(--spacing-xs) var(--header-gap);
     font-size: var(--header-button-font-size-mobile);
+  }
+}
+
+/* G8-B5a: MGButton(JS 로드)보다 SimpleHeader BEM 우선 */
+.simple-header .simple-back-button.mg-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--header-button-size);
+  height: var(--header-button-size);
+  border: none;
+  border-radius: var(--header-border-radius);
+  background: var(--header-primary-light);
+  color: var(--header-primary);
+  min-height: unset;
+  cursor: pointer;
+  transition: all var(--header-transition);
+  font-size: var(--header-icon-size);
+}
+
+.simple-header .simple-back-button.mg-button:hover {
+  background: var(--header-primary-hover);
+  transform: translateX(calc(var(--spacing-xs) * -0.5));
+}
+
+.simple-header .simple-back-button.mg-button:active {
+  transform: translateX(calc(var(--spacing-xs) * -0.25));
+}
+
+.simple-header .simple-logout-button.mg-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width-normal) solid var(--header-danger);
+  border-radius: var(--border-radius-md);
+  background: var(--header-danger);
+  color: var(--mg-white);
+  min-height: unset;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-right: var(--spacing-xs);
+  position: relative;
+  z-index: var(--z-header);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: var(--button-min-width, 5rem);
+  height: var(--icon-size-sm);
+}
+
+.simple-header .simple-logout-button.mg-button:hover {
+  background: var(--header-danger-hover);
+  border-color: var(--header-danger-hover);
+  transform: translateY(calc(var(--spacing-xs) * -0.25));
+  box-shadow: var(--shadow-md);
+}
+
+.simple-header .simple-logout-button.mg-button:active {
+  background: var(--header-danger);
+  border-color: var(--header-danger);
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.simple-header .simple-hamburger-toggle.mg-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--header-button-size);
+  height: var(--header-button-size);
+  border: 1px solid var(--header-border-light);
+  border-radius: var(--header-border-radius);
+  background: var(--header-neutral);
+  color: var(--header-text-primary);
+  min-height: unset;
+  cursor: pointer;
+  transition: all var(--header-transition);
+  font-size: var(--header-icon-size-large);
+}
+
+.simple-header .simple-hamburger-toggle.mg-button:hover {
+  background: var(--header-neutral-hover);
+  transform: scale(1.05);
+}
+
+.simple-header .simple-back-button.mg-button .mg-button__content,
+.simple-header .simple-back-button.mg-button .mg-button__text,
+.simple-header .simple-logout-button.mg-button .mg-button__content,
+.simple-header .simple-logout-button.mg-button .mg-button__text,
+.simple-header .simple-hamburger-toggle.mg-button .mg-button__content,
+.simple-header .simple-hamburger-toggle.mg-button .mg-button__text {
+  display: contents;
+}
+
+@media (max-width: 768px) {
+  .simple-header .simple-back-button.mg-button {
+    width: var(--header-button-size-mobile);
+    height: var(--header-button-size-mobile);
+    font-size: var(--header-icon-size-mobile);
+  }
+
+  .simple-header .simple-logout-button.mg-button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--header-button-font-size-mobile);
+    margin-right: var(--spacing-xs);
+  }
+
+  .simple-header .simple-hamburger-toggle.mg-button {
+    width: var(--header-button-size-mobile);
+    height: var(--header-button-size-mobile);
+    font-size: var(--header-icon-size);
   }
 }

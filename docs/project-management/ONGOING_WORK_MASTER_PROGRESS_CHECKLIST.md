@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B17a/B17b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B18·G-01 백업 제거·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -66,6 +66,7 @@
 | **G8-B16b** | **G-01** — `academy`·`wellness`·`clinical`·`tenant`·`billing`·`mypage`·`training`·`emotion`·`prediction`·`finance`·`statistics`·`erp/shell`·`layout`(일부)·`common`·`ui` → `MGButton` | core-coder | ☑ | `develop` · `8a520c9ec` (2026-04-11) |
 | **G8-B17a** | **G-01** — `components/test/**` 통합 테스트·데모 화면 → `MGButton` | core-coder | ☑ | `develop` · `102143e98` (2026-04-11) |
 | **G8-B17b** | **G-01** — `BaseButton`·`BaseCard`·`ErpButton`·`LoadingSpinnerDemo`·`IconExamples`·`DashboardLayout` JSDoc → `MGButton` | core-coder | ☑ | `develop` · `12e0b6f61` (2026-04-11) |
+| **G8-B18** | **G-01** — 미참조 `AdminDashboard_backup.js`·`UnifiedScheduleComponent_backup.js` 삭제 + 관련 문서 2건 보정 | core-coder | ☑ | `develop` · `77ac0f292` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -144,6 +145,8 @@
 **G8-B17a**: `test/IntegrationTest`·`UnifiedModalTest`·`NotificationTest`·`UnifiedHeaderTest`·`UnifiedLoadingTest`·`PaymentTest`
 
 **G8-B17b**: `base/BaseButton`·`BaseCard`, `erp/common/ErpButton`, `common/LoadingSpinnerDemo`, `ui/Icon/IconExamples`, `ui/Layout/DashboardLayout`(JSDoc)
+
+**G8-B18**: 백업 JS 2파일 삭제; `ERP_UX_LABEL_APPLICATION_SPEC.md`, `DEPOSIT_PAYMENT_ERP_REFUND_MEETING_SURVEY.md` 참조 정리 (아카이브·과거 tests/reports JSON 미변경)
 
 ---
 
@@ -244,7 +247,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B17b** 일부 ☑; **G-01** 잔여 — `*_backup*`·`MGButton.js` 내부 `<button`만 남은 경우 등 최종 `rg '<button'` 확인(의도적 래퍼는 `MGButton`/`ErpButton`/`BaseButton` 경유로 정리됨).
+- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `frontend`에서 `npm run lint:check`, `CI=true npm test -- --watchAll=false`, `npm run verify:erp` 권장(core-tester 게이트).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -319,3 +322,4 @@
 | 2026-04-11 | **G8-B15a** schedule·erd·client MGButton `4b1445b78`, **G8-B15b** admin MGButton `9b5216ab7` |
 | 2026-04-11 | **G8-B16a** consultant·consultation MGButton `1c553164c`, **G8-B16b** academy·wellness·ui·common 등 MGButton `8a520c9ec` |
 | 2026-04-11 | **G8-B17a** test 화면 MGButton `102143e98`, **G8-B17b** BaseButton·BaseCard·ErpButton·데모 MGButton `12e0b6f61` |
+| 2026-04-11 | **G8-B18** 미사용 백업 JS 제거·문서 보정 `77ac0f292`; QA-01 린트·테스트·`verify:erp` 권장 |

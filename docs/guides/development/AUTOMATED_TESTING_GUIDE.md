@@ -61,14 +61,15 @@
 
 ### 테스트 계정 변경
 
-기본값:
-- 사용자명: `superadmin@mindgarden.com`
-- 비밀번호: `admin123`
+**저장소에 비밀번호를 커밋하지 않는다.** 실제 계정은 개발·스테이징 DB에 존재해야 하며, 실행 시에는 환경 변수로만 넘긴다.
 
-다른 계정으로 실행:
+- Playwright / 자동화: `TEST_USERNAME`, `TEST_PASSWORD` (또는 CI의 `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`를 쉘에서 매핑)
+- 상세·core-tester 기준: `/.cursor/skills/core-solution-testing/SKILL.md`의 “E2E·수동 스모크용 로그인 계정” 절 참고
+
+다른 계정으로 실행 예:
 
 ```bash
-TEST_USERNAME=admin@example.com TEST_PASSWORD=password ./scripts/run-all-automated-tests.sh
+TEST_USERNAME='your-test@example.com' TEST_PASSWORD='***' ./scripts/run-all-automated-tests.sh
 ```
 
 ### 서버 URL 변경

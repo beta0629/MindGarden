@@ -19,9 +19,12 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,7 +33,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -72,19 +79,27 @@ class UserScenarioTest {
     @Autowired
     private PersonalDataEncryptionService encryptionService;
 
+    /**
+     * 테스트 프로파일에서 {@code spring.flyway.enabled=false} 이면 빈이 없을 수 있음(H2 + MySQL 마이그레이션 비호환).
+     * 스키마는 Hibernate ddl-auto로 보강되므로, Flyway가 있을 때만 clean/migrate 수행.
+     */
     @Autowired
-    private Flyway flyway;
-    
+    private ObjectProvider<Flyway> flywayProvider;
+
+    @Autowired
+    private DataSource dataSource;
+
     private String testTenantId;
     private Tenant testTenant;
     private SecurityContext securityContext;
     
     @BeforeEach
     void setUp() {
-        // 각 테스트 전에 데이터베이스 초기화 및 마이그레이션
-        flyway.clean();
-        flyway.migrate();
-        
+        flywayProvider.ifAvailable(flyway -> {
+            flyway.clean();
+            flyway.migrate();
+        });
+
         // 테스트용 테넌트 생성
         testTenantId = UUID.randomUUID().toString();
         testTenant = Tenant.builder()
@@ -110,7 +125,21 @@ class UserScenarioTest {
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
     }
-    
+
+    /**
+     * ERD 생성은 MySQL {@code INFORMATION_SCHEMA.TABLES.TABLE_COMMENT} 등에 의존하며 H2에서는 동일 스키마가 없음.
+     */
+    private void assumeNonH2DataSourceForErd() {
+        try (Connection c = dataSource.getConnection()) {
+            String url = c.getMetaData().getURL();
+            Assumptions.assumeFalse(
+                    url != null && url.startsWith("jdbc:h2:"),
+                    "ERD generation requires MySQL-compatible INFORMATION_SCHEMA (not H2)");
+        } catch (SQLException e) {
+            Assertions.fail("Could not read JDBC URL for ERD assumption: " + e.getMessage());
+        }
+    }
+
     @AfterEach
     void tearDown() {
         TenantContext.clear();
@@ -131,7 +160,7 @@ class UserScenarioTest {
                 .pgName("토스페이먼츠")
                 .apiKey("test-api-key-12345")
                 .secretKey("test-secret-key-67890")
-                .merchantId("test-merchant-01")
+                .merchantId("tst-merch-01")
                 .storeId("test-store-id")
                 .webhookUrl("https://example.com/webhook")
                 .returnUrl("https://example.com/return")
@@ -229,6 +258,7 @@ class UserScenarioTest {
     @Test
     @DisplayName("시나리오 2: 기존 테넌트 → ERD 조회 → PG 설정 확인 → 결제 생성")
     void testScenario2_ExistingTenant_ErdView_PgCheck_Payment() {
+        assumeNonH2DataSourceForErd();
         // Step 1: 기존 테넌트 (이미 PG 설정이 활성화된 상태)
         String configId = UUID.randomUUID().toString();
         TenantPgConfiguration existingPgConfig = TenantPgConfiguration.builder()
@@ -238,7 +268,7 @@ class UserScenarioTest {
                 .pgName("기존 토스페이먼츠")
                 .apiKeyEncrypted(encryptionService.encrypt("existing-api-key"))
                 .secretKeyEncrypted(encryptionService.encrypt("existing-secret-key"))
-                .merchantId("exist-merchant-01")
+                .merchantId("exist-mrch-1")
                 .status(PgConfigurationStatus.ACTIVE)
                 .approvalStatus(ApprovalStatus.APPROVED)
                 .requestedBy("test-user")
@@ -330,7 +360,7 @@ class UserScenarioTest {
                 .pgName("변경된 토스페이먼츠")
                 .apiKey("new-api-key-12345")
                 .secretKey("new-secret-key-67890")
-                .merchantId("new-merchant-01")
+                .merchantId("new-mrch-01")
                 .testMode(true)
                 .notes("PG 설정 변경 요청")
                 .build();
@@ -381,7 +411,7 @@ class UserScenarioTest {
                 .pgName("수정된 토스페이먼츠")
                 .apiKey("correct-api-key-12345")
                 .secretKey("correct-secret-key-67890")
-                .merchantId("correct-merchant-01")
+                .merchantId("corr-mrch-01")
                 .testMode(true)
                 .notes("수정 후 재요청")
                 .build();
@@ -428,6 +458,7 @@ class UserScenarioTest {
     @Test
     @DisplayName("시나리오 4: 테넌트 → ERD 조회 → 커스텀 ERD 생성 → 결제 생성")
     void testScenario4_Tenant_ErdView_CustomErd_Payment() {
+        assumeNonH2DataSourceForErd();
         // Step 1: 테넌트가 기본 ERD 조회
         ErdDiagramResponse defaultErd = erdGenerationService.generateTenantErd(
                 testTenantId,

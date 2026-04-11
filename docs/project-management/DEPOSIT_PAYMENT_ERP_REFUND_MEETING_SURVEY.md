@@ -29,7 +29,7 @@
 - 엔티티: `Schedule` 엔티티의 `status` 필드 (ScheduleStatus)
 - 서비스: `ScheduleServiceImpl`, `AdminServiceImpl`, `StatisticsServiceImpl`, `WorkflowAutomationServiceImpl`, `ConsultationRecordServiceImpl`, `ConsultantRatingServiceImpl`
 - 컨트롤러: `ScheduleController` (상태 변경·유효성 검사)
-- 프론트: `colorUtils.js`(CONFIRMED, BOOKED), `UnifiedScheduleComponent_backup.js`, `ClientDashboard.js`, `MappingTableView.js` 등에서 문자열 `'BOOKED'`, `'CONFIRMED'` 사용
+- 프론트: `colorUtils.js`(CONFIRMED, BOOKED), `UnifiedScheduleComponent.js`, `ClientDashboard.js`, `MappingTableView.js` 등에서 문자열 `'BOOKED'`, `'CONFIRMED'` 사용
 - API 응답: 스케줄 조회 API에서 `status` 필드로 enum name 문자열 반환
 
 ---

@@ -127,7 +127,7 @@
 | 위젯 설명 | ERP 관리 메뉴 / 사용 가능한 ERP 관리 메뉴가 없습니다 | **운영·재무 메뉴** / **사용 가능한 운영·재무 메뉴가 없습니다** |
 | 위젯 타입 이름 (관리 UI) | ERP 관리 그리드 | **운영·재무 빠른 액션** (또는 "운영 현황 그리드") |
 
-**적용 파일**: `AdminDashboard.js`, `ErpManagementGridWidget.js`, `ErpStatsGridWidget.js`, `DashboardWidgetEditor.js`, `DashboardLayoutEditor.js`, `AdminDashboard_backup.js`(참고용) 등.
+**적용 파일**: `AdminDashboard.js`, `ErpManagementGridWidget.js`, `ErpStatsGridWidget.js`, `DashboardWidgetEditor.js`, `DashboardLayoutEditor.js` 등.
 
 ---
 

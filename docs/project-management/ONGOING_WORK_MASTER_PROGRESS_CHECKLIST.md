@@ -99,6 +99,10 @@
 
 **G8-B9b**: `ops/PgApprovalManagement.js`, `mapping-management/organisms/MappingTableView.js`·`.css`, `WidgetBasedAdminDashboard.js`·`.css`
 
+**G8-B10a**: `UserManagement.js`, `UserManagementPage.js`, `StaffManagement.js`, `UserManagement.css`, `mapping-management/organisms/MappingSearchSection.css`
+
+**G8-B10b**: `consultant/ConsultationRecordSection.js`, `dashboard/widgets/ConsultationRecordWidget.js`·`.css`, `mypage/components/PrivacyConsentSection.js`, `mypage/MyPageRenewal.css`
+
 ---
 
 ## 사용 방법

@@ -3,8 +3,7 @@ import { ACCOUNT_CSS_CLASSES } from '../../../constants/css';
 import {
   ACCOUNT_FORM_LABELS,
   ACCOUNT_FORM_PLACEHOLDERS,
-  ACCOUNT_BUTTON_TEXT,
-  ACCOUNT_PAGE_TITLES
+  ACCOUNT_BUTTON_TEXT
 } from '../../../constants/account';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -60,22 +59,9 @@ const AccountForm = ({
     }
   }, [showForm, loadBankCodes]);
 
-  if (!showForm) return null;
-
-  const formTitleId = 'account-form-dialog-title';
-
   return (
-    <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_FORM_OVERLAY}>
-      <div
-        className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_FORM}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={formTitleId}
-      >
-        <h2 id={formTitleId} className="mg-v2-ad-b0kla__section-title account-form__title">
-          {editingAccount ? ACCOUNT_PAGE_TITLES.EDIT : ACCOUNT_PAGE_TITLES.CREATE}
-        </h2>
-        <form className="mg-v2-form" onSubmit={onSubmit}>
+    <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_FORM}>
+      <form className="mg-v2-form" onSubmit={onSubmit}>
           <div className="mg-v2-form-group">
             <label htmlFor="account-form-bank" className="mg-v2-form-label">
               {ACCOUNT_FORM_LABELS.BANK}
@@ -202,7 +188,6 @@ const AccountForm = ({
             </MGButton>
           </div>
         </form>
-      </div>
     </div>
   );
 };

@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import UnifiedModal from '../../components/common/modals/UnifiedModal';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
@@ -327,13 +327,16 @@ const ClientMessageSection = ({ userId }) => {
       </div>
 
       {/* 메시지 상세 모달 */}
-      {selectedMessage && (
-        <div className="mg-modal"
-          isOpen={!!selectedMessage}
-          onClose={closeModal}
-          title={selectedMessage.title}
-          size="medium"
-        >
+      <UnifiedModal
+        isOpen={!!selectedMessage}
+        onClose={closeModal}
+        title={selectedMessage ? toDisplayString(selectedMessage.title, '메시지') : ''}
+        size="medium"
+        variant="detail"
+        backdropClick
+        showCloseButton
+      >
+        {selectedMessage && typeInfo && (
           <div className="client-message-detail">
             <div className="client-message-detail__header">
               <div className="client-message-detail__type">
@@ -358,15 +361,15 @@ const ClientMessageSection = ({ userId }) => {
               </span>
             </div>
             <div className="client-message-detail__content">
-              <div 
+              <div
                 dangerouslySetInnerHTML={{
                   __html: selectedMessage.content
                 }}
               />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </UnifiedModal>
     </div>
   );
 };

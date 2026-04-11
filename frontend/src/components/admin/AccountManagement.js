@@ -8,6 +8,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AccountManagement.css';
 import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
 import { ACCOUNT_CSS_CLASSES } from '../../constants/css';
@@ -264,16 +265,27 @@ const AccountManagement = () => {
               </div>
             ) : (
               <>
-                <AccountForm
-                  showForm={showForm}
-                  editingAccount={editingAccount}
-                  formData={formData}
-                  loading={loading}
+                <UnifiedModal
+                  isOpen={showForm}
                   onClose={resetForm}
-                  onSubmit={handleSubmit}
-                  onBankChange={handleBankChange}
-                  onFormDataChange={handleFormDataChange}
-                />
+                  title={editingAccount ? ACCOUNT_PAGE_TITLES.EDIT : ACCOUNT_PAGE_TITLES.CREATE}
+                  size="medium"
+                  variant="form"
+                  backdropClick
+                  showCloseButton
+                  className="mg-v2-ad-b0kla"
+                >
+                  <AccountForm
+                    showForm={showForm}
+                    editingAccount={editingAccount}
+                    formData={formData}
+                    loading={loading}
+                    onClose={resetForm}
+                    onSubmit={handleSubmit}
+                    onBankChange={handleBankChange}
+                    onFormDataChange={handleFormDataChange}
+                  />
+                </UnifiedModal>
 
                 <section
                   className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_LIST_SECTION}`}

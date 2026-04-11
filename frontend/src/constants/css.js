@@ -66,7 +66,6 @@ export const ACCOUNT_CSS_CLASSES = {
   ACCOUNT_HEADER: 'account-header',
   ACCOUNT_LIST: 'account-list',
   
-  ACCOUNT_FORM_OVERLAY: 'account-form-overlay',
   ACCOUNT_FORM: 'account-form',
   
   ACCOUNT_TABLE: 'account-table',

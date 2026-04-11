@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B16a/B16b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B17a/B17b·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -64,6 +64,8 @@
 | **G8-B15b** | **G-01** — `components/admin/**` + `unified-design-tokens.css` 탭·버튼 병기 보정 → `MGButton` | core-coder | ☑ | `develop` · `9b5216ab7` (2026-04-11) |
 | **G8-B16a** | **G-01** — `consultant/**`·`consultation/**` 네이티브 버튼 → `MGButton` | core-coder | ☑ | `develop` · `1c553164c` (2026-04-11) |
 | **G8-B16b** | **G-01** — `academy`·`wellness`·`clinical`·`tenant`·`billing`·`mypage`·`training`·`emotion`·`prediction`·`finance`·`statistics`·`erp/shell`·`layout`(일부)·`common`·`ui` → `MGButton` | core-coder | ☑ | `develop` · `8a520c9ec` (2026-04-11) |
+| **G8-B17a** | **G-01** — `components/test/**` 통합 테스트·데모 화면 → `MGButton` | core-coder | ☑ | `develop` · `102143e98` (2026-04-11) |
+| **G8-B17b** | **G-01** — `BaseButton`·`BaseCard`·`ErpButton`·`LoadingSpinnerDemo`·`IconExamples`·`DashboardLayout` JSDoc → `MGButton` | core-coder | ☑ | `develop` · `12e0b6f61` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -138,6 +140,10 @@
 **G8-B16a**: `consultant/**`, `consultation/**` + `ScheduleB0KlA.css`·`ConsultationReport.css` 등
 
 **G8-B16b**: `academy`·`wellness`·`clinical`·`tenant`·`billing`·`mypage`·`training`·`emotion`·`prediction`·`finance`·`statistics`·`erp/shell`·`layout`(SimpleLayout·DashboardSection)·`common`·`ui` (데모·`MGButton.js` 제외)
+
+**G8-B17a**: `test/IntegrationTest`·`UnifiedModalTest`·`NotificationTest`·`UnifiedHeaderTest`·`UnifiedLoadingTest`·`PaymentTest`
+
+**G8-B17b**: `base/BaseButton`·`BaseCard`, `erp/common/ErpButton`, `common/LoadingSpinnerDemo`, `ui/Icon/IconExamples`, `ui/Layout/DashboardLayout`(JSDoc)
 
 ---
 
@@ -238,7 +244,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B15b** 일부 ☑; **G-01** 잔여 — `consultant`·`academy`·`wellness`·`common`·`ui`·`billing`·`clinical` 등 `rg '<button'` 인벤토리(테스트·`*_backup*`·`MGButton.js`·`BaseButton` 래퍼 제외 권장).
+- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B17b** 일부 ☑; **G-01** 잔여 — `*_backup*`·`MGButton.js` 내부 `<button`만 남은 경우 등 최종 `rg '<button'` 확인(의도적 래퍼는 `MGButton`/`ErpButton`/`BaseButton` 경유로 정리됨).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -312,3 +318,4 @@
 | 2026-04-11 | **G8-B14a** 대시보드 패널·섹션(위젯 제외) MGButton `690906a49`, **G8-B14b** 위젯 `*.js.js` MGButton `b78c600ad` |
 | 2026-04-11 | **G8-B15a** schedule·erd·client MGButton `4b1445b78`, **G8-B15b** admin MGButton `9b5216ab7` |
 | 2026-04-11 | **G8-B16a** consultant·consultation MGButton `1c553164c`, **G8-B16b** academy·wellness·ui·common 등 MGButton `8a520c9ec` |
+| 2026-04-11 | **G8-B17a** test 화면 MGButton `102143e98`, **G8-B17b** BaseButton·BaseCard·ErpButton·데모 MGButton `12e0b6f61` |

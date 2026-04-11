@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B11a/B11b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B12a/B12b·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -54,6 +54,8 @@
 | **G8-B10b** | **G-01** — `ConsultationRecordSection`·`ConsultationRecordWidget`·`PrivacyConsentSection` + `ConsultationRecordWidget.css`·`MyPageRenewal.css` → `MGButton` | core-coder | ☑ | `develop` · `4f54682c9` (2026-04-11) |
 | **G8-B11a** | **G-01** — `ScheduleList`·`ScheduleCard`·`ScheduleModal` + `ScheduleList.css`·`ScheduleCard.css` → `MGButton` | core-coder | ☑ | `develop` · `60c248b0b` (2026-04-11) |
 | **G8-B11b** | **G-01** — `UnifiedNotification`·`UnifiedNotifications`·`SystemNotifications` + `styles/06-components/_notifications.css` → `MGButton` | core-coder | ☑ | `develop` · `de7ade649` (2026-04-11) |
+| **G8-B12a** | **G-01** — 공통 `FormModal`·`ConfirmModal`·`PrivacyConsentModal`·`StatisticsModal`·`ConsultationGuideModal`·`ViewModeToggle`·`BadgeSelect`·`PrintComponent`·`ProfileImageInput`·`MGFilter`·`MGPagination` + 관련 CSS → `MGButton` | core-coder | ☑ | `develop` · `4e7e80bdd` (2026-04-11) |
+| **G8-B12b** | **G-01** — `mypage`(설정·프로필·비밀번호·`MyPage`)·`UserSettings`·`WellnessNotificationDetail`·`pages/billing/BillingCallback` + 관련 CSS → `MGButton` | core-coder | ☑ | `develop` · `d32e7b4a8` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -108,6 +110,10 @@
 **G8-B11a**: `common/ScheduleList.js`·`.css`, `common/ScheduleCard.js`·`.css`, `schedule/ScheduleModal.js`
 
 **G8-B11b**: `common/UnifiedNotification.js`, `notifications/UnifiedNotifications.js`, `notifications/SystemNotifications.js`, `styles/06-components/_notifications.css`
+
+**G8-B12a**: `common/modals/FormModal.js`, `ConfirmModal.js`, `PrivacyConsentModal.js`·`.css`, `StatisticsModal.js`·`.css`, `ConsultationGuideModal.js`, `ViewModeToggle.js`, `BadgeSelect.js`·`.css`, `PrintComponent.js`·`.css`, `ProfileImageInput.js`, `MGFilter.js`·`.css`, `MGPagination.js`·`.css` (+ `styles/main.css` 경로 보정)
+
+**G8-B12b**: `mypage/components/SettingsSection.js`, `ProfileImageUpload.js`, `PasswordChangeModal.js`, `MyPage.js`, `mypage/MyPageRenewal.css`, `settings/UserSettings.js`·`.css`, `wellness/WellnessNotificationDetail.js`·`.css`, `pages/billing/BillingCallback.js`
 
 ---
 
@@ -208,7 +214,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B11b** 일부 ☑; **G-01** 잔여 — `FormModal`·`MGPagination`·`dashboard/widgets`·`mypage` 잔여 등 `rg '<button'` 인벤토리(테스트·`*_backup*` 제외 권장).
+- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B12b** 일부 ☑; **G-01** 잔여 — `dashboard/widgets`·`admin`·`client`·`consultant`·`erd`·`academy` 등 `rg '<button'` 인벤토리(테스트·`*_backup*`·`MGButton.js` 래퍼 제외 권장).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -277,3 +283,4 @@
 | 2026-04-11 | **G8-B9a** AdminDashboard·CommonCode·Branding MGButton `7019f445c`, **G8-B9b** PgApproval·MappingTableView·WidgetBasedAdmin `a51f8e429` |
 | 2026-04-11 | **G8-B10a** User·Staff 관리 MGButton `7754517cd`, **G8-B10b** 상담기록 위젯·개인정보 동의 MGButton `4f54682c9` |
 | 2026-04-11 | **G8-B11a** ScheduleList·ScheduleCard·ScheduleModal MGButton `60c248b0b`, **G8-B11b** 알림 3종·`_notifications.css` MGButton `de7ade649` |
+| 2026-04-11 | **G8-B12a** 공통 모달·필터·MGPagination MGButton `4e7e80bdd`, **G8-B12b** mypage·설정·웰니스·BillingCallback MGButton `d32e7b4a8` |

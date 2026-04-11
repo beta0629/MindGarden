@@ -1,4 +1,6 @@
 import React from 'react';
+
+import MGButton from '../../common/MGButton';
 import styles from './BaseCard.module.css';
 
 const VARIANT_CLASS = {
@@ -12,7 +14,7 @@ const VARIANT_CLASS = {
  * @param {Object} props
  * @param {'default'|'management'|'stat'} props.variant - 카드 변형
  * @param {string} [props.className] - 추가 클래스명
- * @param {function} [props.onClick] - 클릭 핸들러 (있으면 button, 없으면 div)
+ * @param {function} [props.onClick] - 클릭 핸들러 (있으면 MGButton, 없으면 div)
  * @param {React.ReactNode} props.children
  */
 const BaseCard = ({ variant = 'default', className = '', onClick, children, ...rest }) => {
@@ -21,9 +23,16 @@ const BaseCard = ({ variant = 'default', className = '', onClick, children, ...r
 
   if (onClick) {
     return (
-      <button type="button" className={classNames} onClick={onClick} {...rest}>
+      <MGButton
+        type="button"
+        variant="outline"
+        className={classNames}
+        onClick={onClick}
+        preventDoubleClick={false}
+        {...rest}
+      >
         {children}
-      </button>
+      </MGButton>
     );
   }
   return (

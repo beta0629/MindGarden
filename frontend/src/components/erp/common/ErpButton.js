@@ -1,21 +1,37 @@
 import React from 'react';
 
+import MGButton from '../../common/MGButton';
+
+const VARIANT_TO_MG = {
+  primary: 'primary',
+  secondary: 'secondary',
+  success: 'success',
+  danger: 'danger',
+  warning: 'warning',
+  info: 'info',
+  outline: 'outline',
+  ghost: 'outline'
+};
+
+const SIZE_TO_MG = {
+  sm: 'small',
+  md: 'medium',
+  lg: 'large'
+};
+
 /**
- * ERP 공통 버튼 컴포넌트 - Core Solution 디자인 시스템 mg-v2-button 활용
-/**
- * 
-/**
- * @param {string} variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline, ghost)
-/**
- * @param {string} size - 버튼 크기 (sm, md, lg)
-/**
- * @param {boolean} disabled - 비활성화 여부
-/**
- * @param {boolean} loading - 로딩 상태
-/**
- * @param {string} className - 추가 CSS 클래스
-/**
- * @param {string} type - 버튼 타입 (button, submit, reset)
+ * ERP 공통 버튼 컴포넌트 — MGButton 기반, `mg-v2-button` 클래스 호환
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.children
+ * @param {Function} [props.onClick]
+ * @param {string} [props.variant] - primary, secondary, success, danger, warning, info, outline, ghost
+ * @param {string} [props.size] - sm, md, lg
+ * @param {boolean} [props.disabled]
+ * @param {boolean} [props.loading]
+ * @param {string} [props.className]
+ * @param {string} [props.type]
+ * @param {boolean} [props['aria-busy']]
  */
 const ErpButton = ({
   children,
@@ -26,10 +42,13 @@ const ErpButton = ({
   loading = false,
   className = '',
   type = 'button',
-  'aria-busy': ariaBusy
+  'aria-busy': ariaBusy,
+  ...rest
 }) => {
-  // Core Solution 디자인 시스템의 mg-v2-button 클래스 활용
-  const buttonClasses = [
+  const mgVariant = VARIANT_TO_MG[variant] ?? 'primary';
+  const mgSize = SIZE_TO_MG[size] ?? SIZE_TO_MG.md;
+
+  const mergedClassName = [
     'mg-v2-button',
     `mg-v2-button-${variant}`,
     size !== 'md' && `mg-v2-button-${size}`,
@@ -37,22 +56,22 @@ const ErpButton = ({
     className
   ].filter(Boolean).join(' ');
 
-  const handleClick = (e) => {
-    if (!disabled && !loading && onClick) {
-      onClick(e);
-    }
-  };
-
   return (
-    <button
+    <MGButton
+      variant={mgVariant}
+      size={mgSize}
+      disabled={disabled}
+      loading={loading}
+      loadingText="처리중..."
+      className={mergedClassName}
       type={type}
-      className={buttonClasses}
-      onClick={handleClick}
-      disabled={disabled || loading}
+      onClick={onClick}
+      preventDoubleClick={false}
       aria-busy={ariaBusy}
+      {...rest}
     >
-      {loading ? '처리중...' : children}
-    </button>
+      {children}
+    </MGButton>
   );
 };
 

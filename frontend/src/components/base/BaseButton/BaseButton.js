@@ -1,4 +1,6 @@
 import React from 'react';
+
+import MGButton from '../../common/MGButton';
 import styles from './BaseButton.module.css';
 
 /**
@@ -7,12 +9,12 @@ import styles from './BaseButton.module.css';
  * @param {string} [props.className] - 추가 클래스명
  * @param {React.ReactNode} props.children
  */
-const BaseButton = ({ className = '', children, ...rest }) => {
+const BaseButton = ({ className = '', children, preventDoubleClick = false, ...rest }) => {
   const classNames = ['mg-btn', styles.button, className].filter(Boolean).join(' ');
   return (
-    <button type="button" className={classNames} {...rest}>
+    <MGButton type="button" className={classNames} preventDoubleClick={preventDoubleClick} {...rest}>
       {children}
-    </button>
+    </MGButton>
   );
 };
 

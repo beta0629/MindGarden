@@ -2,7 +2,10 @@
  * Icon 컴포넌트 사용 예시
  */
 
-import {useState} from 'react';
+import { useState } from 'react';
+
+import { FORM_CONSTANTS } from '../../../constants/magicNumbers';
+import MGButton from '../../common/MGButton';
 
 import Icon from './Icon';
 
@@ -143,8 +146,11 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-center">
+              {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키(ICON_COLORS_BY_ROLE), ARIA role 아님 */}
               <Icon name="CALENDAR" role="CLIENT" color="PRIMARY" />
+              {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키, ARIA role 아님 */}
               <Icon name="CALENDAR" role="CONSULTANT" color="PRIMARY" />
+              {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키, ARIA role 아님 */}
               <Icon name="CALENDAR" role="ADMIN" color="PRIMARY" />
             </div>
           </div>
@@ -180,18 +186,30 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-center">
-              <button className="mg-v2-v2-v2-button mg-v2-v2-v2-button-primary">
+              <MGButton
+                variant="primary"
+                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-primary"
+                preventDoubleClick={false}
+              >
                 <Icon name="PLUS" size="SM" />
                 새로 만들기
-              </button>
-              <button className="mg-v2-v2-v2-button mg-v2-v2-v2-button-secondary">
+              </MGButton>
+              <MGButton
+                variant="secondary"
+                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-secondary"
+                preventDoubleClick={false}
+              >
                 <Icon name="EDIT" size="SM" />
                 편집
-              </button>
-              <button className="mg-v2-v2-v2-button mg-v2-v2-v2-button-error">
+              </MGButton>
+              <MGButton
+                variant="danger"
+                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-error"
+                preventDoubleClick={false}
+              >
                 <Icon name="TRASH" size="SM" />
                 삭제
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>

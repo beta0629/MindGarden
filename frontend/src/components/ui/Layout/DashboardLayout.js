@@ -24,25 +24,18 @@ import React from 'react';
  * @param {string} [props.className=''] - 추가 CSS 클래스
  * 
  * @example
+ * import MGButton from '../../common/MGButton';
+ * // ...
  * <DashboardLayout
  *   title="관리자 대시보드"
-/**
  *   subtitle="시스템 전체 현황"
-/**
  *   icon={<LayoutDashboard />}
-/**
  *   actions={<>
-/**
- *     <button className="mg-dashboard-icon-btn"><Bell /></button>
-/**
- *     <button className="mg-dashboard-icon-btn"><Settings /></button>
-/**
+ *     <MGButton type="button" variant="outline" className="mg-dashboard-icon-btn" preventDoubleClick={false} aria-label="알림"><Bell /></MGButton>
+ *     <MGButton type="button" variant="outline" className="mg-dashboard-icon-btn" preventDoubleClick={false} aria-label="설정"><Settings /></MGButton>
  *   </>}
-/**
  * >
-/**
  *   {children}
-/**
  * </DashboardLayout>
  */
 const DashboardLayout = ({

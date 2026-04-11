@@ -33,6 +33,8 @@ public record OnboardingCreateRequest(
     
     String subdomain,  // 서브도메인 (와일드카드 도메인용, 선택적)
     
-    String adminPassword  // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용, 암호화 저장)
+    String adminPassword,  // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용, 암호화 저장)
+
+    String captchaToken  // Turnstile 등 CAPTCHA 응답 토큰 (서버에서 검증 활성화 시 필수)
 ) {}
 

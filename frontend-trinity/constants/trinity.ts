@@ -3,6 +3,12 @@
  * 하드코딩 금지 - 모든 값은 여기에 정의
  */
 
+/** sessionStorage 키 (온보딩·결제 콜백 등) */
+export const SESSION_STORAGE_KEYS = {
+  /** Turnstile 응답 토큰 — 메인 온보딩 → PG 콜백에서 createOnboardingRequest 시 전달 */
+  ONBOARDING_CAPTCHA_TOKEN: 'trinity_onboarding_captcha_token',
+} as const;
+
 export const TRINITY_CONSTANTS = {
   // 회사 정보
   COMPANY: {
@@ -101,6 +107,8 @@ export const TRINITY_CONSTANTS = {
     PRICING_PLAN: 3,
     PAYMENT_METHOD: 4,
     COMPLETION: 5,
+    /** 대시보드 설정 후 최종 제출 */
+    DASHBOARD_SETUP: 6,
   },
   
   // 업종 옵션
@@ -115,6 +123,8 @@ export const TRINITY_CONSTANTS = {
   API_ENDPOINTS: {
     ONBOARDING_REQUEST: '/api/v1/onboarding/requests',
     PRICING_PLANS: '/api/v1/ops/plans/active',
+    /** 공개 Turnstile site key (서버 mindgarden.security.captcha.site-key) */
+    CAPTCHA_SITE_KEY: '/api/v1/onboarding/captcha/site-key',
   },
   
   // 메시지
@@ -162,6 +172,13 @@ export const TRINITY_CONSTANTS = {
     PAYMENT_METHOD_VERIFICATION_PENDING: '결제 수단 검증 중...',
     PAYMENT_METHOD_VERIFIED: '✅ 결제 수단 검증 완료',
     PAYMENT_METHOD_VERIFICATION_FAILED: '결제 수단 검증에 실패했습니다. 다시 시도해주세요.',
+    // CAPTCHA (Turnstile) — TRINITY_ONBOARDING_PUBLIC_CAPTCHA_UX_SPEC
+    CAPTCHA_LOADING: '보안 확인을 불러오는 중입니다. 잠시만 기다려 주세요.',
+    CAPTCHA_SUCCESS: '확인이 완료되었습니다. 아래 버튼으로 진행할 수 있습니다.',
+    CAPTCHA_FAIL: '사람 확인에 실패했습니다. 아래에서 다시 시도해 주세요.',
+    CAPTCHA_NETWORK: '네트워크 오류로 확인을 완료할 수 없습니다. 연결을 확인한 뒤 다시 시도해 주세요.',
+    CAPTCHA_REFRESH_HINT: '문제가 계속되면 페이지를 새로고침한 뒤 다시 시도해 주세요.',
+    CAPTCHA_REQUIRED_BEFORE_SUBMIT: '보안 확인을 완료한 뒤 제출해 주세요.',
   },
   
   // 결제 관련 상수

@@ -20,6 +20,7 @@ jest.mock('../../utils/api', () => ({
   createOnboardingRequest: jest.fn(),
   createPaymentMethod: jest.fn(),
   createSubscription: jest.fn(),
+  fetchPublicCaptchaSiteKey: jest.fn().mockResolvedValue(null),
 }));
 
 // Next.js Link 모킹

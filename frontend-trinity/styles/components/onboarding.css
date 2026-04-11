@@ -441,6 +441,12 @@
   font-size: var(--font-size-sm, 0.9rem);
 }
 
+/* 여러 줄·개행이 포함된 에러 본문 (인라인 style 금지 대체) */
+.trinity-onboarding__message--multiline {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
 /* 재시도 버튼 */
 .trinity-onboarding__retry-button {
   margin-top: var(--spacing-md);
@@ -581,6 +587,66 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
+}
+
+/* Turnstile CAPTCHA (온보딩 최종 제출 직전) */
+.trinity-onboarding__captcha-region {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.trinity-onboarding__captcha-box {
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 1rem;
+  background-color: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.trinity-onboarding__captcha-live {
+  margin-bottom: 0.75rem;
+}
+
+.trinity-onboarding__captcha-status-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.trinity-onboarding__captcha-widget-wrap {
+  width: 100%;
+  min-height: 2.75rem;
+  overflow: hidden;
+}
+
+.trinity-onboarding__captcha-actions {
+  margin-top: 1rem;
+}
+
+.trinity-onboarding__captcha-retry {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  font-size: 0.875rem;
+}
+
+.trinity-onboarding__captcha-retry:hover {
+  background-color: #e9ecef;
+}
+
+.trinity-onboarding__captcha-hint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8125rem;
+  color: #666;
+  line-height: 1.4;
 }
 
 /* 완료 페이지 스타일 */

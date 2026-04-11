@@ -25,6 +25,11 @@ public class MindgardenSecurityProperties {
      */
     private RateLimit rateLimit = new RateLimit();
 
+    /**
+     * CAPTCHA(Turnstile 등) 검증 — 비활성화 시 백엔드 검증 생략
+     */
+    private Captcha captcha = new Captcha();
+
     @Data
     public static class AccountIntegration {
 
@@ -63,5 +68,24 @@ public class MindgardenSecurityProperties {
          * 컨텍스트 경로를 쓰는 배포에서는 전체 URI에 맞게 설정한다.
          */
         private String onboardingCreatePath = "/api/v1/onboarding/requests";
+    }
+
+    @Data
+    public static class Captcha {
+
+        /**
+         * {@code true}이고 시크릿 키가 비어 있지 않을 때만 Turnstile siteverify 호출
+         */
+        private boolean enabled = false;
+
+        /**
+         * Turnstile 시크릿 키 — YAML에서 환경 변수로만 주입 (평문 기본값 없음)
+         */
+        private String secretKey = "";
+
+        /**
+         * Turnstile site key(클라이언트 위젯용) — 공개 API로 내려줄 때 사용; 평문 기본값 없음
+         */
+        private String siteKey = "";
     }
 }

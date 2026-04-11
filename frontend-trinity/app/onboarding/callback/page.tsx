@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Button from "../../../components/Button";
-import { TRINITY_CONSTANTS } from "../../../constants/trinity";
+import { SESSION_STORAGE_KEYS, TRINITY_CONSTANTS } from "../../../constants/trinity";
 import { COMPONENT_CSS } from "../../../constants/css-variables";
-import { createPaymentMethod, createSubscription, createOnboardingRequest, type OnboardingCreateRequest } from "../../../utils/api";
+import { createPaymentMethod, createOnboardingRequest, type OnboardingCreateRequest } from "../../../utils/api";
 import { getDefaultRiskLevel } from "../../../utils/commonCodeUtils";
 
 export default function OnboardingCallbackPage() {
@@ -171,10 +171,10 @@ export default function OnboardingCallbackPage() {
 
           // 2. 세션 스토리지에서 폼 데이터 가져오기
           const savedFormData = sessionStorage.getItem('onboarding_form_data');
-          let formData: any = {};
+          let formData: Record<string, unknown> = {};
           if (savedFormData) {
             try {
-              formData = JSON.parse(savedFormData);
+              formData = JSON.parse(savedFormData) as Record<string, unknown>;
               console.log("[OnboardingCallback] 세션 스토리지에서 폼 데이터 로드:", formData);
               sessionStorage.removeItem('onboarding_form_data'); // 사용 후 삭제
             } catch (e) {
@@ -220,7 +220,11 @@ export default function OnboardingCallbackPage() {
             });
           }
 
-          // 3. 온보딩 요청 생성
+          // 3. 온보딩 요청 생성 (메인 플로우에서 저장한 Turnstile 토큰 — 캡차 ON 시 필요)
+          const storedCaptchaToken =
+            typeof window !== "undefined"
+              ? sessionStorage.getItem(SESSION_STORAGE_KEYS.ONBOARDING_CAPTCHA_TOKEN)?.trim() || ""
+              : "";
           const request: OnboardingCreateRequest = {
             tenantId: null,
             tenantName: finalTenantName,
@@ -228,6 +232,7 @@ export default function OnboardingCallbackPage() {
             riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
             businessType: formData.businessType || "",
             adminPassword: formData.adminPassword || "", // 관리자 계정 비밀번호 (checklistJson에 포함)
+            ...(storedCaptchaToken ? { captchaToken: storedCaptchaToken } : {}),
             checklistJson: JSON.stringify({
               contactPhone: formData.contactPhone || "",
               planId: formData.planId || "",
@@ -257,7 +262,11 @@ export default function OnboardingCallbackPage() {
           });
 
           const onboardingRequest = await createOnboardingRequest(request);
-          
+
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem(SESSION_STORAGE_KEYS.ONBOARDING_CAPTCHA_TOKEN);
+          }
+
           console.log("[OnboardingCallback] ✅ 온보딩 요청 생성 완료:", onboardingRequest);
 
           setStatus("success");
@@ -290,7 +299,7 @@ export default function OnboardingCallbackPage() {
   }, [statusParam, authKey, customerKey, tenantName, contactEmail, errorCode, errorMessage, paymentType, paymentKey, orderId]);
 
   return (
-    <div className="trinity-onboarding">
+    <div className="trinity-onboarding" data-loading={loading ? "true" : "false"}>
       <Header />
       <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
         <div className={COMPONENT_CSS.ONBOARDING.FORM}>
@@ -334,7 +343,9 @@ export default function OnboardingCallbackPage() {
                 {paymentType === "register" ? "❌ 카드 등록 실패" : "❌ 결제 실패"}
               </h2>
               {error && (
-                <div className={`${COMPONENT_CSS.ONBOARDING.MESSAGE} ${COMPONENT_CSS.ONBOARDING.MESSAGE_ERROR}`} style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                <div
+                  className={`${COMPONENT_CSS.ONBOARDING.MESSAGE} ${COMPONENT_CSS.ONBOARDING.MESSAGE_ERROR} ${COMPONENT_CSS.ONBOARDING.MESSAGE_MULTILINE}`}
+                >
                   {error}
                 </div>
               )}

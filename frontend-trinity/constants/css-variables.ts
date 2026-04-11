@@ -173,6 +173,7 @@ export const COMPONENT_CSS = {
     GRID_2COL: 'trinity-onboarding__grid-2col',
     MESSAGE: 'trinity-onboarding__message',
     MESSAGE_ERROR: 'trinity-onboarding__message--error',
+    MESSAGE_MULTILINE: 'trinity-onboarding__message--multiline',
     MESSAGE_WARNING: 'trinity-onboarding__message--warning',
     RETRY_BUTTON: 'trinity-onboarding__retry-button',
     SMALL_TEXT: 'trinity-onboarding__small-text',

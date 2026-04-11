@@ -215,10 +215,16 @@ jobs:
           path: test-reports/
 ```
 
+## 백엔드 JUnit / MySQL에서 `@Disabled` 통합 테스트
+
+기본 `mvn test`는 H2(`application-test.yml`, 프로파일 **`test`**) 기준이다. MySQL 저장 프로시저에만 의존하는 케이스는 코드에 `@Disabled`로 두는 경우가 있어, **스테이징·로컬 MySQL**에서 돌릴 때는 환경 변수 덮어쓰기와(필요 시) 로컬에서만 스킵 해제 절차가 필요하다. 상세는 **[백엔드 MySQL 통합 테스트](./BACKEND_MYSQL_INTEGRATION_TESTS.md)** 를 본다.
+
 ## 📚 관련 문서
 
-- [API 테스트 가이드](docs/mgsb/AUTO_TEST_GUIDE.md)
-- [테스트 전략](docs/mgsb/PHASE1_QA_TEST_STRATEGY.md)
+- [API 테스트 가이드 (아카이브)](../../project-management/archive/AUTO_TEST_GUIDE.md)
+- [테스트 전략 (아카이브)](../../project-management/archive/PHASE1_QA_TEST_STRATEGY.md)
+- [백엔드 MySQL 통합 테스트](./BACKEND_MYSQL_INTEGRATION_TESTS.md)
+- [테스트 표준](../../standards/TESTING_STANDARD.md)
 - [Playwright 공식 문서](https://playwright.dev)
 
 ## 💡 팁

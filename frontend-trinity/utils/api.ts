@@ -6,6 +6,8 @@
  * @version 1.0.0
  */
 
+import { TRINITY_CONSTANTS } from '../constants/trinity';
+
 // 환경 변수가 없으면 상대 경로 사용 (프로덕션 환경에서 Nginx 프록시 사용)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -161,7 +163,7 @@ async function apiRequest<T>(
     }
 
     let response: Response;
-    let jsonData: any;
+    let jsonData: unknown;
 
     try {
       response = await fetch(url, {
@@ -223,15 +225,29 @@ async function apiRequest<T>(
         return { success: false } as T;
       }
 
-      const errorData = (jsonData as ApiResponse<any>)?.error || jsonData;
-      const errorMessage = errorData.message || errorData.error || errorData.details || `API 요청 실패: ${response.status} ${response.statusText}`;
+      const fromWrapper =
+        jsonData != null && typeof jsonData === 'object'
+          ? (jsonData as ApiResponse<unknown>).error
+          : undefined;
+      const errorPayload: unknown = fromWrapper || jsonData;
+      let errorMessage: string;
+      if (errorPayload != null && typeof errorPayload === 'object' && !Array.isArray(errorPayload)) {
+        const ed = errorPayload as { message?: unknown; error?: unknown; details?: unknown };
+        const picked = ed.message || ed.error || ed.details;
+        errorMessage =
+          picked != null && picked !== ''
+            ? String(picked)
+            : `API 요청 실패: ${response.status} ${response.statusText}`;
+      } else {
+        errorMessage = `API 요청 실패: ${response.status} ${response.statusText}`;
+      }
 
       if (!isOnboardingEndpoint) {
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
           endpoint,
-          errorData,
+          errorPayload,
           fullError: JSON.stringify(jsonData, null, 2),
         });
       }
@@ -345,6 +361,27 @@ export interface OnboardingCreateRequest {
   brandName?: string; // 브랜드명 (상호, 브랜딩 적용 시 사용, 선택적)
   subdomain?: string; // 서브도메인 (와일드카드 도메인용, 선택적)
   adminPassword?: string; // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용)
+  /** Turnstile 등 클라이언트 CAPTCHA 검증 토큰(서버에서 검증) */
+  captchaToken?: string;
+}
+
+/**
+ * 공개 CAPTCHA(Turnstile) site key — 서버 설정 우선, 없으면 빈 문자열 가능
+ */
+export async function fetchPublicCaptchaSiteKey(): Promise<string | null> {
+  try {
+    const data = await apiGet<{ siteKey?: string }>(
+      TRINITY_CONSTANTS.API_ENDPOINTS.CAPTCHA_SITE_KEY
+    );
+    const fromApi = data?.siteKey?.trim();
+    if (fromApi) {
+      return fromApi;
+    }
+  } catch {
+    // 백엔드 미구성·네트워크 오류 시 env 폴백
+  }
+  const fromEnv = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY?.trim();
+  return fromEnv || null;
 }
 
 export interface OnboardingRequest {

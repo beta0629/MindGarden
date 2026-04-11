@@ -3,10 +3,12 @@ package com.coresolution.core.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
 import com.coresolution.core.controller.dto.OnboardingDecisionRequest;
 import com.coresolution.core.controller.dto.OnboardingDecisionResponse;
@@ -15,7 +17,9 @@ import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.constant.OnboardingConstants;
+import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.util.OpsPermissionUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -62,6 +67,8 @@ public class OnboardingController extends BaseApiController {
     private final OnboardingService onboardingService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final CaptchaVerifier captchaVerifier;
+    private final MindgardenSecurityProperties mindgardenSecurityProperties;
 
     /**
      * 온보딩 접근 권한 확인 /** 온보딩은 새로운 테넌트를 등록하는 것이므로, 이미 테넌트에 속한 사용자는 접근할 수 없음 /**
@@ -124,6 +131,27 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
+     * Turnstile 등 실검증 빈이 등록된 경우에만 토큰·원격 IP를 검증한다.
+     * {@link com.coresolution.consultation.config.CaptchaConfiguration} 과 동일하게 no-op 이면 통과한다.
+     */
+    private void verifyOnboardingCaptchaIfRequired(OnboardingCreateRequest payload,
+            HttpServletRequest httpRequest) {
+        if (!captchaVerifier.requiresCaptchaToken()) {
+            return;
+        }
+        String token = payload.captchaToken();
+        if (!StringUtils.hasText(token)) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CAPTCHA_TOKEN_REQUIRED);
+        }
+        String remoteIp = HttpRequestClientIp.resolve(httpRequest);
+        if (!captchaVerifier.verify(token.trim(), remoteIp)) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CAPTCHA_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
      * 대기 중인 온보딩 요청 목록 조회 /** GET /api/v1/ops/onboarding/requests/pending (관리자 전용) GET
      * /api/v1/onboarding/requests/pending (공개 - 사용 안 함, 하위 호환성)
      */
@@ -161,13 +189,35 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
+     * Trinity 온보딩 Turnstile 등에 사용할 공개 site key. 시크릿은 포함하지 않는다.
+     *
+     * @author CoreSolution
+     * @since 2026-04-11
+     */
+    @GetMapping("/captcha/site-key")
+    public ResponseEntity<ApiResponse<OnboardingCaptchaSiteKeyResponse>> getCaptchaSiteKey() {
+        MindgardenSecurityProperties.Captcha captcha = mindgardenSecurityProperties.getCaptcha();
+        boolean verificationActive =
+                captcha.isEnabled() && StringUtils.hasText(captcha.getSecretKey());
+        String siteKey = null;
+        if (verificationActive && StringUtils.hasText(captcha.getSiteKey())) {
+            siteKey = captcha.getSiteKey().trim();
+        }
+        OnboardingCaptchaSiteKeyResponse body =
+                new OnboardingCaptchaSiteKeyResponse(verificationActive, siteKey);
+        return success(body);
+    }
+
+    /**
      * 온보딩 요청 생성 /** POST /api/onboarding/requests /** 새로운 테넌트를 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한
      * 사용자는 접근 불가) /** (승인/관리는 Trinity 직원만 가능)
      */
     @PostMapping("/requests")
     public ResponseEntity<ApiResponse<OnboardingRequest>> create(
-            @RequestBody @Valid OnboardingCreateRequest payload, HttpSession session) {
+            @RequestBody @Valid OnboardingCreateRequest payload, HttpSession session,
+            HttpServletRequest httpRequest) {
         validateOnboardingAccess(session);
+        verifyOnboardingCaptchaIfRequired(payload, httpRequest);
         log.info(
                 "온보딩 요청 생성: tenantId={}, tenantName={}, requestedBy={}, businessType={}, hasAdminPassword={}",
                 payload.tenantId(), payload.tenantName(), payload.requestedBy(),

@@ -48,6 +48,14 @@ public class OnboardingConstants {
     /** 온보딩 요청 생성 시 관리자 초기 비밀번호 누락 */
     public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
             "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";
+
+    /** CAPTCHA(Turnstile) 검증이 활성화된 환경에서 토큰 미제출 */
+    public static final String ERROR_ONBOARDING_CAPTCHA_TOKEN_REQUIRED =
+            "보안 확인(CAPTCHA) 토큰이 필요합니다.";
+
+    /** CAPTCHA(Turnstile) 원격 검증 실패 */
+    public static final String ERROR_ONBOARDING_CAPTCHA_VERIFICATION_FAILED =
+            "보안 확인(CAPTCHA) 검증에 실패했습니다. 다시 시도해주세요.";
     
     // 온보딩 프로세스 단계 상수
     public static final String STEP_TENANT_CREATE = "TENANT_CREATE";

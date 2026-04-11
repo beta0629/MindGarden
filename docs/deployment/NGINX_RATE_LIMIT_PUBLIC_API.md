@@ -96,6 +96,7 @@ location / {
 
 ## 배포·저장소 연계
 
+- **역할 분리·온보딩·CAPTCHA 요약**: [`SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md`](./SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md)
 - Nginx 설정 변경은 저장소 `config/nginx/**` 및 GitHub Actions [`deploy-nginx-dev.yml`](../../.github/workflows/deploy-nginx-dev.yml) 등과의 정합을 따른다.
 - 운영 반영 전 체크리스트: [`docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md), [`docs/standards/DEPLOYMENT_STANDARD.md`](../standards/DEPLOYMENT_STANDARD.md).
 

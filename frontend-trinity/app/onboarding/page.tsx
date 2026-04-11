@@ -22,11 +22,15 @@ import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
 import Step4Payment from "../../components/onboarding/Step4Payment";
 import Step5Completion from "../../components/onboarding/Step5Completion";
 import Step6DashboardSetup from "../../components/onboarding/Step6DashboardSetup";
+import OnboardingCaptchaSection, {
+  ONBOARDING_CAPTCHA_STATUS_ELEMENT_ID,
+} from "../../components/onboarding/OnboardingCaptchaSection";
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 import OnboardingWelcome from "../../components/onboarding/OnboardingWelcome";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const dashboardStep = TRINITY_CONSTANTS.ONBOARDING_STEP.DASHBOARD_SETUP;
   const [accessChecking, setAccessChecking] = useState(true);
   const [accessError, setAccessError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -96,6 +100,11 @@ export default function OnboardingPage() {
     setSubdomainDuplicateError,
     setSubdomainPreview,
     checkSubdomainDuplicate,
+    captchaSiteKey,
+    captchaConfigLoading,
+    captchaRequired,
+    captchaToken,
+    setCaptchaToken,
   } = useOnboarding();
 
   // 단계 변경 시 방향 감지 및 애니메이션 방향 설정
@@ -538,7 +547,7 @@ export default function OnboardingPage() {
             </StepTransition>
 
             <StepTransition step={6} currentStep={step} direction={transitionDirection}>
-              {step === 6 && (
+              {step === dashboardStep && (
                 <Step6DashboardSetup
                   formData={formData}
                   setFormData={setFormData}
@@ -547,8 +556,16 @@ export default function OnboardingPage() {
               )}
             </StepTransition>
 
+            {step === dashboardStep ? (
+              <OnboardingCaptchaSection
+                siteKey={captchaSiteKey}
+                configLoading={captchaConfigLoading}
+                onTokenChange={setCaptchaToken}
+              />
+            ) : null}
+
             {/* Navigation Buttons - Step 1은 순차적 진행 컴포넌트 내부 버튼 사용 */}
-            {step !== 1 && (step < 5 || step === 6) && (
+            {step !== 1 && (step < 5 || step === dashboardStep) && (
                 <div className="trinity-progressive-fields__navigation">
                 {step > 1 && (
                   <button
@@ -560,31 +577,37 @@ export default function OnboardingPage() {
                   </button>
                 )}
                 <button
-                  type={step === 3 || step === 6 ? "submit" : step < 4 ? "button" : "submit"}
+                  type={step === 3 || step === dashboardStep ? "submit" : step < 4 ? "button" : "submit"}
                   onClick={() => {
                     if (step < 3) {
                       setStep(step + 1);
                     } else if (step === 3) {
                       // step 3에서 step 6으로 이동 (step 4, 5 건너뛰기)
-                      setStep(6);
-                    } else if (step === 6) {
+                      setStep(dashboardStep);
+                    } else if (step === dashboardStep) {
                       // step 6에서 제출
                       // handleSubmit이 자동으로 호출됨
                     }
                   }}
                   className="trinity-progressive-fields__nav-button trinity-progressive-fields__nav-button--next"
+                  aria-describedby={
+                    step === dashboardStep && captchaRequired && !captchaToken
+                      ? ONBOARDING_CAPTCHA_STATUS_ELEMENT_ID
+                      : undefined
+                  }
                   disabled={
                     loading || 
                     (step === 2 && !formData.businessType) || 
                     (step === 3 && !formData.planId) ||
-                    (step === 6 && false) // Step6DashboardSetup 내부에서 검증
+                    (step === dashboardStep &&
+                      (captchaConfigLoading || (captchaRequired && !captchaToken)))
                   }
                 >
                   {loading 
                     ? TRINITY_CONSTANTS.MESSAGES.PROCESSING 
                     : step === 3
                       ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`
-                      : step === 6
+                      : step === dashboardStep
                         ? `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`
                         : step < 4 
                           ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`

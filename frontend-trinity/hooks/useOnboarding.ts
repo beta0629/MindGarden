@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   createOnboardingRequest,
+  fetchPublicCaptchaSiteKey,
   getActivePricingPlans,
   getRootBusinessCategories,
   getBusinessCategoryItems,
@@ -22,7 +23,7 @@ import {
   type BusinessCategoryItem,
 } from "../utils/api";
 import { generateUUID } from "../utils/uuid";
-import { TRINITY_CONSTANTS } from "../constants/trinity";
+import { SESSION_STORAGE_KEYS, TRINITY_CONSTANTS } from "../constants/trinity";
 import { getDefaultRiskLevel, getRegionCodes, type CommonCode } from "../utils/commonCodeUtils";
 
 export interface OnboardingFormData {
@@ -96,6 +97,26 @@ export const useOnboarding = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [defaultRiskLevel, setDefaultRiskLevel] = useState<string>("LOW"); // 기본값 (공통 코드 로드 전)
   const [regionCodes, setRegionCodes] = useState<CommonCode[]>([]); // 지역 코드 목록
+  const [captchaSiteKey, setCaptchaSiteKey] = useState<string | null>(null);
+  const [captchaConfigLoading, setCaptchaConfigLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  const captchaRequired =
+    !captchaConfigLoading && captchaSiteKey !== null && captchaSiteKey.length > 0;
+
+  // Turnstile 토큰 — PG 콜백 페이지의 createOnboardingRequest에 전달 (sessionStorage)
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const key = SESSION_STORAGE_KEYS.ONBOARDING_CAPTCHA_TOKEN;
+    const trimmed = captchaToken?.trim();
+    if (trimmed) {
+      sessionStorage.setItem(key, trimmed);
+    } else {
+      sessionStorage.removeItem(key);
+    }
+  }, [captchaToken]);
 
   // customerKey 생성
   useEffect(() => {
@@ -115,7 +136,7 @@ export const useOnboarding = () => {
       try {
         const riskLevel = await getDefaultRiskLevel();
         setDefaultRiskLevel(riskLevel);
-      } catch (err) {
+      } catch {
         // 기본값 "LOW" 유지 (에러는 조용히 처리)
         // getDefaultRiskLevel이 이미 기본값을 반환하므로 여기서는 추가 처리 불필요
       }
@@ -177,6 +198,37 @@ export const useOnboarding = () => {
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams, formData.planId]);
+
+  // Step 6(최종 제출 직전): Turnstile site key 해석(API 우선 → NEXT_PUBLIC_* 폴백)
+  useEffect(() => {
+    if (step !== TRINITY_CONSTANTS.ONBOARDING_STEP.DASHBOARD_SETUP) {
+      setCaptchaSiteKey(null);
+      setCaptchaToken(null);
+      setCaptchaConfigLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCaptchaSiteKey(null);
+    setCaptchaConfigLoading(true);
+    setCaptchaToken(null);
+
+    fetchPublicCaptchaSiteKey()
+      .then((key) => {
+        if (!cancelled) {
+          setCaptchaSiteKey(key);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCaptchaConfigLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
 
   // 이메일 형식 검증
   const validateEmailFormat = (email: string): { valid: boolean; error?: string } => {
@@ -450,6 +502,11 @@ export const useOnboarding = () => {
       return;
     }
 
+    if (captchaRequired && (!captchaToken || !captchaToken.trim())) {
+      setError(TRINITY_CONSTANTS.MESSAGES.CAPTCHA_REQUIRED_BEFORE_SUBMIT);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -463,6 +520,9 @@ export const useOnboarding = () => {
         regionCode: formData.regionCode || undefined,
         brandName: formData.brandName || undefined,
         subdomain: formData.subdomain || undefined,
+        ...(captchaToken && captchaToken.trim()
+          ? { captchaToken: captchaToken.trim() }
+          : {}),
         checklistJson: JSON.stringify({
           contactPhone: formData.contactPhone,
           planId: formData.planId,
@@ -478,6 +538,9 @@ export const useOnboarding = () => {
       };
 
       const result = await createOnboardingRequest(request);
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(SESSION_STORAGE_KEYS.ONBOARDING_CAPTCHA_TOKEN);
+      }
       setStep(TRINITY_CONSTANTS.ONBOARDING_STEP.COMPLETION);
       console.log("온보딩 요청 성공:", result);
     } catch (err) {
@@ -561,6 +624,12 @@ export const useOnboarding = () => {
     setSubdomainDuplicateError,
     setSubdomainPreview,
     checkSubdomainDuplicate: handleCheckSubdomainDuplicate,
+
+    captchaSiteKey,
+    captchaConfigLoading,
+    captchaRequired,
+    captchaToken,
+    setCaptchaToken,
   };
 };
 

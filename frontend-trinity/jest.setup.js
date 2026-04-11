@@ -19,6 +19,12 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
+jest.mock('@marsidev/react-turnstile', () => ({
+  Turnstile: function MockTurnstile() {
+    return null
+  },
+}))
+
 // Mock window.location
 Object.defineProperty(window, 'location', {
   value: {

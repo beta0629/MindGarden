@@ -1,6 +1,6 @@
 # 권한 시스템 표준
 
-**버전**: 2.2.0  
+**버전**: 2.2.1  
 **최종 업데이트**: 2026-04-11  
 **상태**: 공식 표준 (테넌트 기반으로 전환)
 
@@ -500,14 +500,16 @@ public ResponseEntity<?> registerConsultant(
 
 ## 공개 API·CSRF 제외·레이트리밋 (운영)
 
-로그인 전·온보딩·계정 연동 등 **공개 POST** 는 `SecurityConfig` 에서 CSRF 검증이 제외될 수 있다. 이 경우 브라우저 CSRF 토큰에 의존한 남용 방지가 되지 않으므로, **반드시** 다음을 함께 적용한다.
+**공개 온보딩·계정 연동 API가 CSRF 예외인 이유(요약)**: 해당 경로는 `SecurityConfig` 의 `ignoringRequestMatchers` 등으로 CSRF 검증이 적용되지 않는다. 로그인 세션이 없거나 메일 링크·토큰 기반 흐름에서 호출되어 **브라우저가 SameSite 쿠키 + CSRF 토큰으로 남용을 막는 전제**가 성립하지 않는다. 이러한 **공개 POST** 에는 아래 앱·엣지 보완을 **반드시** 적용한다.
 
 - **앱 레이어**: `mindgarden.security.*` 설정에 따른 보호(예: 계정 연동 이메일 쿨다운·일일 상한)와 **`RateLimitingFilter`** 로 IP 기준 429 응답.
-- **엣지(선택)**: Nginx `limit_req`·WAF 등으로 동일 경로에 대한 추가 상한(이중 방어).
+- **엣지(선택)**: Nginx `limit_req`·WAF 등으로 동일 경로에 대한 추가 상한(이중 방어). 저장소 가이드: [Nginx 공개 API 레이트리밋](../deployment/NGINX_RATE_LIMIT_PUBLIC_API.md).
 
 설정 키 예: `mindgarden.security.account-integration.*`, `mindgarden.security.rate-limit.*`.
 
-**메트릭**: 앱에서 429 차단 시 Micrometer 카운터 `mindgarden.rate_limit.blocked`(태그 `reason`: `login` \| `integration` \| `onboarding_create`)를 증가시킨다. Prometheus/Grafana 알람 예: `rate(mindgarden_rate_limit_blocked_total[5m])` 가 임계값을 넘으면 알림(인프라에서 규칙 확정).
+**메트릭**: 앱에서 429 차단 시 Micrometer 카운터 `mindgarden.rate_limit.blocked`(태그 `reason`: `login` \| `integration` \| `onboarding_create`)를 증가시킨다. Prometheus에서 집계 시 시리즈명은 `mindgarden_rate_limit_blocked_total` 형태로 노출되는 경우가 일반적이다. 알람 예: `rate(mindgarden_rate_limit_blocked_total[5m])` 가 임계값을 넘으면 알림. **운영 알람·Grafana 대시보드 규칙은 인프라 담당에서 정의·운영한다.**
+
+**봇 완화(CAPTCHA·Turnstile 등)**: 앱 구현·도입 우선순위는 [TODO: 공개 온보딩 API 보안 보강](../project-management/2026-03-31/TODO_ONBOARDING_PUBLIC_API_HARDENING.md) 의 봇 완화 항목을 따른다(본 표준은 구현 범위를 정하지 않음).
 
 ---
 

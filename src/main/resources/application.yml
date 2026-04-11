@@ -134,6 +134,11 @@ spring:
 # 프로파일별로 mindgarden.security.* 를 오버라이드할 수 있습니다.
 mindgarden:
   security:
+    # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
+    captcha:
+      enabled: false
+      secret-key: ${MINDGARDEN_CAPTCHA_SECRET_KEY:}
+      site-key: ${MINDGARDEN_CAPTCHA_SITE_KEY:}
     account-integration:
       email-verification-cooldown-seconds: 60
       email-verification-daily-limit: 10

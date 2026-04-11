@@ -216,7 +216,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | 🔄 | **1~3차**: 앱 레이트리밋·메트릭·표준 문서. **엣지(2026-04-11)**: `docs/deployment/NGINX_RATE_LIMIT_PUBLIC_API.md`·`GITHUB_ACTIONS_WORKFLOW_INDEX.md` 링크 — **실서버 nginx 적용은 인프라**. 잔여: **CAPTCHA**·**WAF**·Prometheus 알람 규칙(운영) — `TODO_ONBOARDING_PUBLIC_API_HARDENING.md` |
+| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | 🔄 | **1~3차**·**엣지 문서** 동일. **CAPTCHA(2026-04-11)**: 백엔드·Trinity Turnstile·`OnboardingControllerCaptchaWebMvcTest`. **엣지 `limit_req`·WAF·Prometheus/Grafana 알람·운영 Nginx reload·실IP 정합은 인프라 트랙(저장소 밖)** — `NGINX_RATE_LIMIT_PUBLIC_API.md`·`deploy-nginx-dev.yml`·`TODO_ONBOARDING_PUBLIC_API_HARDENING.md` |
 
 ---
 
@@ -279,7 +279,7 @@
 |------|-------------------|------|
 | 1. ERP | 0 / 5 (세부는 표 참고) | B1~B6·MGButton 배치 ☑; P4 전부 ☐ 아님 — 잔여 🔄 |
 | 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영 |
-| 3. 보안 | (진행형) | SEC-01 🔄 (계정 연동 발송 1차 ☑) |
+| 3. 보안 | (진행형) | SEC-01 🔄 (레이트리밋·쿨다운·CAPTCHA 백엔드·MockMvc 일부 ☑; Trinity·엣지·알람 잔여) |
 | 4. 검증 | (진행형) | QA-01 배치별, QA-02 🔄 (`e2e-erp-smoke` 정의됨) |
 | 5. 운영 | 0 / 2 | OPS 배포·체크리스트 별도 |
 
@@ -366,3 +366,5 @@
 | 2026-04-11 | **QA-01 백엔드 `mvn test` 4차** (core-coder): Psych PDF·Stats, `BaseTenantEntityService`, Passkey·`UserPasskey.tenantId`, `DynamicCardLayout` 시드, Tenant PG `ApiResponse` JSON 경로, 키 로테이션 Mockito, `ConsultantDashboardServiceImplTest`, 온보딩·프로시저(H2 한계) 등 — **전체 `mvn test` 통과** 로컬 확인(`bash -o pipefail`로 Maven 실패가 tail에 묻히지 않게 확인) |
 | 2026-04-11 | **QA-01** `core-tester` 재검증: `mvn test` **509**건, **Failures 0 / Errors 0 / Skipped 43** (H2·MySQL 메타·온보딩 등 조건부 스킵 — 실DB/프로덕션형 프로파일 별도 검증 권장). 커밋 시 `uploads/`·`test-reports/` 등 로컬 산출물 제외 |
 | 2026-04-11 | **위임**: `core-coder` — `.gitignore`에 `uploads/psych-assessments/`, `tmp/`, `tmp_error_tail*.txt`; Playwright 리포트는 주석 안내만. **`core-tester`** — `e2e-erp-smoke.yml`·QA-02 비고 정리(Secrets 없음, 리다이렉트 스모크 범위) |
+| 2026-04-11 | **SEC-01 CAPTCHA(백엔드·테스트)**: `OnboardingController`·`CaptchaVerifier.requiresCaptchaToken()`·`OnboardingControllerCaptchaWebMvcTest`(MockMvc 최소 부트스트랩 `OnboardingControllerMvcTestApplication`). `TODO_ONBOARDING_PUBLIC_API_HARDENING` 봇 완화 `[~]` |
+| 2026-04-11 | **SEC-01 병렬**: Trinity 콜백 `sessionStorage`로 `captchaToken` 전달(`SESSION_STORAGE_KEYS`)·`core-deployer` `docs/deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md`·Nginx 가이드 상호 링크 — `mvn`/ESLint 타깃 회귀 통과 |

@@ -30,6 +30,7 @@ import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
 import { ErpEmptyState, ErpFilterToolbar, useErpSilentRefresh } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
@@ -510,10 +511,14 @@ const ErpDashboard = ({ user: propUser }) => {
                 <MGButton
                   variant="secondary"
                   size="small"
-                  className="mg-v2-button mg-v2-button--secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: silentListRefreshing
+                  })}
                   onClick={handleSilentRefresh}
                   loading={silentListRefreshing}
-                  loadingText="새로고침 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label="데이터 새로고침"
                 >
                   데이터 새로고침

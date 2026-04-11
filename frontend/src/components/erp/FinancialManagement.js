@@ -42,6 +42,7 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpFilterToolbar, ErpSafeText, useErpSilentRefresh } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -442,7 +443,8 @@ const FinancialManagement = () => {
         type="button"
         variant="secondary"
         size="small"
-        className="mg-v2-button mg-v2-button-secondary"
+        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => {}}
         aria-label="거래 목록 내보내기"
         preventDoubleClick={false}
@@ -470,7 +472,7 @@ const FinancialManagement = () => {
                       variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'transactions'}
-                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
                     >
@@ -481,7 +483,7 @@ const FinancialManagement = () => {
                       variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'calendar'}
-                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
                     >
@@ -492,7 +494,7 @@ const FinancialManagement = () => {
                       variant="outline"
                       role="tab"
                       aria-selected={activeTab === 'dashboard'}
-                      className={`mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('dashboard')}
                       preventDoubleClick={false}
                     >
@@ -564,7 +566,13 @@ const FinancialManagement = () => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'small',
+                                  loading: false,
+                                  className: `mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() =>
                                   setFilters((prev) => ({ ...prev, transactionType: opt.value }))
                                 }
@@ -592,7 +600,13 @@ const FinancialManagement = () => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'small',
+                                  loading: false,
+                                  className: `mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() =>
                                   setFilters((prev) => ({ ...prev, category: opt.value }))
                                 }
@@ -627,7 +641,12 @@ const FinancialManagement = () => {
                             type="button"
                             variant="secondary"
                             size="small"
-                            className="mg-v2-button mg-v2-button-secondary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'secondary',
+                              size: 'sm',
+                              loading: false
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowAdvancedFilter((v) => !v)}
                             disabled={silentListRefreshing}
                             preventDoubleClick={false}
@@ -639,7 +658,12 @@ const FinancialManagement = () => {
                             type="button"
                             variant="outline"
                             size="small"
-                            className="mg-v2-button mg-v2-button-secondary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: silentListRefreshing
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() =>
                               setFilters({
                                 transactionType: 'ALL',
@@ -660,10 +684,14 @@ const FinancialManagement = () => {
                           <MGButton
                             variant="primary"
                             size="small"
-                            className="mg-v2-button mg-v2-button-primary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'sm',
+                              loading: silentListRefreshing
+                            })}
                             onClick={() => loadData({ silent: true })}
                             loading={silentListRefreshing}
-                            loadingText="검색 중..."
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             <Search size={16} aria-hidden /> 검색
                           </MGButton>
@@ -687,7 +715,13 @@ const FinancialManagement = () => {
                               type="button"
                               variant="outline"
                               size="small"
-                              className={`mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'small',
+                                loading: false,
+                                className: `mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={() =>
                                 setFilters((prev) => ({ ...prev, relatedEntityType: opt.value }))
                               }
@@ -716,10 +750,14 @@ const FinancialManagement = () => {
                 <MGButton
                   variant="outline"
                   size="small"
-                  className="mg-v2-button mg-v2-button-outline"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: silentListRefreshing
+                  })}
                   onClick={() => loadData({ silent: true })}
                   loading={silentListRefreshing}
-                  loadingText="새로고침 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
                   aria-label="다시 시도"
                 >
@@ -774,7 +812,13 @@ const FinancialManagement = () => {
                                   setSelectedTransaction(transaction);
                                   setShowDetailModal(true);
                                 }}
-                                className="mg-financial-transaction-card__id-button"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'small',
+                                  loading: false,
+                                  className: 'mg-financial-transaction-card__id-button'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                               >
                                 #{toDisplayString(transaction.id)}
@@ -830,7 +874,12 @@ const FinancialManagement = () => {
                                 type="button"
                                 variant="secondary"
                                 size="small"
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'secondary',
+                                  size: 'sm',
+                                  loading: false
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => handleViewTransaction(transaction)}
                                 preventDoubleClick={false}
                               >
@@ -840,10 +889,14 @@ const FinancialManagement = () => {
                                 type="button"
                                 variant="secondary"
                                 size="small"
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'secondary',
+                                  size: 'sm',
+                                  loading: pendingEditId === transaction.id
+                                })}
                                 onClick={() => handleEditTransaction(transaction)}
                                 loading={pendingEditId === transaction.id}
-                                loadingText="불러오는 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                               >
                                 <Pencil size={14} aria-hidden /> 수정
@@ -852,7 +905,12 @@ const FinancialManagement = () => {
                                 type="button"
                                 variant="secondary"
                                 size="small"
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'secondary',
+                                  size: 'sm',
+                                  loading: false
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => handleDeleteTransaction(transaction)}
                                 preventDoubleClick={false}
                               >
@@ -880,7 +938,13 @@ const FinancialManagement = () => {
                               type="button"
                               variant="outline"
                               size="small"
-                              className="page-link"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'page-link'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={() => handlePageChange(pagination.currentPage - 1)}
                               disabled={pagination.currentPage === 0}
                               preventDoubleClick={false}
@@ -897,7 +961,13 @@ const FinancialManagement = () => {
                                   type="button"
                                   variant="outline"
                                   size="small"
-                                  className="page-link"
+                                  className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'page-link'
+                                  })}
+                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => handlePageChange(page)}
                                   preventDoubleClick={false}
                                 >
@@ -912,7 +982,13 @@ const FinancialManagement = () => {
                               type="button"
                               variant="outline"
                               size="small"
-                              className="page-link"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'page-link'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={() => handlePageChange(pagination.currentPage + 1)}
                               disabled={pagination.currentPage === pagination.totalPages - 1}
                               preventDoubleClick={false}
@@ -1025,7 +1101,8 @@ const FinancialManagement = () => {
                       type="button"
                       variant="primary"
                       size="small"
-                      className="mg-v2-button mg-v2-button-primary"
+                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
                     >
@@ -1035,7 +1112,8 @@ const FinancialManagement = () => {
                       type="button"
                       variant="secondary"
                       size="small"
-                      className="mg-v2-button mg-v2-button-secondary"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
                     >
@@ -1045,7 +1123,8 @@ const FinancialManagement = () => {
                       type="button"
                       variant="secondary"
                       size="small"
-                      className="mg-v2-button mg-v2-button-secondary"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                       preventDoubleClick={false}
                     >
@@ -1055,7 +1134,8 @@ const FinancialManagement = () => {
                       type="button"
                       variant="secondary"
                       size="small"
-                      className="mg-v2-button mg-v2-button-secondary"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}
                       preventDoubleClick={false}
                     >
@@ -1096,7 +1176,12 @@ const FinancialManagement = () => {
                   type="button"
                   variant="secondary"
                   size="small"
-                  className="mg-v2-button mg-v2-button-secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setDeleteModal({ isOpen: false, transaction: null })}
                   disabled={deleteSubmitting}
                   preventDoubleClick={false}
@@ -1107,10 +1192,14 @@ const FinancialManagement = () => {
                   type="button"
                   variant="danger"
                   size="small"
-                  className="mg-v2-button mg-v2-button--danger"
+                  className={buildErpMgButtonClassName({
+                    variant: 'danger',
+                    size: 'sm',
+                    loading: deleteSubmitting
+                  })}
                   onClick={confirmDeleteTransaction}
                   loading={deleteSubmitting}
-                  loadingText="삭제 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   삭제
                 </MGButton>
@@ -1206,7 +1295,13 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         variant="secondary"
         size="small"
         onClick={onClose}
-        className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--secondary"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading: false,
+          className: 'mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--secondary'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         preventDoubleClick={false}
       >
         닫기
@@ -1217,7 +1312,13 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           variant="primary"
           size="small"
           onClick={() => window.open(mappingDetailUrl, '_blank')}
-          className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--primary"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--primary'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
           매핑 보기

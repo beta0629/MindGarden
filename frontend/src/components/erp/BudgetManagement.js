@@ -9,12 +9,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import UnifiedModal from '../common/modals/UnifiedModal.js';
 import MGButton from '../common/MGButton';
-import {
-  buildErpMgButtonClassName,
-  ERP_MG_BUTTON_LOADING_TEXT,
-  mapErpSizeToMg,
-  mapErpVariantToMg
-} from './common/erpMgButtonProps';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { PiggyBank, List, Tag, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -331,11 +326,21 @@ const BudgetManagement = () => {
                     <span>Core Solution</span>
                   </div>
                   <div className="erp-login-actions">
-                    <MGButton variant="outline" size="medium" type="button">
+                    <MGButton
+                      variant="outline"
+                      size="medium"
+                      type="button"
+                      className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+                    >
                       <i className="bi bi-arrow-clockwise" aria-hidden />
                       세션 새로고침
                     </MGButton>
-                    <MGButton variant="primary" size="medium" type="button">
+                    <MGButton
+                      variant="primary"
+                      size="medium"
+                      type="button"
+                      className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+                    >
                       <i className="bi bi-box-arrow-in-right" aria-hidden />
                       로그인
                     </MGButton>
@@ -372,7 +377,7 @@ const BudgetManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
                 onClick={() => setActiveTab('budgets')}
                 preventDoubleClick={false}
               >
@@ -383,7 +388,7 @@ const BudgetManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
                 onClick={() => setActiveTab('categories')}
                 preventDoubleClick={false}
               >
@@ -394,7 +399,7 @@ const BudgetManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
                 onClick={() => setActiveTab('reports')}
                 preventDoubleClick={false}
               >
@@ -413,10 +418,10 @@ const BudgetManagement = () => {
                   <MGButton
                     variant="secondary"
                     size="small"
-                    className="mg-v2-button mg-v2-button--secondary"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
                     onClick={() => loadData({ silent: true })}
                     loading={silentListRefreshing}
-                    loadingText="새로고침 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     disabled={loading}
                     aria-label="목록 새로고침"
                   >
@@ -444,10 +449,10 @@ const BudgetManagement = () => {
                 <MGButton
                   variant="outline"
                   size="small"
-                  className="mg-v2-button mg-v2-button--outline"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: silentListRefreshing })}
                   onClick={() => loadData({ silent: true })}
                   loading={silentListRefreshing}
-                  loadingText="새로고침 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
                   aria-label="다시 시도"
                 >
@@ -524,7 +529,7 @@ const BudgetManagement = () => {
                           variant="primary"
                           size="medium"
                           type="button"
-                          className="erp-btn-primary"
+                          className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} erp-btn-primary`}
                           onClick={() => setShowCreateModal(true)}
                         >
                           <i className="bi bi-plus-circle" aria-hidden />
@@ -558,6 +563,7 @@ const BudgetManagement = () => {
                                         variant="outline"
                                         size="small"
                                         type="button"
+                                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                                         onClick={() => openEditModal(budget)}
                                         title="수정"
                                         aria-label="예산 수정"
@@ -568,6 +574,7 @@ const BudgetManagement = () => {
                                         variant="danger"
                                         size="small"
                                         type="button"
+                                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                         onClick={() => handleDeleteBudget(budget.id)}
                                         title="삭제"
                                         aria-label="예산 삭제"
@@ -643,6 +650,7 @@ const BudgetManagement = () => {
                               variant="primary"
                               size="medium"
                               type="button"
+                              className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                               onClick={() => setShowCreateModal(true)}
                             >
                               <i className="bi bi-plus-circle" aria-hidden />
@@ -707,7 +715,12 @@ const BudgetManagement = () => {
                         <h3>예산 카테고리가 없습니다</h3>
                         <p>로그인 후 예산 카테고리를 확인할 수 있습니다.</p>
                         {!isLoggedIn && (
-                          <MGButton variant="primary" size="medium" type="button">
+                          <MGButton
+                            variant="primary"
+                            size="medium"
+                            type="button"
+                            className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+                          >
                             <i className="bi bi-box-arrow-in-right" aria-hidden />
                             로그인하기
                           </MGButton>
@@ -1005,8 +1018,8 @@ const BudgetManagement = () => {
           <div className="mg-v2-form-actions">
             <MGButton
               type="button"
-              variant={mapErpVariantToMg('secondary')}
-              size={mapErpSizeToMg('md')}
+              variant="secondary"
+              size="medium"
               className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
@@ -1019,8 +1032,8 @@ const BudgetManagement = () => {
             </MGButton>
             <MGButton
               type="submit"
-              variant={mapErpVariantToMg('primary')}
-              size={mapErpSizeToMg('md')}
+              variant="primary"
+              size="medium"
               className={buildErpMgButtonClassName({ variant: 'primary', loading })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
@@ -1148,8 +1161,8 @@ const BudgetManagement = () => {
             <div className="mg-v2-form-actions">
               <MGButton
                 type="button"
-                variant={mapErpVariantToMg('secondary')}
-                size={mapErpSizeToMg('md')}
+                variant="secondary"
+                size="medium"
                 className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
@@ -1159,8 +1172,8 @@ const BudgetManagement = () => {
               </MGButton>
               <MGButton
                 type="submit"
-                variant={mapErpVariantToMg('primary')}
-                size={mapErpSizeToMg('md')}
+                variant="primary"
+                size="medium"
                 className={buildErpMgButtonClassName({ variant: 'primary', loading })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}

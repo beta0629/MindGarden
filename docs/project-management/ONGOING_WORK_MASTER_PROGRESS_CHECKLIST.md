@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (ERP-P4 배치 A·B1 허브재무·UI-01·PlSql 테스트·SSOT)  
+**최종 갱신**: 2026-04-11 (ERP-P4 배치 A·B1·B2 구매예산·UI-01·PlSql 테스트·SSOT)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -180,7 +180,7 @@
 | ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **배치 A-1** `IntegratedFinanceDashboard`·`FinancialCalendarView` ☑. **배치 A-2** `ErpReportModal`(지점 로딩)·`FinancialTransactionForm`·`QuickExpenseForm`(공통코드 로딩) 인라인 정리 ☑ (2026-04-11). 잔여 화면별 점검. |
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | ☑ | **`useErpSilentRefresh`** (`erp/common/useErpSilentRefresh.js`)·상태명 **`silentListRefreshing`** 통일, `ErpDashboard`·환불 필터 prop·급여 `runSilentListRefresh` (2026-04-11). 잔여: 화면별 `aria-busy` 점검은 P4-01과 병행 가능. |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
-| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **배치 A-2**: `ErpReportModal`·`FinancialTransactionForm`·`QuickExpenseForm` ☑. **배치 B1**: `ErpDashboard`·`FinancialManagement` 전역 `MGButton`에 `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` (2026-04-11). |
+| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **A-2** `ErpReportModal`·`FinancialTransactionForm`·`QuickExpenseForm` ☑. **B1** `ErpDashboard`·`FinancialManagement` ☑. **B2** `PurchaseManagement`·`PurchaseRequestForm`·`BudgetManagement` ☑ (2026-04-11). |
 | ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
 
 ---
@@ -358,3 +358,4 @@
 | 2026-04-11 | **백엔드 테스트 부트스트랩**: `PlSqlInitializer`에 `@ConditionalOnProperty`(`mindgarden.plsql-initializer.enabled`, 기본 true), `application-test.yml`에서 false — H2에서 MySQL 저장 프로시저 DDL 실행으로 `SuperAdminBypassTest` 등 컨텍스트 로드 실패하던 원인 제거. 검증: `mvn -Dtest=SuperAdminBypassTest test` 통과 |
 | 2026-04-11 | **ERP-P4 배치 A-2** (core-coder): `ErpReportModal.js`·`FinancialTransactionForm.js`·`QuickExpenseForm.js` — `UnifiedLoading` 인라인·`erpMgButtonProps`/`ERP_MG_BUTTON_LOADING_TEXT`·퀵비용 카테고리 로딩 분리. ESLint `--quiet` 3파일 통과 |
 | 2026-04-11 | **ERP-P4 배치 B1** (core-coder): `ErpDashboard.js`·`FinancialManagement.js` — `MGButton`에 `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` 통일. ESLint `--quiet` 2파일 통과 |
+| 2026-04-11 | **ERP-P4 배치 B2** (core-coder): `PurchaseManagement.js`·`PurchaseRequestForm.js`·`BudgetManagement.js` — 동일 MGButton 패턴·`BudgetManagement` variant/size 정리. ESLint `--quiet` 3파일 통과 |

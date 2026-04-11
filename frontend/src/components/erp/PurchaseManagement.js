@@ -15,6 +15,7 @@ import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/Purchase
 import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import ErpPageShell from './shell/ErpPageShell';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 /**
  * ERP 구매 관리 페이지 — 비품 구매 요청 및 주문 관리
@@ -153,7 +154,7 @@ const PurchaseManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'items' ? 'active' : ''}`}
                 onClick={() => setActiveTab('items')}
                 preventDoubleClick={false}
               >
@@ -164,7 +165,7 @@ const PurchaseManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
                 onClick={() => setActiveTab('requests')}
                 preventDoubleClick={false}
               >
@@ -175,7 +176,7 @@ const PurchaseManagement = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
                 onClick={() => setActiveTab('orders')}
                 preventDoubleClick={false}
               >
@@ -191,10 +192,10 @@ const PurchaseManagement = () => {
                   <MGButton
                     variant="secondary"
                     size="small"
-                    className="mg-v2-button mg-v2-button--secondary"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
                     onClick={() => loadData({ silent: true })}
                     loading={silentListRefreshing}
-                    loadingText="새로고침 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     disabled={loading}
                     aria-label="목록 새로고침"
                   >
@@ -223,10 +224,10 @@ const PurchaseManagement = () => {
               <MGButton
                 variant="outline"
                 size="small"
-                className="mg-v2-button mg-v2-button--outline"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: silentListRefreshing })}
                 onClick={() => loadData({ silent: true })}
                 loading={silentListRefreshing}
-                loadingText="새로고침 중..."
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 disabled={loading}
                 aria-label="다시 시도"
               >
@@ -271,7 +272,12 @@ const PurchaseManagement = () => {
                           </div>
                         </div>
                         <div className="erp-card-footer">
-                          <MGButton variant="primary" size="small" type="button">
+                          <MGButton
+                            variant="primary"
+                            size="small"
+                            type="button"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                          >
                             <ShoppingCart size={16} aria-hidden />
                             구매 요청
                           </MGButton>
@@ -318,6 +324,7 @@ const PurchaseManagement = () => {
                           <MGButton
                             variant="outline"
                             size="small"
+                            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
@@ -368,6 +375,7 @@ const PurchaseManagement = () => {
                           <MGButton
                             variant="outline"
                             size="small"
+                            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >

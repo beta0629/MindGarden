@@ -15,6 +15,7 @@ import './ErpCommon.css';
 import './PurchaseRequestForm.css';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import ErpPageShell from './shell/ErpPageShell';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import {
   ErpEmptyState,
   ErpKpiStatCard,
@@ -189,6 +190,7 @@ const PurchaseRequestForm = () => {
                     <MGButton
                       type="button"
                       variant="secondary"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                       onClick={() => window.history.back()}
                     >
                       뒤로가기
@@ -238,9 +240,10 @@ const PurchaseRequestForm = () => {
                   <MGButton
                     type="button"
                     variant="primary"
+                    className={buildErpMgButtonClassName({ variant: 'primary', loading: silentListRefreshing })}
                     onClick={() => loadItems({ silent: true })}
                     loading={silentListRefreshing}
-                    loadingText="불러오는 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     다시 불러오기
                   </MGButton>
@@ -267,7 +270,7 @@ const PurchaseRequestForm = () => {
                         size="medium"
                         fullWidth
                         preventDoubleClick={false}
-                        className={`mg-v2-purchase-item-card${isItemSelected(item) ? ' mg-v2-purchase-item-card--selected' : ''}`}
+                        className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-v2-purchase-item-card${isItemSelected(item) ? ' mg-v2-purchase-item-card--selected' : ''}`}
                         onClick={() => handleItemSelect(item)}
                       >
                         <div className="mg-flex mg-flex-col mg-w-full">
@@ -323,7 +326,7 @@ const PurchaseRequestForm = () => {
                             <MGButton
                               type="button"
                               variant="outline"
-                              className="mg-v2-purchase-qty-btn"
+                              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-v2-purchase-qty-btn`}
                               aria-label="수량 감소"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) - 1)}
                               preventDoubleClick={false}
@@ -341,7 +344,7 @@ const PurchaseRequestForm = () => {
                             <MGButton
                               type="button"
                               variant="outline"
-                              className="mg-v2-purchase-qty-btn"
+                              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-v2-purchase-qty-btn`}
                               aria-label="수량 증가"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) + 1)}
                               preventDoubleClick={false}
@@ -428,9 +431,9 @@ const PurchaseRequestForm = () => {
                     type="submit"
                     variant="primary"
                     size="large"
-                    className="mg-v2-button mg-v2-button-primary"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'lg', loading })}
                     loading={loading}
-                    loadingText="제출 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     disabled={selectedItems.length === 0}
                     preventDoubleClick={false}
                   >
@@ -466,7 +469,7 @@ const PurchaseRequestForm = () => {
           <MGButton
             type="button"
             variant="primary"
-            className="mg-v2-button mg-v2-button-primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
             onClick={() => setShowSuccessModal(false)}
             preventDoubleClick={false}
           >

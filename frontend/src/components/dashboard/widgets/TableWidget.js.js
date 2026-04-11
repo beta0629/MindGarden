@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../../utils/ajax';
+import MGButton from '../../common/MGButton';
 import './Widget.css';
 
 const TableWidget = ({ widget, user }) => {
@@ -141,19 +142,25 @@ const TableWidget = ({ widget, user }) => {
         </div>
         {pagination.enabled && (
           <div className="table-pagination">
-            <button 
-              onClick={() => setPage(page - 1)} 
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              onClick={() => setPage(page - 1)}
               disabled={page <= 1}
             >
               이전
-            </button>
+            </MGButton>
             <span>페이지 {page}</span>
-            <button 
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               onClick={() => setPage(page + 1)}
               disabled={data.length < pageSize}
             >
               다음
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
 // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
 import './Widget.css';
 
 const RatingWidget = ({ widget, user }) => {
@@ -183,9 +184,14 @@ const RatingWidget = ({ widget, user }) => {
                     {new Date(item.date || item.createdAt).toLocaleDateString('ko-KR')}
                   </div>
                 </div>
-                <button className="ratable-item-btn">
+                <MGButton
+                  type="button"
+                  className="ratable-item-btn"
+                  variant="primary"
+                  size="small"
+                >
                   <i className="bi bi-heart"></i> 평가하기
-                </button>
+                </MGButton>
               </div>
             ))}
           </div>

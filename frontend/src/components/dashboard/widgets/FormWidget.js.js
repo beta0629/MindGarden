@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { apiPost, apiPut } from '../../../utils/ajax';
+import MGButton from '../../common/MGButton';
 import './Widget.css';
 
 const FormWidget = ({ widget, user }) => {
@@ -146,9 +147,15 @@ const FormWidget = ({ widget, user }) => {
           )}
           
           <div className="form-actions">
-            <button type="submit" disabled={submitting}>
-              {submitting ? '제출 중...' : '제출'}
-            </button>
+            <MGButton
+              type="submit"
+              className="submit-btn"
+              variant="primary"
+              loading={submitting}
+              loadingText="제출 중..."
+            >
+              제출
+            </MGButton>
           </div>
         </form>
       </div>

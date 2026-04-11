@@ -271,7 +271,8 @@
   margin-top: 1rem;
 }
 
-.table-pagination button {
+.table-pagination button,
+.table-pagination .mg-button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--cs-gray-300);
   background: white;
@@ -279,7 +280,8 @@
   border-radius: 4px;
 }
 
-.table-pagination button:disabled {
+.table-pagination button:disabled,
+.table-pagination .mg-button.mg-button--disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

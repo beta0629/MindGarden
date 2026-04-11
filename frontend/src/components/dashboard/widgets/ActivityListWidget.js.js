@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../../utils/ajax';
+import MGButton from '../../common/MGButton';
 import './Widget.css';
 import '../RecentActivities.css';
 
@@ -150,13 +151,15 @@ const ActivityListWidget = ({ widget, user }) => {
             {config.title || '최근 활동'}
           </h3>
           {hasMore && (
-            <button 
-              className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               onClick={handleViewAll}
             >
               <i className="bi bi-arrow-right"></i>
               {config.viewAllLabel || '전체보기'}
-            </button>
+            </MGButton>
           )}
         </div>
       </div>

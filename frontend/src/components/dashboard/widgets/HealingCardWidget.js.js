@@ -17,7 +17,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
 // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
 import './Widget.css';
+import './HealingCardWidget.css';
 
 const HealingCardWidget = ({ widget, user }) => {
   const [healingData, setHealingData] = useState(null);
@@ -135,9 +137,16 @@ const HealingCardWidget = ({ widget, user }) => {
           {config.title || healingData.title || '오늘의 힐링'}
         </div>
         {config.allowRefresh !== false && (
-          <button className="widget-refresh-btn" onClick={handleRefresh} title="새로고침">
+          <MGButton
+            type="button"
+            className="healing-refresh-btn"
+            variant="outline"
+            size="small"
+            title="새로고침"
+            onClick={handleRefresh}
+          >
             <i className="bi bi-arrow-clockwise"></i>
-          </button>
+          </MGButton>
         )}
       </div>
       <div className="widget-body">

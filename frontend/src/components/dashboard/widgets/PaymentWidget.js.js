@@ -17,6 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
+import MGButton from '../../common/MGButton';
 import './Widget.css';
 
 const PaymentWidget = ({ widget, user }) => {
@@ -141,9 +142,14 @@ const PaymentWidget = ({ widget, user }) => {
           {config.title || '결제 세션'}
         </div>
         {config.viewAllUrl && (
-          <button className="widget-view-all" onClick={handleViewAll}>
+          <MGButton
+            type="button"
+            className="widget-view-all"
+            variant="outline"
+            onClick={handleViewAll}
+          >
             전체보기 →
-          </button>
+          </MGButton>
         )}
       </div>
       <div className="widget-body">

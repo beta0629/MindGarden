@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
-import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
+import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT, ErpFilterToolbar, useErpSilentRefresh } from './common';
+import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './FinancialCalendarView.css';
 import './ErpCommon.css';
@@ -27,20 +28,14 @@ const FinancialCalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState({});
   const [loading, setLoading] = useState(false);
-  const [calendarRefreshing, setCalendarRefreshing] = useState(false);
+  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayDetail, setDayDetail] = useState(null);
 
-  useEffect(() => {
-    loadCalendarData();
-  }, [currentDate]);
-
-  const loadCalendarData = async(options = {}) => {
+  const loadCalendarData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     try {
-      if (silent) {
-        setCalendarRefreshing(true);
-      } else {
+      if (!silent) {
         setLoading(true);
       }
       const year = currentDate.getFullYear();
@@ -84,13 +79,21 @@ const FinancialCalendarView = () => {
     } catch (err) {
       console.error('달력 데이터 로드 실패:', err);
     } finally {
-      if (silent) {
-        setCalendarRefreshing(false);
-      } else {
+      if (!silent) {
         setLoading(false);
       }
     }
-  };
+  }, [currentDate]);
+
+  const handleSilentCalendarRefresh = useCallback(async() => {
+    await runSilentListRefresh(async() => {
+      await loadCalendarData({ silent: true });
+    });
+  }, [runSilentListRefresh, loadCalendarData]);
+
+  useEffect(() => {
+    loadCalendarData();
+  }, [loadCalendarData]);
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -126,66 +129,81 @@ const FinancialCalendarView = () => {
   return (
     <div className="financial-calendar-view-container">
       <div className="mg-calendar">
-        <div className="mg-calendar-header">
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            className="mg-calendar-nav-btn"
-            onClick={() => navigateMonth(-1)}
-            aria-label="이전 달"
-            disabled={calendarRefreshing || loading}
-            preventDoubleClick={false}
-          >
-            <ChevronLeft size={20} aria-hidden />
-          </MGButton>
-          <div className="mg-financial-calendar-header-title-row">
-            <h3 className="mg-calendar-title">
-              <ErpSafeText value={currentDate.getFullYear()} />년{' '}
-              <ErpSafeText value={currentDate.getMonth() + 1} />월
-            </h3>
-            <MGButton
-              variant="secondary"
-              size="small"
-              className="mg-v2-button mg-v2-button--secondary"
-              onClick={() => loadCalendarData({ silent: true })}
-              loading={calendarRefreshing}
-              loadingText="새로고침 중..."
-              disabled={loading}
-              aria-label="달력 데이터 새로고침"
-            >
-              새로고침
-            </MGButton>
-          </div>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            className="mg-calendar-nav-btn"
-            onClick={() => navigateMonth(1)}
-            aria-label="다음 달"
-            disabled={calendarRefreshing || loading}
-            preventDoubleClick={false}
-          >
-            <ChevronRight size={20} aria-hidden />
-          </MGButton>
-        </div>
+        <ErpFilterToolbar
+          ariaLabel="재무 달력 기간·범례"
+          primaryRow={(
+            <div className="mg-calendar-header">
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className="mg-calendar-nav-btn"
+                onClick={() => navigateMonth(-1)}
+                aria-label="이전 달"
+                disabled={silentListRefreshing || loading}
+                preventDoubleClick={false}
+              >
+                <ChevronLeft size={20} aria-hidden />
+              </MGButton>
+              <div className="mg-financial-calendar-header-title-row">
+                <h3 className="mg-calendar-title">
+                  <ErpSafeText value={currentDate.getFullYear()} />년{' '}
+                  <ErpSafeText value={currentDate.getMonth() + 1} />월
+                </h3>
+                <MGButton
+                  variant="secondary"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: silentListRefreshing
+                  })}
+                  onClick={handleSilentCalendarRefresh}
+                  loading={silentListRefreshing}
+                  loadingText="새로고침 중..."
+                  disabled={loading}
+                  aria-label="달력 데이터 새로고침"
+                >
+                  새로고침
+                </MGButton>
+              </div>
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className="mg-calendar-nav-btn"
+                onClick={() => navigateMonth(1)}
+                aria-label="다음 달"
+                disabled={silentListRefreshing || loading}
+                preventDoubleClick={false}
+              >
+                <ChevronRight size={20} aria-hidden />
+              </MGButton>
+            </div>
+          )}
+          secondaryRow={(
+            <div className="mg-financial-calendar-legend">
+              <div className="mg-financial-calendar-legend-item">
+                <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--income" aria-hidden />
+                <span><TrendingUp size={14} aria-hidden /> 수입</span>
+              </div>
+              <div className="mg-financial-calendar-legend-item">
+                <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--expense" aria-hidden />
+                <span><TrendingDown size={14} aria-hidden /> 지출</span>
+              </div>
+              <div className="mg-financial-calendar-legend-item">
+                <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--mapping" aria-hidden />
+                <span><Link2 size={14} aria-hidden /> 매핑연동</span>
+              </div>
+            </div>
+          )}
+        />
 
-        <div className="mg-financial-calendar-legend">
-          <div className="mg-financial-calendar-legend-item">
-            <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--income" aria-hidden />
-            <span><TrendingUp size={14} aria-hidden /> 수입</span>
+        {loading ? (
+          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+            <UnifiedLoading type="inline" text="달력 데이터를 불러오는 중..." />
           </div>
-          <div className="mg-financial-calendar-legend-item">
-            <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--expense" aria-hidden />
-            <span><TrendingDown size={14} aria-hidden /> 지출</span>
-          </div>
-          <div className="mg-financial-calendar-legend-item">
-            <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--mapping" aria-hidden />
-            <span><Link2 size={14} aria-hidden /> 매핑연동</span>
-          </div>
-        </div>
-
+        ) : (
         <div className="mg-calendar-grid">
           {dayNames.map((dayName) => (
             <div key={dayName} className="mg-calendar-day-header">
@@ -265,6 +283,7 @@ const FinancialCalendarView = () => {
             );
           })}
         </div>
+        )}
       </div>
 
       {selectedDate && dayDetail && (
@@ -377,6 +396,7 @@ const FinancialCalendarView = () => {
         </div>
       )}
 
+      {!loading && (
       <section className="mg-financial-calendar-monthly-stats" aria-label="월 통계">
         <h3 className="mg-financial-calendar-monthly-stats-title">
           <BarChart3 size={20} aria-hidden /> <ErpSafeText value={currentDate.getFullYear()} />년{' '}
@@ -448,11 +468,6 @@ const FinancialCalendarView = () => {
           );
         })()}
       </section>
-
-      {loading && (
-        <div className="mg-financial-calendar-loading-overlay">
-          <UnifiedLoading type="inline" text="달력 데이터를 불러오는 중..." />
-        </div>
       )}
     </div>
   );

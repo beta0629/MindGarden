@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -26,7 +26,8 @@ import {
   ErpSafeText,
   ERP_KPI_STAT_VARIANT,
   ERP_KPI_TREND_DIRECTION,
-  ERP_NUMBER_FORMAT
+  ERP_NUMBER_FORMAT,
+  useErpSilentRefresh
 } from './common';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton';
@@ -55,6 +56,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
+import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
 
 const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
@@ -219,7 +221,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);
-  const [refreshingDashboard, setRefreshingDashboard] = useState(false);
+  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
 
   // 권한 체크 중복 실행 방지
   const permissionCheckedRef = useRef(false);
@@ -351,12 +353,10 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     }
   };
 
-  const fetchDashboardData = async(options = {}) => {
+  const fetchDashboardData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     try {
-      if (silent) {
-        setRefreshingDashboard(true);
-      } else {
+      if (!silent) {
         setLoading(true);
       }
       const result = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD);
@@ -390,13 +390,17 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      if (silent) {
-        setRefreshingDashboard(false);
-      } else {
+      if (!silent) {
         setLoading(false);
       }
     }
-  };
+  }, [navigate]);
+
+  const handleSilentDashboardRefresh = useCallback(async() => {
+    await runSilentListRefresh(async() => {
+      await fetchDashboardData({ silent: true });
+    });
+  }, [runSilentListRefresh, fetchDashboardData]);
 
   const renderIntegratedFinanceHeaderSlot = (actionsDisabled) => (
     <ContentHeader
@@ -474,29 +478,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     </div>
   );
 
-  if (loading) {
-    return (
-      <AdminCommonLayout title="수입·지출 관리">
-        <ContentArea ariaLabel="수입·지출 관리 본문">
-          <ErpPageShell
-            className="mg-dashboard-content"
-            headerSlot={renderIntegratedFinanceHeaderSlot(true)}
-            tabsSlot={renderIntegratedFinanceTabsSlot(true)}
-            mainAriaLabel="수입·지출 관리 탭 본문"
-          >
-            <div
-              className="integrated-finance-content"
-              role="region"
-              aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
-            >
-              <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
-            </div>
-          </ErpPageShell>
-        </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
-
   if (error) {
     return (
       <AdminCommonLayout title="수입·지출 관리">
@@ -521,8 +502,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       <ContentArea ariaLabel="수입·지출 관리 본문">
         <ErpPageShell
           className="mg-dashboard-content"
-          headerSlot={renderIntegratedFinanceHeaderSlot(false)}
-          tabsSlot={renderIntegratedFinanceTabsSlot(false)}
+          headerSlot={renderIntegratedFinanceHeaderSlot(loading)}
+          tabsSlot={renderIntegratedFinanceTabsSlot(loading)}
           mainAriaLabel="수입·지출 관리 탭 본문"
         >
           <div
@@ -530,34 +511,46 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             role="region"
             aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
           >
-            <ErpFilterToolbar
-              ariaLabel="수입·지출 도구"
-              secondaryRow={(
-                <div className="integrated-finance__toolbar-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
-                    className="mg-v2-button mg-v2-button--secondary"
-                    onClick={() => fetchDashboardData({ silent: true })}
-                    loading={refreshingDashboard}
-                    loadingText="새로고침 중..."
-                    aria-label="데이터 새로고침"
-                  >
-                    데이터 새로고침
-                  </MGButton>
-                </div>
-              )}
-            />
-            {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
-            {activeTab === 'journal-entries' && <JournalEntriesTab />}
-            {activeTab === 'ledgers' && <LedgersTab />}
-            {activeTab === 'balance-sheet' && <BalanceSheetTab />}
-            {activeTab === 'income-statement' && <IncomeStatementTab />}
-            {activeTab === 'cash-flow' && <CashFlowStatementTab />}
-            {activeTab === 'settlement' && <SettlementTab />}
-            {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
-            {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
-            {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
+            {loading ? (
+              <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+                <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+              </div>
+            ) : (
+              <>
+                <ErpFilterToolbar
+                  ariaLabel="수입·지출 도구"
+                  secondaryRow={(
+                    <div className="integrated-finance__toolbar-actions">
+                      <MGButton
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: silentListRefreshing
+                        })}
+                        onClick={handleSilentDashboardRefresh}
+                        loading={silentListRefreshing}
+                        loadingText="새로고침 중..."
+                        aria-label="데이터 새로고침"
+                      >
+                        데이터 새로고침
+                      </MGButton>
+                    </div>
+                  )}
+                />
+                {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
+                {activeTab === 'journal-entries' && <JournalEntriesTab />}
+                {activeTab === 'ledgers' && <LedgersTab />}
+                {activeTab === 'balance-sheet' && <BalanceSheetTab />}
+                {activeTab === 'income-statement' && <IncomeStatementTab />}
+                {activeTab === 'cash-flow' && <CashFlowStatementTab />}
+                {activeTab === 'settlement' && <SettlementTab />}
+                {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
+                {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
+                {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
+              </>
+            )}
           </div>
         </ErpPageShell>
       </ContentArea>
@@ -567,7 +560,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <FinancialTransactionForm
           onClose={() => setShowTransactionForm(false)}
           onSuccess={() => {
-            fetchDashboardData({ silent: true });
+            handleSilentDashboardRefresh();
             setShowTransactionForm(false);
           }}
         />
@@ -577,7 +570,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <QuickExpenseForm
           onClose={() => setShowQuickExpenseForm(false)}
           onSuccess={() => {
-            fetchDashboardData({ silent: true });
+            handleSilentDashboardRefresh();
             setShowQuickExpenseForm(false);
           }}
         />

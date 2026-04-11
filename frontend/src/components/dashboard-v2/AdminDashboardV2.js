@@ -957,30 +957,33 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
         <div className="mg-v2-ad-b0kla__icon-group">
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__icon-btn"
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
             aria-label="캘린더"
+            preventDoubleClick={false}
           >
             <Calendar size={20} />
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__icon-btn"
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
             aria-label="알림"
+            preventDoubleClick={false}
           >
             <Bell size={20} />
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__icon-btn"
             aria-label="테마"
             onClick={() => {}}
+            preventDoubleClick={false}
           >
             <Sun size={20} />
-          </button>
+          </MGButton>
         </div>
       </div>
     );
@@ -1036,20 +1039,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 </p>
               </div>
               <div className="mg-v2-ad-b0kla__pill-toggle">
-                <button
+                <MGButton
                   type="button"
                   className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                   onClick={() => setChartPeriod('monthly')}
+                  preventDoubleClick={false}
                 >
                   월간
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
                   className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                   onClick={() => setChartPeriod('weekly')}
+                  preventDoubleClick={false}
                 >
                   주간
-                </button>
+                </MGButton>
               </div>
             </div>
             <div
@@ -1130,20 +1135,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 </p>
               </div>
               <div className="mg-v2-ad-b0kla__pill-toggle">
-                <button
+                <MGButton
                   type="button"
                   className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                   onClick={() => setLineChartPeriod('monthly')}
+                  preventDoubleClick={false}
                 >
                   월간
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
                   className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                   onClick={() => setLineChartPeriod('weekly')}
+                  preventDoubleClick={false}
                 >
                   주간
-                </button>
+                </MGButton>
               </div>
             </div>
             <div
@@ -1307,30 +1314,33 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <div className="mg-v2-ad-b0kla__integrated-data-period">
             <span className="mg-v2-ad-b0kla__integrated-data-period-label">집계 기간</span>
             <div className="mg-v2-ad-b0kla__integrated-data-period-tabs">
-              <button
+              <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'all'}
                 className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'all' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataPeriodType('all')}
+                preventDoubleClick={false}
               >
                 전체
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'month'}
                 className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'month' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataPeriodType('month')}
+                preventDoubleClick={false}
               >
                 월별
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'year'}
                 className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'year' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataPeriodType('year')}
+                preventDoubleClick={false}
               >
                 년도별
-              </button>
+              </MGButton>
             </div>
             {integratedDataPeriodType === 'month' && (
               <div className="mg-v2-ad-b0kla__integrated-data-month-picker">
@@ -1359,36 +1369,39 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </div>
           <div className="mg-v2-ad-b0kla__integrated-data-view-toggle">
             <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="통합데이터 뷰 전환">
-              <button
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'table'}
                 aria-label="테이블 뷰"
                 className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataView('table')}
+                preventDoubleClick={false}
               >
                 테이블
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'graph'}
                 aria-label="그래프 뷰"
                 className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'graph' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataView('graph')}
+                preventDoubleClick={false}
               >
                 그래프
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'progress'}
                 aria-label="프로그레스 뷰"
                 className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'progress' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setIntegratedDataView('progress')}
+                preventDoubleClick={false}
               >
                 프로그레스
-              </button>
+              </MGButton>
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__integrated-data-wrap">
@@ -1606,53 +1619,57 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         subtitle="시스템 관리 및 설정 기능"
       >
         <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaUsers size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaCalendarCheck size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaFileAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
-          </button>
+          </MGButton>
         </div>
         <div className="mg-management-grid mg-v2-ad-b0kla__admin-grid">
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaCalendarCheck size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">회기 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 회기를 등록하고 관리합니다</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('schedule-auto-complete') && (
           <MGButton
@@ -1660,7 +1677,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleAutoCompleteSchedules}
             loading={autoCompleteLoading}
-            preventDoubleClick={true}
+            preventDoubleClick={false}
             loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
@@ -1676,7 +1693,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleAutoCompleteWithReminder}
             loading={autoCompleteWithReminderLoading}
-            preventDoubleClick={true}
+            preventDoubleClick={false}
             loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
@@ -1687,194 +1704,210 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('consultant-comprehensive') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaUserTie size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">상담사 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && canManageClients && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaUsers size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">내담자 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
-          </button>
+          </MGButton>
           )}
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaLink size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">매칭 시스템</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사와 내담자 매칭을 관리합니다</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaCalendarAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
-          </button>
+          </MGButton>
           {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
-            <button
+            <MGButton
               type="button"
               className="mg-v2-ad-b0kla__admin-card"
               onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
+              preventDoubleClick={false}
             >
               <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                 <FaUserCog size={28} />
               </div>
               <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
               <span className="mg-v2-ad-b0kla__admin-desc">사용자 역할 변경 및 권한 관리</span>
-            </button>
+            </MGButton>
           )}
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <FaCog size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">공통코드</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 공통코드를 관리합니다</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.PACKAGE_PRICING)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <Package size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">패키지 요금 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 패키지별 가격·회기 수 관리</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaBell size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">알림·메시지 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 공지와 메시지를 한 화면에서 관리합니다</span>
-          </button>
+          </MGButton>
           {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <LayoutDashboard size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">대시보드 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">역할별 대시보드를 관리합니다</span>
-          </button>
+          </MGButton>
           )}
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <Settings size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
             <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
-          </button>
+          </MGButton>
           {!HIDE_ADMIN_CARD_IDS.has('cache-monitoring') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.CACHE_MONITORING)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaDatabase size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">캐시 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 캐시 성능을 실시간으로 모니터링합니다</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('security-monitoring') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.SECURITY_MONITORING)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
               <FaShieldAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">보안 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">실시간 보안 위협 탐지 및 시스템 보안 관리</span>
-          </button>
+          </MGButton>
           )}
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaRocket size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">API 성능 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">API 응답 시간과 성능 지표를 실시간으로 추적합니다</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <MessageSquare size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">메시지 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사-내담자 메시지를 관리합니다</span>
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
               <FaFileAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">심리검사 리포트(AI)</span>
             <span className="mg-v2-ad-b0kla__admin-desc">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</span>
-          </button>
+          </MGButton>
           {!HIDE_ADMIN_CARD_IDS.has('wellness') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate('/admin/wellness')}
+            preventDoubleClick={false}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
               <Sparkles size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">웰니스 알림 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
           <MGButton
@@ -1882,7 +1915,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleMergeDuplicateMappings}
             loading={mergeDuplicateLoading}
-            preventDoubleClick={true}
+            preventDoubleClick={false}
             loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
@@ -1899,7 +1932,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <div className={`mg-toast mg-toast-${toastType}`}>
           <div className="mg-toast-header">
             <strong className="me-auto">알림</strong>
-            <button type="button" className="mg-toast-close" onClick={() => setShowToastState(false)} />
+            <MGButton
+              type="button"
+              className="mg-toast-close"
+              onClick={() => setShowToastState(false)}
+              preventDoubleClick={false}
+              aria-label="알림 닫기"
+            >
+              ×
+            </MGButton>
           </div>
           <div className="mg-toast-body">{toDisplayString(toastMessage, '')}</div>
         </div>

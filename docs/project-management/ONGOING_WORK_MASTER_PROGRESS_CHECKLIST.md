@@ -328,3 +328,4 @@
 | 2026-04-11 | **QA-01** Jest 전체 그린 `be919d459` (react-router v7·craco·setupTests·App·ThemeSelector·파이프라인)·develop·main 반영·운영 프론트 배포(`deploy-frontend-prod`) 트리거 |
 | 2026-04-11 | **UI-02 2차** `AccountManagement`/`AccountForm`/`ClientMessageSection` — `UnifiedModal` 적용·div 모달 오용 수정 `e04da6290` |
 | 2026-04-11 | **UI-02** GNB `GnbDropdownPortal`·`aria-controls`/`panelId`·`NavIcon` `9fa8c92c6` |
+| 2026-04-11 | **QA-01** ESLint `--quiet` 오류 0건(import·파싱·상수·온보딩 TS→JSX·Icon `userRole` 등) `28d02dab6` — `lint:check`(max-warnings 0)는 경고로 아직 실패 가능 |

@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B15a/B15b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B16a/B16b·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -62,6 +62,8 @@
 | **G8-B14b** | **G-01** — `dashboard/widgets/**/*.js.js` 중 `<button` 있던 파일 + `Widget.css` 페이지네이션 병기 → `MGButton` | core-coder | ☑ | `develop` · `b78c600ad` (2026-04-11) |
 | **G8-B15a** | **G-01** — `schedule`·`erd`·`components/client`·`pages/client` 네이티브 버튼 → `MGButton` | core-coder | ☑ | `develop` · `4b1445b78` (2026-04-11) |
 | **G8-B15b** | **G-01** — `components/admin/**` + `unified-design-tokens.css` 탭·버튼 병기 보정 → `MGButton` | core-coder | ☑ | `develop` · `9b5216ab7` (2026-04-11) |
+| **G8-B16a** | **G-01** — `consultant/**`·`consultation/**` 네이티브 버튼 → `MGButton` | core-coder | ☑ | `develop` · `1c553164c` (2026-04-11) |
+| **G8-B16b** | **G-01** — `academy`·`wellness`·`clinical`·`tenant`·`billing`·`mypage`·`training`·`emotion`·`prediction`·`finance`·`statistics`·`erp/shell`·`layout`(일부)·`common`·`ui` → `MGButton` | core-coder | ☑ | `develop` · `8a520c9ec` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -128,6 +130,14 @@
 **G8-B14a**: `ClientMessageSection`, `SystemNotificationSection`, `ScheduleQuickAccess`, `WelcomeSection`, `ConsultantClientSection`, `WeatherCard`, `ErpPurchaseRequestPanel`, `SummaryPanels`, `RecentActivities`, `DashboardWidgetManager/DashboardWidgetManagerPresentation` + `DashboardWidgetManager.css`, `SummaryPanels.css`, `RecentActivities.css`
 
 **G8-B14b**: `widgets/**/*.js.js` 중 버튼 있던 파일(예: `TableWidget`, `PaymentWidget`, `ScheduleWidget`, `MessageWidget`, `NotificationWidget`, `ActivityListWidget`, `QuickActionsWidget`, `FormWidget`, `HealingCardWidget`, `RatingWidget`) + `Widget.css` 보정
+
+**G8-B15a**: `schedule`(백업 제외), `erd`, `components/client`, `pages/client` + 관련 CSS
+
+**G8-B15b**: `admin/**` 전반(백업 제외) + `styles/unified-design-tokens.css`
+
+**G8-B16a**: `consultant/**`, `consultation/**` + `ScheduleB0KlA.css`·`ConsultationReport.css` 등
+
+**G8-B16b**: `academy`·`wellness`·`clinical`·`tenant`·`billing`·`mypage`·`training`·`emotion`·`prediction`·`finance`·`statistics`·`erp/shell`·`layout`(SimpleLayout·DashboardSection)·`common`·`ui` (데모·`MGButton.js` 제외)
 
 ---
 
@@ -301,3 +311,4 @@
 | 2026-04-11 | **G8-B13a** 대시보드 위젯 consultation·erp·admin MGButton `8e6468dbb`, **G8-B13b** 루트·common 위젯 MGButton `5c548e891` |
 | 2026-04-11 | **G8-B14a** 대시보드 패널·섹션(위젯 제외) MGButton `690906a49`, **G8-B14b** 위젯 `*.js.js` MGButton `b78c600ad` |
 | 2026-04-11 | **G8-B15a** schedule·erd·client MGButton `4b1445b78`, **G8-B15b** admin MGButton `9b5216ab7` |
+| 2026-04-11 | **G8-B16a** consultant·consultation MGButton `1c553164c`, **G8-B16b** academy·wellness·ui·common 등 MGButton `8a520c9ec` |

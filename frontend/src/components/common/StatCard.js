@@ -80,7 +80,7 @@ const StatCard = ({
       <div className={DETAILED_STATS_CARD_CSS.CONTAINER}>
         <div className={DETAILED_STATS_CARD_CSS.HEADER}>
           <div className={DETAILED_STATS_CARD_CSS.ICON}>
-            <i className={icon} aria-hidden="true"></i>
+            <i className={icon} aria-hidden="true" />
           </div>
           <div className={DETAILED_STATS_CARD_CSS.TITLE}>{title}</div>
         </div>

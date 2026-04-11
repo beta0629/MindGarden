@@ -40,7 +40,7 @@ const SystemNotificationSection = () => {
   };
 
   // 아이템 클릭 핸들러
-  const handleItemClick = async (item) => {
+  const handleItemClick = async(item) => {
     // 시스템 공지인 경우
     if (item.systemNotificationId || item.id?.toString().startsWith('system-')) {
       const notificationId = item.systemNotificationId || item.id.toString().replace('system-', '');
@@ -117,7 +117,7 @@ const SystemNotificationSection = () => {
                 </div>
                 <div className="mg-v2-message-card-preview">
                   {typeof item.content === 'string' 
-                    ? item.content.replace(/<[^>]*>/g, '').substring(0, 50) + '...'
+                    ? `${item.content.replace(/<[^>]*>/g, '').substring(0, 50)}...`
                     : item.content}
                 </div>
                 <div className="mg-v2-message-card-footer">

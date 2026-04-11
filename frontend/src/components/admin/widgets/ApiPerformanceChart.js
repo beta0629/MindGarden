@@ -48,7 +48,7 @@ const useChartColors = () => {
       success: getColor('--mg-success-500', 34, 197, 94),
       warning: getColor('--mg-warning-500', 234, 179, 8),
       error: getColor('--mg-error-500', 239, 68, 68),
-      gray: getColor('--mg-gray-200', 229, 231, 235),
+      gray: getColor('--mg-gray-200', 229, 231, 235)
     };
   }, []);
 };
@@ -125,7 +125,7 @@ export const ResponseTimeLineChart = ({ data }) => {
     },
     interaction: {
       mode: 'index',
-      intersect: false,
+      intersect: false
     }
   };
 

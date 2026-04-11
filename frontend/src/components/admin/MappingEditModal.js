@@ -63,7 +63,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   /**
    * 패키지 옵션 로드
    */
-  const loadPackageOptions = async () => {
+  const loadPackageOptions = async() => {
     try {
       const { getTenantCodes } = await import('../../utils/commonCodeApi');
       const codes = await getTenantCodes('CONSULTATION_PACKAGE');
@@ -152,7 +152,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   /**
    * 매칭 수정 처리
    */
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     if (!validateForm()) return;

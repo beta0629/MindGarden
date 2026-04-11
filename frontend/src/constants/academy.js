@@ -45,7 +45,7 @@ export const ACADEMY_API = {
   BRANCH_DETAIL: (branchId) => `/api/v1/academy/branches/${branchId}`,
   BRANCH_CREATE: '/api/v1/academy/branches',
   BRANCH_UPDATE: (branchId) => `/api/v1/academy/branches/${branchId}`,
-  BRANCH_DELETE: (branchId) => `/api/v1/academy/branches/${branchId}`,
+  BRANCH_DELETE: (branchId) => `/api/v1/academy/branches/${branchId}`
 };
 
 
@@ -83,7 +83,7 @@ export const ACADEMY_PERMISSIONS = {
   BRANCH_DELETE: 'ACADEMY_BRANCH_DELETE',
   
   STATISTICS_VIEW: 'ACADEMY_STATISTICS_VIEW',
-  REPORT_GENERATE: 'ACADEMY_REPORT_GENERATE',
+  REPORT_GENERATE: 'ACADEMY_REPORT_GENERATE'
 };
 
 
@@ -95,7 +95,7 @@ export const CLASS_STATUS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   COMPLETED: 'COMPLETED',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  CANCELLED: 'CANCELLED',
+  CANCELLED: 'CANCELLED'
 };
 
 export const CLASS_STATUS_LABELS = {
@@ -106,19 +106,19 @@ export const CLASS_STATUS_LABELS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [CLASS_STATUS.COMPLETED]: '완료',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [CLASS_STATUS.CANCELLED]: '취소',
+  [CLASS_STATUS.CANCELLED]: '취소'
 };
 
 export const PRICING_POLICY = {
   FIXED: 'FIXED',
   PER_SESSION: 'PER_SESSION',
-  PACKAGE: 'PACKAGE',
+  PACKAGE: 'PACKAGE'
 };
 
 export const PRICING_POLICY_LABELS = {
   [PRICING_POLICY.FIXED]: '고정 가격',
   [PRICING_POLICY.PER_SESSION]: '회차별 가격',
-  [PRICING_POLICY.PACKAGE]: '패키지 가격',
+  [PRICING_POLICY.PACKAGE]: '패키지 가격'
 };
 
 
@@ -145,7 +145,7 @@ export const ACADEMY_MESSAGES = {
   CAPACITY_INVALID: '정원은 1명 이상이어야 합니다.',
   DATE_INVALID: '시작일은 종료일보다 이전이어야 합니다.',
   PRICE_INVALID: '가격은 0원 이상이어야 합니다.',
-  ENROLLMENT_SAVE_FAILED: '수강 등록 저장에 실패했습니다.',
+  ENROLLMENT_SAVE_FAILED: '수강 등록 저장에 실패했습니다.'
 };
 
 
@@ -158,7 +158,7 @@ export const ACADEMY_DEFAULTS = {
   DISPLAY_ORDER: 0,
   
   PAGE_SIZE: 20,
-  PAGE_NUMBER: 0,
+  PAGE_NUMBER: 0
 };
 
 
@@ -170,13 +170,13 @@ export const ACADEMY_FILTERS = {
     { value: 'SCIENCE', label: '과학' },
     { value: 'SOCIAL', label: '사회' },
     { value: 'ART', label: '예체능' },
-    { value: 'ETC', label: '기타' },
+    { value: 'ETC', label: '기타' }
   ],
   
   LEVELS: [
     { value: 'BEGINNER', label: '초급' },
     { value: 'INTERMEDIATE', label: '중급' },
-    { value: 'ADVANCED', label: '고급' },
+    { value: 'ADVANCED', label: '고급' }
   ],
   
   SUBJECTS: [
@@ -185,7 +185,7 @@ export const ACADEMY_FILTERS = {
     { value: 'KOREAN', label: '국어' },
     { value: 'SCIENCE', label: '과학' },
     { value: 'SOCIAL', label: '사회' },
-    { value: 'ART', label: '예체능' },
-  ],
+    { value: 'ART', label: '예체능' }
+  ]
 };
 

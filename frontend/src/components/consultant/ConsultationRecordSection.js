@@ -16,7 +16,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
   const [error, setError] = useState(null);
 
   // 상담일지 통계 로드
-  const loadRecordStats = async () => {
+  const loadRecordStats = async() => {
     try {
       setLoading(true);
       
@@ -67,7 +67,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
         </div>
         <div className="mg-loading-container">
-          <div className="mg-spinner"></div>
+          <div className="mg-spinner" />
           <p>상담일지 정보를 불러오는 중...</p>
         </div>
       </div>

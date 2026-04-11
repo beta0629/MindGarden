@@ -195,7 +195,7 @@ const StaffManagement = ({ embedded = false }) => {
     setStaffEditForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async() => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get(API_USER_MANAGEMENT, {
@@ -214,7 +214,7 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, []);
 
-  const loadRoles = useCallback(async () => {
+  const loadRoles = useCallback(async() => {
     try {
       const response = await StandardizedApi.get(API_ROLES);
       const list = Array.isArray(response) ? response : [];
@@ -225,7 +225,7 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, []);
 
-  const openAddStaffModal = useCallback(async () => {
+  const openAddStaffModal = useCallback(async() => {
     setAddStaffModal((prev) => ({ ...prev, open: true, loading: true, nonStaffUsers: [] }));
     try {
       const response = await StandardizedApi.get(API_USER_MANAGEMENT, { includeInactive: true });
@@ -269,7 +269,7 @@ const StaffManagement = ({ embedded = false }) => {
     if (name === 'email') setStaffEmailCheckStatus(null);
   }, []);
 
-  const handleStaffEmailDuplicateCheck = useCallback(async () => {
+  const handleStaffEmailDuplicateCheck = useCallback(async() => {
     const email = (createForm.email || '').trim();
     if (!email) {
       showError(VALIDATION_MESSAGES.REQUIRED_EMAIL);
@@ -304,7 +304,7 @@ const StaffManagement = ({ embedded = false }) => {
   }, [createForm.email]);
 
   const handleCreateStaffSubmit = useCallback(
-    async (e) => {
+    async(e) => {
       e.preventDefault();
       const email = (createForm.email || '').trim().toLowerCase();
       const name = (createForm.name || '').trim();
@@ -346,7 +346,7 @@ const StaffManagement = ({ embedded = false }) => {
   );
 
   const handleAssignAsStaff = useCallback(
-    async (user) => {
+    async(user) => {
       if (!user?.id) return;
       setAddStaffModal((prev) => ({ ...prev, assignSubmitting: true }));
       try {
@@ -401,7 +401,7 @@ const StaffManagement = ({ embedded = false }) => {
     setRoleChangeSubmitting(false);
   }, []);
 
-  const handleConfirmRoleChange = useCallback(async () => {
+  const handleConfirmRoleChange = useCallback(async() => {
     const { user } = roleChangeModal;
     if (!user || !selectedNewRole || selectedNewRole === user.role) return;
     setRoleChangeSubmitting(true);
@@ -423,7 +423,7 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, [roleChangeModal, selectedNewRole, handleCloseRoleChange, loadUsers]);
 
-  const handleStaffEditSubmit = useCallback(async () => {
+  const handleStaffEditSubmit = useCallback(async() => {
     const { staff } = staffEditModal;
     if (!staff?.id) return;
     const name = (staffEditForm.name || '').trim();
@@ -1035,7 +1035,7 @@ const StaffManagement = ({ embedded = false }) => {
                   onClick={() => {
                     if (globalThis.window?.daum?.Postcode) {
                       new globalThis.window.daum.Postcode({
-                        oncomplete: function (data) {
+                        oncomplete: function(data) {
                           setCreateForm((prev) => ({
                             ...prev,
                             postalCode: data.zonecode || '',

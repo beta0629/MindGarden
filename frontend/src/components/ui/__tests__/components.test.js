@@ -162,7 +162,7 @@ describe('UI Components Test Suite', () => {
       expect(button).toHaveTextContent('처리 중...');
     });
 
-    test('prevents double click', async () => {
+    test('prevents double click', async() => {
       const handleClick = jest.fn();
       render(
         <TestWrapper>
@@ -324,7 +324,7 @@ describe('UI Components Test Suite', () => {
       expect(button).toHaveClass('mg-button--with-icon');
     });
 
-    test('Button opens Modal', async () => {
+    test('Button opens Modal', async() => {
       const TestComponent = () => {
         const [isOpen, setIsOpen] = React.useState(false);
 

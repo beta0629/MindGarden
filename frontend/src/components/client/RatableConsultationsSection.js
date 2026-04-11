@@ -49,7 +49,7 @@ const RatableConsultationsSection = () => {
     }
   }, [user]);
 
-  const loadRatableSchedules = async () => {
+  const loadRatableSchedules = async() => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -59,7 +59,7 @@ const RatableConsultationsSection = () => {
       const response = await fetch(`${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });

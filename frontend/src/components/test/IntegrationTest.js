@@ -35,13 +35,13 @@ const IntegrationTest = () => {
   const [performanceResults, setPerformanceResults] = useState(null);
   const [securityResults, setSecurityResults] = useState(null);
 
-  const runFullIntegrationTest = async () => {
+  const runFullIntegrationTest = async() => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${INTEGRATION_TEST_API.RUN_FULL_TEST}`, {
         method: HTTP_METHODS.POST,
         headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
         },
         credentials: 'include'
       });
@@ -71,13 +71,13 @@ const IntegrationTest = () => {
     }
   };
 
-  const checkSystemHealth = async () => {
+  const checkSystemHealth = async() => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${INTEGRATION_TEST_API.HEALTH_CHECK}`, {
         method: HTTP_METHODS.GET,
         headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
         },
         credentials: 'include'
       });
@@ -106,13 +106,13 @@ const IntegrationTest = () => {
     }
   };
 
-  const runPerformanceTest = async () => {
+  const runPerformanceTest = async() => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${INTEGRATION_TEST_API.PERFORMANCE_TEST}`, {
         method: HTTP_METHODS.POST,
         headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
         },
         credentials: 'include'
       });
@@ -141,13 +141,13 @@ const IntegrationTest = () => {
     }
   };
 
-  const runSecurityTest = async () => {
+  const runSecurityTest = async() => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${INTEGRATION_TEST_API.SECURITY_TEST}`, {
         method: HTTP_METHODS.POST,
         headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
         },
         credentials: 'include'
       });
@@ -331,7 +331,7 @@ const IntegrationTest = () => {
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               marginBottom: '16px'
-            }}></div>
+            }} />
             <p style={{
               margin: 0,
               fontSize: 'var(--font-size-base)',

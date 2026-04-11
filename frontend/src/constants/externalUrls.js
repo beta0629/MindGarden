@@ -12,5 +12,5 @@ export const EXTERNAL_URLS = {
     get ONBOARDING_REGISTER() { return `${this.ONBOARDING}/register`; },
     get ONBOARDING_CONTACT() { return `${this.ONBOARDING}/contact`; },
     get CORE_LOGIN() { return `${this.CORE}/login`; },
-    get OPS_LOGIN() { return `${this.OPS}/auth/login`; },
+    get OPS_LOGIN() { return `${this.OPS}/auth/login`; }
 };

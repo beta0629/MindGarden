@@ -61,7 +61,7 @@ const SystemToolsWidget = ({ widget, user }) => {
     }
   ];
   
-  const handleToolClick = async (tool) => {
+  const handleToolClick = async(tool) => {
     if (!tool.action) return;
     
     const { type, url, method } = tool.action;
@@ -112,7 +112,7 @@ const SystemToolsWidget = ({ widget, user }) => {
     <div className="widget widget-system-tools">
       <div className="widget-header">
         <div className="widget-title">
-          <i className="bi bi-tools"></i>
+          <i className="bi bi-tools" />
           {config.title || '시스템 도구'}
         </div>
       </div>
@@ -128,7 +128,7 @@ const SystemToolsWidget = ({ widget, user }) => {
               title={toDisplayString(tool.description, '')}
             >
               <div className="system-tool-icon">
-                <i className={`bi ${tool.icon}`}></i>
+                <i className={`bi ${tool.icon}`} />
               </div>
               <div className="system-tool-content">
                 <span className="system-tool-label"><SafeText>{tool.label}</SafeText></span>

@@ -45,7 +45,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 /**
      * 지점 목록 로드
      */
-    const loadBranches = async () => {
+    const loadBranches = async() => {
         try {
             const raw = await StandardizedApi.get('/api/v1/branches');
             const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
@@ -58,7 +58,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 /**
      * 보고서 생성
      */
-    const handleGenerateReport = async () => {
+    const handleGenerateReport = async() => {
         if (!period) {
             notificationManager.error('기간을 선택해주세요.');
             return;
@@ -96,7 +96,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 /**
      * 보고서 다운로드
      */
-    const handleDownloadReport = async () => {
+    const handleDownloadReport = async() => {
         if (!reportData) {
             notificationManager.error('다운로드할 보고서가 없습니다.');
             return;

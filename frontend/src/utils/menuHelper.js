@@ -22,7 +22,7 @@ const MENU_CACHE_DURATION = 10 * 60 * 1000; // 10분
 /**
  * 사용자 권한에 따른 메뉴 구조 로드 (캐시 적용)
  */
-export const loadMenuStructure = async () => {
+export const loadMenuStructure = async() => {
     const now = Date.now();
     
     // 캐시가 유효한 경우 캐시된 데이터 반환
@@ -92,7 +92,7 @@ export const loadMenuStructure = async () => {
 /**
  * 공통 메뉴 로드
  */
-export const loadCommonMenus = async () => {
+export const loadCommonMenus = async() => {
     try {
         console.log('📋 공통 메뉴 로드 중...');
         const response = await apiGet('/api/menu/common');
@@ -100,7 +100,7 @@ export const loadCommonMenus = async () => {
         // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
         // response는 직접 메뉴 배열입니다
         if (Array.isArray(response)) {
-            console.log('✅ 공통 메뉴 로드 성공:', response.length + '개');
+            console.log('✅ 공통 메뉴 로드 성공:', `${response.length}개`);
             return response;
         } else {
             throw new Error('공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
@@ -115,7 +115,7 @@ export const loadCommonMenus = async () => {
 /**
  * 역할별 메뉴 로드
  */
-export const loadRoleMenus = async () => {
+export const loadRoleMenus = async() => {
     try {
         console.log('📋 역할별 메뉴 로드 중...');
         const response = await apiGet('/api/menu/by-role');
@@ -125,7 +125,7 @@ export const loadRoleMenus = async () => {
         if (response && response.menus && Array.isArray(response.menus)) {
             console.log('✅ 역할별 메뉴 로드 성공:', {
                 role: response.role,
-                menus: response.menus.length + '개'
+                menus: `${response.menus.length}개`
             });
             return response.menus;
         } else {
@@ -141,7 +141,7 @@ export const loadRoleMenus = async () => {
 /**
  * 메뉴 접근 권한 확인
  */
-export const checkMenuPermission = async (menuId) => {
+export const checkMenuPermission = async(menuId) => {
     try {
         console.log('🔒 메뉴 권한 확인:', menuId);
         const response = await apiGet(`/api/menu/check-permission?menuId=${menuId}`);
@@ -232,7 +232,7 @@ export const findMenuById = (menuStructure, menuId) => {
 /**
  * 메뉴 경로 유효성 검증
  */
-export const validateMenuPath = async (path) => {
+export const validateMenuPath = async(path) => {
     try {
         const menuStructure = await loadMenuStructure();
         

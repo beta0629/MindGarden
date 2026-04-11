@@ -52,7 +52,7 @@ const BrandingManagement = ({ onClose }) => {
 
   // 브랜딩 정보 로드 시 폼 데이터 초기화
   useEffect(() => {
-    const loadInitialData = async () => {
+    const loadInitialData = async() => {
       try {
         const branding = await getBrandingInfo();
         if (branding) {
@@ -209,7 +209,7 @@ const BrandingManagement = ({ onClose }) => {
   };
 
   // 저장 핸들러
-  const handleSave = async () => {
+  const handleSave = async() => {
     if (!validateForm()) {
       notificationManager.show('입력 정보를 확인해주세요.', 'error');
       return;
@@ -246,7 +246,7 @@ const BrandingManagement = ({ onClose }) => {
   };
 
   // 초기화 핸들러
-  const handleReset = async () => {
+  const handleReset = async() => {
     try {
       const branding = await getBrandingInfo();
       if (branding) {
@@ -586,7 +586,7 @@ const ColorPicker = ({ value, onChange, error }) => {
         <div 
           className="color-picker__swatch"
           style={{ backgroundColor: value }}
-        ></div>
+         />
         <input
           type="text"
           className={`color-picker__input ${error ? 'error' : ''}`}
@@ -712,14 +712,14 @@ const BrandingPreviewModal = ({ brandingData, onClose }) => {
               <div 
                 className="branding-preview__color-swatch"
                 style={{ backgroundColor: brandingData.primaryColor }}
-              ></div>
+               />
               <span>주 색상: {brandingData.primaryColor}</span>
             </div>
             <div className="branding-preview__color-item">
               <div 
                 className="branding-preview__color-swatch"
                 style={{ backgroundColor: brandingData.secondaryColor }}
-              ></div>
+               />
               <span>보조 색상: {brandingData.secondaryColor}</span>
             </div>
           </div>

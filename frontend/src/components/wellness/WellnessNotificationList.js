@@ -56,7 +56,7 @@ const WellnessNotificationList = () => {
     loadNotifications();
   }, [isLoggedIn, user, navigate]);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async() => {
     try {
       setLoading(true);
       setError(null);

@@ -8,7 +8,7 @@ const MappingCard = ({
     onClick,
     actions = null
 }) => {
-    return(
+    return (
         <div 
             className="mg-v2-card mg-v2-mapping-card"
             onClick={ onClick }

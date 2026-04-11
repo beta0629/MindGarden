@@ -25,7 +25,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
             tremorDetected: false,
             anxietyScore: 0.42,
             depressionScore: 0.28,
-            stressScore: 0.35,
+            stressScore: 0.35
         });
     }, [biomarkerId]);
 
@@ -83,7 +83,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
                         <div
                             className="indicator-fill anxiety"
                             style={{ width: `${biomarker.anxietyScore * 100}%` }}
-                        ></div>
+                         />
                     </div>
                     <span>{(biomarker.anxietyScore * 100).toFixed(0)}%</span>
                 </div>
@@ -94,7 +94,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
                         <div
                             className="indicator-fill depression"
                             style={{ width: `${biomarker.depressionScore * 100}%` }}
-                        ></div>
+                         />
                     </div>
                     <span>{(biomarker.depressionScore * 100).toFixed(0)}%</span>
                 </div>
@@ -105,7 +105,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
                         <div
                             className="indicator-fill stress"
                             style={{ width: `${biomarker.stressScore * 100}%` }}
-                        ></div>
+                         />
                     </div>
                     <span>{(biomarker.stressScore * 100).toFixed(0)}%</span>
                 </div>

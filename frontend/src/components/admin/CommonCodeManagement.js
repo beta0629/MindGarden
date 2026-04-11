@@ -156,7 +156,7 @@ const CommonCodeManagement = () => {
         }
     }, [user?.role]);
 
-    const loadParentCategoryCodes = useCallback(async (groupName) => {
+    const loadParentCategoryCodes = useCallback(async(groupName) => {
         if (!groupName || !isSubcategoryCodeGroup(groupName)) {
             setParentCategoryCodes([]);
             return;
@@ -181,7 +181,7 @@ const CommonCodeManagement = () => {
         }
     }, []);
 
-    const loadGroupCodes = useCallback(async (groupName) => {
+    const loadGroupCodes = useCallback(async(groupName) => {
         try {
             setLoading(true);
             const codes = await getCommonCodes(groupName);
@@ -369,7 +369,7 @@ const CommonCodeManagement = () => {
         return koreanMappings[groupName] || groupName;
     };
 
-    const handleAddCode = async (e) => {
+    const handleAddCode = async(e) => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
@@ -442,7 +442,7 @@ const CommonCodeManagement = () => {
         }
     };
 
-    const handleDeleteCode = async (codeId) => {
+    const handleDeleteCode = async(codeId) => {
         const confirmed = await new Promise((resolve) => {
             notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
         });
@@ -467,7 +467,7 @@ const CommonCodeManagement = () => {
         }
     };
 
-    const handleToggleStatus = async (codeId, currentStatus) => {
+    const handleToggleStatus = async(codeId, currentStatus) => {
         try {
             setLoading(true);
             await toggleCommonCodeStatus(codeId, {
@@ -508,7 +508,7 @@ const CommonCodeManagement = () => {
         setShowAddForm(true);
     };
 
-    const handleUpdateCode = async (e) => {
+    const handleUpdateCode = async(e) => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
@@ -639,7 +639,7 @@ const CommonCodeManagement = () => {
                                     onChange={ (e) => setSearchTerm(e.target.value) }
                                     className="mg-v2-ad-b0kla__search-input"
                                 />
-                                <i className="bi bi-search mg-v2-ad-b0kla__search-icon"></i>
+                                <i className="bi bi-search mg-v2-ad-b0kla__search-icon" />
                             </div>
                             <select
                                 value={ categoryFilter }
@@ -682,7 +682,7 @@ const CommonCodeManagement = () => {
                     <div className="mg-v2-ad-b0kla__detail-section">
                         {!selectedGroup ? (
                             <div className="mg-v2-ad-b0kla__detail-empty">
-                                <i className="bi bi-folder-symlink"></i>
+                                <i className="bi bi-folder-symlink" />
                                 <h3>코드그룹을 선택하세요</h3>
                                 <p>좌측 목록에서 코드그룹을 선택하여 상세 코드를 관리할 수 있습니다.</p>
                             </div>
@@ -721,7 +721,7 @@ const CommonCodeManagement = () => {
                                                 disabled={loading}
                                                 preventDoubleClick={false}
                                             >
-                                                <i className="bi bi-plus-lg"></i> 신규 추가
+                                                <i className="bi bi-plus-lg" /> 신규 추가
                                             </MGButton>
                                         )}
                                     </div>
@@ -738,7 +738,7 @@ const CommonCodeManagement = () => {
                                                 onClick={handleCancelForm}
                                                 preventDoubleClick={false}
                                             >
-                                                <i className="bi bi-x-lg"></i>
+                                                <i className="bi bi-x-lg" />
                                             </MGButton>
                                         </div>
                                         <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
@@ -749,7 +749,7 @@ const CommonCodeManagement = () => {
                                                         id="codeValue"
                                                         type="text"
                                                         value={ newCodeData.codeValue }
-                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeValue: e.target.value })}
+                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeValue: e.target.value })}
                                                         placeholder="예: ACTIVE, INACTIVE"
                                                         required
                                                         disabled={!!editingCode}
@@ -762,7 +762,7 @@ const CommonCodeManagement = () => {
                                                         id="codeLabel"
                                                         type="text"
                                                         value={ newCodeData.codeLabel }
-                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeLabel: e.target.value })}
+                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeLabel: e.target.value })}
                                                         placeholder="예: 활성, 비활성"
                                                         required
                                                         className="mg-v2-ad-b0kla__form-input"
@@ -796,7 +796,7 @@ const CommonCodeManagement = () => {
                                                     <textarea
                                                         id="codeDescription"
                                                         value={ newCodeData.codeDescription }
-                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeDescription: e.target.value })}
+                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeDescription: e.target.value })}
                                                         placeholder="코드에 대한 설명을 입력하세요."
                                                         className="mg-v2-ad-b0kla__form-textarea"
                                                     />
@@ -809,7 +809,7 @@ const CommonCodeManagement = () => {
                                                         id="sortOrder"
                                                         type="number"
                                                         value={ newCodeData.sortOrder }
-                                                        onChange={ (e) => setNewCodeData({...newCodeData, sortOrder: Number.parseInt(e.target.value) || 0 })}
+                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, sortOrder: Number.parseInt(e.target.value) || 0 })}
                                                         min="0"
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
@@ -819,7 +819,7 @@ const CommonCodeManagement = () => {
                                                         type="checkbox"
                                                         id="isActiveCheckbox"
                                                         checked={ newCodeData.isActive }
-                                                        onChange={ (e) => setNewCodeData({...newCodeData, isActive: e.target.checked })}
+                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, isActive: e.target.checked })}
                                                     />
                                                     <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label" style={{ cursor: 'pointer' }}>활성 상태</label>
                                                 </div>
@@ -894,13 +894,13 @@ const CommonCodeManagement = () => {
                                                         <td style={{ textAlign: 'center' }}>
                                                             <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
                                                                 <MGButton type="button" variant="outline" size="small" onClick={() => handleEditCode(code)} title="수정" style={{ color: 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
-                                                                    <i className="bi bi-pencil-square"></i>
+                                                                    <i className="bi bi-pencil-square" />
                                                                 </MGButton>
                                                                 <MGButton type="button" variant="outline" size="small" onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
-                                                                    <i className={`bi ${code.isActive ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
+                                                                    <i className={`bi ${code.isActive ? 'bi-pause-circle' : 'bi-play-circle'}`} />
                                                                 </MGButton>
                                                                 <MGButton type="button" variant="outline" size="small" onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500)' }} preventDoubleClick={false}>
-                                                                    <i className="bi bi-trash"></i>
+                                                                    <i className="bi bi-trash" />
                                                                 </MGButton>
                                                             </div>
                                                         </td>

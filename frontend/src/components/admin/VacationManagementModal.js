@@ -65,7 +65,7 @@ const VacationManagementModal = ({
 
     // 휴가 유형 코드 로드
     useEffect(() => {
-        const loadVacationTypeCodes = async () => {
+        const loadVacationTypeCodes = async() => {
             try {
                 setLoadingCodes(true);
                 const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
@@ -127,7 +127,7 @@ const VacationManagementModal = ({
 /**
      * 상담사 목록 로드 (활성 상담사만)
      */
-    const loadConsultants = async () => {
+    const loadConsultants = async() => {
         console.log('🏖️ 활성 상담사 목록 로드 시작 (통합 API)');
         try {
             // 통합 API 사용 (전문분야 포함)
@@ -173,7 +173,7 @@ const VacationManagementModal = ({
 /**
      * 휴가 목록 로드
      */
-    const loadVacations = async (consultantId) => {
+    const loadVacations = async(consultantId) => {
         if (!consultantId) return;
         
         setLoading(true);
@@ -181,7 +181,7 @@ const VacationManagementModal = ({
             const response = await fetch(`${API_BASE_URL}/api/consultant/${consultantId}/vacation`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -239,7 +239,7 @@ const VacationManagementModal = ({
 /**
      * 휴가 등록/수정
      */
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         
         if (!selectedConsultantId) {
@@ -346,7 +346,7 @@ const VacationManagementModal = ({
 /**
      * 휴가 삭제
      */
-    const handleDeleteVacation = async (vacationId, date) => {
+    const handleDeleteVacation = async(vacationId, date) => {
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('정말로 이 휴가를 삭제하시겠습니까?', resolve);
     });
@@ -359,7 +359,7 @@ const VacationManagementModal = ({
             const response = await fetch(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation/${date}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });

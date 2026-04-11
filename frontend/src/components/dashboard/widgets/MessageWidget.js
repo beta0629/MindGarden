@@ -53,7 +53,7 @@ const MessageWidget = ({ widget, user }) => {
     }
   }, []);
   
-  const loadMessages = async () => {
+  const loadMessages = async() => {
     try {
       setLoading(true);
       
@@ -141,7 +141,7 @@ const MessageWidget = ({ widget, user }) => {
     <div className="widget widget-message">
       <div className="widget-header">
         <div className="widget-title">
-          <i className="bi bi-envelope"></i>
+          <i className="bi bi-envelope" />
           {config.title || '메시지'}
           {unreadCount > 0 && (
             <span className="widget-badge">{unreadCount}</span>
@@ -165,7 +165,7 @@ const MessageWidget = ({ widget, user }) => {
                   onClick={() => handleMessageClick(message)}
                 >
                   <div className="message-icon">
-                    <i className={`bi ${typeInfo.icon}`}></i>
+                    <i className={`bi ${typeInfo.icon}`} />
                   </div>
                   <div className="message-content">
                     <div className="message-title"><SafeText>{message.title ?? message.subject}</SafeText></div>
@@ -183,7 +183,7 @@ const MessageWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="widget-empty">
-            <i className="bi bi-inbox"></i>
+            <i className="bi bi-inbox" />
             <p>{config.emptyMessage || '메시지가 없습니다'}</p>
           </div>
         )}

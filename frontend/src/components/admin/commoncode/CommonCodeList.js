@@ -126,7 +126,7 @@ const CommonCodeList = ({
                                                         className="color-swatch" 
                                                         style={{ backgroundColor: code.colorCode }}
                                                         title={code.colorCode}
-                                                    ></span>
+                                                     />
                                                     <span className="color-code">{code.colorCode}</span>
                                                 </div>
                                             </div>
@@ -176,7 +176,7 @@ const CommonCodeList = ({
                                     onClick={() => onEdit(code)}
                                     title="편집"
                                 >
-                                    <i className="bi bi-pencil"></i>
+                                    <i className="bi bi-pencil" />
                                     <span>편집</span>
                                 </MGButton>
                                 <MGButton 
@@ -187,7 +187,7 @@ const CommonCodeList = ({
                                     onClick={() => onDelete(code.id)}
                                     title="삭제"
                                 >
-                                    <i className="bi bi-trash"></i>
+                                    <i className="bi bi-trash" />
                                     <span>삭제</span>
                                 </MGButton>
                             </div>

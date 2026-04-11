@@ -20,7 +20,7 @@ const ActivityHistory = () => {
     loadStatistics();
   }, [filter, dateRange]);
 
-  const loadActivities = async () => {
+  const loadActivities = async() => {
     try {
       setLoading(true);
       
@@ -57,7 +57,7 @@ const ActivityHistory = () => {
     }
   };
 
-  const loadStatistics = async () => {
+  const loadStatistics = async() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/activities/statistics`, {
         method: 'GET',
@@ -134,7 +134,7 @@ const ActivityHistory = () => {
         <div className="activity-history-header">
           <div className="activity-history-header-content">
             <h2>
-              <i className="bi bi-clock-history"></i>
+              <i className="bi bi-clock-history" />
               활동 내역
             </h2>
             <p>
@@ -147,7 +147,7 @@ const ActivityHistory = () => {
             onClick={() => navigate('/client/dashboard')}
             preventDoubleClick={false}
           >
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left" />
             대시보드로
           </MGButton>
         </div>
@@ -192,7 +192,7 @@ const ActivityHistory = () => {
                 <div 
                   className="activity-history-icon"
                 >
-                  <i className={`bi ${activity.icon}`}></i>
+                  <i className={`bi ${activity.icon}`} />
                 </div>
 
                 {/* 내용 */}
@@ -214,15 +214,15 @@ const ActivityHistory = () => {
                   
                   <div className="activity-history-footer">
                     <span>
-                      <i className="bi bi-calendar3"></i>
+                      <i className="bi bi-calendar3" />
                       {activity.date}
                     </span>
                     <span>
-                      <i className="bi bi-clock"></i>
+                      <i className="bi bi-clock" />
                       {activity.time}
                     </span>
                     <span>
-                      <i className="bi bi-hourglass-split"></i>
+                      <i className="bi bi-hourglass-split" />
                       {getTimeAgo(activity.date, activity.time)}
                     </span>
                   </div>
@@ -232,7 +232,7 @@ const ActivityHistory = () => {
           </div>
         ) : (
           <div className="activity-history-empty">
-            <i className="bi bi-inbox activity-history-empty-icon"></i>
+            <i className="bi bi-inbox activity-history-empty-icon" />
             <h5 className="activity-history-empty-title">활동 내역이 없습니다</h5>
             <p className="activity-history-empty-description">선택한 조건에 해당하는 활동이 없습니다.</p>
           </div>

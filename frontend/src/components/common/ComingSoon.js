@@ -24,21 +24,21 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
       <div className="coming-soon-container">
         <div className="coming-soon-content">
           <div className="coming-soon-icon">
-            <i className="bi bi-tools"></i>
+            <i className="bi bi-tools" />
           </div>
           <h1 className="coming-soon-title">{title}</h1>
           <p className="coming-soon-description">{description}</p>
           <div className="coming-soon-features">
             <div className="feature-item">
-              <i className="bi bi-clock"></i>
+              <i className="bi bi-clock" />
               <span>곧 출시될 예정입니다</span>
             </div>
             <div className="feature-item">
-              <i className="bi bi-heart"></i>
+              <i className="bi bi-heart" />
               <span>더 나은 서비스를 위해 준비 중입니다</span>
             </div>
             <div className="feature-item">
-              <i className="bi bi-arrow-left"></i>
+              <i className="bi bi-arrow-left" />
               <span>이전 페이지로 돌아가세요</span>
             </div>
           </div>
@@ -47,7 +47,7 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
             onClick={() => window.history.back()}
             variant="primary"
           >
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left" />
             이전 페이지로
           </MGButton>
         </div>

@@ -5,16 +5,16 @@ export default {
   title: 'Widgets/admin/PendingDeposits',
   component: PendingDepositsWidget,
   parameters: {
-    layout: 'padded',
+    layout: 'padded'
   },
   argTypes: {
     widget: {
-      control: 'object',
+      control: 'object'
     },
     user: {
-      control: 'object',
-    },
-  },
+      control: 'object'
+    }
+  }
 };
 
 const Template = (args) => <PendingDepositsWidget {...args} />;
@@ -36,13 +36,13 @@ Default.args = {
 
 export const Loading = Template.bind({});
 Loading.args = {
-  ...Default.args,
+  ...Default.args
   // 로딩 상태는 컴포넌트 내부에서 처리
 };
 
 export const Error = Template.bind({});
 Error.args = {
-  ...Default.args,
+  ...Default.args
   // 에러 상태는 컴포넌트 내부에서 처리
 };
 

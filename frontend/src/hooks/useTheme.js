@@ -125,7 +125,7 @@ export const useTheme = () => {
     };
 
     const changeToTheme = useCallback(
-        async (themeType) => {
+        async(themeType) => {
             setThemeMode(themeType);
             return { success: true, theme: { type: themeType } };
         },
@@ -133,7 +133,7 @@ export const useTheme = () => {
     );
 
     const applyCustomTheme = useCallback(
-        async (baseThemeType, _customColors) => {
+        async(baseThemeType, _customColors) => {
             if (baseThemeType === 'light' || baseThemeType === 'dark' || baseThemeType === 'system') {
                 setThemeMode(baseThemeType);
             }
@@ -142,7 +142,7 @@ export const useTheme = () => {
         [setThemeMode]
     );
 
-    const resetToDefault = useCallback(async () => {
+    const resetToDefault = useCallback(async() => {
         setThemeMode('light');
         return { success: true, theme: { type: 'light' } };
     }, [setThemeMode]);

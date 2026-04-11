@@ -31,7 +31,7 @@ const ScheduleCalendarLegend = ({
                             <span 
                                 className="mg-v2-legend-color"
                                 style={{ '--legend-color': status.color }}
-                            ></span>
+                             />
                             <span className="mg-v2-legend-label">
                                 {status.icon} {status.label}
                             </span>
@@ -53,7 +53,7 @@ const ScheduleCalendarLegend = ({
                                 <span 
                                     className="mg-v2-consultant-color"
                                     style={{ '--consultant-color': getConsultantColor(consultant.id) }}
-                                ></span>
+                                 />
                                 <span className="mg-v2-consultant-name">
                                     {consultant.name}
                                 </span>

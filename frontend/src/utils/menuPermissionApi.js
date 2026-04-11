@@ -26,7 +26,7 @@ const getMenuPermissionApi = () => `${getApiBaseUrl()}/api/v1/admin/menu-permiss
 /**
  * 역할별 메뉴 권한 목록 조회
  */
-export const getRoleMenuPermissions = async (roleId) => {
+export const getRoleMenuPermissions = async(roleId) => {
     try {
         const response = await axios.get(`${getMenuPermissionApi()}/roles/${roleId}`, {
             withCredentials: true
@@ -41,7 +41,7 @@ export const getRoleMenuPermissions = async (roleId) => {
 /**
  * 메뉴 권한 부여
  */
-export const grantMenuPermission = async (request) => {
+export const grantMenuPermission = async(request) => {
     try {
         const response = await axios.post(`${getMenuPermissionApi()}/grant`, request, {
             withCredentials: true
@@ -56,7 +56,7 @@ export const grantMenuPermission = async (request) => {
 /**
  * 메뉴 권한 회수
  */
-export const revokeMenuPermission = async (roleId, menuId) => {
+export const revokeMenuPermission = async(roleId, menuId) => {
     try {
         const response = await axios.delete(`${getMenuPermissionApi()}/revoke`, {
             params: { roleId, menuId },
@@ -72,7 +72,7 @@ export const revokeMenuPermission = async (roleId, menuId) => {
 /**
  * 메뉴 권한 일괄 설정
  */
-export const batchUpdateMenuPermissions = async (roleId, requests) => {
+export const batchUpdateMenuPermissions = async(roleId, requests) => {
     try {
         const response = await axios.post(
             `${getMenuPermissionApi()}/batch?roleId=${roleId}`,
@@ -89,7 +89,7 @@ export const batchUpdateMenuPermissions = async (roleId, requests) => {
 /**
  * 사용자 접근 가능한 메뉴 조회
  */
-export const getUserAccessibleMenus = async () => {
+export const getUserAccessibleMenus = async() => {
     try {
         const response = await axios.get(`${getMenuPermissionApi()}/user/accessible`, {
             withCredentials: true

@@ -41,7 +41,7 @@ const SimpleHeader = () => {
 
   // 사용자 역할 표시명 동적 로드
   useEffect(() => {
-    const loadRoleDisplayNames = async () => {
+    const loadRoleDisplayNames = async() => {
       if (user?.role) {
         try {
           const koreanName = await getRoleDisplayName(user.role, user.branchName);
@@ -78,7 +78,7 @@ const SimpleHeader = () => {
   };
 
   // 뒤로가기 버튼 클릭 핸들러
-  const handleBackClick = async () => {
+  const handleBackClick = async() => {
     // 브라우저 히스토리가 있으면 뒤로가기, 없으면 적절한 대시보드로 이동
     if (window.history.length > 1) {
       navigate(-1);
@@ -99,13 +99,13 @@ const SimpleHeader = () => {
 
   // 하드코딩된 역할 매핑 함수 제거 - 동적 로딩 사용
 
-  const handleLogout = async (e) => {
+  const handleLogout = async(e) => {
     e.preventDefault();
     e.stopPropagation();
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = async () => {
+  const confirmLogout = async() => {
     // 중앙 세션의 logout 함수 사용
     await logout();
     navigate('/login');
@@ -145,14 +145,14 @@ const SimpleHeader = () => {
               title={HEADER_TEXTS.BACK_TITLE}
               preventDoubleClick={false}
             >
-              <i className={`bi ${HEADER_ICONS.BACK}`}></i>
+              <i className={`bi ${HEADER_ICONS.BACK}`} />
             </MGButton>
           )}
           
           {/* 로고 */}
           <div className={HEADER_CSS_CLASSES.HEADER_LOGO}>
             <a href="/" className={HEADER_CSS_CLASSES.HEADER_LOGO_LINK}>
-              <i className={`bi ${HEADER_ICONS.LOGO}`}></i>
+              <i className={`bi ${HEADER_ICONS.LOGO}`} />
               <span>{HEADER_TEXTS.BRAND_NAME}</span>
             </a>
           </div>
@@ -162,13 +162,13 @@ const SimpleHeader = () => {
         <div className={HEADER_CSS_CLASSES.HEADER_RIGHT}>
           {/* 디버그 정보 */}
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
-          <div style={{fontSize: '10px', color: '#666', marginRight: '10px'}}>
+          <div style={{ fontSize: '10px', color: '#666', marginRight: '10px' }}>
             Debug: {isLoading ? 'Loading' : isLoggedIn ? 'LoggedIn' : 'NotLoggedIn'} | User: {user ? 'Yes' : 'No'}
           </div>
           
           {isLoading ? (
             <div className={HEADER_CSS_CLASSES.LOADING}>
-              <i className={`bi ${HEADER_ICONS.LOADING}`}></i>
+              <i className={`bi ${HEADER_ICONS.LOADING}`} />
               <span>{HEADER_TEXTS.LOADING}</span>
             </div>
           ) : isLoggedIn && user ? (
@@ -197,7 +197,7 @@ const SimpleHeader = () => {
                 title="로그아웃"
                 preventDoubleClick={false}
               >
-                <i className="bi bi-box-arrow-right"></i>
+                <i className="bi bi-box-arrow-right" />
                 <span>로그아웃</span>
               </MGButton>
 
@@ -209,14 +209,14 @@ const SimpleHeader = () => {
                 title={HEADER_TEXTS.MENU_TITLE}
                 preventDoubleClick={false}
               >
-                <i className={`bi ${HEADER_ICONS.HAMBURGER}`}></i>
+                <i className={`bi ${HEADER_ICONS.HAMBURGER}`} />
               </MGButton>
             </>
           ) : (
             <>
               {/* 로그인 버튼 */}
               <a href="/login" className={HEADER_CSS_CLASSES.LOGIN_BUTTON}>
-                <i className={`bi ${HEADER_ICONS.LOGIN}`}></i>
+                <i className={`bi ${HEADER_ICONS.LOGIN}`} />
                 {HEADER_TEXTS.LOGIN}
               </a>
             </>

@@ -18,11 +18,11 @@ import './Card.css';
 /**
  * @param {string} props.className - 추가 CSS 클래스
  */
-const CardFooter = ({children, 
+const CardFooter = ({ children, 
   actions,
   meta,
   className = '',
-  ...props}) => {return (<div className={`mg-v2-card-footer ${className}`.trim()} {...props}>
+  ...props }) => {return (<div className={`mg-v2-card-footer ${className}`.trim()} {...props}>
       {meta && <span className="mg-v2-v2-v2-card-meta">{meta}</span>}
           {actions && (<div className="mg-v2-v2-v2-card-actions">
           {actions.map((action, index) => {

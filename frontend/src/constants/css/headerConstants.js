@@ -31,7 +31,7 @@ export const HEADER_CSS_CLASSES = {
   HAMBURGER_TOGGLE: 'simple-hamburger-toggle',
   LOGIN_BUTTON: 'simple-login-button',
   LOGOUT_BUTTON: 'simple-logout-button',
-  MENU_TOGGLE: 'simple-menu-toggle',
+  MENU_TOGGLE: 'simple-menu-toggle'
 };
 
 export const HEADER_STYLE_CONSTANTS = {
@@ -50,7 +50,7 @@ export const HEADER_STYLE_CONSTANTS = {
     DANGER_HOVER: 'var(--cs-error-700)',
     NEUTRAL: 'var(--mg-gray-100)',
     NEUTRAL_HOVER: 'var(--cs-gray-200)',
-    BORDER_LIGHT: 'var(--cs-border-secondary)',
+    BORDER_LIGHT: 'var(--cs-border-secondary)'
   },
   
   SIZES: {
@@ -67,7 +67,7 @@ export const HEADER_STYLE_CONSTANTS = {
     BORDER_RADIUS_LARGE: '12px',
     BORDER_RADIUS_ROUND: '50%',
     GAP: '12px',
-    GAP_MOBILE: '8px',
+    GAP_MOBILE: '8px'
   },
   
   FONTS: {
@@ -90,46 +90,46 @@ export const HEADER_STYLE_CONSTANTS = {
     ICON_SIZE_LARGE: '18px',
     ICON_SIZE_MOBILE: '14px',
     AVATAR_ICON_SIZE: '24px',
-    AVATAR_ICON_SIZE_MOBILE: '20px',
+    AVATAR_ICON_SIZE_MOBILE: '20px'
   },
   
   SHADOWS: {
     HEADER: '0 2px 4px var(--mg-shadow-light)',
     LOGOUT_BUTTON: 'var(--cs-shadow-error)',
-    LOGOUT_BUTTON_HOVER: 'var(--cs-shadow-error-strong)',
+    LOGOUT_BUTTON_HOVER: 'var(--cs-shadow-error-strong)'
   },
   
   Z_INDEX: {
     HEADER: 1000,
-    LOGOUT_BUTTON: 99999,
+    LOGOUT_BUTTON: 99999
   },
   
   ANIMATIONS: {
     TRANSITION: '0.2s ease',
     TRANSITION_SLOW: '0.3s ease',
     SPIN_DURATION: '1s',
-    PULSE_DURATION: '2s',
-  },
+    PULSE_DURATION: '2s'
+  }
 };
 
 export const HEADER_BREAKPOINTS = {
   MOBILE: '768px',
-  TABLET: '1024px',
+  TABLET: '1024px'
 };
 
 export const HEADER_STATES = {
   LOADING: {
     opacity: '0.7',
-    cursor: 'not-allowed',
+    cursor: 'not-allowed'
   },
   HOVER: {
     transform: 'translateY(-1px)',
-    scale: '1.05',
+    scale: '1.05'
   },
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: {
-    transform: 'scale(0.95)',
-  },
+    transform: 'scale(0.95)'
+  }
 };
 
 export const HEADER_ICONS = {
@@ -142,7 +142,7 @@ export const HEADER_ICONS = {
   LOGOUT: 'bi-box-arrow-right',
   CLOSE: 'bi-x',
   CHECK: 'bi-check-circle',
-  BRANCH: 'bi-geo-alt',
+  BRANCH: 'bi-geo-alt'
 };
 
 export const HEADER_TEXTS = {
@@ -153,7 +153,7 @@ export const HEADER_TEXTS = {
   MENU_TITLE: '메뉴',
   DEFAULT_USER: '사용자',
   TEST_BUTTON: '테스트',
-  BRAND_NAME: 'Core Solution',
+  BRAND_NAME: 'Core Solution'
 };
 
 export const HEADER_DEFAULTS = {
@@ -163,5 +163,5 @@ export const HEADER_DEFAULTS = {
     '/consultant/dashboard', 
     '/client/dashboard',
     '/super_admin/dashboard'
-  ],
+  ]
 };

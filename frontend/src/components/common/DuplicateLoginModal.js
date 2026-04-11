@@ -11,7 +11,7 @@ import SafeText from './SafeText';
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
 
-  const handleConfirm = async () => {
+  const handleConfirm = async() => {
     if (!duplicateLoginModal.loginData) {
       console.error('❌ 로그인 데이터가 없습니다.');
       return;
@@ -51,7 +51,7 @@ const DuplicateLoginModal = () => {
         };
         console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
 
-        setTimeout(async () => {
+        setTimeout(async() => {
           try {
 
             const { getCurrentUserDashboard, getDynamicDashboardPath } = await import('../../utils/dashboardUtils');

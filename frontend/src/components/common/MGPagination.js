@@ -89,7 +89,7 @@ const MGPagination = ({
     <div className={getPaginationClasses()} {...props}>
       {loading && (
         <div className="mg-pagination__loading">
-          <div className="mg-pagination__spinner"></div>
+          <div className="mg-pagination__spinner" />
         </div>
       )}
       

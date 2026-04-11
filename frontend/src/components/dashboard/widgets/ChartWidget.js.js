@@ -56,7 +56,7 @@ const ChartWidget = ({ widget, user }) => {
     return (
       <div className="chart-container">
         <div className="chart-placeholder">
-          <i className="bi bi-bar-chart-line"></i>
+          <i className="bi bi-bar-chart-line" />
           <p>📊 {chartType.toUpperCase()} 차트</p>
           <p className="chart-data-info">
             데이터 포인트: {Array.isArray(data) ? data.length : '1'}개

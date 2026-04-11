@@ -76,7 +76,7 @@ const MappingPaymentModal = ({
     };
 
     // 입금확인 처리
-    const handleConfirmPayment = async () => {
+    const handleConfirmPayment = async() => {
         if (!mapping) return;
 
         setLoading(true);

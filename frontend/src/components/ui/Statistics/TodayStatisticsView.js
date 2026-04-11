@@ -34,7 +34,7 @@ const TodayStatisticsView = ({
                         variant="outline"
                         preventDoubleClick={false}
                     >
-                        <i className="bi bi-graph-up"></i>
+                        <i className="bi bi-graph-up" />
                         통계 보기
                     </MGButton>
                     <MGButton

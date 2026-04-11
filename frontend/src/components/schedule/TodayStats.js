@@ -23,7 +23,7 @@ const TodayStats = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const loadTodayStats = async () => {
+    const loadTodayStats = async() => {
         try {
             setLoading(true);
             const today = new Date().toISOString().split('T')[0];

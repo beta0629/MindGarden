@@ -9,7 +9,7 @@ import { UI_CONSTANTS } from './magicNumbers';
 /**
  * 카드 변형 타입
  */
-export const CARD_VARIANTS = {DEFAULT: 'default',
+export const CARD_VARIANTS = { DEFAULT: 'default',
   GLASS: 'glass',
   GRADIENT: 'gradient',
   FLOATING: 'floating',
@@ -17,144 +17,144 @@ export const CARD_VARIANTS = {DEFAULT: 'default',
   ELEVATED: 'elevated',
   OUTLINED: 'outlined',
   FILLED: 'filled',
-  MINIMAL: 'minimal'};
+  MINIMAL: 'minimal' };
 
 /**
  * 카드 크기
  */
-export const CARD_SIZES = {SMALL: 'small',
+export const CARD_SIZES = { SMALL: 'small',
   MEDIUM: 'medium',
   LARGE: 'large',
-  EXTRA_LARGE: 'extra-large'};
+  EXTRA_LARGE: 'extra-large' };
 
 /**
  * 카드 타입별 정의
  */
-export const CARD_TYPES = {STAT: {name: '통계 카드',
+export const CARD_TYPES = { STAT: { name: '통계 카드',
     description: '숫자와 라벨을 표시하는 통계 카드',
     variant: CARD_VARIANTS.DEFAULT,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'optional',
+    structure: { header: 'optional',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-stat'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-stat' },
   
-  USER: {name: '사용자 카드',
+  USER: { name: '사용자 카드',
     description: '사용자 정보를 표시하는 카드',
     variant: CARD_VARIANTS.DEFAULT,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'required',
+    structure: { header: 'required',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-user'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-user' },
   
-  CLIENT: {name: '내담자 카드',
+  CLIENT: { name: '내담자 카드',
     description: '내담자 정보를 표시하는 카드',
     variant: CARD_VARIANTS.GLASS,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'required',
+    structure: { header: 'required',
       content: 'required',
-      footer: 'required'},
-    cssClass: 'mg-v2-card-client'},
+      footer: 'required' },
+    cssClass: 'mg-v2-card-client' },
   
-  CONSULTANT: {name: '상담사 카드',
+  CONSULTANT: { name: '상담사 카드',
     description: '상담사 정보를 표시하는 카드',
     variant: CARD_VARIANTS.GLASS,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'required',
+    structure: { header: 'required',
       content: 'required',
-      footer: 'required'},
-    cssClass: 'mg-v2-card-consultant'},
+      footer: 'required' },
+    cssClass: 'mg-v2-card-consultant' },
   
-  SESSION: {name: '회기 카드',
+  SESSION: { name: '회기 카드',
     description: '상담 회기 정보를 표시하는 카드',
     variant: CARD_VARIANTS.BORDER,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'required',
+    structure: { header: 'required',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-session'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-session' },
   
-  MESSAGE: {name: '메시지 카드',
+  MESSAGE: { name: '메시지 카드',
     description: '메시지 내용을 표시하는 카드',
     variant: CARD_VARIANTS.MINIMAL,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'optional',
+    structure: { header: 'optional',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-message'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-message' },
   
-  NOTIFICATION: {name: '알림 카드',
+  NOTIFICATION: { name: '알림 카드',
     description: '알림 내용을 표시하는 카드',
     variant: CARD_VARIANTS.FLOATING,
     size: CARD_SIZES.SMALL,
-    structure: {header: 'optional',
+    structure: { header: 'optional',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-notification'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-notification' },
   
-  ACTION: {name: '액션 카드',
+  ACTION: { name: '액션 카드',
     description: '액션 버튼을 포함한 카드',
     variant: CARD_VARIANTS.ELEVATED,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'optional',
+    structure: { header: 'optional',
       content: 'required',
-      footer: 'required'},
-    cssClass: 'mg-v2-card-action'},
+      footer: 'required' },
+    cssClass: 'mg-v2-card-action' },
   
-  INFO: {name: '정보 카드',
+  INFO: { name: '정보 카드',
     description: '일반적인 정보를 표시하는 카드',
     variant: CARD_VARIANTS.DEFAULT,
     size: CARD_SIZES.MEDIUM,
-    structure: {header: 'optional',
+    structure: { header: 'optional',
       content: 'required',
-      footer: 'optional'},
-    cssClass: 'mg-v2-card-info'},
+      footer: 'optional' },
+    cssClass: 'mg-v2-card-info' },
   
-  FORM: {name: '폼 카드',
+  FORM: { name: '폼 카드',
     description: '폼 요소를 포함한 카드',
     variant: CARD_VARIANTS.OUTLINED,
     size: CARD_SIZES.LARGE,
-    structure: {header: 'required',
+    structure: { header: 'required',
       content: 'required',
-      footer: 'required'},
-    cssClass: 'mg-v2-card-form'}};
+      footer: 'required' },
+    cssClass: 'mg-v2-card-form' } };
 
 /**
  * 카드 레이아웃 패턴
  */
-export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
+export const CARD_LAYOUT_PATTERNS = { GRID: { name: '그리드 레이아웃',
     description: '카드들을 그리드 형태로 배치',
     cssClass: 'mg-v2-card-grid',
-    responsive: {mobile: {columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px'},
-      tablet: {columns: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px'},
-      desktop: {columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px'}}},
+    responsive: { mobile: { columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px' },
+      tablet: { columns: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px' },
+      desktop: { columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px' } } },
   
-  LIST: {name: '리스트 레이아웃',
+  LIST: { name: '리스트 레이아웃',
     description: '카드들을 세로로 나열',
     cssClass: 'mg-v2-card-list',
-    responsive: {mobile: {gap: '8px'},
-      tablet: {gap: '12px'},
-      desktop: {gap: '16px'}}},
+    responsive: { mobile: { gap: '8px' },
+      tablet: { gap: '12px' },
+      desktop: { gap: '16px' } } },
   
-  CAROUSEL: {name: '캐러셀 레이아웃',
+  CAROUSEL: { name: '캐러셀 레이아웃',
     description: '카드들을 가로로 스크롤',
     cssClass: 'mg-v2-card-carousel',
-    responsive: {mobile: {visible: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px'},
-      tablet: {visible: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px'},
-      desktop: {visible: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px'}}},
+    responsive: { mobile: { visible: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px' },
+      tablet: { visible: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px' },
+      desktop: { visible: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px' } } },
   
-  MASONRY: {name: '메이슨리 레이아웃',
+  MASONRY: { name: '메이슨리 레이아웃',
     description: '카드들을 높이에 따라 배치',
     cssClass: 'mg-v2-card-masonry',
-    responsive: {mobile: {columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE},
-      tablet: {columns: UI_CONSTANTS.GRID_COLUMNS_TABLET},
-      desktop: {columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP}}}};
+    responsive: { mobile: { columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE },
+      tablet: { columns: UI_CONSTANTS.GRID_COLUMNS_TABLET },
+      desktop: { columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP } } } };
 
 /**
  * 카드 상태
  */
-export const CARD_STATES = {DEFAULT: 'default',
+export const CARD_STATES = { DEFAULT: 'default',
   HOVER: 'hover',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'active',
@@ -162,12 +162,12 @@ export const CARD_STATES = {DEFAULT: 'default',
   LOADING: 'loading',
   ERROR: 'error',
   SUCCESS: 'success',
-  WARNING: 'warning'};
+  WARNING: 'warning' };
 
 /**
  * 카드 애니메이션
  */
-export const CARD_ANIMATIONS = {NONE: 'none',
+export const CARD_ANIMATIONS = { NONE: 'none',
   FADE_IN: 'fade-in',
   SLIDE_UP: 'slide-up',
   SLIDE_DOWN: 'slide-down',
@@ -175,7 +175,7 @@ export const CARD_ANIMATIONS = {NONE: 'none',
   SLIDE_RIGHT: 'slide-right',
   SCALE: 'scale',
   ROTATE: 'rotate',
-  BOUNCE: 'bounce'};
+  BOUNCE: 'bounce' };
 
 /**
  * 카드 헬퍼 함수
@@ -210,8 +210,8 @@ export const validateCardStructure = (cardType, structure) => {const type = getC
   
   if (required.footer === 'required' && !structure.footer) {errors.push(`${cardType} 카드는 footer가 필수입니다.`);}
   
-  return {isValid: errors.length === 0,
-    errors};};
+  return { isValid: errors.length === 0,
+    errors };};
 
 export const getCardLayoutPattern = (patternName) => {return CARD_LAYOUT_PATTERNS[patternName.toUpperCase()] || CARD_LAYOUT_PATTERNS.GRID;};
 
@@ -221,7 +221,7 @@ export const getResponsiveCardLayout = (patternName, deviceType = 'mobile') => {
 /**
  * 카드 사용 예시
  */
-export const CARD_USAGE_EXAMPLES = {STAT: {description: '통계 카드 사용법',
+export const CARD_USAGE_EXAMPLES = { STAT: { description: '통계 카드 사용법',
     code: `
 <Card variant="stat">
   <CardHeader icon={<ICONS.USERS />} title="총 사용자" />
@@ -230,9 +230,9 @@ export const CARD_USAGE_EXAMPLES = {STAT: {description: '통계 카드 사용법
     <div className="mg-v2-v2-v2-stat-label">명</div>
   </CardContent>
 </Card>
-    `},
+    ` },
   
-  USER: {description: '사용자 카드 사용법',
+  USER: { description: '사용자 카드 사용법',
     code: `
 <Card variant="user">
   <CardHeader 
@@ -249,9 +249,9 @@ export const CARD_USAGE_EXAMPLES = {STAT: {description: '통계 카드 사용법
       {label: '편집', onClick: handleEdit}]}
   />
 </Card>
-    `},
+    ` },
   
-  SESSION: {description: '회기 카드 사용법',
+  SESSION: { description: '회기 카드 사용법',
     code: `
 <Card variant="session">
   <CardHeader 
@@ -264,12 +264,12 @@ export const CARD_USAGE_EXAMPLES = {STAT: {description: '통계 카드 사용법
     <p>상태: 완료</p>
   </CardContent>
 </Card>
-    `}};
+    ` } };
 
-export default {CARD_VARIANTS,
+export default { CARD_VARIANTS,
   CARD_SIZES,
   CARD_TYPES,
   CARD_LAYOUT_PATTERNS,
   CARD_STATES,
   CARD_ANIMATIONS,
-  CARD_USAGE_EXAMPLES};
+  CARD_USAGE_EXAMPLES };

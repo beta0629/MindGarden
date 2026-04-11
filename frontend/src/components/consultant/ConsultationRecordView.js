@@ -31,7 +31,7 @@ const ConsultationRecordView = () => {
     }
   }, [recordId, user?.id]);
 
-  const loadRecord = async () => {
+  const loadRecord = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -82,7 +82,7 @@ const ConsultationRecordView = () => {
             className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left" />
             목록으로 돌아가기
           </MGButton>
         </div>
@@ -101,7 +101,7 @@ const ConsultationRecordView = () => {
             className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left" />
             목록으로 돌아가기
           </MGButton>
         </div>
@@ -126,10 +126,10 @@ const ConsultationRecordView = () => {
                 {record.startTime && record.endTime ? (() => {
                   try {
                     const startTime = record.startTime.includes('T') ? 
-                      record.startTime.split('T')[1]?.slice(0,5) : 
+                      record.startTime.split('T')[1]?.slice(0, 5) : 
                       record.startTime;
                     const endTime = record.endTime.includes('T') ? 
-                      record.endTime.split('T')[1]?.slice(0,5) : 
+                      record.endTime.split('T')[1]?.slice(0, 5) : 
                       record.endTime;
                     return `${startTime || '00:00'} - ${endTime || '00:00'}`;
                   } catch (error) {
@@ -171,7 +171,7 @@ const ConsultationRecordView = () => {
             variant="secondary"
             onClick={() => navigate('/consultant/consultation-records')}
           >
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left" />
             목록으로 돌아가기
           </MGButton>
         </div>

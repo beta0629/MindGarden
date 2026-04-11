@@ -58,7 +58,7 @@ export const TRAINING_CSS = {
     // Loading & Status
     LOADING: 'loading',
     TYPING_INDICATOR: 'typing-indicator',
-    NO_SESSION: 'no-session',
+    NO_SESSION: 'no-session'
 };
 
 export default TRAINING_CSS;

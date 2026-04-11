@@ -52,7 +52,7 @@ export const CLINICAL_CSS = {
         PENDING: 'status-pending',
         PROCESSING: 'status-processing',
         COMPLETED: 'status-completed',
-        FAILED: 'status-failed',
+        FAILED: 'status-failed'
     },
 
     // 심각도
@@ -60,7 +60,7 @@ export const CLINICAL_CSS = {
         CRITICAL: 'severity-critical',
         HIGH: 'severity-high',
         MEDIUM: 'severity-medium',
-        LOW: 'severity-low',
+        LOW: 'severity-low'
     },
 
     // 버튼
@@ -69,8 +69,8 @@ export const CLINICAL_CSS = {
         SECONDARY: 'btn btn-secondary',
         SUCCESS: 'btn btn-success',
         DANGER: 'btn btn-danger',
-        WARNING: 'btn btn-warning',
-    },
+        WARNING: 'btn btn-warning'
+    }
 };
 
 export default CLINICAL_CSS;

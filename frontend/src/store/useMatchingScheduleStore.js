@@ -5,11 +5,11 @@ const MOCK_WAITING_LIST = [
   { id: 'w1', name: '김내담', type: '개인상담', preferredTime: '평일 오후', status: 'WAITING' },
   { id: 'w2', name: '이부부', type: '부부상담', preferredTime: '주말 오전', status: 'WAITING' },
   { id: 'w3', name: '박가족', type: '가족상담', preferredTime: '평일 저녁', status: 'WAITING' },
-  { id: 'w4', name: '최학생', type: '개인상담', preferredTime: '주말 오후', status: 'WAITING' },
+  { id: 'w4', name: '최학생', type: '개인상담', preferredTime: '주말 오후', status: 'WAITING' }
 ];
 
 const MOCK_EVENTS = [
-  { id: 'e1', title: '개인상담 - 정기', start: new Date().toISOString().split('T')[0] + 'T10:00:00', end: new Date().toISOString().split('T')[0] + 'T11:00:00', resourceId: 'c1' },
+  { id: 'e1', title: '개인상담 - 정기', start: `${new Date().toISOString().split('T')[0]}T10:00:00`, end: `${new Date().toISOString().split('T')[0]}T11:00:00`, resourceId: 'c1' }
 ];
 
 export const useMatchingScheduleStore = create((set) => ({

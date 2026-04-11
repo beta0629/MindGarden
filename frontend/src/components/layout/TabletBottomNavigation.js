@@ -55,7 +55,7 @@ const TabletBottomNavigation = ({ userRole }) => {
               handleNavigation(item.path);
             }}
           >
-            <i className={item.icon}></i>
+            <i className={item.icon} />
             <span>{toDisplayString(item.label, '—')}</span>
           </a>
         ))}

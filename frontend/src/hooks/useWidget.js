@@ -147,7 +147,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
 /**
    * API 데이터 로드
    */
-  const loadData = useCallback(async (showLoading = true) => {
+  const loadData = useCallback(async(showLoading = true) => {
     // static 타입은 그대로 종료
     if (type === 'static') {
       if (showLoading) setLoading(false);
@@ -203,7 +203,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
 
         const getter = fetcher || apiGet;
         const results = await Promise.all(
-          safeEndpoints.map(async (ep) => {
+          safeEndpoints.map(async(ep) => {
             const epUrl = ep?.url;
             const epParams = ep?.params || {};
             const fallback = ep?.fallback;
@@ -278,7 +278,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
 /**
    * 수동 새로고침
    */
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async() => {
     // 캐시 클리어
     if (cache) {
       const cacheKey = getCacheKey();
@@ -427,7 +427,7 @@ export const combineWidgetResults = (widgetResults = []) => {
   const hasError = widgetResults.some(widget => widget.hasError);
   const errors = widgetResults.filter(widget => widget.hasError).map(widget => widget.error);
 
-  const refresh = async () => {
+  const refresh = async() => {
     await Promise.all(widgetResults.map(widget => widget.refresh()));
   };
 

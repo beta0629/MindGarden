@@ -4,7 +4,7 @@
  * 모든 lucide-react 아이콘을 중앙에서 관리
  */
 
-import {X, Check, Plus, Minus, Edit, Trash2, Save, Search,
+import { X, Check, Plus, Minus, Edit, Trash2, Save, Search,
   Eye, EyeOff, Lock, Unlock, Key, Shield, ShieldCheck, ShieldAlert,
   AlertTriangle, Info, CheckCircle, XCircle, HelpCircle,
   Play, Pause, Square, Volume2, Camera, Mic, Headphones, Speaker,
@@ -17,7 +17,7 @@ import {X, Check, Plus, Minus, Edit, Trash2, Save, Search,
   User, Users, UserCircle, UserSquare, Users2, LogIn, LogOut,
   Sun, Moon, CloudRain, Snowflake, Droplet, Droplets,
   Globe,
-  Compass, Navigation, Route, Building, Home, Store, Library} from 'lucide-react';
+  Compass, Navigation, Route, Building, Home, Store, Library } from 'lucide-react';
 
 import { CONSTANTS } from '../constants/magicNumbers';
 
@@ -40,56 +40,56 @@ export const ICON_SIZES = {
 /**
  * 아이콘 색상 상수
  */
-export const ICON_COLORS = {PRIMARY: {background: 'var(--mg-v2-primary)',
-    color: 'var(--color-white)'},
-  SECONDARY: {background: 'var(--mg-v2-secondary)',
-    color: 'var(--color-white)'},
-  SUCCESS: {background: 'var(--mg-v2-status-success)',
-    color: 'var(--color-white)'},
-  WARNING: {background: 'var(--mg-v2-status-warning)',
-    color: 'var(--color-white)'},
-  ERROR: {background: 'var(--mg-v2-status-error)',
-    color: 'var(--color-white)'},
-  INFO: {background: 'var(--mg-v2-status-info)',
-    color: 'var(--color-white)'},
-  MUTED: {background: 'var(--mg-v2-secondary-light)',
-    color: 'var(--mg-v2-secondary-dark)'},
-  TRANSPARENT: {background: 'transparent',
-    color: 'var(--mg-v2-primary)'}};
+export const ICON_COLORS = { PRIMARY: { background: 'var(--mg-v2-primary)',
+    color: 'var(--color-white)' },
+  SECONDARY: { background: 'var(--mg-v2-secondary)',
+    color: 'var(--color-white)' },
+  SUCCESS: { background: 'var(--mg-v2-status-success)',
+    color: 'var(--color-white)' },
+  WARNING: { background: 'var(--mg-v2-status-warning)',
+    color: 'var(--color-white)' },
+  ERROR: { background: 'var(--mg-v2-status-error)',
+    color: 'var(--color-white)' },
+  INFO: { background: 'var(--mg-v2-status-info)',
+    color: 'var(--color-white)' },
+  MUTED: { background: 'var(--mg-v2-secondary-light)',
+    color: 'var(--mg-v2-secondary-dark)' },
+  TRANSPARENT: { background: 'transparent',
+    color: 'var(--mg-v2-primary)' } };
 
 /**
  * 역할별 아이콘 색상
  */
-export const ICON_COLORS_BY_ROLE = {CLIENT: {PRIMARY: {background: 'var(--client-primary)',
-      color: 'var(--color-white)'},
-    SECONDARY: {background: 'var(--client-secondary)',
-      color: 'var(--client-text)'}},
-  CONSULTANT: {PRIMARY: {background: 'var(--consultant-primary)',
-      color: 'var(--color-white)'},
-    SECONDARY: {background: 'var(--consultant-secondary)',
-      color: 'var(--consultant-text)'}},
-  ADMIN: {PRIMARY: {background: 'var(--admin-primary)',
-      color: 'var(--color-white)'},
-    SECONDARY: {background: 'var(--admin-secondary)',
-      color: 'var(--admin-text)'}}};
+export const ICON_COLORS_BY_ROLE = { CLIENT: { PRIMARY: { background: 'var(--client-primary)',
+      color: 'var(--color-white)' },
+    SECONDARY: { background: 'var(--client-secondary)',
+      color: 'var(--client-text)' } },
+  CONSULTANT: { PRIMARY: { background: 'var(--consultant-primary)',
+      color: 'var(--color-white)' },
+    SECONDARY: { background: 'var(--consultant-secondary)',
+      color: 'var(--consultant-text)' } },
+  ADMIN: { PRIMARY: { background: 'var(--admin-primary)',
+      color: 'var(--color-white)' },
+    SECONDARY: { background: 'var(--admin-secondary)',
+      color: 'var(--admin-text)' } } };
 
 /**
  * 아이콘 사용 권장사항
  */
-export const ICON_USAGE = {BUTTON: ICON_SIZES.SM,
+export const ICON_USAGE = { BUTTON: ICON_SIZES.SM,
   SECTION_TITLE: ICON_SIZES.LG,
   CARD_HEADER: ICON_SIZES.MD,
   NAVIGATION: ICON_SIZES.MD,
   STATUS: ICON_SIZES.SM,
   AVATAR: ICON_SIZES.XXL,
-  HERO: ICON_SIZES.HUGE};
+  HERO: ICON_SIZES.HUGE };
 
 /**
  * 중앙화된 아이콘 객체
 /**
  * 모든 아이콘을 여기서 관리
  */
-export const ICONS = {// 기본 액션
+export const ICONS = { // 기본 액션
   X: X,
   CHECK: Check,
   PLUS: Plus,
@@ -202,7 +202,7 @@ export const ICONS = {// 기본 액션
   BUILDING: Building,
   HOME: Home,
   STORE: Store,
-  LIBRARY: Library};
+  LIBRARY: Library };
 
 /**
  * 아이콘 사용 헬퍼 함수

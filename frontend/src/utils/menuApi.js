@@ -26,7 +26,7 @@ const getMenuApi = () => `${getApiBaseUrl()}/api/v1/menus`;
 /**
  * 사용자 메뉴 조회 (역할별)
  */
-export const getUserMenus = async () => {
+export const getUserMenus = async() => {
     try {
         const response = await axios.get(`${getMenuApi()}/user`, {
             withCredentials: true
@@ -41,7 +41,7 @@ export const getUserMenus = async () => {
 /**
  * 관리자 전용 메뉴 조회
  */
-export const getAdminMenus = async () => {
+export const getAdminMenus = async() => {
     try {
         const response = await axios.get(`${getMenuApi()}/admin`, {
             withCredentials: true
@@ -56,7 +56,7 @@ export const getAdminMenus = async () => {
 /**
  * 전체 메뉴 조회
  */
-export const getAllMenus = async () => {
+export const getAllMenus = async() => {
     try {
         const response = await axios.get(`${getMenuApi()}/all`, {
             withCredentials: true
@@ -71,7 +71,7 @@ export const getAllMenus = async () => {
 /**
  * 메뉴 코드로 조회
  */
-export const getMenuByCode = async (menuCode) => {
+export const getMenuByCode = async(menuCode) => {
     try {
         const response = await axios.get(`${getMenuApi()}/code/${menuCode}`, {
             withCredentials: true
@@ -88,7 +88,7 @@ export const getMenuByCode = async (menuCode) => {
  * 백엔드 미기동(ERR_NETWORK) 시 콘솔 에러 대신 경고만 출력, 호출부에서 폴백 메뉴 사용.
  * @returns {Promise<{ data?: Array }>} ApiResponse 형태. data가 메뉴 트리(children 포함)
  */
-export const getLnbMenus = async () => {
+export const getLnbMenus = async() => {
     try {
         const response = await axios.get(`${getMenuApi()}/lnb`, {
             withCredentials: true
@@ -108,7 +108,7 @@ export const getLnbMenus = async () => {
 /**
  * 메뉴 경로로 조회
  */
-export const getMenuByPath = async (menuPath) => {
+export const getMenuByPath = async(menuPath) => {
     try {
         const response = await axios.get(`${getMenuApi()}/path`, {
             params: { path: menuPath },

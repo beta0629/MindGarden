@@ -27,9 +27,9 @@ export const generateCSSVariables = () => {const cssVars = [];
 /**
  * JavaScript 상수 생성
  */
-export const TOKENS = {colors: colors.tokens,
+export const TOKENS = { colors: colors.tokens,
   spacing: spacing.tokens,
-  typography: typography.tokens};
+  typography: typography.tokens };
 
 /**
  * 테마별 색상 가져오기

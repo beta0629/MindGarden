@@ -56,7 +56,7 @@ const MGStatistics = ({
     >
       {loading && (
         <div className="mg-statistics__loading">
-          <div className="mg-statistics__spinner"></div>
+          <div className="mg-statistics__spinner" />
         </div>
       )}
       
@@ -143,7 +143,7 @@ export const MGStatisticsChart = ({
       
       {loading && (
         <div className="mg-statistics-chart__loading">
-          <div className="mg-statistics-chart__spinner"></div>
+          <div className="mg-statistics-chart__spinner" />
         </div>
       )}
       
@@ -181,7 +181,7 @@ export const MGStatisticsCard = ({
     <div className={getCardClasses()} {...props}>
       {loading && (
         <div className="mg-statistics-card__loading">
-          <div className="mg-statistics-card__spinner"></div>
+          <div className="mg-statistics-card__spinner" />
         </div>
       )}
       

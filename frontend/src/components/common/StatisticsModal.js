@@ -29,7 +29,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   const [activeTab, setActiveTab] = useState('overall');
 
   // 통계 데이터 로드
-  const loadStatistics = async () => {
+  const loadStatistics = async() => {
     setLoading(true);
     setError(false);
     
@@ -44,7 +44,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
@@ -79,7 +79,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   };
 
   // 오늘 통계 데이터 로드
-  const loadTodayStatistics = async () => {
+  const loadTodayStatistics = async() => {
     setLoading(true);
     setError(false);
     
@@ -94,7 +94,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });

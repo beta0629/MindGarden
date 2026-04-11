@@ -13,7 +13,7 @@ const DropoutRiskIndicator = ({ risk }) => {
             'CRITICAL': '#dc2626',
             'HIGH': '#ea580c',
             'MEDIUM': 'var(--mg-warning-500)',
-            'LOW': 'var(--mg-success-500)',
+            'LOW': 'var(--mg-success-500)'
         };
         return colors[level] || '#6b7280';
     };
@@ -23,7 +23,7 @@ const DropoutRiskIndicator = ({ risk }) => {
             'CRITICAL': '매우 높음',
             'HIGH': '높음',
             'MEDIUM': '보통',
-            'LOW': '낮음',
+            'LOW': '낮음'
         };
         return labels[level] || level;
     };
@@ -72,7 +72,7 @@ const DropoutRiskIndicator = ({ risk }) => {
                         <div
                             className="metric-fill"
                             style={{ width: `${risk.engagementScore * 100}%`, backgroundColor: 'var(--mg-primary-500)' }}
-                        ></div>
+                         />
                     </div>
                     <span>{(risk.engagementScore * 100).toFixed(0)}%</span>
                 </div>
@@ -83,7 +83,7 @@ const DropoutRiskIndicator = ({ risk }) => {
                         <div
                             className="metric-fill"
                             style={{ width: `${risk.attendanceRate * 100}%`, backgroundColor: 'var(--mg-success-500)' }}
-                        ></div>
+                         />
                     </div>
                     <span>{(risk.attendanceRate * 100).toFixed(0)}%</span>
                 </div>

@@ -28,7 +28,7 @@ const TaxManagement = () => {
     const [activeTab, setActiveTab] = useState('statistics');
 
     // 세금 통계 로드
-    const loadTaxStatistics = async (period) => {
+    const loadTaxStatistics = async(period) => {
         try {
             setLoading(true);
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
@@ -46,7 +46,7 @@ const TaxManagement = () => {
     };
 
     // 세금 유형별 내역 로드
-    const loadTaxCalculationsByType = async (taxType) => {
+    const loadTaxCalculationsByType = async(taxType) => {
         try {
             setLoading(true);
             const response = await StandardizedApi.get(
@@ -64,7 +64,7 @@ const TaxManagement = () => {
     };
 
     // 추가 세금 계산
-    const calculateAdditionalTax = async (calculationId, grossAmount, taxType, taxRate) => {
+    const calculateAdditionalTax = async(calculationId, grossAmount, taxType, taxRate) => {
         try {
             setLoading(true);
             const requestData = {

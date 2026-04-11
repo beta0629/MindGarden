@@ -55,7 +55,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [loading, setLoading] = useState(true);
   const [recentLoadError, setRecentLoadError] = useState(false);
 
-  const loadStatsAndRecent = useCallback(async () => {
+  const loadStatsAndRecent = useCallback(async() => {
     if (!user?.id) return;
     setLoading(true);
     setRecentLoadError(false);
@@ -79,7 +79,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   useEffect(() => {
     let cancelled = false;
-    const loadClients = async () => {
+    const loadClients = async() => {
       setClientsLoading(true);
       try {
         const res = await StandardizedApi.get(CLIENTS_WITH_MAPPING_URL);
@@ -163,7 +163,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     setIsDragOver(false);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async() => {
     if (!uploadFiles?.length) {
       notificationManager.show('업로드할 파일을 선택해 주세요.', 'warning');
       return;
@@ -215,7 +215,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     }
   };
 
-  const handleGenerateReport = async (documentId) => {
+  const handleGenerateReport = async(documentId) => {
     if (!documentId) return;
     setGeneratingReportDocumentId(documentId);
     try {
@@ -232,7 +232,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     }
   };
 
-  const handleViewReport = async (documentId) => {
+  const handleViewReport = async(documentId) => {
     if (!documentId) return;
     setReportLoading(true);
     setReportContent(null);

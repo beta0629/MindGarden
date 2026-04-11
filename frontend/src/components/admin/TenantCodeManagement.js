@@ -88,7 +88,7 @@ const TenantCodeManagement = () => {
     }, []);
 
     // 코드 그룹 메타데이터 로드
-    const loadGroupMetadata = async () => {
+    const loadGroupMetadata = async() => {
         try {
             const response = await fetch(API_ENDPOINTS.METADATA);
             if (response.ok) {
@@ -102,7 +102,7 @@ const TenantCodeManagement = () => {
     };
 
     // 선택된 그룹의 코드 목록 로드
-    const loadCodes = useCallback(async (codeGroup) => {
+    const loadCodes = useCallback(async(codeGroup) => {
         if (!codeGroup) return;
         
         setLoading(true);
@@ -136,7 +136,7 @@ const TenantCodeManagement = () => {
     }, [selectedGroup, loadCodes]);
 
     // 코드 추가/수정
-    const handleSaveCode = async () => {
+    const handleSaveCode = async() => {
         // 폼 검증
         const validation = validateFormData(formData);
         if (!validation.isValid) {
@@ -170,7 +170,7 @@ const TenantCodeManagement = () => {
     };
 
     // 코드 삭제
-    const handleDeleteCode = async (codeId) => {
+    const handleDeleteCode = async(codeId) => {
         const confirmed = await new Promise((resolve) => {
             notificationManager.confirm(NOTIFICATION_MESSAGES.DELETE_CONFIRM, resolve);
         });
@@ -528,7 +528,7 @@ const TenantCodeManagement = () => {
                                     id="tenant-code-value"
                                     type="text"
                                     value={formData.codeValue}
-                                    onChange={(e) => setFormData({...formData, codeValue: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, codeValue: e.target.value })}
                                     placeholder={UI_TEXT.PLACEHOLDER_CODE_VALUE}
                                 />
                             </div>
@@ -539,7 +539,7 @@ const TenantCodeManagement = () => {
                                     id="tenant-code-label"
                                     type="text"
                                     value={formData.codeLabel}
-                                    onChange={(e) => setFormData({...formData, codeLabel: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, codeLabel: e.target.value })}
                                     placeholder={UI_TEXT.PLACEHOLDER_CODE_LABEL}
                                 />
                             </div>
@@ -550,7 +550,7 @@ const TenantCodeManagement = () => {
                                     id="tenant-code-korean"
                                     type="text"
                                     value={formData.koreanName}
-                                    onChange={(e) => setFormData({...formData, koreanName: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, koreanName: e.target.value })}
                                     placeholder={UI_TEXT.PLACEHOLDER_KOREAN_NAME}
                                 />
                             </div>
@@ -561,7 +561,7 @@ const TenantCodeManagement = () => {
                                     id="tenant-code-sort"
                                     type="number"
                                     value={formData.sortOrder}
-                                    onChange={(e) => setFormData({...formData, sortOrder: parseInt(e.target.value, 10) || 1})}
+                                    onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value, 10) || 1 })}
                                     min="1"
                                 />
                             </div>
@@ -571,7 +571,7 @@ const TenantCodeManagement = () => {
                                 <textarea
                                     id="tenant-code-desc"
                                     value={formData.codeDescription}
-                                    onChange={(e) => setFormData({...formData, codeDescription: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, codeDescription: e.target.value })}
                                     placeholder={UI_TEXT.PLACEHOLDER_DESCRIPTION}
                                     rows="3"
                                 />
@@ -583,7 +583,7 @@ const TenantCodeManagement = () => {
                                     id="tenant-code-icon"
                                     type="text"
                                     value={formData.icon}
-                                    onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                                     placeholder={UI_TEXT.PLACEHOLDER_ICON}
                                 />
                             </div>
@@ -595,7 +595,7 @@ const TenantCodeManagement = () => {
                                     type="color"
                                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                                     value={formData.colorCode || '#6b7280'}
-                                    onChange={(e) => setFormData({...formData, colorCode: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, colorCode: e.target.value })}
                                 />
                             </div>
 
@@ -605,7 +605,7 @@ const TenantCodeManagement = () => {
                                         id="tenant-code-active"
                                         type="checkbox"
                                         checked={formData.isActive}
-                                        onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                                     />
                                     {UI_TEXT.FORM_ACTIVE}
                                 </label>

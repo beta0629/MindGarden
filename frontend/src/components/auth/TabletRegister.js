@@ -67,7 +67,7 @@ const TabletRegister = () => {
     return () => clearTimeout(timer);
   }, [navigate]);
 
-  const getOAuth2Config = async () => {
+  const getOAuth2Config = async() => {
     try {
       const response = await fetch('/api/v1/auth/config/oauth2');
       if (response.ok) {
@@ -79,7 +79,7 @@ const TabletRegister = () => {
   };
 
   /** 이메일 중복 여부만 API로 확인. true: 중복, false: 사용가능, 예외 시 null */
-  const checkEmailDuplicate = async (email) => {
+  const checkEmailDuplicate = async(email) => {
     const trimmed = email?.trim();
     if (!trimmed) return null;
     try {
@@ -94,7 +94,7 @@ const TabletRegister = () => {
     }
   };
 
-  const handleEmailDuplicateCheck = async () => {
+  const handleEmailDuplicateCheck = async() => {
     const email = formData.email?.trim();
     if (!email) {
       notificationManager.show(VALIDATION_MESSAGES.REQUIRED_EMAIL, 'warning');
@@ -126,7 +126,7 @@ const TabletRegister = () => {
   };
 
   /** 휴대폰 중복 여부만 API로 확인. true: 중복, false: 사용가능, 예외 시 null */
-  const checkPhoneDuplicate = async (phone) => {
+  const checkPhoneDuplicate = async(phone) => {
     const trimmed = phone?.trim();
     if (!trimmed) return null;
     const normalized = normalizeKoreanMobileDigits(trimmed);
@@ -145,7 +145,7 @@ const TabletRegister = () => {
     }
   };
 
-  const handlePhoneDuplicateCheck = async () => {
+  const handlePhoneDuplicateCheck = async() => {
     const phone = formData.phone?.trim();
     if (!phone) {
       notificationManager.show(VALIDATION_MESSAGES.REQUIRED_PHONE, 'warning');
@@ -262,7 +262,7 @@ const TabletRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     if (!validateForm()) {

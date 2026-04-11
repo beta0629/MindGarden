@@ -58,7 +58,7 @@ const RatingWidget = ({ widget, user }) => {
     }
   }, [targetId, mode]);
   
-  const loadRatingStats = async () => {
+  const loadRatingStats = async() => {
     try {
       setLoading(true);
       
@@ -75,7 +75,7 @@ const RatingWidget = ({ widget, user }) => {
     }
   };
   
-  const loadRatableItems = async () => {
+  const loadRatableItems = async() => {
     try {
       setLoading(true);
       
@@ -118,7 +118,7 @@ const RatingWidget = ({ widget, user }) => {
       <div className="widget widget-rating">
         <div className="widget-header">
           <div className="widget-title">
-            <i className="bi bi-star"></i>
+            <i className="bi bi-star" />
             {config.title || '평가 통계'}
           </div>
         </div>
@@ -146,7 +146,7 @@ const RatingWidget = ({ widget, user }) => {
                         <div 
                           className="rating-dist-fill" 
                           style={{ width: `${percentage}%` }}
-                        ></div>
+                         />
                       </div>
                       <span className="rating-dist-count">{count}</span>
                     </div>
@@ -166,7 +166,7 @@ const RatingWidget = ({ widget, user }) => {
       <div className="widget widget-rating widget-rating-rate">
         <div className="widget-header">
           <div className="widget-title">
-            <i className="bi bi-heart"></i>
+            <i className="bi bi-heart" />
             {config.title || '평가하기'}
           </div>
         </div>
@@ -190,7 +190,7 @@ const RatingWidget = ({ widget, user }) => {
                   variant="primary"
                   size="small"
                 >
-                  <i className="bi bi-heart"></i> 평가하기
+                  <i className="bi bi-heart" /> 평가하기
                 </MGButton>
               </div>
             ))}
@@ -203,7 +203,7 @@ const RatingWidget = ({ widget, user }) => {
   return (
     <div className="widget widget-rating">
       <div className="widget-empty">
-        <i className="bi bi-star"></i>
+        <i className="bi bi-star" />
         <p>{config.emptyMessage || '평가 정보가 없습니다'}</p>
       </div>
     </div>

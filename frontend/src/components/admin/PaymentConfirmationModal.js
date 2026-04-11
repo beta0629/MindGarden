@@ -116,7 +116,7 @@ const PaymentConfirmationModal = ({
   ];
 
   useEffect(() => {
-    const loadPaymentMethodCodes = async () => {
+    const loadPaymentMethodCodes = async() => {
       try {
         setLoadingCodes(true);
         const codes = await getCommonCodes('PAYMENT_METHOD');
@@ -200,7 +200,7 @@ const PaymentConfirmationModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleConfirmPayment = async (e) => {
+  const handleConfirmPayment = async(e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -216,7 +216,7 @@ const PaymentConfirmationModal = ({
       const response = await fetch(API_ENDPOINTS.CONFIRM_PAYMENT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -244,7 +244,7 @@ const PaymentConfirmationModal = ({
     }
   };
 
-  const handleCancelPayment = async (e) => {
+  const handleCancelPayment = async(e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -260,7 +260,7 @@ const PaymentConfirmationModal = ({
       const response = await fetch(API_ENDPOINTS.CANCEL_PAYMENT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -390,7 +390,7 @@ const PaymentConfirmationModal = ({
                 onChange={(val) => handlePaymentDataChange('method', val)}
                 options={paymentMethodOptions.map(option => ({
                   value: option.value,
-                  label: `${option.icon != null ? option.icon + ' ' : ''}${option.label || option.value || ''}`,
+                  label: `${option.icon != null ? `${option.icon} ` : ''}${option.label || option.value || ''}`,
                   icon: option.icon
                 }))}
                 placeholder="선택하세요"

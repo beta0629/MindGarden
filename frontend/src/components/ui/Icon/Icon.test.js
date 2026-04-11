@@ -2,11 +2,11 @@
  * Icon 컴포넌트 테스트
  */
 
-import {render, screen, fireEvent} from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import '@testing-library/jest-dom';
-import {ICONS} from '../../../constants/icons';
+import { ICONS } from '../../../constants/icons';
 
 import Icon from './Icon';
 
@@ -40,7 +40,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
     render(<Icon name="CALENDAR" onClick={handleClick} />);
     
     const iconElement = screen.getByRole('button');
-    fireEvent.keyDown(iconElement, {key: 'Enter'});
+    fireEvent.keyDown(iconElement, { key: 'Enter' });
     
     expect(handleClick).toHaveBeenCalledTimes(1);});
 
@@ -63,7 +63,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
 
   // 존재하지 않는 아이콘 테스트
   test('returns null for non-existent icon', () => {const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-    const {container} = render(<Icon name="NON_EXISTENT" />);
+    const { container } = render(<Icon name="NON_EXISTENT" />);
     
     expect(container.firstChild).toBeNull();
     expect(consoleSpy).toHaveBeenCalledWith("Icon 'NON_EXISTENT' not found in ICONS registry");

@@ -55,7 +55,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 /**
      * 지점 목록 로드
      */
-    const loadBranches = async () => {
+    const loadBranches = async() => {
         try {
             const response = await apiGet('/api/v1/branches');
             if (response && response.success !== false) {
@@ -69,7 +69,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 /**
      * 성과 지표 로드
      */
-    const loadMetrics = async () => {
+    const loadMetrics = async() => {
         try {
             setLoading(true);
             
@@ -100,7 +100,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 /**
      * 성과 지표 재계산
      */
-    const handleRecalculate = async () => {
+    const handleRecalculate = async() => {
         try {
             setRecalculating(true);
             

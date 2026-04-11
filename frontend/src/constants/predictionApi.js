@@ -19,7 +19,7 @@ export const PREDICTION_API = {
     RECOMMEND_SESSIONS: (clientId) => `${BASE_PATH}/recommend-sessions/${clientId}`,
 
     // 유사 케이스
-    FIND_SIMILAR_CASES: (clientId) => `${BASE_PATH}/similar-cases/${clientId}`,
+    FIND_SIMILAR_CASES: (clientId) => `${BASE_PATH}/similar-cases/${clientId}`
 };
 
 export default PREDICTION_API;

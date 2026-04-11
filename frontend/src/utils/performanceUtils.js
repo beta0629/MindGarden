@@ -273,7 +273,7 @@ export const PerformanceUtils = {
     
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   },
 
 /**
@@ -292,9 +292,9 @@ export const PerformanceUtils = {
     if (typeof number !== 'number') return '0';
     
     if (number >= 1000000) {
-      return (number / 1000000).toFixed(decimals) + 'M';
+      return `${(number / 1000000).toFixed(decimals)}M`;
     } else if (number >= 1000) {
-      return (number / 1000).toFixed(decimals) + 'K';
+      return `${(number / 1000).toFixed(decimals)}K`;
     }
     
     return number.toFixed(decimals);

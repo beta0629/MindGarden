@@ -150,7 +150,7 @@ export const getConsultantBadgeDisplay = (consultant) => {
 /**
  * @returns {Promise<Object>} 등급별 스타일 정보
  */
-export const getConsultantGradeStyles = async () => {
+export const getConsultantGradeStyles = async() => {
     try {
         // 표준 API 사용: /api/v1/common-codes?codeGroup=CONSULTANT_GRADE
         const { getCommonCodes } = await import('./commonCodeApi');
@@ -189,7 +189,7 @@ export const getConsultantGradeStyles = async () => {
 /**
  * @returns {Promise<Object|null>} 상담사 정보 + 통계 정보
  */
-export const getConsultantWithStats = async (consultantId) => {
+export const getConsultantWithStats = async(consultantId) => {
     try {
         const response = await apiGet(`/api/v1/admin/consultants/with-stats/${consultantId}`);
         if (response.success) {
@@ -212,7 +212,7 @@ export const getConsultantWithStats = async (consultantId) => {
  */
 import StandardizedApi from './standardizedApi';
 
-export const getAllConsultantsWithStats = async () => {
+export const getAllConsultantsWithStats = async() => {
     try {
         // 세션 갱신을 통해 최신 tenantId 확보 (API 호출 전 필수)
         // 대시보드는 fetch() 직접 사용으로 세션 쿠키가 자동 포함되지만,
@@ -369,7 +369,7 @@ export const transformConsultantData = (consultantRaw) => {
 /**
  * @returns {Promise<Object|null>} 내담자 정보 + 통계 정보
  */
-export const getClientWithStats = async (clientId) => {
+export const getClientWithStats = async(clientId) => {
     try {
         // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
         const response = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
@@ -391,7 +391,7 @@ export const getClientWithStats = async (clientId) => {
 /**
  * @returns {Promise<Array>} 내담자 목록 + 통계 정보
  */
-export const getAllClientsWithStats = async () => {
+export const getAllClientsWithStats = async() => {
     try {
         // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
         const response = await apiGet('/api/v1/admin/clients/with-stats');

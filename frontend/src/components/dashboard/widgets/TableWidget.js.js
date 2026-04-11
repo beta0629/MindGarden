@@ -38,7 +38,7 @@ const TableWidget = ({ widget, user }) => {
     }
   }, [page]);
   
-  const loadData = async () => {
+  const loadData = async() => {
     try {
       setLoading(true);
       setError(null);

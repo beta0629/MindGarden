@@ -43,7 +43,7 @@ const ConsultantSelectionStepNew = ({
 /**
      * 상담사 목록 로드
      */
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         setLoading(true);
         try {
             console.log('👨‍⚕️ 상담사 목록 로드 시작');
@@ -67,7 +67,7 @@ const ConsultantSelectionStepNew = ({
             const response = await fetch(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -101,7 +101,7 @@ const ConsultantSelectionStepNew = ({
                 }
                 
                 // 휴무 정보가 이미 포함된 상담사 데이터 처리
-                console.log('🔍 필터링 전 상담사 목록:', data.map(c => ({name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType})));
+                console.log('🔍 필터링 전 상담사 목록:', data.map(c => ({ name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType })));
                 
                 // 김선희2 원본 데이터 확인
                 const kimSunHee2Original = data.find(c => c.name === '김선희2');
@@ -130,7 +130,7 @@ const ConsultantSelectionStepNew = ({
                     .filter((consultant) => {
                         // 종일 휴가인 상담사는 목록에서 제외
                         const isOnVacation = consultant.isOnVacation || false;
-                        const vacationType = consultant.vacationType;
+                        const { vacationType } = consultant;
                         
                         console.log(`🔍 상담사 ${consultant.name} - isOnVacation: ${isOnVacation}, vacationType: ${vacationType}`);
                         
@@ -198,7 +198,7 @@ const ConsultantSelectionStepNew = ({
                     });
                 setConsultants(consultantsWithAvailability);
                 console.log('👨‍⚕️ 상담사 목록 로드 완료 (실제 API)');
-                console.log('👨‍⚕️ 필터링 후 상담사 목록:', consultantsWithAvailability.map(c => ({name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType})));
+                console.log('👨‍⚕️ 필터링 후 상담사 목록:', consultantsWithAvailability.map(c => ({ name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType })));
                 console.log('👨‍⚕️ 필터링 후 상담사 수:', consultantsWithAvailability.length);
                 
                 // 김선희2가 필터링 후에도 남아있는지 확인

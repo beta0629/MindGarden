@@ -37,7 +37,7 @@ export const TIME_CONSTANTS = {
   // 폴링 간격
   POLLING_INTERVAL: 10000,
   QUICK_POLLING_INTERVAL: 2000,
-  LONG_POLLING_INTERVAL: 60000,
+  LONG_POLLING_INTERVAL: 60000
 };
 
 // HTTP 상태 코드
@@ -52,7 +52,7 @@ export const HTTP_STATUS = {
   CONFLICT: 409,
   UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
-  SERVICE_UNAVAILABLE: 503,
+  SERVICE_UNAVAILABLE: 503
 };
 
 // UI 관련 상수
@@ -82,7 +82,7 @@ export const UI_CONSTANTS = {
   BOUNCE_DURATION: 300,
   EASE_IN_OUT: 'cubic-bezier(0.4, 0, 0.2, 1)',
   EASE_OUT: 'cubic-bezier(0, 0, 0.2, 1)',
-  EASE_IN: 'cubic-bezier(0.4, 0, 1, 1)',
+  EASE_IN: 'cubic-bezier(0.4, 0, 1, 1)'
 };
 
 // 비즈니스 로직 관련 상수
@@ -117,7 +117,7 @@ export const BUSINESS_CONSTANTS = {
   // 페이지네이션 관련
   DEFAULT_PAGE_SIZE: 10,
   PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
-  MAX_PAGE_SIZE: 100,
+  MAX_PAGE_SIZE: 100
 };
 
 // 수학 관련 상수
@@ -141,7 +141,7 @@ export const MATH_CONSTANTS = {
   
   // 할인 관련
   MAX_DISCOUNT_PERCENTAGE: 100,
-  MIN_DISCOUNT_PERCENTAGE: 0,
+  MIN_DISCOUNT_PERCENTAGE: 0
 };
 
 // 데이터베이스 관련 상수
@@ -157,7 +157,7 @@ export const DATABASE_CONSTANTS = {
   // 캐시 관련
   CACHE_TTL: 5 * 60 * 1000, // 5분
   LONG_CACHE_TTL: 30 * 60 * 1000, // 30분
-  SHORT_CACHE_TTL: 1 * 60 * 1000, // 1분
+  SHORT_CACHE_TTL: 1 * 60 * 1000 // 1분
 };
 
 // 보안 관련 상수
@@ -177,7 +177,7 @@ export const SECURITY_CONSTANTS = {
   
   // 세션 관련
   SESSION_TIMEOUT: 60 * 60 * 1000, // 60분
-  SESSION_EXTENSION_TIME: 5 * 60 * 1000, // 5분
+  SESSION_EXTENSION_TIME: 5 * 60 * 1000 // 5분
 };
 
 // API 관련 상수
@@ -197,7 +197,7 @@ export const API_CONSTANTS = {
   
   // 캐시 관련
   CACHE_DURATION: 5 * 60 * 1000, // 5분
-  STALE_WHILE_REVALIDATE: 1 * 60 * 1000, // 1분
+  STALE_WHILE_REVALIDATE: 1 * 60 * 1000 // 1분
 };
 
 // 폼 관련 상수
@@ -215,7 +215,7 @@ export const FORM_CONSTANTS = {
   
   // 파일 업로드
   MAX_FILES_PER_UPLOAD: 10,
-  MAX_FILE_NAME_LENGTH: 255,
+  MAX_FILE_NAME_LENGTH: 255
 };
 
 // 차트 관련 상수
@@ -235,7 +235,7 @@ export const CHART_CONSTANTS = {
   
   // 데이터 포인트
   MAX_DATA_POINTS: 1000,
-  DEFAULT_DATA_POINTS: 50,
+  DEFAULT_DATA_POINTS: 50
 };
 
 // 알림 관련 상수
@@ -258,7 +258,7 @@ export const NOTIFICATION_CONSTANTS = {
   
   // 최대 개수
   MAX_NOTIFICATIONS: 5,
-  MAX_STORED_NOTIFICATIONS: 100,
+  MAX_STORED_NOTIFICATIONS: 100
 };
 
 // 기본값 상수
@@ -282,7 +282,7 @@ export const DEFAULT_VALUES = {
   // 비즈니스 관련
   DEFAULT_CURRENCY: 'KRW',
   DEFAULT_DECIMAL_PLACES: 2,
-  DEFAULT_RATING_SCALE: 5,
+  DEFAULT_RATING_SCALE: 5
 };
 
 // 에러 코드 상수
@@ -310,7 +310,7 @@ export const ERROR_CODES = {
   // 시스템 에러
   SYSTEM_ERROR: 'SYSTEM_ERROR',
   DATABASE_ERROR: 'DATABASE_ERROR',
-  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
+  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR'
 };
 
 // 모든 상수를 하나의 객체로 내보내기
@@ -327,7 +327,7 @@ export const CONSTANTS = {
   CHART_CONSTANTS,
   NOTIFICATION_CONSTANTS,
   DEFAULT_VALUES,
-  ERROR_CODES,
+  ERROR_CODES
 };
 
 export default CONSTANTS;

@@ -70,7 +70,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
     const [loadingConsultants, setLoadingConsultants] = useState(false);
 
-    const loadScheduleStatusCodes = useCallback(async () => {
+    const loadScheduleStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             const response = await apiGet('/api/v1/common-codes?codeGroup=STATUS');
@@ -113,7 +113,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         if (currentUserRole === 'CLIENT') {
             console.log('👤 내담자 - 상담사 목록 로드 생략');
             setConsultants([]);
@@ -130,7 +130,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 branchCode: currentUser?.branchCode
             });
             
-            const apiEndpoint = '/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0];
+            const apiEndpoint = `/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`;
             
             console.log('🔍 조건 확인:', {
                 currentUserRole,
@@ -171,7 +171,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 /**
      * 스케줄 데이터 로드
      */
-    const loadSchedules = useCallback(async () => {
+    const loadSchedules = useCallback(async() => {
         setLoading(true);
         try {
             console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
@@ -440,10 +440,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setIsDetailModalOpen(true);
     };
 
-    const handleEventDrop = async (info) => {
+    const handleEventDrop = async(info) => {
         console.log('📅 이벤트 드롭:', info);
         
-        const event = info.event;
+        const { event } = info;
         const newStart = event.start;
         const newEnd = event.end;
 
@@ -480,7 +480,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedInfo(null);
     };
 
-    const handleScheduleCreated = async () => {
+    const handleScheduleCreated = async() => {
         console.log('📅 일정 생성됨');
         await loadSchedules();
         setIsModalOpen(false);
@@ -509,11 +509,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setReschedulePayload(null);
     };
 
-    const handleRescheduleSuccess = async () => {
+    const handleRescheduleSuccess = async() => {
         await loadSchedules();
     };
 
-    const handleTimeSelectionConfirm = async () => {
+    const handleTimeSelectionConfirm = async() => {
         try {
             const response = await fetch(`/api/v1/schedules/${selectedSchedule.id}`, {
                 method: 'PUT',
@@ -539,7 +539,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
-    const forceRefresh = useCallback(async () => {
+    const forceRefresh = useCallback(async() => {
         console.log('🔄 강제 새로고침');
         await Promise.all([
             loadScheduleStatusCodes(),

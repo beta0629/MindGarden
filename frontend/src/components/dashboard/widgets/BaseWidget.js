@@ -90,7 +90,7 @@ const BaseWidget = ({
    */
   const renderLoading = () => (
     <div className={WIDGET_CONSTANTS.CSS_CLASSES.LOADING_CONTAINER}>
-      <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_LOADING_SPINNER}></div>
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_LOADING_SPINNER} />
       <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
         {config.loadingMessage || WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
       </p>
@@ -128,10 +128,10 @@ const BaseWidget = ({
    * 빈 상태 렌더링
    */
   const renderEmpty = () => (
-    <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX + ' ' + 
-                   WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL + ' ' + 
-                   WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER + ' ' + 
-                   WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}>
+    <div className={`${WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX} ${  
+                   WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL} ${  
+                   WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER} ${  
+                   WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}`}>
       <div className="mg-empty-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>
         {config.emptyIcon || '📭'}
       </div>

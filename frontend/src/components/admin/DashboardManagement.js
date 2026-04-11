@@ -41,7 +41,7 @@ const DashboardManagement = () => {
   const [showFormModal, setShowFormModal] = useState(false);
 
   // 대시보드 목록 로드
-  const loadDashboards = useCallback(async () => {
+  const loadDashboards = useCallback(async() => {
     setLoading(true);
     try {
       const response = await apiGet(`/api/v1/tenant/dashboards`);
@@ -112,7 +112,7 @@ const DashboardManagement = () => {
   }, [dashboards, searchTerm, filterType]);
 
   // 대시보드 활성화/비활성화 토글
-  const handleToggleActive = async (dashboard) => {
+  const handleToggleActive = async(dashboard) => {
     if (!dashboard.dashboardId) {
       notificationManager.show('대시보드 ID가 없습니다.', 'error');
       return;
@@ -152,7 +152,7 @@ const DashboardManagement = () => {
   };
 
   // 대시보드 삭제
-  const handleDelete = async (dashboard) => {
+  const handleDelete = async(dashboard) => {
     if (!dashboard.dashboardId) {
       notificationManager.show('대시보드 ID가 없습니다.', 'error');
       return;
@@ -229,7 +229,7 @@ const DashboardManagement = () => {
   };
 
   // 모달 저장 후 콜백
-  const handleModalSave = async (savedDashboard) => {
+  const handleModalSave = async(savedDashboard) => {
     console.log('✅ 대시보드 저장 완료, 목록 새로고침:', savedDashboard);
     await loadDashboards();
     handleModalClose();

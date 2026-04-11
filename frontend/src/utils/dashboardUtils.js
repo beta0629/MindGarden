@@ -18,7 +18,7 @@ import { API_BASE_URL } from '../constants/api';
 /**
  * @returns {Promise<Object|null>} 대시보드 정보 또는 null
  */
-export const getCurrentUserDashboard = async (tenantId, tenantRoleId = null) => {
+export const getCurrentUserDashboard = async(tenantId, tenantRoleId = null) => {
   try {
     let endpoint;
     
@@ -120,12 +120,12 @@ export const getDashboardComponentName = (dashboardType) => {
 /**
  * @returns {Promise<Object|null>} 대시보드 정보 또는 null
  */
-export const getDashboardFromAuthResponse = async (authResponse) => {
+export const getDashboardFromAuthResponse = async(authResponse) => {
   try {
     // AuthResponse에 currentTenantRole이 있으면 사용
     if (authResponse?.currentTenantRole?.tenantRoleId) {
       const tenantId = authResponse.user?.tenantId;
-      const tenantRoleId = authResponse.currentTenantRole.tenantRoleId;
+      const { tenantRoleId } = authResponse.currentTenantRole;
       
       if (tenantId && tenantRoleId) {
         return await getCurrentUserDashboard(tenantId, tenantRoleId);
@@ -189,7 +189,7 @@ export const getLegacyDashboardPath = (role) => {
 /**
  * @returns {Promise<void>}
  */
-export const redirectToDynamicDashboard = async (authResponse, navigate) => {
+export const redirectToDynamicDashboard = async(authResponse, navigate) => {
   try {
     // 1차: 동적 대시보드 조회 시도
     const dashboard = await getDashboardFromAuthResponse(authResponse);

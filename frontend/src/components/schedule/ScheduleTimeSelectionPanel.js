@@ -127,7 +127,7 @@ const ScheduleTimeSelectionPanel = ({
       });
     };
 
-    const loadAll = async () => {
+    const loadAll = async() => {
       setLoadingCodes(true);
       let nextConsultation = FALLBACK_CONSULTATION;
       let nextDuration = FALLBACK_DURATION;

@@ -24,7 +24,7 @@ const ConsultationCompletionStatsView = ({
     if (loading) {
         return (
             <div className="mg-v2-loading-container">
-                <div className="mg-v2-spinner"></div>
+                <div className="mg-v2-spinner" />
                 <p>상담 완료 건수 통계를 불러오는 중...</p>
             </div>
         );

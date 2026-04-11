@@ -67,7 +67,7 @@ export const NotificationProvider = ({ children }) => {
   }, [isLoggedIn, user]);
 
   // 읽지 않은 메시지 개수 로드
-  const loadUnreadMessageCount = async () => {
+  const loadUnreadMessageCount = async() => {
     if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📨 메시지 개수 로드 스킵 - 로그인 정보 없음');
       setUnreadMessageCount(0);
@@ -108,7 +108,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 읽지 않은 시스템 공지 개수 로드
-  const loadUnreadSystemCount = async () => {
+  const loadUnreadSystemCount = async() => {
     if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📢 시스템 공지 개수 로드 스킵 - 로그인 정보 없음');
       setUnreadSystemCount(0);
@@ -138,7 +138,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 통합 읽지 않은 개수 로드
-  const loadUnreadCount = async () => {
+  const loadUnreadCount = async() => {
     // 로그인하지 않으면 스킵
     if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📊 통합 읽지 않은 개수 로드 스킵 - 로그인 정보 없음');
@@ -151,7 +151,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 메시지 목록 로드
-  const loadNotifications = async () => {
+  const loadNotifications = async() => {
     if (!isLoggedIn || !user?.id || isPublicRoute()) {
       setNotifications([]);
       return;
@@ -183,7 +183,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 시스템 공지 목록 로드
-  const loadSystemNotifications = async () => {
+  const loadSystemNotifications = async() => {
     if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📢 시스템 공지 목록 로드 스킵 - 로그인 정보 없음');
       setSystemNotifications([]);
@@ -214,7 +214,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 메시지 읽음 처리
-  const markMessageAsRead = async (messageId) => {
+  const markMessageAsRead = async(messageId) => {
     try {
       console.log('📨 메시지 읽음 처리 시작:', messageId);
       await apiGet(`/api/v1/consultation-messages/${messageId}/read`);
@@ -227,7 +227,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 시스템 공지 읽음 처리
-  const markSystemNotificationAsRead = async (notificationId) => {
+  const markSystemNotificationAsRead = async(notificationId) => {
     try {
       console.log('📢 공지 읽음 처리 시작:', notificationId);
       // 백엔드: SystemNotificationController @PostMapping("/{notificationId}/read")
@@ -241,7 +241,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 시스템 공지 일괄 읽음 처리 (읽지 않은 모든 공지)
-  const markAllSystemNotificationsAsRead = async () => {
+  const markAllSystemNotificationsAsRead = async() => {
     try {
       console.log('📢 공지 일괄 읽음 처리 시작');
       await apiPost('/api/v1/system-notifications/read-all', {});

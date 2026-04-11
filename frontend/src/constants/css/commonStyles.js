@@ -58,7 +58,7 @@ export const COMMON_COLORS = {
   
   BRAND_PRIMARY: 'var(--mg-consultant-dark)',
   BRAND_SECONDARY: 'var(--mg-consultant-primary)',
-  BRAND_ACCENT: 'var(--cs-brand-accent)',
+  BRAND_ACCENT: 'var(--cs-brand-accent)'
 };
 
 export const COMMON_SIZES = {
@@ -104,7 +104,7 @@ export const COMMON_SIZES = {
   CONTAINER_MD: '768px',
   CONTAINER_LG: '992px',
   CONTAINER_XL: '1200px',
-  CONTAINER_XXL: '1400px',
+  CONTAINER_XXL: '1400px'
 };
 
 export const COMMON_SHADOWS = {
@@ -116,7 +116,7 @@ export const COMMON_SHADOWS = {
   XL: 'var(--cs-shadow-xl-multi)',
   XXL: 'var(--cs-shadow-xxl)',
   INNER: 'var(--cs-shadow-inner)',
-  OUTLINE: 'var(--cs-shadow-outline)',
+  OUTLINE: 'var(--cs-shadow-outline)'
 };
 
 export const COMMON_ANIMATIONS = {
@@ -134,7 +134,7 @@ export const COMMON_ANIMATIONS = {
   TRANSITION_ALL: 'all 0.2s ease',
   TRANSITION_COLORS: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
   TRANSITION_TRANSFORM: 'transform 0.2s ease',
-  TRANSITION_OPACITY: 'opacity 0.2s ease',
+  TRANSITION_OPACITY: 'opacity 0.2s ease'
 };
 
 export const COMMON_Z_INDEX = {
@@ -147,7 +147,7 @@ export const COMMON_Z_INDEX = {
   MODAL: 1050,
   POPOVER: 1060,
   TOAST: 9999,
-  EMERGENCY: 99999,
+  EMERGENCY: 99999
 };
 
 export const COMMON_BREAKPOINTS = {
@@ -156,7 +156,7 @@ export const COMMON_BREAKPOINTS = {
   MD: '768px',
   LG: '992px',
   XL: '1200px',
-  XXL: '1400px',
+  XXL: '1400px'
 };
 
 export const COMMON_FONTS = {
@@ -176,7 +176,7 @@ export const COMMON_FONTS = {
   LINE_HEIGHT_TIGHT: 1.2,
   LINE_HEIGHT_NORMAL: 1.4,
   LINE_HEIGHT_RELAXED: 1.6,
-  LINE_HEIGHT_LOOSE: 1.8,
+  LINE_HEIGHT_LOOSE: 1.8
 };
 
 export const COMMON_LAYOUTS = {
@@ -196,7 +196,7 @@ export const COMMON_LAYOUTS = {
   ABSOLUTE_CENTER: 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);',
   FIXED_TOP: 'position: fixed; top: 0; left: 0; right: 0;',
   FIXED_BOTTOM: 'position: fixed; bottom: 0; left: 0; right: 0;',
-  STICKY_TOP: 'position: sticky; top: 0;',
+  STICKY_TOP: 'position: sticky; top: 0;'
 };
 
 export const COMMON_UTILITIES = {
@@ -225,30 +225,30 @@ export const COMMON_UTILITIES = {
   
   USER_SELECT_NONE: 'user-select: none;',
   USER_SELECT_ALL: 'user-select: all;',
-  USER_SELECT_TEXT: 'user-select: text;',
+  USER_SELECT_TEXT: 'user-select: text;'
 };
 
 export const COMMON_STATES = {
   LOADING: {
     opacity: '0.7',
     cursor: 'not-allowed',
-    pointerEvents: 'none',
+    pointerEvents: 'none'
   },
   DISABLED: {
     opacity: '0.6',
     cursor: 'not-allowed',
-    pointerEvents: 'none',
+    pointerEvents: 'none'
   },
   HOVER: {
     transform: 'translateY(-1px)',
-    boxShadow: COMMON_SHADOWS.MD,
+    boxShadow: COMMON_SHADOWS.MD
   },
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: {
-    transform: 'scale(0.98)',
+    transform: 'scale(0.98)'
   },
   FOCUS: {
     outline: 'none',
-    boxShadow: COMMON_SHADOWS.OUTLINE,
-  },
+    boxShadow: COMMON_SHADOWS.OUTLINE
+  }
 };

@@ -13,7 +13,7 @@ const TreatmentOutcomeChart = ({ prediction }) => {
             'EXCELLENT': 'var(--mg-success-500)',
             'GOOD': '#84cc16',
             'MODERATE': 'var(--mg-warning-500)',
-            'POOR': '#dc2626',
+            'POOR': '#dc2626'
         };
         return colors[outcome] || '#6b7280';
     };
@@ -23,7 +23,7 @@ const TreatmentOutcomeChart = ({ prediction }) => {
             'EXCELLENT': '매우 좋음',
             'GOOD': '좋음',
             'MODERATE': '보통',
-            'POOR': '좋지 않음',
+            'POOR': '좋지 않음'
         };
         return labels[outcome] || outcome;
     };
@@ -52,7 +52,7 @@ const TreatmentOutcomeChart = ({ prediction }) => {
                                 width: `${prediction.successProbability * 100}%`,
                                 backgroundColor: getOutcomeColor(prediction.predictedOutcome)
                             }}
-                        ></div>
+                         />
                     </div>
                 </div>
 

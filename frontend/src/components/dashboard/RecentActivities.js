@@ -38,7 +38,7 @@ const RecentActivities = ({ consultationData }) => {
     <div className={RECENT_ACTIVITIES_CSS.CONTAINER}>
       <div className="recent-activities-header">
         <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
-          <i className="bi bi-clock-history"></i>
+          <i className="bi bi-clock-history" />
           최근 활동
         </h3>
         {hasMoreActivities && (
@@ -48,7 +48,7 @@ const RecentActivities = ({ consultationData }) => {
             className="recent-activities-view-all mg-button--with-icon"
             onClick={handleViewAll}
           >
-            <i className="bi bi-arrow-right"></i>
+            <i className="bi bi-arrow-right" />
             전체보기
           </MGButton>
         )}
@@ -58,7 +58,7 @@ const RecentActivities = ({ consultationData }) => {
           displayActivities.map((activity, index) => (
             <div key={index} className={RECENT_ACTIVITIES_CSS.ACTIVITY_ITEM}>
               <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_ICON}>
-                <i className={`bi ${getActivityIcon(activity.type)}`}></i>
+                <i className={`bi ${getActivityIcon(activity.type)}`} />
               </div>
               <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_CONTENT}>
                 <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TITLE}><SafeText>{activity.title}</SafeText></div>
@@ -68,7 +68,7 @@ const RecentActivities = ({ consultationData }) => {
           ))
         ) : (
           <div className="no-activities">
-            <i className="bi bi-inbox"></i>
+            <i className="bi bi-inbox" />
             <p>최근 활동이 없습니다</p>
           </div>
         )}

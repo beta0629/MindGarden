@@ -49,7 +49,7 @@ const getErrorMessage = (status) => {
 };
 
 // 세션 체크 및 리다이렉트 공통 함수
-const checkSessionAndRedirect = async (response) => {
+const checkSessionAndRedirect = async(response) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (isLocalEnv) {
     return false;
@@ -123,7 +123,7 @@ const handleError = (error, status) => {
 };
 
 // GET 요청
-export const apiGet = async (endpoint, params = {}, options = {}) => {
+export const apiGet = async(endpoint, params = {}, options = {}) => {
   try {
     // endpoint가 이미 전체 URL인지 확인 (http:// 또는 https://로 시작)
     const isFullUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
@@ -249,7 +249,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      const data = jsonData.data;
+      const { data } = jsonData;
       if (data !== null && data !== undefined) {
         return data;
       }
@@ -357,7 +357,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 };
 
 // POST 요청 (CSRF 토큰 자동 포함)
-export const apiPost = async (endpoint, data = {}, options = {}) => {
+export const apiPost = async(endpoint, data = {}, options = {}) => {
   try {
     console.log('📤 POST 요청:', {
       url: endpoint,
@@ -398,7 +398,7 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      const data = jsonData.data;
+      const { data } = jsonData;
       if (data !== null && data !== undefined) {
         return data;
       }
@@ -414,7 +414,7 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
 };
 
 // PUT 요청 (CSRF 토큰 자동 포함)
-export const apiPut = async (endpoint, data = {}, options = {}) => {
+export const apiPut = async(endpoint, data = {}, options = {}) => {
   try {
     const response = await csrfTokenManager.put(endpoint, data, {
       ...options,
@@ -455,7 +455,7 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      const data = jsonData.data;
+      const { data } = jsonData;
       if (data !== null && data !== undefined) {
         return data;
       }
@@ -471,7 +471,7 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
 };
 
 // PATCH 요청 (CSRF 토큰 자동 포함)
-export const apiPatch = async (endpoint, data = {}, options = {}) => {
+export const apiPatch = async(endpoint, data = {}, options = {}) => {
   try {
     const response = await csrfTokenManager.patch(endpoint, data, {
       ...options,
@@ -526,7 +526,7 @@ export const apiPatch = async (endpoint, data = {}, options = {}) => {
 };
 
 // POST 요청 (FormData)
-export const apiPostFormData = async (endpoint, formData, options = {}) => {
+export const apiPostFormData = async(endpoint, formData, options = {}) => {
   try {
     const headers = { ...options.headers };
     // FormData를 사용할 때는 Content-Type을 자동으로 설정하도록 제거
@@ -579,7 +579,7 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
 };
 
 // DELETE 요청 (CSRF 토큰 자동 포함)
-export const apiDelete = async (endpoint, options = {}) => {
+export const apiDelete = async(endpoint, options = {}) => {
   try {
     const response = await csrfTokenManager.delete(endpoint, {
       ...options,
@@ -600,7 +600,7 @@ export const apiDelete = async (endpoint, options = {}) => {
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      const data = jsonData.data;
+      const { data } = jsonData;
       if (data !== null && data !== undefined) {
         return data;
       }
@@ -616,7 +616,7 @@ export const apiDelete = async (endpoint, options = {}) => {
 };
 
 // 파일 업로드 요청
-export const apiUpload = async (endpoint, formData, options = {}) => {
+export const apiUpload = async(endpoint, formData, options = {}) => {
   try {
     const headers = { ...getDefaultHeaders() };
     delete headers['Content-Type']; // multipart/form-data를 위해 제거
@@ -648,7 +648,7 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
 
 // 인증 관련 API
 export const authAPI = {
-  login: async (data) => {
+  login: async(data) => {
     // CSRF 토큰을 포함한 로그인 요청
     try {
       console.log('🔐 CSRF 토큰 포함 로그인 시도:', data);
@@ -718,7 +718,7 @@ export const userAPI = {
   deleteAccount: () => apiPost(USER_API.DELETE_ACCOUNT),
   
   // 기존 API들...
-  getClientConsultations: (userId) => apiGet(`${USER_API.GET_CLIENT_CONSULTATIONS}/${userId}`),
+  getClientConsultations: (userId) => apiGet(`${USER_API.GET_CLIENT_CONSULTATIONS}/${userId}`)
 };
 
 // 상담 관련 API
@@ -730,12 +730,12 @@ export const consultationAPI = {
 };
 
 // 테스트 로그인 함수 (개발 환경에서만 사용)
-export const testLogin = async () => {
+export const testLogin = async() => {
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/test-login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include'
     });

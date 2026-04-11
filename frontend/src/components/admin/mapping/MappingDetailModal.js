@@ -27,7 +27,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         }
     }, [isOpen, mapping]);
 
-    const loadDetailInfo = async () => {
+    const loadDetailInfo = async() => {
         if (!mapping?.id) return;
         
         setLoading(true);
@@ -45,7 +45,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const formatCurrency = (amount) => {
         if (!amount) return '0원';
-        return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+        return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
     };
 
     const formatDate = (dateString) => {
@@ -318,7 +318,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                             <div 
                                                                 className="progress-fill"
                                                                 data-progress={Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100))}
-                                                            ></div>
+                                                             />
                                                         </div>
                                                         <span className="progress-text">
                                                             {Math.round(Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100)))}%
@@ -380,7 +380,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             <div className="notes-content">
                                                 {mapping.notes.split('\n').map((note, index) => (
                                                     <div key={index} className="note-item">
-                                                        <div className="note-bullet"></div>
+                                                        <div className="note-bullet" />
                                                         <div className="note-text">{note}</div>
                                                     </div>
                                                 ))}

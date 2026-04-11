@@ -53,7 +53,7 @@ const ConsultationLogViewPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
 
-  const loadConsultants = useCallback(async () => {
+  const loadConsultants = useCallback(async() => {
     if (!isAdmin) return;
     try {
       const list = await getAllConsultantsWithStats();
@@ -68,7 +68,7 @@ const ConsultationLogViewPage = () => {
     }
   }, [isAdmin]);
 
-  const loadClients = useCallback(async () => {
+  const loadClients = useCallback(async() => {
     try {
       const list = await getAllClientsWithStats();
       const arr = Array.isArray(list) ? list : [];
@@ -100,7 +100,7 @@ const ConsultationLogViewPage = () => {
     }));
   }, []);
 
-  const loadRecords = useCallback(async () => {
+  const loadRecords = useCallback(async() => {
     if (!user?.id) return;
     setLoading(true);
     try {

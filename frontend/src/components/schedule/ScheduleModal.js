@@ -126,7 +126,7 @@ const ScheduleModalNew = ({
         setStep(4);
     };
 
-    const handleCreateSchedule = async () => {
+    const handleCreateSchedule = async() => {
         if (!selectedConsultant || !selectedClient || !selectedTimeSlot) {
             notificationManager.error('모든 항목을 선택해주세요.');
             return;

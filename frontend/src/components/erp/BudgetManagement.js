@@ -91,7 +91,7 @@ const BudgetManagement = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 탭·세션 변경 시에만 목록 재조회
   }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async (options = {}) => {
+  const loadData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -129,7 +129,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const loadBudgets = async () => {
+  const loadBudgets = async() => {
     try {
       if (!isLoggedIn || !user?.id) {
         setBudgets([]);
@@ -148,7 +148,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const loadBudgetCategories = async () => {
+  const loadBudgetCategories = async() => {
     try {
       if (!isLoggedIn || !user?.id) {
         setBudgetCategories(DEFAULT_BUDGET_CATEGORIES);
@@ -172,7 +172,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const loadBudgetReports = async () => {
+  const loadBudgetReports = async() => {
     try {
       // 보고서 탭: 추후 전용 API 연동
     } catch (err) {
@@ -181,7 +181,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const handleCreateBudget = async (e) => {
+  const handleCreateBudget = async(e) => {
     e?.preventDefault?.();
     try {
       setLoading(true);
@@ -205,7 +205,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const handleSaveEdit = async (e) => {
+  const handleSaveEdit = async(e) => {
     e?.preventDefault?.();
     if (!editingBudget?.id) {
       return;
@@ -234,7 +234,7 @@ const BudgetManagement = () => {
     }
   };
 
-  const handleDeleteBudget = async (budgetId) => {
+  const handleDeleteBudget = async(budgetId) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('정말로 이 예산을 삭제하시겠습니까?', resolve);
     });
@@ -613,7 +613,7 @@ const BudgetManagement = () => {
                                       <div
                                         className={`erp-progress-fill ${isOverBudget ? 'over-budget' : ''}`}
                                         data-width={Math.min(usagePercentage, 100)}
-                                      ></div>
+                                       />
                                     </div>
                                   </div>
 
@@ -857,7 +857,7 @@ const BudgetManagement = () => {
                                         <div
                                           className={`erp-progress-fill ${isOverBudget ? 'over-budget' : ''}`}
                                           data-width={Math.min(usageRate, 100)}
-                                        ></div>
+                                         />
                                       </div>
                                     </div>
 

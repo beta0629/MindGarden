@@ -22,7 +22,7 @@ const NotificationTest = () => {
     const [loadingCodes, setLoadingCodes] = useState(false);
 
     // 알림 유형 코드 로드
-    const loadNotificationTypeCodes = useCallback(async () => {
+    const loadNotificationTypeCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             const response = await fetch('/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE');

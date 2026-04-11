@@ -117,7 +117,7 @@ const UnifiedLogin = () => {
 
   // 서브도메인에서 tenant_id 자동 감지 (표준화: 특정 도메인 정규식 하드코딩 금지)
   useEffect(() => {
-    const detectTenantFromSubdomain = async () => {
+    const detectTenantFromSubdomain = async() => {
       try {
         // 1. URL 파라미터에서 tenantId 확인 (로컬 테스트용)
         const urlParams = new URLSearchParams(window.location.search);
@@ -136,7 +136,7 @@ const UnifiedLogin = () => {
           return;
         }
 
-        const host = window.location.host;
+        const { host } = window.location;
         if (!host) return;
 
         // 3. subdomain 추출: host의 첫 라벨을 사용 (도메인 문자열 하드코딩 금지)
@@ -164,7 +164,7 @@ const UnifiedLogin = () => {
             const tenantData = result.success && result.data ? result.data : result;
 
             if (tenantData.found && tenantData.tenant && tenantData.tenant.tenantId) {
-              const tenantId = tenantData.tenant.tenantId;
+              const { tenantId } = tenantData.tenant;
               console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
 
               // sessionStorage에 저장 (SNS 로그인 시 사용)
@@ -219,7 +219,7 @@ const UnifiedLogin = () => {
     }
     if (!user?.id || isLoading || tooltip.show) return;
     let cancelled = false;
-    (async () => {
+    (async() => {
       const ok = await checkSession(true);
       if (cancelled) return;
       if (!ok) return;
@@ -233,7 +233,7 @@ const UnifiedLogin = () => {
   }, [user, isLoading, tooltip.show, location.search]);
 
   // OAuth2 설정 가져오기
-  const getOAuth2Config = async () => {
+  const getOAuth2Config = async() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/config/oauth2`);
       if (response.ok) {
@@ -299,7 +299,7 @@ const UnifiedLogin = () => {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!isLocalEnv && (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인'))) {
           const host = window.location.hostname;
-          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          const friendlyMessage = `서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -406,7 +406,7 @@ const UnifiedLogin = () => {
   */
 
   // 멀티 테넌트 사용자 확인 및 리다이렉트
-  const checkMultiTenantAndRedirect = async (user) => {
+  const checkMultiTenantAndRedirect = async(user) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
         credentials: 'include'
@@ -448,7 +448,7 @@ const UnifiedLogin = () => {
   };
 
   // 접근 가능한 테넌트 목록 로드
-  const loadAccessibleTenants = async () => {
+  const loadAccessibleTenants = async() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
         credentials: 'include'
@@ -466,7 +466,7 @@ const UnifiedLogin = () => {
   };
 
   // ID/PW 로그인 처리
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     console.log('🚀 handleSubmit 함수 호출됨!', e);
 
     const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -480,7 +480,7 @@ const UnifiedLogin = () => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        const friendlyMessage = `서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
@@ -602,7 +602,7 @@ const UnifiedLogin = () => {
         if (!isLocalEnv && (errorMessage.includes('테넌트 정보가 없습니다') ||
             errorMessage.includes('서브도메인') ||
             errorMessage.includes('TENANT_REQUIRED'))) {
-          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          const friendlyMessage = `서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ${window.location.hostname}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -622,7 +622,7 @@ const UnifiedLogin = () => {
           errorMessage.includes('TENANT_REQUIRED'))) {
         const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다')
           ? errorMessage
-          : '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          : `서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ${window.location.hostname}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
       } else {
@@ -633,7 +633,7 @@ const UnifiedLogin = () => {
   };
 
   // 소셜 로그인 핸들러
-  const handleKakaoLogin = async () => {
+  const handleKakaoLogin = async() => {
     try {
       await kakaoLogin();
     } catch (error) {
@@ -642,7 +642,7 @@ const UnifiedLogin = () => {
     }
   };
 
-  const handleNaverLogin = async () => {
+  const handleNaverLogin = async() => {
     try {
       await naverLogin();
     } catch (error) {
@@ -651,7 +651,7 @@ const UnifiedLogin = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async() => {
     try {
       await googleLogin();
     } catch (error) {
@@ -692,7 +692,7 @@ const UnifiedLogin = () => {
       <TenantSelection
         tenants={accessibleTenants}
         onSelect={null} // TenantSelection에서 직접 처리
-        onCancel={async () => {
+        onCancel={async() => {
           setShowTenantSelection(false);
           await sessionManager.logout();
           navigate('/login');
@@ -875,7 +875,7 @@ const UnifiedLogin = () => {
               <a href="/register" className="mg-v2-link">
                 회원가입
               </a>
-              <span className="mg-v2-link-separator"></span>
+              <span className="mg-v2-link-separator" />
               <a href="/forgot-password" className="mg-v2-link">
                 비밀번호 찾기
               </a>
@@ -893,7 +893,7 @@ const UnifiedLogin = () => {
             // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
             notificationManager.show('임시 비밀번호를 변경해야 합니다.', 'warning');
           }}
-          onSuccess={async () => {
+          onSuccess={async() => {
             // 비밀번호 변경 성공 시 대시보드로 리다이렉트
             console.log('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
             setShowPasswordChangeModal(false);

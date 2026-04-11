@@ -49,7 +49,7 @@ const UnifiedFilterSearch = ({
     }
   }, [debouncedSearchTerm]);
 
-  const loadSuggestions = async (term) => {
+  const loadSuggestions = async(term) => {
     // TODO: 실제 API 호출로 대체
     // 예시: 검색 제안 데이터
     const mockSuggestions = [

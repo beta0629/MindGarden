@@ -23,7 +23,7 @@ const ScheduleQuickAccess = ({ user }) => {
     <div className="schedule-quick-access">
       <div className="schedule-quick-access-header">
         <h3 className="schedule-quick-access-title">
-          <i className="bi bi-calendar-check schedule-quick-access-icon"></i>
+          <i className="bi bi-calendar-check schedule-quick-access-icon" />
           스케줄 관리
         </h3>
         <MGButton
@@ -32,7 +32,7 @@ const ScheduleQuickAccess = ({ user }) => {
           className="schedule-quick-access-view-all mg-button--with-icon"
           onClick={handleScheduleClick}
         >
-          <i className="bi bi-arrow-right"></i>
+          <i className="bi bi-arrow-right" />
           전체보기
         </MGButton>
       </div>
@@ -44,7 +44,7 @@ const ScheduleQuickAccess = ({ user }) => {
       >
         <div className="schedule-quick-access-card-content">
           <div className="schedule-quick-access-card-icon">
-            <i className="bi bi-calendar-check"></i>
+            <i className="bi bi-calendar-check" />
           </div>
           <div className="schedule-quick-access-card-text">
             <h4 className="schedule-quick-access-card-title">
@@ -55,7 +55,7 @@ const ScheduleQuickAccess = ({ user }) => {
             </p>
           </div>
           <div className="schedule-quick-access-card-arrow">
-            <i className="bi bi-arrow-right"></i>
+            <i className="bi bi-arrow-right" />
             스케줄 페이지로 이동
           </div>
         </div>

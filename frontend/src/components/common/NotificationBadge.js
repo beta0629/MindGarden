@@ -1,10 +1,10 @@
-import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {Megaphone} from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Megaphone } from 'lucide-react';
 
-import {ICONS} from '../../constants/icons';
-import {useNotification} from '../../contexts/NotificationContext';
-import {useSession} from '../../contexts/SessionContext';
+import { ICONS } from '../../constants/icons';
+import { useNotification } from '../../contexts/NotificationContext';
+import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
 import './NotificationBadge.css';
 
@@ -37,8 +37,8 @@ const NotificationBadge = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const {user} = useSession();
-  const {unreadCount, unreadMessageCount, unreadSystemCount} = useNotification();
+  const { user } = useSession();
+  const { unreadCount, unreadMessageCount, unreadSystemCount } = useNotification();
 
   const totalCount = unreadCount || 0;
   const messageCount = unreadMessageCount || 0;
@@ -67,10 +67,10 @@ const NotificationBadge = ({
     }
 
     const routes = {
-      ADMIN: {message: '/admin/messages', system: '/notifications'},
-      STAFF: {message: '/admin/messages', system: '/notifications'},
-      CONSULTANT: {message: '/consultant/messages', system: '/notifications'},
-      CLIENT: {message: '/client/messages', system: '/notifications'}
+      ADMIN: { message: '/admin/messages', system: '/notifications' },
+      STAFF: { message: '/admin/messages', system: '/notifications' },
+      CONSULTANT: { message: '/consultant/messages', system: '/notifications' },
+      CLIENT: { message: '/client/messages', system: '/notifications' }
     };
     const userRoutes = routes[user.role] || routes.CLIENT;
 

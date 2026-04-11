@@ -45,7 +45,7 @@ export const EMOTION_CSS = {
         ANGER: 'emotion-anger',
         FEAR: 'emotion-fear',
         SURPRISE: 'emotion-surprise',
-        NEUTRAL: 'emotion-neutral',
+        NEUTRAL: 'emotion-neutral'
     },
 
     // 위험도
@@ -53,15 +53,15 @@ export const EMOTION_CSS = {
         CRITICAL: 'risk-critical',
         HIGH: 'risk-high',
         MEDIUM: 'risk-medium',
-        LOW: 'risk-low',
+        LOW: 'risk-low'
     },
 
     // 추세
     TREND: {
         IMPROVING: 'trend-improving',
         STABLE: 'trend-stable',
-        WORSENING: 'trend-worsening',
-    },
+        WORSENING: 'trend-worsening'
+    }
 };
 
 export default EMOTION_CSS;

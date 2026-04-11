@@ -124,7 +124,7 @@ const PendingDepositWidget = ({ widget, user }) => {
 
   // 금액 포맷팅
   const formatAmount = (amount) => {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
   };
 
   // 날짜 포맷팅

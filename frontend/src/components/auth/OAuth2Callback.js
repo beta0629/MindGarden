@@ -28,7 +28,7 @@ const OAuth2Callback = () => {
   const [socialUserData, setSocialUserData] = useState(null);
 
   useEffect(() => {
-    const handleOAuth2Callback = async () => {
+    const handleOAuth2Callback = async() => {
       try {
         console.log('🔄 OAuth2 콜백 처리 시작');
         
@@ -230,7 +230,7 @@ const OAuth2Callback = () => {
           console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
           
           // 멀티 테넌트 사용자 확인
-          const checkMultiTenantAndRedirect = async (userRole) => {
+          const checkMultiTenantAndRedirect = async(userRole) => {
             try {
               const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
                 credentials: 'include'
@@ -306,7 +306,7 @@ const OAuth2Callback = () => {
           } else {
             console.error('❌ OAuth2 중앙 세션 로그인 실패, 재시도...');
             // 로그인 실패 시 추가 시도
-            setTimeout(async () => {
+            setTimeout(async() => {
               try {
                 console.log('🔄 OAuth2 세션 재확인 시도...');
                 const isLoggedIn = await checkSession(true);
@@ -379,7 +379,7 @@ const OAuth2Callback = () => {
       <TenantSelection
         tenants={accessibleTenants}
         onSelect={null} // TenantSelection에서 직접 처리
-        onCancel={async () => {
+        onCancel={async() => {
           setShowTenantSelection(false);
           await sessionManager.logout();
           navigate('/login');
@@ -408,7 +408,7 @@ const OAuth2Callback = () => {
           isOpen={showIntegrationModal}
           onClose={() => setShowIntegrationModal(false)}
           socialUserInfo={socialUserData}
-          onIntegrationSuccess={async (response) => {
+          onIntegrationSuccess={async(response) => {
             console.log('계정 통합 성공:', response);
             setShowIntegrationModal(false);
             // 통합 성공 후 동적 대시보드로 이동

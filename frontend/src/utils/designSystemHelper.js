@@ -84,7 +84,7 @@ export const getConsultantColor = (consultantId) => {
 /**
  * @param {Object} config - 초기화 설정
  */
-export const initializeDesignSystem = async (config = {}) => {
+export const initializeDesignSystem = async(config = {}) => {
   try {
     console.log('🎨 디자인 시스템 초기화 시작');
     
@@ -332,7 +332,7 @@ export const ZIndexManager = {
 /**
  * @param {Object} config - 초기화 설정
  */
-export const initializeDynamicThemeSystem = async (config = {}) => {
+export const initializeDynamicThemeSystem = async(config = {}) => {
   try {
     console.log('🎨 동적 테마 시스템 초기화 시작');
     

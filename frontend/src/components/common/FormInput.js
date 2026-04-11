@@ -68,7 +68,7 @@ const FormInput = ({
       
       {error && (
         <p className="form-input-error">
-          <i className="bi bi-exclamation-circle form-input-error-icon"></i>
+          <i className="bi bi-exclamation-circle form-input-error-icon" />
           {error}
         </p>
       )}

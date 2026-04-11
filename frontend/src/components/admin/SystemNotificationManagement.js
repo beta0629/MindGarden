@@ -25,7 +25,7 @@ const SystemNotificationManagement = () => {
   const hasManagePermission = hasPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
 
   useEffect(() => {
-    const load = async () => {
+    const load = async() => {
       if (sessionIsLoggedIn && sessionUser) {
         setPermissionsLoading(true);
         try {

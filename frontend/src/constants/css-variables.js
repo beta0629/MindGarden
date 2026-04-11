@@ -659,7 +659,7 @@ export const getCSSVariablesSync = (themeName = 'default') => {
 /**
  * @returns {Promise<string>} 색상 값
  */
-export const getDynamicColor = async (colorKey, themeName = 'default') => {
+export const getDynamicColor = async(colorKey, themeName = 'default') => {
   return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
 };
 

@@ -34,7 +34,7 @@ const AdminMessageListBlock = () => {
   const [filterType, setFilterType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async() => {
     try {
       setLoading(true);
       const response = await StandardizedApi.get('/api/v1/consultation-messages/all');
@@ -68,7 +68,7 @@ const AdminMessageListBlock = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     try {
       const response = await StandardizedApi.get(`/api/v1/consultation-messages/${message.id}`);
       const detail =
@@ -80,7 +80,7 @@ const AdminMessageListBlock = () => {
     }
   };
 
-  const closeModal = useCallback(async () => {
+  const closeModal = useCallback(async() => {
     setSelectedMessage(null);
     await loadMessages();
     globalThis.dispatchEvent(new Event('message-read'));

@@ -35,7 +35,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
     const [lastUpdated, setLastUpdated] = useState(null);
 
     // ========== 데이터 로드 ==========
-    const loadStatistics = useCallback(async () => {
+    const loadStatistics = useCallback(async() => {
         if (!userRole) return;
         
         setLoading(true);

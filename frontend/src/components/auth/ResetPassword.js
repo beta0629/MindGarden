@@ -23,7 +23,7 @@ const ResetPassword = () => {
 
   // 토큰 검증
   useEffect(() => {
-    const validateToken = async () => {
+    const validateToken = async() => {
       if (!token) {
         notificationManager.error('유효하지 않은 접근입니다.');
         navigate('/login');
@@ -73,7 +73,7 @@ const ResetPassword = () => {
     return null;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!formData.newPassword || !formData.confirmPassword) {
@@ -128,7 +128,7 @@ const ResetPassword = () => {
         </div>
         <div className="mg-v2-auth-content">
           <div className="mg-v2-auth-form-wrapper" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <span className="mg-v2-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--mg-primary-color)', borderRightColor: 'var(--mg-primary-color)', borderBottomColor: 'var(--mg-primary-color)' }}></span>
+            <span className="mg-v2-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--mg-primary-color)', borderRightColor: 'var(--mg-primary-color)', borderBottomColor: 'var(--mg-primary-color)' }} />
             <p className="mg-v2-auth-subtitle" style={{ marginTop: '16px' }}>
               토큰을 검증하고 있습니다...
             </p>

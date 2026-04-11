@@ -28,7 +28,7 @@ const CommonCodeFilters = ({
     const [loadingCodes, setLoadingCodes] = useState(false);
 
     // 활성/비활성 상태 코드 로드
-    const loadActiveStatusCodes = useCallback(async () => {
+    const loadActiveStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             // 표준화된 API 사용 (하위 호환성 유지)
@@ -99,7 +99,7 @@ const CommonCodeFilters = ({
                     className="btn btn-primary"
                     onClick={onNewCode}
                 >
-                    <i className="bi bi-plus-circle"></i>
+                    <i className="bi bi-plus-circle" />
                     새 공통코드 추가
                 </MGButton>
             </div>
@@ -142,7 +142,7 @@ const CommonCodeFilters = ({
                     <div className="filter-group search-group">
                         <label htmlFor="searchTerm">검색</label>
                         <div className="search-input-wrapper">
-                            <i className="bi bi-search search-icon"></i>
+                            <i className="bi bi-search search-icon" />
                             <input
                                 type="text"
                                 id="searchTerm"
@@ -161,7 +161,7 @@ const CommonCodeFilters = ({
                                     title="검색어 지우기"
                                     preventDoubleClick={false}
                                 >
-                                    <i className="bi bi-x"></i>
+                                    <i className="bi bi-x" />
                                 </MGButton>
                             )}
                         </div>
@@ -175,7 +175,7 @@ const CommonCodeFilters = ({
                                 className="btn btn-outline-secondary"
                                 onClick={clearFilters}
                             >
-                                <i className="bi bi-arrow-clockwise"></i>
+                                <i className="bi bi-arrow-clockwise" />
                                 필터 초기화
                             </MGButton>
                         )}

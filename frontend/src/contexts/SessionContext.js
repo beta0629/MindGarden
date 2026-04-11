@@ -132,7 +132,7 @@ export const SessionProvider = ({ children }) => {
   // 초기 마운트 시 checkSession( true )로 서버 검증 후 성공(200)일 때만 Context에 user 설정
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    (async() => {
       const postLogoutGate = sessionManager.consumePostLogoutGate();
       console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행', {
         postLogoutGate
@@ -177,7 +177,7 @@ export const SessionProvider = ({ children }) => {
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
-  const checkSession = useCallback(async (force = false) => {
+  const checkSession = useCallback(async(force = false) => {
     const now = Date.now();
     
     // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
@@ -248,7 +248,7 @@ export const SessionProvider = ({ children }) => {
   }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
 
   // 로그인 함수 (API 호출 포함)
-  const login = async (loginData) => {
+  const login = async(loginData) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
       
@@ -297,7 +297,7 @@ export const SessionProvider = ({ children }) => {
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false }); // 로딩 즉시 해제
         
         // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보) - 실패해도 사용자 정보 유지
-        setTimeout(async () => {
+        setTimeout(async() => {
           try {
             console.log('🔄 로그인 후 세션 확인 시작...');
             const sessionCheckResult = await checkSession(true);
@@ -341,7 +341,7 @@ export const SessionProvider = ({ children }) => {
   };
 
   // 테스트 로그인 함수
-  const testLogin = async (userInfo, tokens = null) => {
+  const testLogin = async(userInfo, tokens = null) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
       
@@ -356,7 +356,7 @@ export const SessionProvider = ({ children }) => {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: false }); // 로딩 즉시 해제
       
       // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보)
-      setTimeout(async () => {
+      setTimeout(async() => {
         try {
           console.log('🔄 테스트 로그인 후 세션 확인 시작...');
           await checkSession(true);
@@ -376,7 +376,7 @@ export const SessionProvider = ({ children }) => {
   };
 
   // 로그아웃 함수
-  const logout = async () => {
+  const logout = async() => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
       
@@ -507,7 +507,7 @@ export const SessionProvider = ({ children }) => {
     /** 권한 그룹 코드 목록 (API current-user에서 내려준 값) */
     permissionGroupCodes: state.user?.permissionGroupCodes ?? [],
     /** 단일 권한 코드 체크는 백엔드 API 호출 (기존 호환) */
-    hasPermission: async (permission) => {
+    hasPermission: async(permission) => {
       try {
         const { apiPost } = await import('../utils/ajax');
         const result = await apiPost('/api/v1/permissions/check-permission', { permission });

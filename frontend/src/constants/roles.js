@@ -24,7 +24,7 @@ let ADMIN_ROLES = [USER_ROLES.ADMIN];
  *
  * @returns {Promise<void>}
  */
-export const loadRoleCodesFromCommonCode = async () => {
+export const loadRoleCodesFromCommonCode = async() => {
   try {
     const { getAdminRoleCodes } = await import('../utils/roleCodeUtils');
     ADMIN_ROLES = await getAdminRoleCodes();

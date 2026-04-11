@@ -88,7 +88,7 @@ const WeatherCard = () => {
   };
 
   // 날씨 데이터 가져오기
-  const fetchWeatherData = async () => {
+  const fetchWeatherData = async() => {
     try {
       setWeatherData(prev => ({ ...prev, loading: true, error: null }));
       
@@ -133,7 +133,7 @@ const WeatherCard = () => {
       const weatherCode = data.weather[0].id;
       const temperature = Math.round(data.main.temp);
       const description = getWeatherDescription(weatherCode);
-      const humidity = data.main.humidity;
+      const { humidity } = data.main;
       const windSpeed = data.wind.speed;
       const icon = getWeatherIcon(weatherCode);
       

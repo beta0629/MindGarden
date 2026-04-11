@@ -2,14 +2,14 @@
  * Modal 컴포넌트 사용 예시
  */
 
-import {useState} from 'react';
+import { useState } from 'react';
 
 import Button from '../Button/Button';
 import Icon from '../Icon/Icon';
 
 import Modal from './Modal';
 
-const ModalExamples = () => {const [modals, setModals] = useState({basic: false,
+const ModalExamples = () => {const [modals, setModals] = useState({ basic: false,
     withTitle: false,
     large: false,
     drawer: false,
@@ -21,13 +21,13 @@ const ModalExamples = () => {const [modals, setModals] = useState({basic: false,
     error: false,
     success: false,
     warning: false,
-    info: false});
+    info: false });
 
-  const openModal = (modalName) => {setModals(prev => ({...prev, [modalName]: true}));};
+  const openModal = (modalName) => {setModals(prev => ({ ...prev, [modalName]: true }));};
 
-  const closeModal = (modalName) => {setModals(prev => ({...prev, [modalName]: false}));};
+  const closeModal = (modalName) => {setModals(prev => ({ ...prev, [modalName]: false }));};
 
-  const closeAllModals = () => {setModals({basic: false,
+  const closeAllModals = () => {setModals({ basic: false,
       withTitle: false,
       large: false,
       drawer: false,
@@ -39,7 +39,7 @@ const ModalExamples = () => {const [modals, setModals] = useState({basic: false,
       error: false,
       success: false,
       warning: false,
-      info: false});};
+      info: false });};
 
   return (<div className="mg-v2-v2-v2-section">
       <div className="mg-v2-v2-v2-section-header">

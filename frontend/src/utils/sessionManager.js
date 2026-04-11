@@ -60,7 +60,7 @@ class SessionManager {
 
       // fetch 요청 감지 (AJAX 폼 제출)
       const originalFetch = window.fetch;
-      window.fetch = async (...args) => {
+      window.fetch = async(...args) => {
         const method = (args[1]?.method || args[0]?.method || 'GET').toUpperCase();
         const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
         // 로그아웃·세션 무효화는 폼 훅에서 제외 — endFormSubmit → checkSession(true) 가

@@ -55,7 +55,7 @@ const MappingTableView = ({
   const [processing, setProcessing] = useState(false);
 
   const handleCriticalAction = useCallback(
-    async (fn) => {
+    async(fn) => {
       if (processing) return;
       setProcessing(true);
       try {

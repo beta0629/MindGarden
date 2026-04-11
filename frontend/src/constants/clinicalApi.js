@@ -37,7 +37,7 @@ export const CLINICAL_API = {
     UPDATE_REPORT: (reportId) => `${BASE_PATH}/clinical-reports/${reportId}`,
 
     // 보고서 승인
-    APPROVE_REPORT: (reportId) => `${BASE_PATH}/clinical-reports/${reportId}/approve`,
+    APPROVE_REPORT: (reportId) => `${BASE_PATH}/clinical-reports/${reportId}/approve`
 };
 
 export default CLINICAL_API;

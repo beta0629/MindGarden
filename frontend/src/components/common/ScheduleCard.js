@@ -68,7 +68,7 @@ const ScheduleCard = ({
           onClick={() => onView(schedule)}
           title={SCHEDULE_ACTION_LABELS.view}
         >
-          <i className={SCHEDULE_ACTION_ICONS.view}></i>
+          <i className={SCHEDULE_ACTION_ICONS.view} />
         </MGButton>
       );
     }
@@ -86,7 +86,7 @@ const ScheduleCard = ({
           onClick={() => onConfirm(schedule)}
           title={SCHEDULE_ACTION_LABELS.confirm}
         >
-          <i className={SCHEDULE_ACTION_ICONS.confirm}></i>
+          <i className={SCHEDULE_ACTION_ICONS.confirm} />
         </MGButton>
       );
     }
@@ -104,7 +104,7 @@ const ScheduleCard = ({
           onClick={() => onComplete(schedule)}
           title={SCHEDULE_ACTION_LABELS.complete}
         >
-          <i className={SCHEDULE_ACTION_ICONS.complete}></i>
+          <i className={SCHEDULE_ACTION_ICONS.complete} />
         </MGButton>
       );
     }
@@ -122,7 +122,7 @@ const ScheduleCard = ({
           onClick={() => onCancel(schedule)}
           title={SCHEDULE_ACTION_LABELS.cancel}
         >
-          <i className={SCHEDULE_ACTION_ICONS.cancel}></i>
+          <i className={SCHEDULE_ACTION_ICONS.cancel} />
         </MGButton>
       );
     }
@@ -139,7 +139,7 @@ const ScheduleCard = ({
           onClick={() => onEdit(schedule)}
           title={SCHEDULE_ACTION_LABELS.edit}
         >
-          <i className={SCHEDULE_ACTION_ICONS.edit}></i>
+          <i className={SCHEDULE_ACTION_ICONS.edit} />
         </MGButton>
       );
     }
@@ -156,7 +156,7 @@ const ScheduleCard = ({
           onClick={() => onDelete(schedule)}
           title={SCHEDULE_ACTION_LABELS.delete}
         >
-          <i className={SCHEDULE_ACTION_ICONS.delete}></i>
+          <i className={SCHEDULE_ACTION_ICONS.delete} />
         </MGButton>
       );
     }
@@ -184,26 +184,26 @@ const ScheduleCard = ({
       <div className="schedule-card-content">
         <div className="schedule-card-info">
           <div className="schedule-info-item">
-            <i className="bi bi-calendar"></i>
+            <i className="bi bi-calendar" />
             <span>{formatDate(schedule.date)}</span>
           </div>
           <div className="schedule-info-item">
-            <i className="bi bi-clock"></i>
+            <i className="bi bi-clock" />
             <span>{formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}</span>
           </div>
           <div className="schedule-info-item">
-            <i className="bi bi-person"></i>
+            <i className="bi bi-person" />
             <SafeText tag="span" fallback="상담사 정보 없음">{schedule.consultantName}</SafeText>
           </div>
           {schedule.clientName && (
             <div className="schedule-info-item">
-              <i className="bi bi-person-circle"></i>
+              <i className="bi bi-person-circle" />
               <SafeText tag="span">{schedule.clientName}</SafeText>
             </div>
           )}
           {schedule.consultationType && (
             <div className="schedule-info-item">
-              <i className="bi bi-tag"></i>
+              <i className="bi bi-tag" />
               <SafeText tag="span">{schedule.consultationType}</SafeText>
             </div>
           )}

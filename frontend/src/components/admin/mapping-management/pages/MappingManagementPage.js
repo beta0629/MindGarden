@@ -67,7 +67,7 @@ const MappingManagementPage = () => {
   const [editMapping, setEditMapping] = useState(null);
   const [isLoadingMappings, setIsLoadingMappings] = useState(false);
 
-  const loadMappings = async () => {
+  const loadMappings = async() => {
     if (isLoadingMappings) return;
     setIsLoadingMappings(true);
     setLoading(true);
@@ -159,7 +159,7 @@ const MappingManagementPage = () => {
     return iconMap[status] || FileText;
   };
 
-  const loadMappingStatusInfo = async () => {
+  const loadMappingStatusInfo = async() => {
     try {
       const response = await StandardizedApi.get('/api/v1/common-codes/groups/MAPPING_STATUS');
       if (response && response.length > 0) {
@@ -210,7 +210,7 @@ const MappingManagementPage = () => {
     }
   };
 
-  const handleApproveMapping = async (mappingId) => {
+  const handleApproveMapping = async(mappingId) => {
     try {
       const response = await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
         adminName: user?.name || user?.userId || '관리자'
@@ -227,11 +227,11 @@ const MappingManagementPage = () => {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async() => {
     loadMappings();
   };
 
-  const handleConfirmDeposit = async () => {
+  const handleConfirmDeposit = async() => {
     loadMappings();
   };
 
@@ -292,7 +292,7 @@ const MappingManagementPage = () => {
     setRefundReason('');
   };
 
-  const handleRefundProcess = async () => {
+  const handleRefundProcess = async() => {
     if (!refundReason.trim()) {
       notificationManager.warning('환불 사유를 반드시 입력해주세요.');
       return;

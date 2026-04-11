@@ -119,7 +119,7 @@ const TabletLogin = () => {
       return;
     }
 
-    const checkExistingSession = async () => {
+    const checkExistingSession = async() => {
       try {
         // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
         const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
@@ -164,7 +164,7 @@ const TabletLogin = () => {
     }
   }, [checkSession, navigate, isLoading, tooltip.show]);
 
-  const getOAuth2Config = async () => {
+  const getOAuth2Config = async() => {
     try {
       const config = await authAPI.getOAuth2Config();
       setOauth2Config(config);
@@ -185,7 +185,7 @@ const TabletLogin = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
       showTooltip(LOGIN_IDENTIFIER_PASSWORD_REQUIRED, 'warning');
@@ -276,7 +276,7 @@ const TabletLogin = () => {
     return `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`;
   };
 
-  const sendVerificationCode = async () => {
+  const sendVerificationCode = async() => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!phoneNumber || phoneNumber.length !== SMS.PHONE_LENGTH) {
@@ -309,7 +309,7 @@ const TabletLogin = () => {
     }
   };
 
-  const verifyCode = async () => {
+  const verifyCode = async() => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!verificationCode || verificationCode.length !== SMS.CODE_LENGTH) {
@@ -346,7 +346,7 @@ const TabletLogin = () => {
   };
 
   // SMS 인증 성공 후 처리
-  const handleSmsAuthSuccess = async () => {
+  const handleSmsAuthSuccess = async() => {
     try {
       console.log('✅ SMS 인증 성공 후 로그인 처리 시작');
       
@@ -404,16 +404,16 @@ const TabletLogin = () => {
     }
   };
 
-  const handleKakaoLogin = async () => {
+  const handleKakaoLogin = async() => {
     await kakaoLogin();
   };
 
-  const handleNaverLogin = async () => {
+  const handleNaverLogin = async() => {
     await naverLogin();
   };
 
 
-  const checkOAuthCallback = async () => {
+  const checkOAuthCallback = async() => {
     
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -565,7 +565,7 @@ const TabletLogin = () => {
     }
   };
 
-  const handleSocialSignupSuccess = async (response) => {
+  const handleSocialSignupSuccess = async(response) => {
     setShowSocialSignupModal(false);
     setSocialUserInfo(null);
     console.log('간편 회원가입 성공:', response.message);
@@ -700,7 +700,7 @@ const TabletLogin = () => {
               onClick={() => setSmsMode(false)}
               preventDoubleClick={false}
             >
-              <i className="bi bi-envelope"></i>
+              <i className="bi bi-envelope" />
               이메일 로그인
             </MGButton>
             <MGButton
@@ -710,7 +710,7 @@ const TabletLogin = () => {
               onClick={() => setSmsMode(true)}
               preventDoubleClick={false}
             >
-              <i className="bi bi-phone"></i>
+              <i className="bi bi-phone" />
               SMS 로그인
             </MGButton>
           </div>
@@ -720,7 +720,7 @@ const TabletLogin = () => {
             <form className={TABLET_LOGIN_CSS.FORM} onSubmit={handleSubmit}>
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
-                  <i className="bi bi-envelope"></i>
+                  <i className="bi bi-envelope" />
                   이메일
                 </label>
                 <input
@@ -736,7 +736,7 @@ const TabletLogin = () => {
 
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
-                  <i className="bi bi-lock"></i>
+                  <i className="bi bi-lock" />
                   비밀번호
                 </label>
                 <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
@@ -758,7 +758,7 @@ const TabletLogin = () => {
                     preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
-                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
                   </MGButton>
                 </div>
               </div>
@@ -800,7 +800,7 @@ const TabletLogin = () => {
             <div className={TABLET_LOGIN_CSS.SMS_SECTION}>
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
-                  <i className="bi bi-phone"></i>
+                  <i className="bi bi-phone" />
                   휴대폰 번호
                 </label>
                 <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
@@ -831,7 +831,7 @@ const TabletLogin = () => {
               {isCodeSent && (
                 <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                   <label className={TABLET_LOGIN_CSS.LABEL}>
-                    <i className="bi bi-shield-check"></i>
+                    <i className="bi bi-shield-check" />
                     인증 코드
                   </label>
                   <div className={TABLET_LOGIN_CSS.SMS_VERIFICATION}>
@@ -881,7 +881,7 @@ const TabletLogin = () => {
               disabled={!oauth2Config?.kakao}
               preventDoubleClick={false}
             >
-              <i className="bi bi-chat-dots"></i>
+              <i className="bi bi-chat-dots" />
               카카오로 로그인
             </MGButton>
             <MGButton
@@ -892,7 +892,7 @@ const TabletLogin = () => {
               disabled={!oauth2Config?.naver}
               preventDoubleClick={false}
             >
-              <i className="bi bi-n"></i>
+              <i className="bi bi-n" />
               네이버로 로그인
             </MGButton>
           </div>

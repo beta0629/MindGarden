@@ -70,7 +70,7 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
     }
   }, [enrollment, branchId, classId, consumerId]);
 
-  const fetchClasses = async () => {
+  const fetchClasses = async() => {
     try {
       const params = new URLSearchParams();
       if (branchId) params.append('branchId', branchId);
@@ -92,7 +92,7 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
     }
   };
 
-  const fetchConsumers = async () => {
+  const fetchConsumers = async() => {
     setConsumers([]);
   };
 
@@ -104,7 +104,7 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);

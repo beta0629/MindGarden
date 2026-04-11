@@ -333,7 +333,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     });
   }, [chartPeriod, lineChartPeriod]);
 
-  const loadTodayStats = useCallback(async () => {
+  const loadTodayStats = useCallback(async() => {
     const user = propUser || sessionUser;
     if (!user?.role) return;
     try {
@@ -384,7 +384,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       return;
     }
     if (isInitialized.current) return;
-    const initializeDashboard = async () => {
+    const initializeDashboard = async() => {
       try {
         await fetchUserPermissions(setUserPermissions);
         loadTodayStats();
@@ -405,14 +405,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     setTimeout(() => setShowToastState(false), 3000);
   }, []);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async() => {
     setLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       /** fetch 실패(rejected) 시 res.ok 체크를 통과하지 않도록 쓰는 더미 */
       const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
       const settled = await Promise.allSettled([
-        fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0], { headers, credentials: 'include' }),
+        fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
         fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
         fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
         fetch('/api/v1/admin/consultant-rating-stats', { headers, credentials: 'include' }),
@@ -529,7 +529,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           const payload = d?.data != null ? d.data : d;
           if (payload != null) {
             const booked = payload.bookedSchedules;
-            const statusCount = payload.statusCount;
+            const { statusCount } = payload;
             if (typeof booked === 'number') {
               schedulePendingCount = booked;
             } else if (statusCount && typeof statusCount.BOOKED === 'number') {
@@ -563,7 +563,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, [showToast, propUser, sessionUser, loadTodayStats]);
 
-  const loadRefundStats = useCallback(async () => {
+  const loadRefundStats = useCallback(async() => {
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       const response = await fetch('/api/v1/admin/refund-statistics?period=month', { headers, credentials: 'include' });
@@ -584,7 +584,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, []);
 
-  const loadUnassignedClientsAndConsultants = useCallback(async () => {
+  const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
       const dateStr = new Date().toISOString().split('T')[0];
@@ -609,7 +609,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, []);
 
-  const loadPendingDepositStats = useCallback(async () => {
+  const loadPendingDepositStats = useCallback(async() => {
     try {
       const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
       const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
@@ -631,7 +631,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   }, []);
 
   const handleConfirmMatch = useCallback(
-    async (clientId, consultantId) => {
+    async(clientId, consultantId) => {
       try {
         await StandardizedApi.post('/api/v1/admin/mappings', {
           clientId: Number(clientId),
@@ -658,7 +658,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]
   );
 
-  const handleAutoCompleteSchedules = async () => {
+  const handleAutoCompleteSchedules = async() => {
     setAutoCompleteLoading(true);
     try {
       const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
@@ -678,7 +678,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   };
 
-  const handleAutoCompleteWithReminder = async () => {
+  const handleAutoCompleteWithReminder = async() => {
     setAutoCompleteWithReminderLoading(true);
     try {
       const response = await csrfTokenManager.post(
@@ -700,7 +700,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   };
 
-  const handleMergeDuplicateMappings = async () => {
+  const handleMergeDuplicateMappings = async() => {
     setMergeDuplicateLoading(true);
     try {
       const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
@@ -885,7 +885,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     return () => clearTimeout(t);
   }, [integratedDataRankSignature]);
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(async() => {
     try {
       await logout();
     } catch (e) {

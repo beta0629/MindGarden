@@ -108,7 +108,7 @@ const ClientMessageWidget = ({ widget, user }) => {
   };
 
   // 시스템 공지와 상담사 메시지 통합
-  const loadAllMessages = async () => {
+  const loadAllMessages = async() => {
     try {
       // 1. 상담사 메시지 처리
       let processedConsultantMessages = [];
@@ -189,7 +189,7 @@ const ClientMessageWidget = ({ widget, user }) => {
   }
 
   // 메시지 상세 보기
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     try {
       if (message.messageSource === 'SYSTEM') {
         // 시스템 공지 상세 조회
@@ -222,7 +222,7 @@ const ClientMessageWidget = ({ widget, user }) => {
   };
 
   // 모달 닫기
-  const closeModal = async () => {
+  const closeModal = async() => {
     setSelectedMessage(null);
     await loadAllMessages();
     
@@ -316,7 +316,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                     <SafeText>{message.title}</SafeText>
                   </h4>
                   {!message.isRead && (
-                    <span className="client-message-item-unread-dot"></span>
+                    <span className="client-message-item-unread-dot" />
                   )}
                 </div>
                 <div className="client-message-item-preview">

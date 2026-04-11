@@ -150,7 +150,7 @@ const UnifiedHeader = ({
   };
 
   // 백 버튼 클릭 핸들러
-  const handleBackClick = async () => {
+  const handleBackClick = async() => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
@@ -183,7 +183,7 @@ const UnifiedHeader = ({
   }, [user?.id]);
 
   // 멀티 테넌트 사용자 확인
-  const checkMultiTenantUser = async () => {
+  const checkMultiTenantUser = async() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
         credentials: 'include'
@@ -208,7 +208,7 @@ const UnifiedHeader = ({
   };
 
   // 접근 가능한 테넌트 목록 로드
-  const loadAccessibleTenants = async () => {
+  const loadAccessibleTenants = async() => {
     try {
       setIsLoadingTenants(true);
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
@@ -236,7 +236,7 @@ const UnifiedHeader = ({
   };
 
   // 테넌트 전환 핸들러
-  const handleTenantSwitch = async (tenantId) => {
+  const handleTenantSwitch = async(tenantId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/switch`, {
         method: 'POST',
@@ -298,9 +298,9 @@ const UnifiedHeader = ({
         aria-label="테넌트 전환"
         preventDoubleClick={false}
       >
-        <i className="bi bi-building"></i>
+        <i className="bi bi-building" />
         <span className="mg-header__tenant-name">{currentTenantName}</span>
-        <i className="bi bi-chevron-down"></i>
+        <i className="bi bi-chevron-down" />
       </MGButton>
     );
   };
@@ -434,9 +434,9 @@ const UnifiedHeader = ({
           aria-label="메뉴 열기"
           preventDoubleClick={false}
         >
-          <span className="mg-header__hamburger-icon"></span>
-          <span className="mg-header__hamburger-icon"></span>
-          <span className="mg-header__hamburger-icon"></span>
+          <span className="mg-header__hamburger-icon" />
+          <span className="mg-header__hamburger-icon" />
+          <span className="mg-header__hamburger-icon" />
         </MGButton>
       </div>
     );
@@ -465,7 +465,7 @@ const UnifiedHeader = ({
                 aria-label="뒤로가기"
                 preventDoubleClick={false}
               >
-                <i className="bi bi-arrow-left"></i>
+                <i className="bi bi-arrow-left" />
               </MGButton>
             )}
             {renderLogo()}

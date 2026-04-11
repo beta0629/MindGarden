@@ -44,7 +44,7 @@ const ConsultationHistory = () => {
 
   // 상담 상태 코드 로드 (공통코드 기반)
   useEffect(() => {
-    const loadStatusCodes = async () => {
+    const loadStatusCodes = async() => {
       try {
         setLoadingCodes(true);
         // 공통코드 API 사용 (표준화된 방법)
@@ -75,7 +75,7 @@ const ConsultationHistory = () => {
     loadStatusCodes();
   }, []);
 
-  const loadConsultationHistory = async () => {
+  const loadConsultationHistory = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -175,7 +175,7 @@ const ConsultationHistory = () => {
             titleId={CONSULTATION_HISTORY_TITLE_ID}
             actions={
               <MGButton variant="outline" size="small" onClick={() => navigate(-1)} preventDoubleClick={false}>
-                <i className="bi bi-arrow-left"></i>
+                <i className="bi bi-arrow-left" />
                 뒤로
               </MGButton>
             }
@@ -262,7 +262,7 @@ const ConsultationHistory = () => {
           <div className="consultation-list">
             {error ? (
               <div className="error-message">
-                <i className="bi bi-exclamation-triangle"></i>
+                <i className="bi bi-exclamation-triangle" />
                 <p>{error}</p>
                 <MGButton variant="primary" onClick={loadConsultationHistory} className="retry-btn" preventDoubleClick={false}>
                   다시 시도
@@ -270,7 +270,7 @@ const ConsultationHistory = () => {
               </div>
             ) : filteredConsultations.length === 0 ? (
               <div className="no-data">
-                <i className="bi bi-calendar-x"></i>
+                <i className="bi bi-calendar-x" />
                 <p>상담 내역이 없습니다</p>
                 <small>새로운 상담을 예약해보세요</small>
               </div>
@@ -286,12 +286,12 @@ const ConsultationHistory = () => {
                   
                   <div className="consultation-details">
                     <div className="detail-item">
-                      <i className="bi bi-calendar"></i>
+                      <i className="bi bi-calendar" />
                       <span>{formatDate(consultation.date)}</span>
                     </div>
                     
                     <div className="detail-item">
-                      <i className="bi bi-clock"></i>
+                      <i className="bi bi-clock" />
                       <span>
                         {formatTime(consultation.startTime)} - {formatTime(consultation.endTime)}
                       </span>
@@ -299,14 +299,14 @@ const ConsultationHistory = () => {
                     
                     {consultation.title && (
                       <div className="detail-item">
-                        <i className="bi bi-chat-text"></i>
+                        <i className="bi bi-chat-text" />
                         <span><SafeText>{consultation.title}</SafeText></span>
                       </div>
                     )}
                     
                     {consultation.description && (
                       <div className="detail-item description">
-                        <i className="bi bi-file-text"></i>
+                        <i className="bi bi-file-text" />
                         <span><SafeText>{consultation.description}</SafeText></span>
                       </div>
                     )}

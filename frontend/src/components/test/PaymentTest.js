@@ -62,7 +62,7 @@ const PaymentTest = () => {
     setResults(prev => [result, ...prev]);
   };
 
-  const executeTest = async (testFunction, title) => {
+  const executeTest = async(testFunction, title) => {
     setLoading(true);
     try {
       const result = await testFunction();
@@ -74,7 +74,7 @@ const PaymentTest = () => {
     }
   };
 
-  const testCreatePayment = async () => {
+  const testCreatePayment = async() => {
     const paymentRequest = {
       orderId: `TEST_ORDER_${Date.now()}`,
       amount: testData.amount,
@@ -93,7 +93,7 @@ const PaymentTest = () => {
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.CREATE_PAYMENT}`, {
       method: HTTP_METHODS.POST,
       headers: {
-        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
       },
       credentials: 'include',
       body: JSON.stringify(paymentRequest)
@@ -105,11 +105,11 @@ const PaymentTest = () => {
     return await response.json();
   };
 
-  const testPaymentScenarios = async () => {
+  const testPaymentScenarios = async() => {
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.PAYMENT_SCENARIOS}`, {
       method: HTTP_METHODS.POST,
       headers: {
-        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
       },
       credentials: 'include'
     });
@@ -120,7 +120,7 @@ const PaymentTest = () => {
     return await response.json();
   };
 
-  const testPaymentStatus = async () => {
+  const testPaymentStatus = async() => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
@@ -131,7 +131,7 @@ const PaymentTest = () => {
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.PAYMENT_STATUS}/${paymentId}/status`, {
       method: HTTP_METHODS.PUT,
       headers: {
-        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
       },
       credentials: 'include',
       body: JSON.stringify({ status })
@@ -143,7 +143,7 @@ const PaymentTest = () => {
     return await response.json();
   };
 
-  const testWebhook = async () => {
+  const testWebhook = async() => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
@@ -163,7 +163,7 @@ const PaymentTest = () => {
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.WEBHOOK}`, {
       method: HTTP_METHODS.POST,
       headers: {
-        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
       },
       credentials: 'include',
       body: JSON.stringify(webhookData)
@@ -175,11 +175,11 @@ const PaymentTest = () => {
     return await response.json();
   };
 
-  const testStatistics = async () => {
+  const testStatistics = async() => {
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.STATISTICS}`, {
       method: HTTP_METHODS.GET,
       headers: {
-        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON
       },
       credentials: 'include'
     });
@@ -190,7 +190,7 @@ const PaymentTest = () => {
     return await response.json();
   };
 
-  const testDepositConfirmation = async () => {
+  const testDepositConfirmation = async() => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
@@ -203,14 +203,14 @@ const PaymentTest = () => {
     const response = await fetch(`${API_BASE_URL}/api/test/payment/deposit-test?paymentId=${paymentId}&amount=${amount}&depositorName=${depositorName}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include'
     });
     return await response.json();
   };
 
-  const testCancelRefund = async () => {
+  const testCancelRefund = async() => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
@@ -231,32 +231,32 @@ const PaymentTest = () => {
     const response = await fetch(`${API_BASE_URL}/api/test/payment/cancel-refund-test?${params}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include'
     });
     return await response.json();
   };
 
-  const testBulkCreate = async () => {
+  const testBulkCreate = async() => {
     const count = prompt('생성할 결제 수를 입력하세요:', '10');
     if (!count) return;
 
     const response = await fetch(`${API_BASE_URL}/api/test/payment/bulk-create?count=${count}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include'
     });
     return await response.json();
   };
 
-  const testSystemHealth = async () => {
+  const testSystemHealth = async() => {
     const response = await fetch(`${API_BASE_URL}/api/test/payment/health`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include'
     });
@@ -439,7 +439,7 @@ const PaymentTest = () => {
         {/* 로딩 표시 */}
         {loading && (
           <div className="loading">
-            <div className="spinner"></div>
+            <div className="spinner" />
             <span>테스트 실행 중...</span>
           </div>
         )}

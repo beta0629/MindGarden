@@ -69,7 +69,7 @@ const NotificationDropdown = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const target = event.target;
+      const { target } = event;
       if (
         dropdownRef.current && !dropdownRef.current.contains(target) &&
         panelRef.current && !panelRef.current.contains(target)
@@ -93,7 +93,7 @@ const NotificationDropdown = () => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
-  const fetchSystemNotifications = async () => {
+  const fetchSystemNotifications = async() => {
     try {
       setLoadingSystem(true);
       const response = await StandardizedApi.get('/api/v1/system-notifications', {
@@ -111,7 +111,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = async() => {
     const endpoint = getConsultationMessagesListPath(user);
     if (!endpoint) {
       setMessageList([]);
@@ -132,7 +132,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  const handleMarkAllRead = async () => {
+  const handleMarkAllRead = async() => {
     try {
       if ((unreadSystemCount || 0) > 0) {
         await markAllSystemNotificationsAsRead();
@@ -163,7 +163,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  const getSystemItemDetail = async (item) => {
+  const getSystemItemDetail = async(item) => {
     if (!item?.id) return item;
     try {
       const response = await StandardizedApi.get(`/api/v1/system-notifications/${item.id}`);
@@ -174,7 +174,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  const getMessageItemDetail = async (item) => {
+  const getMessageItemDetail = async(item) => {
     if (!item?.id) return item;
     try {
       const response = await StandardizedApi.get(`/api/v1/consultation-messages/${item.id}`);
@@ -185,7 +185,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  const handleSystemItemClick = async (event, item) => {
+  const handleSystemItemClick = async(event, item) => {
     stopNotificationItemEvent(event);
     const id = item?.id;
     if (id == null) return;
@@ -207,7 +207,7 @@ const NotificationDropdown = () => {
     setIsOpen(false);
   };
 
-  const handleMessageItemClick = async (event, item) => {
+  const handleMessageItemClick = async(event, item) => {
     stopNotificationItemEvent(event);
     const mid = item?.id;
     if (mid == null) return;

@@ -28,7 +28,7 @@ import {
   BILLING_MESSAGES,
   CALLBACK_PARAMS,
   CALLBACK_STATUS,
-  BILLING_ROUTES,
+  BILLING_ROUTES
 } from '../../constants/billing';
 import './BillingCallback.css';
 
@@ -51,7 +51,7 @@ const BillingCallback = () => {
   const errorMessage = searchParams.get(CALLBACK_PARAMS.ERROR_MESSAGE);
 
   useEffect(() => {
-    const processCallback = async () => {
+    const processCallback = async() => {
       if (!statusParam) {
         setError(BILLING_MESSAGES.CALLBACK.ERROR_MISSING_STATUS);
         setStatus(CALLBACK_STATUS.FAIL);
@@ -86,7 +86,7 @@ const BillingCallback = () => {
             paymentMethodToken: authKey,
             pgProvider: PG_PROVIDER.TOSS,
             customerKey,
-            tenantId,
+            tenantId
           });
 
           setPaymentMethod(paymentMethodData);

@@ -63,7 +63,7 @@ const PgConfigurationDetail = () => {
   useEffect(() => {
     if (!tenantId || !configId) return;
     
-    const loadDetail = async () => {
+    const loadDetail = async() => {
       try {
         setLoading(true);
         setError(null);
@@ -84,7 +84,7 @@ const PgConfigurationDetail = () => {
     }
   }, [tenantId, configId, sessionLoading, isLoggedIn, user]);
   
-  const handleDelete = async () => {
+  const handleDelete = async() => {
     if (!tenantId || !configId) return;
     
     try {
@@ -100,7 +100,7 @@ const PgConfigurationDetail = () => {
     }
   };
   
-  const handleTestConnection = async () => {
+  const handleTestConnection = async() => {
     if (!tenantId || !configId) return;
     
     try {
@@ -123,7 +123,7 @@ const PgConfigurationDetail = () => {
     }
   };
   
-  const handleDecryptKeys = async () => {
+  const handleDecryptKeys = async() => {
     if (!tenantId || !configId) return;
     
     try {

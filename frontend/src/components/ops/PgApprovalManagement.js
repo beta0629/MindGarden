@@ -86,7 +86,7 @@ const PgApprovalManagement = () => {
   const [loadingKeys, setLoadingKeys] = useState(false);
   
   // 승인 대기 목록 로드
-  const loadPendingConfigurations = useCallback(async () => {
+  const loadPendingConfigurations = useCallback(async() => {
     try {
       setLoading(true);
       setError(null);
@@ -134,7 +134,7 @@ const PgApprovalManagement = () => {
   }, [sessionLoading, isLoggedIn, user, loadPendingConfigurations, navigate]);
   
   // PG 설정 상세 조회
-  const loadConfigDetail = async (configId) => {
+  const loadConfigDetail = async(configId) => {
     try {
       setLoadingDetail(true);
       const detail = await getPgConfigurationDetailForOps(configId);
@@ -149,7 +149,7 @@ const PgApprovalManagement = () => {
   };
   
   // 연결 테스트
-  const handleTestConnection = async (configId) => {
+  const handleTestConnection = async(configId) => {
     try {
       setTestingConnection(configId);
       setTestResult(null);
@@ -190,7 +190,7 @@ const PgApprovalManagement = () => {
   };
   
   // 키 복호화
-  const handleDecryptKeys = async (configId) => {
+  const handleDecryptKeys = async(configId) => {
     try {
       setLoadingKeys(true);
       const keys = await decryptPgKeysForOps(configId);
@@ -206,7 +206,7 @@ const PgApprovalManagement = () => {
   };
   
   // 승인 처리
-  const handleApprove = async () => {
+  const handleApprove = async() => {
     if (!selectedConfig) return;
     
     try {
@@ -264,7 +264,7 @@ const PgApprovalManagement = () => {
   };
   
   // 거부 처리
-  const handleReject = async () => {
+  const handleReject = async() => {
     if (!selectedConfig || !rejectForm.rejectionReason.trim()) {
       showNotification('거부 사유를 입력해주세요.', 'error');
       return;

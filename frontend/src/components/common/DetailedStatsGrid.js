@@ -23,7 +23,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
     return (
       <div className="detailed-stats-grid">
         <div className="detailed-stats-empty">
-          <i className="fas fa-chart-line detailed-stats-empty-icon"></i>
+          <i className="fas fa-chart-line detailed-stats-empty-icon" />
           <p className="detailed-stats-empty-text">상세 통계 데이터를 불러오는 중입니다...</p>
         </div>
       </div>
@@ -66,7 +66,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-people-fill detailed-stats-card-icon-svg"></i>
+            <i className="bi bi-people-fill detailed-stats-card-icon-svg" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -132,7 +132,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-person-badge-fill detailed-stats-card-icon-svg"></i>
+            <i className="bi bi-person-badge-fill detailed-stats-card-icon-svg" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -197,7 +197,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-check-circle-fill mg-v2-text-xl"></i>
+            <i className="bi bi-check-circle-fill mg-v2-text-xl" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -256,7 +256,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-x-circle-fill mg-v2-text-xl"></i>
+            <i className="bi bi-x-circle-fill mg-v2-text-xl" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -315,7 +315,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-week-fill mg-v2-text-xl"></i>
+            <i className="bi bi-calendar-week-fill mg-v2-text-xl" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -374,7 +374,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: 'var(--mg-white)',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-day-fill mg-v2-text-xl"></i>
+            <i className="bi bi-calendar-day-fill mg-v2-text-xl" />
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',

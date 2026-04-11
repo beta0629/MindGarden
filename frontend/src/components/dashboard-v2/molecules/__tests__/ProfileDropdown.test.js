@@ -51,7 +51,7 @@ describe('ProfileDropdown', () => {
   });
 
   describe('트리거 클릭 시 패널 열림', () => {
-    it('트리거 클릭 시 패널(role=menu)이 열린다', async () => {
+    it('트리거 클릭 시 패널(role=menu)이 열린다', async() => {
       render(<ProfileDropdown />);
       const trigger = screen.getByRole('button', { expanded: false });
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('ProfileDropdown', () => {
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('트리거 다시 클릭 시 패널이 닫힌다', async () => {
+    it('트리거 다시 클릭 시 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
       const trigger = screen.getByRole('button', { expanded: false });
       await userEvent.click(trigger);
@@ -75,7 +75,7 @@ describe('ProfileDropdown', () => {
   });
 
   describe('Portal 렌더링', () => {
-    it('패널이 열리면 document.body 직계 자식에 패널이 존재한다', async () => {
+    it('패널이 열리면 document.body 직계 자식에 패널이 존재한다', async() => {
       render(<ProfileDropdown />);
       await userEvent.click(screen.getByRole('button', { expanded: false }));
 
@@ -85,7 +85,7 @@ describe('ProfileDropdown', () => {
   });
 
   describe('useDropdownPosition 스타일 적용', () => {
-    it('열린 패널에 position: fixed 및 zIndex가 적용된다', async () => {
+    it('열린 패널에 position: fixed 및 zIndex가 적용된다', async() => {
       render(<ProfileDropdown />);
       await userEvent.click(screen.getByRole('button', { expanded: false }));
 
@@ -97,7 +97,7 @@ describe('ProfileDropdown', () => {
   });
 
   describe('Escape 키로 닫힘', () => {
-    it('패널이 열린 상태에서 Escape 키를 누르면 패널이 닫힌다', async () => {
+    it('패널이 열린 상태에서 Escape 키를 누르면 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
       await userEvent.click(screen.getByRole('button', { expanded: false }));
       expect(screen.getByRole('menu')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('ProfileDropdown', () => {
   });
 
   describe('메뉴 클릭', () => {
-    it('내 정보 클릭 시 navigate 호출 후 패널이 닫힌다', async () => {
+    it('내 정보 클릭 시 navigate 호출 후 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
       await userEvent.click(screen.getByRole('button', { expanded: false }));
       await userEvent.click(screen.getByText('내 정보'));
@@ -117,7 +117,7 @@ describe('ProfileDropdown', () => {
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
-    it('로그아웃 클릭 시 onLogout이 있으면 호출된다', async () => {
+    it('로그아웃 클릭 시 onLogout이 있으면 호출된다', async() => {
       const onLogout = jest.fn();
       render(<ProfileDropdown onLogout={onLogout} />);
       await userEvent.click(screen.getByRole('button', { expanded: false }));

@@ -109,7 +109,7 @@ const SocialSignupModal = ({
   }, [socialUser, isOpen]);
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     const cleaned = value.replace(/\D/g, '');
 
     if (cleaned.length <= 13) {

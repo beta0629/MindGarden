@@ -74,7 +74,7 @@ const FinancialTransactionForm = ({
   const isApprovedReadOnly =
     mode === 'edit' && String(initialTransaction?.status || '').toUpperCase() === 'APPROVED';
 
-  const loadCommonCodes = async () => {
+  const loadCommonCodes = async() => {
     try {
       setLoadingCodes(true);
       const response = await csrfTokenManager.get('/api/v1/erp/common-codes/financial');
@@ -103,7 +103,7 @@ const FinancialTransactionForm = ({
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);

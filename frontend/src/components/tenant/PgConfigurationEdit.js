@@ -31,7 +31,7 @@ const PgConfigurationEdit = () => {
   useEffect(() => {
     if (!tenantId || !configId) return;
     
-    const loadConfig = async () => {
+    const loadConfig = async() => {
       try {
         setLoading(true);
         const detail = await getPgConfigurationDetail(tenantId, configId);
@@ -58,7 +58,7 @@ const PgConfigurationEdit = () => {
     }
   }, [config, configId, navigate]);
 
-  const handleSave = async (formData) => {
+  const handleSave = async(formData) => {
     if (!tenantId || !configId) {
       showNotification('테넌트 정보를 찾을 수 없습니다.', 'error');
       return;

@@ -41,7 +41,7 @@ export const usePermissionGroups = () => {
 /**
      * 권한 그룹 조회
      */
-    const fetchPermissionGroups = useCallback(async () => {
+    const fetchPermissionGroups = useCallback(async() => {
         try {
             setLoading(true);
             setError(null);

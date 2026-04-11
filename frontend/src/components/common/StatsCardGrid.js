@@ -30,7 +30,7 @@ const StatsCardGrid = ({
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index} className="mg-v2-card">
             <div className="mg-v2-icon-container">
-              <i className="fas fa-chart-bar"></i>
+              <i className="fas fa-chart-bar" />
             </div>
             <div>
               <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
@@ -56,7 +56,7 @@ const StatsCardGrid = ({
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index} className="mg-v2-card">
             <div className="mg-v2-icon-container mg-v2-icon-container--error">
-              <i className="fas fa-exclamation-triangle"></i>
+              <i className="fas fa-exclamation-triangle" />
             </div>
             <div>
               <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
@@ -91,7 +91,7 @@ const StatsCardGrid = ({
         marginBottom: '24px'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <i className="fas fa-chart-bar" style={{ fontSize: 'var(--font-size-xxxl)', color: 'var(--mg-secondary-500)', marginBottom: '16px' }}></i>
+          <i className="fas fa-chart-bar" style={{ fontSize: 'var(--font-size-xxxl)', color: 'var(--mg-secondary-500)', marginBottom: '16px' }} />
           <p style={{ margin: '0', fontSize: 'var(--font-size-base)', color: 'var(--mg-secondary-500)' }}>
             통계 데이터를 불러오는 중입니다...
           </p>
@@ -141,7 +141,7 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: 'var(--mg-white)'
         }}>
-          <i className="bi bi-graph-up" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
+          <i className="bi bi-graph-up" style={{ fontSize: 'var(--font-size-xxl)' }} />
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
@@ -181,7 +181,7 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: 'var(--mg-white)'
         }}>
-          <i className="bi bi-calendar-check" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
+          <i className="bi bi-calendar-check" style={{ fontSize: 'var(--font-size-xxl)' }} />
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
@@ -221,7 +221,7 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: 'var(--mg-white)'
         }}>
-          <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
+          <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }} />
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
@@ -261,7 +261,7 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: 'var(--mg-white)'
         }}>
-          <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
+          <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }} />
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>

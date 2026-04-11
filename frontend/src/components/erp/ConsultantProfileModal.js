@@ -42,7 +42,7 @@ const ConsultantProfileModal = ({
     }, [isOpen, consultant]);
 
     // 급여 프로필 조회
-    const loadSalaryProfile = async () => {
+    const loadSalaryProfile = async() => {
         try {
             setLoading(true);
             const response = await StandardizedApi.get(
@@ -95,7 +95,7 @@ const ConsultantProfileModal = ({
     };
 
     // 옵션 유형 조회
-    const loadOptionTypes = async () => {
+    const loadOptionTypes = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.OPTION_TYPES);
             // apiGet이 unwrap하여 배열 또는 객체 반환
@@ -114,7 +114,7 @@ const ConsultantProfileModal = ({
     };
 
     // 등급 조회
-    const loadGrades = async () => {
+    const loadGrades = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.GRADES);
             if (Array.isArray(response)) {
@@ -131,7 +131,7 @@ const ConsultantProfileModal = ({
     };
 
     // 등급별 기본급여 계산 (공통 코드에서 동적 조회)
-    const calculateBaseSalaryByGrade = async (grade) => {
+    const calculateBaseSalaryByGrade = async(grade) => {
         if (!grade) return '';
         
         try {
@@ -144,7 +144,7 @@ const ConsultantProfileModal = ({
     };
 
     // 급여 유형 조회
-    const loadSalaryTypes = async () => {
+    const loadSalaryTypes = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.CODES);
             const salaryTypesList = response?.salaryTypes ?? response?.data?.salaryTypes;
@@ -167,7 +167,7 @@ const ConsultantProfileModal = ({
     };
 
     // 급여 프로필 생성/수정
-    const handleSalaryProfileSubmit = async (e) => {
+    const handleSalaryProfileSubmit = async(e) => {
         e.preventDefault();
         try {
             setLoading(true);
@@ -214,7 +214,7 @@ const ConsultantProfileModal = ({
 
             const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
             if (response != null && typeof response === 'object' && response.success === false) {
-                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + (response.message || ''), 'error');
+                notificationManager.show(`급여 프로필 저장에 실패했습니다: ${response.message || ''}`, 'error');
             } else {
                 notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');
                 setShowSalaryForm(false);
@@ -340,7 +340,7 @@ const ConsultantProfileModal = ({
                                         <label className="consultant-profile-form-label">급여 유형 *</label>
                                         <select
                                             value={salaryFormData.salaryType}
-                                            onChange={(e) => setSalaryFormData({...salaryFormData, salaryType: e.target.value})}
+                                            onChange={(e) => setSalaryFormData({ ...salaryFormData, salaryType: e.target.value })}
                                             className="consultant-profile-form-select"
                                             required
                                         >
@@ -357,7 +357,7 @@ const ConsultantProfileModal = ({
                                         <select
                                             value={salaryFormData.grade || ''}
                                             onChange={(e) => {
-                                                const handleGradeChange = async () => {
+                                                const handleGradeChange = async() => {
                                                     const selectedGrade = e.target.value;
                                                     const calculatedBaseSalary = await calculateBaseSalaryByGrade(selectedGrade);
                                                     setSalaryFormData({
@@ -393,7 +393,7 @@ const ConsultantProfileModal = ({
                                         <label className="consultant-profile-form-label">사업자 등록 여부</label>
                                         <select
                                             value={salaryFormData.isBusinessRegistered ? 'true' : 'false'}
-                                            onChange={(e) => setSalaryFormData({...salaryFormData, isBusinessRegistered: e.target.value === 'true'})}
+                                            onChange={(e) => setSalaryFormData({ ...salaryFormData, isBusinessRegistered: e.target.value === 'true' })}
                                             className="consultant-profile-form-select"
                                         >
                                             <option key="false" value="false">일반 프리랜서 (3.3% 원천징수만)</option>
@@ -412,7 +412,7 @@ const ConsultantProfileModal = ({
                                                 <input
                                                     type="text"
                                                     value={salaryFormData.businessRegistrationNumber}
-                                                    onChange={(e) => setSalaryFormData({...salaryFormData, businessRegistrationNumber: e.target.value})}
+                                                    onChange={(e) => setSalaryFormData({ ...salaryFormData, businessRegistrationNumber: e.target.value })}
                                                     placeholder="123-45-67890"
                                                     className="consultant-profile-form-input"
                                                 />
@@ -425,7 +425,7 @@ const ConsultantProfileModal = ({
                                                 <input
                                                     type="text"
                                                     value={salaryFormData.businessName}
-                                                    onChange={(e) => setSalaryFormData({...salaryFormData, businessName: e.target.value})}
+                                                    onChange={(e) => setSalaryFormData({ ...salaryFormData, businessName: e.target.value })}
                                                     placeholder="사업자명을 입력하세요"
                                                     className="consultant-profile-form-input"
                                                 />
@@ -451,7 +451,7 @@ const ConsultantProfileModal = ({
                                         <label className="consultant-profile-form-label">계약 조건</label>
                                         <textarea
                                             value={salaryFormData.contractTerms}
-                                            onChange={(e) => setSalaryFormData({...salaryFormData, contractTerms: e.target.value})}
+                                            onChange={(e) => setSalaryFormData({ ...salaryFormData, contractTerms: e.target.value })}
                                             placeholder="계약 조건을 입력하세요"
                                             className="consultant-profile-form-textarea"
                                             rows="3"

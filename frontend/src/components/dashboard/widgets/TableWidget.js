@@ -84,7 +84,7 @@ const TableWidget = ({ widget, user }) => {
         
         {data.length === 0 && (
           <div className="table-empty">
-            <i className="bi bi-table"></i>
+            <i className="bi bi-table" />
             <span>테이블에 표시할 데이터가 없습니다.</span>
           </div>
         )}

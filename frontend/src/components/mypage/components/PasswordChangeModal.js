@@ -134,7 +134,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     validation.confirmPassword.isValid
   ]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (!validateForm()) return;
 

@@ -1,11 +1,11 @@
 import React from 'react';
 
-const Select = ({children,
+const Select = ({ children,
   value = '',
   onChange,
   disabled = false,
   className = '',
-  ...props}) => {return (<select
+  ...props }) => {return (<select
       value={value}
       onChange={onChange}
       disabled={disabled}

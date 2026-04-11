@@ -44,7 +44,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
     const [loadingCodes, setLoadingCodes] = useState(false);
 
     // 공통 코드 그룹 로드
-    const loadCommonCodeGroupOptions = useCallback(async () => {
+    const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
             setLoadingCodes(true);
             const response = await apiGet('/api/v1/common-codes?codeGroup=COMMON_CODE_GROUP');
@@ -155,7 +155,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
     };
 
     // 폼 제출 핸들러
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         
         if (!validateForm()) {
@@ -192,7 +192,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                         preventDoubleClick={false}
                         aria-label="닫기"
                     >
-                        <i className="bi bi-x"></i>
+                        <i className="bi bi-x" />
                     </MGButton>
                 </div>
 
@@ -364,7 +364,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     checked={formData.isActive}
                                     onChange={handleChange}
                                 />
-                                <span className="checkmark"></span>
+                                <span className="checkmark" />
                                 활성 상태
                             </label>
                         </div>

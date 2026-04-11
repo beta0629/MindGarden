@@ -147,7 +147,7 @@ const CORE_CODE_GROUPS = [
 /**
  * @returns {Promise<Array>} 공통코드 목록
  */
-export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
+export const getCommonCodes = async(codeGroup = null, forceTenant = null) => {
     try {
         const useTenantApi = shouldUseTenantOnlyReadPath(codeGroup, forceTenant);
         
@@ -207,7 +207,7 @@ export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
 /**
  * @returns {Promise<Array>} 테넌트별 코드 목록 (코어 코드 폴백 없음)
  */
-export const getTenantCodes = async (codeGroup = null) => {
+export const getTenantCodes = async(codeGroup = null) => {
     try {
         const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
         const response = await apiGet(url);
@@ -253,7 +253,7 @@ export const getTenantCodes = async (codeGroup = null) => {
 /**
  * @returns {Promise<Object|null>} 공통코드 상세 정보
  */
-export const getCommonCodeById = async (id) => {
+export const getCommonCodeById = async(id) => {
     try {
         const response = await apiGet(`${API_BASE}/${id}`);
         
@@ -275,7 +275,7 @@ export const getCommonCodeById = async (id) => {
 /**
  * @returns {Promise<Object|null>} 생성된 공통코드
  */
-export const createCommonCode = async (codeData) => {
+export const createCommonCode = async(codeData) => {
     try {
         const group = codeData?.codeGroup;
         const useTenant = isTenantWriteIsolatedGroup(group);
@@ -304,7 +304,7 @@ export const createCommonCode = async (codeData) => {
 /**
  * @param {Object} [routeOpts] - 테넌트 격리 그룹 수정 시 codeGroup 전달 (codeData에 없을 때 필수)
  */
-export const updateCommonCode = async (id, codeData, routeOpts = {}) => {
+export const updateCommonCode = async(id, codeData, routeOpts = {}) => {
     try {
         const group = resolveCodeGroupForRoute(codeData, routeOpts);
         const useTenant = isTenantWriteIsolatedGroup(group);
@@ -327,7 +327,7 @@ export const updateCommonCode = async (id, codeData, routeOpts = {}) => {
 /**
  * @param {Object} [routeOpts] - { codeGroup } 테넌트 격리 그룹 삭제 시 필수
  */
-export const deleteCommonCode = async (id, routeOpts = {}) => {
+export const deleteCommonCode = async(id, routeOpts = {}) => {
     try {
         const group = routeOpts.codeGroup ?? null;
         const useTenant = isTenantWriteIsolatedGroup(group);
@@ -350,7 +350,7 @@ export const deleteCommonCode = async (id, routeOpts = {}) => {
 /**
  * @param {Object} [routeOpts] - 테넌트 격리: { codeGroup, currentIsActive } 필수
  */
-export const toggleCommonCodeStatus = async (id, routeOpts = {}) => {
+export const toggleCommonCodeStatus = async(id, routeOpts = {}) => {
     try {
         const group = routeOpts.codeGroup ?? null;
         const useTenant = isTenantWriteIsolatedGroup(group);
@@ -380,7 +380,7 @@ export const toggleCommonCodeStatus = async (id, routeOpts = {}) => {
 /**
  * @returns {Promise<Array>} 생성된 공통코드 목록
  */
-export const createCommonCodesBatch = async (codesData) => {
+export const createCommonCodesBatch = async(codesData) => {
     try {
         const response = await apiPost(`${API_BASE}/batch`, codesData);
         
@@ -400,7 +400,7 @@ export const createCommonCodesBatch = async (codesData) => {
 /**
  * @returns {Promise<Array>} 코드 그룹 목록
  */
-export const getCodeGroups = async () => {
+export const getCodeGroups = async() => {
     try {
         // 새로운 API 시도
         const response = await apiGet(`${API_BASE}?codeGroup=`);
@@ -432,7 +432,7 @@ export const getCodeGroups = async () => {
 /**
  * @returns {Promise<Array>} 코어 코드 목록
  */
-export const getCoreCodesAPI = async (codeGroup) => {
+export const getCoreCodesAPI = async(codeGroup) => {
     try {
         const response = await apiGet(`${API_BASE}?codeGroup=${codeGroup}`);
         

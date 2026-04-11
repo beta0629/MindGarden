@@ -13,7 +13,7 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10분 캐시
 /**
  * 백엔드에서 역할 정보를 로드
  */
-const loadRoleData = async () => {
+const loadRoleData = async() => {
     try {
         // 캐시 확인
         if (roleDataCache && lastFetchTime && (Date.now() - lastFetchTime < CACHE_DURATION)) {
@@ -25,7 +25,7 @@ const loadRoleData = async () => {
         const response = await fetch('/api/admin/user-roles', {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             credentials: 'include'
         });
@@ -62,7 +62,7 @@ const getFallbackRoleData = () => ({
 /**
  * 역할의 한국어 표시명 가져오기
  */
-export const getRoleDisplayName = async (role) => {
+export const getRoleDisplayName = async(role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
@@ -81,7 +81,7 @@ export const getRoleDisplayName = async (role) => {
 /**
  * 역할의 영문 표시명 가져오기
  */
-export const getRoleDisplayNameEn = async (role) => {
+export const getRoleDisplayNameEn = async(role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
@@ -100,7 +100,7 @@ export const getRoleDisplayNameEn = async (role) => {
 /**
  * 모든 역할 정보 가져오기
  */
-export const getAllRoles = async () => {
+export const getAllRoles = async() => {
     try {
         return await loadRoleData();
     } catch (error) {
@@ -121,7 +121,7 @@ export const refreshRoleCache = () => {
 /**
  * 디버그용 역할 정보 출력
  */
-export const debugRoleData = async () => {
+export const debugRoleData = async() => {
     if (process.env.NODE_ENV === 'development') {
         const roleData = await loadRoleData();
         console.log('🎭 디버그 - 역할 정보:', roleData);

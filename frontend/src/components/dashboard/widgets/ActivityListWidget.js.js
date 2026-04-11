@@ -50,7 +50,7 @@ const ActivityListWidget = ({ widget, user }) => {
     }
   }, []);
   
-  const loadActivities = async () => {
+  const loadActivities = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -147,7 +147,7 @@ const ActivityListWidget = ({ widget, user }) => {
       <div className="widget-header">
         <div className="recent-activities-header">
           <h3 className="widget-title">
-            <i className="bi bi-clock-history"></i>
+            <i className="bi bi-clock-history" />
             {config.title || '최근 활동'}
           </h3>
           {hasMore && (
@@ -157,7 +157,7 @@ const ActivityListWidget = ({ widget, user }) => {
               size="small"
               onClick={handleViewAll}
             >
-              <i className="bi bi-arrow-right"></i>
+              <i className="bi bi-arrow-right" />
               {config.viewAllLabel || '전체보기'}
             </MGButton>
           )}
@@ -169,7 +169,7 @@ const ActivityListWidget = ({ widget, user }) => {
             displayActivities.map((activity, index) => (
               <div key={activity.id || index} className="recent-activities-item">
                 <div className="recent-activities-icon">
-                  <i className={`bi ${getActivityIcon(activity.type || activity.category)}`}></i>
+                  <i className={`bi ${getActivityIcon(activity.type || activity.category)}`} />
                 </div>
                 <div className="recent-activities-content">
                   <div className="recent-activities-title">
@@ -183,7 +183,7 @@ const ActivityListWidget = ({ widget, user }) => {
             ))
           ) : (
             <div className="no-activities">
-              <i className="bi bi-inbox"></i>
+              <i className="bi bi-inbox" />
               <p>{config.emptyMessage || '최근 활동이 없습니다'}</p>
             </div>
           )}

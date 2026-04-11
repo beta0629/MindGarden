@@ -45,7 +45,7 @@ const ClientPaymentHistory = () => {
     loadPaymentData();
   }, []);
 
-  const loadPaymentData = async () => {
+  const loadPaymentData = async() => {
     try {
       setIsLoading(true);
       setError(null);

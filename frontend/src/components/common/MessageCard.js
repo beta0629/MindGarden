@@ -83,7 +83,7 @@ const MessageCard = ({
           </div>
         </div>
         {!message.isRead && showUnreadIndicator && (
-          <div className="message-item-unread-dot"></div>
+          <div className="message-item-unread-dot" />
         )}
       </div>
     </div>

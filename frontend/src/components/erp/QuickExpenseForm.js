@@ -25,7 +25,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     loadExpenseCodes();
   }, []);
 
-  const loadExpenseCodes = async () => {
+  const loadExpenseCodes = async() => {
     try {
       setLoadingCodes(true);
       const response = await csrfTokenManager.get('/api/v1/erp/common-codes/financial');
@@ -77,12 +77,12 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     }).filter(item => item.category && item.subcategory);
   };
 
-  const submitQuickExpense = async () => {
+  const submitQuickExpense = async() => {
     if (!selectedExpense) return;
-    const category = selectedExpense.category;
-    const subcategory = selectedExpense.subcategory;
-    const categoryCode = selectedExpense.categoryCode;
-    const subcategoryCode = selectedExpense.subcategoryCode;
+    const { category } = selectedExpense;
+    const { subcategory } = selectedExpense;
+    const { categoryCode } = selectedExpense;
+    const { subcategoryCode } = selectedExpense;
 
     const amount = Number.parseFloat(amountInput, 10);
     if (!amountInput.trim() || isNaN(amount) || amount <= 0) {

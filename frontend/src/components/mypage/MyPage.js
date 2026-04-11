@@ -99,7 +99,7 @@ const MyPage = () => {
     [setSearchParams]
   );
 
-  const loadUserInfo = useCallback(async () => {
+  const loadUserInfo = useCallback(async() => {
     try {
       const currentUser = sessionManager.getUser() || sessionUser;
       if (!currentUser) {
@@ -146,7 +146,7 @@ const MyPage = () => {
     }
   }, [sessionUser]);
 
-  const loadSocialAccounts = useCallback(async () => {
+  const loadSocialAccounts = useCallback(async() => {
     try {
       const currentUser = sessionManager.getUser() || sessionUser;
       if (!currentUser) {
@@ -219,7 +219,7 @@ const MyPage = () => {
     }
   }, [activeTab, loadSocialAccounts]);
 
-  const handleSubmit = withFormSubmit(async (e, formDataToUpdate) => {
+  const handleSubmit = withFormSubmit(async(e, formDataToUpdate) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
@@ -303,7 +303,7 @@ const MyPage = () => {
     notificationManager.show('비밀번호가 변경되었습니다.', 'success');
   };
 
-  const handleLinkSocialAccount = async (provider) => {
+  const handleLinkSocialAccount = async(provider) => {
     try {
       notificationManager.show(
         `${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 시작합니다.`,
@@ -322,7 +322,7 @@ const MyPage = () => {
     setSocialUnlinkTarget({ provider, accountId });
   };
 
-  const confirmUnlinkSocial = async () => {
+  const confirmUnlinkSocial = async() => {
     if (!socialUnlinkTarget) return;
     const { provider, accountId } = socialUnlinkTarget;
     try {
@@ -341,7 +341,7 @@ const MyPage = () => {
     notificationManager.show('고객센터 연결은 준비 중입니다.', 'info');
   };
 
-  const handleLogoutClick = async () => {
+  const handleLogoutClick = async() => {
     try {
       await sessionManager.logout();
     } catch (error) {

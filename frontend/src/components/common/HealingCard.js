@@ -21,7 +21,7 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, category]);
 
-    const fetchHealingData = async () => {
+    const fetchHealingData = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -45,7 +45,7 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
         }
     };
 
-    const handleRefresh = async () => {
+    const handleRefresh = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -75,7 +75,7 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
                 <div className="mg-card">
                     <div className="mg-card__content">
                         <div className="mg-loading">
-                            <div className="mg-spinner"></div>
+                            <div className="mg-spinner" />
                             <p>힐링 컨텐츠를 불러오는 중...</p>
                         </div>
                     </div>

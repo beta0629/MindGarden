@@ -29,7 +29,7 @@ const ClientSessionManagement = () => {
     loadSessionData();
   }, []);
 
-  const loadSessionData = async () => {
+  const loadSessionData = async() => {
     try {
       setIsLoading(true);
       setError(null);
@@ -67,7 +67,7 @@ const ClientSessionManagement = () => {
     }
   };
 
-  const handleMenuAction = async (action) => {
+  const handleMenuAction = async(action) => {
     setIsMenuOpen(false);
     switch (action) {
       case 'dashboard':
@@ -149,7 +149,7 @@ const ClientSessionManagement = () => {
           <div className="client-session-management">
             <div className="error-container">
               <div className="error-icon">
-                <i className="bi bi-exclamation-triangle"></i>
+                <i className="bi bi-exclamation-triangle" />
               </div>
               <h3>오류가 발생했습니다</h3>
               <p>{error}</p>
@@ -170,7 +170,7 @@ const ClientSessionManagement = () => {
           <div className="client-session-management">
             <div className="no-data-container">
               <div className="no-data-icon">
-                <i className="bi bi-calendar-check"></i>
+                <i className="bi bi-calendar-check" />
               </div>
               <h3>회기 정보가 없습니다</h3>
               <p>아직 상담사와 연결된 패키지가 없습니다.</p>
@@ -202,7 +202,7 @@ const ClientSessionManagement = () => {
                 onClick={() => handleMenuAction('dashboard')}
                 preventDoubleClick={false}
               >
-                <i className="bi bi-house client-session-menu-icon"></i>
+                <i className="bi bi-house client-session-menu-icon" />
                 대시보드
               </MGButton>
               <MGButton
@@ -211,7 +211,7 @@ const ClientSessionManagement = () => {
                 onClick={() => handleMenuAction('session-management')}
                 preventDoubleClick={false}
               >
-                <i className="bi bi-clock-history client-session-menu-icon"></i>
+                <i className="bi bi-clock-history client-session-menu-icon" />
                 회기 관리
               </MGButton>
               <MGButton
@@ -220,7 +220,7 @@ const ClientSessionManagement = () => {
                 onClick={() => handleMenuAction('payment-history')}
                 preventDoubleClick={false}
               >
-                <i className="bi bi-credit-card client-session-menu-icon"></i>
+                <i className="bi bi-credit-card client-session-menu-icon" />
                 결제 내역
               </MGButton>
               <MGButton
@@ -229,7 +229,7 @@ const ClientSessionManagement = () => {
                 onClick={() => handleMenuAction('consultation-guide')}
                 preventDoubleClick={false}
               >
-                <i className="bi bi-book client-session-menu-icon"></i>
+                <i className="bi bi-book client-session-menu-icon" />
                 상담 가이드
               </MGButton>
             </div>
@@ -240,7 +240,7 @@ const ClientSessionManagement = () => {
         <div className="summary-cards">
           <div className="summary-card total">
             <div className="card-icon">
-              <i className="bi bi-calendar-check"></i>
+              <i className="bi bi-calendar-check" />
             </div>
             <div className="card-content">
               <h3>총 회기</h3>
@@ -251,7 +251,7 @@ const ClientSessionManagement = () => {
 
           <div className="summary-card used">
             <div className="card-icon">
-              <i className="bi bi-check-circle"></i>
+              <i className="bi bi-check-circle" />
             </div>
             <div className="card-content">
               <h3>사용한 회기</h3>
@@ -262,7 +262,7 @@ const ClientSessionManagement = () => {
 
           <div className="summary-card remaining">
             <div className="card-icon">
-              <i className="bi bi-clock"></i>
+              <i className="bi bi-clock" />
             </div>
             <div className="card-content">
               <h3>남은 회기</h3>
@@ -290,7 +290,7 @@ const ClientSessionManagement = () => {
                   ? `${(sessionData.usedSessions / sessionData.totalSessions) * 100}%`
                   : '0%'
               }}
-            ></div>
+             />
           </div>
         </div>
 
@@ -301,7 +301,7 @@ const ClientSessionManagement = () => {
               <div key={mapping.id || index} className="package-card">
                 <div className="package-card-header">
                   <div className="package-card-header-left">
-                    <i className="bi bi-person package-card-icon"></i>
+                    <i className="bi bi-person package-card-icon" />
                     <span className="package-card-title">상담사: {mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <span className={`package-card-status ${mapping.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
@@ -340,7 +340,7 @@ const ClientSessionManagement = () => {
         {/* 최근 상담 일정 */}
         <div className="consultation-history">
           <h3>
-            <i className="bi bi-calendar3 mg-color-primary"></i>
+            <i className="bi bi-calendar3 mg-color-primary" />
             최근 상담 일정
           </h3>
           {sessionData.schedules && sessionData.schedules.length > 0 ? (
@@ -349,7 +349,7 @@ const ClientSessionManagement = () => {
                 <div key={schedule.id || index} className="consultation-item">
                   <div className="consultation-header">
                     <div className="consultation-date">
-                      <i className="bi bi-calendar3"></i>
+                      <i className="bi bi-calendar3" />
                       {formatDate(schedule.date)}
                     </div>
                     <div className="consultation-status">
@@ -358,12 +358,12 @@ const ClientSessionManagement = () => {
                   </div>
                   <div className="consultation-content">
                     <div className="consultation-title">
-                      <i className="bi bi-chat-dots"></i>
+                      <i className="bi bi-chat-dots" />
                       {schedule.title || '상담'}
                     </div>
                     <div className="consultation-details">
                       <div className="consultation-duration">
-                        <i className="bi bi-clock"></i>
+                        <i className="bi bi-clock" />
                         {schedule.startTime} - {schedule.endTime}
                       </div>
                     </div>
@@ -373,7 +373,7 @@ const ClientSessionManagement = () => {
             </div>
           ) : (
             <div className="no-consultations">
-              <i className="bi bi-calendar-x"></i>
+              <i className="bi bi-calendar-x" />
               <p>아직 상담 일정이 없습니다.</p>
             </div>
           )}

@@ -54,7 +54,7 @@ const BusinessTypeGuard = ({
     checkAccess();
   }, [location.pathname, user]);
 
-  const checkAccess = async () => {
+  const checkAccess = async() => {
     try {
       setIsLoading(true);
       
@@ -148,7 +148,7 @@ const BusinessTypeGuard = ({
 /**
  * @returns {Promise<string>} 업종 타입
  */
-const getUserBusinessType = async (user) => {
+const getUserBusinessType = async(user) => {
   // 캐시에서 조회
   const cached = getCachedBusinessType(user.id);
   if (cached) {
@@ -181,7 +181,7 @@ const getUserBusinessType = async (user) => {
 /**
  * @returns {Promise<Object>} 검증 결과
  */
-const validateAccess = async ({
+const validateAccess = async({
   userBusinessType,
   userRole,
   requiredBusinessType,
@@ -265,7 +265,7 @@ const validateAccess = async ({
 /**
  * @returns {Promise<Object>} 검증 결과
  */
-const validatePathAccess = async (path, businessType, userRole) => {
+const validatePathAccess = async(path, businessType, userRole) => {
   // 경로 패턴 기반 검증 (임시)
   const pathPatterns = {
     '/consultant': ['CONSULTATION'],

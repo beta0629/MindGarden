@@ -32,7 +32,7 @@ export const useSession = () => {
         };
         
         // 초기 세션 확인 (로딩 없이 즉시 확인)
-        const initializeSession = async () => {
+        const initializeSession = async() => {
             try {
                 console.log('🔍 초기 세션 체크 (로딩 없음)...');
                 

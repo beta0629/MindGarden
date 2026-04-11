@@ -32,7 +32,7 @@ const ClientSettings = () => {
     }
   }, [user?.id]);
 
-  const loadSettings = async () => {
+  const loadSettings = async() => {
     try {
       const response = await apiGet(`/api/clients/${user.id}/settings`);
       if (response.success && response.data) {
@@ -62,7 +62,7 @@ const ClientSettings = () => {
     </div>
   );
 
-  const handleSettingChange = async (key, value) => {
+  const handleSettingChange = async(key, value) => {
     try {
       const newSettings = { ...settings, [key]: value };
       const response = await apiPost(`/api/clients/${user.id}/settings`, newSettings);
@@ -99,7 +99,7 @@ const ClientSettings = () => {
         <div className="client-settings-card">
           {message && (
             <div className="client-settings-message">
-              <i className="bi bi-check-circle"></i> {message}
+              <i className="bi bi-check-circle" /> {message}
             </div>
           )}
 
@@ -107,7 +107,7 @@ const ClientSettings = () => {
             {/* 알림 설정 */}
             <div className="client-settings-section">
               <h3 className="client-settings-section-title">
-                <i className="bi bi-bell"></i>
+                <i className="bi bi-bell" />
                 알림 설정
               </h3>
               
@@ -162,7 +162,7 @@ const ClientSettings = () => {
             {/* 프라이버시 설정 */}
             <div className="client-settings-section">
               <h3 className="client-settings-section-title">
-                <i className="bi bi-shield-check"></i>
+                <i className="bi bi-shield-check" />
                 프라이버시
               </h3>
               

@@ -55,16 +55,16 @@ const CalendarWidget = ({ widget, user }) => {
           <h4 className="calendar-month">{currentMonth}</h4>
           <div className="calendar-nav">
             <MGButton className="nav-btn prev" variant="outline" type="button" title="이전 달">
-              <i className="bi bi-chevron-left"></i>
+              <i className="bi bi-chevron-left" />
             </MGButton>
             <MGButton className="nav-btn next" variant="outline" type="button" title="다음 달">
-              <i className="bi bi-chevron-right"></i>
+              <i className="bi bi-chevron-right" />
             </MGButton>
           </div>
         </div>
         
         <div className="calendar-placeholder">
-          <i className="bi bi-calendar3"></i>
+          <i className="bi bi-calendar3" />
           <p>📅 캘린더 위젯</p>
           <p className="calendar-info">
             {hasData && Array.isArray(data) ? `${data.length}개의 일정` : '일정 없음'}

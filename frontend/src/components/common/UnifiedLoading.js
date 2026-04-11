@@ -88,24 +88,24 @@ const UnifiedLoading = ({
       case 'dots':
         return (
           <div className={`${baseClasses} mg-loading-dots`}>
-            <div className="mg-loading-dot"></div>
-            <div className="mg-loading-dot"></div>
-            <div className="mg-loading-dot"></div>
+            <div className="mg-loading-dot" />
+            <div className="mg-loading-dot" />
+            <div className="mg-loading-dot" />
           </div>
         );
       case 'pulse':
         return (
           <div className={`${baseClasses} mg-loading-pulse`}>
-            <div className="mg-loading-pulse-circle"></div>
+            <div className="mg-loading-pulse-circle" />
           </div>
         );
       case 'bars':
         return (
           <div className={`${baseClasses} mg-loading-bars`}>
-            <div className="mg-loading-bar"></div>
-            <div className="mg-loading-bar"></div>
-            <div className="mg-loading-bar"></div>
-            <div className="mg-loading-bar"></div>
+            <div className="mg-loading-bar" />
+            <div className="mg-loading-bar" />
+            <div className="mg-loading-bar" />
+            <div className="mg-loading-bar" />
           </div>
         );
       case 'logo':
@@ -115,7 +115,7 @@ const UnifiedLoading = ({
         return (
           <div className={baseClasses}>
             <div className="mg-loading-spinner">
-              <div className="mg-loading-spinner-icon"></div>
+              <div className="mg-loading-spinner-icon" />
             </div>
           </div>
         );

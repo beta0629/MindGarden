@@ -94,7 +94,7 @@ const IntegratedMatchingSchedule = () => {
   const [approveProcessing, setApproveProcessing] = useState(false);
   const sidebarListRef = useRef(null);
 
-  const loadMappings = useCallback(async () => {
+  const loadMappings = useCallback(async() => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get('/api/v1/admin/mappings');
@@ -207,7 +207,7 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   };
 
-  const handleApprove = async (mappingId) => {
+  const handleApprove = async(mappingId) => {
     if (approveProcessing) return;
     setApproveProcessing(true);
     try {

@@ -17,7 +17,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
 
   // 사용자 역할 표시명 동적 로드
   useEffect(() => {
-    const loadRoleDisplayNames = async () => {
+    const loadRoleDisplayNames = async() => {
       if (sessionUser?.role) {
         try {
           const koreanName = await getRoleDisplayName(sessionUser.role);

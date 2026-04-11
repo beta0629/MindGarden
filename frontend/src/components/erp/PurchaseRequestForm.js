@@ -46,7 +46,7 @@ const PurchaseRequestForm = () => {
     loadItems();
   }, []);
 
-  const loadItems = async (options = {}) => {
+  const loadItems = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -105,7 +105,7 @@ const PurchaseRequestForm = () => {
     return total + (item.unitPrice * quantity);
   }, 0);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     if (selectedItems.length === 0) {

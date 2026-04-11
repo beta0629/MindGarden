@@ -47,7 +47,7 @@ const ClientDashboard = () => {
   useEffect(() => {
     let isMounted = true;
     
-    const checkAndRestoreSession = async () => {
+    const checkAndRestoreSession = async() => {
       const urlParams = new URLSearchParams(window.location.search);
       const oauth = urlParams.get('oauth');
       
@@ -155,7 +155,7 @@ const ClientDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const loadClientData = useCallback(async () => {
+  const loadClientData = useCallback(async() => {
     const currentUser = sessionUser || user;
     if (!currentUser?.id) {
       return;

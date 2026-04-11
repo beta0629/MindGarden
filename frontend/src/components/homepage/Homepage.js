@@ -122,7 +122,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                   aria-label="메뉴 열기"
                 >
-                  <i className="bi bi-list"></i>
+                  <i className="bi bi-list" />
                 </MGButton>
               </div>
             )
@@ -143,7 +143,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                   aria-label="메뉴 닫기"
                 >
-                  <i className="bi bi-x"></i>
+                  <i className="bi bi-x" />
                 </MGButton>
               </div>
               <div className="hamburger-menu-content">
@@ -154,7 +154,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.HOME)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-house"></i>
+                  <i className="bi bi-house" />
                   홈
                 </MGButton>
                 <MGButton
@@ -164,7 +164,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.ABOUT)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-info-circle"></i>
+                  <i className="bi bi-info-circle" />
                   소개
                 </MGButton>
                 <MGButton
@@ -174,7 +174,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.SERVICES)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-heart"></i>
+                  <i className="bi bi-heart" />
                   서비스
                 </MGButton>
                 <MGButton
@@ -184,7 +184,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.CONTACT)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-telephone"></i>
+                  <i className="bi bi-telephone" />
                   문의
                 </MGButton>
                 <MGButton
@@ -194,7 +194,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-box-arrow-in-right"></i>
+                  <i className="bi bi-box-arrow-in-right" />
                   로그인
                 </MGButton>
                 <MGButton
@@ -204,7 +204,7 @@ const Homepage = () => {
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-person-plus"></i>
+                  <i className="bi bi-person-plus" />
                   회원가입
                 </MGButton>
               </div>
@@ -214,7 +214,7 @@ const Homepage = () => {
 
         {/* Hero Section */}
         <section className="mg-v2-homepage-hero">
-          <div className="mg-v2-homepage-hero-overlay"></div>
+          <div className="mg-v2-homepage-hero-overlay" />
           <div className="mg-v2-homepage-hero-content">
             <h1 className="mg-v2-homepage-hero-title">비즈니스의 핵심을 솔루션하다</h1>
             <p className="mg-v2-homepage-hero-subtitle">Core Solution과 함께 비즈니스의 모든 과정을 통합하고 자동화하여 혁신적인 성장을 경험하세요.</p>
@@ -223,7 +223,7 @@ const Homepage = () => {
               variant="primary"
               size="large"
               className="mg-v2-btn-primary-large"
-              onClick={async () => {
+              onClick={async() => {
                 if (user) {
                   if (user?.role) {
                     const authResponse = {
@@ -246,7 +246,7 @@ const Homepage = () => {
           <div className="mg-v2-homepage-scroll-indicator" aria-hidden="true">
             <span className="mg-v2-homepage-scroll-indicator__text">SCROLL</span>
             <span className="mg-v2-homepage-scroll-indicator__mouse">
-              <span className="mg-v2-homepage-scroll-indicator__wheel"></span>
+              <span className="mg-v2-homepage-scroll-indicator__wheel" />
             </span>
           </div>
         </section>
@@ -256,21 +256,21 @@ const Homepage = () => {
           <h2 className="mg-v2-homepage-section-title">복잡한 비즈니스, Core Solution 하나로 끝내세요</h2>
           <div className="mg-v2-homepage-features-grid">
             <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-data"></div>
+              <div className="mg-v2-card-image bg-img-data" />
               <div className="mg-v2-card-content">
                 <h3 className="mg-v2-card-title">데이터 분석/대시보드</h3>
                 <p className="mg-v2-card-desc">실시간으로 비즈니스 지표를 분석하고 의사결정을 가속화하세요.</p>
               </div>
             </div>
             <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-finance"></div>
+              <div className="mg-v2-card-image bg-img-finance" />
               <div className="mg-v2-card-content">
                 <h3 className="mg-v2-card-title">재무/회계 관리</h3>
                 <p className="mg-v2-card-desc">투명하고 체계적인 재무 관리로 기업의 건전성을 확보합니다.</p>
               </div>
             </div>
             <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-collab"></div>
+              <div className="mg-v2-card-image bg-img-collab" />
               <div className="mg-v2-card-content">
                 <h3 className="mg-v2-card-title">협업 및 커뮤니케이션</h3>
                 <p className="mg-v2-card-desc">팀원들과 원활하게 소통하고 업무 효율성을 극대화하세요.</p>
@@ -281,7 +281,7 @@ const Homepage = () => {
 
         {/* Image & Text Split Section */}
         <section className="mg-v2-homepage-split">
-          <div className="mg-v2-homepage-split-image bg-img-split"></div>
+          <div className="mg-v2-homepage-split-image bg-img-split" />
           <div className="mg-v2-homepage-split-text">
             <span className="mg-v2-homepage-split-subtitle">SEAMLESS INTEGRATION</span>
             <h2 className="mg-v2-homepage-split-title">모든 데이터를 한 곳에서 투명하게 관리하세요</h2>

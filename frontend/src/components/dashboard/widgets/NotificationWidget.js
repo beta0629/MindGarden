@@ -75,7 +75,7 @@ const NotificationWidget = ({ widget, user }) => {
   const displayNotifications = localNotifications.length > 0 ? localNotifications : (notifications || []);
   const unreadCount = displayNotifications.filter(n => !n.isRead).length;
   
-  const handleNotificationClick = async (notification) => {
+  const handleNotificationClick = async(notification) => {
     // 읽음 처리
     if (!notification.isRead && notification.id) {
       try {

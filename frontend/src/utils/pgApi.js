@@ -26,7 +26,7 @@ const getTenantPgBase = (tenantId) => `/api/v1/tenants/${tenantId}/pg-configurat
 /**
  * @returns {Promise<Array>} PG 설정 목록
  */
-export const getPgConfigurations = async (tenantId, params = {}) => {
+export const getPgConfigurations = async(tenantId, params = {}) => {
   try {
     const response = await apiGet(getTenantPgBase(tenantId), params);
     return response || [];
@@ -45,7 +45,7 @@ export const getPgConfigurations = async (tenantId, params = {}) => {
 /**
  * @returns {Promise<Object>} PG 설정 상세 정보
  */
-export const getPgConfigurationDetail = async (tenantId, configId) => {
+export const getPgConfigurationDetail = async(tenantId, configId) => {
   try {
     const response = await apiGet(`${getTenantPgBase(tenantId)}/${configId}`);
     return response;
@@ -64,7 +64,7 @@ export const getPgConfigurationDetail = async (tenantId, configId) => {
 /**
  * @returns {Promise<Object>} 생성된 PG 설정 정보
  */
-export const createPgConfiguration = async (tenantId, request) => {
+export const createPgConfiguration = async(tenantId, request) => {
   try {
     const response = await apiPost(getTenantPgBase(tenantId), request);
     return response;
@@ -85,7 +85,7 @@ export const createPgConfiguration = async (tenantId, request) => {
 /**
  * @returns {Promise<Object>} 수정된 PG 설정 정보
  */
-export const updatePgConfiguration = async (tenantId, configId, request) => {
+export const updatePgConfiguration = async(tenantId, configId, request) => {
   try {
     const response = await apiPut(`${getTenantPgBase(tenantId)}/${configId}`, request);
     return response;
@@ -104,7 +104,7 @@ export const updatePgConfiguration = async (tenantId, configId, request) => {
 /**
  * @returns {Promise<void>}
  */
-export const deletePgConfiguration = async (tenantId, configId) => {
+export const deletePgConfiguration = async(tenantId, configId) => {
   try {
     await apiDelete(`${getTenantPgBase(tenantId)}/${configId}`);
   } catch (error) {
@@ -122,7 +122,7 @@ export const deletePgConfiguration = async (tenantId, configId) => {
 /**
  * @returns {Promise<Object>} 연결 테스트 결과
  */
-export const testPgConnection = async (tenantId, configId) => {
+export const testPgConnection = async(tenantId, configId) => {
   try {
     const response = await apiPost(`${getTenantPgBase(tenantId)}/${configId}/test-connection`, {});
     return response;
@@ -141,7 +141,7 @@ export const testPgConnection = async (tenantId, configId) => {
 /**
  * @returns {Promise<Object>} 복호화된 키 정보
  */
-export const decryptPgKeys = async (tenantId, configId) => {
+export const decryptPgKeys = async(tenantId, configId) => {
   try {
     const response = await apiPost(`${getTenantPgBase(tenantId)}/${configId}/decrypt-keys`, {});
     return response;

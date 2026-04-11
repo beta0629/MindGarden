@@ -76,7 +76,7 @@ const WellnessManagement = () => {
     });
 
     // 데이터 로드 함수 (재사용 가능)
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async() => {
         try {
             setLoading(true);
             console.log('📊 웰니스 관리 데이터 로드 시작');
@@ -127,7 +127,7 @@ const WellnessManagement = () => {
     useEffect(() => {
         console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, userId: user?.id, selectedMonth });
         
-        const loadDataAsync = async () => {
+        const loadDataAsync = async() => {
             // sessionManager에서 직접 사용자 확인
             const sessionUser = sessionManager.getUser();
             if (!sessionUser?.id) {
@@ -192,13 +192,13 @@ const WellnessManagement = () => {
 /**
      * 테스트 발송
      */
-    const handleTestSend = async () => {
+    const handleTestSend = async() => {
         setConfirmModal({
             isOpen: true,
             title: '웰니스 알림 테스트 발송',
             message: '웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다.',
             type: 'warning',
-            onConfirm: async () => {
+            onConfirm: async() => {
                 try {
                     setSending(true);
                     const response = await apiPost('/api/v1/admin/wellness/test-send');
@@ -230,7 +230,7 @@ const WellnessManagement = () => {
 /**
      * 환율 새로고침
      */
-    const handleExchangeRateRefresh = async () => {
+    const handleExchangeRateRefresh = async() => {
         try {
             setRefreshing(true);
             const response = await apiPost('/api/v1/admin/wellness/exchange-rate/refresh');
@@ -290,7 +290,7 @@ const WellnessManagement = () => {
     const getDayName = (dayOfWeek) => {
         if (!dayOfWeek) return '모든 요일';
         const days = ['', '월', '화', '수', '목', '금', '토', '일'];
-        return days[dayOfWeek] + '요일';
+        return `${days[dayOfWeek]}요일`;
     };
 
 /**

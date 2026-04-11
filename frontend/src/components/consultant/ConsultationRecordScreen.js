@@ -36,7 +36,7 @@ const ConsultationRecordScreen = () => {
   const [psychReports, setPsychReports] = useState([]);
   const [loadingPsychReports, setLoadingPsychReports] = useState(false);
 
-  const loadPriorityCodes = useCallback(async () => {
+  const loadPriorityCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
@@ -304,7 +304,7 @@ const ConsultationRecordScreen = () => {
     }
   };
 
-  const loadCompletionStatusCodes = useCallback(async () => {
+  const loadCompletionStatusCodes = useCallback(async() => {
     try {
       setLoadingCompletionCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
@@ -335,7 +335,7 @@ const ConsultationRecordScreen = () => {
     loadCompletionStatusCodes();
   }, [scheduleId, loadPriorityCodes, loadCompletionStatusCodes]);
 
-  const loadData = async () => {
+  const loadData = async() => {
     try {
       setLoading(true);
       
@@ -450,7 +450,7 @@ const ConsultationRecordScreen = () => {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     try {
       setSaving(true);
       
@@ -486,7 +486,7 @@ const ConsultationRecordScreen = () => {
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async() => {
     try {
       setSaving(true);
       
@@ -673,7 +673,7 @@ const ConsultationRecordScreen = () => {
               name="sessionDate"
               value={formData.sessionDate}
               onChange={handleInputChange}
-              style={{...styles.formInput, ...styles.formInputFocus}}
+              style={{ ...styles.formInput, ...styles.formInputFocus }}
               required
             />
           </div>
@@ -819,7 +819,7 @@ const ConsultationRecordScreen = () => {
             >
               <option value="">위험도를 선택하세요</option>
               {riskLevels.map(level => (
-                <option key={level.value} value={level.value} style={{color: level.color}}>
+                <option key={level.value} value={level.value} style={{ color: level.color }}>
                   {level.icon} {level.label}
                 </option>
               ))}
@@ -847,10 +847,10 @@ const ConsultationRecordScreen = () => {
               onChange={handleInputChange}
               min="0"
               max="100"
-              style={{width: '100%'}}
+              style={{ width: '100%' }}
             />
             <div style={styles.progressBar}>
-              <div style={{...styles.progressFill, width: `${formData.progressScore}%`}}></div>
+              <div style={{ ...styles.progressFill, width: `${formData.progressScore}%` }} />
             </div>
             <span className="mg-v2-text-sm mg-v2-text-secondary">{formData.progressScore}점</span>
           </div>
@@ -876,7 +876,7 @@ const ConsultationRecordScreen = () => {
               style={styles.formSelect}
             >
               {goalAchievements.map(achievement => (
-                <option key={achievement.value} value={achievement.value} style={{color: achievement.color}}>
+                <option key={achievement.value} value={achievement.value} style={{ color: achievement.color }}>
                   {achievement.label}
                 </option>
               ))}
@@ -1046,7 +1046,7 @@ const ConsultationRecordScreen = () => {
             type="button"
             variant="secondary"
             onClick={() => navigate('/consultant/schedule')}
-            style={{...styles.button, ...styles.secondaryButton}}
+            style={{ ...styles.button, ...styles.secondaryButton }}
             disabled={saving}
           >
             취소
@@ -1055,7 +1055,7 @@ const ConsultationRecordScreen = () => {
             type="button"
             variant="primary"
             onClick={handleSave}
-            style={{...styles.button, ...styles.primaryButton}}
+            style={{ ...styles.button, ...styles.primaryButton }}
             disabled={saving}
             loading={saving}
             loadingText="처리 중..."
@@ -1066,7 +1066,7 @@ const ConsultationRecordScreen = () => {
             type="button"
             variant="danger"
             onClick={handleComplete}
-            style={{...styles.button, ...styles.dangerButton}}
+            style={{ ...styles.button, ...styles.dangerButton }}
             disabled={saving}
             loading={saving}
             loadingText="처리 중..."

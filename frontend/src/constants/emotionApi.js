@@ -24,7 +24,7 @@ export const EMOTION_API = {
 
     // 감정 변화 추이
     GET_EMOTION_TREND: (clientId) => `${BASE_PATH}/trend/${clientId}`,
-    TRACK_EMOTION: (clientId) => `${BASE_PATH}/track/${clientId}`,
+    TRACK_EMOTION: (clientId) => `${BASE_PATH}/track/${clientId}`
 };
 
 export default EMOTION_API;

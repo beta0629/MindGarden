@@ -65,7 +65,7 @@ const ErdDetailPage = () => {
 /**
    * ERD 상세 정보 로드
    */
-  const loadErdDetail = async () => {
+  const loadErdDetail = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -93,7 +93,7 @@ const ErdDetailPage = () => {
 /**
    * Mermaid 다이어그램 렌더링
    */
-  const renderMermaid = async () => {
+  const renderMermaid = async() => {
     if (!mermaidRef.current || !erd?.mermaidCode) {
       return;
     }
@@ -135,13 +135,13 @@ const ErdDetailPage = () => {
           noteTextColor: '#333',
           activationBorderColor: 'var(--mg-primary-500)',
           activationBkgColor: '#e3f2fd',
-          sequenceNumberColor: '#fff',
+          sequenceNumberColor: '#fff'
         },
         flowchart: {
           useMaxWidth: true,
           htmlLabels: true,
           curve: 'basis',
-          padding: 20,
+          padding: 20
         },
         er: {
           layoutDirection: 'TB',
@@ -150,9 +150,9 @@ const ErdDetailPage = () => {
           entityPadding: 15,
           stroke: 'var(--mg-primary-500)',
           fill: '#fff',
-          fontSize: 14,
+          fontSize: 14
         },
-        securityLevel: 'loose',
+        securityLevel: 'loose'
       });
 
       mermaidRef.current.innerHTML = '';
@@ -535,7 +535,7 @@ const ErdDetailPage = () => {
     return (
       <div className="erd-detail-page">
         <div className="erd-loading">
-          <div className="loading-spinner"></div>
+          <div className="loading-spinner" />
           <p>ERD 정보를 불러오는 중...</p>
         </div>
       </div>
@@ -624,7 +624,7 @@ const ErdDetailPage = () => {
                 variant="outline"
                 className="erd-export-menu-item"
                 preventDoubleClick={false}
-                onClick={async () => {
+                onClick={async() => {
                   try {
                     const svgElement = mermaidRef.current?.querySelector('svg');
                     if (svgElement) {
@@ -836,7 +836,7 @@ const ErdDetailPage = () => {
               </div>
             ) : (
               <div className="mermaid-wrapper">
-                <div ref={mermaidRef} className="mermaid-diagram"></div>
+                <div ref={mermaidRef} className="mermaid-diagram" />
               </div>
             )}
           </div>

@@ -20,7 +20,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         userId: '', email: '', password: '', name: '', phone: '', specialization: ''
     });
 
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         setLoading(true);
 
         try {
@@ -72,7 +72,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         loadConsultants();
     }, [loadConsultants]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         try {
             const response = await fetch('/api/v1/admin/consultants', {
@@ -97,7 +97,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async(id) => {
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('정말로 이 상담사를 삭제하시겠습니까?', resolve);
     });
@@ -188,7 +188,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">
-                        <i className="bi bi-person-badge"></i>
+                        <i className="bi bi-person-badge" />
                         상담사 관리
                     </h3>
                     <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
@@ -215,7 +215,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="text"
                             value={form.userId}
-                            onChange={(e) => setForm({...form, userId: e.target.value})}
+                            onChange={(e) => setForm({ ...form, userId: e.target.value })}
                             required
                         />
                     </Form.Group>
@@ -224,7 +224,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="email"
                             value={form.email}
-                            onChange={(e) => setForm({...form, email: e.target.value})}
+                            onChange={(e) => setForm({ ...form, email: e.target.value })}
                             required
                         />
                     </Form.Group>
@@ -233,7 +233,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="password"
                             value={form.password}
-                            onChange={(e) => setForm({...form, password: e.target.value})}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
                             required
                         />
                     </Form.Group>
@@ -242,7 +242,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="text"
                             value={form.name}
-                            onChange={(e) => setForm({...form, name: e.target.value})}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
                             required
                         />
                     </Form.Group>
@@ -251,7 +251,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="tel"
                             value={form.phone}
-                            onChange={(e) => setForm({...form, phone: e.target.value})}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
                             required
                         />
                     </Form.Group>
@@ -260,7 +260,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <Form.Control
                             type="text"
                             value={form.specialization}
-                            onChange={(e) => setForm({...form, specialization: e.target.value})}
+                            onChange={(e) => setForm({ ...form, specialization: e.target.value })}
                         />
                     </Form.Group>
                     <div className="d-flex justify-content-end gap-2">

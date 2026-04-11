@@ -47,7 +47,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!formData.reason.trim()) {
@@ -176,7 +176,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
                     <span 
                       className="mg-v2-radio-color"
                       data-color={type.color}
-                    ></span>
+                     />
                   </div>
                 </label>
               ))}

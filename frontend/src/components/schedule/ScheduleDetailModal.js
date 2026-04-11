@@ -100,7 +100,7 @@ const ScheduleDetailModal = ({
         return codeStr;
     };
 
-    const loadScheduleStatusCodes = useCallback(async () => {
+    const loadScheduleStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             const codes = await getCommonCodes('SCHEDULE_STATUS');
@@ -141,7 +141,7 @@ const ScheduleDetailModal = ({
     /**
      * 예약 취소 처리 (TDZ 방지: renderCancelConfirm에서 참조)
      */
-    const handleCancelSchedule = async () => {
+    const handleCancelSchedule = async() => {
         try {
             setLoading(true);
             console.log('❌ 스케줄 취소 요청:', scheduleData?.id);
@@ -162,7 +162,7 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 취소 실패:', error);
-            notificationManager.error('예약 취소에 실패했습니다: ' + error.message);
+            notificationManager.error(`예약 취소에 실패했습니다: ${error.message}`);
         } finally {
             setLoading(false);
             setShowCancelConfirm(false);
@@ -172,7 +172,7 @@ const ScheduleDetailModal = ({
     /**
      * 예약 확정 처리 (TDZ 방지: renderConfirmModal에서 참조)
      */
-    const handleConfirmSchedule = async () => {
+    const handleConfirmSchedule = async() => {
         if (!scheduleData?.id) {
             notificationManager.error('스케줄 정보가 올바르지 않습니다.');
             return;
@@ -197,7 +197,7 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 확정 실패:', error);
-            notificationManager.error('예약 확정에 실패했습니다: ' + error.message);
+            notificationManager.error(`예약 확정에 실패했습니다: ${error.message}`);
         } finally {
             setLoading(false);
             setShowConfirmModal(false);
@@ -411,7 +411,7 @@ const ScheduleDetailModal = ({
      * 상태 변경 처리
      * 성공 시 응답으로 모달 표시 데이터를 갱신해, 부모가 목록만 갱신해도 버튼/상태가 올바르게 보이도록 함.
      */
-    const handleStatusChange = async (newStatus) => {
+    const handleStatusChange = async(newStatus) => {
         try {
             setLoading(true);
             console.log('📝 스케줄 상태 변경:', scheduleData.id, newStatus);
@@ -442,7 +442,7 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 상태 변경 실패:', error);
-            notificationManager.error('상태 변경에 실패했습니다: ' + error.message);
+            notificationManager.error(`상태 변경에 실패했습니다: ${error.message}`);
         } finally {
             setLoading(false);
         }

@@ -13,7 +13,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const loadPurchaseData = async () => {
+    const loadPurchaseData = async() => {
       if (!user?.id) return;
       
       try {
@@ -87,7 +87,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       {isExpanded && (
         <div className="mg-card-body">{isLoading ? (
           <div className="mg-loading-container">
-            <div className="mg-spinner"></div>
+            <div className="mg-spinner" />
             <p>데이터 로딩 중...</p>
           </div>
         ) : (

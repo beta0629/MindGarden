@@ -106,7 +106,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   }, [currentUser, sessionLoading, navigate]);
 
   // loadDashboard 함수를 useCallback으로 감싸고 필요한 의존성만 명시
-  const loadDashboard = useCallback(async () => {
+  const loadDashboard = useCallback(async() => {
     if (!currentUser) {
       setError('사용자 정보가 없습니다.');
       setIsLoading(false);
@@ -165,7 +165,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         }
       }
       
-      const tenantId = userWithTenant.tenantId;
+      const { tenantId } = userWithTenant;
       const tenantRoleId = userWithTenant.currentTenantRoleId || 
                           userWithTenant.tenantRole?.tenantRoleId ||
                           null;
@@ -584,7 +584,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
   
   // 업종 정보 동적 로드 (tenantId 기반)
   useEffect(() => {
-    const loadBusinessType = async () => {
+    const loadBusinessType = async() => {
       if (businessType) {
         return; // 이미 있으면 스킵
       }
@@ -665,7 +665,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
       console.debug(`업종 정보 누락, tenantId에서 추출 시도: ${user.tenantId}`);
       
       // API 호출로 테넌트 정보 조회
-      const fetchBusinessType = async () => {
+      const fetchBusinessType = async() => {
         try {
           // /api/v1/auth/current-user API가 이미 tenantId를 가지고 있으니
           // 추가 API 호출 대신 현재 URL이나 다른 방법 사용

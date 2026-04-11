@@ -27,7 +27,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
   const [statusFilter, setStatusFilter] = useState('');
 
   // 반 목록 조회
-  const fetchClasses = async () => {
+  const fetchClasses = async() => {
     setLoading(true);
     setError(null);
     
@@ -65,7 +65,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
   }, [branchId, courseId, statusFilter]);
 
   // 반 삭제
-  const handleDelete = async (classId) => {
+  const handleDelete = async(classId) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) {
       return;
     }
@@ -141,7 +141,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
           </MGButton>
         )}
       </div>
-    )}
+    ) }
   ];
 
   return (

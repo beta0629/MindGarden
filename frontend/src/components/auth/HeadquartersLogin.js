@@ -52,7 +52,7 @@ const HeadquartersLogin = () => {
 /**
    * 본사 정보 조회
    */
-  const loadHeadquartersInfo = async () => {
+  const loadHeadquartersInfo = async() => {
     try {
       setIsLoadingInfo(true);
       setError(null);
@@ -83,7 +83,7 @@ const HeadquartersLogin = () => {
 /**
    * 본사 로그인
    */
-  const handleHeadquartersLogin = async (e) => {
+  const handleHeadquartersLogin = async(e) => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
@@ -160,7 +160,7 @@ const HeadquartersLogin = () => {
         <div className="branch-login-container">
           <div className="login-card">
             <div className="loading-spinner">
-              <div className="spinner"></div>
+              <div className="spinner" />
               <p>본사 정보를 불러오는 중...</p>
             </div>
           </div>

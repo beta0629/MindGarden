@@ -65,7 +65,7 @@ const setToCache = (key, data) => {
 /**
  * @returns {Promise<Array>} 테마 목록
  */
-export const getAllActiveThemes = async () => {
+export const getAllActiveThemes = async() => {
     try {
         const cacheKey = 'all-active-themes';
         const cached = getFromCache(cacheKey);
@@ -88,7 +88,7 @@ export const getAllActiveThemes = async () => {
 /**
  * @returns {Promise<Object|null>} 기본 테마 정보
  */
-export const getDefaultTheme = async () => {
+export const getDefaultTheme = async() => {
     try {
         const cacheKey = 'default-theme';
         const cached = getFromCache(cacheKey);
@@ -113,7 +113,7 @@ export const getDefaultTheme = async () => {
 /**
  * @returns {Promise<Object>} 색상 설정 객체 (colorKey -> colorValue)
  */
-export const getThemeColors = async (themeName) => {
+export const getThemeColors = async(themeName) => {
     try {
         const cacheKey = `theme-colors-${themeName}`;
         const cached = getFromCache(cacheKey);
@@ -140,7 +140,7 @@ export const getThemeColors = async (themeName) => {
 /**
  * @returns {Promise<string|null>} 색상 값
  */
-export const getThemeColor = async (themeName, colorKey) => {
+export const getThemeColor = async(themeName, colorKey) => {
     try {
         const cacheKey = `theme-color-${themeName}-${colorKey}`;
         const cached = getFromCache(cacheKey);
@@ -167,7 +167,7 @@ export const getThemeColor = async (themeName, colorKey) => {
 /**
  * @returns {Promise<Array>} 색상 설정 목록
  */
-export const getThemeColorsByCategory = async (themeName, category) => {
+export const getThemeColorsByCategory = async(themeName, category) => {
     try {
         const cacheKey = `theme-category-${themeName}-${category}`;
         const cached = getFromCache(cacheKey);
@@ -192,7 +192,7 @@ export const getThemeColorsByCategory = async (themeName, category) => {
 /**
  * @returns {Promise<boolean>} 존재 여부
  */
-export const isThemeExists = async (themeName) => {
+export const isThemeExists = async(themeName) => {
     try {
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/exists`);
         return response.success && response.exists;
@@ -209,7 +209,7 @@ export const isThemeExists = async (themeName) => {
 /**
  * @returns {Promise<Object>} CSS 변수 객체
  */
-export const getDynamicCSSVariables = async (themeName = 'default') => {
+export const getDynamicCSSVariables = async(themeName = 'default') => {
     try {
         console.log(`🎨 동적 CSS 변수 생성: ${themeName}`);
         

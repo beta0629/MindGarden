@@ -8,7 +8,7 @@
 
 import { BUSINESS_CONSTANTS } from './magicNumbers';
 
-export const CSS_REGISTRY = {// 기존 클래스 (레거시)
+export const CSS_REGISTRY = { // 기존 클래스 (레거시)
   EXISTING: ['mg-button',
     'mg-card',
     'mg-dashboard-layout',
@@ -321,7 +321,7 @@ export const CSS_REGISTRY = {// 기존 클래스 (레거시)
     'mg-v2-subsubchunk',
     'mg-v2-subsubfragment',
     'mg-v2-subsubsegment',
-    'mg-v2-subsubdivision']};
+    'mg-v2-subsubdivision'] };
 
 /**
  * CSS 클래스 검증 함수
@@ -338,7 +338,7 @@ export const validateCSSClass = (className) => {const errors = [];
   // BUSINESS_CONSTANTS.MAX_RETRY_ATTEMPTS. 예약어 검사
   if (CSS_REGISTRY.RESERVED.some(reserved => className.includes(reserved))) {errors.push(`클래스 '${className}'이 예약어를 포함합니다.`);}
   
-  return {errors, warnings};};
+  return { errors, warnings };};
 
 /**
  * CSS 클래스 등록 함수

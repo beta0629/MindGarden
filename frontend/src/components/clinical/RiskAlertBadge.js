@@ -32,7 +32,7 @@ const RiskAlertBadge = ({ tenantId }) => {
     /**
      * 알림 로드
      */
-    const loadAlerts = async () => {
+    const loadAlerts = async() => {
         setIsLoading(true);
 
         try {
@@ -148,7 +148,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                         <div className="alert-list">
                             {isLoading && (
                                 <div className="alert-loading">
-                                    <div className="spinner-small"></div>
+                                    <div className="spinner-small" />
                                     <p>로딩 중...</p>
                                 </div>
                             )}

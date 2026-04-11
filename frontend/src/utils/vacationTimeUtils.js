@@ -18,7 +18,7 @@ let lastCacheTime = 0;
 /**
  * 업무 시간 설정을 가져와서 휴가 시간을 계산합니다.
  */
-const fetchBusinessTimeSettings = async () => {
+const fetchBusinessTimeSettings = async() => {
     try {
         const response = await apiGet('/api/admin/business-time/settings');
         if (response && response.success) {
@@ -33,7 +33,7 @@ const fetchBusinessTimeSettings = async () => {
 /**
  * 동적으로 휴가 시간 설정을 가져옵니다.
  */
-export const getVacationTimeSettings = async (forceRefresh = false) => {
+export const getVacationTimeSettings = async(forceRefresh = false) => {
     if (!forceRefresh && cachedSettings && (Date.now() - lastCacheTime < CACHE_EXPIRATION_MS)) {
         return cachedSettings;
     }
@@ -120,7 +120,7 @@ export const getVacationTimeSettings = async (forceRefresh = false) => {
 /**
  * 특정 휴가 유형의 시간을 가져옵니다.
  */
-export const getVacationTimeSlot = async (vacationType) => {
+export const getVacationTimeSlot = async(vacationType) => {
     const settings = await getVacationTimeSettings();
     return settings[vacationType] || TIME_SLOTS[vacationType];
 };
@@ -128,14 +128,14 @@ export const getVacationTimeSlot = async (vacationType) => {
 /**
  * 모든 휴가 시간 슬롯을 가져옵니다.
  */
-export const getAllVacationTimeSlots = async () => {
+export const getAllVacationTimeSlots = async() => {
     return await getVacationTimeSettings();
 };
 
 /**
  * 상담사의 직종에 따라 사용 가능한 휴가 유형을 필터링합니다.
  */
-export const getAvailableVacationTypes = async (consultantId = null, salaryType = null) => {
+export const getAvailableVacationTypes = async(consultantId = null, salaryType = null) => {
     const vacationSettings = await getVacationTimeSettings();
     
     // 기본 휴가 유형 (모든 직종 사용 가능)
@@ -188,7 +188,7 @@ export const clearVacationTimeCache = () => {
 /**
  * 특정 시간이 휴가 시간과 겹치는지 확인합니다.
  */
-export const isVacationTime = async (time, vacationType) => {
+export const isVacationTime = async(time, vacationType) => {
     const timeSlot = await getVacationTimeSlot(vacationType);
     const checkTime = time.split(':');
     const startTime = timeSlot.start.split(':');
@@ -204,7 +204,7 @@ export const isVacationTime = async (time, vacationType) => {
 /**
  * 휴가 유형별 표시 라벨을 가져옵니다.
  */
-export const getVacationTypeLabel = async (vacationType) => {
+export const getVacationTypeLabel = async(vacationType) => {
     const timeSlot = await getVacationTimeSlot(vacationType);
     return timeSlot.label || vacationType;
 };

@@ -58,7 +58,7 @@ const BranchSpecificLogin = () => {
 /**
    * 지점 정보 조회
    */
-  const loadBranchInfo = async () => {
+  const loadBranchInfo = async() => {
     try {
       setIsLoadingBranch(true);
       setError(null);
@@ -89,7 +89,7 @@ const BranchSpecificLogin = () => {
 /**
    * 지점별 로그인
    */
-  const handleBranchLogin = async (e) => {
+  const handleBranchLogin = async(e) => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
@@ -168,7 +168,7 @@ const BranchSpecificLogin = () => {
         <div className="branch-login-container">
           <div className="login-card">
             <div className="loading-spinner">
-              <div className="spinner"></div>
+              <div className="spinner" />
               <p>지점 정보를 불러오는 중...</p>
             </div>
           </div>

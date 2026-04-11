@@ -20,7 +20,7 @@ const ConsultantClientSection = ({ userId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadClients = useCallback(async () => {
+  const loadClients = useCallback(async() => {
     try {
       setIsLoading(true);
       setError(null);

@@ -47,7 +47,7 @@ const HealingCardWidget = ({ widget, user }) => {
     }
   }, [userRole, category]);
   
-  const loadHealingData = async () => {
+  const loadHealingData = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -74,7 +74,7 @@ const HealingCardWidget = ({ widget, user }) => {
     }
   };
   
-  const handleRefresh = async () => {
+  const handleRefresh = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -122,7 +122,7 @@ const HealingCardWidget = ({ widget, user }) => {
     return (
       <div className="widget widget-healing-card">
         <div className="widget-empty">
-          <i className="bi bi-heart"></i>
+          <i className="bi bi-heart" />
           <p>{config.emptyMessage || '힐링 컨텐츠가 없습니다'}</p>
         </div>
       </div>
@@ -133,7 +133,7 @@ const HealingCardWidget = ({ widget, user }) => {
     <div className="widget widget-healing-card">
       <div className="widget-header">
         <div className="widget-title">
-          <i className="bi bi-heart"></i>
+          <i className="bi bi-heart" />
           {config.title || healingData.title || '오늘의 힐링'}
         </div>
         {config.allowRefresh !== false && (
@@ -145,7 +145,7 @@ const HealingCardWidget = ({ widget, user }) => {
             title="새로고침"
             onClick={handleRefresh}
           >
-            <i className="bi bi-arrow-clockwise"></i>
+            <i className="bi bi-arrow-clockwise" />
           </MGButton>
         )}
       </div>

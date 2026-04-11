@@ -90,7 +90,7 @@ const MenuPermissionManagementUI = ({
                                     className={`mg-role-item ${selectedRole?.tenantRoleId === role.tenantRoleId ? 'mg-active' : ''}`}
                                     onClick={() => onRoleSelect(role)}
                                 >
-                                    <i className="bi bi-person-badge mg-role-icon"></i>
+                                    <i className="bi bi-person-badge mg-role-icon" />
                                     <div className="mg-role-info">
                                         <span className="mg-role-name">{role.nameKo || role.nameEn}</span>
                                         <span className="mg-role-code">({role.nameEn})</span>
@@ -202,7 +202,7 @@ const MenuPermissionManagementUI = ({
                                     </div>
 
                                     <div className="mg-help-text">
-                                        <i className="bi bi-info-circle mg-help-icon"></i>
+                                        <i className="bi bi-info-circle mg-help-icon" />
                                         <div className="mg-help-content">
                                             <p className="mg-help-title">권한 부여 규칙:</p>
                                             <ul className="mg-help-list">
@@ -217,7 +217,7 @@ const MenuPermissionManagementUI = ({
                         </>
                     ) : (
                         <div className="mg-empty-state">
-                            <i className="bi bi-shield-lock mg-empty-icon"></i>
+                            <i className="bi bi-shield-lock mg-empty-icon" />
                             <p className="mg-empty-text">좌측에서 역할을 선택하세요</p>
                         </div>
                     )}

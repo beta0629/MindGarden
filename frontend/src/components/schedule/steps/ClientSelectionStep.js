@@ -41,7 +41,7 @@ const ClientSelectionStep = ({
 /**
      * 내담자 목록 로드 (선택된 상담사와 매핑된 결제 승인된 내담자만)
      */
-    const loadClients = async () => {
+    const loadClients = async() => {
         if (!selectedConsultant) {
             console.log('👤 상담사가 선택되지 않았습니다.');
             setClients([]);
@@ -56,7 +56,7 @@ const ClientSelectionStep = ({
             const response = await fetch(`${API_BASE_URL}/api/v1/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -134,14 +134,14 @@ const ClientSelectionStep = ({
 /**
      * 전체 매핑에서 상담사별 필터링 (백업 방법)
      */
-    const loadClientsFromAllMappings = async () => {
+    const loadClientsFromAllMappings = async() => {
         try {
             console.log('👤 전체 매핑에서 상담사별 필터링 시작');
             
             const response = await fetch('/api/v1/admin/mappings/active', {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });

@@ -24,7 +24,7 @@ const PG_OPS_API = {
   TEST_CONNECTION: '/api/v1/ops/pg-configurations',
   ACTIVATE: '/api/v1/ops/pg-configurations',
   DEACTIVATE: '/api/v1/ops/pg-configurations',
-  DECRYPT_KEYS: '/api/v1/ops/pg-configurations',
+  DECRYPT_KEYS: '/api/v1/ops/pg-configurations'
 };
 
 /**
@@ -34,7 +34,7 @@ const PG_OPS_API = {
 /**
  * @returns {Promise<Array>} 승인 대기 목록
  */
-export const getPendingPgConfigurations = async (filters = {}) => {
+export const getPendingPgConfigurations = async(filters = {}) => {
   try {
     const response = await apiGet(PG_OPS_API.GET_PENDING, filters);
     return response || [];
@@ -51,7 +51,7 @@ export const getPendingPgConfigurations = async (filters = {}) => {
 /**
  * @returns {Promise<Array>} PG 설정 목록
  */
-export const getAllPgConfigurationsForOps = async (filters = {}) => {
+export const getAllPgConfigurationsForOps = async(filters = {}) => {
   try {
     const response = await apiGet(PG_OPS_API.GET_ALL, filters);
     return response || [];
@@ -68,7 +68,7 @@ export const getAllPgConfigurationsForOps = async (filters = {}) => {
 /**
  * @returns {Promise<Object>} PG 설정 상세 정보
  */
-export const getPgConfigurationDetailForOps = async (configId) => {
+export const getPgConfigurationDetailForOps = async(configId) => {
   try {
     const response = await apiGet(`${PG_OPS_API.GET_DETAIL}/${configId}`);
     return response;
@@ -87,7 +87,7 @@ export const getPgConfigurationDetailForOps = async (configId) => {
 /**
  * @returns {Promise<Object>} 승인된 PG 설정 정보
  */
-export const approvePgConfiguration = async (configId, request) => {
+export const approvePgConfiguration = async(configId, request) => {
   try {
     const response = await apiPost(`${PG_OPS_API.APPROVE}/${configId}/approve`, request);
     return response;
@@ -106,7 +106,7 @@ export const approvePgConfiguration = async (configId, request) => {
 /**
  * @returns {Promise<Object>} 거부된 PG 설정 정보
  */
-export const rejectPgConfiguration = async (configId, request) => {
+export const rejectPgConfiguration = async(configId, request) => {
   try {
     const response = await apiPost(`${PG_OPS_API.REJECT}/${configId}/reject`, request);
     return response;
@@ -123,7 +123,7 @@ export const rejectPgConfiguration = async (configId, request) => {
 /**
  * @returns {Promise<Object>} 연결 테스트 결과
  */
-export const testPgConnectionForOps = async (configId) => {
+export const testPgConnectionForOps = async(configId) => {
   try {
     const response = await apiPost(`${PG_OPS_API.TEST_CONNECTION}/${configId}/test-connection`, {});
     return response;
@@ -142,7 +142,7 @@ export const testPgConnectionForOps = async (configId) => {
 /**
  * @returns {Promise<Object>} 활성화된 PG 설정 정보
  */
-export const activatePgConfiguration = async (configId, activatedBy) => {
+export const activatePgConfiguration = async(configId, activatedBy) => {
   try {
     const response = await apiPost(`${PG_OPS_API.ACTIVATE}/${configId}/activate`, { activatedBy });
     return response;
@@ -161,7 +161,7 @@ export const activatePgConfiguration = async (configId, activatedBy) => {
 /**
  * @returns {Promise<Object>} 비활성화된 PG 설정 정보
  */
-export const deactivatePgConfiguration = async (configId, deactivatedBy) => {
+export const deactivatePgConfiguration = async(configId, deactivatedBy) => {
   try {
     const response = await apiPost(`${PG_OPS_API.DEACTIVATE}/${configId}/deactivate`, { deactivatedBy });
     return response;
@@ -178,7 +178,7 @@ export const deactivatePgConfiguration = async (configId, deactivatedBy) => {
 /**
  * @returns {Promise<Object>} 복호화된 키 정보
  */
-export const decryptPgKeysForOps = async (configId) => {
+export const decryptPgKeysForOps = async(configId) => {
   try {
     const response = await apiPost(`${PG_OPS_API.DECRYPT_KEYS}/${configId}/decrypt-keys`, {});
     return response;

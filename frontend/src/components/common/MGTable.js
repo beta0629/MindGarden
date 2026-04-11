@@ -58,7 +58,7 @@ const MGTable = ({
     <div className="mg-table-wrapper">
       {loading && (
         <div className="mg-table__loading">
-          <div className="mg-table__spinner"></div>
+          <div className="mg-table__spinner" />
           <span>데이터를 불러오는 중...</span>
         </div>
       )}

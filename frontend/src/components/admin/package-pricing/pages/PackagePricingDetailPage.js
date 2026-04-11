@@ -69,7 +69,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [listLength, setListLength] = useState(0);
 
-  const fetchListForEdit = useCallback(async () => {
+  const fetchListForEdit = useCallback(async() => {
     if (isNew) return;
     setLoading(true);
     try {
@@ -105,7 +105,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
     }
   }, [id, isNew, navigate]);
 
-  const fetchListLength = useCallback(async () => {
+  const fetchListLength = useCallback(async() => {
     try {
       const data = await StandardizedApi.get(API.TENANT_CODES_LIST, {
         codeGroup: CODE_GROUP_CONSULTATION_PACKAGE
@@ -146,7 +146,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
     return Object.keys(err).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async() => {
     if (!validateForm()) return;
     setSubmitLoading(true);
     try {

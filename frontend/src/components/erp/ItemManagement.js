@@ -59,7 +59,7 @@ const ItemManagement = () => {
   }, []);
 
   // 아이템 카테고리 코드 로드
-  const loadCategoryCodes = async () => {
+  const loadCategoryCodes = async() => {
     try {
       setLoadingCodes(true);
       const raw = await StandardizedApi.get(COMMON_CODE_API.BASE, { codeGroup: 'ITEM_CATEGORY' });
@@ -92,7 +92,7 @@ const ItemManagement = () => {
     }
   };
 
-  const loadItems = async (options = {}) => {
+  const loadItems = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -137,7 +137,7 @@ const ItemManagement = () => {
     setSuccess('');
   };
 
-  const handleCreateItem = async (e) => {
+  const handleCreateItem = async(e) => {
     e.preventDefault();
     
     try {
@@ -182,7 +182,7 @@ const ItemManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateItem = async (e) => {
+  const handleUpdateItem = async(e) => {
     e.preventDefault();
     
     try {
@@ -215,7 +215,7 @@ const ItemManagement = () => {
     }
   };
 
-  const handleDeleteItem = async (item) => {
+  const handleDeleteItem = async(item) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(`"${item.name}" 아이템을 삭제하시겠습니까?`, resolve);
     });

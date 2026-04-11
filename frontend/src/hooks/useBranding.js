@@ -44,7 +44,7 @@ export const useBranding = (options = {}) => {
 /**
    * 브랜딩 정보 로드
    */
-  const loadBrandingInfo = useCallback(async (forceReload = false) => {
+  const loadBrandingInfo = useCallback(async(forceReload = false) => {
     // 로그인하지 않은 경우 기본값 사용
     const user = sessionManager.getUser();
     if (!user) {
@@ -111,7 +111,7 @@ export const useBranding = (options = {}) => {
 /**
    * 브랜딩 정보 업데이트 후 새로고침
    */
-  const updateAndRefresh = useCallback(async (updateFn) => {
+  const updateAndRefresh = useCallback(async(updateFn) => {
     try {
       setIsLoading(true);
       await updateFn();

@@ -128,7 +128,7 @@ const PgConfigurationForm = ({
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!validate()) {

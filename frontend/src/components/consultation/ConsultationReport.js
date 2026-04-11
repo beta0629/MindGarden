@@ -48,7 +48,7 @@ const ConsultationReport = () => {
   const [loadingYearCodes, setLoadingYearCodes] = useState(false);
   const [loadingMonthCodes, setLoadingMonthCodes] = useState(false);
 
-  const loadPeriodCodes = useCallback(async () => {
+  const loadPeriodCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=REPORT_PERIOD');
@@ -76,7 +76,7 @@ const ConsultationReport = () => {
     }
   }, []);
 
-  const loadYearCodes = useCallback(async () => {
+  const loadYearCodes = useCallback(async() => {
     try {
       setLoadingYearCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=YEAR_RANGE');
@@ -103,7 +103,7 @@ const ConsultationReport = () => {
     }
   }, []);
 
-  const loadMonthCodes = useCallback(async () => {
+  const loadMonthCodes = useCallback(async() => {
     try {
       setLoadingMonthCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=MONTH_RANGE');
@@ -144,7 +144,7 @@ const ConsultationReport = () => {
     }
   }, [user, sessionLoading, isLoggedIn, selectedPeriod, selectedYear, selectedMonth, loadPeriodCodes, loadYearCodes, loadMonthCodes]);
 
-  const loadReportData = async () => {
+  const loadReportData = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -347,7 +347,7 @@ const ConsultationReport = () => {
               onClick={() => navigate(-1)}
               title="뒤로"
             >
-              <i className="bi bi-arrow-left"></i>
+              <i className="bi bi-arrow-left" />
             </MGButton>
             <div className="header-text">
               <h1>📊 상담 리포트</h1>
@@ -414,7 +414,7 @@ const ConsultationReport = () => {
 
           {error ? (
             <div className="error-message">
-              <i className="bi bi-exclamation-triangle"></i>
+              <i className="bi bi-exclamation-triangle" />
               <p>{error}</p>
               <MGButton variant="primary" onClick={loadReportData} className="retry-btn">
                 다시 시도
@@ -422,7 +422,7 @@ const ConsultationReport = () => {
             </div>
           ) : !reportData ? (
             <div className="no-data">
-              <i className="bi bi-file-text"></i>
+              <i className="bi bi-file-text" />
               <p>상담 데이터가 없습니다</p>
               <small>새로운 상담을 예약해보세요</small>
             </div>
@@ -432,7 +432,7 @@ const ConsultationReport = () => {
               <div className="summary-cards">
                 <div className="summary-card">
                   <div className="card-icon">
-                    <i className="bi bi-calendar-check"></i>
+                    <i className="bi bi-calendar-check" />
                   </div>
                   <div className="card-content">
                     <h3>총 상담 수</h3>
@@ -442,7 +442,7 @@ const ConsultationReport = () => {
                 
                 <div className="summary-card">
                   <div className="card-icon">
-                    <i className="bi bi-check-circle"></i>
+                    <i className="bi bi-check-circle" />
                   </div>
                   <div className="card-content">
                     <h3>완료된 상담</h3>
@@ -452,7 +452,7 @@ const ConsultationReport = () => {
                 
                 <div className="summary-card">
                   <div className="card-icon">
-                    <i className="bi bi-clock"></i>
+                    <i className="bi bi-clock" />
                   </div>
                   <div className="card-content">
                     <h3>예정된 상담</h3>
@@ -462,7 +462,7 @@ const ConsultationReport = () => {
                 
                 <div className="summary-card">
                   <div className="card-icon">
-                    <i className="bi bi-percent"></i>
+                    <i className="bi bi-percent" />
                   </div>
                   <div className="card-content">
                     <h3>완료율</h3>

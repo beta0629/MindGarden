@@ -68,7 +68,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
 /**
    * 그룹화된 위젯 조회 API
    */
-  const fetchGroupedWidgets = async () => {
+  const fetchGroupedWidgets = async() => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -101,7 +101,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
 /**
    * 독립 위젯 조회 API (추가 가능한 위젯)
    */
-  const fetchAvailableWidgets = async () => {
+  const fetchAvailableWidgets = async() => {
     try {
       const response = await fetch(
         `/api/v1/widgets/available?businessType=${businessType}`,
@@ -130,7 +130,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
 /**
    * 위젯 추가 핸들러
    */
-  const handleAddWidget = async (widgetType) => {
+  const handleAddWidget = async(widgetType) => {
     try {
       const response = await fetch(
         `/api/v1/widgets/dashboards/${dashboard.dashboardId}/widgets`,
@@ -168,7 +168,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
 /**
    * 위젯 삭제 핸들러
    */
-  const handleDeleteWidget = async (widgetId) => {
+  const handleDeleteWidget = async(widgetId) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
     });

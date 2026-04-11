@@ -135,7 +135,7 @@ const ConsultantFilterNew = ({
                                 onClick={() => handleAvailabilityChange(option.value)}
                                 preventDoubleClick={false}
                             >
-                                <div className="consultant-filter-availability-dot"></div>
+                                <div className="consultant-filter-availability-dot" />
                                 {option.label}
                             </MGButton>
                         ))}

@@ -64,7 +64,7 @@ describe('VacationStatsWidget', () => {
     expect(screen.getByText('데이터를 불러오는 중...')).toBeInTheDocument();
   });
 
-  it('API 오류를 처리한다', async () => {
+  it('API 오류를 처리한다', async() => {
     apiGet.mockRejectedValue(new Error('API Error'));
     renderWidget();
 
@@ -73,7 +73,7 @@ describe('VacationStatsWidget', () => {
     });
   });
 
-  it('데이터를 성공적으로 로드한다', async () => {
+  it('데이터를 성공적으로 로드한다', async() => {
     apiGet.mockResolvedValue({ count: 10 });
     renderWidget();
 

@@ -11,7 +11,7 @@ const DashboardHeader = () => {
                     <div className="welcome-profile">
                         <div className="profile-avatar">
                             <div className="profile-icon">
-                                <i className="bi bi-person-circle"></i>
+                                <i className="bi bi-person-circle" />
                             </div>
                         </div>
                         <div className="welcome-content">

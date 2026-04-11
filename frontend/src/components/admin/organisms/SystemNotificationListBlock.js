@@ -41,7 +41,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async() => {
     try {
       setLoading(true);
       const params = {};
@@ -85,7 +85,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     setShowModal(true);
   };
 
-  const handleSave = async (formData) => {
+  const handleSave = async(formData) => {
     if (!formData.title || !formData.content) {
       notificationManager.show('제목과 내용을 입력해주세요.', 'warning');
       return;
@@ -114,7 +114,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     }
   };
 
-  const handlePublish = async (id) => {
+  const handlePublish = async(id) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('이 공지를 게시하시겠습니까?', resolve);
     });
@@ -129,7 +129,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     }
   };
 
-  const handleArchive = async (id) => {
+  const handleArchive = async(id) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('이 공지를 보관하시겠습니까?', resolve);
     });
@@ -144,7 +144,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async(id) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('이 공지를 삭제하시겠습니까?', resolve);
     });

@@ -36,7 +36,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
     loadPaymentSessionsData();
   }, [userId]);
 
-  const loadPaymentSessionsData = async () => {
+  const loadPaymentSessionsData = async() => {
     try {
       setIsLoading(true);
       setError(null);

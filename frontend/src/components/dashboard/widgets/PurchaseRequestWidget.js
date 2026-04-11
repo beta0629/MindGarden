@@ -55,7 +55,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
     }
   }, [userId]);
   
-  const loadPurchaseData = async () => {
+  const loadPurchaseData = async() => {
     try {
       setLoading(true);
       

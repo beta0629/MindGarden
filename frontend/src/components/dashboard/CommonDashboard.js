@@ -59,7 +59,7 @@ const CommonDashboard = ({ user: propUser }) => {
   const [clientStatus, setClientStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadClientConsultationData = useCallback(async (userId) => {
+  const loadClientConsultationData = useCallback(async(userId) => {
     try {
       console.log('📊 내담자 상담 데이터 로드 시작 - 사용자 ID:', userId);
       
@@ -207,7 +207,7 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   }, [user?.id]);
 
-  const loadConsultantConsultationData = useCallback(async (userId) => {
+  const loadConsultantConsultationData = useCallback(async(userId) => {
     try {
       console.log('📊 상담사 상담 데이터 로드 시작 - 사용자 ID:', userId);
       
@@ -392,7 +392,7 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   }, [user?.id]);
 
-  const loadAdminSystemData = useCallback(async () => {
+  const loadAdminSystemData = useCallback(async() => {
     try {
       console.log('📊 관리자 시스템 데이터 로드 시작');
       
@@ -496,7 +496,7 @@ const CommonDashboard = ({ user: propUser }) => {
   useEffect(() => {
     let isMounted = true; // 컴포넌트 마운트 상태 추적
     
-    const loadDashboardData = async () => {
+    const loadDashboardData = async() => {
       try {
         console.log('🔍 대시보드 데이터 로드 시작...');
         
@@ -521,7 +521,7 @@ const CommonDashboard = ({ user: propUser }) => {
             
             window.delayedSessionCheckExecuted = true;
             
-           setTimeout(async () => {
+           setTimeout(async() => {
              try {
                console.log('🔄 지연된 세션 확인 시작...');
                
@@ -675,7 +675,7 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   };
 
-  const loadClientStatus = async (userId) => {
+  const loadClientStatus = async(userId) => {
     try {
       console.log('📊 내담자 상태 데이터 로드 시작 - 사용자 ID:', userId);
       
@@ -713,7 +713,7 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   };
 
-  const refreshSchedule = async () => {
+  const refreshSchedule = async() => {
     try {
       if (RoleUtils.isClient(user)) {
         await loadClientConsultationData(user.id);

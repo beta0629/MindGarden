@@ -24,7 +24,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 /**
  * @returns {Promise<Object>} 업무 시간 설정 객체
  */
-export const getBusinessTimeSettings = async (useCache = true) => {
+export const getBusinessTimeSettings = async(useCache = true) => {
     const now = Date.now();
     
     // 캐시 사용 및 유효성 검사
@@ -72,7 +72,7 @@ export const getBusinessTimeSettings = async (useCache = true) => {
 /**
  * @returns {Promise<boolean>} 업데이트 성공 여부
  */
-export const updateBusinessTimeSettings = async (settings) => {
+export const updateBusinessTimeSettings = async(settings) => {
     try {
         console.log('🕐 업무 시간 설정 업데이트 요청:', settings);
         
@@ -101,7 +101,7 @@ export const updateBusinessTimeSettings = async (settings) => {
 /**
  * @returns {Promise<Object>} 시간 확인 결과
  */
-export const checkBusinessTime = async (time) => {
+export const checkBusinessTime = async(time) => {
     try {
         const response = await apiGet(`/api/admin/business-time/check-time?time=${time}`);
         
@@ -123,7 +123,7 @@ export const checkBusinessTime = async (time) => {
 /**
  * @returns {Array} 시간 슬롯 배열
  */
-export const generateTimeSlots = async (settings = null) => {
+export const generateTimeSlots = async(settings = null) => {
     try {
         const timeSettings = settings || await getBusinessTimeSettings();
         

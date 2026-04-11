@@ -83,7 +83,7 @@ const PermissionGroupManagementUI = ({
                     <li key={group.groupCode} className={`mg-permission-group-item ${depthClass}`}>
                         <div className="mg-permission-group-row">
                             <div className="mg-permission-group-info">
-                                <i className={`bi ${group.icon || 'bi-folder'} mg-group-icon`}></i>
+                                <i className={`bi ${group.icon || 'bi-folder'} mg-group-icon`} />
                                 <div className="mg-group-details">
                                     <span className="mg-group-name">{group.groupName}</span>
                                     <span className="mg-group-code">({group.groupCode})</span>
@@ -178,7 +178,7 @@ const PermissionGroupManagementUI = ({
                                     className={`mg-role-item ${selectedRole?.tenantRoleId === role.tenantRoleId ? 'mg-active' : ''}`}
                                     onClick={() => onRoleSelect(role)}
                                 >
-                                    <i className="bi bi-person-badge mg-role-icon"></i>
+                                    <i className="bi bi-person-badge mg-role-icon" />
                                     <div className="mg-role-info">
                                         <span className="mg-role-name">{role.nameKo || role.nameEn}</span>
                                         <span className="mg-role-code">({role.nameEn})</span>
@@ -193,7 +193,7 @@ const PermissionGroupManagementUI = ({
                 <div className="mg-main-content">
                     {!selectedRole ? (
                         <div className="mg-empty-state">
-                            <i className="bi bi-info-circle mg-empty-icon"></i>
+                            <i className="bi bi-info-circle mg-empty-icon" />
                             <p>역할을 선택하여 권한을 설정하세요.</p>
                         </div>
                     ) : loading ? (
@@ -208,7 +208,7 @@ const PermissionGroupManagementUI = ({
                             </div>
                             {permissionGroups.length === 0 ? (
                                 <div className="mg-empty-state">
-                                    <i className="bi bi-folder-x mg-empty-icon"></i>
+                                    <i className="bi bi-folder-x mg-empty-icon" />
                                     <p>권한 그룹이 없습니다.</p>
                                 </div>
                             ) : (

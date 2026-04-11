@@ -58,7 +58,7 @@ const ProfileImageUpload = ({
     e.preventDefault();
     setDragActive(false);
     if (!isEditing) return;
-    const files = e.dataTransfer.files;
+    const { files } = e.dataTransfer;
     if (files.length > 0 && files[0].type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (ev) => {

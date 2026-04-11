@@ -51,7 +51,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const refundAmount = lastAddedPackage.sessions > 0 ? 
     Math.round((lastAddedPackage.price * refundSessions) / lastAddedPackage.sessions) : 0;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!reason.trim()) {

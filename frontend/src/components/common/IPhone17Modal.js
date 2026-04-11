@@ -7,7 +7,7 @@ const VARIANT_TO_SIZE = {
   content: 'auto',
   fullscreen: 'fullscreen',
   'side-sheet': 'auto',
-  alert: 'small',
+  alert: 'small'
 };
 
 const VARIANT_TO_UNIFIED_VARIANT = {
@@ -15,7 +15,7 @@ const VARIANT_TO_UNIFIED_VARIANT = {
   default: 'default',
   content: 'default',
   fullscreen: 'default',
-  'side-sheet': 'default',
+  'side-sheet': 'default'
 };
 
 /**

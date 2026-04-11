@@ -92,7 +92,7 @@ const PaymentWidget = ({ widget, user }) => {
               </div>
               <div className="payment-details">
                 <span className="payment-method">
-                  <i className={`bi bi-${getPaymentMethodIcon(payment.method)}`}></i>
+                  <i className={`bi bi-${getPaymentMethodIcon(payment.method)}`} />
                   {payment.method || '결제 방법'}
                 </span>
                 <span className="payment-date">
@@ -107,11 +107,11 @@ const PaymentWidget = ({ widget, user }) => {
               {config.showActions && (
                 <>
                   <MGButton className="payment-action-btn view" variant="outline" size="small" type="button" title="상세보기">
-                    <i className="bi bi-eye"></i>
+                    <i className="bi bi-eye" />
                   </MGButton>
                   {payment.status === 'completed' && (
                     <MGButton className="payment-action-btn receipt" variant="outline" size="small" type="button" title="영수증">
-                      <i className="bi bi-receipt"></i>
+                      <i className="bi bi-receipt" />
                     </MGButton>
                   )}
                 </>

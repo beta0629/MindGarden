@@ -114,7 +114,7 @@ const ImprovedTaxManagement = () => {
     description: ''
   });
 
-  const loadData = async (options = {}) => {
+  const loadData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -158,7 +158,7 @@ const ImprovedTaxManagement = () => {
     }
   }, [sessionIsLoggedIn, sessionUser?.id, activeTab, selectedPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadTaxOverview = async () => {
+  const loadTaxOverview = async() => {
     try {
       const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
         period: selectedPeriod
@@ -171,7 +171,7 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  const loadTaxCalculations = async () => {
+  const loadTaxCalculations = async() => {
     try {
       const statsRes = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
         period: selectedPeriod
@@ -191,7 +191,7 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  const loadTaxReports = async () => {
+  const loadTaxReports = async() => {
     try {
       console.log('세금 보고서 데이터 로드');
     } catch (err) {
@@ -200,7 +200,7 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  const loadTaxSettings = async () => {
+  const loadTaxSettings = async() => {
     try {
       const response = await StandardizedApi.get(COMMON_CODE_API.BASE, {
         codeGroup: 'TAX_CATEGORY'
@@ -213,7 +213,7 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  const handleCreateTaxItem = async () => {
+  const handleCreateTaxItem = async() => {
     const calculationId = newTaxItem.calculationId ? Number(newTaxItem.calculationId) : null;
     const grossAmount = newTaxItem.grossAmount ? Number(newTaxItem.grossAmount) : null;
     const taxRate = newTaxItem.taxRate ? Number(newTaxItem.taxRate) : null;

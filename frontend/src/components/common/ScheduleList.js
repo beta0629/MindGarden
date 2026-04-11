@@ -58,7 +58,7 @@ const ScheduleList = ({
   const [selectedConsultantId, setSelectedConsultantId] = useState('');
   const [loadingConsultants, setLoadingConsultants] = useState(false);
 
-  const loadFilterOptions = useCallback(async () => {
+  const loadFilterOptions = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=SCHEDULE_FILTER');
@@ -87,7 +87,7 @@ const ScheduleList = ({
     }
   }, []);
 
-  const loadSortOptions = useCallback(async () => {
+  const loadSortOptions = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=SCHEDULE_SORT');
@@ -115,7 +115,7 @@ const ScheduleList = ({
     }
   }, []);
 
-  const loadConsultants = useCallback(async () => {
+  const loadConsultants = useCallback(async() => {
     try {
       setLoadingConsultants(true);
       const response = await apiGet('/api/v1/admin/consultants');
@@ -131,7 +131,7 @@ const ScheduleList = ({
     }
   }, []);
 
-  const loadSchedules = async () => {
+  const loadSchedules = async() => {
     setLoading(true);
     setError(false);
     
@@ -309,7 +309,7 @@ const ScheduleList = ({
     return (
       <div className="schedule-list">
         <div className="schedule-error">
-          <i className="bi bi-exclamation-triangle"></i>
+          <i className="bi bi-exclamation-triangle" />
           <p>{SCHEDULE_ERROR_MESSAGES.LOAD_FAILED}</p>
           <MGButton
             type="button"
@@ -319,7 +319,7 @@ const ScheduleList = ({
             loadingText="불러오는 중..."
             onClick={handleRefresh}
           >
-            <i className="bi bi-arrow-clockwise"></i>
+            <i className="bi bi-arrow-clockwise" />
             다시 시도
           </MGButton>
         </div>
@@ -340,14 +340,14 @@ const ScheduleList = ({
           disabled={loading}
           onClick={handleRefresh}
         >
-          <i className="bi bi-arrow-clockwise"></i>
+          <i className="bi bi-arrow-clockwise" />
           새로고침
         </MGButton>
       </div>
 
       <div className="schedule-filters">
         <div className="schedule-search">
-          <i className="bi bi-search"></i>
+          <i className="bi bi-search" />
           <input
             type="text"
             placeholder="스케줄 검색..."
@@ -415,7 +415,7 @@ const ScheduleList = ({
           <div className="mg-loading">로딩중...</div>
         ) : displaySchedules.length === 0 ? (
           <div className="schedule-empty">
-            <i className="bi bi-calendar-x"></i>
+            <i className="bi bi-calendar-x" />
             <p>표시할 스케줄이 없습니다.</p>
           </div>
         ) : (

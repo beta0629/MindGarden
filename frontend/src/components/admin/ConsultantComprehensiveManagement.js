@@ -414,7 +414,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     useEffect(() => {
         // SessionGuard가 먼저 세션을 체크할 시간을 주기 위해 약간의 지연
-        const initializeData = async () => {
+        const initializeData = async() => {
             // 세션이 준비될 때까지 약간 대기 (SessionGuard가 실행될 시간 확보)
             await new Promise(resolve => setTimeout(resolve, 200));
             
@@ -455,12 +455,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         };
 
         window.addEventListener('forceRefresh', handleForceRefresh);
-        return() => window.removeEventListener('forceRefresh', handleForceRefresh);
+        return () => window.removeEventListener('forceRefresh', handleForceRefresh);
     }, [loadAllData]);
 
     // 공통코드 로드 (상태 옵션)
     useEffect(() => {
-        const loadStatusCodes = async () => {
+        const loadStatusCodes = async() => {
             try {
                 const statusCodes = await getCommonCodes('USER_STATUS');
                 const uniqueStatusCodes = (statusCodes || []).filter((option, index, self) => 
@@ -481,7 +481,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     // 상담사 등급 공통코드 로드 (CONSULTANT_GRADE)
     useEffect(() => {
-        const loadGradeCodes = async () => {
+        const loadGradeCodes = async() => {
             try {
                 const codes = await getCommonCodes('CONSULTANT_GRADE');
                 const list = Array.isArray(codes) ? codes : [];
@@ -646,7 +646,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
         }, []);
     
-    const handleEmailDuplicateCheck = useCallback(async () => {
+    const handleEmailDuplicateCheck = useCallback(async() => {
         const email = formData.email?.trim();
         if (!email) {
             window.dispatchEvent(new CustomEvent('showNotification', {
@@ -710,7 +710,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         });
     }, []);
 
-    const createConsultant = useCallback(async (data) => {
+    const createConsultant = useCallback(async(data) => {
         try {
             // tenantId 확인 및 세션 갱신
             let tenantId = null;
@@ -827,7 +827,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [loadConsultants]);
 
-    const updateConsultant = useCallback(async (id, data, existing) => {
+    const updateConsultant = useCallback(async(id, data, existing) => {
         try {
             const specialization = Array.isArray(data.specialty) && data.specialty.length > 0
                 ? data.specialty.join(',')
@@ -890,7 +890,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [loadConsultants]);
 
-    const deleteConsultant = useCallback(async (id) => {
+    const deleteConsultant = useCallback(async(id) => {
         try {
             const response = await StandardizedApi.delete(`/api/v1/admin/consultants/${id}`);
             if (!response || response.success !== false) {
@@ -914,7 +914,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [loadConsultants]);
 
-    const handlePasswordResetConfirm = useCallback(async (newPassword) => {
+    const handlePasswordResetConfirm = useCallback(async(newPassword) => {
         if (!passwordResetConsultant) return;
 
         try {
@@ -934,12 +934,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
-            showError('비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+            showError(`비밀번호 초기화 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
             throw error;
         }
     }, [passwordResetConsultant]);
 
-    const handleModalSubmit = useCallback(async (e) => {
+    const handleModalSubmit = useCallback(async(e) => {
         e.preventDefault();
         setModalSubmitLoading(true);
         try {
@@ -1770,7 +1770,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 onClick={() => {
                                     if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
                                         new window.daum.Postcode({
-                                            oncomplete: function (data) {
+                                            oncomplete: function(data) {
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     postalCode: data.zonecode || '',
@@ -2035,7 +2035,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             className="mg-v2-button mg-v2-button-danger"
                             loading={deleteConfirmLoading}
                             loadingText="삭제 중..."
-                            onClick={async () => {
+                            onClick={async() => {
                                 if (!selectedConsultant) return;
                                 setDeleteConfirmLoading(true);
                                 try {

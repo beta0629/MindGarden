@@ -207,7 +207,7 @@ const Chart = ({
     return (
       <div className="chart-container chart-error" data-height={height}>
         <div className="chart-error-content">
-          <i className="bi bi-exclamation-triangle chart-error-icon"></i>
+          <i className="bi bi-exclamation-triangle chart-error-icon" />
           <p className="chart-error-text">차트를 불러올 수 없습니다</p>
           <small className="chart-error-detail">
             {typeof error === 'string' ? error : (error?.message ?? JSON.stringify(error))}
@@ -227,7 +227,7 @@ const Chart = ({
     return (
       <div className="chart-container chart-empty" data-height={height}>
         <div className="chart-empty-content">
-          <i className="bi bi-graph-up chart-empty-icon"></i>
+          <i className="bi bi-graph-up chart-empty-icon" />
           <p className="chart-empty-text">표시할 데이터가 없습니다</p>
         </div>
       </div>

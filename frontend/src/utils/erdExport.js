@@ -21,7 +21,7 @@
 /**
  * @param {Object} options - 옵션 (width, height, scale)
  */
-export const exportSvgToPng = async (svg, filename = 'erd-diagram', options = {}) => {
+export const exportSvgToPng = async(svg, filename = 'erd-diagram', options = {}) => {
   try {
     const { width, height, scale = 2 } = options;
     
@@ -115,7 +115,7 @@ export const exportSvgToSvg = (svg, filename = 'erd-diagram') => {
 
     // SVG 헤더 추가 (필요한 경우)
     if (!svgData.includes('<?xml')) {
-      svgData = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgData;
+      svgData = `<?xml version="1.0" encoding="UTF-8"?>\n${svgData}`;
     }
 
     // Blob 생성
@@ -145,7 +145,7 @@ export const exportSvgToSvg = (svg, filename = 'erd-diagram') => {
 /**
  * @param {Object} options - 옵션
  */
-export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', options = {}) => {
+export const exportMermaidToPng = async(mermaidCode, filename = 'erd-diagram', options = {}) => {
   try {
     // Mermaid를 렌더링하여 SVG 가져오기 (선택 의존성)
     // eslint-disable-next-line import/no-unresolved -- 런타임 동적 로드
@@ -172,7 +172,7 @@ export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', 
 /**
  * @param {string} filename - 다운로드할 파일명
  */
-export const exportMermaidToSvg = async (mermaidCode, filename = 'erd-diagram') => {
+export const exportMermaidToSvg = async(mermaidCode, filename = 'erd-diagram') => {
   try {
     // Mermaid를 렌더링하여 SVG 가져오기 (선택 의존성)
     // eslint-disable-next-line import/no-unresolved -- 런타임 동적 로드

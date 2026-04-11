@@ -62,7 +62,7 @@ const PrivacyConsentModal = ({
     }
 
     let cancelled = false;
-    (async () => {
+    (async() => {
       try {
         const tenantData = await StandardizedApi.get('/api/v1/auth/tenant/by-subdomain', { subdomain });
         if (cancelled) {

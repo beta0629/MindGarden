@@ -99,7 +99,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               {displayName}님, 오늘도 좋은 하루 되세요!
             </p>
             <div className="welcome-time">
-              <i className="bi bi-clock"></i>
+              <i className="bi bi-clock" />
               <span>{currentTime}</span>
             </div>
           </div>
@@ -111,7 +111,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
         <div className="welcome-info-cards">
           <div className="welcome-info-card today-consultation-card">
             <div className="info-icon info-icon--consultation">
-              <i className="bi bi-calendar-check"></i>
+              <i className="bi bi-calendar-check" />
             </div>
             <div className="info-content">
               <h3 className="info-title">오늘의 상담</h3>
@@ -161,7 +161,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
           {/* 오늘의 상담 - 큰 카드 */}
           <div className="welcome-info-card today-consultation-card">
             <div className="info-icon info-icon--consultation">
-              <i className="bi bi-calendar-check"></i>
+              <i className="bi bi-calendar-check" />
             </div>
             <div className="info-content">
               <h3 className="info-title">오늘의 상담</h3>
@@ -237,7 +237,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               onClick={() => handleCardClick('session-progress')}
             >
               <div className="info-icon info-icon--progress">
-                <i className="bi bi-graph-up-arrow"></i>
+                <i className="bi bi-graph-up-arrow" />
               </div>
               <div className="info-content">
                 <h3 className="info-title">나의 상담 진행률</h3>
@@ -246,7 +246,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 </p>
                 <div className="info-action">
                   <span className="info-action-text">자세히 보기</span>
-                  <i className="bi bi-arrow-right"></i>
+                  <i className="bi bi-arrow-right" />
                 </div>
               </div>
             </div>
@@ -258,14 +258,14 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
             onClick={() => handleCardClick('mindfulness-guide')}
           >
             <div className="info-icon info-icon--mindfulness">
-              <i className="bi bi-heart-pulse"></i>
+              <i className="bi bi-heart-pulse" />
             </div>
             <div className="info-content">
               <h3 className="info-title">마음건강 가이드</h3>
               <p className="info-value">호흡법과 명상으로 마음을 돌봐요</p>
               <div className="info-action">
                 <span className="info-action-text">가이드 보기</span>
-                <i className="bi bi-arrow-right"></i>
+                <i className="bi bi-arrow-right" />
               </div>
             </div>
           </div>

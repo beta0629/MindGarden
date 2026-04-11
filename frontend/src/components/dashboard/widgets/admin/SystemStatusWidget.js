@@ -318,7 +318,7 @@ const SystemStatusWidget = ({ widget, user }) => {
               <div 
                 className="metric-bar-fill cpu"
                 style={{ width: `${displayData.systemMetrics.cpu}%` }}
-              ></div>
+               />
             </div>
             <span className="metric-value">{formatMetric(displayData.systemMetrics.cpu, 'percentage')}</span>
           </div>
@@ -328,7 +328,7 @@ const SystemStatusWidget = ({ widget, user }) => {
               <div 
                 className="metric-bar-fill memory"
                 style={{ width: `${displayData.systemMetrics.memory}%` }}
-              ></div>
+               />
             </div>
             <span className="metric-value">{formatMetric(displayData.systemMetrics.memory, 'percentage')}</span>
           </div>
@@ -338,7 +338,7 @@ const SystemStatusWidget = ({ widget, user }) => {
               <div 
                 className="metric-bar-fill disk"
                 style={{ width: `${displayData.systemMetrics.disk}%` }}
-              ></div>
+               />
             </div>
             <span className="metric-value">{formatMetric(displayData.systemMetrics.disk, 'percentage')}</span>
           </div>

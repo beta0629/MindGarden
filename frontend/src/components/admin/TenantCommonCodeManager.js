@@ -75,7 +75,7 @@ const TenantCommonCodeManager = () => {
 
     // 초기 로드: 코드 그룹 목록 조회
     useEffect(() => {
-        const init = async () => {
+        const init = async() => {
             await loadCodeGroupMetadata();
             loadCodeGroups();
         };
@@ -89,7 +89,7 @@ const TenantCommonCodeManager = () => {
         }
     }, [selectedGroup]);
 
-    const loadParentCategoryOptions = useCallback(async (groupName) => {
+    const loadParentCategoryOptions = useCallback(async(groupName) => {
         const parentGroup = getParentCodeGroupForSubcategory(groupName);
         if (!parentGroup) {
             setParentCategoryOptions([]);
@@ -133,7 +133,7 @@ const TenantCommonCodeManager = () => {
 /**
      * 코드 그룹 목록 로드
      */
-    const loadCodeGroups = async () => {
+    const loadCodeGroups = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -154,7 +154,7 @@ const TenantCommonCodeManager = () => {
 /**
      * 특정 그룹의 코드 목록 로드
      */
-    const loadCodes = async (groupName) => {
+    const loadCodes = async(groupName) => {
         try {
             setLoading(true);
             setError(null);
@@ -229,7 +229,7 @@ const TenantCommonCodeManager = () => {
 /**
      * 폼 제출
      */
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         
         const gn = selectedGroup?.groupName || selectedGroup;
@@ -279,7 +279,7 @@ const TenantCommonCodeManager = () => {
 /**
      * 코드 삭제
      */
-    const handleDeleteCode = async (codeId) => {
+    const handleDeleteCode = async(codeId) => {
         const confirmed = await new Promise((resolve) => {
             notificationManager.confirm('정말 삭제하시겠습니까?', resolve);
         });
@@ -308,7 +308,7 @@ const TenantCommonCodeManager = () => {
 /**
      * 코드 활성화/비활성화 토글
      */
-    const handleToggleActive = async (codeId, isActive) => {
+    const handleToggleActive = async(codeId, isActive) => {
         try {
             setLoading(true);
             setError(null);
@@ -351,7 +351,7 @@ const TenantCommonCodeManager = () => {
                     loadCodes('CONSULTATION_PACKAGE');
                     notificationManager.success('상담 패키지가 생성되었습니다.');
                 } else {
-                    notificationManager.error('생성 실패: ' + response.message);
+                    notificationManager.error(`생성 실패: ${response.message}`);
                 }
             })
             .catch(err => {

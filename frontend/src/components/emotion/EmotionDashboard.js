@@ -36,7 +36,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
     /**
      * 감정 분석 데이터 로드
      */
-    const loadEmotionData = async () => {
+    const loadEmotionData = async() => {
         setIsLoading(true);
         setError(null);
 
@@ -79,7 +79,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
             'CRITICAL': '#dc2626',
             'HIGH': '#ea580c',
             'MEDIUM': 'var(--mg-warning-500)',
-            'LOW': 'var(--mg-success-500)',
+            'LOW': 'var(--mg-success-500)'
         };
         return colors[riskLevel] || '#6b7280';
     };
@@ -88,7 +88,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
         return (
             <div className={EMOTION_CSS.EMOTION_DASHBOARD}>
                 <div className="loading-container">
-                    <div className="spinner"></div>
+                    <div className="spinner" />
                     <p>감정 분석 중...</p>
                 </div>
             </div>
@@ -148,7 +148,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                         <div
                             className="metric-bar-fill anxiety"
                             style={{ width: `${multimodalReport.anxietyIndex * 100}%` }}
-                        ></div>
+                         />
                     </div>
                 </div>
 
@@ -161,7 +161,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                         <div
                             className="metric-bar-fill depression"
                             style={{ width: `${multimodalReport.depressionIndex * 100}%` }}
-                        ></div>
+                         />
                     </div>
                 </div>
 
@@ -174,7 +174,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                         <div
                             className="metric-bar-fill stress"
                             style={{ width: `${multimodalReport.stressIndex * 100}%` }}
-                        ></div>
+                         />
                     </div>
                 </div>
 
@@ -187,7 +187,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                         <div
                             className="metric-bar-fill energy"
                             style={{ width: `${multimodalReport.energyIndex * 100}%` }}
-                        ></div>
+                         />
                     </div>
                 </div>
             </div>

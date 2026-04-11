@@ -17,7 +17,7 @@ export const BILLING_CSS = {
     INFO: 'payment-method-registration__info',
     INFO_ITEM: 'payment-method-registration__info-item',
     CUSTOMER_KEY: 'payment-method-registration__customer-key',
-    FOOTER: 'payment-method-registration__footer',
+    FOOTER: 'payment-method-registration__footer'
   },
 
   BILLING_CALLBACK: {
@@ -31,7 +31,7 @@ export const BILLING_CSS = {
     INFO_ITEM: 'billing-callback__info-item',
     ERROR_DETAILS: 'billing-callback__error-details',
     ERROR_ITEM: 'billing-callback__error-item',
-    ACTIONS: 'billing-callback__actions',
+    ACTIONS: 'billing-callback__actions'
   },
 
   SUBSCRIPTION_MANAGEMENT: {
@@ -60,8 +60,8 @@ export const BILLING_CSS = {
     STATUS: 'subscription-management__status',
     STATUS_ACTIVE: 'subscription-management__status--active',
     STATUS_PENDING_ACTIVATION: 'subscription-management__status--pending_activation',
-    STATUS_CANCELLED: 'subscription-management__status--cancelled',
-  },
+    STATUS_CANCELLED: 'subscription-management__status--cancelled'
+  }
 };
 
 
@@ -70,7 +70,7 @@ export const ICON_SIZES = {
   MEDIUM: 20,
   LARGE: 24,
   XLARGE: 48,
-  XXLARGE: 64,
+  XXLARGE: 64
 };
 
 
@@ -88,24 +88,24 @@ export const SUBSCRIPTION_CONSTANTS = {
     SUSPENDED: 'SUSPENDED',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'CANCELLED',
-    TERMINATED: 'TERMINATED',
+    TERMINATED: 'TERMINATED'
   },
 
   BILLING_CYCLE: {
     MONTHLY: 'MONTHLY',
     QUARTERLY: 'QUARTERLY',
-    YEARLY: 'YEARLY',
+    YEARLY: 'YEARLY'
   },
 
   DEFAULT_BILLING_CYCLE: 'MONTHLY',
-  DEFAULT_AUTO_RENEWAL: true,
+  DEFAULT_AUTO_RENEWAL: true
 };
 
 
 export const COMMON_CODE_GROUPS = {
   SUBSCRIPTION_STATUS: 'SUBSCRIPTION_STATUS',
   BILLING_CYCLE: 'BILLING_CYCLE',
-  PG_PROVIDER: 'PG_PROVIDER',
+  PG_PROVIDER: 'PG_PROVIDER'
 };
 
 
@@ -114,8 +114,8 @@ export const CURRENCY_CONSTANTS = {
   LOCALE: 'ko-KR',
   FORMAT_OPTIONS: {
     style: 'currency',
-    minimumFractionDigits: 0,
-  },
+    minimumFractionDigits: 0
+  }
 };
 
 
@@ -132,7 +132,7 @@ export const BILLING_MESSAGES = {
     CANCEL_BUTTON: '취소',
     ERROR_TENANT_NOT_FOUND: '테넌트 정보를 찾을 수 없습니다.',
     ERROR_CUSTOMER_KEY_GENERATION: '고객 정보를 생성할 수 없습니다.',
-    ERROR_REGISTRATION_FAILED: '결제 수단 등록 중 오류가 발생했습니다.',
+    ERROR_REGISTRATION_FAILED: '결제 수단 등록 중 오류가 발생했습니다.'
   },
 
   CALLBACK: {
@@ -150,7 +150,7 @@ export const BILLING_MESSAGES = {
     CARD_LAST4_FORMAT: '**** **** ****',
     ERROR_CODE_LABEL: '에러 코드',
     GO_TO_DASHBOARD: '대시보드로 이동',
-    RETRY: '다시 시도',
+    RETRY: '다시 시도'
   },
 
   SUBSCRIPTION: {
@@ -174,14 +174,14 @@ export const BILLING_MESSAGES = {
     CARD_EXPIRY_LABEL: '만료',
     CARD_DEFAULT_LABEL: '카드',
     DEFAULT_BADGE_LABEL: '기본',
-    LOADING_TEXT: '구독 정보를 불러오는 중...',
+    LOADING_TEXT: '구독 정보를 불러오는 중...'
   },
 
   SUCCESS: {
     PAYMENT_METHOD_REGISTERED: '결제 수단이 성공적으로 등록되었습니다.',
     SUBSCRIPTION_CREATED: '구독이 생성되었습니다.',
     SUBSCRIPTION_ACTIVATED: '구독이 활성화되었습니다.',
-    SUBSCRIPTION_CANCELLED: '구독이 취소되었습니다.',
+    SUBSCRIPTION_CANCELLED: '구독이 취소되었습니다.'
   },
 
   ERROR: {
@@ -192,8 +192,8 @@ export const BILLING_MESSAGES = {
     ACTIVATE_SUBSCRIPTION: '구독 활성화에 실패했습니다.',
     CANCEL_SUBSCRIPTION: '구독 취소에 실패했습니다.',
     TENANT_NOT_FOUND: '테넌트 정보를 찾을 수 없습니다.',
-    REGISTRATION_FAILED: '결제 수단 등록 처리 중 오류가 발생했습니다.',
-  },
+    REGISTRATION_FAILED: '결제 수단 등록 처리 중 오류가 발생했습니다.'
+  }
 };
 
 
@@ -201,18 +201,18 @@ export const BILLING_API = {
   PAYMENT_METHODS: {
     CREATE: '/api/v1/billing/payment-methods',
     GET: (paymentMethodId) => `/api/v1/billing/payment-methods/${paymentMethodId}`,
-    LIST: (tenantId) => `/api/v1/billing/payment-methods?tenantId=${tenantId}`,
+    LIST: (tenantId) => `/api/v1/billing/payment-methods?tenantId=${tenantId}`
   },
   SUBSCRIPTIONS: {
     CREATE: '/api/v1/billing/subscriptions',
     GET: (subscriptionId) => `/api/v1/billing/subscriptions/${subscriptionId}`,
     LIST: (tenantId) => `/api/v1/billing/subscriptions?tenantId=${tenantId}`,
     ACTIVATE: (subscriptionId) => `/api/v1/billing/subscriptions/${subscriptionId}/activate`,
-    CANCEL: (subscriptionId) => `/api/v1/billing/subscriptions/${subscriptionId}/cancel`,
+    CANCEL: (subscriptionId) => `/api/v1/billing/subscriptions/${subscriptionId}/cancel`
   },
   PRICING_PLANS: {
-    LIST_ACTIVE: '/api/v1/ops/plans/active',
-  },
+    LIST_ACTIVE: '/api/v1/ops/plans/active'
+  }
 };
 
 
@@ -220,7 +220,7 @@ export const BILLING_ROUTES = {
   CALLBACK: '/billing/callback',
   PAYMENT_METHODS: '/billing/payment-methods',
   SUBSCRIPTIONS: '/billing/subscriptions',
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/dashboard'
 };
 
 
@@ -230,14 +230,14 @@ export const CALLBACK_PARAMS = {
   TENANT_ID: 'tenantId',
   AUTH_KEY: 'authKey',
   ERROR_CODE: 'errorCode',
-  ERROR_MESSAGE: 'errorMessage',
+  ERROR_MESSAGE: 'errorMessage'
 };
 
 
 export const CALLBACK_STATUS = {
   SUCCESS: 'success',
   FAIL: 'fail',
-  PROCESSING: 'processing',
+  PROCESSING: 'processing'
 };
 
 
@@ -248,6 +248,6 @@ export const PG_PROVIDER_NAMES = {
   KAKAO: '카카오페이',
   NAVER: '네이버페이',
   PAYPAL: '페이팔',
-  OTHER: '기타',
+  OTHER: '기타'
 };
 

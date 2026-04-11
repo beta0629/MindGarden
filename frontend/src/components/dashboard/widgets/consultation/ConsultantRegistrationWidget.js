@@ -168,7 +168,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
   };
 
   // 폼 제출 처리
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     // 필수 필드 검사
@@ -554,7 +554,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                           onClick={() => {
                             if (window.daum && window.daum.Postcode) {
                               new window.daum.Postcode({
-                                oncomplete: function (data) {
+                                oncomplete: function(data) {
                                   setFormData(prev => ({
                                     ...prev,
                                     postalCode: data.zonecode || '',

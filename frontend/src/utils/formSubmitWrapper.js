@@ -22,7 +22,7 @@ import { sessionManager } from './sessionManager';
  * @returns {Function} - 래핑된 함수
  */
 export const withFormSubmit = (submitFunction) => {
-    return async (...args) => {
+    return async(...args) => {
         // 폼 제출 시작 - 세션 체크 일시 중지
         sessionManager.startFormSubmit();
         

@@ -38,7 +38,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
    * codeDescription(없으면 codeLabel)을 값으로 하는 객체.
    * 키: SALARY_BASE_DATE, SALARY_PAYMENT_DAY, SALARY_CUTOFF_DAY, SALARY_BATCH_CYCLE, SALARY_CALCULATION_METHOD
    */
-  const loadCurrentConfigs = async () => {
+  const loadCurrentConfigs = async() => {
     try {
       setLoading(true);
       setError('');
@@ -65,7 +65,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  const loadConfigOptions = async () => {
+  const loadConfigOptions = async() => {
     try {
       const data = await StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIG_OPTIONS);
       if (data && typeof data === 'object') {
@@ -90,7 +90,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     try {
       setLoading(true);
       setError('');
@@ -100,7 +100,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
         {
           configType: 'SALARY_BASE_DATE',
           configValue: configs.monthlyBaseDay,
-          description: `매월 ${configs.monthlyBaseDay === 'LAST_DAY' ? '말일' : configs.monthlyBaseDay + '일'} 급여 기산일`
+          description: `매월 ${configs.monthlyBaseDay === 'LAST_DAY' ? '말일' : `${configs.monthlyBaseDay}일`} 급여 기산일`
         },
         {
           configType: 'SALARY_PAYMENT_DAY',
@@ -110,7 +110,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
         {
           configType: 'SALARY_CUTOFF_DAY',
           configValue: configs.cutoffDay,
-          description: `매월 ${configs.cutoffDay === 'LAST_DAY' ? '말일' : configs.cutoffDay + '일'} 급여 마감`
+          description: `매월 ${configs.cutoffDay === 'LAST_DAY' ? '말일' : `${configs.cutoffDay}일`} 급여 마감`
         },
         {
           configType: 'SALARY_BATCH_CYCLE',

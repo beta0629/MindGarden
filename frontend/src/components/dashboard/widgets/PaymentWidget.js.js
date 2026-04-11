@@ -52,7 +52,7 @@ const PaymentWidget = ({ widget, user }) => {
     }
   }, [userId]);
   
-  const loadPaymentSessions = async () => {
+  const loadPaymentSessions = async() => {
     try {
       setLoading(true);
       
@@ -138,7 +138,7 @@ const PaymentWidget = ({ widget, user }) => {
     <div className="widget widget-payment">
       <div className="widget-header">
         <div className="widget-title">
-          <i className="bi bi-credit-card"></i>
+          <i className="bi bi-credit-card" />
           {config.title || '결제 세션'}
         </div>
         {config.viewAllUrl && (
@@ -202,7 +202,7 @@ const PaymentWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="widget-empty">
-            <i className="bi bi-credit-card-2-front"></i>
+            <i className="bi bi-credit-card-2-front" />
             <p>{config.emptyMessage || '결제 세션이 없습니다'}</p>
           </div>
         )}

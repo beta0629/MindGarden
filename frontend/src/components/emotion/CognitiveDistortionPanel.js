@@ -27,21 +27,21 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
                     type: '전부-아무것도 사고',
                     keyword: '전부',
                     context: '전부 다 망했어요',
-                    severity: 'HIGH',
+                    severity: 'HIGH'
                 },
                 {
                     type: '파국화',
                     keyword: '최악',
                     context: '최악의 상황이에요',
-                    severity: 'HIGH',
+                    severity: 'HIGH'
                 },
                 {
                     type: '과잉 일반화',
                     keyword: '항상',
                     context: '항상 이렇게 돼요',
-                    severity: 'MEDIUM',
-                },
-            ],
+                    severity: 'MEDIUM'
+                }
+            ]
         });
     }, [emotionId]);
 
@@ -59,7 +59,7 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
         const colors = {
             'HIGH': '#dc2626',
             'MEDIUM': 'var(--mg-warning-500)',
-            'LOW': 'var(--mg-success-500)',
+            'LOW': 'var(--mg-success-500)'
         };
         return colors[severity] || '#6b7280';
     };

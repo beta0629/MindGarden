@@ -33,7 +33,7 @@ export const DataLoading = ({ text = '데이터를 불러오는 중...' }) => (
 const CommonLoading = ({
   text = '로딩 중...',
   size = 'medium',
-  type = 'inline',
+  type = 'inline'
 }) => {
   switch (type) {
     case 'fullscreen':

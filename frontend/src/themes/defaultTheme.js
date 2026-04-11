@@ -18,7 +18,7 @@ export const defaultTheme = {
       main: 'var(--mg-mint-green)',      // Mint Green
       hover: 'var(--mg-olive-green)',     // Olive Green
       active: 'var(--cs-yellow-700)',
-      light: 'var(--mg-soft-mint)',     // Soft Mint
+      light: 'var(--mg-soft-mint)'     // Soft Mint
     },
     
     // Background Colors
@@ -26,7 +26,7 @@ export const defaultTheme = {
       primary: 'var(--mg-white)',   // White
       secondary: 'var(--cs-gray-50)', // Light Gray
       surface: 'var(--mg-white)',
-      overlay: 'var(--mg-overlay)',
+      overlay: 'var(--mg-overlay)'
     },
     
     // Text Colors
@@ -35,7 +35,7 @@ export const defaultTheme = {
       secondary: 'var(--cs-gray-600)', // Medium Gray
       tertiary: 'var(--cs-gray-400)',
       inverse: 'var(--mg-white)',
-      link: 'var(--mg-olive-green)',      // Olive Green
+      link: 'var(--mg-olive-green)'      // Olive Green
     },
     
     // Border Colors
@@ -43,7 +43,7 @@ export const defaultTheme = {
       light: 'var(--cs-gray-200)',
       medium: 'var(--cs-gray-300)',
       dark: 'var(--cs-gray-400)',
-      focus: 'var(--mg-olive-green)',
+      focus: 'var(--mg-olive-green)'
     },
     
     // Status Colors
@@ -58,7 +58,7 @@ export const defaultTheme = {
       errorBg: '#fee2e2',
       info: 'var(--mg-primary-500)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dbeafe -> var(--mg-custom-dbeafe)
-      infoBg: '#dbeafe',
+      infoBg: '#dbeafe'
     },
     
     // Interactive States
@@ -69,7 +69,7 @@ export const defaultTheme = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E5E5E7 -> var(--mg-custom-E5E5E7)
       disabled: '#E5E5E7',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CA3AF -> var(--mg-custom-9CA3AF)
-      disabledText: '#9CA3AF',
+      disabledText: '#9CA3AF'
     },
     
     // Glass Effect
@@ -78,8 +78,8 @@ export const defaultTheme = {
       background: 'rgba(255, 255, 255, 0.6)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.5) -> var(--mg-custom-color)
       border: 'rgba(255, 255, 255, 0.5)',
-      blur: '20px',
-    },
+      blur: '20px'
+    }
   },
   
   spacing: {
@@ -89,14 +89,14 @@ export const defaultTheme = {
     lg: '1.5rem',     // 24px
     xl: '2rem',       // 32px
     xxl: '3rem',      // 48px
-    xxxl: '4rem',     // 64px
+    xxxl: '4rem'     // 64px
   },
   
   typography: {
     fontFamily: {
       base: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       heading: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
     },
     fontSize: {
       xs: '0.75rem',      // 12px
@@ -107,7 +107,7 @@ export const defaultTheme = {
       '2xl': '1.5rem',    // 24px
       '3xl': '2rem',      // 32px
       '4xl': '2.5rem',    // 40px
-      '5xl': '3rem',      // 48px
+      '5xl': '3rem'      // 48px
     },
     fontWeight: {
       light: 300,
@@ -115,13 +115,13 @@ export const defaultTheme = {
       medium: 500,
       semibold: 600,
       bold: 700,
-      extrabold: 800,
+      extrabold: 800
     },
     lineHeight: {
       tight: 1.25,
       normal: 1.5,
-      relaxed: 1.75,
-    },
+      relaxed: 1.75
+    }
   },
   
   borderRadius: {
@@ -131,7 +131,7 @@ export const defaultTheme = {
     lg: '1rem',       // 16px
     xl: '1.5rem',     // 24px
     '2xl': '2rem',    // 32px
-    full: '50%',
+    full: '50%'
   },
   
   shadows: {
@@ -144,13 +144,13 @@ export const defaultTheme = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.25) -> var(--mg-custom-color)
     '2xl': '0 25px 50px rgba(0, 0, 0, 0.25)',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
-    inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
+    inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)'
   },
   
   transitions: {
     fast: '150ms ease-in-out',
     base: '300ms ease-in-out',
-    slow: '500ms ease-in-out',
+    slow: '500ms ease-in-out'
   },
   
   zIndex: {
@@ -160,15 +160,15 @@ export const defaultTheme = {
     fixed: 500,
     modal: 9999,
     popover: 10000,
-    tooltip: 10001,
+    tooltip: 10001
   },
   
   breakpoints: {
     mobile: '768px',
     tablet: '1024px',
     desktop: '1280px',
-    wide: '1536px',
-  },
+    wide: '1536px'
+  }
 };
 
 export default defaultTheme;

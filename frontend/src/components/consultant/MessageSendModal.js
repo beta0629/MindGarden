@@ -35,7 +35,7 @@ const MessageSendModal = ({
 
   // 메시지 유형 코드 로드
   useEffect(() => {
-    const loadMessageTypeCodes = async () => {
+    const loadMessageTypeCodes = async() => {
       try {
         setLoadingCodes(true);
         const response = await apiGet('/api/v1/common-codes?codeGroup=MESSAGE_TYPE');
@@ -108,7 +108,7 @@ const MessageSendModal = ({
     }));
   };
 
-  const handleSend = async () => {
+  const handleSend = async() => {
     if (!formData.title.trim() || !formData.content.trim()) {
       notificationManager.show('제목과 내용을 입력해주세요.', 'error');
       return;

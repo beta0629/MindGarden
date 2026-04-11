@@ -31,7 +31,7 @@ const SearchFilterSection = ({
         <div className="search-filter-section">
             <div className="search-container">
                 <div className="search-input-wrapper">
-                    <i className="bi bi-search search-icon"></i>
+                    <i className="bi bi-search search-icon" />
                     <input
                         type="text"
                         placeholder={placeholder}

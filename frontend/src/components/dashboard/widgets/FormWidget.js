@@ -54,7 +54,7 @@ const FormWidget = ({ widget, user }) => {
   };
 
   // 폼 제출 핸들러
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!submitUrl) {
@@ -69,7 +69,7 @@ const FormWidget = ({ widget, user }) => {
       const response = await fetch(submitUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify(formData)
@@ -194,7 +194,7 @@ const FormWidget = ({ widget, user }) => {
 
         {submitResult && (
           <div className={`form-result ${submitResult.success ? 'form-success' : 'form-error'}`}>
-            <i className={`bi bi-${submitResult.success ? 'check-circle' : 'exclamation-triangle'}`}></i>
+            <i className={`bi bi-${submitResult.success ? 'check-circle' : 'exclamation-triangle'}`} />
             <SafeText>{submitResult.message}</SafeText>
           </div>
         )}

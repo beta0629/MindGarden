@@ -32,7 +32,7 @@ const SecurityMonitoringDashboard = () => {
   });
 
   // 전체 새로고침
-  const handleRefresh = async () => {
+  const handleRefresh = async() => {
     setRefreshing(true);
     
     // 캐시 클리어
@@ -47,7 +47,7 @@ const SecurityMonitoringDashboard = () => {
   };
 
   // 보안 보고서 다운로드
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = async() => {
     try {
       const response = await fetch(WIDGET_CONSTANTS.SECURITY_WIDGET.API_ENDPOINTS.AUDIT_REPORT);
       if (response.ok) {
@@ -71,7 +71,7 @@ const SecurityMonitoringDashboard = () => {
   };
 
   // 보안 요약 데이터 조회
-  const fetchSecuritySummary = async () => {
+  const fetchSecuritySummary = async() => {
     try {
       const response = await fetch(WIDGET_CONSTANTS.SECURITY_WIDGET.API_ENDPOINTS.STATUS);
       if (response.ok) {

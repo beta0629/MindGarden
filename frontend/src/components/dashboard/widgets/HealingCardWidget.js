@@ -69,7 +69,7 @@ const HealingCardWidget = ({ widget, user }) => {
   }
 
   // 새로고침 핸들러 (API 변경)
-  const handleRefresh = async () => {
+  const handleRefresh = async() => {
     const targetRole = RoleUtils.isConsultant(user) ? 'CONSULTANT' : 'CLIENT';
     const category = widget?.config?.category || null;
     

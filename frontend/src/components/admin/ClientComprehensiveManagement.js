@@ -96,7 +96,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         formDataRef.current = formData;
     }, [formData]);
 
-    const loadCommonCodes = useCallback(async () => {
+    const loadCommonCodes = useCallback(async() => {
         if (loadingCodes) return;
         
         setLoadingCodes(true);
@@ -135,7 +135,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [loadingCodes]);
 
-    const loadClients = useCallback(async () => {
+    const loadClients = useCallback(async() => {
         setLoading(true);
         try {
             console.log('🔄 내담자 목록 로딩 시작 (통합 API)...');
@@ -192,7 +192,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
     }, []);
 
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         try {
             const response = await apiGet('/api/v1/admin/consultants');
             console.log('📊 상담사 목록 응답:', response);
@@ -210,7 +210,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
     }, []);
 
-    const loadMappings = useCallback(async () => {
+    const loadMappings = useCallback(async() => {
         try {
             const response = await apiGet('/api/v1/admin/mappings');
             console.log('📊 매칭 정보 응답:', response);
@@ -235,7 +235,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
     }, []);
 
-    const loadConsultations = useCallback(async () => {
+    const loadConsultations = useCallback(async() => {
         try {
             console.log('🔄 상담 이력 로드 시작...');
             const response = await apiGet('/api/v1/admin/consultations');
@@ -386,7 +386,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         setShowPasswordResetModal(true);
     }, []);
 
-    const handlePasswordResetConfirm = useCallback(async (newPassword) => {
+    const handlePasswordResetConfirm = useCallback(async(newPassword) => {
         if (!passwordResetClient) return;
 
         try {
@@ -406,7 +406,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
-            showError('비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+            showError(`비밀번호 초기화 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
             throw error;
         }
     }, [passwordResetClient]);
@@ -688,7 +688,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onClose={handleCloseModal}
                         onSave={(data) => {
                             console.log('🔘 내담자 저장 클릭 (onSave 호출)', { modalType, editingClientId: editingClient?.id, hasData: !!data });
-                            const handleSave = async () => {
+                            const handleSave = async() => {
                                 if (modalType === 'view') return;
                                 // 모달 제출 시점의 최신 폼 데이터(data) 우선 사용. (상담사는 formData 직접 전달과 동일)
                                 const dataToUse = data ?? formDataRef.current ?? formData;
@@ -781,7 +781,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     }
                                 } catch (error) {
                                     console.error('❌ 내담자 처리 실패:', error);
-                                    const errMsg = '내담자 처리 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류');
+                                    const errMsg = `내담자 처리 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`;
                                     showError(errMsg);
                                 }
                             };

@@ -28,7 +28,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     }
   }, [isOpen, clientId]);
 
-  const loadTransferHistory = async () => {
+  const loadTransferHistory = async() => {
     setLoading(true);
     setError('');
     
@@ -100,7 +100,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
         <div className="mg-v2-modal-body">
           {loading ? (
             <div className="transfer-history-loading">
-              <div className="transfer-loading-spinner"></div>
+              <div className="transfer-loading-spinner" />
               <p>이력을 불러오는 중...</p>
             </div>
           ) : error ? (

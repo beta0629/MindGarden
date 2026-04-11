@@ -25,7 +25,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchEnrollments = async () => {
+  const fetchEnrollments = async() => {
     setLoading(true);
     setError(null);
     
@@ -62,7 +62,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     fetchEnrollments();
   }, [branchId, classId, consumerId]);
 
-  const handleCancel = async (enrollmentId) => {
+  const handleCancel = async(enrollmentId) => {
     if (!window.confirm('정말 수강을 취소하시겠습니까?')) {
       return;
     }
@@ -113,7 +113,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
           </MGButton>
         )}
       </div>
-    )}
+    ) }
   ];
 
   return (

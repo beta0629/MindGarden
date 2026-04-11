@@ -83,9 +83,9 @@ const MGHeader = ({
           preventDoubleClick={false}
         >
           <span className={`mg-header__hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
-            <span></span>
-            <span></span>
-            <span></span>
+            <span />
+            <span />
+            <span />
           </span>
         </MGButton>
 
@@ -156,7 +156,7 @@ const MGHeader = ({
                     <span className="mg-header__menu-icon">❓</span>
                     도움말
                   </a>
-                  <div className="mg-header__menu-divider"></div>
+                  <div className="mg-header__menu-divider" />
                   <MGButton
                     type="button"
                     className="mg-header__menu-item mg-header__menu-item--logout"

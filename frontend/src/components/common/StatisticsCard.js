@@ -26,12 +26,12 @@ const StatisticsCard = ({
     >
       <div className="statistics-card-content">
         <div className="statistics-card-icon">
-          <i className={icon}></i>
+          <i className={icon} />
         </div>
         <div className="statistics-card-info">
           <div className="statistics-card-value">
             {loading ? (
-              <div className="loading-spinner"></div>
+              <div className="loading-spinner" />
             ) : error ? (
               <span className="error-text">오류</span>
             ) : (

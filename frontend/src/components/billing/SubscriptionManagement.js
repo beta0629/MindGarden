@@ -23,7 +23,7 @@ import {
   getErrorMessage,
   getSubscriptionStatusCodes,
   getBillingCycleCodes,
-  getCodeLabel,
+  getCodeLabel
 } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -36,7 +36,7 @@ import {
   ICON_SIZES,
   BILLING_MESSAGES,
   SUBSCRIPTION_CONSTANTS,
-  COMMON_CODE_GROUPS,
+  COMMON_CODE_GROUPS
 } from '../../constants/billing';
 import SafeText from '../common/SafeText';
 import './SubscriptionManagement.css';
@@ -72,11 +72,11 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 공통 코드 로드
    */
-  const loadCommonCodes = async () => {
+  const loadCommonCodes = async() => {
     try {
       const [statusCodes, cycleCodes] = await Promise.all([
         getSubscriptionStatusCodes(),
-        getBillingCycleCodes(),
+        getBillingCycleCodes()
       ]);
       setSubscriptionStatusCodes(statusCodes);
       setBillingCycleCodes(cycleCodes);
@@ -88,7 +88,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 구독 목록 로드
    */
-  const loadSubscriptions = async () => {
+  const loadSubscriptions = async() => {
     if (!tenantId) return;
 
     try {
@@ -106,7 +106,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 결제 수단 목록 로드
    */
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethods = async() => {
     if (!tenantId) return;
 
     try {
@@ -120,7 +120,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 요금제 목록 로드
    */
-  const loadPricingPlans = async () => {
+  const loadPricingPlans = async() => {
     try {
       const plans = await getActivePricingPlans();
       setPricingPlans(plans);
@@ -132,7 +132,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 구독 생성
    */
-  const handleCreateSubscription = async (planId, paymentMethodId) => {
+  const handleCreateSubscription = async(planId, paymentMethodId) => {
     if (!tenantId) {
       notificationManager.error(BILLING_MESSAGES.ERROR.TENANT_NOT_FOUND);
       return;
@@ -143,7 +143,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
       await createSubscription({
         tenantId,
         planId,
-        paymentMethodId,
+        paymentMethodId
       });
 
       notificationManager.success(BILLING_MESSAGES.SUCCESS.SUBSCRIPTION_CREATED);
@@ -162,7 +162,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 구독 활성화
    */
-  const handleActivateSubscription = async (subscriptionId) => {
+  const handleActivateSubscription = async(subscriptionId) => {
     try {
       setLoading(true);
       await activateSubscription(subscriptionId);
@@ -180,7 +180,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   /**
    * 구독 취소
    */
-  const handleCancelSubscription = async (subscriptionId) => {
+  const handleCancelSubscription = async(subscriptionId) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM, resolve);
     });
@@ -405,7 +405,7 @@ const SubscriptionStatusBadgeLabel = ({ status, statusCodes }) => {
   const [statusLabel, setStatusLabel] = useState(status || BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
 
   useEffect(() => {
-    const load = async () => {
+    const load = async() => {
       if (!status) {
         setStatusLabel(BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
         return;
@@ -438,7 +438,7 @@ const BillingCycleLabel = ({ cycle, cycleCodes }) => {
   const [cycleLabel, setCycleLabel] = useState(cycle);
 
   useEffect(() => {
-    const loadCycleLabel = async () => {
+    const loadCycleLabel = async() => {
       if (!cycle) {
         setCycleLabel('');
         return;

@@ -46,7 +46,7 @@ jest.mock('./utils/designSystemHelper', () => ({
 import App from './App';
 
 describe('App', () => {
-  test('루트 경로에서 앱이 마운트되고 홈 관련 UI가 보인다', async () => {
+  test('루트 경로에서 앱이 마운트되고 홈 관련 UI가 보인다', async() => {
     const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     render(<App />);

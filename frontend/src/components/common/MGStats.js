@@ -66,9 +66,9 @@ const MGStats = ({
                 className={`mg-stats__sparkline-line mg-stats__sparkline-line--${color}`}
                 points={sparklineData
                   .map((value, index) => {
-                    const x = (index / (sparklineData.length - 1)) * 100
-                    const y = 50 - (value / Math.max(...sparklineData)) * 40
-                    return `${x},${y}`
+                    const x = (index / (sparklineData.length - 1)) * 100;
+                    const y = 50 - (value / Math.max(...sparklineData)) * 40;
+                    return `${x},${y}`;
                   })
                   .join(" ")}
               />

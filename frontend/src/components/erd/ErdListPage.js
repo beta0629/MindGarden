@@ -35,7 +35,7 @@ const ErdListPage = () => {
 /**
    * ERD 목록 로드
    */
-  const loadErds = async () => {
+  const loadErds = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -92,7 +92,7 @@ const ErdListPage = () => {
     return (
       <div className="erd-list-page">
         <div className="erd-loading">
-          <div className="loading-spinner"></div>
+          <div className="loading-spinner" />
           <p>ERD 목록을 불러오는 중...</p>
         </div>
       </div>

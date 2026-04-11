@@ -338,7 +338,7 @@ const isAdminRole = (userRole) => {
 /**
  * @returns {boolean} 관리자 권한 여부
  */
-const checkRoleHasAdminPermission = async (userRole) => {
+const checkRoleHasAdminPermission = async(userRole) => {
   try {
     // 1. 캐시에서 관리자 권한 확인
     const cacheKey = `admin_permission_${userRole}`;
@@ -390,7 +390,7 @@ const checkRoleHasAdminPermission = async (userRole) => {
 /**
  * @returns {Promise<Object>} 역할 정보
  */
-const fetchRoleInfoFromCommonCode = async (userRole) => {
+const fetchRoleInfoFromCommonCode = async(userRole) => {
   // USER_ROLES 공통코드 그룹에서 해당 역할 조회
   const response = await apiGet(`/api/v1/common-codes?codeGroup=USER_ROLES&codeValue=${userRole}`);
   
@@ -413,7 +413,7 @@ const fetchRoleInfoFromCommonCode = async (userRole) => {
 /**
  * @returns {Promise<boolean>} 관리자 권한 여부
  */
-const checkAdminLevelFromCommonCode = async (roleInfo) => {
+const checkAdminLevelFromCommonCode = async(roleInfo) => {
   // extra_data에서 admin_level 확인
   if (roleInfo.extraData && typeof roleInfo.extraData.admin_level === 'number') {
     return roleInfo.extraData.admin_level > 0;
@@ -629,7 +629,7 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
 /**
  * @returns {Promise<string[]>} 허용된 위젯 타입 배열
  */
-export const fetchAllowedWidgetsByBusinessType = async (businessType) => {
+export const fetchAllowedWidgetsByBusinessType = async(businessType) => {
   try {
     const response = await apiGet(`/api/admin/business-types/${businessType}/widgets`);
     if (response && response.success) {
@@ -652,7 +652,7 @@ export const fetchAllowedWidgetsByBusinessType = async (businessType) => {
 /**
  * @returns {Promise<string[]>} 권한 목록
  */
-export const fetchRolePermissions = async (userRole) => {
+export const fetchRolePermissions = async(userRole) => {
   try {
     const response = await apiGet(`/api/admin/roles/${userRole}/permissions`);
     if (response && response.success) {
@@ -674,7 +674,7 @@ export const fetchRolePermissions = async (userRole) => {
 /**
  * @returns {Promise<Object>} 위젯 메타데이터
  */
-export const fetchWidgetMetadata = async (widgetType) => {
+export const fetchWidgetMetadata = async(widgetType) => {
   try {
     const response = await apiGet(`/api/admin/widgets/${widgetType}/metadata`);
     if (response && response.success) {

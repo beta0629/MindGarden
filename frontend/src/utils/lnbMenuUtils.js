@@ -25,7 +25,7 @@ function findFirstAbsoluteMenuPath(menuItem) {
       return trimmed.split('?')[0];
     }
   }
-  const children = menuItem.children;
+  const { children } = menuItem;
   if (!Array.isArray(children)) {
     return null;
   }

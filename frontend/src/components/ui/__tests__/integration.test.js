@@ -35,7 +35,7 @@ describe('UI Components Integration Tests', () => {
     expect(button).toHaveClass('mg-button--with-icon');
   });
 
-  test('Button opens Modal', async () => {
+  test('Button opens Modal', async() => {
     const TestComponent = () => {
       const [isOpen, setIsOpen] = React.useState(false);
 
@@ -74,7 +74,7 @@ describe('UI Components Integration Tests', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  test('All components work together in a simple scenario', async () => {
+  test('All components work together in a simple scenario', async() => {
     const ComplexComponent = () => {
       const [isModalOpen, setIsModalOpen] = React.useState(false);
 

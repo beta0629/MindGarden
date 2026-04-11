@@ -44,7 +44,7 @@ const ConsultantApplicationModal = ({
 /**
      * 자격 요건 상세 정보 조회 (미충족 시)
      */
-    const getRequirementsDetails = useCallback(async () => {
+    const getRequirementsDetails = useCallback(async() => {
         try {
             // 자격 요건 상세 정보를 별도 API로 조회하거나 
             // 프로필 완성도 정보를 활용
@@ -58,7 +58,7 @@ const ConsultantApplicationModal = ({
 /**
      * 상담사 자격 요건 확인
      */
-    const checkEligibility = useCallback(async () => {
+    const checkEligibility = useCallback(async() => {
         try {
             setLoading(true);
             const response = await apiGet(`/api/user/profile/${userId}/consultant-eligibility`);
@@ -99,7 +99,7 @@ const ConsultantApplicationModal = ({
 /**
      * 상담사 신청 제출
      */
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         
         if (!isEligible) {
@@ -154,7 +154,7 @@ const ConsultantApplicationModal = ({
 
     const modalTitle = (
         <>
-            <i className="bi bi-person-plus me-2" aria-hidden="true"></i>
+            <i className="bi bi-person-plus me-2" aria-hidden="true" />
             상담사 신청
         </>
     );
@@ -172,12 +172,12 @@ const ConsultantApplicationModal = ({
                 >
                     {loading ? (
                         <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
                             신청 중...
                         </>
                     ) : (
                         <>
-                            <i className="bi bi-send me-2" aria-hidden="true"></i>
+                            <i className="bi bi-send me-2" aria-hidden="true" />
                             상담사 신청
                         </>
                     )}
@@ -208,7 +208,7 @@ const ConsultantApplicationModal = ({
             {eligibilityChecked && !isEligible && (
                 <Alert variant="warning" className="mb-4">
                     <Alert.Heading>
-                        <i className="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
+                        <i className="bi bi-exclamation-triangle me-2" aria-hidden="true" />
                         상담사 자격 요건 미충족
                     </Alert.Heading>
                     <p>상담사 신청을 위해서는 다음 요건을 충족해야 합니다:</p>
@@ -228,7 +228,7 @@ const ConsultantApplicationModal = ({
             {eligibilityChecked && isEligible && (
                 <Alert variant="success" className="mb-4">
                     <Alert.Heading>
-                        <i className="bi bi-check-circle me-2" aria-hidden="true"></i>
+                        <i className="bi bi-check-circle me-2" aria-hidden="true" />
                         상담사 자격 요건 충족
                     </Alert.Heading>
                     <p className="mb-0">상담사 신청이 가능합니다. 아래 정보를 입력해주세요.</p>

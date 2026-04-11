@@ -66,7 +66,7 @@ const SessionManagement = () => {
     const [confirmingPayment, setConfirmingPayment] = useState(false);
     const [rejectingRequest, setRejectingRequest] = useState(false);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async() => {
         try {
             setLoading(true);
             
@@ -114,7 +114,7 @@ const SessionManagement = () => {
         }
     }, []);
 
-    const loadMappingStatusCodes = useCallback(async () => {
+    const loadMappingStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
@@ -203,7 +203,7 @@ const SessionManagement = () => {
         return { text, ...config };
     };
 
-    const handlePaymentConfirm = async (requestId) => {
+    const handlePaymentConfirm = async(requestId) => {
         try {
             setConfirmingPayment(true);
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/confirm-payment`, {
@@ -212,7 +212,7 @@ const SessionManagement = () => {
             });
             notificationManager.success('입금이 확인되었습니다. 회기수가 업데이트되었습니다.');
             
-            setTimeout(async () => {
+            setTimeout(async() => {
                 console.log('🔄 입금 확인 후 데이터 새로고침 시작...');
                 await loadData();
                 console.log('✅ 입금 확인 후 데이터 새로고침 완료 - 회기수 업데이트됨');
@@ -226,7 +226,7 @@ const SessionManagement = () => {
         }
     };
 
-    const handleAdminApprove = async (requestId) => {
+    const handleAdminApprove = async(requestId) => {
         try {
             setConfirmingPayment(true); // 재사용
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/approve`, {
@@ -243,7 +243,7 @@ const SessionManagement = () => {
         }
     };
 
-    const handleRejectRequest = async (requestId) => {
+    const handleRejectRequest = async(requestId) => {
         try {
             setRejectingRequest(true);
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/reject`, {
@@ -260,12 +260,12 @@ const SessionManagement = () => {
         }
     };
 
-    const handleSessionExtensionRequested = async (mappingId) => {
+    const handleSessionExtensionRequested = async(mappingId) => {
         console.log('✅ 회기 추가 요청 완료:', mappingId);
         setShowSessionExtensionModal(false);
         setSelectedMapping(null);
         
-        setTimeout(async () => {
+        setTimeout(async() => {
             console.log('🔄 회기 추가 후 데이터 새로고침 시작...');
             await loadData();
             console.log('✅ 회기 추가 후 데이터 새로고침 완료');

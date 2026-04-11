@@ -33,7 +33,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
     /**
      * 보고서 저장
      */
-    const handleSave = async () => {
+    const handleSave = async() => {
         setIsSaving(true);
         setSaveMessage('');
 
@@ -65,7 +65,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
     /**
      * 보고서 승인
      */
-    const handleApprove = async () => {
+    const handleApprove = async() => {
         const confirmed = window.confirm(
             '이 SOAP 노트를 최종 승인하시겠습니까?\n승인 후에는 공식 상담 기록으로 저장됩니다.'
         );

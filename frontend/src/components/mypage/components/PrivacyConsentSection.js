@@ -26,7 +26,7 @@ const PrivacyConsentSection = () => {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [dataRequestOpen, setDataRequestOpen] = useState(false);
 
-  const loadConsentStatus = useCallback(async () => {
+  const loadConsentStatus = useCallback(async() => {
     try {
       setLoading(true);
       const result = await StandardizedApi.get('/api/privacy-consent/status');
@@ -42,7 +42,7 @@ const PrivacyConsentSection = () => {
     }
   }, []);
 
-  const updateConsentStatus = async (consentData) => {
+  const updateConsentStatus = async(consentData) => {
     try {
       setUpdating(true);
       const result = await StandardizedApi.post('/api/privacy-consent/update', consentData);

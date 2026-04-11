@@ -4,9 +4,9 @@
  * 사용자가 테마를 선택하고 미리보기할 수 있는 UI 컴포넌트
  */
 
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 
-import {useTheme} from '../../../contexts/ThemeContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import MGButton from '../../common/MGButton';
 import Card from '../Card/Card';
 import CardContent from '../Card/CardContent';
@@ -14,15 +14,15 @@ import Icon from '../Icon/Icon';
 import SafeText from '../../common/SafeText';
 import './ThemeSelector.css';
 
-const ThemeSelector = ({onThemeChange, 
+const ThemeSelector = ({ onThemeChange, 
   showPreview = true, 
   showCustomColors = false,
-  className = ''}) => {const {currentTheme, 
+  className = '' }) => {const { currentTheme, 
     availableThemes, 
     changeTheme, 
     previewTheme, 
     cancelPreview,
-    isLoading} = useTheme();
+    isLoading } = useTheme();
 
   const [selectedTheme, setSelectedTheme] = useState(currentTheme.type);
   const [previewedTheme, setPreviewedTheme] = useState(null);
@@ -49,7 +49,7 @@ const ThemeSelector = ({onThemeChange,
     setSelectedTheme(currentTheme.type);};
 
   // 커스텀 색상 변경 핸들러
-  const handleCustomColorChange = (colorKey, value) => {const newCustomColors = {...customColors, [colorKey]: value};
+  const handleCustomColorChange = (colorKey, value) => {const newCustomColors = { ...customColors, [colorKey]: value };
     setCustomColors(newCustomColors);
     
     if (showPreview && selectedTheme) {const preview = previewTheme(selectedTheme, newCustomColors);
@@ -72,7 +72,7 @@ const ThemeSelector = ({onThemeChange,
               >
                 <div 
                   className="mg-v2-v2-v2-theme-preview"
-                  style={{'--theme-preview': theme.preview}}
+                  style={{ '--theme-preview': theme.preview }}
                 />
                 <div className="mg-v2-v2-v2-theme-info">
                   <SafeText tag="h4" className="mg-v2-v2-v2-theme-name">{theme.name}</SafeText>
@@ -125,7 +125,7 @@ const ThemeSelector = ({onThemeChange,
             <div className="mg-v2-v2-v2-theme-info">
               <div 
                 className="mg-v2-v2-v2-theme-preview mg-v2-v2-v2-theme-preview--current"
-                style={{'--theme-primary': currentTheme.colors.primary}}
+                style={{ '--theme-primary': currentTheme.colors.primary }}
               />
               <div>
                 <SafeText tag="p" className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-font-medium">{currentTheme.name}</SafeText>

@@ -22,7 +22,7 @@ import notificationManager from './notification';
 export const COMMON_CODE_GROUPS = {
   SUBSCRIPTION_STATUS: 'SUBSCRIPTION_STATUS',
   BILLING_CYCLE: 'BILLING_CYCLE',
-  PG_PROVIDER: 'PG_PROVIDER',
+  PG_PROVIDER: 'PG_PROVIDER'
 };
 
 // ============================================
@@ -63,7 +63,7 @@ export function generateCallbackUrl(status, customerKey, tenantId) {
   const params = new URLSearchParams({
     status,
     customerKey,
-    tenantId,
+    tenantId
   });
   return `${baseUrl}/billing/callback?${params.toString()}`;
 }
@@ -168,7 +168,7 @@ export async function createSubscription(params) {
       planId: params.planId,
       paymentMethodId: params.paymentMethodId,
       billingCycle: params.billingCycle || SUBSCRIPTION_CONSTANTS.DEFAULT_BILLING_CYCLE,
-      autoRenewal: params.autoRenewal !== undefined ? params.autoRenewal : SUBSCRIPTION_CONSTANTS.DEFAULT_AUTO_RENEWAL,
+      autoRenewal: params.autoRenewal !== undefined ? params.autoRenewal : SUBSCRIPTION_CONSTANTS.DEFAULT_AUTO_RENEWAL
     };
 
     const response = await apiPost(BILLING_API.SUBSCRIPTIONS.CREATE, requestData);
@@ -332,7 +332,7 @@ export async function getCodeLabel(codeGroup, codeValue) {
 export function formatCurrency(amount, currency = CURRENCY_CONSTANTS.DEFAULT) {
   return new Intl.NumberFormat(CURRENCY_CONSTANTS.LOCALE, {
     ...CURRENCY_CONSTANTS.FORMAT_OPTIONS,
-    currency,
+    currency
   }).format(amount);
 }
 

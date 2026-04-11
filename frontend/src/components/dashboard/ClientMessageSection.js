@@ -79,7 +79,7 @@ const ClientMessageSection = ({ userId }) => {
   };
 
   // 메시지 목록 로드 (일반 메시지 + 시스템 공지)
-  const loadMessages = async () => {
+  const loadMessages = async() => {
     try {
       setLoading(true);
       
@@ -164,7 +164,7 @@ const ClientMessageSection = ({ userId }) => {
   };
 
   // 메시지 상세 보기
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     try {
       if (message.messageSource === 'SYSTEM') {
         // 시스템 공지 상세 조회
@@ -197,7 +197,7 @@ const ClientMessageSection = ({ userId }) => {
   };
 
   // 모달 닫기
-  const closeModal = async () => {
+  const closeModal = async() => {
     setSelectedMessage(null);
     await loadMessages();
     
@@ -289,7 +289,7 @@ const ClientMessageSection = ({ userId }) => {
                       {message.title}
                     </h4>
                     {!message.isRead && (
-                      <span className="client-message-item__unread-dot"></span>
+                      <span className="client-message-item__unread-dot" />
                     )}
                   </div>
                   <div className="client-message-item__preview">

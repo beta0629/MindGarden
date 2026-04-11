@@ -12,7 +12,7 @@ import { RoleUtils } from '../constants/roles';
 /**
  * @param {Function} setUserPermissions - 권한 목록을 설정할 상태 함수 (선택사항)
  */
-export const fetchUserPermissions = async (setUserPermissions = null) => {
+export const fetchUserPermissions = async(setUserPermissions = null) => {
     try {
         console.log('🔍 사용자 권한 목록 조회 중...');
         const response = await apiGet('/api/v1/permissions/my-permissions');

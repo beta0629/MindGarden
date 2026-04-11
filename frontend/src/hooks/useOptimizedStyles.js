@@ -53,13 +53,13 @@ export const useThemeStyles = (theme = 'light') => {
       light: {
         backgroundColor: COMMON_COLORS.BG_PRIMARY,
         color: COMMON_COLORS.TEXT_PRIMARY,
-        borderColor: COMMON_COLORS.BORDER_PRIMARY,
+        borderColor: COMMON_COLORS.BORDER_PRIMARY
       },
       dark: {
         backgroundColor: COMMON_COLORS.BG_DARK,
         color: COMMON_COLORS.TEXT_LIGHT,
-        borderColor: COMMON_COLORS.BORDER_DARK,
-      },
+        borderColor: COMMON_COLORS.BORDER_DARK
+      }
     };
     
     return baseStyles[theme] || baseStyles.light;
@@ -94,7 +94,7 @@ export const useResponsiveStyles = (breakpointStyles) => {
       md: 768,
       lg: 992,
       xl: 1200,
-      xxl: 1400,
+      xxl: 1400
     };
     
     let activeBreakpoint = 'xs';
@@ -123,7 +123,7 @@ export const useAnimationStyles = (isAnimating = false, animationConfig = {}) =>
   const defaultConfig = {
     duration: COMMON_ANIMATIONS.DURATION_NORMAL,
     easing: COMMON_ANIMATIONS.EASE_IN_OUT,
-    delay: '0s',
+    delay: '0s'
   };
   
   const config = { ...defaultConfig, ...animationConfig };
@@ -131,24 +131,24 @@ export const useAnimationStyles = (isAnimating = false, animationConfig = {}) =>
   const animationStyles = useMemo(() => {
     const baseStyles = {
       transition: `all ${config.duration} ${config.easing}`,
-      transitionDelay: config.delay,
+      transitionDelay: config.delay
     };
     
     const stateStyles = {
       idle: {},
       enter: {
         opacity: 1,
-        transform: 'translateY(0)',
+        transform: 'translateY(0)'
       },
       exit: {
         opacity: 0,
-        transform: 'translateY(-10px)',
-      },
+        transform: 'translateY(-10px)'
+      }
     };
     
     return {
       ...baseStyles,
-      ...stateStyles[animationState],
+      ...stateStyles[animationState]
     };
   }, [animationState, config]);
   
@@ -177,7 +177,7 @@ export const useAnimationStyles = (isAnimating = false, animationConfig = {}) =>
     state: animationState,
     start: startAnimation,
     stop: stopAnimation,
-    reset: resetAnimation,
+    reset: resetAnimation
   };
 };
 
@@ -269,13 +269,13 @@ export const useHoverStyles = (normalStyles = {}, hoverStyles = {}) => {
   
   const hoverProps = {
     onMouseEnter: () => setIsHovered(true),
-    onMouseLeave: () => setIsHovered(false),
+    onMouseLeave: () => setIsHovered(false)
   };
   
   return {
     styles: currentStyles,
     isHovered,
-    hoverProps,
+    hoverProps
   };
 };
 
@@ -297,12 +297,12 @@ export const useFocusStyles = (normalStyles = {}, focusStyles = {}) => {
   
   const focusProps = {
     onFocus: () => setIsFocused(true),
-    onBlur: () => setIsFocused(false),
+    onBlur: () => setIsFocused(false)
   };
   
   return {
     styles: currentStyles,
     isFocused,
-    focusProps,
+    focusProps
   };
 };

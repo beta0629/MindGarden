@@ -65,7 +65,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
         );
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async() => {
         if (heartScore === 0) {
             notificationManager.show('하트 점수를 선택해주세요.', 'info');
             return;

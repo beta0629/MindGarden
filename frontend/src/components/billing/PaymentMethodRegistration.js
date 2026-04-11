@@ -44,7 +44,7 @@ const PaymentMethodRegistration = ({
   onSuccess,
   onCancel,
   tenantId: propTenantId,
-  pgProvider = PG_PROVIDER.TOSS,
+  pgProvider = PG_PROVIDER.TOSS
 }) => {
   const { user, sessionInfo } = useSession();
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ const PaymentMethodRegistration = ({
 
   // PG 제공자 이름 로드
   useEffect(() => {
-    const loadPgProviderName = async () => {
+    const loadPgProviderName = async() => {
       try {
         const label = await getCodeLabel(COMMON_CODE_GROUPS.PG_PROVIDER, pgProvider);
         setPgProviderName(label);
@@ -75,7 +75,7 @@ const PaymentMethodRegistration = ({
         const defaultNames = {
           [PG_PROVIDER.TOSS]: '토스페이먼츠',
           [PG_PROVIDER.STRIPE]: '스트라이프',
-          [PG_PROVIDER.IAMPORT]: '아임포트',
+          [PG_PROVIDER.IAMPORT]: '아임포트'
         };
         setPgProviderName(defaultNames[pgProvider] || pgProvider);
       }
@@ -89,7 +89,7 @@ const PaymentMethodRegistration = ({
 /**
    * 자동결제 등록 시작
    */
-  const handleRegister = async () => {
+  const handleRegister = async() => {
     if (!tenantId) {
       setError(BILLING_MESSAGES.REGISTRATION.ERROR_TENANT_NOT_FOUND);
       return;
@@ -115,7 +115,7 @@ const PaymentMethodRegistration = ({
           customerName: user?.name || user?.userId || '',
           customerEmail: user?.email || '',
           successUrl,
-          failUrl,
+          failUrl
         },
         pgProvider
       );

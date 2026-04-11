@@ -61,7 +61,7 @@ const ClientModal = ({
       setSummaryLoading(true);
       setClientSummary(null);
 
-      (async () => {
+      (async() => {
         try {
           const data = await StandardizedApi.get(`${API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS}/${c.id}`);
           if (cancelled) {
@@ -168,7 +168,7 @@ const ClientModal = ({
         }
     };
     
-    const handleEmailDuplicateCheck = async () => {
+    const handleEmailDuplicateCheck = async() => {
         const email = formData.email?.trim();
         if (!email) {
             window.dispatchEvent(new CustomEvent('showNotification', {
@@ -504,7 +504,7 @@ const ClientModal = ({
                             onClick={() => {
                                 if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
                                     new window.daum.Postcode({
-                                        oncomplete: function (data) {
+                                        oncomplete: function(data) {
                                             setFormData(prev => ({
                                                 ...prev,
                                                 postalCode: data.zonecode || '',

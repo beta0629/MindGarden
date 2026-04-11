@@ -58,7 +58,7 @@ const SalaryExportModal = ({
   }, [isOpen, user?.email]);
 
   // 출력 실행
-  const handleExport = async () => {
+  const handleExport = async() => {
     if (!salaryData) {
       setError('급여 데이터가 없습니다.');
       return;

@@ -46,7 +46,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
   }, [tenants]);
 
   // 테넌트 선택 완료 핸들러
-  const handleTenantSelected = async (tenantId) => {
+  const handleTenantSelected = async(tenantId) => {
     setIsLoading(true);
     try {
       console.log('🔄 테넌트 전환 요청:', tenantId);
@@ -113,7 +113,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
     }
   };
 
-  const handleSelect = async (tenantId) => {
+  const handleSelect = async(tenantId) => {
     setSelectedTenantId(tenantId);
     
     // onSelect가 있으면 사용, 없으면 직접 처리
@@ -132,7 +132,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
     }
   };
 
-  const handleCancel = async () => {
+  const handleCancel = async() => {
     if (onCancel) {
       await onCancel();
     } else {

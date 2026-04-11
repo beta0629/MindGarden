@@ -88,7 +88,7 @@ const DiscountPaymentConfirmationModal = ({
     }
   }, [isOpen, mappings]);
 
-  const loadAvailableDiscounts = async () => {
+  const loadAvailableDiscounts = async() => {
     if (selectedMappings.length === 0) return;
     
     try {
@@ -106,7 +106,7 @@ const DiscountPaymentConfirmationModal = ({
     }
   };
 
-  const applyDiscount = async () => {
+  const applyDiscount = async() => {
     if (!paymentData.discountCode.trim()) {
       notificationManager.warning('할인 코드를 입력해주세요.');
       return;
@@ -172,7 +172,7 @@ const DiscountPaymentConfirmationModal = ({
     notificationManager.info('할인이 제거되었습니다.');
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async() => {
     if (selectedMappings.length === 0) {
       notificationManager.warning('선택된 매핑이 없습니다.');
       return;

@@ -59,7 +59,7 @@ const MGButton = ({
   const isNativeFormSubmitOnly = !onClick && (type === 'submit' || hasFormAttr);
   const effectivePreventDoubleClick = isNativeFormSubmitOnly ? false : preventDoubleClick;
 
-  const handleClick = useCallback(async (e) => {
+  const handleClick = useCallback(async(e) => {
     // 이미 처리 중이거나 비활성화된 경우 무시
     if (isProcessing || disabled || loading) {
       e.preventDefault();

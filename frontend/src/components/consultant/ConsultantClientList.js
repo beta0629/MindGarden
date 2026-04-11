@@ -39,7 +39,7 @@ const ConsultantClientList = () => {
     { value: 'SUSPENDED', label: '일시정지', icon: PauseCircle, activeColor: 'var(--mg-error-600)' }
   ];
 
-  const loadClients = useCallback(async () => {
+  const loadClients = useCallback(async() => {
     try {
       setLoading(true);
       setError(null);
@@ -187,7 +187,7 @@ const ConsultantClientList = () => {
     navigate('/consultant/clients', { replace: true });
   };
 
-  const handleSaveClient = async (updatedData) => {
+  const handleSaveClient = async(updatedData) => {
     try {
       console.log('💾 내담자 정보 저장:', updatedData);
       
@@ -204,11 +204,11 @@ const ConsultantClientList = () => {
         handleCloseModal();
       } else {
         console.error('❌ 내담자 정보 저장 실패:', response?.message || '알 수 없는 오류');
-        notificationManager.show('내담자 정보 저장에 실패했습니다: ' + (response?.message || '알 수 없는 오류'), 'error');
+        notificationManager.show(`내담자 정보 저장에 실패했습니다: ${response?.message || '알 수 없는 오류'}`, 'error');
       }
     } catch (err) {
       console.error('❌ 내담자 정보 저장 실패:', err);
-      notificationManager.show('내담자 정보 저장 중 오류가 발생했습니다: ' + err.message, 'error');
+      notificationManager.show(`내담자 정보 저장 중 오류가 발생했습니다: ${err.message}`, 'error');
     }
   };
 

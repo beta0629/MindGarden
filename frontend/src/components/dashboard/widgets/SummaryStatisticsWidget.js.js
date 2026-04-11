@@ -78,7 +78,7 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
           return (
             <div key={index} className="summary-panel-item">
               <div className="summary-item-icon">
-                {stat.icon && <i className={`bi ${stat.icon}`}></i>}
+                {stat.icon && <i className={`bi ${stat.icon}`} />}
               </div>
               <div className="summary-item-info">
                 <div className="summary-item-label">{stat.label}</div>

@@ -28,7 +28,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
         loadExistingReports();
     }, [consultationRecordId]);
 
-    const loadExistingReports = async () => {
+    const loadExistingReports = async() => {
         setIsLoading(true);
 
         try {
@@ -54,7 +54,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     /**
      * 진단 보고서 생성
      */
-    const generateReport = async () => {
+    const generateReport = async() => {
         setIsGenerating(true);
         setError(null);
 
@@ -80,7 +80,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     /**
      * 보고서 저장
      */
-    const handleSave = async () => {
+    const handleSave = async() => {
         setIsSaving(true);
         setSaveMessage('');
 
@@ -107,7 +107,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     /**
      * 보고서 승인
      */
-    const handleApprove = async () => {
+    const handleApprove = async() => {
         const confirmed = window.confirm(
             '이 진단 보고서를 최종 승인하시겠습니까?\n승인 후에는 공식 문서로 저장됩니다.'
         );
@@ -145,7 +145,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     if (isLoading) {
         return (
             <div className="diagnostic-report-editor loading">
-                <div className="spinner"></div>
+                <div className="spinner" />
                 <p>보고서를 불러오는 중...</p>
             </div>
         );
@@ -234,7 +234,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         <textarea
                             className="report-textarea"
                             value={report.diagnosisSummary || ''}
-                            onChange={(e) => setReport({...report, diagnosisSummary: e.target.value})}
+                            onChange={(e) => setReport({ ...report, diagnosisSummary: e.target.value })}
                             placeholder="진단 요약을 입력하세요..."
                             rows="6"
                             disabled={report.humanReviewed}
@@ -250,7 +250,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         <textarea
                             className="report-textarea"
                             value={report.diagnosticImpressions || ''}
-                            onChange={(e) => setReport({...report, diagnosticImpressions: e.target.value})}
+                            onChange={(e) => setReport({ ...report, diagnosticImpressions: e.target.value })}
                             placeholder="진단적 인상을 입력하세요..."
                             rows="8"
                             disabled={report.humanReviewed}
@@ -266,7 +266,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         <textarea
                             className="report-textarea"
                             value={report.treatmentRecommendations || ''}
-                            onChange={(e) => setReport({...report, treatmentRecommendations: e.target.value})}
+                            onChange={(e) => setReport({ ...report, treatmentRecommendations: e.target.value })}
                             placeholder="치료 권고사항을 입력하세요..."
                             rows="7"
                             disabled={report.humanReviewed}

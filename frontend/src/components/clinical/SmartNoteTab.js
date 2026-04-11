@@ -30,7 +30,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
     useEffect(() => {
         if (!audioFileId) return;
 
-        const pollInterval = setInterval(async () => {
+        const pollInterval = setInterval(async() => {
             try {
                 const data = await apiGet(CLINICAL_API.TRANSCRIPTION_STATUS(audioFileId));
 
@@ -69,7 +69,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
     /**
      * SOAP 노트 생성
      */
-    const generateSOAPNote = async () => {
+    const generateSOAPNote = async() => {
         setIsGenerating(true);
         setError(null);
 
@@ -96,7 +96,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
     /**
      * DAP 노트 생성
      */
-    const generateDAPNote = async () => {
+    const generateDAPNote = async() => {
         setIsGenerating(true);
         setError(null);
 
@@ -123,7 +123,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
     /**
      * 위험 징후 분석
      */
-    const analyzeRisks = async () => {
+    const analyzeRisks = async() => {
         try {
             const data = await apiPost(CLINICAL_API.ANALYZE_RISKS(consultationRecordId));
 
@@ -167,7 +167,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
 
                     {transcriptionStatus === 'PROCESSING' && (
                         <div className="loading-transcription">
-                            <div className="spinner"></div>
+                            <div className="spinner" />
                             <p>음성을 텍스트로 변환하는 중입니다...</p>
                         </div>
                     )}
@@ -282,7 +282,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 <label><strong>D - Data (데이터)</strong></label>
                                 <textarea
                                     value={dapNote.data || ''}
-                                    onChange={(e) => setDapNote({...dapNote, data: e.target.value})}
+                                    onChange={(e) => setDapNote({ ...dapNote, data: e.target.value })}
                                     rows="5"
                                 />
                             </div>
@@ -290,7 +290,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 <label><strong>A - Assessment (평가)</strong></label>
                                 <textarea
                                     value={dapNote.assessment || ''}
-                                    onChange={(e) => setDapNote({...dapNote, assessment: e.target.value})}
+                                    onChange={(e) => setDapNote({ ...dapNote, assessment: e.target.value })}
                                     rows="5"
                                 />
                             </div>
@@ -298,7 +298,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 <label><strong>P - Plan (계획)</strong></label>
                                 <textarea
                                     value={dapNote.plan || ''}
-                                    onChange={(e) => setDapNote({...dapNote, plan: e.target.value})}
+                                    onChange={(e) => setDapNote({ ...dapNote, plan: e.target.value })}
                                     rows="5"
                                 />
                             </div>

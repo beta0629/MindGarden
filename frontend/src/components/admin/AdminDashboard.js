@@ -130,7 +130,7 @@ const AdminDashboard = ({ user: propUser }) => {
     });
     const isInitialized = useRef(false);
 
-    const loadTodayStats = useCallback(async () => {
+    const loadTodayStats = useCallback(async() => {
         const user = propUser || sessionUser;
         if (!user?.role) return;
         
@@ -194,7 +194,7 @@ const AdminDashboard = ({ user: propUser }) => {
         
         if (isInitialized.current) return;
         
-        const initializeDashboard = async () => {
+        const initializeDashboard = async() => {
             try {
                 console.log('🔄 AdminDashboard 초기화 시작...');
                 const permissions = await fetchUserPermissions(setUserPermissions);
@@ -220,11 +220,11 @@ const AdminDashboard = ({ user: propUser }) => {
 
 
 
-    const loadStats = useCallback(async () => {
+    const loadStats = useCallback(async() => {
         setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] = await Promise.all([
-                fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
+                fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
                 fetch('/api/v1/admin/clients/with-mapping-info'),
                 fetch('/api/v1/admin/mappings'),
                 fetch('/api/v1/admin/consultant-rating-stats'),
@@ -334,7 +334,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, [showToast]);
 
-    const loadRefundStats = useCallback(async () => {
+    const loadRefundStats = useCallback(async() => {
         try {
             const response = await fetch('/api/v1/admin/refund-statistics?period=month');
             if (response.ok) {
@@ -353,7 +353,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    const loadUnassignedClientsAndConsultants = useCallback(async () => {
+    const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
             const dateStr = new Date().toISOString().split('T')[0];
@@ -378,7 +378,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    const loadPendingDepositStats = useCallback(async () => {
+    const loadPendingDepositStats = useCallback(async() => {
         try {
             const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
             const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
@@ -398,7 +398,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    const handleConfirmMatch = useCallback(async (clientId, consultantId) => {
+    const handleConfirmMatch = useCallback(async(clientId, consultantId) => {
         try {
             await StandardizedApi.post('/api/v1/admin/mappings', {
                 clientId: Number(clientId),
@@ -418,7 +418,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
 
-    const handleAutoCompleteSchedules = async () => {
+    const handleAutoCompleteSchedules = async() => {
         setAutoCompleteLoading(true);
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
@@ -439,7 +439,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const handleAutoCompleteWithReminder = async () => {
+    const handleAutoCompleteWithReminder = async() => {
         setAutoCompleteWithReminderLoading(true);
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete-with-reminder');
@@ -460,7 +460,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const handleMergeDuplicateMappings = async () => {
+    const handleMergeDuplicateMappings = async() => {
         try {
             const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
             if (!checkResponse.ok) {
@@ -506,7 +506,7 @@ const AdminDashboard = ({ user: propUser }) => {
         loadUnassignedClientsAndConsultants();
     }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
 
-    const createTestData = async () => {
+    const createTestData = async() => {
         try {
             const response = await csrfTokenManager.post('/api/v1/test/create-test-data');
 
@@ -523,7 +523,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const checkSystemStatus = async () => {
+    const checkSystemStatus = async() => {
         setLoading(true);
         try {
             const [serverRes, dbRes] = await Promise.all([
@@ -558,7 +558,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const viewLogs = async () => {
+    const viewLogs = async() => {
         try {
             const response = await fetch('/api/v1/admin/logs/recent');
             if (response.ok) {
@@ -583,7 +583,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const clearCache = async () => {
+    const clearCache = async() => {
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/cache/clear');
 
@@ -599,7 +599,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    const createBackup = async () => {
+    const createBackup = async() => {
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/backup/create');
 
@@ -1461,7 +1461,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     <div className="mg-management-grid">
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE)}>
                             <div className="mg-management-icon">
-                                <i className="bi bi-shield-check"></i>
+                                <i className="bi bi-shield-check" />
                             </div>
                             <h3>컴플라이언스 대시보드</h3>
                             <p className="mg-management-description">개인정보보호법 준수 현황을 모니터링합니다</p>
@@ -1469,7 +1469,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DASHBOARD)}>
                             <div className="mg-management-icon">
-                                <i className="bi bi-graph-up"></i>
+                                <i className="bi bi-graph-up" />
                             </div>
                             <h3>개인정보 처리 현황</h3>
                             <p className="mg-management-description">개인정보 처리 현황 및 통계를 관리합니다</p>
@@ -1477,7 +1477,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DESTRUCTION)}>
                             <div className="mg-management-icon">
-                                <i className="bi bi-trash"></i>
+                                <i className="bi bi-trash" />
                             </div>
                             <h3>개인정보 파기 관리</h3>
                             <p className="mg-management-description">자동화된 개인정보 파기 시스템을 관리합니다</p>

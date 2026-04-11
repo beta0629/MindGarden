@@ -18,7 +18,7 @@ const ConsultantRecordFilterBlock = ({
   return (
     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
       <div style={{ flex: '1 1 300px', display: 'flex', alignItems: 'center', backgroundColor: 'var(--mg-bg-white)', border: '1px solid var(--mg-gray-300)', borderRadius: 'var(--mg-radius-md)', padding: '0.5rem 1rem' }}>
-        <i className="bi bi-search" style={{ color: 'var(--mg-gray-400)', marginRight: '0.5rem' }}></i>
+        <i className="bi bi-search" style={{ color: 'var(--mg-gray-400)', marginRight: '0.5rem' }} />
         <input
           type="text"
           style={{ border: 'none', outline: 'none', width: '100%', backgroundColor: 'transparent' }}

@@ -53,7 +53,7 @@ export const AudioRecorder = ({
     /**
      * 녹음 시작
      */
-    const startRecording = async () => {
+    const startRecording = async() => {
         try {
             setError(null);
 
@@ -166,7 +166,7 @@ export const AudioRecorder = ({
     /**
      * 녹음 파일 업로드
      */
-    const uploadRecording = async () => {
+    const uploadRecording = async() => {
         if (!audioBlob) return;
 
         try {

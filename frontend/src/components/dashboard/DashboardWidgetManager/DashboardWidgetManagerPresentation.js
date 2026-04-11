@@ -49,7 +49,7 @@ const DashboardWidgetManagerPresentation = ({
   if (loading) {
     return (
       <div className="mg-widget-manager-loading">
-        <div className="mg-spinner"></div>
+        <div className="mg-spinner" />
         <p>위젯 목록을 불러오는 중...</p>
       </div>
     );

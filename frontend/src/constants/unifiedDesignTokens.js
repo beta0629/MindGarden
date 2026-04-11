@@ -156,7 +156,7 @@ export const MG_DESIGN_TOKENS = {
     __MEDIUM_GRAY: 'var(--medium-gray)',
     GRAY_DARK: 'var(--mg-gray_dark)',
     GRAY_LIGHT: 'var(--mg-gray_light)',
-    GRAY_MEDIUM: 'var(--mg-gray_medium)',
+    GRAY_MEDIUM: 'var(--mg-gray_medium)'
 
   },
   
@@ -165,7 +165,7 @@ export const MG_DESIGN_TOKENS = {
     // 색상 클래스 생성
     getBgClass: (color) => `mg-bg-${color}`,
     getTextClass: (color) => `mg-text-${color}`,
-    getBorderClass: (color) => `mg-border-${color}`,
+    getBorderClass: (color) => `mg-border-${color}`
   },
   
   // 유틸리티 함수

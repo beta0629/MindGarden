@@ -105,7 +105,7 @@ export const isValidPassword = (password) => {
 // 문자열 길이 제한 및 말줄임표 추가
 export const truncateText = (text, maxLength = 100) => {
   if (!text || text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
+  return `${text.substring(0, maxLength)}...`;
 };
 
 // 숫자에 천 단위 콤마 추가
@@ -122,7 +122,7 @@ export const formatFileSize = (bytes) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
 // 파일 확장자 검사
@@ -240,7 +240,7 @@ export const sessionStorage = {
 export const debounce = (func, delay) => {
   let timeoutId;
   
-  return function (...args) {
+  return function(...args) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func.apply(this, args), delay);
   };
@@ -250,7 +250,7 @@ export const debounce = (func, delay) => {
 export const throttle = (func, limit) => {
   let inThrottle;
   
-  return function (...args) {
+  return function(...args) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
@@ -314,7 +314,7 @@ export const cookies = {
   
   // 쿠키 가져오기
   get: (name) => {
-    const nameEQ = name + "=";
+    const nameEQ = `${name}=`;
     const ca = document.cookie.split(';');
     
     for (let i = 0; i < ca.length; i++) {

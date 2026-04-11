@@ -96,7 +96,7 @@ const ConsultationCompletionStats = () => {
     };
 
     // ========== 데이터 로드 ==========
-    const loadStatistics = async (period = '') => {
+    const loadStatistics = async(period = '') => {
         try {
             setLoading(true);
             setError(null);

@@ -55,7 +55,7 @@ const SalaryProfileFormModal = ({
     const [existingProfileId, setExistingProfileId] = useState(null);
 
     // 등급을 한글로 변환 (공통 코드에서 동적 조회)
-    const convertGradeToKorean = async (grade) => {
+    const convertGradeToKorean = async(grade) => {
         try {
             return await getGradeKoreanName(grade);
         } catch (error) {
@@ -72,7 +72,7 @@ const SalaryProfileFormModal = ({
     };
 
     // 등급별 기본 급여 설정 (공통 코드에서 동적 조회)
-    const getGradeBaseSalary = async (grade) => {
+    const getGradeBaseSalary = async(grade) => {
         try {
             const gradeSalaryMap = await getGradeSalaryMap();
             return gradeSalaryMap[grade] || 30000;
@@ -123,7 +123,7 @@ const SalaryProfileFormModal = ({
     };
 
     // 공통 코드에서 등급 정보 로드 (API 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
-    const loadGradeTableData = async () => {
+    const loadGradeTableData = async() => {
         try {
             const response = await StandardizedApi.get('/api/v1/common-codes', {
               codeGroup: 'CONSULTANT_GRADE'
@@ -184,7 +184,7 @@ const SalaryProfileFormModal = ({
     };
 
     // 모달 오픈 시: 기존 프로필 조회 후 폼 세팅(수정) 또는 신규 초기화
-    const loadProfileAndInitForm = async () => {
+    const loadProfileAndInitForm = async() => {
         if (!consultant) return;
         try {
             const res = await StandardizedApi.get(getProfileUrl(consultant.id));
@@ -241,7 +241,7 @@ const SalaryProfileFormModal = ({
             return;
         }
         let cancelled = false;
-        (async () => {
+        (async() => {
             try {
                 const [label, salary] = await Promise.all([
                     convertGradeToKorean(grade),
@@ -261,7 +261,7 @@ const SalaryProfileFormModal = ({
         return () => { cancelled = true; };
     }, [consultant, formData.grade]);
 
-    const loadInitialData = async () => {
+    const loadInitialData = async() => {
         try {
             setLoading(true);
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
@@ -306,7 +306,7 @@ const SalaryProfileFormModal = ({
         }
     };
 
-    const initializeFormData = async () => {
+    const initializeFormData = async() => {
         if (!consultant) return;
 
         const baseSalary = await getGradeBaseSalary(consultant.grade);
@@ -325,7 +325,7 @@ const SalaryProfileFormModal = ({
     };
 
     // 등급 변경 시 기본 급여와 옵션 업데이트
-    const handleGradeChange = async (newGrade) => {
+    const handleGradeChange = async(newGrade) => {
         const baseSalary = await getGradeBaseSalary(newGrade);
         const gradeOptions = getGradeOptions(newGrade);
 
@@ -397,7 +397,7 @@ const SalaryProfileFormModal = ({
         return pattern.test(number);
     };
 
-    const handleSave = async () => {
+    const handleSave = async() => {
         try {
             setLoading(true);
 

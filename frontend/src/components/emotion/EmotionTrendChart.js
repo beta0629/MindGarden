@@ -26,7 +26,7 @@ const EmotionTrendChart = ({ trend }) => {
         const icons = {
             'IMPROVING': '📈 호전',
             'STABLE': '➡️ 안정',
-            'WORSENING': '📉 악화',
+            'WORSENING': '📉 악화'
         };
         return icons[trendType] || trendType;
     };
@@ -38,7 +38,7 @@ const EmotionTrendChart = ({ trend }) => {
         const colors = {
             'IMPROVING': 'var(--mg-success-500)',
             'STABLE': 'var(--mg-warning-500)',
-            'WORSENING': '#dc2626',
+            'WORSENING': '#dc2626'
         };
         return colors[trendType] || '#6b7280';
     };

@@ -31,7 +31,7 @@ const ConsultantRatingStatistics = () => {
     });
 
     // ========== 데이터 로드 ==========
-    const loadRatingStatistics = async () => {
+    const loadRatingStatistics = async() => {
         setLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}${RATING_API.ADMIN_STATS}`, {

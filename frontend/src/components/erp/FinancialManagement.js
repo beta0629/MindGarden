@@ -129,7 +129,7 @@ const FinancialManagement = () => {
     }
   }, [filters, sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async (options = {}) => {
+  const loadData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -186,7 +186,7 @@ const FinancialManagement = () => {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadTransactions = async() => {
     try {
       const { startDate, endDate } = getDateRangeForFilter();
       const params = {
@@ -282,7 +282,7 @@ const FinancialManagement = () => {
     }
   };
 
-  const calculateDashboardStats = async (transactionData) => {
+  const calculateDashboardStats = async(transactionData) => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -317,7 +317,7 @@ const FinancialManagement = () => {
     });
   };
 
-  const loadDashboard = async () => {
+  const loadDashboard = async() => {
     // 대시보드 전용 API 연동 시 이곳에서 로드
   };
 
@@ -325,8 +325,8 @@ const FinancialManagement = () => {
     setDeleteModal({ isOpen: true, transaction });
   };
 
-  const confirmDeleteTransaction = async () => {
-    const transaction = deleteModal.transaction;
+  const confirmDeleteTransaction = async() => {
+    const { transaction } = deleteModal;
     if (!transaction?.id) {
       setDeleteModal({ isOpen: false, transaction: null });
       return;
@@ -354,7 +354,7 @@ const FinancialManagement = () => {
     setShowDetailModal(true);
   };
   
-  const handleEditTransaction = async (transaction) => {
+  const handleEditTransaction = async(transaction) => {
     setPendingEditId(transaction.id);
     try {
       const data = await StandardizedApi.get(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
@@ -378,7 +378,7 @@ const FinancialManagement = () => {
 
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
   };
 
   const formatDate = (dateString) => {
@@ -386,7 +386,7 @@ const FinancialManagement = () => {
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
-  const getBranchName = async (branchCode) => {
+  const getBranchName = async(branchCode) => {
     if (!branchCode) return '';
     try {
       const branchName = await getCodeLabel('BRANCH', branchCode);
@@ -1155,7 +1155,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
 
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
   };
 
   useEffect(() => {
@@ -1164,7 +1164,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
     }
   }, [transaction]);
 
-  const loadMappingDetail = async () => {
+  const loadMappingDetail = async() => {
     try {
       setLoading(true);
       const response = await StandardizedApi.get(

@@ -39,7 +39,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
   };
 
   // 아이템 클릭 핸들러
-  const handleItemClick = async (item) => {
+  const handleItemClick = async(item) => {
     try {
       // 시스템 공지인 경우
       if (item.systemNotificationId || item.id?.toString().startsWith('system-')) {
@@ -77,7 +77,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
   // 콘텐츠 텍스트 정리
   const cleanContent = (content) => {
     if (typeof content === 'string') {
-      return content.replace(/<[^>]*>/g, '').substring(0, 50) + '...';
+      return `${content.replace(/<[^>]*>/g, '').substring(0, 50)}...`;
     }
     return content || '';
   };

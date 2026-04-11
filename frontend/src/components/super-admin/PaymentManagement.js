@@ -64,7 +64,7 @@ const PaymentManagement = () => {
   }, [filters, pagination.currentPage]);
 
   useEffect(() => {
-    const loadPaymentStatusCodes = async () => {
+    const loadPaymentStatusCodes = async() => {
       try {
         setLoadingCodes(true);
         const response = await apiGet('/api/v1/common-codes?codeGroup=PAYMENT_STATUS');
@@ -101,7 +101,7 @@ const PaymentManagement = () => {
     loadPaymentStatusCodes();
   }, []);
 
-  const loadPaymentGatewayCodes = useCallback(async () => {
+  const loadPaymentGatewayCodes = useCallback(async() => {
     try {
       setLoadingGatewayCodes(true);
       // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
@@ -133,7 +133,7 @@ const PaymentManagement = () => {
     loadPaymentGatewayCodes();
   }, [loadPaymentGatewayCodes]);
 
-  const loadPaymentMethodCodes = useCallback(async () => {
+  const loadPaymentMethodCodes = useCallback(async() => {
     try {
       setLoadingMethodCodes(true);
       // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
@@ -165,7 +165,7 @@ const PaymentManagement = () => {
     loadPaymentMethodCodes();
   }, [loadPaymentMethodCodes]);
 
-  const loadPayments = async () => {
+  const loadPayments = async() => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -177,7 +177,7 @@ const PaymentManagement = () => {
       const response = await fetch(`${API_BASE_URL}/api/payments?${params}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
@@ -201,7 +201,7 @@ const PaymentManagement = () => {
     }
   };
 
-  const loadStatistics = async () => {
+  const loadStatistics = async() => {
     try {
       const params = new URLSearchParams({
         startDate: filters.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -211,7 +211,7 @@ const PaymentManagement = () => {
       const response = await fetch(`${API_BASE_URL}/api/payments/statistics?${params}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
@@ -243,12 +243,12 @@ const PaymentManagement = () => {
     }));
   };
 
-  const handleStatusUpdate = async (paymentId, status) => {
+  const handleStatusUpdate = async(paymentId, status) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/status?status=${status}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
@@ -265,12 +265,12 @@ const PaymentManagement = () => {
     }
   };
 
-  const handleRefund = async (paymentId, amount) => {
+  const handleRefund = async(paymentId, amount) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/refund`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -298,7 +298,7 @@ const PaymentManagement = () => {
     }).format(amount);
   };
 
-  const exportPayments = async () => {
+  const exportPayments = async() => {
     try {
       const params = new URLSearchParams({
         ...filters,
@@ -337,7 +337,7 @@ const PaymentManagement = () => {
     notificationManager.show('결제 분석 기능은 개발 중입니다.', 'info');
   };
 
-  const handleBulkAction = async (action, selectedPayments) => {
+  const handleBulkAction = async(action, selectedPayments) => {
     if (!selectedPayments || selectedPayments.length === 0) {
       notificationManager.show('선택된 결제가 없습니다.', 'info');
       return;
@@ -366,7 +366,7 @@ const PaymentManagement = () => {
         return fetch(endpoint, {
           method: action === 'refund' ? 'POST' : 'PUT',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
           credentials: 'include',
           body: JSON.stringify(body)

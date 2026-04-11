@@ -33,7 +33,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
   // 메뉴 구조 로드 (성능 최적화: 권한 체크 병렬 처리)
   useEffect(() => {
-    const loadMenus = async () => {
+    const loadMenus = async() => {
       try {
         setIsLoading(true);
         setError(null);
@@ -134,7 +134,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     return null;
   }
 
-  const handleMenuClick = async (path, menuGroup = null) => {
+  const handleMenuClick = async(path, menuGroup = null) => {
     if (path && path !== '준비중') {
       // 메뉴 그룹 권한 검증 (비동기)
       if (menuGroup) {
@@ -161,7 +161,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = async () => {
+  const confirmLogout = async() => {
     try {
       await sessionManager.logout();
       console.log('✅ 로그아웃 완료');
@@ -200,13 +200,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               onClick={onClose}
               preventDoubleClick={false}
             >
-              <i className="bi bi-x"></i>
+              <i className="bi bi-x" />
             </MGButton>
           </div>
           
           <div className="simple-hamburger-content">
             <div className="loading-message">
-              <i className="bi bi-arrow-repeat spin"></i>
+              <i className="bi bi-arrow-repeat spin" />
               <span>메뉴를 불러오는 중...</span>
             </div>
           </div>
@@ -231,13 +231,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               onClick={onClose}
               preventDoubleClick={false}
             >
-              <i className="bi bi-x"></i>
+              <i className="bi bi-x" />
             </MGButton>
           </div>
           
           <div className="simple-hamburger-content">
             <div className="error-message">
-              <i className="bi bi-exclamation-triangle text-warning"></i>
+              <i className="bi bi-exclamation-triangle text-warning" />
               <span>{error}</span>
               <MGButton
                 type="button"
@@ -289,7 +289,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             onClick={onClose}
             preventDoubleClick={false}
           >
-            <i className="bi bi-x"></i>
+            <i className="bi bi-x" />
           </MGButton>
         </div>
 
@@ -298,7 +298,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           <nav className="simple-hamburger-nav">
             {mainMenus.length === 0 ? (
               <div className="no-menu-message">
-                <i className="bi bi-info-circle"></i>
+                <i className="bi bi-info-circle" />
                 <span>사용 가능한 메뉴가 없습니다.</span>
               </div>
             ) : (
@@ -316,13 +316,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                     }}
                   >
                     <div className="simple-menu-item-content">
-                      {item.icon && <i className={`${item.icon} simple-menu-icon`}></i>}
+                      {item.icon && <i className={`${item.icon} simple-menu-icon`} />}
                       <span className="simple-menu-label">{item.label}</span>
                       {!item.path && <span className="preparing-badge">준비중</span>}
                     </div>
                     
                     {item.hasSubMenu && (
-                      <i className={`bi ${expandedItems[item.id] ? 'bi-chevron-up' : 'bi-chevron-down'} simple-expand-icon`}></i>
+                      <i className={`bi ${expandedItems[item.id] ? 'bi-chevron-up' : 'bi-chevron-down'} simple-expand-icon`} />
                     )}
                   </div>
 
@@ -336,7 +336,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                           onClick={() => handleMenuClick(subItem.path)}
                         >
                           <div className="simple-submenu-item-content">
-                            {subItem.icon && <i className={`${subItem.icon} simple-submenu-icon`}></i>}
+                            {subItem.icon && <i className={`${subItem.icon} simple-submenu-icon`} />}
                             <span className="simple-submenu-label">{subItem.label}</span>
                             {!subItem.path && <span className="preparing-badge">준비중</span>}
                           </div>
@@ -359,7 +359,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             preventDoubleClick={false}
             fullWidth
           >
-            <i className="bi bi-box-arrow-right"></i>
+            <i className="bi bi-box-arrow-right" />
             <span>로그아웃</span>
           </MGButton>
           

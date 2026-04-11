@@ -94,8 +94,8 @@ export const getEventColor = (status) => {
  * 휴가 데이터를 이벤트로 변환
  */
 export const convertVacationToEvent = (vacationData, consultantId, date) => {
-    const startDate = new Date(date + 'T00:00:00+09:00');
-    const endDate = new Date(date + 'T23:59:59+09:00');
+    const startDate = new Date(`${date}T00:00:00+09:00`);
+    const endDate = new Date(`${date}T23:59:59+09:00`);
     
     return {
         id: `vacation-${consultantId}-${date}`,

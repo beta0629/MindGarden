@@ -42,7 +42,7 @@ const MGFilter = ({
     <div className={getFilterClasses()} {...props}>
       {loading && (
         <div className="mg-filter__loading">
-          <div className="mg-filter__spinner"></div>
+          <div className="mg-filter__spinner" />
         </div>
       )}
       

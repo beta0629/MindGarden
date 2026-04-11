@@ -115,46 +115,46 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
 
     const convertVacationToEvent = (vacationData, consultantId, date) => {
         const { type, reason, startTime, endTime, consultantName } = vacationData;
-        const startDate = new Date(date + 'T00:00:00+09:00');
+        const startDate = new Date(`${date}T00:00:00+09:00`);
         let endDate, title, backgroundColor, allDay = true;
         
         switch (type) {
             case 'MORNING':
-                endDate = new Date(date + 'T13:00:00+09:00');
+                endDate = new Date(`${date}T13:00:00+09:00`);
                 title = '🌅 오전 휴무';
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
                 startDate.setHours(14, 0, 0);
-                endDate = new Date(date + 'T20:00:00+09:00');
+                endDate = new Date(`${date}T20:00:00+09:00`);
                 title = '🌇 오후 휴무';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
-                endDate = new Date(date + 'T11:00:00+09:00');
+                endDate = new Date(`${date}T11:00:00+09:00`);
                 title = '🌄 오전 반반차 1';
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
-                endDate = new Date(date + 'T13:00:00+09:00');
+                endDate = new Date(`${date}T13:00:00+09:00`);
                 title = '🌄 오전 반반차 2';
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
                 startDate.setHours(14, 0, 0);
-                endDate = new Date(date + 'T16:00:00+09:00');
+                endDate = new Date(`${date}T16:00:00+09:00`);
                 title = '🌆 오후 반반차 1';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
-                endDate = new Date(date + 'T20:00:00+09:00');
+                endDate = new Date(`${date}T20:00:00+09:00`);
                 title = '🌆 오후 반반차 2';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
@@ -162,19 +162,19 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             case 'CUSTOM_TIME':
                 if (startTime && endTime) {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
-                    endDate = new Date(date + 'T' + endTime + '+09:00');
+                    endDate = new Date(`${date}T${endTime}+09:00`);
                     title = '⏰ 사용자 정의 휴무';
                     backgroundColor = 'var(--ad-b0kla-blue)';
                     allDay = false;
                 } else {
-                    endDate = new Date(date + 'T23:59:59+09:00');
+                    endDate = new Date(`${date}T23:59:59+09:00`);
                     title = '⏰ 사용자 정의 휴무';
                     backgroundColor = 'var(--ad-b0kla-blue)';
                 }
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
-                endDate = new Date(date + 'T23:59:59+09:00');
+                endDate = new Date(`${date}T23:59:59+09:00`);
                 title = '🏖️ 하루 종일 휴무';
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = true;
@@ -182,10 +182,10 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             default:
                 if (startTime && endTime) {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
-                    endDate = new Date(date + 'T' + endTime + '+09:00');
+                    endDate = new Date(`${date}T${endTime}+09:00`);
                     allDay = false;
                 } else {
-                    endDate = new Date(date + 'T23:59:59+09:00');
+                    endDate = new Date(`${date}T23:59:59+09:00`);
                     allDay = true;
                 }
                 title = '🏖️ 휴무';
@@ -217,7 +217,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
     };
 
     // ========== 데이터 로드 ==========
-    const loadScheduleStatusCodes = useCallback(async () => {
+    const loadScheduleStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             // 공통코드 API 사용 (표준화된 방법)
@@ -225,7 +225,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             console.log('📋 스케줄 상태 코드 응답:', codes);
             
             if (codes && Array.isArray(codes) && codes.length > 0) {
-                const statusOptions = await Promise.all(codes.map(async (code) => {
+                const statusOptions = await Promise.all(codes.map(async(code) => {
                     try {
                         const [color, icon] = await Promise.all([
                             getStatusColor(code.codeValue, 'SCHEDULE_STATUS'),
@@ -267,7 +267,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         }
     }, []);
 
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         try {
             setLoadingConsultants(true);
             const dateStr = new Date().toISOString().split('T')[0];
@@ -312,7 +312,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         }
     }, []);
 
-    const loadSchedules = useCallback(async () => {
+    const loadSchedules = useCallback(async() => {
         // 관리자·지점수퍼관리자는 userId 없이도 전체 조회 가능
         const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
         
@@ -572,7 +572,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
 
         // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
-        const loadData = async () => {
+        const loadData = async() => {
             const promises = [];
             const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
 
@@ -656,12 +656,12 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
     const handleEventClick = (info) => {
         console.log('📋 이벤트 클릭:', info.event.title);
         
-        const event = info.event;
+        const { event } = info;
         
         if (event.extendedProps.type === 'vacation') {
             console.log('🏖️ 휴가 이벤트 클릭');
             
-            let consultantName = event.extendedProps.consultantName;
+            let { consultantName } = event.extendedProps;
             if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
                 if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
                     consultantName = `상담사 ${event.extendedProps.consultantId}`;
@@ -750,10 +750,10 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         setIsDetailModalOpen(true);
     };
 
-    const handleEventDrop = async (info) => {
+    const handleEventDrop = async(info) => {
         console.log('🔄 이벤트 이동:', info.event.title);
         
-        const event = info.event;
+        const { event } = info;
         const status = event.extendedProps?.status;
 
         // 완료된 스케줄은 드래그 이동 불가
@@ -801,7 +801,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         setSelectedInfo(null);
     };
 
-    const handleScheduleCreated = async () => {
+    const handleScheduleCreated = async() => {
         console.log('🔄 스케줄 생성 완료 - 캘린더 새로고침 시작');
         await loadSchedules();
         handleModalClose();
@@ -827,7 +827,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         setReschedulePayload(null);
     };
 
-    const handleRescheduleSuccess = async () => {
+    const handleRescheduleSuccess = async() => {
         await loadSchedules();
     };
 
@@ -847,7 +847,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         handleConsultationLogModalClose();
     };
 
-    const forceRefresh = useCallback(async () => {
+    const forceRefresh = useCallback(async() => {
         console.log('🔄 강제 새로고침 시작');
         setEvents([]);
         await loadSchedules();

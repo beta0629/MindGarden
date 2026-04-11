@@ -116,7 +116,7 @@ describe('ThemeSelector', () => {
     expect(mockPreviewTheme).toHaveBeenCalled();
   });
 
-  test('테마 적용 버튼 클릭', async () => {
+  test('테마 적용 버튼 클릭', async() => {
     const mockChangeTheme = jest.fn().mockResolvedValue({ success: true });
     mockThemeFns.changeTheme.mockImplementation(mockChangeTheme);
 
@@ -151,7 +151,7 @@ describe('ThemeSelector', () => {
     }
   });
 
-  test('접근성 테스트', async () => {
+  test('접근성 테스트', async() => {
     renderWithTheme(<ThemeSelector />);
 
     fireEvent.click(screen.getByText('내담자 테마').closest('.mg-v2-theme-option'));

@@ -91,7 +91,7 @@ const TenantProfile = () => {
 /**
    * 테넌트 정보 로드
    */
-  const loadTenantInfo = async (options = {}) => {
+  const loadTenantInfo = async(options = {}) => {
     const silent = options.silent === true;
     if (!tenantId) return;
 
@@ -141,7 +141,7 @@ const TenantProfile = () => {
     return '';
   };
 
-  const handleTenantNameSave = async (e) => {
+  const handleTenantNameSave = async(e) => {
     e.preventDefault();
     const msg = validateTenantNameDraft(tenantNameDraft);
     setTenantNameFieldError(msg);
@@ -176,7 +176,7 @@ const TenantProfile = () => {
 /**
    * 구독 정보 로드
    */
-  const loadSubscriptions = async () => {
+  const loadSubscriptions = async() => {
     if (!tenantId) return;
 
     try {
@@ -190,7 +190,7 @@ const TenantProfile = () => {
 /**
    * 결제 수단 목록 로드
    */
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethods = async() => {
     if (!tenantId) return;
 
     try {
@@ -204,7 +204,7 @@ const TenantProfile = () => {
 /**
    * 결제 수단 삭제
    */
-  const handleDeletePaymentMethod = async (paymentMethodId) => {
+  const handleDeletePaymentMethod = async(paymentMethodId) => {
     if (!confirm('정말 이 결제 수단을 삭제하시겠습니까?')) {
       return;
     }
@@ -230,7 +230,7 @@ const TenantProfile = () => {
 /**
    * 기본 결제 수단 설정
    */
-  const handleSetDefaultPaymentMethod = async (paymentMethodId) => {
+  const handleSetDefaultPaymentMethod = async(paymentMethodId) => {
     try {
       const response = await fetch(`/api/v1/billing/payment-methods/${paymentMethodId}/set-default?tenantId=${tenantId}`, {
         method: 'PUT',

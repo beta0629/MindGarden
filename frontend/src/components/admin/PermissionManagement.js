@@ -146,7 +146,7 @@ const PermissionManagement = () => {
     const [message, setMessage] = useState('');
     const [allPermissions, setAllPermissions] = useState([]); // DB에서 로드한 모든 권한
 
-    const fetchUserInfo = async () => {
+    const fetchUserInfo = async() => {
         try {
             const response = await fetch('/api/v1/auth/current-user', {
                 credentials: 'include'
@@ -165,7 +165,7 @@ const PermissionManagement = () => {
         }
     };
 
-    const loadAllPermissions = useCallback(async () => {
+    const loadAllPermissions = useCallback(async() => {
         try {
             // DB에서 모든 권한 목록 로드
             const response = await fetch('/api/v1/permissions/manageable', {
@@ -184,7 +184,7 @@ const PermissionManagement = () => {
         }
     }, []);
 
-    const loadUserPermissions = useCallback(async () => {
+    const loadUserPermissions = useCallback(async() => {
         try {
             // 실제 사용자 권한 로드
             const response = await fetch('/api/v1/permissions/my-permissions', {
@@ -221,7 +221,7 @@ const PermissionManagement = () => {
         }
     }, []);
 
-    const loadRolePermissions = useCallback(async () => {
+    const loadRolePermissions = useCallback(async() => {
         try {
             // 데이터베이스에서 역할 권한 로드
             const response = await fetch(`/api/v1/permissions/role/${selectedRole}`, {
@@ -277,7 +277,7 @@ const PermissionManagement = () => {
         });
     };
 
-    const handleSavePermissions = async () => {
+    const handleSavePermissions = async() => {
         setSaveLoading(true);
         setMessage('');
         
@@ -285,7 +285,7 @@ const PermissionManagement = () => {
             const response = await fetch('/api/v1/permissions/role-permissions', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include',
                 body: JSON.stringify({

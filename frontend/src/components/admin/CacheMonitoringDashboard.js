@@ -24,7 +24,7 @@ const CacheMonitoringDashboard = () => {
   const [refreshInterval, setRefreshInterval] = useState(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.DEFAULT_REFRESH_INTERVAL);
 
   // 캐시 통계 조회
-  const fetchCacheStats = useCallback(async () => {
+  const fetchCacheStats = useCallback(async() => {
     setLoading(true);
     try {
       const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.STATS);
@@ -44,7 +44,7 @@ const CacheMonitoringDashboard = () => {
   }, []);
 
   // 모든 캐시 클리어
-  const clearAllCaches = async () => {
+  const clearAllCaches = async() => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM, resolve);
     });
@@ -234,7 +234,7 @@ const CacheMonitoringDashboard = () => {
                         type="button"
                         variant="outline"
                         size="small"
-                        onClick={async () => {
+                        onClick={async() => {
                           setRetryLoading(true);
                           try {
                             await fetchCacheStats();

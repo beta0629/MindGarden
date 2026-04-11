@@ -33,7 +33,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
     return emailRegex.test(value);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (!email.trim()) {
       setError('이메일을 입력해주세요.');

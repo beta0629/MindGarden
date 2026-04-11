@@ -31,7 +31,7 @@ const filterToAllowedRoles = (list) => (list || []).filter(
     code => code && code.codeValue && ALLOWED_ROLES.includes(code.codeValue)
 );
 
-export const getRoleCodesFromCommonCode = async (useCache = true) => {
+export const getRoleCodesFromCommonCode = async(useCache = true) => {
     try {
         if (useCache && roleCodeCache.has('roles')) {
             const cached = roleCodeCache.get('roles');
@@ -67,7 +67,7 @@ export const getRoleCodesFromCommonCode = async (useCache = true) => {
 /**
  * @returns {Promise<boolean>} 존재 여부
  */
-export const hasRoleCode = async (roleCode) => {
+export const hasRoleCode = async(roleCode) => {
     try {
         const roleCodes = await getRoleCodesFromCommonCode();
         return roleCodes.some(code => 
@@ -87,7 +87,7 @@ export const hasRoleCode = async (roleCode) => {
 /**
  * @returns {Promise<string>} 한글명
  */
-export const getRoleKoreanName = async (roleCode) => {
+export const getRoleKoreanName = async(roleCode) => {
     try {
         const roleCodes = await getRoleCodesFromCommonCode();
         const role = roleCodes.find(code => 
@@ -107,7 +107,7 @@ export const getRoleKoreanName = async (roleCode) => {
  * @returns {Promise<Array<string>>} 관리자 역할 코드 목록
  */
 /** 관리자 역할은 ADMIN만 (4역할 단순화) */
-export const getAdminRoleCodes = async () => {
+export const getAdminRoleCodes = async() => {
     try {
         const roleCodes = await getRoleCodesFromCommonCode();
         return roleCodes

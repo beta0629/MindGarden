@@ -54,7 +54,7 @@ export const useAdminDashboard = () => {
     useEffect(() => {
         if (isInitialized.current) return;
         
-        const initializeDashboard = async () => {
+        const initializeDashboard = async() => {
             try {
                 console.log('🔄 AdminDashboard 초기화 시작...');
                 const permissions = await fetchUserPermissions(setUserPermissions);
@@ -79,7 +79,7 @@ export const useAdminDashboard = () => {
     }, []);
 
     // 통계 로드
-    const loadStats = useCallback(async () => {
+    const loadStats = useCallback(async() => {
         try {
             setLoading(true);
             
@@ -137,7 +137,7 @@ export const useAdminDashboard = () => {
     }, [showToast]);
 
     // 시스템 상태 체크 (실제 존재하는 API 사용)
-    const checkSystemStatus = useCallback(async () => {
+    const checkSystemStatus = useCallback(async() => {
         try {
             const response = await fetch('/api/admin/statistics-management/plsql/status', {
                 method: 'GET',

@@ -28,7 +28,7 @@ const getPermissionGroupApi = () => `${getApiBaseUrl()}/api/v1/permissions/group
 /**
  * 내 권한 그룹 조회
  */
-export const getMyPermissionGroups = async () => {
+export const getMyPermissionGroups = async() => {
     try {
         const response = await axios.get(`${getPermissionGroupApi()}/my`, {
             withCredentials: true,
@@ -63,7 +63,7 @@ export const getMyPermissionGroups = async () => {
 /**
  * 권한 그룹 체크
  */
-export const checkPermissionGroup = async (groupCode) => {
+export const checkPermissionGroup = async(groupCode) => {
     try {
         const response = await axios.get(`${getPermissionGroupApi()}/check/${groupCode}`, {
             withCredentials: true
@@ -78,7 +78,7 @@ export const checkPermissionGroup = async (groupCode) => {
 /**
  * 권한 그룹 레벨 조회
  */
-export const getPermissionGroupLevel = async (groupCode) => {
+export const getPermissionGroupLevel = async(groupCode) => {
     try {
         const response = await axios.get(`${getPermissionGroupApi()}/level/${groupCode}`, {
             withCredentials: true
@@ -93,7 +93,7 @@ export const getPermissionGroupLevel = async (groupCode) => {
 /**
  * 모든 권한 그룹 조회
  */
-export const getAllPermissionGroups = async () => {
+export const getAllPermissionGroups = async() => {
     try {
         const response = await axios.get(`${getPermissionGroupApi()}/all`, {
             withCredentials: true
@@ -108,7 +108,7 @@ export const getAllPermissionGroups = async () => {
 /**
  * 권한 그룹 부여
  */
-export const grantPermissionGroup = async (request) => {
+export const grantPermissionGroup = async(request) => {
     try {
         const response = await axios.post(`${getPermissionGroupApi()}/grant`, request, {
             withCredentials: true
@@ -123,7 +123,7 @@ export const grantPermissionGroup = async (request) => {
 /**
  * 권한 그룹 회수
  */
-export const revokePermissionGroup = async (roleId, groupCode) => {
+export const revokePermissionGroup = async(roleId, groupCode) => {
     try {
         const response = await axios.delete(`${getPermissionGroupApi()}/revoke`, {
             params: { roleId, groupCode },
@@ -139,7 +139,7 @@ export const revokePermissionGroup = async (roleId, groupCode) => {
 /**
  * 권한 그룹 일괄 부여
  */
-export const batchGrantPermissionGroups = async (roleId, request) => {
+export const batchGrantPermissionGroups = async(roleId, request) => {
     try {
         const response = await axios.post(
             `${getPermissionGroupApi()}/batch?roleId=${roleId}`,

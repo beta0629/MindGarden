@@ -37,7 +37,7 @@ const SalaryPrintComponent = ({
 
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
   };
 
   const taxAmount = (salaryData.totalSalary || 0) - (salaryData.totalSalary - (salaryData.taxAmount || 0));

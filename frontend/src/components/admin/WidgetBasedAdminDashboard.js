@@ -46,7 +46,7 @@ const WidgetBasedAdminDashboard = () => {
             return;
         }
         
-        const fetchDashboards = async () => {
+        const fetchDashboards = async() => {
             try {
                 setLoading(true);
                 setFetchAttempts(prev => prev + 1);
@@ -87,7 +87,7 @@ const WidgetBasedAdminDashboard = () => {
     }, [isLoggedIn, sessionLoading]); // user 제거하여 무한루프 방지
 
     // 위젯 그룹 로드
-    const loadWidgetGroups = async (dashboard) => {
+    const loadWidgetGroups = async(dashboard) => {
         try {
             // 2. 위젯 그룹 조회
             const groupResponse = await axios.get(
@@ -109,7 +109,7 @@ const WidgetBasedAdminDashboard = () => {
                 
                 // 3. 각 그룹의 위젯 정의 조회
                 const groupsWithWidgets = await Promise.all(
-                    groups.map(async (group) => {
+                    groups.map(async(group) => {
                         try {
                             const widgetResponse = await axios.get(
                                 `${API_BASE_URL}/api/v1/widgets/groups/${group.groupId}/widgets`,
@@ -154,7 +154,7 @@ const WidgetBasedAdminDashboard = () => {
     };
 
     // 위젯 삭제
-    const handleDeleteWidget = async (widgetId, groupId) => {
+    const handleDeleteWidget = async(widgetId, groupId) => {
         const confirmed = await new Promise((resolve) => {
             notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
         });

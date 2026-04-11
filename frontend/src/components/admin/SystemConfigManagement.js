@@ -118,7 +118,7 @@ const SystemConfigManagement = () => {
     }
   }, [loading, providers]);
 
-  const loadConfigs = useCallback(async () => {
+  const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
       const openaiRes = await apiGet('/api/v1/admin/system-config/openai');
@@ -203,7 +203,7 @@ const SystemConfigManagement = () => {
     }
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     try {
       setSaving(true);
       const posts = [];
@@ -234,7 +234,7 @@ const SystemConfigManagement = () => {
     }
   };
 
-  const handleTestOpenAI = async () => {
+  const handleTestOpenAI = async() => {
     const key = (providers.openai?.apiKey || '').trim();
     if (!key) {
       notificationManager.show('OpenAI API 키를 입력한 뒤 테스트해 주세요.', 'warning');
@@ -262,7 +262,7 @@ const SystemConfigManagement = () => {
     }
   };
 
-  const handleTestGemini = async () => {
+  const handleTestGemini = async() => {
     const key = (providers.gemini?.apiKey || '').trim();
     if (!key) {
       notificationManager.show('Gemini API 키를 입력한 뒤 테스트해 주세요.', 'warning');
@@ -285,7 +285,7 @@ const SystemConfigManagement = () => {
     }
   };
 
-  const loadGeminiModels = async () => {
+  const loadGeminiModels = async() => {
     const key = (providers.gemini?.apiKey || '').trim();
     if (!key) {
       notificationManager.show('Gemini API 키를 입력한 뒤 목록을 불러오세요.', 'warning');
@@ -308,7 +308,7 @@ const SystemConfigManagement = () => {
     }
   };
 
-  const handleLoadOpenAIModels = async () => {
+  const handleLoadOpenAIModels = async() => {
     const key = (providers.openai?.apiKey || '').trim();
     if (!key) {
       notificationManager.show('OpenAI API 키를 입력한 뒤 목록을 불러오세요.', 'warning');

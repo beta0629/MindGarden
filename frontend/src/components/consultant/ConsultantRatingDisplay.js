@@ -30,13 +30,13 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
         }
     }, [consultantId, user]);
 
-    const loadRatingStats = async (targetConsultantId) => {
+    const loadRatingStats = async(targetConsultantId) => {
         setLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}${RATING_API.CONSULTANT_STATS(targetConsultantId)}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -65,7 +65,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             <div className="mg-v2-card">
                 <div className="mg-v2-card-body">
                     <div className="mg-loading-container">
-                        <div className="mg-spinner"></div>
+                        <div className="mg-spinner" />
                         <p>평가 통계를 불러오는 중...</p>
                     </div>
                 </div>

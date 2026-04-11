@@ -69,7 +69,7 @@ export const PREDICTION_CSS = {
     FACTORS_TAGS: 'factors-tags',
     FACTOR_TAG: 'factor-tag',
     LESSONS_LEARNED: 'lessons-learned',
-    NO_CASES: 'no-cases',
+    NO_CASES: 'no-cases'
 };
 
 export default PREDICTION_CSS;

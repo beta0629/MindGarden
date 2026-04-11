@@ -27,13 +27,13 @@ const MGForm = ({
     const variantClasses = {
       default: "space-y-4",
       card: "bg-[var(--mg-cream)] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
-      minimal: "space-y-2",
+      minimal: "space-y-2"
     };
 
     const sizeClasses = {
       small: "text-sm",
       medium: "text-base",
-      large: "text-lg",
+      large: "text-lg"
     };
 
     return [

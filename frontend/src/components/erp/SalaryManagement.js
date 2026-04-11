@@ -105,7 +105,7 @@ const SalaryManagement = () => {
     return list;
   })();
 
-  const loadCalculationPeriod = async (year, month) => {
+  const loadCalculationPeriod = async(year, month) => {
     if (!year || !month) {
       setCalculationPeriodDisplay(null);
       return;
@@ -132,7 +132,7 @@ const SalaryManagement = () => {
 
   /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats).
    * API 반환형 { consultant: { id, name, ... }, ... } → item.consultant 기준 평탄화 후 setConsultants (ConsultantManagement/VacationManagementModal과 동일). */
-  const loadConsultants = async (options = {}) => {
+  const loadConsultants = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
@@ -170,7 +170,7 @@ const SalaryManagement = () => {
     }
   };
 
-  const loadSalaryProfiles = async (options = {}) => {
+  const loadSalaryProfiles = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
@@ -198,7 +198,7 @@ const SalaryManagement = () => {
     }
   };
 
-  const loadPayDayOptions = async () => {
+  const loadPayDayOptions = async() => {
     try {
       const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.COMMON_CODES, {
         codeGroup: 'SALARY_PAY_DAY'
@@ -221,7 +221,7 @@ const SalaryManagement = () => {
     }
   };
 
-  const executeSalaryCalculation = async () => {
+  const executeSalaryCalculation = async() => {
     if (!selectedConsultant || !selectedPeriod) {
       showNotification('상담사와 기간을 선택해주세요.', 'warning');
       return;
@@ -336,7 +336,7 @@ const SalaryManagement = () => {
     setSelectedConsultant(null);
   };
 
-  const loadSalaryCalculations = async (consultantId, options = {}) => {
+  const loadSalaryCalculations = async(consultantId, options = {}) => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
@@ -358,7 +358,7 @@ const SalaryManagement = () => {
     }
   };
 
-  const loadTaxStatistics = async (period, options = {}) => {
+  const loadTaxStatistics = async(period, options = {}) => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
@@ -381,7 +381,7 @@ const SalaryManagement = () => {
     }
   };
 
-  const handleDataRefresh = useCallback(async () => {
+  const handleDataRefresh = useCallback(async() => {
     setSilentRefreshing(true);
     try {
       const silent = { silent: true };
@@ -852,7 +852,7 @@ const SalaryManagement = () => {
                           <MGButton
                             variant="primary"
                             size="medium"
-                            onClick={async () => {
+                            onClick={async() => {
                               if (!previewResult.periodStart || !previewResult.periodEnd) {
                                 showNotification('확정할 기간 정보가 없습니다.', 'warning');
                                 return;

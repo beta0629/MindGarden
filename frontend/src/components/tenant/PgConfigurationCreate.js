@@ -22,7 +22,7 @@ const PgConfigurationCreate = () => {
   
   const tenantId = user?.tenantId || user?.tenant_id;
   
-  const handleSave = async (formData) => {
+  const handleSave = async(formData) => {
     if (!tenantId) {
       showNotification('테넌트 정보를 찾을 수 없습니다.', 'error');
       return;

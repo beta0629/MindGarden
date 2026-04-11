@@ -59,7 +59,7 @@ const ProfileSection = ({
     '';
 
   useEffect(() => {
-    const loadGenderCodes = async () => {
+    const loadGenderCodes = async() => {
       try {
         setLoadingCodes(true);
         const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'GENDER' });
@@ -166,7 +166,7 @@ const ProfileSection = ({
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     try {
       if (onSave) {

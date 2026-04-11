@@ -42,7 +42,7 @@ const ScheduleLegend = ({
                                 <span 
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': getConsultantColor(consultant.id) }}
-                                ></span>
+                                 />
                                 <span className="mg-v2-legend-text">{toDisplayString(consultant.name, '—')}</span>
                             </div>
                         ))}
@@ -63,7 +63,7 @@ const ScheduleLegend = ({
                                 <span 
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': option.color }}
-                                ></span>
+                                 />
                                 <span className="mg-v2-legend-text">{toDisplayString(option.label, '—')}</span>
                             </div>
                         ))}

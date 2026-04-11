@@ -71,7 +71,7 @@ const ConsultationLogCalendarBlock = ({
   };
 
   const handleDateClick = (info) => {
-    const dateStr = info.dateStr;
+    const { dateStr } = info;
     const dayRecords = getRecordsByDate(dateStr);
     if (dayRecords.length === 0) return;
     if (dayRecords.length === 1) {

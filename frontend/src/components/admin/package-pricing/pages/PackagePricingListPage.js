@@ -46,7 +46,7 @@ function PackagePricingListPage() {
   const [loading, setLoading] = useState(true);
   const [togglingRowId, setTogglingRowId] = useState(null);
 
-  const fetchList = useCallback(async () => {
+  const fetchList = useCallback(async() => {
     setLoading(true);
     try {
       const data = await StandardizedApi.get(API.TENANT_CODES_LIST, {
@@ -69,7 +69,7 @@ function PackagePricingListPage() {
     fetchList();
   }, [fetchList]);
 
-  const handleToggleActive = async (row) => {
+  const handleToggleActive = async(row) => {
     const nextActive = !row.isActive;
     setTogglingRowId(row.id);
     try {

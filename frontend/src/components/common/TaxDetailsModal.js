@@ -40,7 +40,7 @@ const TaxDetailsModal = ({
   const [error, setError] = useState(null);
 
   // 세금 내역 조회
-  const loadTaxDetails = async () => {
+  const loadTaxDetails = async() => {
     if (!calculationId) return;
     
     setLoading(true);
@@ -181,7 +181,7 @@ const TaxDetailsModal = ({
                     <tr className="mg-v2-table-row--emphasized">
                       <td colSpan="4"><strong>총 세금</strong></td>
                       <td className="mg-v2-color-danger"><strong>{formatAmount(totalTaxAmount)}원</strong></td>
-                      <td></td>
+                      <td />
                     </tr>
                   </tfoot>
                 </table>

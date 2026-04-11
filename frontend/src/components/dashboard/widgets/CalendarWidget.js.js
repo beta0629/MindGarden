@@ -34,7 +34,7 @@ const CalendarWidget = ({ widget, user }) => {
     }
   }, []);
   
-  const loadData = async () => {
+  const loadData = async() => {
     try {
       setLoading(true);
       setError(null);

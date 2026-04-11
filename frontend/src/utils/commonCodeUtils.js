@@ -23,7 +23,7 @@ const codeCache = new Map();
 /**
  * @returns {Promise<Array>} 공통 코드 배열
  */
-export const getCommonCodes = async (groupCode, useCache = true) => {
+export const getCommonCodes = async(groupCode, useCache = true) => {
     try {
         // 캐시에서 먼저 확인
         if (useCache && codeCache.has(groupCode)) {
@@ -67,7 +67,7 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
 /**
  * @returns {Promise<string>} 코드 라벨
  */
-export const getCodeLabel = async (groupCode, codeValue) => {
+export const getCodeLabel = async(groupCode, codeValue) => {
     try {
         const codes = await getCommonCodes(groupCode);
         const code = codes.find(c => c.codeValue === codeValue);
@@ -83,7 +83,7 @@ export const getCodeLabel = async (groupCode, codeValue) => {
 /**
  * @returns {Promise<Object>} 등급별 급여 매핑 객체
  */
-export const getGradeSalaryMap = async () => {
+export const getGradeSalaryMap = async() => {
     try {
         const codes = await getCommonCodes('FREELANCE_BASE_RATE');
         const salaryMap = {};
@@ -119,7 +119,7 @@ export const getGradeSalaryMap = async () => {
 /**
  * @returns {Promise<string>} 한글 등급명
  */
-export const getGradeKoreanName = async (grade) => {
+export const getGradeKoreanName = async(grade) => {
     try {
         return await getCodeLabel('CONSULTANT_GRADE', grade);
     } catch (error) {
@@ -140,7 +140,7 @@ export const getGradeKoreanName = async (grade) => {
 /**
  * @returns {Promise<Array>} 패키지 옵션 배열
  */
-export const getPackageOptions = async () => {
+export const getPackageOptions = async() => {
     try {
         console.log('🔍 getPackageOptions 시작 (테넌트 코드 전용)');
         // 테넌트 코드 전용 API 사용 (독립성 보장)
@@ -264,7 +264,7 @@ export const getPackageOptions = async () => {
 /**
  * @returns {Promise<Object>} 만족도 데이터
  */
-export const getSatisfactionData = async () => {
+export const getSatisfactionData = async() => {
     try {
         const codes = await getCommonCodes('SATISFACTION');
         const satisfactionData = {};
@@ -277,8 +277,8 @@ export const getSatisfactionData = async () => {
                 } else if (code.codeValue === 'TOTAL_RESPONSES') {
                     satisfactionData.totalResponses = extraData.count || 150;
                 } else if (code.codeValue.startsWith('SCORE_')) {
-                    const score = extraData.score;
-                    const count = extraData.count;
+                    const { score } = extraData;
+                    const { count } = extraData;
                     if (score && count !== undefined) {
                         satisfactionData[`score${score}`] = count;
                     }

@@ -103,7 +103,7 @@ const ActivityListWidget = ({ widget, user }) => {
               title="상세 보기"
             >
               <div className="activity-icon">
-                <i className={`bi bi-${activity.icon || 'circle'}`}></i>
+                <i className={`bi bi-${activity.icon || 'circle'}`} />
               </div>
               <div className="activity-content">
                 <div className="activity-title">

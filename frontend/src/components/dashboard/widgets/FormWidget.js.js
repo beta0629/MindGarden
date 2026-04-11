@@ -34,7 +34,7 @@ const FormWidget = ({ widget, user }) => {
     }));
   };
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     try {
@@ -42,7 +42,7 @@ const FormWidget = ({ widget, user }) => {
       setError(null);
       setSuccess(false);
       
-      const url = submit.url;
+      const { url } = submit;
       const method = submit.method || 'POST';
       
       let response;

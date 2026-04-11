@@ -50,7 +50,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 /**
      * 상담사 목록 로드 (통합 API 사용, 삭제 제외)
      */
-    const loadConsultants = async () => {
+    const loadConsultants = async() => {
         try {
             setLoading(true);
             const consultantsList = await getAllConsultantsWithStats();
@@ -146,7 +146,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 /**
      * 전문분야 목록 로드
      */
-    const loadSpecialties = async () => {
+    const loadSpecialties = async() => {
         try {
             const response = await apiGet('/api/v1/common-codes?codeGroup=SPECIALTY');
             if (response && Array.isArray(response)) {
@@ -212,7 +212,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 /**
      * 전문분야 추가/수정
      */
-    const handleSaveSpecialty = async () => {
+    const handleSaveSpecialty = async() => {
         if (!selectedConsultant || !newSpecialty.trim()) {
             notificationManager.error('전문분야를 입력해주세요.');
             return;
@@ -253,7 +253,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 /**
      * 전문분야 추가 (공통 코드)
      */
-    const handleAddSpecialty = async () => {
+    const handleAddSpecialty = async() => {
         if (!newSpecialty.trim()) {
             notificationManager.error('전문분야를 입력해주세요.');
             return;

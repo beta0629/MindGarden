@@ -48,7 +48,7 @@ const WellnessNotificationDetail = () => {
     loadNotificationDetail();
   }, [id, isLoggedIn, user, navigate]);
 
-  const loadNotificationDetail = async () => {
+  const loadNotificationDetail = async() => {
     try {
       setLoading(true);
       setError(null);

@@ -52,7 +52,7 @@ const ProfileDropdown = ({ onLogout }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const target = event.target;
+      const { target } = event;
       if (
         dropdownRef.current && !dropdownRef.current.contains(target) &&
         panelRef.current && !panelRef.current.contains(target)

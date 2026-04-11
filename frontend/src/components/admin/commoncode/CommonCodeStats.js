@@ -23,7 +23,7 @@ const CommonCodeStats = ({ totalCodes, activeCodes, codeGroups }) => {
             <div className="stats-grid">
                 <div className="stat-card total">
                     <div className="stat-icon">
-                        <i className="bi bi-list-ul"></i>
+                        <i className="bi bi-list-ul" />
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{totalCodes}</div>
@@ -33,7 +33,7 @@ const CommonCodeStats = ({ totalCodes, activeCodes, codeGroups }) => {
 
                 <div className="stat-card active">
                     <div className="stat-icon">
-                        <i className="bi bi-check-circle"></i>
+                        <i className="bi bi-check-circle" />
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{activeCodes}</div>
@@ -44,7 +44,7 @@ const CommonCodeStats = ({ totalCodes, activeCodes, codeGroups }) => {
 
                 <div className="stat-card inactive">
                     <div className="stat-icon">
-                        <i className="bi bi-x-circle"></i>
+                        <i className="bi bi-x-circle" />
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{inactiveCodes}</div>
@@ -54,7 +54,7 @@ const CommonCodeStats = ({ totalCodes, activeCodes, codeGroups }) => {
 
                 <div className="stat-card groups">
                     <div className="stat-icon">
-                        <i className="bi bi-collection"></i>
+                        <i className="bi bi-collection" />
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{codeGroups}</div>

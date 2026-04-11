@@ -97,7 +97,7 @@ const FormField = ({
   // Input 타입 (text, number, date, email, password 등)
   const inputProps = {
     ...commonProps,
-    type,
+    type
   };
 
   if (type === 'number') {

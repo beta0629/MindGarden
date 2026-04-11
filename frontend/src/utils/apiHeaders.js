@@ -12,7 +12,7 @@
  * @param {boolean} forceRefresh 세션 강제 갱신 여부
  * @returns {string|null} tenantId 또는 null
  */
-export const getTenantId = async (forceRefresh = false) => {
+export const getTenantId = async(forceRefresh = false) => {
     try {
         // forceRefresh 시 API 호출 전 한 번 갱신: 맨 처음 checkSession(true) await 후 조회
         if (forceRefresh && typeof window !== 'undefined' && window.sessionManager?.checkSession) {
@@ -231,7 +231,7 @@ export const getDefaultApiHeaders = (additionalHeaders = {}) => {
  * @param {boolean} forceRefresh 세션 강제 갱신 여부
  * @returns {Promise<Object>} 헤더 객체
  */
-export const getDefaultApiHeadersAsync = async (additionalHeaders = {}, forceRefresh = false) => {
+export const getDefaultApiHeadersAsync = async(additionalHeaders = {}, forceRefresh = false) => {
     const token = localStorage.getItem('accessToken');
     const headers = {
         'Content-Type': 'application/json',

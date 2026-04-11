@@ -42,7 +42,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     };
 
     useEffect(() => {
-        const loadStatCards = async () => {
+        const loadStatCards = async() => {
             try {
                 setLoading(true);
                 
@@ -64,7 +64,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.pending,
                         color: color,
-                        bgColor: color + '20',
+                        bgColor: `${color}20`,
                         action: 'payment',
                         status: 'PENDING_PAYMENT'
                     })),
@@ -83,7 +83,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.active,
                         color: color,
-                        bgColor: color + '20',
+                        bgColor: `${color}20`,
                         action: 'view',
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         status: 'ACTIVE'
@@ -99,7 +99,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.paymentConfirmed,
                         color: color,
-                        bgColor: color + '20',
+                        bgColor: `${color}20`,
                         action: 'view',
                         status: 'PAYMENT_CONFIRMED'
                     })),
@@ -125,7 +125,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.terminated,
                         color: color,
-                        bgColor: color + '20',
+                        bgColor: `${color}20`,
                         action: 'view',
                         status: 'TERMINATED'
                     })),
@@ -140,7 +140,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.sessionsExhausted,
                         color: color,
-                        bgColor: color + '20',
+                        bgColor: `${color}20`,
                         action: 'view',
                         status: 'SESSIONS_EXHAUSTED'
                     }))

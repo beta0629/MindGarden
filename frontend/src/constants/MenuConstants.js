@@ -238,7 +238,7 @@ const DEFAULT_MENU_CONFIG = {
 /**
  * @returns {Promise<string[]>} 허용된 메뉴 ID 배열
  */
-export const getAllowedMenuItems = async (businessType, userRole, features = {}) => {
+export const getAllowedMenuItems = async(businessType, userRole, features = {}) => {
   // 캐시에서 조회
   const cachedMenus = getMenuCacheByBusinessType(businessType, userRole);
   if (cachedMenus) {
@@ -274,7 +274,7 @@ export const getAllowedMenuItems = async (businessType, userRole, features = {})
 /**
  * @returns {Promise<boolean>} 접근 권한 여부
  */
-export const hasMenuAccess = async (menuItem, businessType, userRole, features = {}) => {
+export const hasMenuAccess = async(menuItem, businessType, userRole, features = {}) => {
   const allowedMenus = await getAllowedMenuItems(businessType, userRole, features);
   return allowedMenus.includes(menuItem);
 };
@@ -286,7 +286,7 @@ export const hasMenuAccess = async (menuItem, businessType, userRole, features =
 /**
  * @returns {Promise<Object|null>} 메뉴 설정
  */
-export const getMenuConfig = async (menuItem) => {
+export const getMenuConfig = async(menuItem) => {
   // 캐시에서 조회
   const cachedConfig = getMenuConfigFromCache(menuItem);
   if (cachedConfig) {
@@ -504,7 +504,7 @@ const cacheMenuConfig = (menuItem, config) => {
 /**
  * API에서 업종별 허용 메뉴 조회
  */
-const fetchAllowedMenusByBusinessType = async (businessType, userRole, features) => {
+const fetchAllowedMenusByBusinessType = async(businessType, userRole, features) => {
   const response = await apiGet('/api/admin/menus/allowed', {
     businessType,
     userRole,
@@ -521,7 +521,7 @@ const fetchAllowedMenusByBusinessType = async (businessType, userRole, features)
 /**
  * API에서 메뉴 설정 조회
  */
-const fetchMenuConfig = async (menuItem) => {
+const fetchMenuConfig = async(menuItem) => {
   const response = await apiGet(`/api/admin/menus/${menuItem}/config`);
   
   if (response?.success) {

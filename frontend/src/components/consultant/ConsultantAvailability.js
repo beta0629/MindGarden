@@ -30,7 +30,7 @@ const ConsultantAvailability = () => {
   const [loadingCodes, setLoadingCodes] = useState(false);
 
   // 시간 코드 로드
-  const loadDurationCodes = useCallback(async () => {
+  const loadDurationCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await StandardizedApi.get('/api/v1/common-codes/groups/DURATION');
@@ -125,7 +125,7 @@ const ConsultantAvailability = () => {
     }
   }, [isLoggedIn, user?.id, loadDurationCodes]);
 
-  const loadAvailability = async () => {
+  const loadAvailability = async() => {
     try {
       setLoading(true);
       setError(null);
@@ -150,7 +150,7 @@ const ConsultantAvailability = () => {
   };
 
   // 상담 가능 시간 추가
-  const handleAddAvailability = async (formData) => {
+  const handleAddAvailability = async(formData) => {
     try {
       console.log('➕ 상담 가능 시간 추가:', formData);
 
@@ -171,7 +171,7 @@ const ConsultantAvailability = () => {
   };
 
   // 상담 가능 시간 수정
-  const handleEditAvailability = async (id, formData) => {
+  const handleEditAvailability = async(id, formData) => {
     try {
       console.log('✏️ 상담 가능 시간 수정:', id, formData);
 
@@ -192,7 +192,7 @@ const ConsultantAvailability = () => {
   };
 
   // 상담 가능 시간 삭제
-  const handleDeleteAvailability = async (id) => {
+  const handleDeleteAvailability = async(id) => {
     try {
       console.log('🗑️ 상담 가능 시간 삭제:', id);
 
@@ -251,11 +251,11 @@ const ConsultantAvailability = () => {
   const headerActions = (
     <>
       <MGButton variant="primary" onClick={() => setShowAddModal(true)} preventDoubleClick={false}>
-        <i className="bi bi-plus-circle"></i>
+        <i className="bi bi-plus-circle" />
         상담 가능 시간 추가
       </MGButton>
       <MGButton variant="outline" onClick={loadAvailability} preventDoubleClick={false}>
-        <i className="bi bi-arrow-clockwise"></i>
+        <i className="bi bi-arrow-clockwise" />
         새로고침
       </MGButton>
     </>
@@ -275,7 +275,7 @@ const ConsultantAvailability = () => {
           {pageShell(
             <div className="consultant-availability-error-container">
               <div className="consultant-availability-error-box consultant-availability-error-box--login">
-                <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
+                <i className="bi bi-exclamation-triangle consultant-availability-error-icon" />
                 <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
                 <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
                 <MGButton
@@ -283,7 +283,7 @@ const ConsultantAvailability = () => {
                   onClick={() => { redirectToLoginPageOnce(); }}
                   preventDoubleClick={false}
                 >
-                  <i className="bi bi-box-arrow-in-right"></i>
+                  <i className="bi bi-box-arrow-in-right" />
                   로그인하기
                 </MGButton>
               </div>
@@ -299,14 +299,14 @@ const ConsultantAvailability = () => {
           {pageShell(
             <div className="consultant-availability-error-container">
               <div className="consultant-availability-error-box consultant-availability-error-box--permission">
-                <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
+                <i className="bi bi-shield-exclamation consultant-availability-error-icon" />
                 <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
                 <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
                 <p className="consultant-availability-error-detail">
                   현재 사용자 역할: {userRole || '없음'}
                 </p>
                 <MGButton variant="warning" onClick={() => window.history.back()} preventDoubleClick={false}>
-                  <i className="bi bi-arrow-left"></i>
+                  <i className="bi bi-arrow-left" />
                   이전 페이지로
                 </MGButton>
               </div>
@@ -327,7 +327,7 @@ const ConsultantAvailability = () => {
             {error && (
               <div className="error-container">
                 <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  <i className="bi bi-exclamation-triangle-fill" />
                   {error}
                 </div>
               </div>
@@ -337,7 +337,7 @@ const ConsultantAvailability = () => {
               <div className="availability-content">
                 {availability.length === 0 ? (
                   <div className="empty-state">
-                    <i className="bi bi-clock"></i>
+                    <i className="bi bi-clock" />
                     <h3>설정된 상담 가능 시간이 없습니다</h3>
                     <p>상담 가능한 시간을 추가해보세요.</p>
                   </div>
@@ -371,7 +371,7 @@ const ConsultantAvailability = () => {
                                   onClick={() => setEditingSlot(slot)}
                                   title="수정"
                                 >
-                                  <i className="bi bi-pencil"></i>
+                                  <i className="bi bi-pencil" />
                                 </MGButton>
                                 <MGButton
                                   variant="outline"
@@ -380,13 +380,13 @@ const ConsultantAvailability = () => {
                                   onClick={() => handleDeleteAvailability(slot.id)}
                                   title="삭제"
                                 >
-                                  <i className="bi bi-trash"></i>
+                                  <i className="bi bi-trash" />
                                 </MGButton>
                               </div>
                             </div>
                           )) || (
                             <div className="no-slots">
-                              <i className="bi bi-dash-circle"></i>
+                              <i className="bi bi-dash-circle" />
                               <span>설정된 시간이 없습니다</span>
                             </div>
                           )}
@@ -505,7 +505,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
       actions={(
         <>
           <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-            <i className="bi bi-x-circle"></i>
+            <i className="bi bi-x-circle" />
             취소
           </MGButton>
           <MGButton
@@ -515,7 +515,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             size="medium"
             preventDoubleClick={false}
           >
-            <i className="bi bi-check-circle"></i>
+            <i className="bi bi-check-circle" />
             {initialData ? '수정' : '추가'}
           </MGButton>
         </>

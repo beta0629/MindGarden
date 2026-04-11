@@ -27,7 +27,7 @@ describe('Button Component', () => {
     expect(button).toHaveClass('mg-button--success');
   });
 
-  test('handles click events', async () => {
+  test('handles click events', async() => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
 
@@ -39,7 +39,7 @@ describe('Button Component', () => {
     });
   });
 
-  test('prevents double click when preventDoubleClick is true', async () => {
+  test('prevents double click when preventDoubleClick is true', async() => {
     const handleClick = jest.fn();
     render(
       <Button onClick={handleClick} preventDoubleClick>
@@ -155,7 +155,7 @@ describe('Button Component', () => {
     expect(button).toHaveStyle('background-color: red');
   });
 
-  test('handles async click handlers', async () => {
+  test('handles async click handlers', async() => {
     const asyncHandler = jest.fn().mockResolvedValue();
     render(<Button onClick={asyncHandler}>Async Button</Button>);
 
@@ -167,7 +167,7 @@ describe('Button Component', () => {
     });
   });
 
-  test('handles click handler errors gracefully', async () => {
+  test('handles click handler errors gracefully', async() => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     const errorHandler = jest.fn().mockRejectedValue(new Error('Test error'));
 

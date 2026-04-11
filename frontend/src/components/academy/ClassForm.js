@@ -75,7 +75,7 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);

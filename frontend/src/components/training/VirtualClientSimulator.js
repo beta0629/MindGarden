@@ -31,7 +31,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
         { value: '불안장애', label: '불안장애 내담자' },
         { value: '성격장애', label: '성격장애 내담자' },
         { value: '자살위기', label: '자살 위기 내담자 (고난이도)' },
-        { value: '가족갈등', label: '가족 갈등 내담자' },
+        { value: '가족갈등', label: '가족 갈등 내담자' }
     ];
 
     useEffect(() => {
@@ -45,7 +45,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
     /**
      * 시뮬레이션 시작
      */
-    const startSimulation = async () => {
+    const startSimulation = async() => {
         if (!selectedScenario) {
             notificationManager.warning('시나리오를 선택해주세요.');
             return;
@@ -55,7 +55,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
             const data = await apiPost('/api/v1/training/virtual-client/create', {
                 consultantId,
                 scenarioType: selectedScenario,
-                difficultyLevel,
+                difficultyLevel
             });
 
             if (data && data.success) {
@@ -67,7 +67,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
                 setMessages([{
                     role: 'client',
                     message: openingMessage,
-                    timestamp: new Date().toLocaleTimeString('ko-KR'),
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
                 }]);
             }
 
@@ -80,14 +80,14 @@ const VirtualClientSimulator = ({ consultantId }) => {
     /**
      * 메시지 전송
      */
-    const sendMessage = async () => {
+    const sendMessage = async() => {
         if (!currentMessage.trim() || !session) return;
 
         // 상담사 메시지 추가
         const counselorMsg = {
             role: 'counselor',
             message: currentMessage,
-            timestamp: new Date().toLocaleTimeString('ko-KR'),
+            timestamp: new Date().toLocaleTimeString('ko-KR')
         };
 
         setMessages(prev => [...prev, counselorMsg]);
@@ -106,7 +106,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
                     setMessages(prev => [...prev, {
                         role: 'client',
                         message: data.clientResponse,
-                        timestamp: new Date().toLocaleTimeString('ko-KR'),
+                        timestamp: new Date().toLocaleTimeString('ko-KR')
                     }]);
                     setIsTyping(false);
                 }, 1000);
@@ -121,7 +121,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
     /**
      * 세션 종료
      */
-    const endSession = async () => {
+    const endSession = async() => {
         if (!session) return;
 
         try {
@@ -236,9 +236,9 @@ const VirtualClientSimulator = ({ consultantId }) => {
                         {isTyping && (
                             <div className="chat-message client typing">
                                 <div className="typing-indicator">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                    <span />
+                                    <span />
+                                    <span />
                                 </div>
                             </div>
                         )}

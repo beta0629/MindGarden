@@ -4,10 +4,10 @@
  * 테마 설정과 기타 사용자 설정을 관리하는 페이지
  */
 
-import {useState, useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import {useTheme} from '../../hooks/useTheme';
+import { useTheme } from '../../hooks/useTheme';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../common/MGButton';
 import Card from '../ui/Card/Card';
@@ -18,48 +18,48 @@ import ThemeSelector from '../ui/ThemeSelector/ThemeSelector';
 import SafeText from '../common/SafeText';
 import './UserSettings.css';
 
-const UserSettings = ({user, onSettingsUpdate}) => {const {
+const UserSettings = ({ user, onSettingsUpdate }) => {const {
     currentTheme,
     changeToTheme,
     applyCustomTheme,
     resetToDefault,
     isLoading,
     error,
-    themeColors} = useTheme();
+    themeColors } = useTheme();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('theme');
   const [showThemeSelector, setShowThemeSelector] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState({emailNotifications: true,
+  const [notificationSettings, setNotificationSettings] = useState({ emailNotifications: true,
     pushNotifications: true,
     smsNotifications: false,
-    marketingEmails: false});
+    marketingEmails: false });
 
   // 사용자 정보가 변경되면 설정 업데이트
   useEffect(() => {if (user) {// 알림 설정 로드 (실제로는 API에서 가져와야 함)
-      setNotificationSettings({emailNotifications: user.emailNotifications ?? true,
+      setNotificationSettings({ emailNotifications: user.emailNotifications ?? true,
         pushNotifications: user.pushNotifications ?? true,
         smsNotifications: user.smsNotifications ?? false,
-        marketingEmails: user.marketingEmails ?? false});}}, [user]);
+        marketingEmails: user.marketingEmails ?? false });}}, [user]);
 
   // 테마 변경 핸들러
   const handleThemeChange = async(newTheme) => {try {const result = await changeToTheme(newTheme.type);
-      if (result.success) {onSettingsUpdate?.({theme: newTheme});
+      if (result.success) {onSettingsUpdate?.({ theme: newTheme });
         setShowThemeSelector(false);}} catch (err) {console.error('테마 변경 실패:', err);}};
 
   // 커스텀 테마 적용 핸들러
   const handleCustomThemeApply = async(baseThemeType, customColors) => {try {const result = await applyCustomTheme(baseThemeType, customColors);
-      if (result.success) {onSettingsUpdate?.({theme: result.theme});
+      if (result.success) {onSettingsUpdate?.({ theme: result.theme });
         setShowThemeSelector(false);}} catch (err) {console.error('커스텀 테마 적용 실패:', err);}};
 
   // 테마 초기화 핸들러
   const handleThemeReset = async() => {try {const result = await resetToDefault();
-      if (result.success) {onSettingsUpdate?.({theme: result.theme});}} catch (err) {console.error('테마 초기화 실패:', err);}};
+      if (result.success) {onSettingsUpdate?.({ theme: result.theme });}} catch (err) {console.error('테마 초기화 실패:', err);}};
 
   // 알림 설정 변경 핸들러
-  const handleNotificationChange = (setting, value) => {const newSettings = {...notificationSettings, [setting]: value};
+  const handleNotificationChange = (setting, value) => {const newSettings = { ...notificationSettings, [setting]: value };
     setNotificationSettings(newSettings);
-    onSettingsUpdate?.({notifications: newSettings});};
+    onSettingsUpdate?.({ notifications: newSettings });};
 
   // 탭 렌더링
   const renderTabContent = () => {switch (activeTab) {case 'theme':

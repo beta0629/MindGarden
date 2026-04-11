@@ -59,7 +59,7 @@ const ClientSelector = ({
 /**
      * 모든 내담자의 매핑 정보를 일괄 로드
      */
-    const loadAllClientMappings = useCallback(async (clientsList) => {
+    const loadAllClientMappings = useCallback(async(clientsList) => {
         if (!selectedConsultant) return;
         
         try {
@@ -70,7 +70,7 @@ const ClientSelector = ({
             const response = await fetch(`/api/v1/admin/mappings/consultant/${consultantId}/clients`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -165,7 +165,7 @@ const ClientSelector = ({
 /**
      * 개별 내담자 매핑 정보 로드 (필요시에만 사용)
      */
-    const loadClientMapping = useCallback(async (client) => {
+    const loadClientMapping = useCallback(async(client) => {
         const clientId = client.originalId || client.id;
         
         if (clientMappings[clientId] || loadingMappings[clientId]) {
@@ -202,7 +202,7 @@ const ClientSelector = ({
 /**
      * 내담자 상담 히스토리 조회
      */
-    const loadClientHistory = async (client) => {
+    const loadClientHistory = async(client) => {
         const clientId = client.originalId || client.id;
         const displayId = client.id; // 표시용 ID (client-34-22 형태)
         
@@ -232,7 +232,7 @@ const ClientSelector = ({
 /**
      * 내담자와 상담사 간의 매핑 확인
      */
-    const getClientMappingInfo = async (client) => {
+    const getClientMappingInfo = async(client) => {
         const API_ENDPOINTS = {
             CHECK_MAPPING: '/api/v1/schedules/client/mapping/check'
         };
@@ -322,7 +322,7 @@ const ClientSelector = ({
 /**
      * 내담자 카드 클릭 핸들러
      */
-    const handleClientClick = async (client) => {
+    const handleClientClick = async(client) => {
         const MESSAGES = {
             NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
             NO_SESSIONS: '남은 세션이 없는 내담자입니다.'

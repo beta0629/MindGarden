@@ -59,7 +59,7 @@ const AccountIntegrationModal = ({
         }));
     };
 
-    const handleSendVerificationCode = async () => {
+    const handleSendVerificationCode = async() => {
         if (!formData.existingEmail) {
             notificationManager.showToast('이메일을 입력해주세요.', 'error');
             return;
@@ -87,7 +87,7 @@ const AccountIntegrationModal = ({
         }
     };
 
-    const handleVerifyCode = async () => {
+    const handleVerifyCode = async() => {
         if (!formData.verificationCode) {
             notificationManager.showToast('인증 코드를 입력해주세요.', 'error');
             return;
@@ -114,7 +114,7 @@ const AccountIntegrationModal = ({
         }
     };
 
-    const handleIntegrateAccounts = async () => {
+    const handleIntegrateAccounts = async() => {
         if (!formData.existingPassword) {
             notificationManager.showToast('기존 계정 비밀번호를 입력해주세요.', 'error');
             return;

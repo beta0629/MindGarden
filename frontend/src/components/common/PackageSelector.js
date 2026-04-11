@@ -31,7 +31,7 @@ const PackageSelector = ({
         loadPackageOptions();
     }, []);
 
-    const loadPackageOptions = async () => {
+    const loadPackageOptions = async() => {
         try {
             setLoading(true);
             // 표준화된 API 사용 (하위 호환성 유지)

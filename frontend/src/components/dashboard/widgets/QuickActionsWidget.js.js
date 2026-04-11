@@ -126,7 +126,7 @@ const QuickActionsWidget = ({ widget, user }) => {
                 >
                   {action.icon && (
                     typeof action.icon === 'string' ? (
-                      <i className={`bi ${action.icon}`}></i>
+                      <i className={`bi ${action.icon}`} />
                     ) : (
                       action.icon
                     )

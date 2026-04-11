@@ -51,9 +51,9 @@ const BranchLogin = () => {
 /**
    * 지점 목록 조회
    */
-  const loadBranches = async () => {
+  const loadBranches = async() => {
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH + '/branches', {
+      const response = await fetch(`${API_ENDPOINTS.AUTH}/branches`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -75,7 +75,7 @@ const BranchLogin = () => {
 /**
    * 지점별 로그인
    */
-  const handleBranchLogin = async (e) => {
+  const handleBranchLogin = async(e) => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
@@ -100,7 +100,7 @@ const BranchLogin = () => {
 
       console.log('🏢 지점별 로그인 요청:', loginData);
 
-      const response = await csrfTokenManager.post(API_ENDPOINTS.AUTH + '/branch-login', loginData);
+      const response = await csrfTokenManager.post(`${API_ENDPOINTS.AUTH}/branch-login`, loginData);
 
       const result = await response.json();
 

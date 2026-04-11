@@ -34,7 +34,7 @@ export const WIDGET_CLASSES = {
   WIDGET_LOADING: 'mg-widget--loading',
   WIDGET_ERROR: 'mg-widget--error',
   WIDGET_SUCCESS: 'mg-widget--success',
-  WIDGET_WARNING: 'mg-widget--warning',
+  WIDGET_WARNING: 'mg-widget--warning'
 };
 
 // ===== 통계 위젯 클래스 =====
@@ -60,7 +60,7 @@ export const STATS_WIDGET_CLASSES = {
   STATS_SUCCESS: 'mg-stats--success',
   STATS_WARNING: 'mg-stats--warning',
   STATS_ERROR: 'mg-stats--error',
-  STATS_INFO: 'mg-stats--info',
+  STATS_INFO: 'mg-stats--info'
 };
 
 // ===== 시스템 오버뷰 위젯 클래스 =====
@@ -79,7 +79,7 @@ export const SYSTEM_WIDGET_CLASSES = {
   // 시스템 상태
   METRIC_HEALTHY: 'mg-metric--healthy',
   METRIC_WARNING: 'mg-metric--warning',
-  METRIC_ERROR: 'mg-metric--error',
+  METRIC_ERROR: 'mg-metric--error'
 };
 
 // ===== 빠른 작업 위젯 클래스 =====
@@ -96,7 +96,7 @@ export const QUICK_ACTIONS_CLASSES = {
   // 액션 상태
   ACTION_PRIMARY: 'mg-quick-action--primary',
   ACTION_SECONDARY: 'mg-quick-action--secondary',
-  ACTION_DISABLED: 'mg-quick-action--disabled',
+  ACTION_DISABLED: 'mg-quick-action--disabled'
 };
 
 // ===== 공통 유틸리티 클래스 =====
@@ -119,7 +119,7 @@ export const UTILITY_CLASSES = {
   // 애니메이션
   FADE_IN: 'mg-fade-in',
   SLIDE_UP: 'mg-slide-up',
-  BOUNCE_IN: 'mg-bounce-in',
+  BOUNCE_IN: 'mg-bounce-in'
 };
 
 // ===== 반응형 클래스 =====
@@ -134,7 +134,7 @@ export const RESPONSIVE_CLASSES = {
   
   // 데스크톱
   DESKTOP_ONLY: 'mg-desktop-only',
-  DESKTOP_HIDDEN: 'mg-desktop-hidden',
+  DESKTOP_HIDDEN: 'mg-desktop-hidden'
 };
 
 // ===== 클래스 조합 헬퍼 함수 =====
@@ -154,7 +154,7 @@ export const getStatusClass = (status, baseClass) => {
     warning: `${baseClass}--warning`,
     error: `${baseClass}--error`,
     info: `${baseClass}--info`,
-    loading: `${baseClass}--loading`,
+    loading: `${baseClass}--loading`
   };
   return statusMap[status] || baseClass;
 };
@@ -165,7 +165,7 @@ export const getSizeClass = (size, baseClass) => {
     sm: `${baseClass}--sm`,
     md: `${baseClass}--md`,
     lg: `${baseClass}--lg`,
-    xl: `${baseClass}--xl`,
+    xl: `${baseClass}--xl`
   };
   return sizeMap[size] || baseClass;
 };

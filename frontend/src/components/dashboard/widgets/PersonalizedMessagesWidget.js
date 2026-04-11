@@ -73,7 +73,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
   });
 
   useEffect(() => {
-    const loadClientStatus = async () => {
+    const loadClientStatus = async() => {
       if (!user?.id) return;
       
       try {
@@ -373,7 +373,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
                 </div>
                 {message.action && (
                   <div className="message-arrow">
-                    <i className="bi bi-chevron-right"></i>
+                    <i className="bi bi-chevron-right" />
                   </div>
                 )}
               </div>

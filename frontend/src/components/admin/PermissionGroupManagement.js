@@ -65,7 +65,7 @@ const PermissionGroupManagement = () => {
 /**
      * 역할 목록 조회
      */
-    const fetchRoles = async () => {
+    const fetchRoles = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -93,7 +93,7 @@ const PermissionGroupManagement = () => {
 /**
      * 권한 그룹 목록 조회
      */
-    const fetchPermissionGroups = async () => {
+    const fetchPermissionGroups = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -116,7 +116,7 @@ const PermissionGroupManagement = () => {
 /**
      * 역할의 권한 조회
      */
-    const fetchRolePermissions = async (roleId) => {
+    const fetchRolePermissions = async(roleId) => {
         try {
             setLoading(true);
             setError(null);
@@ -144,7 +144,7 @@ const PermissionGroupManagement = () => {
 /**
      * 권한 그룹 부여
      */
-    const handleGrantPermission = async (groupCode, accessLevel) => {
+    const handleGrantPermission = async(groupCode, accessLevel) => {
         if (!selectedRole) {
             setError('역할을 선택해주세요.');
             return;
@@ -177,7 +177,7 @@ const PermissionGroupManagement = () => {
 /**
      * 권한 그룹 회수
      */
-    const handleRevokePermission = async (groupCode) => {
+    const handleRevokePermission = async(groupCode) => {
         if (!selectedRole) {
             setError('역할을 선택해주세요.');
             return;
@@ -209,7 +209,7 @@ const PermissionGroupManagement = () => {
 /**
      * 권한 그룹 일괄 부여
      */
-    const handleBatchGrant = async (groupCodes, accessLevel) => {
+    const handleBatchGrant = async(groupCodes, accessLevel) => {
         if (!selectedRole) {
             setError('역할을 선택해주세요.');
             return;

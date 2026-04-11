@@ -37,7 +37,7 @@ export const maskEncryptedDisplay = (value, fallback = '—') => {
 /**
  * 코드그룹 메타데이터 로드 (캐시 적용)
  */
-export const loadCodeGroupMetadata = async () => {
+export const loadCodeGroupMetadata = async() => {
     const now = Date.now();
     
     if (groupMetadataCache && (now - lastCacheTime) < CACHE_DURATION) {
@@ -73,7 +73,7 @@ export const loadCodeGroupMetadata = async () => {
 /**
  * 코드그룹 한글명 조회 (동적)
  */
-export const getCodeGroupKoreanName = async (groupName) => {
+export const getCodeGroupKoreanName = async(groupName) => {
     try {
         if (groupMetadataCache) {
             const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
@@ -97,7 +97,7 @@ export const getCodeGroupKoreanName = async (groupName) => {
 /**
  * 코드그룹 아이콘 조회 (동적)
  */
-export const getCodeGroupIcon = async (groupName) => {
+export const getCodeGroupIcon = async(groupName) => {
     try {
         if (groupMetadataCache) {
             const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
@@ -121,7 +121,7 @@ export const getCodeGroupIcon = async (groupName) => {
 /**
  * 코드그룹 색상 조회 (동적)
  */
-export const getCodeGroupColor = async (groupName) => {
+export const getCodeGroupColor = async(groupName) => {
     try {
         if (groupMetadataCache) {
             const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
@@ -176,7 +176,7 @@ export const getStatusColorSync = (codeValue) => {
 /**
  * 상태별 아이콘 조회 (동적)
  */
-export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
+export const getStatusIcon = async(codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
         return 'ClipboardList';
     }
@@ -238,7 +238,7 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
 /**
  * 상태별 색상과 아이콘을 함께 조회 (동적)
  */
-export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
+export const getStatusStyle = async(codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
         return { color: 'var(--mg-color-text-secondary)', icon: 'ClipboardList' };
     }
@@ -265,7 +265,7 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
 /**
  * 상태별 색상 조회 (동적)
  */
-export const getStatusColor = async (codeValue, groupName) => {
+export const getStatusColor = async(codeValue, groupName) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
@@ -344,7 +344,7 @@ export const getStatusColor = async (codeValue, groupName) => {
 /**
  * 코드그룹별 표시 옵션 조회 (색상, 아이콘 등)
  */
-export const getCodeGroupDisplayOptions = async (groupName) => {
+export const getCodeGroupDisplayOptions = async(groupName) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
@@ -395,7 +395,7 @@ export const getCodeGroupIconSync = (groupName) => {
 /**
  * 사용자 상태 한글명 조회 (동적)
  */
-export const getUserStatusKoreanName = async (status) => {
+export const getUserStatusKoreanName = async(status) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/STATUS`);
@@ -461,7 +461,7 @@ export const getUserStatusKoreanNameSync = (status) => {
 /**
  * 사용자 등급 한글명 조회 (동적)
  */
-export const getUserGradeKoreanName = async (grade) => {
+export const getUserGradeKoreanName = async(grade) => {
     try {
         const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
         if (response.success && response.data && response.data.codes) {
@@ -527,7 +527,7 @@ export const getUserGradeKoreanNameSync = (grade) => {
 /**
  * 사용자 등급 아이콘 조회 (동적)
  */
-export const getUserGradeIcon = async (grade) => {
+export const getUserGradeIcon = async(grade) => {
     try {
         const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
         if (response.success && response.data && response.data.codes) {
@@ -593,7 +593,7 @@ export const getUserGradeIconSync = (grade) => {
 /**
  * 매칭 상태 한글명 조회 (동적)
  */
-export const getMappingStatusKoreanName = async (status) => {
+export const getMappingStatusKoreanName = async(status) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/MAPPING_STATUS`);
@@ -714,7 +714,7 @@ export const getSpecialtyKoreanNames = (codes) => {
 /**
  * 공통 코드에서 전문분야 조회
  */
-export const getSpecialtyFromCommonCode = async (codeValue) => {
+export const getSpecialtyFromCommonCode = async(codeValue) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/SPECIALTY`);

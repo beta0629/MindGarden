@@ -80,7 +80,7 @@ const VacationStatistics = ({ className = "" }) => {
 /**
      * 휴가 통계 데이터 로드
      */
-    const loadVacationStats = useCallback(async () => {
+    const loadVacationStats = useCallback(async() => {
         try {
             setLoading(true);
             setError(null);
@@ -89,7 +89,7 @@ const VacationStatistics = ({ className = "" }) => {
             const response = await fetch(`/api/admin/vacation-statistics?period=${selectedPeriod}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });

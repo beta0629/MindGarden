@@ -81,7 +81,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     return `${method}_${timestamp}`;
   };
 
-  const loadPackageCodes = useCallback(async () => {
+  const loadPackageCodes = useCallback(async() => {
     try {
       setLoadingPackageCodes(true);
       const { getTenantCodes } = await import('../../utils/commonCodeApi');
@@ -211,7 +211,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setFilteredClients(filtered);
   }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
-  const loadConsultants = async () => {
+  const loadConsultants = async() => {
     try {
       const list = await getAllConsultantsWithStats();
       if (list?.length) {
@@ -235,7 +235,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
   };
 
-  const loadClients = async () => {
+  const loadClients = async() => {
     try {
       const res = await apiGet('/api/v1/admin/clients/with-mapping-info');
       const arr = res?.clients ?? (Array.isArray(res) ? res : []);
@@ -246,7 +246,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
   };
 
-  const loadMappings = async () => {
+  const loadMappings = async() => {
     try {
       const res = await apiGet('/api/v1/admin/mappings');
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
@@ -256,7 +256,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
   };
 
-  const loadCodeOptions = async () => {
+  const loadCodeOptions = async() => {
     try {
       const { getTenantCodes } = await import('../../utils/commonCodeApi');
       const paymentCodes = await getTenantCodes('PAYMENT_METHOD');
@@ -272,7 +272,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
   };
 
-  const handleCreateMapping = async () => {
+  const handleCreateMapping = async() => {
     if (!selectedConsultant || !selectedClient) {
       notificationManager.warning('상담사와 내담자를 모두 선택해주세요.');
       return;

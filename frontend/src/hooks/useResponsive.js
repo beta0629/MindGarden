@@ -35,7 +35,7 @@ export const useResponsive = () => {
 
     // 브레이크포인트 계산
     useEffect(() => {
-        const width = windowSize.width;
+        const { width } = windowSize;
         
         if (width >= breakpoints.xxl) {
             setBreakpoint('xxl');
@@ -125,7 +125,7 @@ export const useResponsive = () => {
     // 반응형 이미지 소스 생성
     const getResponsiveImageSrc = useCallback((sources) => {
         const sortedBreakpoints = Object.entries(breakpoints)
-            .sort(([,a], [,b]) => b - a);
+            .sort(([, a], [, b]) => b - a);
         
         for (const [bp, width] of sortedBreakpoints) {
             if (windowSize.width >= width && sources[bp]) {

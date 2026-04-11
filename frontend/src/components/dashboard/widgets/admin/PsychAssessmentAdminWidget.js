@@ -154,7 +154,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     setIsDragOver(false);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async() => {
     if (!uploadFiles?.length) {
       notificationManager.show('업로드할 파일을 선택해 주세요.', 'warning');
       return;
@@ -203,7 +203,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     }
   };
 
-  const handleGenerateReport = async (documentId) => {
+  const handleGenerateReport = async(documentId) => {
     if (!documentId) return;
     setGeneratingReportDocumentId(documentId);
     try {
@@ -220,7 +220,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     }
   };
 
-  const handleViewReport = async (documentId) => {
+  const handleViewReport = async(documentId) => {
     if (!documentId) return;
     setReportLoading(true);
     setReportContent(null);
@@ -262,7 +262,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
           type="button"
           variant="outline"
           size="small"
-          onClick={async () => {
+          onClick={async() => {
             setRetryLoading(true);
             try {
               await refresh();

@@ -96,7 +96,7 @@ export const useTenantBranding = (options = {}) => {
     // 2. 테넌트별 확장 색상 시스템 적용
     if (activeBranding.primaryColor) {
       // Primary 색상 기반 파생 색상 생성
-      const primaryColor = activeBranding.primaryColor;
+      const { primaryColor } = activeBranding;
       
       // 밝기 조절된 색상들 (간단한 구현)
       element.style.setProperty('--tenant-primary-light', `${primaryColor}20`); // 20% 투명도

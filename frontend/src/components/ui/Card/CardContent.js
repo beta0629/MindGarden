@@ -1,8 +1,8 @@
 import React from 'react';
 
-const CardContent = ({children, 
+const CardContent = ({ children, 
   className = '',
-  ...props}) => {return (<div
+  ...props }) => {return (<div
       className={`mg-v2-card-content ${className}`.trim()}
       {...props}
     >

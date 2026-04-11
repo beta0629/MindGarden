@@ -27,7 +27,7 @@ const getInitialExpandedKey = (items, pathname) => {
       hasChildren(item) &&
       (pathname === item.to ||
         item.children.some(
-          (sub) => pathname === sub.to || pathname.startsWith(sub.to + '/')
+          (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
         ))
   );
   return group ? group.to : null;
@@ -38,7 +38,7 @@ const sublistId = (prefix, itemTo) =>
 
 const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
   const location = useLocation();
-  const pathname = location.pathname;
+  const { pathname } = location;
 
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
     getInitialExpandedKey(menuItems, pathname)

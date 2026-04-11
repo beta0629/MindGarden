@@ -36,7 +36,7 @@ const PurchaseManagement = () => {
     }
   }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
 
-  const loadData = async (options = {}) => {
+  const loadData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -72,7 +72,7 @@ const PurchaseManagement = () => {
     }
   };
 
-  const loadItems = async () => {
+  const loadItems = async() => {
     try {
       const raw = await StandardizedApi.get(ERP_API.ITEMS);
       const list = normalizeErpListResponse(raw);
@@ -83,7 +83,7 @@ const PurchaseManagement = () => {
     }
   };
 
-  const loadPurchaseRequests = async () => {
+  const loadPurchaseRequests = async() => {
     try {
       const raw = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS);
       const list = normalizeErpListResponse(raw);
@@ -94,7 +94,7 @@ const PurchaseManagement = () => {
     }
   };
 
-  const loadPurchaseOrders = async () => {
+  const loadPurchaseOrders = async() => {
     try {
       const raw = await StandardizedApi.get(ERP_API.PURCHASE_ORDERS);
       const list = normalizeErpListResponse(raw);

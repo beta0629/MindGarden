@@ -55,7 +55,7 @@ const RefundManagement = () => {
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [refundViewMode, setRefundViewMode] = useState('table');
 
-  const loadRefundData = useCallback(async (options = {}) => {
+  const loadRefundData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -111,7 +111,7 @@ const RefundManagement = () => {
   };
 
   const handleReflectErp = useCallback(
-    async (refund) => {
+    async(refund) => {
       const mappingId = refund?.mappingId;
       if (mappingId == null) return;
       try {
@@ -132,7 +132,7 @@ const RefundManagement = () => {
     [loadRefundData]
   );
 
-  const handleBatchReflectErp = useCallback(async () => {
+  const handleBatchReflectErp = useCallback(async() => {
     if (!(Array.isArray(selectedRowIds) && selectedRowIds.length > 0)) {
       notificationManager.show('반영할 건을 선택해 주세요.', 'info');
       return;

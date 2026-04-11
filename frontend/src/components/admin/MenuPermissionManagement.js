@@ -65,7 +65,7 @@ const MenuPermissionManagement = () => {
 /**
      * 역할 목록 조회
      */
-    const fetchRoles = async () => {
+    const fetchRoles = async() => {
         try {
             setLoading(true);
             setError(null);
@@ -93,7 +93,7 @@ const MenuPermissionManagement = () => {
 /**
      * 메뉴 권한 조회
      */
-    const fetchMenuPermissions = async (roleId) => {
+    const fetchMenuPermissions = async(roleId) => {
         try {
             setLoading(true);
             setError(null);
@@ -125,7 +125,7 @@ const MenuPermissionManagement = () => {
 /**
      * 권한 변경
      */
-    const handlePermissionChange = async (menuId, field, value) => {
+    const handlePermissionChange = async(menuId, field, value) => {
         try {
             setError(null);
             
@@ -168,7 +168,7 @@ const MenuPermissionManagement = () => {
 /**
      * 일괄 저장
      */
-    const handleBatchSave = async () => {
+    const handleBatchSave = async() => {
         const confirmed = await new Promise((resolve) => {
             notificationManager.confirm('변경사항을 저장하시겠습니까?', resolve);
         });

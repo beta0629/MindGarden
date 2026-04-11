@@ -47,7 +47,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
     }
   }, [userId]);
   
-  const loadPersonalizedMessages = async () => {
+  const loadPersonalizedMessages = async() => {
     try {
       setLoading(true);
       
@@ -84,7 +84,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
   
   const getIconComponent = (iconName) => {
     // Bootstrap Icons 사용
-    return <i className={`bi bi-${iconName}`}></i>;
+    return <i className={`bi bi-${iconName}`} />;
   };
   
   if (loading && messages.length === 0) {
@@ -124,7 +124,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
                   {message.action && message.action.label && (
                     <div className="personalized-message-action">
                       <SafeText>{message.action.label}</SafeText>{' '}
-                      <i className="bi bi-arrow-right"></i>
+                      <i className="bi bi-arrow-right" />
                     </div>
                   )}
                 </div>
@@ -133,7 +133,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="widget-empty">
-            <i className="bi bi-chat-dots"></i>
+            <i className="bi bi-chat-dots" />
             <p><SafeText>{config.emptyMessage || '맞춤형 메시지가 없습니다'}</SafeText></p>
           </div>
         )}

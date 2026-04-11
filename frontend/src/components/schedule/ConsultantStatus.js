@@ -29,7 +29,7 @@ const ConsultantStatus = () => {
 /**
      * 상담사 목록 로드 (휴가 정보 포함)
      */
-    const loadConsultants = async () => {
+    const loadConsultants = async() => {
         try {
             setLoading(true);
             console.log('👥 상담사 현황 로드 시작');
@@ -44,7 +44,7 @@ const ConsultantStatus = () => {
                 
                 // 상담사별 상태 계산 (실제 스케줄 데이터 기반)
                 const consultantsWithStatus = await Promise.all(
-                    consultantData.map(async (consultant) => ({
+                    consultantData.map(async(consultant) => ({
                         ...consultant,
                         status: await calculateConsultantStatus(consultant)
                     }))
@@ -80,7 +80,7 @@ const ConsultantStatus = () => {
 /**
      * 상담사 상태 계산 (실제 스케줄 데이터 기반)
      */
-    const calculateConsultantStatus = async (consultant) => {
+    const calculateConsultantStatus = async(consultant) => {
         try {
             const today = new Date().toISOString().split('T')[0];
             console.log(`🔍 상담사 ${consultant.name} (ID: ${consultant.id}) 상태 계산 시작`);
@@ -191,7 +191,7 @@ const ConsultantStatus = () => {
             ) : (
                 <div className="consultant-status-grid">
                     {consultants.map((consultant) => {
-                        const status = consultant.status;
+                        const { status } = consultant;
                         return (
                             <div key={consultant.id} className="consultant-status-card">
                                 <Avatar

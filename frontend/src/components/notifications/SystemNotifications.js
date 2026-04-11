@@ -46,7 +46,7 @@ const SystemNotifications = () => {
   };
 
   // 공지 목록 로드
-  const loadNotifications = async (page = 0) => {
+  const loadNotifications = async(page = 0) => {
     if (!isLoggedIn) return;
 
     try {
@@ -66,7 +66,7 @@ const SystemNotifications = () => {
   };
 
   // 공지 상세 보기
-  const handleNotificationClick = async (notification) => {
+  const handleNotificationClick = async(notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
@@ -85,7 +85,7 @@ const SystemNotifications = () => {
   };
 
   // 모달 닫기
-  const closeModal = async () => {
+  const closeModal = async() => {
     setSelectedNotification(null);
     
     // 목록 새로고침 (읽음 상태 반영)

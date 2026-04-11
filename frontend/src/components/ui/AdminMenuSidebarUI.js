@@ -50,10 +50,10 @@ const AdminMenuSidebarUI = ({
                         onClick={() => onToggleMenu(menu.menuCode)}
                     >
                         {menu.icon && (
-                            <i className={`bi bi-${menu.icon} mg-menu-icon`}></i>
+                            <i className={`bi bi-${menu.icon} mg-menu-icon`} />
                         )}
                         <span className="mg-menu-name">{menu.menuName}</span>
-                        <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'} mg-menu-arrow`}></i>
+                        <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'} mg-menu-arrow`} />
                     </div>
                     {isExpanded && (
                         <ul className="mg-submenu">
@@ -71,7 +71,7 @@ const AdminMenuSidebarUI = ({
                         onClick={() => onMenuClick(menu)}
                     >
                         {menu.icon && (
-                            <i className={`bi bi-${menu.icon} mg-menu-icon`}></i>
+                            <i className={`bi bi-${menu.icon} mg-menu-icon`} />
                         )}
                         <span className="mg-menu-name">{menu.menuName}</span>
                     </Link>
@@ -83,7 +83,7 @@ const AdminMenuSidebarUI = ({
     return (
         <aside className="mg-admin-sidebar">
             <div className="mg-sidebar-header">
-                <i className="bi bi-gear-fill mg-header-icon"></i>
+                <i className="bi bi-gear-fill mg-header-icon" />
                 <h2 className="mg-header-title">시스템 관리</h2>
             </div>
 

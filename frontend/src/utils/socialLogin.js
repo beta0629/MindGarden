@@ -32,7 +32,7 @@ let oauth2Config = null;
 /**
  * OAuth2 초기화 (캐시 적용)
  */
-export const initializeOAuth2 = async () => {
+export const initializeOAuth2 = async() => {
   try {
     const config = await cachedApiCall(
       '/api/v1/auth/config/oauth2',
@@ -97,7 +97,7 @@ const generateCodeVerifier = (length = 128) => {
 /**
  * PKCE code challenge 생성 (SHA256)
  */
-const generateCodeChallenge = async (verifier) => {
+const generateCodeChallenge = async(verifier) => {
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
   const digest = await crypto.subtle.digest('SHA-256', data);
@@ -110,7 +110,7 @@ const generateCodeChallenge = async (verifier) => {
 /**
  * 카카오 로그인
  */
-export const kakaoLogin = async () => {
+export const kakaoLogin = async() => {
   try {
     console.log('=== 카카오 로그인 시작 ===');
     
@@ -124,7 +124,7 @@ export const kakaoLogin = async () => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
@@ -149,13 +149,13 @@ export const kakaoLogin = async () => {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           }
         }
       } catch (parseError) {
@@ -199,7 +199,7 @@ export const kakaoLogin = async () => {
 /**
  * 네이버 로그인
  */
-export const naverLogin = async () => {
+export const naverLogin = async() => {
   try {
     console.log('=== 네이버 로그인 시작 ===');
     
@@ -213,7 +213,7 @@ export const naverLogin = async () => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
@@ -235,13 +235,13 @@ export const naverLogin = async () => {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
           }
         }
       } catch (parseError) {
@@ -342,7 +342,7 @@ export const facebookLogin = () => {
 /**
  * OAuth2 콜백 처리
  */
-export const handleOAuthCallback = async (provider, code, state) => {
+export const handleOAuthCallback = async(provider, code, state) => {
   try {
     const savedState = sessionStorage.get('oauth_state');
     if (state !== savedState) {
@@ -410,7 +410,7 @@ export const handleOAuthCallback = async (provider, code, state) => {
 /**
  * 소셜 로그아웃
  */
-export const socialLogout = async () => {
+export const socialLogout = async() => {
   try {
     await authAPI.logout();
     
@@ -432,7 +432,7 @@ export const socialLogout = async () => {
 /**
  * 소셜 계정 연동 상태 확인
  */
-export const checkSocialAccountStatus = async (provider, email) => {
+export const checkSocialAccountStatus = async(provider, email) => {
   try {
     const response = await fetch(`${AUTH_API.SOCIAL_STATUS}?provider=${provider}&email=${email}`);
     const result = await response.json();
@@ -446,7 +446,7 @@ export const checkSocialAccountStatus = async (provider, email) => {
 /**
  * 소셜 계정 연동 해제
  */
-export const unlinkSocialAccount = async (provider, email) => {
+export const unlinkSocialAccount = async(provider, email) => {
   try {
     const response = await fetch(`${AUTH_API.SOCIAL_UNLINK}?provider=${provider}&email=${email}`, {
       method: 'DELETE'

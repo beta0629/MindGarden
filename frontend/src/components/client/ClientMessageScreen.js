@@ -45,7 +45,7 @@ const ClientMessageScreen = () => {
     }
   }, [user, sessionLoading, isLoggedIn, navigate]);
 
-  const loadMessages = async () => {
+  const loadMessages = async() => {
     if (!user || !user.id) {
       console.warn('사용자 정보가 없어 메시지를 로드할 수 없습니다.');
       setLoading(false);
@@ -101,7 +101,7 @@ const ClientMessageScreen = () => {
     }
   };
 
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     setSelectedMessage(message);
     
     // 읽지 않은 메시지인 경우 읽음 처리
@@ -118,7 +118,7 @@ const ClientMessageScreen = () => {
     }
   };
 
-  const handleReply = async () => {
+  const handleReply = async() => {
     if (!replyContent.trim()) {
       notificationManager.show('답장 내용을 입력해주세요.', 'warning');
       return;

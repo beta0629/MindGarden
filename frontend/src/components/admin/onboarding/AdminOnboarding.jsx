@@ -22,7 +22,7 @@ import '../../../styles/main.css';
 const AdminOnboarding = () => {
   const navigate = useNavigate();
   const params = useParams();
-  const id = params.id;
+  const { id } = params;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -55,7 +55,7 @@ const AdminOnboarding = () => {
     }
   };
 
-  const handleApprove = async () => {
+  const handleApprove = async() => {
     if (!window.confirm(ONBOARDING_MESSAGES.CONFIRM_APPROVE)) return;
 
     setIsLoading(true);
@@ -75,7 +75,7 @@ const AdminOnboarding = () => {
     }
   };
 
-  const handleReject = async () => {
+  const handleReject = async() => {
     if (!rejectReason.trim()) {
       alert(ONBOARDING_MESSAGES.REJECT_REASON_REQUIRED);
       return;

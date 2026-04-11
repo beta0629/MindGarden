@@ -160,7 +160,7 @@ export const usePermissions = () => {
     const [roleCodesLoading, setRoleCodesLoading] = useState(true);
 
     useEffect(() => {
-        const loadRoleCodes = async () => {
+        const loadRoleCodes = async() => {
             try {
                 setRoleCodesLoading(true);
                 const codes = await getRoleCodesFromCommonCode();
@@ -181,7 +181,7 @@ export const usePermissions = () => {
 /**
      * @returns {Promise<string>} 한글명
      */
-    const getRoleName = useCallback(async (roleCode) => {
+    const getRoleName = useCallback(async(roleCode) => {
         return await getRoleKoreanName(roleCode);
     }, []);
 

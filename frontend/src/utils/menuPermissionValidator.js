@@ -87,7 +87,7 @@ const MENU_PERMISSIONS = {
 /**
  * @returns {boolean} 접근 권한 여부
  */
-export const hasMenuAccess = async (menuGroup) => {
+export const hasMenuAccess = async(menuGroup) => {
     try {
         const user = sessionManager.getUser();
         if (!user || !user.role) {

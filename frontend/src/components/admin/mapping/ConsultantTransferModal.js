@@ -61,7 +61,7 @@ const ConsultantTransferModal = ({
   }, [isOpen, currentMapping]);
 
   // 상담사 목록 로드
-  const loadConsultants = async () => {
+  const loadConsultants = async() => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
@@ -125,7 +125,7 @@ const ConsultantTransferModal = ({
   };
 
   // 상담사 변경 처리
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -150,7 +150,7 @@ const ConsultantTransferModal = ({
       const response = await fetch('/api/v1/admin/mappings/transfer', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(transferData)
       });

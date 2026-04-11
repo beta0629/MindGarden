@@ -37,7 +37,7 @@ const NavigationMenuWidget = ({ widget, user }) => {
     setActivePath(location.pathname);
   }, [location.pathname]);
   
-  const handleMenuClick = async (menuItem) => {
+  const handleMenuClick = async(menuItem) => {
     if (!menuItem.path || menuItem.path === '준비중') {
       return;
     }
@@ -76,14 +76,14 @@ const NavigationMenuWidget = ({ widget, user }) => {
   
   const isActive = (path) => {
     if (!path) return false;
-    return activePath === path || activePath.startsWith(path + '/');
+    return activePath === path || activePath.startsWith(`${path}/`);
   };
   
   const hasChildren = (item) => {
     return item.children && Array.isArray(item.children) && item.children.length > 0;
   };
   
-  const shouldShowMenuItem = async (item) => {
+  const shouldShowMenuItem = async(item) => {
     // 역할 필터링
     if (item.roles && user?.role) {
       if (!item.roles.includes(user.role)) {
@@ -121,12 +121,12 @@ const NavigationMenuWidget = ({ widget, user }) => {
           }}
         >
           {showIcons && item.icon && (
-            <i className={`navigation-menu-icon ${item.icon}`}></i>
+            <i className={`navigation-menu-icon ${item.icon}`} />
           )}
           <span className="navigation-menu-label"><SafeText>{item.label}</SafeText></span>
           {hasSubItems && (
             <i className={`navigation-menu-arrow ${isExpanded ? 'expanded' : ''}`}>
-              <i className="bi bi-chevron-down"></i>
+              <i className="bi bi-chevron-down" />
             </i>
           )}
           {item.badge && (
@@ -147,7 +147,7 @@ const NavigationMenuWidget = ({ widget, user }) => {
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   
   useEffect(() => {
-    const filterMenus = async () => {
+    const filterMenus = async() => {
       const filtered = [];
       for (const item of menuItems) {
         const shouldShow = await shouldShowMenuItem(item);

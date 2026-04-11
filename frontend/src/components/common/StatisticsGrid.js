@@ -83,7 +83,7 @@ const StatisticsGrid = ({
     return (
       <div className="statistics-grid">
         <div className="statistics-error">
-          <i className="bi bi-exclamation-triangle"></i>
+          <i className="bi bi-exclamation-triangle" />
           <p>통계를 불러오는데 실패했습니다.</p>
         </div>
       </div>

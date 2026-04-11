@@ -89,7 +89,7 @@ const ConsultationLogModal = ({
     setMemoDirty(false);
   }, [client]);
 
-  const loadPriorityCodes = useCallback(async () => {
+  const loadPriorityCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
@@ -170,7 +170,7 @@ const ConsultationLogModal = ({
     { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' }
   ];
 
-  const loadCompletionStatusCodes = useCallback(async () => {
+  const loadCompletionStatusCodes = useCallback(async() => {
     try {
       setLoadingCompletionCodes(true);
       const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
@@ -215,7 +215,7 @@ const ConsultationLogModal = ({
   /**
    * 내담자 맥락 프로필 SSOT — ADMIN/STAFF: consultantId 생략, CONSULTANT: consultantId 필수(백엔드 검증).
    */
-  const fetchClientWithStats = useCallback(async (clientIdNum) => {
+  const fetchClientWithStats = useCallback(async(clientIdNum) => {
     if (clientIdNum == null || Number.isNaN(Number(clientIdNum))) {
       return { payload: null, clientData: null };
     }
@@ -265,7 +265,7 @@ const ConsultationLogModal = ({
     }
   }, [isOpen, scheduleData, recordId]);
 
-  const loadDataByRecordId = async () => {
+  const loadDataByRecordId = async() => {
     if (!recordId || !user?.id) return;
     try {
       setLoading(true);
@@ -378,7 +378,7 @@ const ConsultationLogModal = ({
     }
   };
 
-  const loadData = async () => {
+  const loadData = async() => {
     try {
       setLoading(true);
       setClientWithStats(null);
@@ -505,7 +505,7 @@ const ConsultationLogModal = ({
     setMemoDirty(true);
   };
 
-  const persistClientNotesIfNeeded = async () => {
+  const persistClientNotesIfNeeded = async() => {
     if (!memoDirty || !client?.id) {
       return;
     }
@@ -584,7 +584,7 @@ const ConsultationLogModal = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
@@ -646,7 +646,7 @@ const ConsultationLogModal = ({
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async() => {
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;

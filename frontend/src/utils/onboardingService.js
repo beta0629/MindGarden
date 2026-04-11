@@ -52,7 +52,7 @@ export const parseChecklistJson = (checklistJson, contactPhone) => {
 /**
  * 온보딩 요청 생성
  */
-export const createOnboardingRequest = async (formData) => {
+export const createOnboardingRequest = async(formData) => {
   const requestedBy = getCurrentUserEmail();
   const checklistJson = parseChecklistJson(formData.checklistJson, formData.contactPhone);
 
@@ -71,7 +71,7 @@ export const createOnboardingRequest = async (formData) => {
 /**
  * 온보딩 요청 목록 조회
  */
-export const getOnboardingRequests = async (status = null) => {
+export const getOnboardingRequests = async(status = null) => {
   const params = status ? { status } : {};
   const response = await apiGet(ONBOARDING_API.GET_REQUEST, params);
   
@@ -90,7 +90,7 @@ export const getOnboardingRequests = async (status = null) => {
 /**
  * 온보딩 요청 상세 조회
  */
-export const getOnboardingRequestDetail = async (id) => {
+export const getOnboardingRequestDetail = async(id) => {
   const response = await apiGet(`${ONBOARDING_API.GET_REQUEST_BY_ID}/${id}`);
   
   // { success: true, data: {...} } 형식인 경우
@@ -103,7 +103,7 @@ export const getOnboardingRequestDetail = async (id) => {
 /**
  * 루트 업종 카테고리 조회
  */
-export const getRootBusinessCategories = async () => {
+export const getRootBusinessCategories = async() => {
   try {
     const response = await apiGet(BUSINESS_CATEGORY_API.ROOT);
     
@@ -123,7 +123,7 @@ export const getRootBusinessCategories = async () => {
 /**
  * 업종 카테고리 아이템 조회
  */
-export const getBusinessCategoryItems = async (categoryId = null) => {
+export const getBusinessCategoryItems = async(categoryId = null) => {
   try {
     const params = categoryId ? { categoryId } : {};
     const response = await apiGet(BUSINESS_CATEGORY_API.ITEMS, params);
@@ -144,7 +144,7 @@ export const getBusinessCategoryItems = async (categoryId = null) => {
 /**
  * 공통 코드 조회 (코드 그룹별)
  */
-export const getCommonCodesByGroup = async (codeGroup) => {
+export const getCommonCodesByGroup = async(codeGroup) => {
   try {
     // 표준 API 사용
     const response = await apiGet(`${COMMON_CODE_API.BY_GROUP}?codeGroup=${codeGroup}`);
@@ -174,14 +174,14 @@ export const getCommonCodesByGroup = async (codeGroup) => {
 /**
  * 위험도 코드 목록 조회
  */
-export const getRiskLevelCodes = async () => {
+export const getRiskLevelCodes = async() => {
   return await getCommonCodesByGroup(CODE_GROUPS.RISK_LEVEL);
 };
 
 /**
  * 온보딩 상태 코드 목록 조회
  */
-export const getOnboardingStatusCodes = async () => {
+export const getOnboardingStatusCodes = async() => {
   return await getCommonCodesByGroup(CODE_GROUPS.ONBOARDING_STATUS);
 };
 

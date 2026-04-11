@@ -35,7 +35,7 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30분
 /**
  * @returns {Promise<Object>} 브랜딩 정보
  */
-export const getBrandingInfo = async (useCache = true) => {
+export const getBrandingInfo = async(useCache = true) => {
   // 개발 중 강제 기본 브랜딩 적용
   if (FORCE_DEFAULT_BRANDING) {
     console.warn('🎨 강제 기본 CoreSolution 브랜딩 적용');
@@ -251,7 +251,7 @@ export const getLogoAlt = (brandingInfo) => {
 /**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
-export const updateBrandingInfo = async (updateData) => {
+export const updateBrandingInfo = async(updateData) => {
   try {
     console.debug('브랜딩 정보 업데이트 요청:', updateData);
     
@@ -297,7 +297,7 @@ export const updateBrandingInfo = async (updateData) => {
 /**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
-export const uploadLogo = async (logoFile) => {
+export const uploadLogo = async(logoFile) => {
   try {
     console.debug('로고 업로드 요청:', logoFile.name, logoFile.size);
     
@@ -343,7 +343,7 @@ export const uploadLogo = async (logoFile) => {
 /**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
-export const uploadFavicon = async (faviconFile) => {
+export const uploadFavicon = async(faviconFile) => {
   try {
     console.debug('파비콘 업로드 요청:', faviconFile.name, faviconFile.size);
     
@@ -387,7 +387,7 @@ export const uploadFavicon = async (faviconFile) => {
 /**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
-export const deleteLogo = async () => {
+export const deleteLogo = async() => {
   try {
     console.debug('로고 삭제 요청');
     
@@ -427,7 +427,7 @@ export const deleteLogo = async () => {
 /**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
-export const deleteFavicon = async () => {
+export const deleteFavicon = async() => {
   try {
     console.debug('파비콘 삭제 요청');
     

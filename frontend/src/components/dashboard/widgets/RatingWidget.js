@@ -60,7 +60,7 @@ const RatingWidget = ({ widget, user }) => {
           onMouseEnter={() => interactive && onStarHover && onStarHover(i)}
           onMouseLeave={() => interactive && onStarHover && onStarHover(0)}
         >
-          <i className={`bi bi-star${filled ? '-fill' : ''}`}></i>
+          <i className={`bi bi-star${filled ? '-fill' : ''}`} />
         </span>
       );
     }
@@ -69,7 +69,7 @@ const RatingWidget = ({ widget, user }) => {
   };
 
   // 사용자 평점 제출
-  const handleRatingSubmit = async (rating) => {
+  const handleRatingSubmit = async(rating) => {
     if (!config.submitUrl || submitting) return;
 
     setSubmitting(true);
@@ -77,7 +77,7 @@ const RatingWidget = ({ widget, user }) => {
       const response = await fetch(config.submitUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -137,7 +137,7 @@ const RatingWidget = ({ widget, user }) => {
                   <div 
                     className="distribution-fill"
                     style={{ width: `${(item.count / count) * 100}%` }}
-                  ></div>
+                   />
                 </div>
                 <span className="distribution-count">
                   {item.count}

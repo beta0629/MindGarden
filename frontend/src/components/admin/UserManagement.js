@@ -41,7 +41,7 @@ const UserManagement = ({ onUpdate }) => {
     const [roleSubmitting, setRoleSubmitting] = useState(false);
 
     // 역할 코드 로드
-    const loadRoleCodes = useCallback(async () => {
+    const loadRoleCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
             // 표준 API 사용: /api/v1/common-codes?codeGroup=ROLE
@@ -82,7 +82,7 @@ const UserManagement = ({ onUpdate }) => {
         }
     }, []);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async() => {
         setLoading(true);
         try {
             const [usersRes, rolesRes] = await Promise.all([
@@ -143,7 +143,7 @@ const UserManagement = ({ onUpdate }) => {
         setFilteredUsers(filtered);
     }, [users, selectedRole, searchTerm, includeInactive]);
 
-    const handleRoleChange = async (e) => {
+    const handleRoleChange = async(e) => {
         e.preventDefault();
         
         // 내담자→상담사 변경 시 확인 메시지 (표준화 2025-12-05: 상수 활용)

@@ -6,11 +6,11 @@
 
 import PropTypes from 'prop-types';
 
-import {ICONS, ICON_SIZES, ICON_COLORS, ICON_COLORS_BY_ROLE} from '../../../constants/icons';
-import {LAYOUT_SYSTEM} from '../../../constants/layout';
+import { ICONS, ICON_SIZES, ICON_COLORS, ICON_COLORS_BY_ROLE } from '../../../constants/icons';
+import { LAYOUT_SYSTEM } from '../../../constants/layout';
 import './Icon.css';
 
-const Icon = ({name,
+const Icon = ({ name,
   size = 'MD',
   color = 'PRIMARY',
   userRole = null,
@@ -19,7 +19,7 @@ const Icon = ({name,
   onClick,
   disabled = false,
   loading = false,
-  ...props}) => {// 아이콘 컴포넌트 가져오기
+  ...props }) => {// 아이콘 컴포넌트 가져오기
   const IconComponent = ICONS[name];
   
   if (!IconComponent) {console.warn(`Icon '${name}' not found in ICONS registry`);
@@ -80,7 +80,7 @@ const Icon = ({name,
         />)}
     </span>);};
 
-Icon.propTypes = {/** 아이콘 이름 (ICONS 객체의 키) */
+Icon.propTypes = { /** 아이콘 이름 (ICONS 객체의 키) */
   name: PropTypes.string.isRequired,
   
   /** 아이콘 크기 */
@@ -108,15 +108,15 @@ Icon.propTypes = {/** 아이콘 이름 (ICONS 객체의 키) */
   loading: PropTypes.bool,
   
   /** 접근성 라벨 */
-  'aria-label': PropTypes.string};
+  'aria-label': PropTypes.string };
 
-Icon.defaultProps = {size: 'MD',
+Icon.defaultProps = { size: 'MD',
   color: 'PRIMARY',
   userRole: null,
   variant: 'default',
   className: '',
   onClick: null,
   disabled: false,
-  loading: false};
+  loading: false };
 
 export default Icon;

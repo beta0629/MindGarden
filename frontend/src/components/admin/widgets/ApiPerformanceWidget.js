@@ -40,7 +40,7 @@ const ApiPerformanceWidget = ({
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }}></div>
+        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
         </span>
@@ -57,7 +57,7 @@ const ApiPerformanceWidget = ({
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }}></div>
+        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
         </span>
@@ -74,7 +74,7 @@ const ApiPerformanceWidget = ({
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }}></div>
+        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
           전체 캐시 히트율
         </span>
@@ -91,7 +91,7 @@ const ApiPerformanceWidget = ({
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }}></div>
+        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
         </span>

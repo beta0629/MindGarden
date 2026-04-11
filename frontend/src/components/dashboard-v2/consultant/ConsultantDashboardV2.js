@@ -59,7 +59,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     fetchDashboardData();
   }, [user]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async() => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -385,7 +385,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     return { dateStr, weekday, timeStr };
   };
 
-  const fetchPhase1Content = async (consultantId) => {
+  const fetchPhase1Content = async(consultantId) => {
     if (!consultantId) return;
 
     try {
@@ -482,7 +482,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     if (loading) {
       return (
         <div className="empty-state">
-          <div className="mg-v2-spinner"></div>
+          <div className="mg-v2-spinner" />
           <span className="empty-state-text">일정을 불러오는 중...</span>
         </div>
       );
@@ -528,7 +528,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     if (loading) {
       return (
         <div className="empty-state">
-          <div className="mg-v2-spinner"></div>
+          <div className="mg-v2-spinner" />
           <span className="empty-state-text">일정을 불러오는 중...</span>
         </div>
       );
@@ -785,7 +785,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                           className={`chart-bar ${isLatestWeek ? 'active' : ''}`}
                           style={{ height: `${Math.max(heightPercent, 4)}%` }}
                           title={`${stat.label}: ${stat.count}건`}
-                        ></div>
+                         />
                         <span className="chart-label">{stat.label}</span>
                       </div>
                     );

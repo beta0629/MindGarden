@@ -78,7 +78,7 @@ const AdminCommonLayout = ({
     [menuItems]
   );
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(async() => {
     try {
       if (onLogout) {
         await onLogout();

@@ -279,7 +279,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
               type="button"
               onClick={handleViewAll}
             >
-              <i className="bi bi-arrow-right"></i>
+              <i className="bi bi-arrow-right" />
               전체보기
             </MGButton>
           )}
@@ -295,7 +295,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
                 data-type={activity.type}
               >
                 <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_ICON}>
-                  <i className={`bi ${getActivityIcon(activity.type)}`}></i>
+                  <i className={`bi ${getActivityIcon(activity.type)}`} />
                 </div>
                 <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_CONTENT}>
                   <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TITLE}>
@@ -309,7 +309,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
             ))
           ) : (
             <div className="no-activities">
-              <i className="bi bi-inbox"></i>
+              <i className="bi bi-inbox" />
               <p>최근 활동이 없습니다</p>
             </div>
           )}

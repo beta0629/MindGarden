@@ -77,7 +77,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const isEditMode = !!dashboard;
 
   // 테넌트 정보 및 역할 목록 로드
-  const loadTenantRoles = useCallback(async () => {
+  const loadTenantRoles = useCallback(async() => {
     setLoadingRoles(true);
     try {
       const user = sessionManager.getUser();
@@ -218,7 +218,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   }, [isEditMode, businessType]);
 
   // 역할 템플릿 목록 로드
-  const loadRoleTemplates = useCallback(async () => {
+  const loadRoleTemplates = useCallback(async() => {
     setLoadingTemplates(true);
     try {
       const user = sessionManager.getUser();
@@ -253,7 +253,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   }, [businessType]);
 
   // 역할 추가 (템플릿 기반, 이름 커스터마이징 가능)
-  const handleAddRole = async () => {
+  const handleAddRole = async() => {
     if (!selectedTemplateId) {
       notificationManager.show('템플릿을 선택해주세요.', 'warning');
       return;
@@ -321,7 +321,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   };
 
   // 역할 제거
-  const handleDeleteRole = async (tenantRoleId, roleName) => {
+  const handleDeleteRole = async(tenantRoleId, roleName) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(`"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`, resolve);
     });
@@ -446,7 +446,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   }, [formData.dashboardConfig]);
 
   // 역할별 기본 위젯 설정 가져오기 (메타 시스템 우선 사용)
-  const getDefaultWidgetsForRole = async (role) => {
+  const getDefaultWidgetsForRole = async(role) => {
     console.log('🔍 역할별 기본 위젯 설정 가져오기:', {
       roleName: role.nameKo || role.name,
       templateCode: role.templateCode,
@@ -532,14 +532,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 학생: 일정, 알림
       defaultConfig.widgets = [
         {
-          id: 'schedule-' + Date.now(),
+          id: `schedule-${Date.now()}`,
           type: 'schedule',
           title: '내 일정',
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
-          id: 'notification-' + Date.now(),
+          id: `notification-${Date.now()}`,
           type: 'notification',
           title: '알림',
           position: { x: 2, y: 0 },
@@ -550,14 +550,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 선생님: 일정, 통계
       defaultConfig.widgets = [
         {
-          id: 'schedule-' + Date.now(),
+          id: `schedule-${Date.now()}`,
           type: 'schedule',
           title: '일정',
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
-          id: 'summary-statistics-' + Date.now(),
+          id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
           title: '통계',
           position: { x: 2, y: 0 },
@@ -568,21 +568,21 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 관리자: 환영, 통계, 활동 목록
       defaultConfig.widgets = [
         {
-          id: 'welcome-' + Date.now(),
+          id: `welcome-${Date.now()}`,
           type: 'welcome',
           title: '환영합니다',
           position: { x: 0, y: 0 },
           size: { width: 3, height: 1 }
         },
         {
-          id: 'summary-statistics-' + Date.now(),
+          id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
           title: '통계 요약',
           position: { x: 0, y: 1 },
           size: { width: 3, height: 1 }
         },
         {
-          id: 'activity-list-' + Date.now(),
+          id: `activity-list-${Date.now()}`,
           type: 'activity-list',
           title: '최근 활동',
           position: { x: 0, y: 2 },
@@ -593,14 +593,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 기본: 환영, 통계
       defaultConfig.widgets = [
         {
-          id: 'welcome-' + Date.now(),
+          id: `welcome-${Date.now()}`,
           type: 'welcome',
           title: '환영합니다',
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
-          id: 'summary-statistics-' + Date.now(),
+          id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
           title: '통계',
           position: { x: 2, y: 0 },
@@ -626,9 +626,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         if (selectedRole) {
           // 즉시 대시보드 이름과 타입 설정 (비동기 위젯 로드 전에)
           newData.dashboardType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name || 'DEFAULT';
-          newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+          newData.dashboardNameKo = `${selectedRole.nameKo || selectedRole.name || ''} 대시보드`;
           newData.dashboardName = newData.dashboardNameKo;
-          newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
+          newData.dashboardNameEn = `${selectedRole.nameEn || selectedRole.name || ''} Dashboard`;
           
           // 메타 시스템: RoleTemplate의 default_widgets_json 사용
           getDefaultWidgetsForRole(selectedRole).then(defaultConfig => {
@@ -705,7 +705,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     console.log('📝 위젯 설정 업데이트:', {
       위젯수: newWidgets.length,
       설정길이: configString.length,
-      설정미리보기: configString.substring(0, 100) + '...'
+      설정미리보기: `${configString.substring(0, 100)}...`
     });
     
     setParsedConfig(updatedConfig);
@@ -826,7 +826,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (formData.tenantRoleId) {
         const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
         if (selectedRole) {
-          const autoName = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+          const autoName = `${selectedRole.nameKo || selectedRole.name || ''} 대시보드`;
           setFormData(prev => ({
             ...prev,
             dashboardNameKo: autoName,
@@ -868,7 +868,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   };
 
   // 폼 제출 핸들러
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     e.stopPropagation();
     console.log('🔄 대시보드 저장 시작:', { 
@@ -908,7 +908,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       console.log('📋 저장할 dashboardConfig 확인:', {
         원본길이: dashboardConfigValue.length,
         위젯수: parsedConfig?.widgets?.length || 0,
-        미리보기: dashboardConfigValue.substring(0, 200) + '...'
+        미리보기: `${dashboardConfigValue.substring(0, 200)}...`
       });
       
       // 빈 문자열이거나 빈 객체인 경우 기본 구조 생성
@@ -1121,7 +1121,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         type="button"
         variant="primary"
         disabled={loading}
-        onClick={async (e) => {
+        onClick={async(e) => {
           e.preventDefault();
           e.stopPropagation();
           console.log('🔘 저장 버튼 클릭:', {

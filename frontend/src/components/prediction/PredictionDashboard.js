@@ -28,7 +28,7 @@ const PredictionDashboard = ({ clientId }) => {
         }
     }, [clientId]);
 
-    const loadPredictionData = async () => {
+    const loadPredictionData = async() => {
         setIsLoading(true);
         setError(null);
 
@@ -69,7 +69,7 @@ const PredictionDashboard = ({ clientId }) => {
         return (
             <div className={PREDICTION_CSS.DASHBOARD}>
                 <div className={PREDICTION_CSS.LOADING_CONTAINER}>
-                    <div className={PREDICTION_CSS.SPINNER}></div>
+                    <div className={PREDICTION_CSS.SPINNER} />
                     <p>예측 분석 중...</p>
                 </div>
             </div>

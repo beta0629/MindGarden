@@ -55,7 +55,7 @@ const PgConfigurationList = () => {
   
   const tenantId = user?.tenantId || user?.tenant_id;
   
-  const loadConfigurations = useCallback(async () => {
+  const loadConfigurations = useCallback(async() => {
     if (!tenantId) return;
     
     try {
@@ -94,7 +94,7 @@ const PgConfigurationList = () => {
     }
   }, [sessionLoading, isLoggedIn, user, tenantId, loadConfigurations]);
   
-  const handleDelete = async () => {
+  const handleDelete = async() => {
     if (!selectedConfig || !tenantId) return;
     
     try {
@@ -112,7 +112,7 @@ const PgConfigurationList = () => {
     }
   };
   
-  const handleTestConnection = async (configId) => {
+  const handleTestConnection = async(configId) => {
     if (!tenantId) return;
     
     try {

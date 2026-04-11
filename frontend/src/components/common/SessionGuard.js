@@ -81,7 +81,7 @@ const SessionGuard = ({ children }) => {
             return;
         }
         
-        const checkSessionAndRefresh = async () => {
+        const checkSessionAndRefresh = async() => {
             try {
                 checkingRef.current = true;
                 console.log('🔍 [SessionGuard] 페이지 이동 감지 - 세션 체크 시작:', currentPath);
@@ -92,7 +92,7 @@ const SessionGuard = ({ children }) => {
                 
                 if (isLoggedIn && user) {
                     // tenantId 확인
-                    const tenantId = user.tenantId;
+                    const { tenantId } = user;
                     const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
                     
                     // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음

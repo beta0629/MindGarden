@@ -18,7 +18,7 @@ export const TRAINING_API = {
     COMPLETE_SESSION: (sessionId) => `${BASE_PATH}/virtual-client/${sessionId}/complete`,
 
     // 피드백
-    GET_FEEDBACK: (consultantId) => `${BASE_PATH}/feedback/${consultantId}`,
+    GET_FEEDBACK: (consultantId) => `${BASE_PATH}/feedback/${consultantId}`
 };
 
 export default TRAINING_API;

@@ -316,7 +316,7 @@ const ConsultantMessageScreen = () => {
     loadData();
   }, [consultationId]);
 
-  const loadData = async () => {
+  const loadData = async() => {
     try {
       setLoading(true);
       
@@ -375,7 +375,7 @@ const ConsultantMessageScreen = () => {
     }));
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async() => {
     try {
       setSending(true);
       
@@ -486,7 +486,7 @@ const ConsultantMessageScreen = () => {
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담시간</span>
             <span className="mg-v2-text-base mg-font-medium">
-              {consultation.startTime?.split('T')[1]?.slice(0,5)} - {consultation.endTime?.split('T')[1]?.slice(0,5)}
+              {consultation.startTime?.split('T')[1]?.slice(0, 5)} - {consultation.endTime?.split('T')[1]?.slice(0, 5)}
             </span>
           </div>
           <div className="mg-flex mg-flex-col">
@@ -532,7 +532,7 @@ const ConsultantMessageScreen = () => {
               value={messageData.title}
               onChange={handleInputChange}
               placeholder="메시지 제목을 입력하세요"
-              style={{...styles.formInput, ...styles.formInputFocus}}
+              style={{ ...styles.formInput, ...styles.formInputFocus }}
               required
             />
           </div>
@@ -584,7 +584,7 @@ const ConsultantMessageScreen = () => {
             type="button"
             variant="secondary"
             onClick={handleSkipMessage}
-            style={{...styles.button, ...styles.secondaryButton}}
+            style={{ ...styles.button, ...styles.secondaryButton }}
             disabled={sending}
           >
             건너뛰기
@@ -593,7 +593,7 @@ const ConsultantMessageScreen = () => {
             type="button"
             variant="success"
             onClick={handleSendMessage}
-            style={{...styles.button, ...styles.successButton}}
+            style={{ ...styles.button, ...styles.successButton }}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
             loading={sending}
             loadingText="전송 중..."

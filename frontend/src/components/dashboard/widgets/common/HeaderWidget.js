@@ -48,7 +48,7 @@ const HeaderWidget = ({ widget, user }) => {
 
   // 사용자 역할 표시명 동적 로드
   useEffect(() => {
-    const loadRoleDisplayNames = async () => {
+    const loadRoleDisplayNames = async() => {
       if (currentUser?.role) {
         try {
           const koreanName = await getRoleDisplayName(currentUser.role, currentUser.branchName);
@@ -81,7 +81,7 @@ const HeaderWidget = ({ widget, user }) => {
   };
 
   // 뒤로가기 버튼 클릭 핸들러
-  const handleBackClick = async () => {
+  const handleBackClick = async() => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
@@ -97,11 +97,11 @@ const HeaderWidget = ({ widget, user }) => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async() => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = async () => {
+  const confirmLogout = async() => {
     await logout();
     navigate('/login');
   };
@@ -149,14 +149,14 @@ const HeaderWidget = ({ widget, user }) => {
                 onClick={handleBackClick}
                 title="뒤로가기"
               >
-                <i className="bi bi-arrow-left"></i>
+                <i className="bi bi-arrow-left" />
               </MGButton>
             )}
             
             {showLogo && (
               <div className="widget-header-logo">
                 <a href="/" className="widget-header-logo-link">
-                  <i className={`bi ${logoIcon}`}></i>
+                  <i className={`bi ${logoIcon}`} />
                   <span>{brandName}</span>
                 </a>
               </div>
@@ -167,7 +167,7 @@ const HeaderWidget = ({ widget, user }) => {
           <div className="widget-header-right">
             {isLoading ? (
               <div className="widget-header-loading">
-                <i className="bi bi-hourglass-split"></i>
+                <i className="bi bi-hourglass-split" />
                 <span>로딩 중...</span>
               </div>
             ) : isLoggedIn && currentUser ? (
@@ -196,14 +196,14 @@ const HeaderWidget = ({ widget, user }) => {
                     onClick={handleLogout}
                     title="로그아웃"
                   >
-                    <i className="bi bi-box-arrow-right"></i>
+                    <i className="bi bi-box-arrow-right" />
                     <span>로그아웃</span>
                   </MGButton>
                 )}
               </>
             ) : (
               <a href="/login" className="widget-header-login-button">
-                <i className="bi bi-box-arrow-in-right"></i>
+                <i className="bi bi-box-arrow-in-right" />
                 로그인
               </a>
             )}

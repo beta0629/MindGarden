@@ -49,7 +49,7 @@ const ScheduleWidget = ({ widget, user }) => {
     }
   }, []);
   
-  const loadSchedules = async () => {
+  const loadSchedules = async() => {
     try {
       setLoading(true);
       
@@ -117,7 +117,7 @@ const ScheduleWidget = ({ widget, user }) => {
     <div className="widget widget-schedule">
       <div className="widget-header">
         <div className="widget-title">
-          <i className="bi bi-calendar"></i>
+          <i className="bi bi-calendar" />
           {config.title || (showTodayOnly ? '오늘의 일정' : '일정')}
           {todayCount > 0 && (
             <span className="widget-badge">{todayCount}</span>
@@ -153,7 +153,7 @@ const ScheduleWidget = ({ widget, user }) => {
                   )}
                   {schedule.location && (
                     <div className="schedule-location">
-                      <i className="bi bi-geo-alt"></i> {schedule.location}
+                      <i className="bi bi-geo-alt" /> {schedule.location}
                     </div>
                   )}
                 </div>
@@ -167,7 +167,7 @@ const ScheduleWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="widget-empty">
-            <i className="bi bi-calendar-x"></i>
+            <i className="bi bi-calendar-x" />
             <p>{config.emptyMessage || '일정이 없습니다'}</p>
           </div>
         )}

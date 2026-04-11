@@ -74,7 +74,7 @@ const StatsCard = ({
     return (
       <div className={`${STATS_CARD_CSS.CONTAINER} ${STATS_CARD_CSS.ERROR}`}>
         <div className={STATS_CARD_CSS.ERROR_ICON}>
-          <i className="fas fa-exclamation-triangle"></i>
+          <i className="fas fa-exclamation-triangle" />
         </div>
         <div className={STATS_CARD_CSS.ERROR_TEXT}>데이터를 불러올 수 없습니다</div>
       </div>
@@ -85,7 +85,7 @@ const StatsCard = ({
     <div className={`${STATS_CARD_CSS.CONTAINER} ${getCardColorClass()}`}>
       <div className={STATS_CARD_CSS.HEADER}>
         <div className={STATS_CARD_CSS.ICON}>
-          <i className={icon}></i>
+          <i className={icon} />
         </div>
         <div className={STATS_CARD_CSS.TITLE}>{title}</div>
       </div>

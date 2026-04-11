@@ -44,7 +44,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
   const isReadOnly = userRole === 'CONSULTANT';
 
   // 상담일지 작성 상태 체크
-  const checkConsultationLogStatus = async () => {
+  const checkConsultationLogStatus = async() => {
     if (!event?.id) return;
     
     try {
@@ -211,7 +211,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required
@@ -223,7 +223,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             <input
               type="datetime-local"
               value={formData.start}
-              onChange={(e) => setFormData({...formData, start: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, start: e.target.value })}
               className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required
@@ -235,7 +235,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             <input
               type="datetime-local"
               value={formData.end}
-              onChange={(e) => setFormData({...formData, end: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, end: e.target.value })}
               className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required

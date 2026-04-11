@@ -145,7 +145,7 @@ export const keyboard = {
 // 클립보드 유틸리티
 export const clipboard = {
   // 텍스트 복사
-  copyText: async (text) => {
+  copyText: async(text) => {
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
@@ -172,7 +172,7 @@ export const clipboard = {
   },
   
   // 텍스트 붙여넣기
-  pasteText: async () => {
+  pasteText: async() => {
     try {
       if (navigator.clipboard) {
         return await navigator.clipboard.readText();
@@ -256,7 +256,7 @@ export const animation = {
     element.style.transition = `height ${duration}ms ease-in-out`;
     
     const targetHeight = element.scrollHeight;
-    element.style.height = targetHeight + 'px';
+    element.style.height = `${targetHeight}px`;
     
     setTimeout(() => {
       element.style.height = 'auto';
@@ -265,7 +265,7 @@ export const animation = {
   
   // 슬라이드 업
   slideUp: (element, duration = 300) => {
-    element.style.height = element.scrollHeight + 'px';
+    element.style.height = `${element.scrollHeight}px`;
     element.style.overflow = 'hidden';
     element.style.transition = `height ${duration}ms ease-in-out`;
     

@@ -31,7 +31,7 @@ const Card = ({
     default: "mg-card mg-card--default",
     elevated: "mg-card mg-card--elevated",
     outlined: "mg-card mg-card--outlined",
-    glass: "mg-card mg-card--glass",
+    glass: "mg-card mg-card--glass"
   };
 
   const paddingClasses = {

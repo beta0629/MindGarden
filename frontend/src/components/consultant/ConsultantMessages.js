@@ -26,7 +26,7 @@ const MESSAGE_COUNTERPARTY_COPY = {
   SENDER_PREFIX: '보낸 사람:',
   RECIPIENT_PREFIX: '받는 사람:',
   RELATED_PREFIX: '관련:',
-  NO_SPECIFIC_COUNTERPARTY: '특정 상대 없음 (알림·일괄)',
+  NO_SPECIFIC_COUNTERPARTY: '특정 상대 없음 (알림·일괄)'
 };
 
 /**
@@ -86,7 +86,7 @@ const ConsultantMessages = () => {
     { value: 'URGENT', label: '긴급', icon: 'AlertTriangle', color: 'var(--mg-error-500)' }
   ];
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
@@ -112,7 +112,7 @@ const ConsultantMessages = () => {
     }
   }, [user?.id]);
 
-  const loadClients = useCallback(async () => {
+  const loadClients = useCallback(async() => {
     if (!user?.id) return;
     try {
       const data = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
@@ -188,7 +188,7 @@ const ConsultantMessages = () => {
   });
 
   // 메시지 전송
-  const handleSendMessage = async () => {
+  const handleSendMessage = async() => {
     try {
       if (!newMessage.clientId || !newMessage.title || !newMessage.content) {
         notificationManager.show('모든 필드를 입력해주세요.', 'warning');
@@ -222,7 +222,7 @@ const ConsultantMessages = () => {
   };
 
   // 메시지 상세 보기
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     setSelectedMessage(message);
     if (!message.isRead && markMessageAsRead) {
       try {
@@ -304,7 +304,7 @@ const ConsultantMessages = () => {
         <div className="consultant-messages-search-container">
           <div className="consultant-messages-search-field">
             <div className="consultant-messages-search-input-container">
-              <i className="bi bi-search consultant-messages-search-icon"></i>
+              <i className="bi bi-search consultant-messages-search-icon" />
               <input
                 type="text"
                 placeholder="제목, 내용, 내담자명으로 검색..."
@@ -360,7 +360,7 @@ const ConsultantMessages = () => {
           <div>
             {filteredMessages.length === 0 ? (
               <div className="consultant-messages-empty">
-                <i className="bi bi-chat-dots consultant-messages-empty-icon"></i>
+                <i className="bi bi-chat-dots consultant-messages-empty-icon" />
                 <h3 className="consultant-messages-empty-title">
                   {messages.length === 0 ? "전송된 메시지가 없습니다" : "검색 결과가 없습니다"}
                 </h3>

@@ -58,7 +58,7 @@ const StatisticsWidget = ({ widget, user }) => {
           {data.label && <div className="stat-label"><SafeText>{data.label}</SafeText></div>}
           {data.change && (
             <div className={`stat-change ${data.change > 0 ? 'positive' : 'negative'}`}>
-              <i className={`bi bi-arrow-${data.change > 0 ? 'up' : 'down'}`}></i>
+              <i className={`bi bi-arrow-${data.change > 0 ? 'up' : 'down'}`} />
               {Math.abs(data.change)}%
             </div>
           )}
@@ -76,7 +76,7 @@ const StatisticsWidget = ({ widget, user }) => {
               <div className="stat-label"><SafeText>{stat.label}</SafeText></div>
               {stat.change && (
                 <div className={`stat-change ${stat.change > 0 ? 'positive' : 'negative'}`}>
-                  <i className={`bi bi-arrow-${stat.change > 0 ? 'up' : 'down'}`}></i>
+                  <i className={`bi bi-arrow-${stat.change > 0 ? 'up' : 'down'}`} />
                   {Math.abs(stat.change)}%
                 </div>
               )}

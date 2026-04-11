@@ -147,7 +147,7 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
     return;
   }
 
-  const role = user.role;
+  const { role } = user;
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
@@ -179,7 +179,7 @@ const getDefaultPermissionsForRole = (user) => {
     return [];
   }
 
-  const role = user.role;
+  const { role } = user;
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
@@ -235,7 +235,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     }
 
     // OAuth2 콜백 후 세션 확인을 위한 지연 처리
-    const checkSessionWithDelay = async () => {
+    const checkSessionWithDelay = async() => {
       // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
       let currentUser = user;
       
@@ -283,7 +283,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   // 권한 체크 및 데이터 로드
   useEffect(() => {
-    const checkPermissionAndLoad = async () => {
+    const checkPermissionAndLoad = async() => {
       if (!sessionLoading && user && user.id && !permissionCheckedRef.current) {
         console.log('🔍 통합재무관리 권한 체크 및 로드 시작');
         
@@ -341,7 +341,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     checkPermissionAndLoad();
   }, [sessionLoading, user]); // eslint-disable-line react-hooks/exhaustive-deps
   
-  const initializeComponent = async () => {
+  const initializeComponent = async() => {
     try {
       await fetchDashboardData();
     } catch (err) {
@@ -351,7 +351,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     }
   };
 
-  const fetchDashboardData = async (options = {}) => {
+  const fetchDashboardData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {
@@ -746,7 +746,7 @@ const BalanceSheetTab = () => {
   const [error, setError] = useState(null);
   const [asOfDate, setAsOfDate] = useState(() => formatLocalDateYmd(new Date()));
 
-  const fetchBalanceSheet = async () => {
+  const fetchBalanceSheet = async() => {
     setError(null);
     setLoading(true);
     try {
@@ -960,7 +960,7 @@ const IncomeStatementTab = () => {
   });
   const [endDate, setEndDate] = useState(() => formatLocalDateYmd(new Date()));
 
-  const fetchIncomeStatement = async () => {
+  const fetchIncomeStatement = async() => {
     setError(null);
     setLoading(true);
     try {
@@ -1155,8 +1155,8 @@ const IncomeStatementTab = () => {
           </div>
         </div>
         <div className="net-income-card">
-          <div className="net-income-decoration-1"></div>
-          <div className="net-income-decoration-2"></div>
+          <div className="net-income-decoration-1" />
+          <div className="net-income-decoration-2" />
           <h3 className="net-income-title">
             <DollarSign className="net-income-icon" size={32} />
             당기순이익
@@ -1186,7 +1186,7 @@ const CashFlowStatementTab = () => {
     fetchCashFlowStatement();
   }, [startDate, endDate]);
 
-  const fetchCashFlowStatement = async () => {
+  const fetchCashFlowStatement = async() => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_CASHFLOW, {
@@ -1341,8 +1341,8 @@ const CashFlowStatementTab = () => {
 
       {/* 현금 및 현금성 자산 증가 */}
       <div className="net-income-card">
-        <div className="net-income-decoration-1"></div>
-        <div className="net-income-decoration-2"></div>
+        <div className="net-income-decoration-1" />
+        <div className="net-income-decoration-2" />
         <h3 className="net-income-title">
           <DollarSign className="net-income-icon" size={32} />
           현금 및 현금성 자산 증가
@@ -1369,7 +1369,7 @@ const DailyReportTab = ({ period }) => {
     fetchDailyReport();
   }, []);
 
-  const fetchDailyReport = async () => {
+  const fetchDailyReport = async() => {
     try {
       setLoading(true);
       const result = await StandardizedApi.get(ERP_API.FINANCE_DAILY_REPORT);
@@ -1500,7 +1500,7 @@ const MonthlyReportTab = ({ period }) => {
     fetchMonthlyReport();
   }, [currentMonth]);
 
-  const fetchMonthlyReport = async () => {
+  const fetchMonthlyReport = async() => {
     try {
       setLoading(true);
       const result = await StandardizedApi.get(ERP_API.FINANCE_MONTHLY_REPORT, {
@@ -1683,7 +1683,7 @@ const YearlyReportTab = ({ period }) => {
     fetchYearlyReport();
   }, [currentYear]);
 
-  const fetchYearlyReport = async () => {
+  const fetchYearlyReport = async() => {
     try {
       setLoading(true);
       const result = await StandardizedApi.get(ERP_API.FINANCE_YEARLY_REPORT, { year: currentYear });
@@ -1816,7 +1816,7 @@ const JournalEntriesTab = () => {
     fetchJournalEntries();
   }, []);
 
-  const fetchJournalEntries = async () => {
+  const fetchJournalEntries = async() => {
     try {
       const result = await StandardizedApi.get(ERP_API.JOURNAL_ENTRIES);
       if (!isApiEnvelopeFailure(result)) {
@@ -1830,7 +1830,7 @@ const JournalEntriesTab = () => {
     }
   };
 
-  const handleApprove = async (id) => {
+  const handleApprove = async(id) => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {});
       if (!isApiEnvelopeFailure(result)) {
@@ -1843,7 +1843,7 @@ const JournalEntriesTab = () => {
     }
   };
 
-  const handlePost = async (id) => {
+  const handlePost = async(id) => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_POST(id), {});
       if (!isApiEnvelopeFailure(result)) {
@@ -2016,7 +2016,7 @@ const LedgersTab = () => {
   const [showLedgerDetailModal, setShowLedgerDetailModal] = useState(false);
 
   useEffect(() => {
-    const loadAccounts = async () => {
+    const loadAccounts = async() => {
       try {
         const res = await StandardizedApi.get('/api/v1/accounts/active');
         const list = Array.isArray(res) ? res : (res?.data ?? []);
@@ -2035,7 +2035,7 @@ const LedgersTab = () => {
     }
   }, [selectedAccountId, periodStart, periodEnd]);
 
-  const fetchLedger = async () => {
+  const fetchLedger = async() => {
     if (!selectedAccountId) return;
     
     setLoading(true);
@@ -2172,7 +2172,7 @@ const SettlementTab = () => {
     }
   }, [activeSubTab]);
 
-  const fetchRules = async () => {
+  const fetchRules = async() => {
     setLoading(true);
     try {
       const result = await StandardizedApi.get(ERP_API.SETTLEMENT_RULES);
@@ -2187,7 +2187,7 @@ const SettlementTab = () => {
     }
   };
 
-  const fetchSettlements = async () => {
+  const fetchSettlements = async() => {
     setLoading(true);
     try {
       const result = await StandardizedApi.get(ERP_API.SETTLEMENT_RESULTS);
@@ -2202,7 +2202,7 @@ const SettlementTab = () => {
     }
   };
 
-  const handleCalculate = async (period) => {
+  const handleCalculate = async(period) => {
     try {
       const result = await StandardizedApi.post(
         `${ERP_API.SETTLEMENT_CALCULATE}?period=${encodeURIComponent(period)}`,
@@ -2375,7 +2375,7 @@ const SettlementTab = () => {
                             <MGButton
                               variant="success"
                               size="small"
-                              onClick={async () => {
+                              onClick={async() => {
                                 try {
                                   const result = await StandardizedApi.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {});
                                   if (!isApiEnvelopeFailure(result)) {
@@ -2423,7 +2423,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
     fetchEntryDetail();
   }, [entry.id]);
 
-  const fetchEntryDetail = async () => {
+  const fetchEntryDetail = async() => {
     try {
       const result = await StandardizedApi.get(ERP_API.JOURNAL_ENTRY_DETAIL(entry.id));
       if (!isApiEnvelopeFailure(result)) {
@@ -2541,7 +2541,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
   useEffect(() => {
     let cancelled = false;
-    const fetchAccountTypes = async () => {
+    const fetchAccountTypes = async() => {
       setAccountTypesLoading(true);
       setAccountTypesError(null);
       try {
@@ -2630,7 +2630,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async() => {
     if (!validateForm()) {
       notificationManager.show('입력 정보를 확인해주세요.', 'error');
       return;
@@ -2900,7 +2900,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async() => {
     if (!validateForm()) {
       notificationManager.show('입력 정보를 확인해주세요.', 'error');
       return;
@@ -3066,7 +3066,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     fetchJournalEntries();
   }, [ledger]);
 
-  const fetchJournalEntries = async () => {
+  const fetchJournalEntries = async() => {
     if (!ledger.accountId || !ledger.periodStart || !ledger.periodEnd) return;
     
     setLoadingEntries(true);
@@ -3197,7 +3197,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
 
   useEffect(() => {
     let cancelled = false;
-    const fetchAccountTypes = async () => {
+    const fetchAccountTypes = async() => {
       setAccountTypesLoading(true);
       setAccountTypesError(null);
       try {
@@ -3286,7 +3286,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async() => {
     if (!validateForm()) {
       notificationManager.show('입력 정보를 확인해주세요.', 'error');
       return;

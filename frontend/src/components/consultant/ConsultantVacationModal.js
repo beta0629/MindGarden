@@ -50,7 +50,7 @@ const ConsultantVacationModal = ({
 
     // 휴가 유형 코드 로드
     useEffect(() => {
-        const loadVacationTypeCodes = async () => {
+        const loadVacationTypeCodes = async() => {
             try {
                 const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
                 if (response && response.length > 0) {
@@ -96,7 +96,7 @@ const ConsultantVacationModal = ({
         }));
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async() => {
         if (!vacationData.reason.trim()) {
             notificationManager.error('휴가 사유를 입력해주세요.');
             return;

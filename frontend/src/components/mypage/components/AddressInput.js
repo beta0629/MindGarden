@@ -18,7 +18,7 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
   }, [postalCode, address, addressDetail]);
 
   useEffect(() => {
-    const loadAddressTypeCodes = async () => {
+    const loadAddressTypeCodes = async() => {
       try {
         setLoadingCodes(true);
         const response = await apiGet('/api/v1/common-codes?codeGroup=ADDRESS_TYPE');
@@ -61,7 +61,7 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
   };
 
   const handlePostalCodeChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setLocalPostalCode(value);
     onAddressChange({
       addressType,
@@ -72,7 +72,7 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
   };
 
   const handleAddressChangeField = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setLocalAddress(value);
     onAddressChange({
       addressType,
@@ -83,7 +83,7 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
   };
 
   const handleAddressDetailChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setLocalAddressDetail(value);
     onAddressChange({
       addressType,

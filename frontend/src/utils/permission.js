@@ -30,7 +30,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 /**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
-export const hasPermission = async (permission, session) => {
+export const hasPermission = async(permission, session) => {
     if (!permission || !session) {
         return false;
     }
@@ -46,7 +46,7 @@ export const hasPermission = async (permission, session) => {
         const response = await session.fetch(API_ENDPOINTS.PERMISSIONS.CHECK_PERMISSION, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ permission })
         });
@@ -81,7 +81,7 @@ export const hasPermission = async (permission, session) => {
 /**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
-export const hasAnyPermission = async (permissions, session) => {
+export const hasAnyPermission = async(permissions, session) => {
     if (!permissions || permissions.length === 0 || !session) {
         return false;
     }
@@ -103,7 +103,7 @@ export const hasAnyPermission = async (permissions, session) => {
 /**
  * @returns {Promise<boolean>} 권한 보유 여부
  */
-export const hasAllPermissions = async (permissions, session) => {
+export const hasAllPermissions = async(permissions, session) => {
     if (!permissions || permissions.length === 0 || !session) {
         return false;
     }
@@ -130,7 +130,7 @@ export const clearPermissionCache = () => {
 /**
  * @returns {Promise<string[]>} 권한 목록
  */
-export const getUserPermissions = async (session) => {
+export const getUserPermissions = async(session) => {
     if (!session) {
         return [];
     }
@@ -173,7 +173,7 @@ export const usePermission = (permission, session) => {
             return;
         }
 
-        const checkPermission = async () => {
+        const checkPermission = async() => {
             try {
                 setLoading(true);
                 setError(null);

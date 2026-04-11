@@ -24,7 +24,7 @@ const PerformanceWidget = ({
   const [lastUpdated, setLastUpdated] = useState(null);
 
   // 성능 데이터 조회
-  const fetchPerformanceData = async () => {
+  const fetchPerformanceData = async() => {
     setLoading(true);
     try {
       // 캐시 통계 조회

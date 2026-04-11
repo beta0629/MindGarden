@@ -6,37 +6,37 @@
 import Icon from './Icon';
 import { ICONS } from '../../../constants/icons';
 
-export default {title: 'UI Components/Icon',
+export default { title: 'UI Components/Icon',
   component: Icon,
-  parameters: {docs: {description: {component: '중앙화된 아이콘 시스템을 사용하는 재사용 가능한 아이콘 컴포넌트'}}},
-  argTypes: {name: {control: 'select',
+  parameters: { docs: { description: { component: '중앙화된 아이콘 시스템을 사용하는 재사용 가능한 아이콘 컴포넌트' } } },
+  argTypes: { name: { control: 'select',
       options: Object.keys(ICONS),
-      description: '아이콘 이름 (ICONS 객체의 키)'},
-    size: {control: 'select',
+      description: '아이콘 이름 (ICONS 객체의 키)' },
+    size: { control: 'select',
       options: ['XS', 'SM', 'MD', 'LG', 'XL', 'XXL', 'XXXL', 'HUGE'],
-      description: '아이콘 크기'},
-    color: {control: 'select',
+      description: '아이콘 크기' },
+    color: { control: 'select',
       options: ['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT'],
-      description: '아이콘 색상'},
-    userRole: {control: 'select',
+      description: '아이콘 색상' },
+    userRole: { control: 'select',
       options: ['CLIENT', 'CONSULTANT', 'ADMIN'],
-      description: '사용자 역할 (테마 적용)'},
-    variant: {control: 'select',
+      description: '사용자 역할 (테마 적용)' },
+    variant: { control: 'select',
       options: ['default', 'outlined', 'filled', 'minimal'],
-      description: '아이콘 변형'},
-    disabled: {control: 'boolean',
-      description: '비활성화 상태'},
-    loading: {control: 'boolean',
-      description: '로딩 상태'},
-    onClick: {action: 'clicked',
-      description: '클릭 핸들러'}}};
+      description: '아이콘 변형' },
+    disabled: { control: 'boolean',
+      description: '비활성화 상태' },
+    loading: { control: 'boolean',
+      description: '로딩 상태' },
+    onClick: { action: 'clicked',
+      description: '클릭 핸들러' } } };
 
 const Template = (args) => <Icon {...args} />;
 
 export const Default = Template.bind({});
-Default.args = {name: 'CALENDAR',
+Default.args = { name: 'CALENDAR',
   size: 'MD',
-  color: 'PRIMARY'};
+  color: 'PRIMARY' };
 
 export const Sizes = () => (<div className="story-container">
     <div className="story-section">

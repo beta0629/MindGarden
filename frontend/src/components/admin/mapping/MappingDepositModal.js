@@ -47,7 +47,7 @@ const MappingDepositModal = ({
         }
     }, [isOpen, mapping]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();

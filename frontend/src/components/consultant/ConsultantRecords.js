@@ -27,7 +27,7 @@ const ConsultantRecords = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalRecordId, setModalRecordId] = useState(null);
 
-  const loadStatusCodes = useCallback(async () => {
+  const loadStatusCodes = useCallback(async() => {
     try {
       const codes = await getCommonCodes('STATUS');
       if (codes && codes.length > 0) {
@@ -54,7 +54,7 @@ const ConsultantRecords = () => {
     }
   }, []);
 
-  const loadRecords = useCallback(async () => {
+  const loadRecords = useCallback(async() => {
     try {
       setLoading(true);
       setError(null);
@@ -181,7 +181,7 @@ const ConsultantRecords = () => {
             {error && (
               <div className="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
                 <div>
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  <i className="bi bi-exclamation-triangle-fill me-2" />
                   {error}
                 </div>
                 <MGButton 
@@ -191,7 +191,7 @@ const ConsultantRecords = () => {
                   onClick={loadRecords}
                   disabled={loading}
                 >
-                  <i className="bi bi-arrow-clockwise me-1"></i>
+                  <i className="bi bi-arrow-clockwise me-1" />
                   재시도
                 </MGButton>
               </div>

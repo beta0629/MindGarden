@@ -30,7 +30,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
   });
 
   // 강좌 목록 조회
-  const fetchCourses = async () => {
+  const fetchCourses = async() => {
     setLoading(true);
     setError(null);
     
@@ -68,7 +68,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
   }, [branchId, filters.category, filters.subject]);
 
   // 강좌 삭제
-  const handleDelete = async (courseId) => {
+  const handleDelete = async(courseId) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) {
       return;
     }
@@ -148,7 +148,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
           </MGButton>
         )}
       </div>
-    )}
+    ) }
   ];
 
   return (

@@ -31,7 +31,7 @@ const UnifiedNotifications = () => {
   const [selectedItem, setSelectedItem] = useState(null);
 
   // 시스템 공지 로드
-  const loadSystemNotifications = async () => {
+  const loadSystemNotifications = async() => {
     if (!isLoggedIn || !user?.id) {
       console.log('📢 UnifiedNotifications - 시스템 공지 로드 스킵 - 로그인 정보 없음');
       setSystemNotifications([]);
@@ -61,7 +61,7 @@ const UnifiedNotifications = () => {
   };
 
   // 일반 메시지 로드
-  const loadMessages = async () => {
+  const loadMessages = async() => {
     if (!isLoggedIn || !user?.id) return;
 
     try {
@@ -99,7 +99,7 @@ const UnifiedNotifications = () => {
   };
 
   // 시스템 공지 클릭
-  const handleSystemNotificationClick = async (notification) => {
+  const handleSystemNotificationClick = async(notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
@@ -118,7 +118,7 @@ const UnifiedNotifications = () => {
   };
 
   // 일반 메시지 클릭
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
@@ -137,7 +137,7 @@ const UnifiedNotifications = () => {
   };
 
   // 모달 닫기
-  const closeModal = async () => {
+  const closeModal = async() => {
     setSelectedItem(null);
     
     // 목록 새로고침 (읽음 상태 반영)
@@ -206,7 +206,7 @@ const UnifiedNotifications = () => {
     }
 
     let cancelled = false;
-    (async () => {
+    (async() => {
       try {
         if (openSystemId != null) {
           setActiveTab('system');

@@ -41,7 +41,7 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
             onClick={onNavigateSchedule}
             style={{ marginTop: '1rem' }}
           >
-            <i className="bi bi-calendar"></i> 일정 관리로 이동
+            <i className="bi bi-calendar" /> 일정 관리로 이동
           </MGButton>
         </div>
       );
@@ -92,7 +92,7 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
                     size="small"
                     onClick={() => onViewRecord(record.id)}
                   >
-                    <i className="bi bi-eye"></i> 상담일지 조회
+                    <i className="bi bi-eye" /> 상담일지 조회
                   </MGButton>
                 ) : (
                   <MGButton
@@ -100,7 +100,7 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
                     size="small"
                     onClick={() => onWriteRecord(record.id)}
                   >
-                    <i className="bi bi-pencil-square"></i> 상담일지 작성
+                    <i className="bi bi-pencil-square" /> 상담일지 작성
                   </MGButton>
                 )}
               </div>

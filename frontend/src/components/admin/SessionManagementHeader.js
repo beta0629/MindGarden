@@ -27,7 +27,7 @@ const SessionManagementHeader = ({
             <div className="header-content">
                 <div className="header-text">
                     <h1 className="page-title">
-                        <i className="bi bi-calendar-check"></i>
+                        <i className="bi bi-calendar-check" />
                         내담자 회기 관리
                     </h1>
                     <p className="page-subtitle">
@@ -42,7 +42,7 @@ const SessionManagementHeader = ({
                         className="add-session-btn"
                         onClick={onAddSession}
                     >
-                        <i className="bi bi-plus-circle"></i>
+                        <i className="bi bi-plus-circle" />
                         회기 추가 요청
                     </MGButton>
                 </div>
@@ -56,7 +56,7 @@ const SessionManagementHeader = ({
                     onClick={() => onTabChange('mappings')}
                     preventDoubleClick={false}
                 >
-                    <i className="bi bi-diagram-3"></i>
+                    <i className="bi bi-diagram-3" />
                     회기 관리
                 </MGButton>
                 <MGButton
@@ -66,7 +66,7 @@ const SessionManagementHeader = ({
                     onClick={() => onTabChange('sessions')}
                     preventDoubleClick={false}
                 >
-                    <i className="bi bi-clock-history"></i>
+                    <i className="bi bi-clock-history" />
                     세션 이력
                 </MGButton>
             </div>

@@ -56,7 +56,7 @@ const AcademyRegister = () => {
 
   // 브랜치 목록 로드
   useEffect(() => {
-    const loadBranches = async () => {
+    const loadBranches = async() => {
       try {
         setLoading(true);
         const params = tenantId ? `?tenantId=${tenantId}` : '';
@@ -145,7 +145,7 @@ const AcademyRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -191,7 +191,7 @@ const AcademyRegister = () => {
   };
 
   // SNS 로그인 핸들러 (테넌트 정보 포함)
-  const handleSocialLogin = async (provider) => {
+  const handleSocialLogin = async(provider) => {
     if (!tenantId) {
       notificationManager.error('테넌트 정보가 없습니다.');
       return;

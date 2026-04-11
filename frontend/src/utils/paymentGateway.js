@@ -38,7 +38,7 @@ export const PG_PROVIDER = {
   KAKAO: 'KAKAO',
   NAVER: 'NAVER',
   PAYPAL: 'PAYPAL',
-  OTHER: 'OTHER',
+  OTHER: 'OTHER'
 };
 
 /**
@@ -206,7 +206,7 @@ class TestPaymentGatewaySdk extends PaymentGatewaySdk {
       cardBrand,
       cardLast4: cardNumber.slice(-4),
       expiryMonth: parseInt(cardInfo.expiryMonth),
-      expiryYear: 2000 + expiryYear,
+      expiryYear: 2000 + expiryYear
     };
   }
 
@@ -292,7 +292,7 @@ class TossPaymentGatewaySdk extends PaymentGatewaySdk {
       customerEmail: params.customerEmail,
       successUrl: params.successUrl,
       failUrl: params.failUrl,
-      windowTarget: 'self',
+      windowTarget: 'self'
     });
   }
 }
@@ -402,7 +402,7 @@ class PaymentGatewaySdkFactory {
           this.instance = new TossPaymentGatewaySdk();
           await this.instance.init({
             clientKey: process.env.REACT_APP_TOSS_CLIENT_KEY || '',
-            testMode: false,
+            testMode: false
           });
           break;
         case PG_PROVIDER.STRIPE:
@@ -502,6 +502,6 @@ export {
   IamportPaymentGatewaySdk,
   PaymentGatewaySdkFactory,
   DEFAULT_PG_PROVIDER,
-  TEST_MODE,
+  TEST_MODE
 };
 

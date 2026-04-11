@@ -101,7 +101,7 @@ export const handleImageError = (event, onFallback) => {
   } else {
     // 기본 폴백: 이미지 숨기고 아이콘 표시
     event.target.style.display = 'none';
-    const nextSibling = event.target.nextSibling;
+    const { nextSibling } = event.target;
     if (nextSibling) {
       nextSibling.style.display = 'block';
     }

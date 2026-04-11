@@ -62,7 +62,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 /**
      * 반복 지출 목록 로드
      */
-    const loadExpenses = async () => {
+    const loadExpenses = async() => {
         try {
             setLoading(true);
             console.log('🔄 반복 지출 목록 API 호출 시작');
@@ -82,7 +82,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 /**
      * 반복 지출 통계 로드
      */
-    const loadStatistics = async () => {
+    const loadStatistics = async() => {
         try {
             const response = await apiGet('/api/v1/admin/statistics/recurring-expenses');
             if (response && response.success !== false) {
@@ -96,7 +96,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 /**
      * 카테고리 목록 로드
      */
-    const loadCategories = async () => {
+    const loadCategories = async() => {
         try {
             const response = await apiGet('/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
@@ -163,7 +163,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 /**
      * 반복 지출 저장
      */
-    const handleSaveExpense = async () => {
+    const handleSaveExpense = async() => {
         if (!formData.name.trim() || !formData.amount || !formData.category) {
             notificationManager.error('필수 항목을 모두 입력해주세요.');
             return;
@@ -207,7 +207,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 /**
      * 반복 지출 삭제
      */
-    const handleDeleteExpense = async (expenseId) => {
+    const handleDeleteExpense = async(expenseId) => {
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('정말로 이 반복 지출을 삭제하시겠습니까?', resolve);
     });

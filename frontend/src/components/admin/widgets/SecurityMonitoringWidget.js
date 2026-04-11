@@ -29,7 +29,7 @@ const SecurityMonitoringWidget = ({
   const [selectedView, setSelectedView] = useState(WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW);
 
   // 보안 데이터 조회 (비즈니스 로직 분리)
-  const fetchSecurityData = useCallback(async () => {
+  const fetchSecurityData = useCallback(async() => {
     setLoading(true);
     try {
       const endpoints = WIDGET_CONSTANTS.SECURITY_WIDGET.API_ENDPOINTS;

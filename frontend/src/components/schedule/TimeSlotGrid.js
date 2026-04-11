@@ -73,12 +73,12 @@ const TimeSlotGrid = ({
 /**
      * 상담사 정보 로드
      */
-    const loadConsultantInfo = async () => {
+    const loadConsultantInfo = async() => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/v1/consultants/${consultantId}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -123,7 +123,7 @@ const TimeSlotGrid = ({
 /**
      * 휴가 정보 로드
      */
-    const loadVacationInfo = async () => {
+    const loadVacationInfo = async() => {
         if (!consultantId || !date) {
             console.log('휴가 정보 로드 건너뜀: consultantId 또는 date가 없음');
             return;
@@ -146,7 +146,7 @@ const TimeSlotGrid = ({
             const response = await fetch(`/api/v1/consultants/availability/vacations?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -386,7 +386,7 @@ const TimeSlotGrid = ({
 /**
      * 기존 스케줄 로드
      */
-    const loadExistingSchedules = async () => {
+    const loadExistingSchedules = async() => {
         // consultantId가 유효하지 않으면 요청하지 않음
         if (!consultantId || consultantId === 'undefined' || consultantId === 'null') {
             console.warn('⚠️ TimeSlotGrid: consultantId가 유효하지 않음:', consultantId);
@@ -412,7 +412,7 @@ const TimeSlotGrid = ({
             const response = await fetch(scheduleUrl, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
@@ -823,7 +823,7 @@ const TimeSlotGrid = ({
                                     {schedule.startTime} - {schedule.endTime}
                                 </span>
                                 <span className={useB0kla ? 'mg-v2-ad-ts__existing-label' : 'mg-v2-schedule-title'}>
-                                    {schedule.title || `${schedule.consultantName || '상담사 ID ' + (schedule.consultantId || '알 수 없음')} - ${schedule.clientName || '내담자 ID ' + (schedule.clientId || '알 수 없음')}`}
+                                    {schedule.title || `${schedule.consultantName || `상담사 ID ${schedule.consultantId || '알 수 없음'}`} - ${schedule.clientName || `내담자 ID ${schedule.clientId || '알 수 없음'}`}`}
                                 </span>
                             </div>
                         ))}

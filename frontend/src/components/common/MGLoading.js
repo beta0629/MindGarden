@@ -18,29 +18,29 @@ const MGLoading = ({
 }) => {
   const renderSpinner = () => (
     <div className={`mg-loading-spinner mg-loading-spinner--${size} mg-loading-spinner--${color}`}>
-      <div className="mg-loading-spinner__ring"></div>
+      <div className="mg-loading-spinner__ring" />
     </div>
   );
 
   const renderDots = () => (
     <div className={`mg-loading-dots mg-loading-dots--${size} mg-loading-dots--${color}`}>
-      <div className="mg-loading-dots__dot"></div>
-      <div className="mg-loading-dots__dot"></div>
-      <div className="mg-loading-dots__dot"></div>
+      <div className="mg-loading-dots__dot" />
+      <div className="mg-loading-dots__dot" />
+      <div className="mg-loading-dots__dot" />
     </div>
   );
 
   const renderPulse = () => (
     <div className={`mg-loading-pulse mg-loading-pulse--${size} mg-loading-pulse--${color}`}>
-      <div className="mg-loading-pulse__circle"></div>
+      <div className="mg-loading-pulse__circle" />
     </div>
   );
 
   const renderSkeleton = () => (
     <div className={`mg-loading-skeleton mg-loading-skeleton--${size}`}>
-      <div className="mg-loading-skeleton__line"></div>
-      <div className="mg-loading-skeleton__line mg-loading-skeleton__line--short"></div>
-      <div className="mg-loading-skeleton__line mg-loading-skeleton__line--medium"></div>
+      <div className="mg-loading-skeleton__line" />
+      <div className="mg-loading-skeleton__line mg-loading-skeleton__line--short" />
+      <div className="mg-loading-skeleton__line mg-loading-skeleton__line--medium" />
     </div>
   );
 
@@ -50,7 +50,7 @@ const MGLoading = ({
         <div 
           className="mg-loading-progress__bar"
           style={{ '--progress-width': `${progress}%` }}
-        ></div>
+         />
       </div>
       {text && (
         <div className="mg-loading-progress__text">{text}</div>

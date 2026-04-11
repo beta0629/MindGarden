@@ -46,7 +46,7 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
     return;
   }
 
-  const role = user.role;
+  const { role } = user;
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
@@ -102,7 +102,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const [refreshingToolbar, setRefreshingToolbar] = useState(false);
 
   /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
-  const loadIncomeExpenseSummary = useCallback(async (options = {}) => {
+  const loadIncomeExpenseSummary = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     setFinanceError(null);
     if (!silent) {
@@ -140,7 +140,7 @@ const ErpDashboard = ({ user: propUser }) => {
     }
   }, []);
 
-  const loadDashboardData = useCallback(async (options = {}) => {
+  const loadDashboardData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     if (!silent) {
       setLoading(true);
@@ -194,7 +194,7 @@ const ErpDashboard = ({ user: propUser }) => {
     }
   }, []);
 
-  const handleSilentRefresh = useCallback(async () => {
+  const handleSilentRefresh = useCallback(async() => {
     setRefreshingToolbar(true);
     try {
       await loadDashboardData({ silent: true });
@@ -224,7 +224,7 @@ const ErpDashboard = ({ user: propUser }) => {
       return;
     }
 
-    const checkSessionWithDelay = async () => {
+    const checkSessionWithDelay = async() => {
       let currentUser = propUser || sessionUser;
 
       if (!currentUser || !currentUser.role) {
@@ -339,7 +339,7 @@ const ErpDashboard = ({ user: propUser }) => {
     return () => clearTimeout(timeoutId);
   }, [userPermissions, navigate, propUser, sessionUser, loadDashboardData, loadIncomeExpenseSummary]);
 
-  const handleInitTenantErp = async () => {
+  const handleInitTenantErp = async() => {
     setInitResult(null);
     setInitLoading(true);
     try {
@@ -358,7 +358,7 @@ const ErpDashboard = ({ user: propUser }) => {
     }
   };
 
-  const handleBackfillJournalEntries = async () => {
+  const handleBackfillJournalEntries = async() => {
     setBackfillResult(null);
     setBackfillLoading(true);
     try {

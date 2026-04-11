@@ -35,7 +35,7 @@ const FinancialCalendarView = () => {
     loadCalendarData();
   }, [currentDate]);
 
-  const loadCalendarData = async (options = {}) => {
+  const loadCalendarData = async(options = {}) => {
     const silent = options.silent === true;
     try {
       if (silent) {

@@ -61,14 +61,14 @@ const SummaryPanels = ({ user, consultationData }) => {
         <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-summary`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.CALENDAR}`}></i>
+              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.CALENDAR}`} />
               {DASHBOARD_LABELS.CONSULTATION_SCHEDULE}
             </h3>
           </div>
           <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CLOCK}></i>
+                <i className={DASHBOARD_ICONS.CLOCK} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.UPCOMING_CONSULTATIONS}</div>
@@ -120,7 +120,7 @@ const SummaryPanels = ({ user, consultationData }) => {
             </div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CALENDAR_CHECK}></i>
+                <i className={DASHBOARD_ICONS.CALENDAR_CHECK} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.THIS_WEEK_CONSULTATIONS}</div>
@@ -144,14 +144,14 @@ const SummaryPanels = ({ user, consultationData }) => {
         <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-stats`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.GRAPH_UP}`}></i>
+              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.GRAPH_UP}`} />
               {DASHBOARD_LABELS.CONSULTATION_STATS}
             </h3>
           </div>
           <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CALENDAR}></i>
+                <i className={DASHBOARD_ICONS.CALENDAR} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.THIS_MONTH_CONSULTATIONS}</div>
@@ -160,7 +160,7 @@ const SummaryPanels = ({ user, consultationData }) => {
             </div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.STAR}></i>
+                <i className={DASHBOARD_ICONS.STAR} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.RATING}</div>
@@ -179,14 +179,14 @@ const SummaryPanels = ({ user, consultationData }) => {
         <div className={`${SUMMARY_PANELS_CSS.PANEL} system-status`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.GEAR}`}></i>
+              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.GEAR}`} />
               {DASHBOARD_LABELS.SYSTEM_STATUS}
             </h3>
           </div>
           <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.PEOPLE}></i>
+                <i className={DASHBOARD_ICONS.PEOPLE} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.TOTAL_USERS}</div>
@@ -195,7 +195,7 @@ const SummaryPanels = ({ user, consultationData }) => {
             </div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CALENDAR}></i>
+                <i className={DASHBOARD_ICONS.CALENDAR} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.TODAY_CONSULTATIONS}</div>
@@ -211,14 +211,14 @@ const SummaryPanels = ({ user, consultationData }) => {
         <div className={`${SUMMARY_PANELS_CSS.PANEL} mapping-management`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.LINK}`}></i>
+              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.LINK}`} />
               {DASHBOARD_LABELS.MAPPING_MANAGEMENT}
             </h3>
           </div>
           <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CLOCK}></i>
+                <i className={DASHBOARD_ICONS.CLOCK} />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.PENDING_APPROVALS}</div>
@@ -227,7 +227,7 @@ const SummaryPanels = ({ user, consultationData }) => {
             </div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className="bi bi-check-circle"></i>
+                <i className="bi bi-check-circle" />
               </div>
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.ACTIVE_MAPPINGS}</div>
@@ -240,7 +240,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                 size="small"
                 onClick={() => { window.location.href = '/admin/mapping-management'; }}
               >
-                <i className="bi bi-gear"></i> 매핑 관리
+                <i className="bi bi-gear" /> 매핑 관리
               </MGButton>
             </div>
           </div>

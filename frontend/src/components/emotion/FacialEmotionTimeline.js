@@ -27,8 +27,8 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                 { time: '0:00', joy: 0.3, sorrow: 0.2, anger: 0.1, fear: 0.1 },
                 { time: '5:00', joy: 0.2, sorrow: 0.4, anger: 0.1, fear: 0.3 },
                 { time: '10:00', joy: 0.3, sorrow: 0.3, anger: 0.1, fear: 0.2 },
-                { time: '15:00', joy: 0.4, sorrow: 0.2, anger: 0.05, fear: 0.1 },
-            ],
+                { time: '15:00', joy: 0.4, sorrow: 0.2, anger: 0.05, fear: 0.1 }
+            ]
         });
     }, [emotionId]);
 
@@ -46,7 +46,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                             <div
                                 className={`bar ${EMOTION_CSS.EMOTION_TYPE.JOY}`}
                                 style={{ width: `${emotionData.avgJoy * 100}%` }}
-                            ></div>
+                             />
                         </div>
                         <span>{(emotionData.avgJoy * 100).toFixed(0)}%</span>
                     </div>
@@ -57,7 +57,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                             <div
                                 className={`bar ${EMOTION_CSS.EMOTION_TYPE.SORROW}`}
                                 style={{ width: `${emotionData.avgSorrow * 100}%` }}
-                            ></div>
+                             />
                         </div>
                         <span>{(emotionData.avgSorrow * 100).toFixed(0)}%</span>
                     </div>
@@ -68,7 +68,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                             <div
                                 className={`bar ${EMOTION_CSS.EMOTION_TYPE.ANGER}`}
                                 style={{ width: `${emotionData.avgAnger * 100}%` }}
-                            ></div>
+                             />
                         </div>
                         <span>{(emotionData.avgAnger * 100).toFixed(0)}%</span>
                     </div>
@@ -79,7 +79,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                             <div
                                 className={`bar ${EMOTION_CSS.EMOTION_TYPE.FEAR}`}
                                 style={{ width: `${emotionData.avgFear * 100}%` }}
-                            ></div>
+                             />
                         </div>
                         <span>{(emotionData.avgFear * 100).toFixed(0)}%</span>
                     </div>
@@ -90,7 +90,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
                             <div
                                 className={`bar ${EMOTION_CSS.EMOTION_TYPE.SURPRISE}`}
                                 style={{ width: `${emotionData.avgSurprise * 100}%` }}
-                            ></div>
+                             />
                         </div>
                         <span>{(emotionData.avgSurprise * 100).toFixed(0)}%</span>
                     </div>

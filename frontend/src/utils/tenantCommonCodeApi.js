@@ -29,7 +29,7 @@ const getTenantCommonCodeApiBase = () => {
 /**
  * 테넌트 공통코드 그룹 목록 조회
  */
-export const getTenantCodeGroups = async () => {
+export const getTenantCodeGroups = async() => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const url = `${apiBase}/groups`;
@@ -60,7 +60,7 @@ export const getTenantCodeGroups = async () => {
 /**
  * 특정 그룹의 테넌트 공통코드 목록 조회
  */
-export const getTenantCodesByGroup = async (codeGroup) => {
+export const getTenantCodesByGroup = async(codeGroup) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const url = `${apiBase}/groups/${codeGroup}`;
@@ -91,7 +91,7 @@ export const getTenantCodesByGroup = async (codeGroup) => {
 /**
  * 테넌트 공통코드 생성
  */
-export const createTenantCode = async (codeData) => {
+export const createTenantCode = async(codeData) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -109,7 +109,7 @@ export const createTenantCode = async (codeData) => {
 /**
  * 테넌트 공통코드 수정
  */
-export const updateTenantCode = async (codeId, codeData) => {
+export const updateTenantCode = async(codeId, codeData) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -127,7 +127,7 @@ export const updateTenantCode = async (codeId, codeData) => {
 /**
  * 테넌트 공통코드 삭제
  */
-export const deleteTenantCode = async (codeId) => {
+export const deleteTenantCode = async(codeId) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -145,7 +145,7 @@ export const deleteTenantCode = async (codeId) => {
 /**
  * 테넌트 공통코드 활성화/비활성화
  */
-export const toggleTenantCodeActive = async (codeId, isActive) => {
+export const toggleTenantCodeActive = async(codeId, isActive) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -167,7 +167,7 @@ export const toggleTenantCodeActive = async (codeId, isActive) => {
 /**
  * 테넌트 공통코드 정렬 순서 변경
  */
-export const updateTenantCodeOrder = async (codeId, sortOrder) => {
+export const updateTenantCodeOrder = async(codeId, sortOrder) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -189,7 +189,7 @@ export const updateTenantCodeOrder = async (codeId, sortOrder) => {
 /**
  * 상담 패키지 생성 (금액 포함)
  */
-export const createConsultationPackage = async (packageData) => {
+export const createConsultationPackage = async(packageData) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();
@@ -211,7 +211,7 @@ export const createConsultationPackage = async (packageData) => {
 /**
  * 평가 유형 생성 (금액 포함)
  */
-export const createAssessmentType = async (assessmentData) => {
+export const createAssessmentType = async(assessmentData) => {
     try {
         const apiBase = getTenantCommonCodeApiBase();
         const headers = getDefaultApiHeaders();

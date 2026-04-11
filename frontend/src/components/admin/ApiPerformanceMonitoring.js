@@ -50,7 +50,7 @@ const ApiPerformanceMonitoring = () => {
   // 상태 관리
   const [dashboardData, setDashboardData] = useState(MOCK_CHART_DATA);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async() => {
     setRefreshing(true);
     // 실제 환경에서는 API 호출을 통해 데이터를 가져옵니다.
     // 현재는 Mock 데이터로 시뮬레이션합니다.
@@ -71,7 +71,7 @@ const ApiPerformanceMonitoring = () => {
   }, [fetchDashboardData]);
 
   // 통계 초기화
-  const handleClearStats = async () => {
+  const handleClearStats = async() => {
     const messages = API_PERFORMANCE_WIDGET.MESSAGES;
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(messages.CLEAR_CONFIRM, resolve);
@@ -94,7 +94,7 @@ const ApiPerformanceMonitoring = () => {
   };
 
   // 성능 보고서 다운로드
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = async() => {
     setDownloadLoading(true);
     try {
       // Mock 동작
@@ -173,7 +173,7 @@ const ApiPerformanceMonitoring = () => {
             padding: '24px'
           }}>
             <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>응답 시간 트렌드</h3>
             </div>
             <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
@@ -189,7 +189,7 @@ const ApiPerformanceMonitoring = () => {
             padding: '24px'
           }}>
             <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>상태 코드 비율</h3>
             </div>
             <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
@@ -213,7 +213,7 @@ const ApiPerformanceMonitoring = () => {
             padding: '24px'
           }}>
             <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>가장 느린 API Top 5</h3>
             </div>
             <div className="mg-v2-ad-b0kla__list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -240,7 +240,7 @@ const ApiPerformanceMonitoring = () => {
             padding: '24px'
           }}>
             <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>캐시 히트 상태</h3>
             </div>
             <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '100px', width: '100%', display: 'flex', alignItems: 'center' }}>

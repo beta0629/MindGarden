@@ -19,13 +19,13 @@ import './Card.css';
 /**
  * @param {string} props.className - 추가 CSS 클래스
  */
-const CardHeader = ({children, 
+const CardHeader = ({ children, 
   icon, 
   title, 
   subtitle,
   actions,
   className = '',
-  ...props}) => {return (<div className={`mg-v2-card-header ${className}`.trim()} {...props}>
+  ...props }) => {return (<div className={`mg-v2-card-header ${className}`.trim()} {...props}>
       <div className="mg-v2-v2-v2-card-header-content">
         {icon && <div className="mg-v2-v2-v2-card-header-icon">{icon}</div>}
         <div className="mg-v2-v2-v2-card-header-text">

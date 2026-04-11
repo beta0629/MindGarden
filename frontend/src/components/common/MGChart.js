@@ -25,7 +25,7 @@ const MGChart = ({
     if (!canvasRef.current) return;
 
     // Chart.js 동적 import
-    const initChart = async () => {
+    const initChart = async() => {
       try {
         const { Chart, registerables } = await import('chart.js/auto');
         Chart.register(...registerables);
@@ -144,7 +144,7 @@ const MGChart = ({
     <div className={getChartClasses()} style={{ '--chart-height': `${height}px` }}>
       {loading && (
         <div className="mg-chart__loading">
-          <div className="mg-chart__spinner"></div>
+          <div className="mg-chart__spinner" />
           <span>차트를 불러오는 중...</span>
         </div>
       )}

@@ -98,7 +98,7 @@ const SessionExtensionModal = ({
         }
     }, [isOpen, mapping]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         
         if (additionalSessions < 1) {

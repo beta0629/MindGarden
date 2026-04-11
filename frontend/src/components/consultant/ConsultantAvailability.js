@@ -364,18 +364,24 @@ const ConsultantAvailability = () => {
                                 </span>
                               </div>
                               <div className="time-actions">
-                                <button
+                                <MGButton
+                                  variant="outline"
+                                  size="small"
                                   className="btn btn-sm btn-outline-primary"
                                   onClick={() => setEditingSlot(slot)}
+                                  title="수정"
                                 >
                                   <i className="bi bi-pencil"></i>
-                                </button>
-                                <button
+                                </MGButton>
+                                <MGButton
+                                  variant="outline"
+                                  size="small"
                                   className="btn btn-sm btn-outline-danger"
                                   onClick={() => handleDeleteAvailability(slot.id)}
+                                  title="삭제"
                                 >
                                   <i className="bi bi-trash"></i>
-                                </button>
+                                </MGButton>
                               </div>
                             </div>
                           )) || (

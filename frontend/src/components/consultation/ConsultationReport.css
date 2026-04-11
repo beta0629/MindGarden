@@ -34,7 +34,27 @@
   transition: all 0.2s ease;
 }
 
+.back-button.mg-button {
+  min-height: 40px;
+  padding: 0;
+  box-shadow: none;
+}
+
+.back-button.mg-button .mg-button__content,
+.back-button.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
 .back-button:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.back-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: #e9ecef;
   color: #495057;
 }
@@ -307,7 +327,17 @@
   transition: background-color 0.2s ease;
 }
 
+.retry-btn.mg-button.mg-button--primary {
+  background: var(--mg-primary-500);
+  color: white;
+  border: none;
+}
+
 .retry-btn:hover {
+  background: #0056b3;
+}
+
+.retry-btn.mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: #0056b3;
 }
 

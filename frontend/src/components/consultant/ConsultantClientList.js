@@ -9,6 +9,7 @@ import notificationManager from '../../utils/notification';
 import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
 import FilterBadge from './molecules/FilterBadge';
 import ClientCard from './molecules/ClientCard';
+import MGButton from '../common/MGButton';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -306,9 +307,9 @@ const ConsultantClientList = () => {
             <div className="client-list-error-state">
               <AlertTriangle size={48} />
               <div className="client-list-error-state__message">{error}</div>
-              <button className="mg-v2-client-view-btn" onClick={loadClients}>
+              <MGButton variant="primary" className="mg-v2-client-view-btn" onClick={loadClients}>
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           )}
 
@@ -333,12 +334,13 @@ const ConsultantClientList = () => {
                   }
                 </p>
                 {clients.length > 0 && (
-                  <button
+                  <MGButton
+                    variant="primary"
                     className="mg-v2-client-view-btn"
                     onClick={() => setFilterStatus('ALL')}
                   >
                     전체 상태 보기
-                  </button>
+                  </MGButton>
                 )}
               </div>
             ) : (

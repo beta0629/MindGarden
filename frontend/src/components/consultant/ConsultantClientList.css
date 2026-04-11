@@ -122,6 +122,21 @@
   border-color: var(--mg-color-primary-main, #3D5246);
 }
 
+.mg-v2-filter-badge.mg-button {
+  height: auto;
+  min-height: 36px;
+}
+
+.mg-v2-filter-badge.mg-button .mg-button__content {
+  width: 100%;
+}
+
+.mg-v2-filter-badge.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .mg-v2-filter-badge__count {
   font-weight: 600;
   opacity: 0.8;
@@ -357,6 +372,33 @@
 .mg-v2-client-view-btn svg {
   width: 16px;
   height: 16px;
+}
+
+.mg-v2-client-view-btn.mg-button.mg-button--primary {
+  background: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-background-main, #FAF9F7);
+  border: none;
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 8px 16px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mg-v2-client-view-btn.mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-color-primary-light, #4A6354);
+}
+
+.mg-v2-client-view-btn.mg-button.mg-button--primary:disabled {
+  background: var(--mg-v2-color-secondary-300, #d1d5db);
+  color: var(--mg-v2-color-secondary-500, #6b7280);
+}
+
+.mg-v2-client-view-btn.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* 빈 상태 */

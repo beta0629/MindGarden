@@ -10,6 +10,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
 import ConsultantRecordListBlock from './records/ConsultantRecordListBlock';
 import ConsultationLogModal from './ConsultationLogModal';
+import MGButton from '../common/MGButton';
 import './ConsultantRecords.css';
 
 const ConsultantRecords = () => {
@@ -183,14 +184,16 @@ const ConsultantRecords = () => {
                   <i className="bi bi-exclamation-triangle-fill me-2"></i>
                   {error}
                 </div>
-                <button 
+                <MGButton 
+                  variant="outline"
+                  size="small"
                   className="btn btn-outline-danger btn-sm" 
                   onClick={loadRecords}
                   disabled={loading}
                 >
                   <i className="bi bi-arrow-clockwise me-1"></i>
                   재시도
-                </button>
+                </MGButton>
               </div>
             )}
 

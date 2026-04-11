@@ -11,6 +11,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import MGButton from '../common/MGButton';
 import './ConsultantMessages.css';
 
 /**
@@ -330,12 +331,13 @@ const ConsultantMessages = () => {
             />
           </div>
 
-          <button
+          <MGButton
             onClick={() => setShowSendModal(true)}
+            variant="primary"
             className="mg-v2-button mg-v2-button-primary"
           >
             새 메시지
-          </button>
+          </MGButton>
         </div>
 
         {/* 로딩 상태 — 목록 영역만 인라인 로더 (헤더·검색은 유지) */}
@@ -366,12 +368,13 @@ const ConsultantMessages = () => {
                   {messages.length === 0 ? "아직 전송한 메시지가 없습니다." : "다른 검색어를 사용해보세요."}
                 </p>
                 {messages.length === 0 && (
-                  <button 
+                  <MGButton
                     onClick={() => setShowSendModal(true)}
+                    variant="primary"
                     className="consultant-messages-empty-btn"
                   >
                     첫 메시지 보내기
-                  </button>
+                  </MGButton>
                 )}
               </div>
             ) : (
@@ -436,18 +439,20 @@ const ConsultantMessages = () => {
           backdropClick={true}
           actions={
             <>
-              <button
+              <MGButton
+                variant="secondary"
                 className="mg-v2-button mg-v2-button-secondary"
                 onClick={() => setShowSendModal(false)}
               >
                 취소
-              </button>
-              <button
+              </MGButton>
+              <MGButton
+                variant="primary"
                 className="mg-v2-button mg-v2-button-primary"
                 onClick={handleSendMessage}
               >
                 전송
-              </button>
+              </MGButton>
             </>
           }
         >

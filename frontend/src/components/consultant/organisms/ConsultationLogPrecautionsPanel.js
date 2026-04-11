@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { renderConsultationLogKeywordHighlight } from '../utils/renderConsultationLogKeywordHighlight';
 
@@ -16,13 +17,15 @@ const PANEL_ID = 'consultation-log-accordion-precautions-panel';
  */
 const ConsultationLogPrecautionsPanel = ({ expanded, onExpandedChange, importantComments = [] }) => (
   <div className="mg-accordion-item mg-v2-consultation-log-modal__precautions-panel">
-    <button
+    <MGButton
       type="button"
+      variant="outline"
       className="mg-accordion-header"
       id={TRIGGER_ID}
       aria-expanded={expanded}
       aria-controls={PANEL_ID}
       onClick={() => onExpandedChange(!expanded)}
+      preventDoubleClick={false}
     >
       <span className="mg-accordion-title mg-flex mg-v2-items-center mg-v2-gap-sm">
         <AlertTriangle
@@ -35,7 +38,7 @@ const ConsultationLogPrecautionsPanel = ({ expanded, onExpandedChange, important
       <span className={`mg-accordion-icon${expanded ? ' open' : ''}`} aria-hidden="true">
         ▼
       </span>
-    </button>
+    </MGButton>
     <section
       id={PANEL_ID}
       className={`mg-accordion-content${expanded ? ' open' : ''}`}

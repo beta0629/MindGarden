@@ -6,6 +6,7 @@ import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import MGButton from '../common/MGButton';
 import './ConsultationReport.css';
 
 const ConsultationReport = () => {
@@ -339,12 +340,15 @@ const ConsultationReport = () => {
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">
-            <button 
+            <MGButton 
+              type="button"
+              variant="outline"
               className="back-button"
               onClick={() => navigate(-1)}
+              title="뒤로"
             >
               <i className="bi bi-arrow-left"></i>
-            </button>
+            </MGButton>
             <div className="header-text">
               <h1>📊 상담 리포트</h1>
               <p>상담 현황을 분석한 리포트를 확인할 수 있습니다</p>
@@ -412,9 +416,9 @@ const ConsultationReport = () => {
             <div className="error-message">
               <i className="bi bi-exclamation-triangle"></i>
               <p>{error}</p>
-              <button onClick={loadReportData} className="retry-btn">
+              <MGButton variant="primary" onClick={loadReportData} className="retry-btn">
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           ) : !reportData ? (
             <div className="no-data">

@@ -239,7 +239,8 @@
   gap: 8px;
 }
 
-.time-actions .btn {
+.time-actions .btn,
+.time-actions .mg-button {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.85rem;

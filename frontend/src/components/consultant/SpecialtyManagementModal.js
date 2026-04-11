@@ -7,6 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 
@@ -380,15 +381,19 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 <SafeText>{consultant.specialtyDisplay ?? getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}</SafeText>
                                             </div>
                                         </div>
-                                        <button 
+                                        <MGButton 
+                                            variant="outline"
+                                            size="small"
                                             className="mg-v2-button mg-v2-button--icon"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleConsultantSelect(consultant);
                                             }}
+                                            preventDoubleClick={false}
+                                            title="편집"
                                         >
                                             <Edit2 size={20} />
-                                        </button>
+                                        </MGButton>
                                     </div>
                                 ))}
                             </div>
@@ -429,14 +434,17 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 className="mg-v2-form-badge-select mg-v2-form-select--flex-1"
                                             />
-                                            <button 
+                                            <MGButton 
+                                                variant="primary"
                                                 className="mg-v2-button mg-v2-button--primary"
                                                 onClick={handleSaveSpecialty}
                                                 disabled={loading || !newSpecialty.trim()}
+                                                loading={loading}
+                                                loadingText="저장 중..."
                                             >
                                                 <Save size={20} className="mg-v2-icon-inline" />
-                                                {loading ? '저장 중...' : '저장'}
-                                            </button>
+                                                저장
+                                            </MGButton>
                                         </div>
                                     </div>
                                 </div>
@@ -462,14 +470,17 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             disabled={loading}
                                             className="mg-v2-form-input mg-v2-form-input--flex-1"
                                         />
-                                        <button 
+                                        <MGButton 
+                                            variant="secondary"
                                             className="mg-v2-button mg-v2-button--secondary"
                                             onClick={handleAddSpecialty}
                                             disabled={loading || !newSpecialty.trim()}
+                                            loading={loading}
+                                            loadingText="추가 중..."
                                         >
                                             <Plus size={20} className="mg-v2-icon-inline" />
-                                            {loading ? '추가 중...' : '추가'}
-                                        </button>
+                                            추가
+                                        </MGButton>
                                     </div>
                                 </div>
                             </div>

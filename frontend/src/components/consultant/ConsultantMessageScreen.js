@@ -9,6 +9,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import MGButton from '../common/MGButton';
 
 /**
  * 상담사 메시지 전송 화면
@@ -579,22 +580,26 @@ const ConsultantMessageScreen = () => {
 
         {/* 버튼 그룹 */}
         <div style={styles.buttonGroup}>
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
             onClick={handleSkipMessage}
             style={{...styles.button, ...styles.secondaryButton}}
             disabled={sending}
           >
             건너뛰기
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
+            variant="success"
             onClick={handleSendMessage}
             style={{...styles.button, ...styles.successButton}}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
+            loading={sending}
+            loadingText="전송 중..."
           >
-            {sending ? <div className="mg-loading">로딩중...</div> : '📤 메시지 전송'}
-          </button>
+            📤 메시지 전송
+          </MGButton>
         </div>
       </div>
       </div>

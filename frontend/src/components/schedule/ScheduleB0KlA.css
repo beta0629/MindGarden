@@ -908,6 +908,34 @@
   background: var(--mg-warning-50, var(--cs-warning-50));
 }
 
+/* 상담일지 모달 아코디언 — MGButton 래퍼와 헤더 레이아웃 유지 */
+.mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button,
+.mg-v2-consultation-log-modal__client-profile-panel .mg-accordion-header.mg-button {
+  width: 100%;
+  min-height: unset;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-weight: inherit;
+  justify-content: flex-start;
+}
+
+.mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button .mg-button__content,
+.mg-v2-consultation-log-modal__client-profile-panel .mg-accordion-header.mg-button .mg-button__content {
+  width: 100%;
+}
+
+.mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button .mg-button__text,
+.mg-v2-consultation-log-modal__client-profile-panel .mg-accordion-header.mg-button .mg-button__text {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
 .mg-v2-consultation-log-modal__form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

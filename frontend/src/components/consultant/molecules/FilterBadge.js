@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import MGButton from '../../common/MGButton';
 
 const FilterBadge = ({
   label,
@@ -35,17 +36,20 @@ const FilterBadge = ({
   } : {};
 
   return (
-    <button
+    <MGButton
+      type="button"
+      variant="outline"
       aria-label={`${label} 상태 필터 (${count}명)`}
       aria-pressed={isActive}
       className={badgeClasses}
       onClick={handleClick}
       style={badgeStyle}
+      preventDoubleClick={false}
     >
       {Icon && <Icon size={14} />}
       <span className="mg-v2-filter-badge__label">{label}</span>
       <span className="mg-v2-filter-badge__count">({count})</span>
-    </button>
+    </MGButton>
   );
 };
 

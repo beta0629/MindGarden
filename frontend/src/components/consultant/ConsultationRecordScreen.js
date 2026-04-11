@@ -8,6 +8,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 
 /**
  * 상담일지 작성 화면
@@ -1041,30 +1042,37 @@ const ConsultationRecordScreen = () => {
 
         {/* 버튼 그룹 */}
         <div style={styles.buttonGroup}>
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
             onClick={() => navigate('/consultant/schedule')}
             style={{...styles.button, ...styles.secondaryButton}}
             disabled={saving}
           >
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
+            variant="primary"
             onClick={handleSave}
             style={{...styles.button, ...styles.primaryButton}}
             disabled={saving}
+            loading={saving}
+            loadingText="처리 중..."
           >
-            {saving ? <div className="mg-loading">로딩중...</div> : '💾 저장'}
-          </button>
-          <button
+            💾 저장
+          </MGButton>
+          <MGButton
             type="button"
+            variant="danger"
             onClick={handleComplete}
             style={{...styles.button, ...styles.dangerButton}}
             disabled={saving}
+            loading={saving}
+            loadingText="처리 중..."
           >
-            {saving ? <div className="mg-loading">로딩중...</div> : '✅ 완료'}
-          </button>
+            ✅ 완료
+          </MGButton>
         </div>
       </div>
       </ContentArea>

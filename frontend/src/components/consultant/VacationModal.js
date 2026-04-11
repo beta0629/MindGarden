@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CalendarX, XCircle, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { 
   VACATION_TYPES, 
@@ -123,33 +124,28 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
       loading={loading}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
             className="mg-v2-button mg-v2-button--secondary"
             onClick={handleClose}
             disabled={loading}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="submit"
             form="vacation-modal-form"
+            variant="primary"
             className="mg-v2-button mg-v2-button--primary"
             disabled={loading}
+            loading={loading}
+            loadingText="설정 중..."
           >
-            {loading ? (
-              <>
-                <div className="mg-loading">로딩중...</div>
-                설정 중...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={20} className="mg-v2-icon-inline" />
-                휴무 설정
-              </>
-            )}
-          </button>
+            <CheckCircle size={20} className="mg-v2-icon-inline" />
+            휴무 설정
+          </MGButton>
         </>
       }
     >
@@ -224,14 +220,17 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             <label className="mg-v2-form-label">휴무 사유 <span className="mg-v2-form-label-required">*</span></label>
             <div className="mg-v2-chip-group">
               {DEFAULT_VACATION_REASONS.map((reason, index) => (
-                <button
+                <MGButton
                   key={index}
                   type="button"
+                  variant="outline"
+                  size="small"
                   className={`mg-v2-chip ${formData.reason === reason ? 'mg-v2-chip--selected' : ''}`}
                   onClick={() => setFormData(prev => ({ ...prev, reason }))}
+                  preventDoubleClick={false}
                 >
                   {reason}
-                </button>
+                </MGButton>
               ))}
             </div>
             <textarea

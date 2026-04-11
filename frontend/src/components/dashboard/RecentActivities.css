@@ -1,4 +1,16 @@
 /* 최근 활동 - 두 번째 스크린샷과 같은 깔끔한 카드 형태 */
+.recent-activities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.recent-activities-header .section-title {
+  margin-bottom: 0;
+}
+
 .recent-activities {
   background: white;
   border-radius: var(--border-radius-lg);

@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { RECENT_ACTIVITIES_CSS } from '../../constants/css';
@@ -41,13 +42,15 @@ const RecentActivities = ({ consultationData }) => {
           최근 활동
         </h3>
         {hasMoreActivities && (
-          <button 
-            className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
+          <MGButton
+            variant="outline"
+            size="small"
+            className="recent-activities-view-all mg-button--with-icon"
             onClick={handleViewAll}
           >
             <i className="bi bi-arrow-right"></i>
             전체보기
-          </button>
+          </MGButton>
         )}
       </div>
       <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_LIST}>

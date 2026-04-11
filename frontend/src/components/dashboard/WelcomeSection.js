@@ -8,6 +8,7 @@ import { RoleUtils } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
 import Avatar from '../common/Avatar';
+import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import './WelcomeSection.css';
 
@@ -215,12 +216,14 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
               {todayConsultations.length > 4 && (
                 <div className="mg-text-center mg-v2-mt-md mg-v2-pt-md mg-v2-w-full" style={{ borderTop: '1px solid var(--light-beige)' }}>
-                  <button 
+                  <MGButton
+                    variant="outline"
+                    fullWidth
                     onClick={() => handleCardClick('schedule')}
-                    className="mg-v2-button mg-v2-button--outline mg-v2-w-full"
+                    className="mg-v2-w-full"
                   >
                     +{todayConsultations.length - 4}건 더 보기
-                  </button>
+                  </MGButton>
                 </div>
               )}
             </div>

@@ -27,6 +27,7 @@
 import React from 'react';
 import { Plus, Trash2, Settings, Lock, Move } from 'lucide-react';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
+import MGButton from '../../common/MGButton';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import './DashboardWidgetManager.css';
 
@@ -59,13 +60,15 @@ const DashboardWidgetManagerPresentation = ({
       {/* 헤더 */}
       <div className="mg-widget-manager-header">
         <h3 className="mg-widget-manager-title">위젯 관리</h3>
-        <button
-          className="mg-btn mg-btn--primary mg-btn--sm"
+        <MGButton
+          variant="primary"
+          size="small"
+          className="mg-widget-manager-header-add mg-button--with-icon"
           onClick={onShowAddModal}
         >
           <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
           위젯 추가
-        </button>
+        </MGButton>
       </div>
       
       {/* 그룹별 위젯 표시 */}
@@ -127,34 +130,44 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
       <div className="mg-widget-item-actions">
         {/* 이동 버튼 */}
         {widget.isMovable && (
-          <button
-            className="mg-btn mg-btn--ghost mg-btn--sm"
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className="mg-widget-item-action-btn"
             title="위젯 이동"
+            preventDoubleClick={false}
           >
             <Move size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </button>
+          </MGButton>
         )}
         
         {/* 설정 버튼 */}
         {widget.isConfigurable && (
-          <button
-            onClick={() => onConfigure(widget.widgetId)}
-            className="mg-btn mg-btn--ghost mg-btn--sm"
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className="mg-widget-item-action-btn"
             title="위젯 설정"
+            onClick={() => onConfigure(widget.widgetId)}
           >
             <Settings size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </button>
+          </MGButton>
         )}
         
         {/* 삭제 버튼 */}
         {widget.isDeletable ? (
-          <button
-            onClick={() => onDelete(widget.widgetId)}
-            className="mg-btn mg-btn--danger mg-btn--sm"
+          <MGButton
+            type="button"
+            variant="danger"
+            size="small"
+            className="mg-widget-item-action-btn"
             title="위젯 삭제"
+            onClick={() => onDelete(widget.widgetId)}
           >
             <Trash2 size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </button>
+          </MGButton>
         ) : (
           <span className="mg-widget-item-locked" title="삭제 불가">
             <Lock size={14} />
@@ -183,9 +196,11 @@ const AddWidgetModal = ({ isOpen, availableWidgets, onAdd, onClose }) => {
       <div className="mg-available-widgets">
         {availableWidgets.length > 0 ? (
           availableWidgets.map(widget => (
-            <button
+            <MGButton
               key={widget.widgetId}
               type="button"
+              variant="outline"
+              fullWidth
               onClick={() => onAdd(widget.widgetType)}
               className="mg-available-widget-item"
             >
@@ -196,7 +211,7 @@ const AddWidgetModal = ({ isOpen, availableWidgets, onAdd, onClose }) => {
                 </p>
               </div>
               <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_MD} />
-            </button>
+            </MGButton>
           ))
         ) : (
           <p className="mg-text--muted">추가 가능한 위젯이 없습니다.</p>

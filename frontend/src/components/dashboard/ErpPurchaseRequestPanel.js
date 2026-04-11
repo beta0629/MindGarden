@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, ShoppingCart, Clock, Check, ClipboardList } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
+import MGButton from '../common/MGButton';
 
 const ErpPurchaseRequestPanel = ({ user }) => {
   const [purchaseData, setPurchaseData] = useState({
@@ -126,18 +127,18 @@ const ErpPurchaseRequestPanel = ({ user }) => {
 
             {/* 액션 버튼 */}
             <div className="quick-actions-grid">
-              <button 
-                className="mg-button mg-button-primary"
-                onClick={() => window.location.href = '/erp/purchase-requests'}
+              <MGButton
+                variant="primary"
+                onClick={() => { window.location.href = '/erp/purchase-requests'; }}
               >
                 새 구매 요청
-              </button>
-              <button 
-                className="mg-button mg-button-ghost"
-                onClick={() => window.location.href = '/erp/purchase-management'}
+              </MGButton>
+              <MGButton
+                variant="outline"
+                onClick={() => { window.location.href = '/erp/purchase-management'; }}
               >
                 요청 내역
-              </button>
+              </MGButton>
             </div>
           </>
         )}

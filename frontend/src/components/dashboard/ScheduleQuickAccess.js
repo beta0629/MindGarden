@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -25,13 +26,15 @@ const ScheduleQuickAccess = ({ user }) => {
           <i className="bi bi-calendar-check schedule-quick-access-icon"></i>
           스케줄 관리
         </h3>
-        <button 
-          className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
+        <MGButton
+          variant="outline"
+          size="small"
+          className="schedule-quick-access-view-all mg-button--with-icon"
           onClick={handleScheduleClick}
         >
           <i className="bi bi-arrow-right"></i>
           전체보기
-        </button>
+        </MGButton>
       </div>
 
       {/* 통합 스케줄 카드 */}

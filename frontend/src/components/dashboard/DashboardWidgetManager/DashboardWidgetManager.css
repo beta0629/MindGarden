@@ -242,6 +242,43 @@
   font-size: var(--mg-font-size-xs);
 }
 
+/* MGButton (G8-B14a) — 레거시 .mg-btn 대체·공존 */
+.mg-widget-manager-header-add.mg-button--with-icon .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-2);
+}
+
+.mg-widget-item-action-btn.mg-button--small {
+  min-width: var(--button-height-sm, 2rem);
+  padding-inline: var(--mg-spacing-2);
+}
+
+.mg-available-widgets .mg-available-widget-item.mg-button.mg-button--outline {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  background: var(--mg-gray-50);
+  border: 1px solid var(--mg-gray-200);
+  color: var(--mg-gray-900);
+}
+
+.mg-available-widgets .mg-available-widget-item.mg-button .mg-button__text {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mg-spacing-4);
+  white-space: normal;
+}
+
+.mg-available-widgets .mg-available-widget-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--mg-primary-500);
+  background: color-mix(in srgb, var(--mg-primary-500) 5%, white);
+  box-shadow: var(--mg-shadow-sm);
+  color: var(--mg-gray-900);
+}
+
 /* ========================================
    모달
    ======================================== */

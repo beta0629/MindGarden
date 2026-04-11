@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { CloudSun, Droplet, Wind, RefreshCw, AlertTriangle } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 
@@ -194,12 +195,13 @@ const WeatherCard = () => {
             <AlertTriangle className="mg-v2-empty-state-icon" />
             <div className="mg-v2-empty-state-text">
               <h3>날씨 정보 오류</h3>
-              <button
-                className="mg-v2-button mg-v2-button--text mg-v2-button--sm"
+              <MGButton
+                variant="outline"
+                size="small"
                 onClick={fetchWeatherData}
               >
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>

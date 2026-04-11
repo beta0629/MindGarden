@@ -15,6 +15,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../../components/common/modals/UnifiedModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
 
@@ -247,12 +248,13 @@ const ClientMessageSection = ({ userId }) => {
           )}
         </div>
         {allMessages.length > 0 && (
-          <button 
-            className="mg-button mg-button-ghost mg-button-sm"
+          <MGButton
+            variant="outline"
+            size="small"
             onClick={handleViewAllMessages}
           >
             전체보기
-          </button>
+          </MGButton>
         )}
       </div>
 

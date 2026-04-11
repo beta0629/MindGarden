@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Mail } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -70,12 +71,13 @@ const SystemNotificationSection = () => {
             )}
           </div>
           {totalUnreadCount > 0 && (
-            <button
-              className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm"
+            <MGButton
+              variant="outline"
+              size="small"
               onClick={handleViewAll}
             >
               {totalUnreadCount > 5 ? `전체 보기 (+${totalUnreadCount - 5})` : '전체 보기'}
-            </button>
+            </MGButton>
           )}
         </div>
       </div>

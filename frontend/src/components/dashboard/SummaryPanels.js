@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
@@ -234,12 +235,13 @@ const SummaryPanels = ({ user, consultationData }) => {
               </div>
             </div>
             <div className={SUMMARY_PANELS_CSS.MAPPING_ACTIONS}>
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={() => window.location.href = '/admin/mapping-management'}
+              <MGButton
+                variant="primary"
+                size="small"
+                onClick={() => { window.location.href = '/admin/mapping-management'; }}
               >
                 <i className="bi bi-gear"></i> 매핑 관리
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>

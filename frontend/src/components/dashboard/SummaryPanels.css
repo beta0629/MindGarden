@@ -188,12 +188,15 @@
   border-top: 1px solid #e9ecef;
 }
 
-.summary-panels-mapping-actions .btn {
+.summary-panels-mapping-actions .mg-button {
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-weight: 500;
-  display: flex;
+}
+
+.summary-panels-mapping-actions .mg-button .mg-button__text {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
@@ -240,7 +243,8 @@
   flex-wrap: wrap;
 }
 
-.erp-action-buttons .mg-btn {
+.erp-action-buttons .mg-btn,
+.erp-action-buttons .mg-button {
   flex: 1;
   min-width: 140px;
   display: flex;

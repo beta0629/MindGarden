@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Avatar from '../common/Avatar';
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -161,12 +162,12 @@ const ConsultantClientSection = ({ userId }) => {
             <div className="mg-v2-empty-state-text">
               <h3>오류가 발생했습니다</h3>
               <p>{error}</p>
-              <button 
-                className="mg-v2-button mg-v2-button--primary"
+              <MGButton
+                variant="primary"
                 onClick={loadClients}
               >
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>
@@ -181,12 +182,13 @@ const ConsultantClientSection = ({ userId }) => {
           <Users size={20} />
           내 내담자 ({clients.length}명)
         </div>
-        <button 
-          className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm"
+        <MGButton
+          variant="outline"
+          size="small"
           onClick={() => navigate('/consultant/clients')}
         >
           전체보기 →
-        </button>
+        </MGButton>
       </div>
 
       <div className="mg-v2-card-body">

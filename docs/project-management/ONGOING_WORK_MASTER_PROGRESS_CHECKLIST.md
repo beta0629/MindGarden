@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B18·G-01 백업 제거·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (QA-01 Jest 전체 그린·develop/main 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -247,12 +247,13 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `frontend`에서 `npm run lint:check`, `CI=true npm test -- --watchAll=false`, `npm run verify:erp` 권장(core-tester 게이트).
+- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `CI=true npm test -- --watchAll=false` **전 스위트 통과**(craco `react-router/dom`·관리자 파이프라인·ThemeSelector·App 스모크 등); `npm run lint:check`·`npm run verify:erp`는 잔여 부채로 별도 배치 권장.
 
 **권장 다음 단계 (마스터 진행)**  
-1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
-2) **G-01** — `ErpModal`/레거시 모달 미적용 화면 explore → 파일 충돌 없게 G8-Bn 블록 나누기.  
-3) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
+1) **UI-02 2차** — 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (`tf-layout-refactor-2` 트랙, AccountForm·드롭다운 포털 등 소규모 정리 포함).  
+2) **전역 린트 부채** — `npm run lint:check` 에러 축소 배치(ERP·앱 전역, G-01과 별도).  
+3) **ERP-P4 잔여** — `components/erp` 내 인벤토리·MGButton 패턴(ERP-P4-05 비고).  
+4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
 
 ---
 
@@ -324,3 +325,4 @@
 | 2026-04-11 | **G8-B17a** test 화면 MGButton `102143e98`, **G8-B17b** BaseButton·BaseCard·ErpButton·데모 MGButton `12e0b6f61` |
 | 2026-04-11 | **G8-B18** 미사용 백업 JS 제거·문서 보정 `77ac0f292`; QA-01 린트·테스트·`verify:erp` 권장 |
 | 2026-04-11 | **QA-01** Jest 일부 스위트 수정(ProfileDropdown·Table·위젯·testUtils) `0f69e2cf4` — UI-02 인벤토리: `UnifiedModal` 광범위 적용·RB Modal 없음(explore) |
+| 2026-04-11 | **QA-01** Jest 전체 그린(react-router v7·craco·setupTests·App·ThemeSelector·파이프라인)·develop·main 반영·운영 프론트 배포(`deploy-frontend-prod`) 트리거 |

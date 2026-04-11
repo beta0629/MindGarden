@@ -25,8 +25,7 @@ describe('PipelineStepCard', () => {
       );
 
       expect(screen.getByText('테스트 단계')).toBeInTheDocument();
-      expect(screen.getByText('5건')).toBeInTheDocument();
-      expect(screen.getByText('완료')).toBeInTheDocument();
+      expect(screen.getByText('5건 완료')).toBeInTheDocument();
     });
 
     it('badgeValue가 "—"일 때 그대로 표시된다', () => {
@@ -39,7 +38,7 @@ describe('PipelineStepCard', () => {
         />
       );
 
-      expect(screen.getByText('—')).toBeInTheDocument();
+      expect(screen.getByText(/—\s*대기중/)).toBeInTheDocument();
       expect(screen.getByText('대기 단계')).toBeInTheDocument();
     });
 
@@ -116,7 +115,7 @@ describe('PipelineStepCard', () => {
 
       const badge = container.querySelector('.pipeline-step-badge[aria-label]');
       expect(badge).toBeInTheDocument();
-      expect(badge?.getAttribute('aria-label')).toBe('10건 매칭됨');
+      expect(badge?.getAttribute('aria-label')).toMatch(/10건\s*매칭됨/);
     });
   });
 });

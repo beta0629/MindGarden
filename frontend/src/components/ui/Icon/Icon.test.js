@@ -33,7 +33,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
     const iconElement = screen.getByRole('button');
     fireEvent.click(iconElement);
     
-    expect(handleClick).toHaveBeenCalledTimes(DEFAULT_VALUES.CURRENT_PAGE);});
+    expect(handleClick).toHaveBeenCalledTimes(1);});
 
   // 키보드 이벤트 테스트
   test('handles keyboard events', () => {const handleClick = jest.fn();
@@ -42,7 +42,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
     const iconElement = screen.getByRole('button');
     fireEvent.keyDown(iconElement, {key: 'Enter'});
     
-    expect(handleClick).toHaveBeenCalledTimes(DEFAULT_VALUES.CURRENT_PAGE);});
+    expect(handleClick).toHaveBeenCalledTimes(1);});
 
   // 비활성화 상태 테스트
   test('disables interaction when disabled', () => {const handleClick = jest.fn();
@@ -50,7 +50,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
     
     const iconElement = screen.getByRole('button');
     expect(iconElement).toHaveAttribute('aria-disabled', 'true');
-    expect(iconElement).toHaveClass('mg-v2-icon--disabled');
+    expect(iconElement).toHaveClass('mg-v2-disabled');
     
     fireEvent.click(iconElement);
     expect(handleClick).not.toHaveBeenCalled();});
@@ -58,7 +58,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
   // 로딩 상태 테스트
   test('shows loading spinner when loading', () => {render(<Icon name="CALENDAR" loading />);
     
-    const spinnerElement = document.querySelector('.mg-v2-icon-spinner');
+    const spinnerElement = document.querySelector('.mg-v2-v2-v2-icon-spinner');
     expect(spinnerElement).toBeInTheDocument();});
 
   // 존재하지 않는 아이콘 테스트

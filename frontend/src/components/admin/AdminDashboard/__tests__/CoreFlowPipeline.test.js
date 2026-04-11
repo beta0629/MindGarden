@@ -26,10 +26,11 @@ describe('CoreFlowPipeline', () => {
       expect(screen.getByText('스케줄 등록 (관리자 전담)')).toBeInTheDocument();
       expect(screen.getByText('자동 회기차감/회계처리 (ERP)')).toBeInTheDocument();
 
-      expect(screen.getByText('10건')).toBeInTheDocument();
-      expect(screen.getByText('2건')).toBeInTheDocument();
-      expect(screen.getByText('8건')).toBeInTheDocument();
-      expect(screen.getByText('1건')).toBeInTheDocument();
+      expect(screen.getByText('10건 매칭됨')).toBeInTheDocument();
+      expect(screen.getByText('2건 대기중')).toBeInTheDocument();
+      expect(screen.getByText('8건 부여됨')).toBeInTheDocument();
+      expect(screen.getByText('1건 의견수렴중')).toBeInTheDocument();
+      expect(screen.getByText('배치/일지작성 연동')).toBeInTheDocument();
     });
 
     it('steps를 직접 전달하면 해당 단계만 렌더된다', () => {
@@ -41,8 +42,8 @@ describe('CoreFlowPipeline', () => {
 
       expect(screen.getByText('1단계')).toBeInTheDocument();
       expect(screen.getByText('2단계')).toBeInTheDocument();
-      expect(screen.getByText('5건')).toBeInTheDocument();
-      expect(screen.getByText('3건')).toBeInTheDocument();
+      expect(screen.getByText('5건 완료')).toBeInTheDocument();
+      expect(screen.getByText('3건 대기')).toBeInTheDocument();
       expect(screen.queryByText('내담자/상담사 매칭 (관리자)')).not.toBeInTheDocument();
     });
   });
@@ -64,11 +65,14 @@ describe('CoreFlowPipeline', () => {
   });
 
   describe('stats null/0 시 "—" 표시', () => {
-    it('stats가 빈 객체일 때 단계별로 "—"가 표시된다', () => {
+    it('stats가 빈 객체일 때 KPI 배지가 값+라벨 형태로 표시된다', () => {
       render(<CoreFlowPipeline stats={{}} />);
 
-      const dashes = screen.getAllByText('—');
-      expect(dashes.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('— 매칭됨')).toBeInTheDocument();
+      expect(screen.getByText('— 대기중')).toBeInTheDocument();
+      expect(screen.getByText('— 부여됨')).toBeInTheDocument();
+      expect(screen.getByText('— 의견수렴중')).toBeInTheDocument();
+      expect(screen.getByText('배치/일지작성 연동')).toBeInTheDocument();
     });
 
     it('stats 일부만 null이면 해당 단계에 "—"가 표시된다', () => {
@@ -80,13 +84,13 @@ describe('CoreFlowPipeline', () => {
       };
       render(<CoreFlowPipeline stats={stats} />);
 
-      expect(screen.getByText('5건')).toBeInTheDocument();
-      expect(screen.getByText('0건')).toBeInTheDocument();
-      const dashes = screen.getAllByText('—');
-      expect(dashes.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('5건 매칭됨')).toBeInTheDocument();
+      expect(screen.getByText('0건 부여됨')).toBeInTheDocument();
+      expect(screen.getByText('— 대기중')).toBeInTheDocument();
+      expect(screen.getByText('— 의견수렴중')).toBeInTheDocument();
     });
 
-    it('schedulePendingCount가 null이면 해당 단계는 "—"로 표시된다', () => {
+    it('schedulePendingCount가 null이면 해당 단계는 "— 의견수렴중"으로 표시된다', () => {
       const stats = {
         totalMappings: 1,
         pendingDepositCount: 0,
@@ -95,8 +99,7 @@ describe('CoreFlowPipeline', () => {
       };
       render(<CoreFlowPipeline stats={stats} />);
 
-      const dashValues = screen.getAllByText('—');
-      expect(dashValues.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('— 의견수렴중')).toBeInTheDocument();
     });
   });
 
@@ -139,11 +142,18 @@ describe('CoreFlowPipeline', () => {
         />
       );
 
-      const badgeWithAriaLabel = document.querySelector(
-        '.pipeline-step-badge[aria-label]'
+      const badges = document.querySelectorAll('.pipeline-step-badge[aria-label]');
+      expect(badges.length).toBe(5);
+      const labels = [...badges].map((el) => el.getAttribute('aria-label'));
+      expect(labels).toEqual(
+        expect.arrayContaining([
+          '3건 매칭됨',
+          '1건 대기중',
+          '2건 부여됨',
+          '0건 의견수렴중',
+          '배치/일지작성 연동'
+        ])
       );
-      expect(badgeWithAriaLabel).toBeInTheDocument();
-      expect(badgeWithAriaLabel?.getAttribute('aria-label')).toMatch(/\d+건|—/);
     });
   });
 });

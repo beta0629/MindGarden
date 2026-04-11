@@ -22,7 +22,8 @@
   margin-bottom: 1rem;
 }
 
-.back-button {
+.back-button,
+.back-button.mg-button {
   padding: 0.5rem 1rem;
   background: var(--bg-secondary, #fff);
   color: var(--text-primary, #333);
@@ -34,7 +35,8 @@
   white-space: nowrap;
 }
 
-.back-button:hover {
+.back-button:hover,
+.back-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--bg-hover, #f0f0f0);
   border-color: var(--primary-color, var(--mg-primary-500));
   color: var(--primary-color, var(--mg-primary-500));
@@ -101,7 +103,8 @@
   position: relative;
 }
 
-.export-button {
+.export-button,
+.export-button.mg-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -116,7 +119,8 @@
   transition: all 0.2s;
 }
 
-.export-button:hover {
+.export-button:hover,
+.export-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--primary-hover, #0056b3);
 }
 
@@ -139,7 +143,8 @@
   display: block;
 }
 
-.export-menu button {
+.export-menu button,
+.export-menu .erd-export-menu-item.mg-button {
   display: block;
   width: 100%;
   padding: 0.75rem 1rem;
@@ -152,12 +157,20 @@
   transition: background-color 0.2s;
 }
 
-.export-menu button:hover {
+.export-menu button:hover,
+.export-menu .erd-export-menu-item.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--bg-hover, #f0f0f0);
 }
 
-.export-menu button:first-child {
+.export-menu button:first-child,
+.export-menu .erd-export-menu-item.mg-button:first-child {
   border-bottom: 1px solid var(--border-color, var(--mg-gray-300));
+}
+
+.export-menu .erd-export-menu-item.mg-button.mg-button--outline {
+  border-radius: 0;
+  justify-content: flex-start;
+  box-shadow: none;
 }
 
 /* 탭 메뉴 */
@@ -168,7 +181,8 @@
   border-bottom: 2px solid var(--border-color, var(--mg-gray-300));
 }
 
-.tab-button {
+.tab-button,
+.tab-button.mg-button {
   padding: 0.75rem 1.5rem;
   background: transparent;
   color: var(--text-secondary, #666);
@@ -181,13 +195,23 @@
   margin-bottom: -2px;
 }
 
-.tab-button:hover {
+.tab-button:hover,
+.tab-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   color: var(--primary-color, var(--mg-primary-500));
 }
 
-.tab-button.active {
+.tab-button.active,
+.tab-button.mg-button.active {
   color: var(--primary-color, var(--mg-primary-500));
   border-bottom-color: var(--primary-color, var(--mg-primary-500));
+}
+
+.erd-detail-tabs .tab-button.mg-button.mg-button--outline {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* 탭 컨텐츠 */
@@ -223,7 +247,8 @@
   box-shadow: 0 2px 8px var(--mg-shadow-medium);
 }
 
-.zoom-button {
+.zoom-button,
+.zoom-button.mg-button {
   width: 32px;
   height: 32px;
   display: flex;
@@ -237,9 +262,12 @@
   font-size: 1.2rem;
   font-weight: bold;
   transition: background 0.2s;
+  min-height: 32px;
+  padding: 0;
 }
 
-.zoom-button:hover {
+.zoom-button:hover,
+.zoom-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--primary-hover, #0056b3);
 }
 
@@ -251,7 +279,8 @@
   color: var(--text-primary, #333);
 }
 
-.zoom-reset-button {
+.zoom-reset-button,
+.zoom-reset-button.mg-button {
   width: 32px;
   height: 32px;
   display: flex;
@@ -264,10 +293,18 @@
   cursor: pointer;
   font-size: 1rem;
   transition: background 0.2s;
+  min-height: 32px;
+  padding: 0;
 }
 
-.zoom-reset-button:hover {
+.zoom-reset-button:hover,
+.zoom-reset-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--text-primary, #333);
+}
+
+.erd-zoom-controls .zoom-reset-button.mg-button.mg-button--secondary {
+  background: var(--text-secondary, #666);
+  color: #fff;
 }
 
 /* 필터 컨트롤 */
@@ -281,7 +318,8 @@
   gap: 0.5rem;
 }
 
-.filter-toggle-button {
+.filter-toggle-button,
+.filter-toggle-button.mg-button {
   width: 40px;
   height: 40px;
   display: flex;
@@ -295,9 +333,12 @@
   font-size: 1.2rem;
   transition: all 0.2s;
   box-shadow: 0 2px 4px var(--mg-shadow-light);
+  min-height: 40px;
+  padding: 0;
 }
 
-.filter-toggle-button:hover {
+.filter-toggle-button:hover,
+.filter-toggle-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--bg-hover, #f0f0f0);
   border-color: var(--primary-color, var(--mg-primary-500));
 }
@@ -380,7 +421,8 @@
   flex: 1;
 }
 
-.clear-selection-button {
+.clear-selection-button,
+.clear-selection-button.mg-button {
   padding: 0.25rem 0.5rem;
   background: var(--error-color, var(--mg-error-500));
   color: #fff;
@@ -391,7 +433,8 @@
   transition: background 0.2s;
 }
 
-.clear-selection-button:hover {
+.clear-selection-button:hover,
+.clear-selection-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--error-hover, #c82333);
 }
 
@@ -624,7 +667,8 @@
   gap: 1rem;
 }
 
-.retry-button {
+.retry-button,
+.retry-button.mg-button {
   padding: 0.75rem 1.5rem;
   background: var(--primary-color, var(--mg-primary-500));
   color: #fff;
@@ -635,7 +679,8 @@
   transition: background 0.2s;
 }
 
-.retry-button:hover {
+.retry-button:hover,
+.retry-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--primary-hover, #0056b3);
 }
 
@@ -666,7 +711,8 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .tab-button {
+  .tab-button,
+  .tab-button.mg-button {
     white-space: nowrap;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;

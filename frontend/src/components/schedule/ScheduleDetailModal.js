@@ -9,6 +9,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import '../../styles/main.css';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
@@ -221,21 +222,27 @@ const ScheduleDetailModal = ({
             className="mg-v2-ad-b0kla"
             actions={
                 <>
-                    <button
+                    <MGButton
+                        type="button"
+                        variant="outline"
                         className="mg-v2-btn--outline"
+                        preventDoubleClick={false}
                         onClick={() => setShowCancelConfirm(false)}
                         disabled={loading}
                     >
                         아니오
-                    </button>
-                    <button
-                        className="mg-v2-btn--primary"
-                        style={{ backgroundColor: 'var(--mg-error-500)' }}
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        variant="danger"
+                        className="mg-v2-schedule-detail-btn--danger"
+                        preventDoubleClick={false}
                         onClick={handleCancelSchedule}
-                        disabled={loading}
+                        loading={loading}
+                        loadingText="처리중..."
                     >
-                        {loading ? '처리중...' : '예, 취소합니다'}
-                    </button>
+                        예, 취소합니다
+                    </MGButton>
                 </>
             }
         >
@@ -260,20 +267,27 @@ const ScheduleDetailModal = ({
             className="mg-v2-ad-b0kla"
             actions={
                 <>
-                    <button
+                    <MGButton
+                        type="button"
+                        variant="outline"
                         className="mg-v2-btn--outline"
+                        preventDoubleClick={false}
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        variant="primary"
                         className="mg-v2-btn--primary"
+                        preventDoubleClick={false}
                         onClick={handleConfirmSchedule}
-                        disabled={loading}
+                        loading={loading}
+                        loadingText="처리중..."
                     >
-                        {loading ? '처리중...' : '확정'}
-                    </button>
+                        확정
+                    </MGButton>
                 </>
             }
         >
@@ -502,29 +516,37 @@ const ScheduleDetailModal = ({
                 {isStatus(resolveStatusForActions(displayData), 'BOOKED') && (
                     <>
                         {canRescheduleByRole && (
-                            <button
+                            <MGButton
+                                type="button"
+                                variant="outline"
                                 className="mg-v2-btn--outline"
+                                preventDoubleClick={false}
                                 onClick={handleEditSchedule}
                                 disabled={loading}
                             >
                                 예약 변경
-                            </button>
+                            </MGButton>
                         )}
-                        <button
+                        <MGButton
+                            type="button"
+                            variant="primary"
                             className="mg-v2-btn--primary"
+                            preventDoubleClick={false}
                             onClick={() => setShowConfirmModal(true)}
                             disabled={loading}
                         >
                             예약 확정
-                        </button>
-                        <button
-                            className="mg-v2-btn--primary"
-                            style={{ backgroundColor: 'var(--mg-error-500)' }}
+                        </MGButton>
+                        <MGButton
+                            type="button"
+                            variant="danger"
+                            className="mg-v2-schedule-detail-btn--danger"
+                            preventDoubleClick={false}
                             onClick={() => setShowCancelConfirm(true)}
                             disabled={loading}
                         >
                             예약 취소
-                        </button>
+                        </MGButton>
                     </>
                 )}
                 {isStatus(resolveStatusForActions(displayData), 'CONFIRMED') && (() => {
@@ -533,28 +555,36 @@ const ScheduleDetailModal = ({
                     )?.value || 'COMPLETED';
                     return (
                         <>
-                            <button
+                            <MGButton
+                                type="button"
+                                variant="outline"
                                 className="mg-v2-btn--outline"
+                                preventDoubleClick={false}
                                 onClick={handleWriteConsultationLog}
                                 disabled={loading}
                             >
                                 상담일지 작성
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
+                                type="button"
+                                variant="primary"
                                 className="mg-v2-btn--primary"
+                                preventDoubleClick={false}
                                 onClick={() => handleStatusChange(completedStatus)}
                                 disabled={loading}
                             >
                                 완료 처리
-                            </button>
-                            <button
-                                className="mg-v2-btn--primary"
-                                style={{ backgroundColor: 'var(--mg-error-500)' }}
+                            </MGButton>
+                            <MGButton
+                                type="button"
+                                variant="danger"
+                                className="mg-v2-schedule-detail-btn--danger"
+                                preventDoubleClick={false}
                                 onClick={() => setShowCancelConfirm(true)}
                                 disabled={loading}
                             >
                                 예약 취소
-                            </button>
+                            </MGButton>
                         </>
                     );
                 })()}
@@ -563,13 +593,16 @@ const ScheduleDetailModal = ({
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
                     return (
-                        <button
+                        <MGButton
+                            type="button"
+                            variant="outline"
                             className="mg-v2-btn--outline"
+                            preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
                             다시 예약
-                        </button>
+                        </MGButton>
                     );
                 })()}
                 {isStatus(resolveStatusForActions(displayData), 'CANCELLED') && (() => {
@@ -577,13 +610,16 @@ const ScheduleDetailModal = ({
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
                     return (
-                        <button
+                        <MGButton
+                            type="button"
+                            variant="outline"
                             className="mg-v2-btn--outline"
+                            preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
                             다시 예약
-                        </button>
+                        </MGButton>
                     );
                 })()}
             </div>

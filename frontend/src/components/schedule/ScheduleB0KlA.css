@@ -1437,6 +1437,41 @@
   cursor: not-allowed;
 }
 
+/* G8-B7b: MGButton + B0KlA schedule modal 액션 (네이티브 .mg-v2-btn--* 와 시각 정합) */
+.mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary {
+  background: var(--mg-primary-500);
+  color: var(--mg-white);
+  border: none;
+  border-radius: 10px;
+  min-height: 44px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-primary-600);
+}
+
+.mg-v2-ad-b0kla .mg-button.mg-v2-btn--outline {
+  background: transparent;
+  color: var(--mg-text-primary);
+  border: 1px solid var(--mg-gray-300);
+  border-radius: 10px;
+  min-height: 44px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mg-v2-ad-b0kla .mg-button.mg-v2-schedule-detail-btn--danger {
+  min-height: 44px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
 /* ===== Calendar Event Block (B0KlA) ===== */
 .mg-v2-ad-calendar-event {
   background-color: var(--mg-gray-50);

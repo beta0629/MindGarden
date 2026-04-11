@@ -9,6 +9,7 @@ import { Download } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import StatusBadge from '../common/StatusBadge';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ErdDetailPage.css';
 
@@ -547,12 +548,24 @@ const ErdDetailPage = () => {
         <div className="erd-error">
           <p className="error-message"><SafeText fallback="ERD를 찾을 수 없습니다.">{error}</SafeText></p>
           <div className="error-actions">
-            <button onClick={() => navigate('/tenant/erd')} className="back-button">
+            <MGButton
+              type="button"
+              variant="outline"
+              className="back-button"
+              preventDoubleClick={false}
+              onClick={() => navigate('/tenant/erd')}
+            >
               목록으로 돌아가기
-            </button>
-            <button onClick={loadErdDetail} className="retry-button">
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="primary"
+              className="retry-button"
+              preventDoubleClick={false}
+              onClick={loadErdDetail}
+            >
               다시 시도
-            </button>
+            </MGButton>
           </div>
         </div>
       </div>
@@ -564,12 +577,15 @@ const ErdDetailPage = () => {
       {/* 헤더 */}
       <div className="erd-detail-header">
         <div className="erd-detail-header-content">
-          <button 
-            onClick={() => navigate('/tenant/erd')} 
+          <MGButton
+            type="button"
+            variant="outline"
             className="back-button"
+            preventDoubleClick={false}
+            onClick={() => navigate('/tenant/erd')}
           >
             ← 목록으로
-          </button>
+          </MGButton>
           <div className="erd-detail-title-section">
             <h1 className="erd-detail-title"><SafeText>{erd.name}</SafeText></h1>
             <div className="erd-detail-meta">
@@ -592,12 +608,22 @@ const ErdDetailPage = () => {
         {/* 내보내기 버튼 */}
         <div className="erd-export-buttons">
           <div className="export-dropdown">
-            <button className="export-button" title={toDisplayString('ERD 내보내기')}>
+            <MGButton
+              type="button"
+              variant="primary"
+              className="export-button"
+              title={toDisplayString('ERD 내보내기')}
+              preventDoubleClick={false}
+            >
               <Download size={18} />
               내보내기
-            </button>
+            </MGButton>
             <div className="export-menu">
-              <button 
+              <MGButton
+                type="button"
+                variant="outline"
+                className="erd-export-menu-item"
+                preventDoubleClick={false}
                 onClick={async () => {
                   try {
                     const svgElement = mermaidRef.current?.querySelector('svg');
@@ -613,8 +639,12 @@ const ErdDetailPage = () => {
                 }}
               >
                 PNG로 내보내기
-              </button>
-              <button 
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="outline"
+                className="erd-export-menu-item"
+                preventDoubleClick={false}
                 onClick={() => {
                   try {
                     const svgElement = mermaidRef.current?.querySelector('svg');
@@ -630,7 +660,7 @@ const ErdDetailPage = () => {
                 }}
               >
                 SVG로 내보내기
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>
@@ -638,25 +668,34 @@ const ErdDetailPage = () => {
 
       {/* 탭 메뉴 */}
       <div className="erd-detail-tabs">
-        <button
+        <MGButton
+          type="button"
+          variant="outline"
           className={`tab-button ${activeTab === 'diagram' ? 'active' : ''}`}
+          preventDoubleClick={false}
           onClick={() => setActiveTab('diagram')}
         >
           다이어그램
-        </button>
-        <button
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="outline"
           className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          preventDoubleClick={false}
           onClick={() => setActiveTab('history')}
         >
           변경 이력 ({history.length})
-        </button>
+        </MGButton>
         {erd.textErd && (
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
             className={`tab-button ${activeTab === 'text' ? 'active' : ''}`}
+            preventDoubleClick={false}
             onClick={() => setActiveTab('text')}
           >
             텍스트 ERD
-          </button>
+          </MGButton>
         )}
       </div>
 
@@ -666,27 +705,51 @@ const ErdDetailPage = () => {
           <div className="erd-diagram-container">
             {/* 확대/축소 컨트롤 */}
             <div className="erd-zoom-controls">
-              <button onClick={handleZoomIn} className="zoom-button" title={toDisplayString('확대')}>
+              <MGButton
+                type="button"
+                variant="primary"
+                className="zoom-button"
+                title={toDisplayString('확대')}
+                preventDoubleClick={false}
+                onClick={handleZoomIn}
+              >
                 <span>+</span>
-              </button>
+              </MGButton>
               <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-              <button onClick={handleZoomOut} className="zoom-button" title={toDisplayString('축소')}>
+              <MGButton
+                type="button"
+                variant="primary"
+                className="zoom-button"
+                title={toDisplayString('축소')}
+                preventDoubleClick={false}
+                onClick={handleZoomOut}
+              >
                 <span>−</span>
-              </button>
-              <button onClick={handleZoomReset} className="zoom-reset-button" title={toDisplayString('리셋')}>
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="secondary"
+                className="zoom-reset-button"
+                title={toDisplayString('리셋')}
+                preventDoubleClick={false}
+                onClick={handleZoomReset}
+              >
                 <span>⌂</span>
-              </button>
+              </MGButton>
             </div>
 
             {/* 필터 컨트롤 */}
             <div className="erd-filter-controls">
-              <button 
-                onClick={() => setFilterVisible(!filterVisible)}
+              <MGButton
+                type="button"
+                variant="outline"
                 className="filter-toggle-button"
                 title={toDisplayString('필터 토글')}
+                preventDoubleClick={false}
+                onClick={() => setFilterVisible(!filterVisible)}
               >
                 <span>🔍</span>
-              </button>
+              </MGButton>
               {filterVisible && (
                 <div className="filter-panel">
                   <input
@@ -715,30 +778,38 @@ const ErdDetailPage = () => {
                   <div className="selection-info">
                     <span className="selection-label">선택된 테이블:</span>
                     <span className="selection-value"><SafeText>{selectedTable}</SafeText></span>
-                    <button 
+                    <MGButton
+                      type="button"
+                      variant="danger"
+                      size="small"
+                      className="clear-selection-button"
+                      preventDoubleClick={false}
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
                         mermaidRef.current?.querySelectorAll('path, line, polyline') || []
                       )}
-                      className="clear-selection-button"
                     >
                       ✕
-                    </button>
+                    </MGButton>
                   </div>
                 )}
                 {selectedRelation && (
                   <div className="selection-info">
                     <span className="selection-label">선택된 관계:</span>
                     <span className="selection-value"><SafeText>{selectedRelation}</SafeText></span>
-                    <button 
+                    <MGButton
+                      type="button"
+                      variant="danger"
+                      size="small"
+                      className="clear-selection-button"
+                      preventDoubleClick={false}
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
                         mermaidRef.current?.querySelectorAll('path, line, polyline') || []
                       )}
-                      className="clear-selection-button"
                     >
                       ✕
-                    </button>
+                    </MGButton>
                   </div>
                 )}
                 {hoveredElement && !selectedTable && !selectedRelation && (
@@ -753,9 +824,15 @@ const ErdDetailPage = () => {
             {mermaidError ? (
               <div className="mermaid-error">
                 <p className="error-message"><SafeText>{mermaidError}</SafeText></p>
-                <button onClick={renderMermaid} className="retry-button">
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  className="retry-button"
+                  preventDoubleClick={false}
+                  onClick={renderMermaid}
+                >
                   다시 시도
-                </button>
+                </MGButton>
               </div>
             ) : (
               <div className="mermaid-wrapper">

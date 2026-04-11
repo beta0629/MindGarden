@@ -8,6 +8,7 @@ import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,6 +206,7 @@ public class StoredProcedureStandardizationIntegrationTest {
     }
 
     @Test
+    @Disabled("H2에는 MySQL 저장 프로시저·구문이 없음 — MySQL 통합에서 검증")
     @DisplayName("GetRefundStatistics 프로시저 - tenant_id 파라미터 검증 및 branchCode 제거 확인")
     void testGetRefundStatisticsWithTenantId() {
         // Given
@@ -267,6 +269,7 @@ public class StoredProcedureStandardizationIntegrationTest {
     }
 
     @Test
+    @Disabled("H2에는 MySQL 저장 프로시저·구문이 없음 — MySQL 통합에서 검증")
     @DisplayName("GetConsolidatedFinancialData 프로시저 - tenant_id 파라미터 검증 및 branchCodes 제거 확인")
     void testGetConsolidatedFinancialDataWithTenantId() {
         // Given

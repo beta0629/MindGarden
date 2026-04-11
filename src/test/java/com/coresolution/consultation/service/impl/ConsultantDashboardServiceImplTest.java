@@ -96,7 +96,8 @@ class ConsultantDashboardServiceImplTest {
         
         when(scheduleRepository.findIncompleteRecords(eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), any(Pageable.class)))
             .thenReturn(Arrays.asList(schedule));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(client));
+        when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(TEST_CLIENT_ID)))
+            .thenReturn(Optional.of(client));
         when(userPersonalDataCacheService.getDecryptedUserData(client)).thenReturn(decryptedData);
         
         List<IncompleteRecordResponse> result = consultantDashboardService.getIncompleteRecords(TEST_CONSULTANT_ID, 10);
@@ -144,7 +145,8 @@ class ConsultantDashboardServiceImplTest {
         
         when(consultationRecordRepository.findHighPriorityClients(eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), any(Pageable.class)))
             .thenReturn(Arrays.asList(record));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(client));
+        when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(TEST_CLIENT_ID)))
+            .thenReturn(Optional.of(client));
         when(userPersonalDataCacheService.getDecryptedUserData(client)).thenReturn(decryptedData);
         
         List<HighPriorityClientResponse> result = consultantDashboardService.getHighPriorityClients(TEST_CONSULTANT_ID, 5);
@@ -203,7 +205,8 @@ class ConsultantDashboardServiceImplTest {
             .thenReturn(Arrays.asList(schedule));
         when(consultationRecordRepository.findLatestByClientId(eq(TEST_TENANT_ID), eq(TEST_CLIENT_ID), any(Pageable.class)))
             .thenReturn(Arrays.asList(record));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(client));
+        when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(TEST_CLIENT_ID)))
+            .thenReturn(Optional.of(client));
         when(userPersonalDataCacheService.getDecryptedUserData(client)).thenReturn(decryptedData);
         
         List<UpcomingPreparationResponse> result = consultantDashboardService.getUpcomingPreparation(TEST_CONSULTANT_ID, 2);

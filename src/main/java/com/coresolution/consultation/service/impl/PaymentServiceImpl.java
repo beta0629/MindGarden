@@ -103,7 +103,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             throw new RuntimeException("이미 승인된 주문입니다.");
         }
         
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         Payment payment = Payment.builder()
                 .paymentId(generatePaymentId())
@@ -120,11 +120,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .expiresAt(LocalDateTime.now().plusMinutes(request.getTimeoutMinutes()))
                 .build();
         
-        if (tenantId != null) {
-            payment = create(tenantId, payment);
-        } else {
-            payment = paymentRepository.save(payment);
-        }
+        payment = create(tenantId, payment);
         log.info("결제 생성 완료: ID={}, PaymentID={}", payment.getId(), payment.getPaymentId());
         
         String paymentUrl = createExternalPayment(payment);

@@ -71,8 +71,9 @@ class PsychAssessmentPdfUploadIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        tenantId1 = "tenant-psych-pdf-" + UUID.randomUUID();
-        tenantId2 = "tenant-psych-pdf-" + UUID.randomUUID();
+        // tenants.tenant_id 는 VARCHAR(36) — 접두사+UUID 조합은 길이 초과하므로 UUID 문자열만 사용
+        tenantId1 = UUID.randomUUID().toString();
+        tenantId2 = UUID.randomUUID().toString();
 
         Tenant t1 = Tenant.builder()
                 .tenantId(tenantId1)

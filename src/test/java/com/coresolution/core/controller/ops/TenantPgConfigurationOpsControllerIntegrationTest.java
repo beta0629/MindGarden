@@ -88,8 +88,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/ops/pg-configurations/pending")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].configId").value(testConfigId));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId));
     }
     
     @Test
@@ -111,8 +111,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.approvalStatus").value("APPROVED"));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"));
     }
     
     @Test
@@ -140,8 +140,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.approvalStatus").value("REJECTED"));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.approvalStatus").value("REJECTED"));
     }
     
     @Test
@@ -178,8 +178,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/activate", testConfigId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
     }
     
     @Test
@@ -199,8 +199,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/deactivate", testConfigId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.status").value("INACTIVE"));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.status").value("INACTIVE"));
     }
     
     @Test
@@ -223,9 +223,9 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/test-connection", testConfigId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.result").value("SUCCESS"))
-                .andExpect(jsonPath("$.message").value("연결 성공"));
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.message").value("연결 성공"));
     }
     
     @Test
@@ -247,8 +247,8 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/test-connection", testConfigId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.result").value("FAILED"));
+                .andExpect(jsonPath("$.data.success").value(false))
+                .andExpect(jsonPath("$.data.result").value("FAILED"));
     }
     
     @Test

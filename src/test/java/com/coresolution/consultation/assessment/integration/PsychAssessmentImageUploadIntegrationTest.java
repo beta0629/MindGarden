@@ -72,7 +72,8 @@ class PsychAssessmentImageUploadIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        tenantId = "tenant-psych-img-" + UUID.randomUUID();
+        // tenant_id VARCHAR(36) — 접두어 없이 UUID만 사용
+        tenantId = UUID.randomUUID().toString();
         Tenant t = Tenant.builder()
                 .tenantId(tenantId)
                 .name("이미지 테스트 테넌트")

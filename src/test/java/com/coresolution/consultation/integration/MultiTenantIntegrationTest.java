@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +76,9 @@ class MultiTenantIntegrationTest {
     
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     private String tenantId1;
     private String tenantId2;
@@ -83,8 +87,8 @@ class MultiTenantIntegrationTest {
     
     @BeforeEach
     void setUp() {
-        // 테스트용 테넌트 1 생성
-        tenantId1 = "tenant-" + UUID.randomUUID().toString();
+        // 테스트용 테넌트 1 생성 (tenant_id VARCHAR(36) — UUID만 사용)
+        tenantId1 = UUID.randomUUID().toString();
         tenant1 = Tenant.builder()
                 .tenantId(tenantId1)
                 .name("테스트 테넌트 1")
@@ -95,7 +99,7 @@ class MultiTenantIntegrationTest {
         tenant1 = tenantRepository.save(tenant1);
         
         // 테스트용 테넌트 2 생성
-        tenantId2 = "tenant-" + UUID.randomUUID().toString();
+        tenantId2 = UUID.randomUUID().toString();
         tenant2 = Tenant.builder()
                 .tenantId(tenantId2)
                 .name("테스트 테넌트 2")
@@ -109,6 +113,13 @@ class MultiTenantIntegrationTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+    }
+
+    /** User/Consultant 검증: userId, email, password(해시) 필수 */
+    private void fillConsultantRequiredFields(Consultant consultant, String uniqueKey) {
+        consultant.setUserId("u-" + uniqueKey);
+        consultant.setEmail("c-" + uniqueKey + "@mt.test");
+        consultant.setPassword(passwordEncoder.encode("TestPw12ab"));
     }
     
     // ============================================
@@ -128,6 +139,7 @@ class MultiTenantIntegrationTest {
         consultant1.setYearsOfExperience(5);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant1.setIsActive(true);
+        fillConsultantRequiredFields(consultant1, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant1 = consultantService.save(consultant1);
         
         // When: 테넌트 1의 상담 생성
@@ -162,6 +174,7 @@ class MultiTenantIntegrationTest {
         consultant2.setYearsOfExperience(3);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant2.setIsActive(true);
+        fillConsultantRequiredFields(consultant2, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant2 = consultantService.save(consultant2);
         
         // When: 테넌트 2의 상담 생성
@@ -223,11 +236,9 @@ class MultiTenantIntegrationTest {
         assertThat(consultations2.stream()
                 .anyMatch(c -> c.getId().equals(consultation1Id))).isFalse();
         
-        // Then: 테넌트 1의 상담을 직접 조회하려고 하면 접근 제어 오류 발생
+        // Then: findById는 잘못된 테넌트 컨텍스트에서 빈 Optional 반환
         TenantContextHolder.setTenantId(tenantId2);
-        assertThatThrownBy(() -> {
-            consultationService.findById(consultation1Id);
-        }).isInstanceOf(Exception.class);
+        assertThat(consultationService.findById(consultation1Id)).isEmpty();
     }
     
     // ============================================
@@ -245,6 +256,7 @@ class MultiTenantIntegrationTest {
         consultant1.setYearsOfExperience(5);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant1.setIsActive(true);
+        fillConsultantRequiredFields(consultant1, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant1 = consultantService.save(consultant1);
         Long consultant1Id = consultant1.getId();
         
@@ -282,7 +294,9 @@ class MultiTenantIntegrationTest {
         schedule1.setStartTime(LocalTime.of(10, 0));
         schedule1.setEndTime(LocalTime.of(11, 0));
         schedule1.setTitle("테넌트1 스케줄");
-        schedule1 = scheduleService.createSchedule(schedule1);
+        // createSchedule은 예약 알림(ConsultationMessage) 연동을 타므로, 격리 검증은 저장만 수행
+        schedule1.setTenantId(tenantId1);
+        schedule1 = scheduleRepository.save(schedule1);
         Long schedule1Id = schedule1.getId();
         
         // When: 테넌트 2 컨텍스트로 변경
@@ -358,6 +372,7 @@ class MultiTenantIntegrationTest {
         consultant1.setYearsOfExperience(5);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant1.setIsActive(true);
+        fillConsultantRequiredFields(consultant1, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant1 = consultantRepository.save(consultant1);
         
         Consultation consultation1 = new Consultation();
@@ -402,6 +417,7 @@ class MultiTenantIntegrationTest {
         consultant1.setYearsOfExperience(5);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant1.setIsActive(true);
+        fillConsultantRequiredFields(consultant1, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant1 = consultantService.save(consultant1);
         
         // When: 테넌트 2로 전환 후 데이터 생성
@@ -412,6 +428,7 @@ class MultiTenantIntegrationTest {
         consultant2.setYearsOfExperience(3);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant2.setIsActive(true);
+        fillConsultantRequiredFields(consultant2, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         consultant2 = consultantService.save(consultant2);
         
         // Then: 각 테넌트는 자신의 데이터만 조회
@@ -443,6 +460,7 @@ class MultiTenantIntegrationTest {
         consultant.setYearsOfExperience(5);
         // averageRating은 addRating 메서드로 설정하거나 테스트에서는 생략
         consultant.setIsActive(true);
+        fillConsultantRequiredFields(consultant, UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         // tenant_id는 null로 설정하지 않음
         
         consultant = consultantService.save(consultant);

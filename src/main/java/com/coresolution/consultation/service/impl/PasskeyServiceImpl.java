@@ -168,6 +168,7 @@ public class PasskeyServiceImpl implements PasskeyService {
             
             // Passkey 저장
             UserPasskey passkey = UserPasskey.builder()
+                    .tenantId(tenantId)
                     .user(user)
                     .credentialId(credentialId)
                     .publicKey(attestationObject) // 실제로는 공개 키만 추출해야 함

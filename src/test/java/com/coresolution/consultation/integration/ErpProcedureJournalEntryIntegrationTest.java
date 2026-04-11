@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +102,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
     }
 
     @Test
+    @Disabled("H2에는 MySQL PL/SQL 프로시저가 없음 — MySQL 통합·시드 환경에서 검증")
     @DisplayName("ApplyDiscountAccounting 프로시저 실행 시 자동 분개 생성")
     void testApplyDiscountAccountingAutoJournalEntry() {
         // Given

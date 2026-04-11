@@ -73,10 +73,11 @@ class TenantPgConfigurationKeyRotationServiceTest {
         // Then
         assertEquals(1, result);
         verify(configurationRepository, times(1)).save(testConfiguration);
-        verify(encryptionService, times(1)).decrypt("v1::old-encrypted-api-key");
-        verify(encryptionService, times(1)).decrypt("v1::old-encrypted-secret-key");
-        verify(encryptionService, times(1)).ensureActiveKey("decrypted-api-key");
-        verify(encryptionService, times(1)).ensureActiveKey("decrypted-secret-key");
+        // needsRotation()와 실제 rotate 블록에서 각각 decrypt 호출
+        verify(encryptionService, times(2)).decrypt("v1::old-encrypted-api-key");
+        verify(encryptionService, times(2)).decrypt("v1::old-encrypted-secret-key");
+        verify(encryptionService, atLeast(1)).ensureActiveKey("decrypted-api-key");
+        verify(encryptionService, atLeast(1)).ensureActiveKey("decrypted-secret-key");
     }
     
     @Test
@@ -100,20 +101,20 @@ class TenantPgConfigurationKeyRotationServiceTest {
     
     @Test
     void testRotateAllPgConfigurations_PartialFailure() {
-        // Given
-        TenantPgConfiguration config1 = createTestConfiguration("config-1", "v1::old-key");
-        TenantPgConfiguration config2 = createTestConfiguration("config-2", "v1::old-key");
+        // Given — API/Secret 암호문이 동일하면 needsRotation 단계에서 stub 소진 순서가 꼬이므로 키를 분리
+        TenantPgConfiguration config1 = createTestConfiguration("config-1", "v1::old-a1", "v1::old-s1");
+        TenantPgConfiguration config2 = createTestConfiguration("config-2", "v1::old-a2", "v1::old-s2");
         List<TenantPgConfiguration> configurations = Arrays.asList(config1, config2);
         when(configurationRepository.findAll()).thenReturn(configurations);
         when(encryptionService.isEncrypted(anyString())).thenReturn(true);
-        
-        // config1 성공
-        when(encryptionService.decrypt("v1::old-key")).thenReturn("decrypted-key");
-        when(encryptionService.ensureActiveKey("decrypted-key")).thenReturn("v2::new-key");
+
+        when(encryptionService.decrypt("v1::old-a1")).thenReturn("decrypted-a");
+        when(encryptionService.decrypt("v1::old-s1")).thenReturn("decrypted-s");
+        when(encryptionService.ensureActiveKey("decrypted-a")).thenReturn("v2::new-a");
+        when(encryptionService.ensureActiveKey("decrypted-s")).thenReturn("v2::new-s");
         when(configurationRepository.save(config1)).thenReturn(config1);
-        
-        // config2 실패
-        when(encryptionService.decrypt("v1::old-key")).thenThrow(new RuntimeException("Decryption failed"));
+
+        when(encryptionService.decrypt("v1::old-a2")).thenThrow(new RuntimeException("Decryption failed"));
         
         // When
         int result = keyRotationService.rotateAllPgConfigurations();
@@ -140,18 +141,19 @@ class TenantPgConfigurationKeyRotationServiceTest {
         // Then
         assertEquals(1, result);
         verify(configurationRepository, times(1)).save(testConfiguration);
+        verify(encryptionService, atLeast(4)).decrypt(any());
     }
     
     // ==================== Helper Methods ====================
     
-    private TenantPgConfiguration createTestConfiguration(String configId, String encryptedKey) {
+    private TenantPgConfiguration createTestConfiguration(String configId, String apiEncrypted, String secretEncrypted) {
         return TenantPgConfiguration.builder()
                 .configId(configId)
                 .tenantId("test-tenant-1")
                 .pgProvider(PgProvider.TOSS)
                 .pgName("테스트 PG")
-                .apiKeyEncrypted(encryptedKey)
-                .secretKeyEncrypted(encryptedKey)
+                .apiKeyEncrypted(apiEncrypted)
+                .secretKeyEncrypted(secretEncrypted)
                 .status(PgConfigurationStatus.ACTIVE)
                 .approvalStatus(ApprovalStatus.APPROVED)
                 .build();

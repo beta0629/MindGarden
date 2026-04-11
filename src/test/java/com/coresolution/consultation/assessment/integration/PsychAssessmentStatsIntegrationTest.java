@@ -57,8 +57,9 @@ class PsychAssessmentStatsIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        tenantId1 = "tenant-psych-" + UUID.randomUUID();
-        tenantId2 = "tenant-psych-" + UUID.randomUUID();
+        // tenants.tenant_id 는 VARCHAR(36)
+        tenantId1 = UUID.randomUUID().toString();
+        tenantId2 = UUID.randomUUID().toString();
 
         Tenant t1 = Tenant.builder()
                 .tenantId(tenantId1)

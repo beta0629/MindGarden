@@ -5,6 +5,7 @@ import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
 import com.coresolution.core.service.TenantPgConfigurationService;
+import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -53,6 +56,9 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @MockBean
     private TenantPgConfigurationService pgConfigurationService;
+
+    @MockBean
+    private TenantAccessControlService tenantAccessControlService;
     
     private String testTenantId;
     private String testConfigId;
@@ -78,6 +84,9 @@ class TenantPgConfigurationControllerIntegrationTest {
         
         // TenantContext 설정
         TenantContextHolder.setTenantId(testTenantId);
+
+        doNothing().when(tenantAccessControlService).validateTenantAccess(anyString());
+        when(tenantAccessControlService.getCurrentUserId()).thenReturn("test-user");
     }
     
     @Test
@@ -94,10 +103,11 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].configId").value(testConfigId))
-                .andExpect(jsonPath("$[0].tenantId").value(testTenantId))
-                .andExpect(jsonPath("$[0].pgProvider").value("TOSS"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId))
+                .andExpect(jsonPath("$.data[0].tenantId").value(testTenantId))
+                .andExpect(jsonPath("$.data[0].pgProvider").value("TOSS"));
     }
     
     @Test
@@ -124,9 +134,9 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.tenantId").value(testTenantId))
-                .andExpect(jsonPath("$.history").isArray());
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.tenantId").value(testTenantId))
+                .andExpect(jsonPath("$.data.history").isArray());
     }
     
     @Test
@@ -151,8 +161,8 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .header("X-Tenant-Id", testTenantId)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.configId").value(testConfigId))
-                .andExpect(jsonPath("$.pgProvider").value("TOSS"));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.pgProvider").value("TOSS"));
     }
     
     @Test
@@ -196,7 +206,7 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .header("X-Tenant-Id", testTenantId)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configId").value(testConfigId));
+                .andExpect(jsonPath("$.data.configId").value(testConfigId));
     }
     
     @Test
@@ -214,7 +224,8 @@ class TenantPgConfigurationControllerIntegrationTest {
                         testTenantId, testConfigId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
     
     @Test
@@ -239,10 +250,10 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.result").value("SUCCESS"))
-                .andExpect(jsonPath("$.message").value("연결 성공"))
-                .andExpect(jsonPath("$.details").exists());
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.message").value("연결 성공"))
+                .andExpect(jsonPath("$.data.details").exists());
     }
     
     @Test
@@ -266,9 +277,9 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.result").value("FAILED"))
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.data.success").value(false))
+                .andExpect(jsonPath("$.data.result").value("FAILED"))
+                .andExpect(jsonPath("$.data.message").exists());
     }
     
     @Test

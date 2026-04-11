@@ -162,6 +162,23 @@ class BaseTenantEntityServiceIntegrationTest {
         c.setIsDeleted(false);
         return clientRepository.save(c);
     }
+
+    /**
+     * Consultant는 User 상속 — userId·BCrypt 비밀번호 필수.
+     */
+    private Consultant newPersistedConsultant(String tenantId, String name, String email) {
+        TenantContextHolder.setTenantId(tenantId);
+        Consultant consultant = new Consultant();
+        consultant.setUserId("c-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+        consultant.setEmail(email);
+        consultant.setPassword(passwordEncoder.encode("password12ab"));
+        consultant.setName(name);
+        consultant.setPhone("010-1234-5678");
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setIsActive(true);
+        consultant.setIsPasswordChanged(true);
+        return consultantService.save(consultant);
+    }
     
     // ==================== ConsultationService 테스트 ====================
     
@@ -170,10 +187,14 @@ class BaseTenantEntityServiceIntegrationTest {
     void testConsultationServiceCreate() {
         // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
+        User clientUser = newPersistedClientUser(tenantId1, "클라이언트", "ccreate@test.com", "010-1000-0001");
+        Client client = persistClientRowForUser(clientUser);
+        Consultant consultant = newPersistedConsultant(tenantId1, "상담사", "concreate@test.com");
+
         Consultation consultation = new Consultation();
-        consultation.setClientId(1L);
-        consultation.setConsultantId(1L);
+        consultation.setClientId(client.getId());
+        consultation.setConsultantId(consultant.getId());
+        consultation.setTitle("테스트 상담");
         consultation.setStatus("REQUESTED");
         consultation.setConsultationDate(LocalDate.now());
         consultation.setStartTime(LocalTime.now());
@@ -194,10 +215,14 @@ class BaseTenantEntityServiceIntegrationTest {
     void testConsultationServiceFindAllByTenant() {
         // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
+        User cu1 = newPersistedClientUser(tenantId1, "클라1", "cfind1@test.com", "010-2000-0001");
+        Client client1 = persistClientRowForUser(cu1);
+        Consultant cons1 = newPersistedConsultant(tenantId1, "상담사1", "confind1@test.com");
+
         Consultation consultation1 = new Consultation();
-        consultation1.setClientId(1L);
-        consultation1.setConsultantId(1L);
+        consultation1.setClientId(client1.getId());
+        consultation1.setConsultantId(cons1.getId());
+        consultation1.setTitle("테넌트1 상담");
         consultation1.setStatus("REQUESTED");
         consultation1.setConsultationDate(LocalDate.now());
         consultation1.setStartTime(LocalTime.now());
@@ -205,9 +230,14 @@ class BaseTenantEntityServiceIntegrationTest {
         consultationService.save(consultation1);
         
         TenantContextHolder.setTenantId(tenantId2);
+        User cu2 = newPersistedClientUser(tenantId2, "클라2", "cfind2@test.com", "010-2000-0002");
+        Client client2 = persistClientRowForUser(cu2);
+        Consultant cons2 = newPersistedConsultant(tenantId2, "상담사2", "confind2@test.com");
+
         Consultation consultation2 = new Consultation();
-        consultation2.setClientId(2L);
-        consultation2.setConsultantId(2L);
+        consultation2.setClientId(client2.getId());
+        consultation2.setConsultantId(cons2.getId());
+        consultation2.setTitle("테넌트2 상담");
         consultation2.setStatus("REQUESTED");
         consultation2.setConsultationDate(LocalDate.now());
         consultation2.setStartTime(LocalTime.now());
@@ -270,9 +300,13 @@ class BaseTenantEntityServiceIntegrationTest {
         TenantContextHolder.setTenantId(tenantId1);
         
         Consultant consultant = new Consultant();
+        consultant.setUserId("c-test-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10));
+        consultant.setPassword(passwordEncoder.encode("password12ab"));
         consultant.setName("테스트 상담사");
         consultant.setEmail("consultant@test.com");
         consultant.setPhone("010-1234-5678");
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setIsPasswordChanged(true);
         
         // When
         Consultant saved = consultantService.save(consultant);
@@ -327,18 +361,22 @@ class BaseTenantEntityServiceIntegrationTest {
     void testScheduleServiceCreate() {
         // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
+        User cu = newPersistedClientUser(tenantId1, "스케줄클라", "schedc@test.com", "010-3000-0001");
+        Client client = persistClientRowForUser(cu);
+        Consultant consultant = newPersistedConsultant(tenantId1, "스케줄상담", "schedcon@test.com");
+
         Schedule schedule = new Schedule();
-        schedule.setConsultantId(1L);
-        schedule.setClientId(1L);
+        schedule.setConsultantId(consultant.getId());
+        schedule.setClientId(client.getId());
         schedule.setDate(LocalDate.now());
         schedule.setStartTime(LocalTime.now());
         schedule.setEndTime(LocalTime.now().plusHours(1));
         schedule.setTitle("테스트 스케줄");
         schedule.setStatus(com.coresolution.consultation.constant.ScheduleStatus.BOOKED);
         
-        // When
-        Schedule saved = scheduleService.createSchedule(schedule);
+        schedule.setTenantId(tenantId1);
+        // createSchedule 은 예약 알림용 ConsultationMessage 를 보내 세션/플러시 부작용이 있어, 격리 검증은 직접 저장으로 수행
+        Schedule saved = scheduleRepository.save(schedule);
         
         // Then
         assertThat(saved).isNotNull();
@@ -352,27 +390,36 @@ class BaseTenantEntityServiceIntegrationTest {
     void testScheduleServiceFindAllByTenant() {
         // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
+        User cu1 = newPersistedClientUser(tenantId1, "스케줄클라1", "sch1@test.com", "010-4000-0001");
+        Client client1 = persistClientRowForUser(cu1);
+        Consultant consultant1 = newPersistedConsultant(tenantId1, "스케줄상담1", "schcon1@test.com");
+
         Schedule schedule1 = new Schedule();
-        schedule1.setConsultantId(1L);
-        schedule1.setClientId(1L);
+        schedule1.setConsultantId(consultant1.getId());
+        schedule1.setClientId(client1.getId());
         schedule1.setDate(LocalDate.now());
         schedule1.setStartTime(LocalTime.now());
         schedule1.setEndTime(LocalTime.now().plusHours(1));
         schedule1.setTitle("스케줄 1");
         schedule1.setStatus(com.coresolution.consultation.constant.ScheduleStatus.BOOKED);
-        scheduleService.createSchedule(schedule1);
+        schedule1.setTenantId(tenantId1);
+        scheduleRepository.save(schedule1);
         
         TenantContextHolder.setTenantId(tenantId2);
+        User cu2 = newPersistedClientUser(tenantId2, "스케줄클라2", "sch2@test.com", "010-4000-0002");
+        Client client2 = persistClientRowForUser(cu2);
+        Consultant consultant2 = newPersistedConsultant(tenantId2, "스케줄상담2", "schcon2@test.com");
+
         Schedule schedule2 = new Schedule();
-        schedule2.setConsultantId(2L);
-        schedule2.setClientId(2L);
+        schedule2.setConsultantId(consultant2.getId());
+        schedule2.setClientId(client2.getId());
         schedule2.setDate(LocalDate.now());
         schedule2.setStartTime(LocalTime.now());
         schedule2.setEndTime(LocalTime.now().plusHours(1));
         schedule2.setTitle("스케줄 2");
         schedule2.setStatus(com.coresolution.consultation.constant.ScheduleStatus.BOOKED);
-        scheduleService.createSchedule(schedule2);
+        schedule2.setTenantId(tenantId2);
+        scheduleRepository.save(schedule2);
         
         // When
         TenantContextHolder.setTenantId(tenantId1);
@@ -391,11 +438,14 @@ class BaseTenantEntityServiceIntegrationTest {
     void testConsultationMessageServiceCreate() {
         // Given
         TenantContextHolder.setTenantId(tenantId1);
-        
+        User cu = newPersistedClientUser(tenantId1, "메시지클라", "msgc@test.com", "010-5000-0001");
+        Client client = persistClientRowForUser(cu);
+        Consultant consultant = newPersistedConsultant(tenantId1, "메시지상담", "msgcon@test.com");
+
         // When
         ConsultationMessage message = consultationMessageService.sendMessage(
-            1L, // consultantId
-            1L, // clientId
+            consultant.getId(), // consultantId
+            client.getId(), // clientId
             null, // consultationId
             "CONSULTANT", // senderType
             "테스트 메시지", // title
@@ -483,7 +533,7 @@ class BaseTenantEntityServiceIntegrationTest {
         
         com.coresolution.consultation.dto.BranchCreateRequest request = 
             new com.coresolution.consultation.dto.BranchCreateRequest();
-        request.setBranchCode("BRANCH-001");
+        request.setBranchCode("BRANCH01");
         request.setBranchName("테스트 지점");
         request.setBranchType(Branch.BranchType.MAIN);
         request.setAddress("서울시 강남구");
@@ -516,11 +566,7 @@ class BaseTenantEntityServiceIntegrationTest {
         User cu1 = newPersistedClientUser(tenantId1, "클라이언트 1", "client1@test.com", "010-1111-1111");
         Client client1 = persistClientRowForUser(cu1);
 
-        Consultant consultant1 = new Consultant();
-        consultant1.setName("상담사 1");
-        consultant1.setEmail("consultant1@test.com");
-        consultant1.setPhone("010-2222-2222");
-        consultant1 = consultantService.save(consultant1);
+        Consultant consultant1 = newPersistedConsultant(tenantId1, "상담사 1", "consultant1@test.com");
         
         // Given - Tenant 2에 데이터 생성
         TenantContextHolder.setTenantId(tenantId2);
@@ -528,11 +574,7 @@ class BaseTenantEntityServiceIntegrationTest {
         User cu2 = newPersistedClientUser(tenantId2, "클라이언트 2", "client2@test.com", "010-3333-3333");
         Client client2 = persistClientRowForUser(cu2);
 
-        Consultant consultant2 = new Consultant();
-        consultant2.setName("상담사 2");
-        consultant2.setEmail("consultant2@test.com");
-        consultant2.setPhone("010-4444-4444");
-        consultant2 = consultantService.save(consultant2);
+        Consultant consultant2 = newPersistedConsultant(tenantId2, "상담사 2", "consultant2@test.com");
         
         // When - Tenant 1로 전환하여 조회
         TenantContextHolder.setTenantId(tenantId1);

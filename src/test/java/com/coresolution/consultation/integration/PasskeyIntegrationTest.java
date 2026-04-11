@@ -1,23 +1,28 @@
 package com.coresolution.consultation.integration;
 
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserPasskey;
 import com.coresolution.consultation.repository.UserPasskeyRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PasskeyService;
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Passkey 인증 통합 테스트
@@ -42,17 +47,45 @@ class PasskeyIntegrationTest {
     @Autowired
     private UserPasskeyRepository passkeyRepository;
 
+    @Autowired
+    private TenantRepository tenantRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private String tenantId;
     private User testUser;
 
     @BeforeEach
     void setUp() {
-        // 테스트용 사용자 생성
+        tenantId = UUID.randomUUID().toString();
+        Tenant tenant = Tenant.builder()
+                .tenantId(tenantId)
+                .name("Passkey 테스트 테넌트")
+                .businessType("CONSULTATION")
+                .status(Tenant.TenantStatus.ACTIVE)
+                .contactEmail("tenant-passkey@test.com")
+                .build();
+        tenantRepository.save(tenant);
+
+        TenantContextHolder.setTenantId(tenantId);
+
         testUser = new User();
+        testUser.setUserId("pk-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         testUser.setEmail("passkey-test@example.com");
         testUser.setName("Passkey Test User");
         testUser.setUsername("passkey-test-user");
-        testUser.setPassword("test-password-123");
+        testUser.setPassword(passwordEncoder.encode("test-password-123"));
+        testUser.setRole(UserRole.CLIENT);
+        testUser.setTenantId(tenantId);
+        testUser.setIsActive(true);
+        testUser.setIsPasswordChanged(true);
         testUser = userRepository.save(testUser);
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
     }
 
     @Test
@@ -203,4 +236,3 @@ class PasskeyIntegrationTest {
         assertThat(deletedPasskey.getIsActive()).isEqualTo(false);
     }
 }
-

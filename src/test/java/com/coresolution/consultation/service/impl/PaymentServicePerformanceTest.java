@@ -89,7 +89,7 @@ class PaymentServicePerformanceTest {
                 .pgName("성능 테스트 토스페이먼츠")
                 .apiKeyEncrypted(encryptionService.encrypt("test-api-key"))
                 .secretKeyEncrypted(encryptionService.encrypt("test-secret-key"))
-                .merchantId("test-merchant-id")
+                .merchantId("tst-merch-01")
                 .storeId("test-store-id")
                 .webhookUrl("https://api.tosspayments.com/webhook")
                 .returnUrl("https://example.com/return")

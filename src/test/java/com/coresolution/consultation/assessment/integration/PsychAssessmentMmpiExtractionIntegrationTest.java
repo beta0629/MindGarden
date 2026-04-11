@@ -19,6 +19,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -72,8 +73,8 @@ class PsychAssessmentMmpiExtractionIntegrationTest {
                         TENANT_ID, FILENAME_PATTERN))
                 .orElse(null);
 
-        assertThat(doc).as("tenant=%s, documentId=%s 또는 filename LIKE '%%%s%%' 매칭 문서 필요",
-                TENANT_ID, DOCUMENT_ID_29, FILENAME_PATTERN).isNotNull();
+        Assumptions.assumeTrue(doc != null,
+                "tenant=" + TENANT_ID + ", documentId=" + DOCUMENT_ID_29 + " 또는 mmpi_이혁진 시드 문서 필요 (로컬 DB 없으면 스킵)");
 
         Long documentId = doc.getId();
         log.info("테스트 대상 문서: documentId={}, originalFilename={}, assessmentType={}, storagePath={}",

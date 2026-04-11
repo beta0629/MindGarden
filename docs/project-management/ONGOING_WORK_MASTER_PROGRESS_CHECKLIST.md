@@ -224,8 +224,8 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| QA-01 | 코드 변경 배치 — `core-tester` 스모크·회귀 (프로젝트 표준) | 🔄 | 배치마다 해당 |
-| QA-02 | ERP E2E·스모크 (저장소 워크플로·시나리오가 있는 경우) | ☐ | `docs/planning/ERP_TEST_SCENARIOS.md` 참고 |
+| QA-01 | 코드 변경 배치 — `core-tester` 스모크·회귀 (프로젝트 표준) | 🔄 | 프론트 Jest·lint 통과. **백엔드 전체 `mvn test` 통과**(2026-04-11, 로컬 `pipefail` 검증). 배치마다 `core-tester` 권장 |
+| QA-02 | ERP E2E·스모크 (저장소 워크플로·시나리오가 있는 경우) | 🔄 | **`.github/workflows/e2e-erp-smoke.yml`**: PR(paths)·`npm run verify:erp`·Playwright(chromium, `BASE_URL=localhost`, **Secrets 불필요**) — `erp-legacy-path-redirects` 전체·`erp-approval-hub-redirect` 중 `super-approvals` grep 1건만(리다이렉트 스모크). 로그인·메뉴/리스트 스펙은 CI 미포함 — 회귀는 별도. `docs/planning/ERP_TEST_SCENARIOS.md` |
 
 ---
 
@@ -280,7 +280,7 @@
 | 1. ERP | 0 / 5 (세부는 표 참고) | B1~B6·MGButton 배치 ☑; P4 전부 ☐ 아님 — 잔여 🔄 |
 | 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영 |
 | 3. 보안 | (진행형) | SEC-01 🔄 (계정 연동 발송 1차 ☑) |
-| 4. 검증 | (진행형) | QA-01 배치별, QA-02 ☐ |
+| 4. 검증 | (진행형) | QA-01 배치별, QA-02 🔄 (`e2e-erp-smoke` 정의됨) |
 | 5. 운영 | 0 / 2 | OPS 배포·체크리스트 별도 |
 
 ---
@@ -362,3 +362,7 @@
 | 2026-04-11 | **ERP-P4 배치 B3** (core-coder): `SalaryManagement`·`ImprovedTaxManagement`·`RefundManagement`·승인 대시보드 2종·`approval/ApprovalHubLayout.js` — MGButton 정합·승인 무음 재조회. ESLint `--quiet` |
 | 2026-04-11 | **QA-01 백엔드 `mvn test` 1차**: `FullSystemIntegrationTest`·`UserScenarioTest` — `ObjectProvider<Flyway>`, 가이드 비밀번호 평문 제거 |
 | 2026-04-11 | **QA-01 백엔드 `mvn test` 2차**: `OnboardingApprovalServiceIntegrationTest`·`OnboardingOpsIntegrationTest`·`ErdGenerationServiceIntegrationTest` — H2에서 MySQL 의존 시 Assumptions 스킵·BCrypt·`Pageable` 수정 |
+| 2026-04-11 | **QA-01 백엔드 `mvn test` 3차** (core-coder): ERD 컨트롤러 H2 스킵, `merchant_id` 길이, `MultiTenant`·`PsychAssessmentImageUpload` `tenant_id`≤36, 결제 생성 시 테넌트 필수(`PaymentServiceImpl` 등) |
+| 2026-04-11 | **QA-01 백엔드 `mvn test` 4차** (core-coder): Psych PDF·Stats, `BaseTenantEntityService`, Passkey·`UserPasskey.tenantId`, `DynamicCardLayout` 시드, Tenant PG `ApiResponse` JSON 경로, 키 로테이션 Mockito, `ConsultantDashboardServiceImplTest`, 온보딩·프로시저(H2 한계) 등 — **전체 `mvn test` 통과** 로컬 확인(`bash -o pipefail`로 Maven 실패가 tail에 묻히지 않게 확인) |
+| 2026-04-11 | **QA-01** `core-tester` 재검증: `mvn test` **509**건, **Failures 0 / Errors 0 / Skipped 43** (H2·MySQL 메타·온보딩 등 조건부 스킵 — 실DB/프로덕션형 프로파일 별도 검증 권장). 커밋 시 `uploads/`·`test-reports/` 등 로컬 산출물 제외 |
+| 2026-04-11 | **위임**: `core-coder` — `.gitignore`에 `uploads/psych-assessments/`, `tmp/`, `tmp_error_tail*.txt`; Playwright 리포트는 주석 안내만. **`core-tester`** — `e2e-erp-smoke.yml`·QA-02 비고 정리(Secrets 없음, 리다이렉트 스모크 범위) |

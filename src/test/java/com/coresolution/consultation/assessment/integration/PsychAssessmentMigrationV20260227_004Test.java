@@ -6,8 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -63,9 +61,10 @@ class PsychAssessmentMigrationV20260227_004Test {
     @DisplayName("마이그레이션 DDL 형식 검증 - ADD COLUMN 구문")
     void migrationUsesAddColumn() throws Exception {
         String content = Files.readString(Paths.get(MIGRATION_FILE), StandardCharsets.UTF_8);
-        List<String> lines = content.lines()
-                .filter(l -> l.trim().toUpperCase().startsWith("ADD COLUMN"))
-                .collect(Collectors.toList());
-        assertThat(lines).hasSizeGreaterThanOrEqualTo(6); // 3 tables × 2 columns each
+        // MySQL 동적 SQL 문자열 내부에 ADD COLUMN 이 포함됨 (줄 단독 ADD COLUMN 아님)
+        long addColumnOccurrences = content.lines()
+                .filter(l -> l.toUpperCase().contains("ADD COLUMN"))
+                .count();
+        assertThat(addColumnOccurrences).isGreaterThanOrEqualTo(6); // 3 tables × 2 columns each
     }
 }

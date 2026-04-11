@@ -5,6 +5,8 @@ import com.coresolution.core.dto.ErdDiagramResponse;
 import com.coresolution.core.service.ErdGenerationService;
 import com.coresolution.core.service.SchemaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,10 +56,28 @@ class ErdOpsControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private DataSource dataSource;
+
     private String testSchemaName;
+
+    /**
+     * ERD/스키마 메타 조회는 MySQL {@code INFORMATION_SCHEMA} 등에 의존하며 H2에서는 동일 스키마가 없음.
+     */
+    private void assumeNonH2DataSourceForErd() {
+        try (Connection c = dataSource.getConnection()) {
+            String url = c.getMetaData().getURL();
+            Assumptions.assumeFalse(
+                    url != null && url.startsWith("jdbc:h2:"),
+                    "ERD ops API tests require MySQL-compatible INFORMATION_SCHEMA (not H2)");
+        } catch (SQLException e) {
+            Assertions.fail("Could not read JDBC URL for ERD assumption: " + e.getMessage());
+        }
+    }
 
     @BeforeEach
     void setUp() {
+        assumeNonH2DataSourceForErd();
         testSchemaName = "core_solution";
     }
 

@@ -112,3 +112,16 @@ spring.log
 # Node.js
 node_modules/
 package-lock.json
+
+# --- MindGarden: 로컬·통합테스트 산출물 ---
+# psych-assessments: uploads/ 하위는 기존 추적 파일이 이 경로에만 있음 — 신규 로컬 업로드만 무시
+uploads/psych-assessments/
+
+# 로컬 임시
+tmp/
+tmp_error_tail*.txt
+
+# Playwright E2E 로컬 리포트: test-reports 등이 저장소에 커밋되는 정책이면 무시 패턴을 켜지 말 것(충돌).
+# 로컬 산출물만 숨기려면 필요 시 아래 주석 해제.
+# tests/e2e/test-results/
+# tests/e2e/test-reports/

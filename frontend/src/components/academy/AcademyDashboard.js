@@ -17,6 +17,7 @@ import EnrollmentList from './EnrollmentList';
 import EnrollmentForm from './EnrollmentForm';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import MGButton from '../common/MGButton';
 import './Academy.css';
 
 const ACADEMY_TITLE_ID = 'academy-dashboard-title';
@@ -117,33 +118,39 @@ const AcademyDashboard = () => {
               className="mg-v2-tab-buttons mg-v2-academy-dashboard__tabs"
               aria-label="학원 관리 섹션"
             >
-              <button
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={view === 'courses'}
                 className={`mg-v2-tab-button${view === 'courses' ? ' active' : ''}`}
                 onClick={() => resetTabView('courses')}
+                variant="outline"
+                preventDoubleClick={false}
               >
                 강좌 관리
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={view === 'classes'}
                 className={`mg-v2-tab-button${view === 'classes' ? ' active' : ''}`}
                 onClick={() => resetTabView('classes')}
+                variant="outline"
+                preventDoubleClick={false}
               >
                 반 관리
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={view === 'enrollments'}
                 className={`mg-v2-tab-button${view === 'enrollments' ? ' active' : ''}`}
                 onClick={() => resetTabView('enrollments')}
+                variant="outline"
+                preventDoubleClick={false}
               >
                 수강 등록 관리
-              </button>
+              </MGButton>
             </nav>
 
             <main aria-labelledby={ACADEMY_TITLE_ID} className="academy-content">

@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
+import MGButton from '../../common/MGButton';
 
 const TAB_ACTIVE = 'mg-v2-tab-active';
 
@@ -48,7 +49,7 @@ const ErpHubTabs = ({
       {list.map((item) => {
         const isActive = activeId === item.id;
         return (
-          <button
+          <MGButton
             key={item.id}
             type="button"
             role="tab"
@@ -56,9 +57,11 @@ const ErpHubTabs = ({
             aria-selected={isActive}
             className={['mg-v2-tab', isActive ? TAB_ACTIVE : ''].filter(Boolean).join(' ')}
             onClick={handleItemTabClick}
+            variant="outline"
+            preventDoubleClick={false}
           >
             {item.label}
-          </button>
+          </MGButton>
         );
       })}
     </div>

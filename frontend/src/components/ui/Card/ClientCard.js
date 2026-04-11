@@ -2,6 +2,7 @@ import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
@@ -211,33 +212,42 @@ const ClientCard = ({
                 {/* 액션 버튼들 */}
                 {showActions && (
                     <div className="mg-client-card__actions">
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-primary mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
                             }}
+                            variant="primary"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             {selected ? '선택됨' : '선택하기'}
-                        </button>
+                        </MGButton>
                         
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
+                            variant="outline"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             <MessageCircle size={16} />
-                        </button>
+                        </MGButton>
                         
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-ghost mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
+                            variant="outline"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             <Phone size={16} />
-                        </button>
+                        </MGButton>
                     </div>
                 )}
             </div>
@@ -306,23 +316,29 @@ const ClientCard = ({
                 
                 {showActions && (
                     <div className="mg-client-card__actions mg-client-card__actions--mobile">
-                        <button 
-                            className="mg-button mg-button-primary mg-button-sm mg-v2-flex-1" 
+                        <MGButton
+                            className="mg-button mg-button-primary mg-button-sm mg-v2-flex-1"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
                             }}
+                            variant="primary"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             {selected ? '선택됨' : '선택하기'}
-                        </button>
-                        <button 
+                        </MGButton>
+                        <MGButton
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
+                            variant="outline"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             <MessageCircle size={16} />
-                        </button>
+                        </MGButton>
                     </div>
                 )}
             </div>

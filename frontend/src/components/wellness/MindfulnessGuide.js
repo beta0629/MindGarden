@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './MindfulnessGuide.css';
 
@@ -242,14 +243,17 @@ const MindfulnessGuide = () => {
             <div className="mg-card">
               <nav className="mindfulness-guide-nav">
                 {sections.map((section) => (
-                  <button
+                  <MGButton
                     key={section.id}
+                    type="button"
                     className={`mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`}
                     onClick={() => handleSectionClick(section.id)}
+                    variant="outline"
+                    preventDoubleClick={false}
                   >
                     <span className="nav-icon"><SafeText>{section.icon}</SafeText></span>
                     <span className="nav-title"><SafeText>{section.title}</SafeText></span>
-                  </button>
+                  </MGButton>
                 ))}
               </nav>
             </div>

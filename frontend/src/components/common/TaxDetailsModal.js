@@ -4,6 +4,7 @@ import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS, SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
+import MGButton from './MGButton';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
@@ -102,12 +103,14 @@ const TaxDetailsModal = ({
       backdropClick={true}
       showCloseButton={true}
       actions={
-        <button
+        <MGButton
           className="mg-v2-button mg-v2-button--primary"
           onClick={onClose}
+          variant="primary"
+          preventDoubleClick={false}
         >
           닫기
-        </button>
+        </MGButton>
       }
     >
           {/* 상담사 정보 */}
@@ -133,13 +136,14 @@ const TaxDetailsModal = ({
             <div className="mg-v2-alert mg-v2-alert--error">
               <AlertCircle size={20} className="mg-v2-icon-inline" />
               <p>{error}</p>
-              <button 
+              <MGButton
                 className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
                 onClick={loadTaxDetails}
+                variant="primary"
               >
                 <RefreshCw size={20} className="mg-v2-icon-inline" />
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           ) : taxDetails.length === 0 ? (
             <div className="mg-v2-empty-state">

@@ -1,4 +1,6 @@
+import React from 'react';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import './Card.css';
 
 /**
@@ -22,15 +24,29 @@ const CardFooter = ({children,
   className = '',
   ...props}) => {return (<div className={`mg-v2-card-footer ${className}`.trim()} {...props}>
       {meta && <span className="mg-v2-v2-v2-card-meta">{meta}</span>}
-      {actions && (<div className="mg-v2-v2-v2-card-actions">
-          {actions.map((action, index) => (<button
-              key={index}
-              onClick={action.onClick}
-              className={`mg-v2-button ${action.variant || 'mg-v2-button--secondary'}`}
-              disabled={action.disabled}
-            >
-              <SafeText>{action.label}</SafeText>
-            </button>))}
+          {actions && (<div className="mg-v2-v2-v2-card-actions">
+          {actions.map((action, index) => {
+            const variantClass = action.variant || 'mg-v2-button--secondary';
+            const mgVariant = variantClass.includes('danger')
+              ? 'danger'
+              : variantClass.includes('primary')
+                ? 'primary'
+                : variantClass.includes('outline')
+                  ? 'outline'
+                  : 'secondary';
+            return (
+              <MGButton
+                key={index}
+                onClick={action.onClick}
+                className={`mg-v2-button ${variantClass}`}
+                disabled={action.disabled}
+                variant={mgVariant}
+                preventDoubleClick={false}
+              >
+                <SafeText>{action.label}</SafeText>
+              </MGButton>
+            );
+          })}
         </div>)}
       {children}
     </div>);};

@@ -9,6 +9,7 @@ import {
 } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
+import MGButton from './MGButton';
 
 /**
  * 급여 출력 모달 컴포넌트
@@ -130,24 +131,27 @@ const SalaryExportModal = ({
       backdropClick={!loading}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
             className="mg-v2-btn mg-v2-btn--outline"
             onClick={onClose}
             disabled={loading}
+            variant="outline"
+            preventDoubleClick={false}
           >
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
             className="mg-v2-btn mg-v2-btn--primary"
             onClick={handleExport}
             disabled={
               loading || (sendEmail && (!emailAddress || !isEmailValid(emailAddress)))
             }
+            variant="primary"
           >
             출력
-          </button>
+          </MGButton>
         </>
       }
     >

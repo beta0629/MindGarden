@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Hash } from 'lucide-react';
 import { SEARCH_PLACEHOLDER } from '../../../constants/filterSearch';
+import MGButton from '../../common/MGButton';
 
 const SearchBar = ({
   searchTerm = '',
@@ -64,14 +65,16 @@ const SearchBar = ({
           aria-label="검색어 입력"
         />
         {searchTerm && (
-          <button 
+          <MGButton
             className="mg-v2-search-bar__clear"
             onClick={onClear}
             type="button"
             aria-label="검색어 지우기"
+            variant="outline"
+            preventDoubleClick={false}
           >
             <X size={16} />
-          </button>
+          </MGButton>
         )}
       </div>
 
@@ -79,15 +82,17 @@ const SearchBar = ({
       {enableHashtag && hashtags.length > 0 && (
         <div className="mg-v2-search-bar__hashtags">
           {hashtags.map((tag, index) => (
-            <button
+            <MGButton
               key={index}
               className="mg-v2-search-bar__hashtag"
               onClick={() => handleHashtagClick(tag)}
               type="button"
+              variant="outline"
+              preventDoubleClick={false}
             >
               <Hash size={12} />
               {tag}
-            </button>
+            </MGButton>
           ))}
         </div>
       )}

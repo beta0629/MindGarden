@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS, ACADEMY_DEFAULTS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -253,23 +253,24 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
             {/* 액션 버튼 */}
             <div className="academy-form-actions">
               {onCancel && (
-                <button className="mg-button"
+                <MGButton
                   type="button"
                   variant="outline"
                   onClick={onCancel}
                   disabled={loading}
                 >
                   취소
-                </button>
+                </MGButton>
               )}
-              <button className="mg-button"
+              <MGButton
                 type="submit"
                 variant="primary"
                 loading={loading}
+                loadingText="처리 중..."
                 disabled={loading}
               >
                 {classItem ? '수정' : '등록'}
-              </button>
+              </MGButton>
             </div>
           </form>
         </div>

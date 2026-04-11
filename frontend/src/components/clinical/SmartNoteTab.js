@@ -5,6 +5,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './SmartNoteTab.css';
 
 /**
@@ -186,12 +187,13 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                             />
 
                             {/* 위험 징후 분석 버튼 */}
-                            <button
+                            <MGButton
                                 className="btn btn-warning btn-analyze-risk"
                                 onClick={analyzeRisks}
+                                variant="warning"
                             >
                                 🔍 위험 징후 분석
-                            </button>
+                            </MGButton>
                         </div>
                     )}
                 </section>
@@ -231,23 +233,29 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                     {/* 생성 버튼 */}
                     <div className="generation-controls">
                         {selectedFormat === 'SOAP' && (
-                            <button
+                            <MGButton
                                 className="btn btn-primary btn-generate"
                                 onClick={generateSOAPNote}
                                 disabled={isGenerating}
+                                loading={isGenerating}
+                                loadingText="SOAP 노트 생성 중..."
+                                variant="primary"
                             >
-                                {isGenerating ? '⏳ SOAP 노트 생성 중...' : '🤖 SOAP 노트 자동 생성'}
-                            </button>
+                                🤖 SOAP 노트 자동 생성
+                            </MGButton>
                         )}
 
                         {selectedFormat === 'DAP' && (
-                            <button
+                            <MGButton
                                 className="btn btn-primary btn-generate"
                                 onClick={generateDAPNote}
                                 disabled={isGenerating}
+                                loading={isGenerating}
+                                loadingText="DAP 노트 생성 중..."
+                                variant="primary"
                             >
-                                {isGenerating ? '⏳ DAP 노트 생성 중...' : '🤖 DAP 노트 자동 생성'}
-                            </button>
+                                🤖 DAP 노트 자동 생성
+                            </MGButton>
                         )}
                     </div>
 

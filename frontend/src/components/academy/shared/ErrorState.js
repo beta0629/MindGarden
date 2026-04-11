@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import MGButton from '../../common/MGButton';
 import './ErrorState.css';
 
 /**
@@ -24,13 +25,15 @@ const ErrorState = ({ message = '오류가 발생했습니다.', onRetry = null 
       <div className="academy-error-icon">⚠️</div>
       <p className="academy-error-message">{message}</p>
       {onRetry && (
-        <button
+        <MGButton
           type="button"
           className="academy-error-retry"
           onClick={onRetry}
+          variant="primary"
+          preventDoubleClick={false}
         >
           다시 시도
-        </button>
+        </MGButton>
       )}
     </div>
   );

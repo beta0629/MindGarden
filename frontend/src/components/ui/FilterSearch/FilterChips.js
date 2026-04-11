@@ -11,6 +11,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { FILTER_CHIP_CLEAR_ALL } from '../../../constants/filterSearch';
+import MGButton from '../../common/MGButton';
 
 const FilterChips = ({
   activeFilters = [],
@@ -26,24 +27,28 @@ const FilterChips = ({
           <span className="mg-v2-filter-chip__label">
             {filter.label}: {filter.value}
           </span>
-          <button 
+          <MGButton
             className="mg-v2-filter-chip__remove"
             onClick={() => onRemoveFilter(filter.key)}
             type="button"
             aria-label={`${filter.label} 필터 제거`}
+            variant="outline"
+            preventDoubleClick={false}
           >
             <X size={14} />
-          </button>
+          </MGButton>
         </div>
       ))}
       
-      <button 
+      <MGButton
         className="mg-v2-filter-chip__clear-all"
         onClick={onClearAll}
         type="button"
+        variant="outline"
+        preventDoubleClick={false}
       >
         {FILTER_CHIP_CLEAR_ALL}
-      </button>
+      </MGButton>
     </div>
   );
 };

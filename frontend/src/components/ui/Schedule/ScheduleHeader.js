@@ -8,6 +8,7 @@
 import PropTypes from 'prop-types';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import MGButton from '../../common/MGButton';
 
 const ScheduleHeader = ({
   userRole,
@@ -43,16 +44,18 @@ const ScheduleHeader = ({
             )}
           </select>
         )}
-        <button
+        <MGButton
           type="button"
           onClick={onRefresh}
           className="mg-v2-schedule-header__refresh"
           title="데이터 새로고침"
           aria-label="새로고침"
+          variant="outline"
+          preventDoubleClick={false}
         >
           <RefreshCw size={16} />
           새로고침
-        </button>
+        </MGButton>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import MGButton from '../common/MGButton';
 import { DataTable, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -101,15 +102,15 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     { key: 'tuitionAmount', label: '수강료', render: (enrollment) => enrollment.tuitionAmount ? `${enrollment.tuitionAmount.toLocaleString()}원` : '-' },
     { key: 'actions', label: '작업', render: (enrollment) => (
       <div className="academy-actions">
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+        {/* 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
         {enrollment.status !== 'CANCELLED' && (
-          <button className="mg-button"
+          <MGButton
             variant="danger"
             size="small"
             onClick={() => handleCancel(enrollment.enrollmentId)}
           >
             취소
-          </button>
+          </MGButton>
         )}
       </div>
     )}
@@ -121,12 +122,12 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
         <div className="mg-card__header">
           <h3>수강 등록 목록</h3>
           {onCreateEnrollment && (
-            <button className="mg-button"
+            <MGButton
               variant="primary"
               onClick={onCreateEnrollment}
             >
               수강 등록
-            </button>
+            </MGButton>
           )}
         </div>
         <div className="mg-card__body">

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import UnifiedHeader from '../common/UnifiedHeader';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import NotificationBadge from '../dashboard-v2/atoms/NotificationBadge';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -54,10 +55,12 @@ const SimpleLayout = ({
   // 알림 아이콘 컴포넌트
   const notificationAction = user && (
     <div className="notification-wrapper">
-      <button 
+      <MGButton
         className="notification-button"
         onClick={handleNotificationClick}
         aria-label="알림"
+        variant="outline"
+        preventDoubleClick={false}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
@@ -65,7 +68,7 @@ const SimpleLayout = ({
             <NotificationBadge count={unreadCount} />
           </span>
         )}
-      </button>
+      </MGButton>
     </div>
   );
 

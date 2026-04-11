@@ -3,6 +3,7 @@ import { apiPost, apiGet } from '../../utils/ajax';
 import { TRAINING_API } from '../../constants/trainingApi';
 import { TRAINING_CSS } from '../../constants/trainingCss';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './VirtualClientSimulator.css';
 
 /**
@@ -187,13 +188,15 @@ const VirtualClientSimulator = ({ consultantId }) => {
                             </select>
                         </div>
 
-                        <button
+                        <MGButton
                             className="btn btn-primary btn-lg"
                             onClick={startSimulation}
                             disabled={!selectedScenario}
+                            variant="primary"
+                            size="large"
                         >
                             시뮬레이션 시작
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             ) : (
@@ -203,12 +206,13 @@ const VirtualClientSimulator = ({ consultantId }) => {
                             <h3>시나리오: {session.scenarioType}</h3>
                             <span className="turn-count">턴: {messages.length / 2}</span>
                         </div>
-                        <button
+                        <MGButton
                             className="btn btn-danger"
                             onClick={endSession}
+                            variant="danger"
                         >
                             세션 종료 및 평가
-                        </button>
+                        </MGButton>
                     </div>
 
                     <div className="chat-container">
@@ -252,13 +256,14 @@ const VirtualClientSimulator = ({ consultantId }) => {
                             rows="3"
                             disabled={isTyping}
                         />
-                        <button
+                        <MGButton
                             className="btn btn-primary"
                             onClick={sendMessage}
                             disabled={!currentMessage.trim() || isTyping}
+                            variant="primary"
                         >
                             전송
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             )}

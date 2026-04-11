@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import MGButton from './MGButton';
 import './ActionButton.css';
 
 const VALID_VARIANTS = new Set(['primary', 'success', 'outline', 'secondary', 'danger']);
@@ -38,17 +39,19 @@ function ActionButton({
     .trim();
 
   return (
-    <button
+    <MGButton
       type={type}
-      className={classNames}
+      variant={resolvedVariant}
+      size={resolvedSize}
       disabled={disabled}
       onClick={onClick}
+      className={classNames}
+      preventDoubleClick={false}
       aria-label={ariaLabel}
-      aria-disabled={disabled ? 'true' : undefined}
       {...rest}
     >
       {children}
-    </button>
+    </MGButton>
   );
 }
 

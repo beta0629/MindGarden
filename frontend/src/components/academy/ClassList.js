@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { DataTable, FilterBar, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -123,22 +123,22 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
     { key: 'actions', label: '작업', render: (classItem) => (
       <div className="academy-actions">
         {onEditClass && (
-          <button className="mg-button"
+          <MGButton
             variant="outline"
             size="small"
             onClick={() => onEditClass(classItem)}
           >
             수정
-          </button>
+          </MGButton>
         )}
         {onDeleteClass && (
-          <button className="mg-button"
+          <MGButton
             variant="danger"
             size="small"
             onClick={() => handleDelete(classItem.classId)}
           >
             삭제
-          </button>
+          </MGButton>
         )}
       </div>
     )}
@@ -150,12 +150,12 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
         <div className="mg-card__header">
           <h3>반 목록</h3>
           {onCreateClass && (
-            <button className="mg-button"
+            <MGButton
               variant="primary"
               onClick={onCreateClass}
             >
               반 등록
-            </button>
+            </MGButton>
           )}
         </div>
         <div className="mg-card__body">

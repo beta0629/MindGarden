@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, UserX, User, Check } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
 import SafeText from './SafeText';
+import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
@@ -19,12 +20,14 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
       backdropClick={true}
       showCloseButton={true}
       actions={
-        <button
+        <MGButton
           className="mg-v2-button mg-v2-button--ghost"
           onClick={onClose}
+          variant="outline"
+          preventDoubleClick={false}
         >
           닫기
-        </button>
+        </MGButton>
       }
     >
       {consultantList && consultantList.length > 0 ? (
@@ -65,13 +68,14 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             아직 연결된 상담사가 없습니다.<br />
             상담사와 연결하여 상담을 시작해보세요.
           </p>
-          <button
+          <MGButton
             className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
             onClick={onClose}
+            variant="primary"
           >
             <Check size={20} className="mg-v2-icon-inline" />
             확인
-          </button>
+          </MGButton>
         </div>
       )}
     </UnifiedModal>

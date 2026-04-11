@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import MGButton from './MGButton';
 import './HealingCard.css';
 
 /**
@@ -90,9 +91,9 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
                     <div className="mg-card__content">
                         <div className="mg-error">
                             <p>{error}</p>
-                            <button onClick={handleRefresh} className="mg-button mg-button--primary mg-button--sm">
+                            <MGButton onClick={handleRefresh} className="mg-button mg-button--primary mg-button--sm" variant="primary" size="small">
                                 다시 시도
-                            </button>
+                            </MGButton>
                         </div>
                     </div>
                 </div>
@@ -108,14 +109,19 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
                         {healingData?.emoji && <span className="healing-emoji">{healingData.emoji}</span>}
                         {healingData?.title || '오늘의 힐링'}
                     </div>
-                    <button
+                    <MGButton
                         onClick={handleRefresh}
                         className="mg-button mg-button--ghost mg-button--sm"
                         title="새로운 메시지 보기"
                         disabled={loading}
+                        loading={loading}
+                        loadingText="⏳"
+                        variant="outline"
+                        size="small"
+                        preventDoubleClick={false}
                     >
-                        {loading ? '⏳' : '🔄'}
-                    </button>
+                        🔄
+                    </MGButton>
                 </div>
 
                 <div className="mg-card__content">

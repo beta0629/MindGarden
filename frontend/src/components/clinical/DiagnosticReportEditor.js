@@ -3,6 +3,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './DiagnosticReportEditor.css';
 
 /**
@@ -156,22 +157,26 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                 <h3>📋 진단 보고서</h3>
                 <div className="header-actions">
                     {!report && (
-                        <button
+                        <MGButton
                             className="btn btn-primary"
                             onClick={generateReport}
                             disabled={isGenerating}
+                            loading={isGenerating}
+                            loadingText="생성 중..."
+                            variant="primary"
                         >
-                            {isGenerating ? '⏳ 생성 중...' : '🤖 AI 보고서 생성'}
-                        </button>
+                            🤖 AI 보고서 생성
+                        </MGButton>
                     )}
 
                     {report && !report.humanReviewed && (
-                        <button
+                        <MGButton
                             className="btn btn-secondary"
                             onClick={exportToPDF}
+                            variant="secondary"
                         >
                             📄 PDF 내보내기
-                        </button>
+                        </MGButton>
                     )}
                 </div>
             </div>
@@ -189,12 +194,14 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                     <div className="icon">📋</div>
                     <h4>진단 보고서가 없습니다</h4>
                     <p>상담 기록을 기반으로 AI가 진단 보고서 초안을 생성합니다.</p>
-                    <button
+                    <MGButton
                         className="btn btn-primary btn-large"
                         onClick={generateReport}
+                        variant="primary"
+                        size="large"
                     >
                         🤖 진단 보고서 생성하기
-                    </button>
+                    </MGButton>
                 </div>
             )}
 
@@ -276,20 +283,24 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                     {/* 액션 버튼 */}
                     {!report.humanReviewed && (
                         <div className="editor-actions">
-                            <button
+                            <MGButton
                                 className="btn btn-secondary"
                                 onClick={handleSave}
                                 disabled={isSaving}
+                                loading={isSaving}
+                                loadingText="저장 중..."
+                                variant="secondary"
                             >
-                                {isSaving ? '💾 저장 중...' : '💾 저장'}
-                            </button>
+                                💾 저장
+                            </MGButton>
 
-                            <button
+                            <MGButton
                                 className="btn btn-success"
                                 onClick={handleApprove}
+                                variant="success"
                             >
                                 ✅ 최종 승인
-                            </button>
+                            </MGButton>
                         </div>
                     )}
 

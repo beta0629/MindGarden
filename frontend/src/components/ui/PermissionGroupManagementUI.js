@@ -25,6 +25,7 @@
 
 import React from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import './PermissionGroupManagementUI.css';
 
 const PermissionGroupManagementUI = ({
@@ -98,37 +99,45 @@ const PermissionGroupManagementUI = ({
                                         <span className="mg-permission-badge mg-permission-badge--active">
                                             {getAccessLevelName(getPermissionLevel(group.groupCode))}
                                         </span>
-                                        <button
+                                        <MGButton
                                             className="mg-btn mg-btn-danger mg-btn-sm"
                                             onClick={() => onRevokePermission(group.groupCode)}
                                             disabled={loading}
+                                            variant="danger"
+                                            size="small"
                                         >
                                             회수
-                                        </button>
+                                        </MGButton>
                                     </>
                                 ) : (
                                     <div className="mg-permission-grant-buttons">
-                                        <button
+                                        <MGButton
                                             className="mg-btn mg-btn-primary mg-btn-sm"
                                             onClick={() => onGrantPermission(group.groupCode, 'READ')}
                                             disabled={loading}
+                                            variant="primary"
+                                            size="small"
                                         >
                                             읽기
-                                        </button>
-                                        <button
+                                        </MGButton>
+                                        <MGButton
                                             className="mg-btn mg-btn-primary mg-btn-sm"
                                             onClick={() => onGrantPermission(group.groupCode, 'WRITE')}
                                             disabled={loading}
+                                            variant="primary"
+                                            size="small"
                                         >
                                             쓰기
-                                        </button>
-                                        <button
+                                        </MGButton>
+                                        <MGButton
                                             className="mg-btn mg-btn-primary mg-btn-sm"
                                             onClick={() => onGrantPermission(group.groupCode, 'FULL')}
                                             disabled={loading}
+                                            variant="primary"
+                                            size="small"
                                         >
                                             전체
-                                        </button>
+                                        </MGButton>
                                     </div>
                                 )}
                             </div>

@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { SessionContext } from '../../../contexts/SessionContext';
 import UnifiedLoading from '../UnifiedLoading';
+import MGButton from '../MGButton';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
 /**
@@ -141,14 +142,17 @@ const UnifiedModal = ({
               )}
             </div>
             {showCloseButton && (
-              <button
+              <MGButton
+                type="button"
                 className="mg-modal__close"
                 onClick={onClose}
                 aria-label="닫기"
                 disabled={loading}
+                variant="outline"
+                preventDoubleClick={false}
               >
                 ×
-              </button>
+              </MGButton>
             )}
           </div>
         )}

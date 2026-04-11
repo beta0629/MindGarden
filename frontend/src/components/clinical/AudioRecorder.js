@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { apiPostFormData } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
+import MGButton from '../common/MGButton';
 import './AudioRecorder.css';
 
 /**
@@ -321,45 +322,50 @@ export const AudioRecorder = ({
             {/* 컨트롤 버튼 */}
             <div className="audio-recorder-controls">
                 {!isRecording && !audioBlob && (
-                    <button
+                    <MGButton
                         className="btn btn-primary btn-start-recording"
                         onClick={startRecording}
+                        variant="primary"
                     >
                         🎤 녹음 시작
-                    </button>
+                    </MGButton>
                 )}
 
                 {isRecording && (
                     <>
-                        <button
+                        <MGButton
                             className="btn btn-secondary"
                             onClick={togglePause}
+                            variant="secondary"
                         >
                             {isPaused ? '▶️ 재개' : '⏸️ 일시정지'}
-                        </button>
-                        <button
+                        </MGButton>
+                        <MGButton
                             className="btn btn-danger"
                             onClick={stopRecording}
+                            variant="danger"
                         >
                             ⏹️ 중지
-                        </button>
+                        </MGButton>
                     </>
                 )}
 
                 {audioBlob && !isUploading && (
                     <>
-                        <button
+                        <MGButton
                             className="btn btn-success btn-upload"
                             onClick={uploadRecording}
+                            variant="success"
                         >
                             ⬆️ 업로드 및 전사 시작
-                        </button>
-                        <button
+                        </MGButton>
+                        <MGButton
                             className="btn btn-secondary"
                             onClick={cancelRecording}
+                            variant="secondary"
                         >
                             ❌ 취소
-                        </button>
+                        </MGButton>
                     </>
                 )}
 

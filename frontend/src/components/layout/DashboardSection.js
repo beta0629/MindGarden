@@ -7,6 +7,7 @@
  */
 
 import React, { useState } from 'react';
+import MGButton from '../common/MGButton';
 import './DashboardSection.css';
 
 const DashboardSection = ({
@@ -37,14 +38,16 @@ const DashboardSection = ({
             {subtitle && <p className="mg-dashboard-section-subtitle">{subtitle}</p>}
           </div>
           {collapsible && (
-            <button
+            <MGButton
               type="button"
               className="mg-dashboard-section-collapse-btn"
               onClick={toggleCollapse}
               aria-label={isCollapsed ? '펼치기' : '접기'}
+              variant="outline"
+              preventDoubleClick={false}
             >
               <i className={`bi bi-chevron-${isCollapsed ? 'down' : 'up'}`} aria-hidden />
-            </button>
+            </MGButton>
           )}
         </div>
         {actions && <div className="mg-dashboard-section-actions">{actions}</div>}

@@ -5,6 +5,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
 import notificationManager from '../../../utils/notification';
 import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
+import MGButton from '../../common/MGButton';
 
 const maskEmail = (email) => {
   if (!email || !email.includes('@')) return email || '—';
@@ -198,13 +199,15 @@ const ProfileSection = ({
             <p className="mg-mypage__section-description">다른 사용자에게 보이는 정보입니다.</p>
           </div>
           <div className="mg-mypage__section-action">
-            <button
+            <MGButton
               type="button"
               className="mg-v2-button mg-v2-button--outline"
               onClick={() => applyEditingState(!isEditing)}
+              variant="outline"
+              preventDoubleClick={false}
             >
               {isEditing ? '취소' : '편집'}
-            </button>
+            </MGButton>
           </div>
         </div>
         <div className="mg-mypage__card-body">
@@ -300,15 +303,17 @@ const ProfileSection = ({
                 <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-email-label">
                   {maskEmail(formData.email)}
                 </p>
-                <button
+                <MGButton
                   type="button"
                   className="mg-v2-button mg-v2-button--outline"
                   onClick={() =>
                     notificationManager.show('이메일 변경은 보안 절차 준비 중입니다.', 'info')
                   }
+                  variant="outline"
+                  preventDoubleClick={false}
                 >
                   변경
-                </button>
+                </MGButton>
               </div>
             </div>
 
@@ -320,15 +325,17 @@ const ProfileSection = ({
                 <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-phone-label">
                   {maskPhone(formData.phone)}
                 </p>
-                <button
+                <MGButton
                   type="button"
                   className="mg-v2-button mg-v2-button--outline"
                   onClick={() =>
                     notificationManager.show('휴대전화 변경은 보안 절차 준비 중입니다.', 'info')
                   }
+                  variant="outline"
+                  preventDoubleClick={false}
                 >
                   변경
-                </button>
+                </MGButton>
               </div>
             </div>
 
@@ -370,16 +377,18 @@ const ProfileSection = ({
 
           {isEditing ? (
             <div className="mg-v2-card-actions">
-              <button type="submit" className="mg-v2-button mg-v2-button--primary">
+              <MGButton type="submit" className="mg-v2-button mg-v2-button--primary" variant="primary">
                 저장
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 className="mg-v2-button mg-v2-button--outline"
                 onClick={handleCancelEdit}
+                variant="outline"
+                preventDoubleClick={false}
               >
                 취소
-              </button>
+              </MGButton>
             </div>
           ) : null}
         </form>

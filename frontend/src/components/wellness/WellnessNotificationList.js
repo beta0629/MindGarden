@@ -10,6 +10,7 @@ import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import Badge from '../common/Badge';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationList.css';
 
@@ -120,9 +121,9 @@ const WellnessNotificationList = () => {
               </div>
               <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
               <p className="empty-message"><SafeText>{error}</SafeText></p>
-              <button className="mg-btn mg-btn--primary" onClick={loadNotifications}>
+              <MGButton variant="primary" onClick={loadNotifications}>
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           </div>
         </ContentArea>

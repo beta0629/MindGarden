@@ -3,6 +3,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import '../../styles/main.css';
+import MGButton from './MGButton';
 import './HelpPage.css';
 
 const HelpPage = () => {
@@ -162,14 +163,17 @@ const HelpPage = () => {
           <div className="help-page__sidebar">
             <div className="help-page__nav">
               {helpSections.map((section) => (
-                <button
+                <MGButton
                   key={section.id}
+                  type="button"
                   className={`help-page__nav-item ${activeSection === section.id ? 'help-page__nav-item--active' : ''}`}
                   onClick={() => setActiveSection(section.id)}
+                  variant="outline"
+                  preventDoubleClick={false}
                 >
                   <i className={section.icon}></i>
                   {section.title}
-                </button>
+                </MGButton>
               ))}
             </div>
           </div>
@@ -188,18 +192,20 @@ const HelpPage = () => {
             위의 정보로도 해결되지 않는 문제가 있으시면 언제든지 문의해주세요.
           </p>
           <div className="help-page__footer-actions">
-            <button 
-              className="btn btn-primary" 
+            <MGButton
+              className="btn btn-primary"
               onClick={() => window.open('mailto:support@mindgarden.com')}
+              variant="primary"
             >
               <i className="bi bi-envelope"></i> 이메일 문의
-            </button>
-            <button 
-              className="btn btn-outline-primary" 
+            </MGButton>
+            <MGButton
+              className="btn btn-outline-primary"
               onClick={() => window.open('tel:1588-0000')}
+              variant="outline"
             >
               <i className="bi bi-telephone"></i> 전화 문의
-            </button>
+            </MGButton>
           </div>
         </div>
         </div>

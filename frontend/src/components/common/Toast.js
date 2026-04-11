@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import MGButton from './MGButton';
 import './Toast.css';
 
 /**
@@ -67,15 +68,18 @@ const Toast = () => {
                         <div className="toast-message">
                             {toDisplayString(notification.message)}
                         </div>
-                        <button 
+                        <MGButton
+                            type="button"
                             className="toast-close"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                             }}
+                            variant="outline"
+                            preventDoubleClick={false}
                         >
                             ×
-                        </button>
+                        </MGButton>
                     </div>
                     <div className="toast-progress">
                         <div 

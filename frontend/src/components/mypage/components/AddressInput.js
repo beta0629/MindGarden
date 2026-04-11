@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
+import MGButton from '../../common/MGButton';
 
 const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isEditing }) => {
   const [addressType, setAddressType] = useState('HOME');
@@ -148,9 +149,15 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
             placeholder="우편번호"
           />
           {isEditing ? (
-            <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={handleAddressSearch}>
+            <MGButton
+              type="button"
+              className="mg-v2-button mg-v2-button--outline"
+              onClick={handleAddressSearch}
+              variant="outline"
+              preventDoubleClick={false}
+            >
               주소 검색
-            </button>
+            </MGButton>
           ) : null}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import MGButton from './MGButton';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './ComingSoon.css';
@@ -41,13 +42,14 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
               <span>이전 페이지로 돌아가세요</span>
             </div>
           </div>
-          <button 
+          <MGButton
             className="coming-soon-button"
             onClick={() => window.history.back()}
+            variant="primary"
           >
             <i className="bi bi-arrow-left"></i>
             이전 페이지로
-          </button>
+          </MGButton>
         </div>
       </div>
     </AdminCommonLayout>

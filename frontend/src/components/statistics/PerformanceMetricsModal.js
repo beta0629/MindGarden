@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -209,26 +210,26 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             </div>
                         </div>
                         <div className="mg-v2-modal-footer">
-                            <button 
+                            <MGButton
                                 className="mg-v2-button mg-v2-button--primary"
                                 onClick={handleFilterChange}
                                 disabled={loading || recalculating}
+                                variant="primary"
                             >
                                 <BarChart size={20} className="mg-v2-icon-inline" />
                                 조회
-                            </button>
-                            <button 
+                            </MGButton>
+                            <MGButton
                                 className="mg-v2-button mg-v2-button--secondary"
                                 onClick={handleRecalculate}
                                 disabled={loading || recalculating}
+                                loading={recalculating}
+                                loadingText="재계산 중..."
+                                variant="secondary"
                             >
-                                {recalculating ? <div className="mg-loading">로딩중...</div> : (
-                                    <>
-                                        <RefreshCw size={20} className="mg-v2-icon-inline" />
-                                        재계산
-                                    </>
-                                )}
-                            </button>
+                                <RefreshCw size={20} className="mg-v2-icon-inline" />
+                                재계산
+                            </MGButton>
                         </div>
                     </div>
 
@@ -303,14 +304,15 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     ) : (
                         <div className="mg-v2-empty-state">
                             <p>성과 지표 데이터가 없습니다.</p>
-                            <button 
+                            <MGButton
                                 className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
                                 onClick={loadMetrics}
                                 disabled={loading}
+                                variant="primary"
                             >
                                 <RefreshCw size={20} className="mg-v2-icon-inline" />
                                 데이터 로드
-                            </button>
+                            </MGButton>
                         </div>
                     )}
                 </div>

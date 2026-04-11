@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
+import MGButton from '../common/MGButton';
 import './RiskAlertBadge.css';
 
 /**
@@ -103,16 +104,19 @@ const RiskAlertBadge = ({ tenantId }) => {
     return (
         <div className={CLINICAL_CSS.RISK_ALERT_BADGE_CONTAINER}>
             {/* 알림 배지 버튼 */}
-            <button
+            <MGButton
+                type="button"
                 className={`risk-alert-button ${unreadCount > 0 ? 'has-alerts' : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
                 title="위험 징후 알림"
+                variant="outline"
+                preventDoubleClick={false}
             >
                 <span className="alert-icon">⚠️</span>
                 {unreadCount > 0 && (
                     <span className="alert-count-badge">{unreadCount}</span>
                 )}
-            </button>
+            </MGButton>
 
             {/* 알림 드롭다운 */}
             {isOpen && (
@@ -127,14 +131,18 @@ const RiskAlertBadge = ({ tenantId }) => {
                     <div className="alert-dropdown">
                         <div className="alert-dropdown-header">
                             <h4>🚨 위험 징후 알림</h4>
-                            <button
+                            <MGButton
+                                type="button"
                                 className="btn-refresh"
                                 onClick={loadAlerts}
                                 disabled={isLoading}
                                 title="새로고침"
+                                variant="outline"
+                                loading={isLoading}
+                                preventDoubleClick={false}
                             >
                                 🔄
-                            </button>
+                            </MGButton>
                         </div>
 
                         <div className="alert-list">
@@ -208,15 +216,17 @@ const RiskAlertBadge = ({ tenantId }) => {
 
                         {alerts.length > 0 && (
                             <div className="alert-dropdown-footer">
-                                <button
+                                <MGButton
+                                    type="button"
                                     className="btn-view-all"
                                     onClick={() => {
                                         window.location.href = '/consultant/alerts';
                                         setIsOpen(false);
                                     }}
+                                    variant="primary"
                                 >
                                     전체 알림 보기 →
-                                </button>
+                                </MGButton>
                             </div>
                         )}
                     </div>

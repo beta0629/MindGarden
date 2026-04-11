@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import notificationManager from '../../../utils/notification';
+import MGButton from '../../common/MGButton';
 
 const parseUaSummary = () => {
   if (typeof navigator === 'undefined') return '이 브라우저';
@@ -36,12 +37,23 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
             비밀번호는 목록에 표시되지 않습니다. 변경 시 확인이 필요합니다.
           </p>
           <div className="mg-mypage__readonly-row">
-            <button type="button" className="mg-v2-button mg-v2-button--primary" onClick={onPasswordChange}>
+            <MGButton
+              type="button"
+              className="mg-v2-button mg-v2-button--primary"
+              onClick={onPasswordChange}
+              variant="primary"
+            >
               비밀번호 변경
-            </button>
-            <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={onPasswordReset}>
+            </MGButton>
+            <MGButton
+              type="button"
+              className="mg-v2-button mg-v2-button--outline"
+              onClick={onPasswordReset}
+              variant="outline"
+              preventDoubleClick={false}
+            >
               비밀번호 찾기
-            </button>
+            </MGButton>
           </div>
         </div>
       </article>
@@ -60,13 +72,15 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
             <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
               미사용
             </span>
-            <button
+            <MGButton
               type="button"
               className="mg-v2-button mg-v2-button--outline"
               onClick={() => notificationManager.show('2단계 인증은 준비 중입니다.', 'info')}
+              variant="outline"
+              preventDoubleClick={false}
             >
               설정
-            </button>
+            </MGButton>
           </div>
         </div>
       </article>
@@ -94,13 +108,14 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
           </li>
         </ul>
         <div className="mg-v2-card-actions">
-          <button
+          <MGButton
             type="button"
             className="mg-v2-button mg-v2-button--danger mg-v2-button--outline"
             onClick={onRequestLogoutOtherDevices}
+            variant="danger"
           >
             다른 기기 모두 로그아웃
-          </button>
+          </MGButton>
         </div>
       </article>
     </>

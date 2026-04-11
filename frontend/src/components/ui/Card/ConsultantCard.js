@@ -239,26 +239,32 @@ const ConsultantCard = ({
                 {/* 액션 버튼들 */}
                 {showActions && (
                     <div className="mg-consultant-card__actions">
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-primary mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
                             }}
                             disabled={!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY'))}
+                            variant="primary"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             {selected ? '선택됨' : '선택하기'}
-                        </button>
+                        </MGButton>
                         
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setShowDetailModal(true);
                             }}
+                            variant="outline"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             상세보기
-                        </button>
+                        </MGButton>
                     </div>
                 )}
             </div>
@@ -343,25 +349,31 @@ const ConsultantCard = ({
                 
                 {showActions && (
                     <div className="mg-consultant-card__actions mg-consultant-card__actions--mobile">
-                        <button 
+                        <MGButton
                             className="mg-button mg-button-primary mg-button-sm mg-v2-flex-1"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
                             }}
                             disabled={!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY'))}
+                            variant="primary"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             {selected ? '선택됨' : '선택하기'}
-                        </button>
-                        <button 
+                        </MGButton>
+                        <MGButton
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setShowDetailModal(true);
                             }}
+                            variant="outline"
+                            size="small"
+                            preventDoubleClick={false}
                         >
                             <MessageCircle size={16} />
-                        </button>
+                        </MGButton>
                     </div>
                 )}
             </div>

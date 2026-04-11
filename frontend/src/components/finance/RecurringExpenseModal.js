@@ -5,6 +5,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
@@ -291,14 +292,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                     {/* 액션 버튼 */}
                     <div className="mg-v2-mb-md">
-                        <button 
+                        <MGButton
                             className="mg-v2-button mg-v2-button--primary"
                             onClick={handleAddExpense}
                             disabled={loading}
+                            variant="primary"
                         >
                             <Plus size={20} className="mg-v2-icon-inline" />
                             새 반복 지출 추가
-                        </button>
+                        </MGButton>
                     </div>
 
                     {/* 반복 지출 목록 */}
@@ -332,20 +334,28 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             )}
                                         </div>
                                         <div className="mg-v2-list-item-actions">
-                                            <button 
+                                            <MGButton
                                                 className="mg-v2-button mg-v2-button--icon"
                                                 onClick={() => handleEditExpense(expense)}
                                                 disabled={loading}
+                                                variant="outline"
+                                                size="small"
+                                                title="수정"
+                                                preventDoubleClick={false}
                                             >
                                                 <Edit2 size={20} />
-                                            </button>
-                                            <button 
+                                            </MGButton>
+                                            <MGButton
                                                 className="mg-v2-button mg-v2-button--icon mg-v2-button--danger"
                                                 onClick={() => handleDeleteExpense(expense.id)}
                                                 disabled={loading}
+                                                variant="danger"
+                                                size="small"
+                                                title="삭제"
+                                                preventDoubleClick={false}
                                             >
                                                 <Trash2 size={20} />
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     </div>
                                 ))}
@@ -368,28 +378,29 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                             zIndex={1050}
                             actions={
                                 <>
-                                    <button
+                                    <MGButton
                                         type="button"
                                         className="mg-v2-button mg-v2-button--secondary"
                                         onClick={() => setShowForm(false)}
                                         disabled={loading}
+                                        variant="secondary"
+                                        preventDoubleClick={false}
                                     >
                                         <XCircle size={20} className="mg-v2-icon-inline" />
                                         취소
-                                    </button>
-                                    <button
+                                    </MGButton>
+                                    <MGButton
                                         type="button"
                                         className="mg-v2-button mg-v2-button--primary"
                                         onClick={handleSaveExpense}
                                         disabled={loading}
+                                        loading={loading}
+                                        loadingText="저장 중..."
+                                        variant="primary"
                                     >
-                                        {loading ? <div className="mg-loading">로딩중...</div> : (
-                                            <>
-                                                <Edit2 size={20} className="mg-v2-icon-inline" />
-                                                저장
-                                            </>
-                                        )}
-                                    </button>
+                                        <Edit2 size={20} className="mg-v2-icon-inline" />
+                                        저장
+                                    </MGButton>
                                 </>
                             }
                         >

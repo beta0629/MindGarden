@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import MGButton from './MGButton';
 import './MGPageHeader.css';
 
 const MGPageHeader = ({
@@ -31,13 +32,16 @@ const MGPageHeader = ({
     <header className={`mg-page-header ${className}`} {...props}>
       <div className="mg-page-header__content">
         {showBackButton && (
-          <button 
+          <MGButton
+            type="button"
             className="mg-page-header__back-button"
             onClick={handleBackClick}
             aria-label="뒤로 가기"
+            variant="outline"
+            preventDoubleClick={false}
           >
             ←
-          </button>
+          </MGButton>
         )}
         
         <div className="mg-page-header__main">

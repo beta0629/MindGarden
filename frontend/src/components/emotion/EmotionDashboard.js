@@ -6,6 +6,7 @@ import VoiceBiomarkerChart from './VoiceBiomarkerChart';
 import FacialEmotionTimeline from './FacialEmotionTimeline';
 import EmotionTrendChart from './EmotionTrendChart';
 import CognitiveDistortionPanel from './CognitiveDistortionPanel';
+import MGButton from '../common/MGButton';
 import './EmotionDashboard.css';
 
 /**
@@ -98,9 +99,9 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
         return (
             <div className={EMOTION_CSS.EMOTION_DASHBOARD}>
                 <div className="error-message">{error}</div>
-                <button className="btn btn-primary" onClick={loadEmotionData}>
+                <MGButton className="btn btn-primary" onClick={loadEmotionData} variant="primary">
                     다시 시도
-                </button>
+                </MGButton>
             </div>
         );
     }
@@ -110,9 +111,9 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
             <div className={EMOTION_CSS.EMOTION_DASHBOARD}>
                 <div className="empty-state">
                     <p>감정 분석 데이터가 없습니다.</p>
-                    <button className="btn btn-primary" onClick={loadEmotionData}>
+                    <MGButton className="btn btn-primary" onClick={loadEmotionData} variant="primary">
                         분석 시작
-                    </button>
+                    </MGButton>
                 </div>
             </div>
         );

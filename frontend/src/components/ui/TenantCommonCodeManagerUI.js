@@ -189,12 +189,16 @@ const TenantCommonCodeManagerUI = ({
                                                         <code className="mg-code-value">{toDisplayString(code.codeValue, '—')}</code>
                                                         <h4 className="mg-code-name">{toDisplayString(code.koreanName || code.codeLabel, '—')}</h4>
                                                     </div>
-                                                    <button
+                                                    <MGButton
+                                                        type="button"
                                                         className={`mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`}
                                                         onClick={() => onToggleActive(code.id, code.isActive)}
+                                                        variant="outline"
+                                                        size="small"
+                                                        preventDoubleClick={false}
                                                     >
                                                         {code.isActive ? '활성' : '비활성'}
-                                                    </button>
+                                                    </MGButton>
                                                 </div>
                                                 
                                                 {/* 카드 본문 */}

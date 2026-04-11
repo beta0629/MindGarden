@@ -10,6 +10,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 /**
  * Toast 알림 컴포넌트
@@ -87,13 +88,16 @@ const Toast = ({
         <div className="mg-notification-title">{title}</div>
         <div className="mg-notification-message">{message}</div>
       </div>
-      <button 
+      <MGButton
+        type="button"
         className="mg-notification-close"
         onClick={handleClose}
         aria-label="닫기"
+        variant="outline"
+        preventDoubleClick={false}
       >
         <X size={16} />
-      </button>
+      </MGButton>
     </div>
   );
 };

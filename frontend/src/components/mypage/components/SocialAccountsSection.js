@@ -1,4 +1,6 @@
+import React from 'react';
 import { User, MessageCircle, Hash } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 const maskIdentifier = (text) => {
   if (!text) return '—';
@@ -54,26 +56,29 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
               <span className="mg-v2-status-badge mg-v2-badge--success" role="status">
                 연결됨
               </span>
-              <button
+              <MGButton
                 type="button"
                 className="mg-v2-button mg-v2-button--outline mg-v2-button--danger"
                 onClick={() => onUnlinkAccount(linkedAccount.provider, linkedAccount.id)}
+                variant="danger"
+                preventDoubleClick={false}
               >
                 연결 해제
-              </button>
+              </MGButton>
             </>
           ) : (
             <>
               <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
                 미연결
               </span>
-              <button
+              <MGButton
                 type="button"
                 className="mg-v2-button mg-v2-button--primary"
                 onClick={() => onLinkAccount(provider)}
+                variant="primary"
               >
                 연결하기
-              </button>
+              </MGButton>
             </>
           )}
         </div>
@@ -96,9 +101,15 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
         {renderRow('NAVER', naverAccount)}
       </ul>
       <div className="mg-v2-card-actions">
-        <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={onSupportClick}>
+        <MGButton
+          type="button"
+          className="mg-v2-button mg-v2-button--outline"
+          onClick={onSupportClick}
+          variant="outline"
+          preventDoubleClick={false}
+        >
           고객센터
-        </button>
+        </MGButton>
       </div>
     </article>
   );

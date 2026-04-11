@@ -5,6 +5,7 @@ import { PREDICTION_CSS } from '../../constants/predictionCss';
 import TreatmentOutcomeChart from './TreatmentOutcomeChart';
 import DropoutRiskIndicator from './DropoutRiskIndicator';
 import SimilarCasesPanel from './SimilarCasesPanel';
+import MGButton from '../common/MGButton';
 import './PredictionDashboard.css';
 
 /**
@@ -79,9 +80,9 @@ const PredictionDashboard = ({ clientId }) => {
         return (
             <div className={PREDICTION_CSS.DASHBOARD}>
                 <div className={PREDICTION_CSS.ERROR_MESSAGE}>{error}</div>
-                <button className="btn btn-primary" onClick={loadPredictionData}>
+                <MGButton className="btn btn-primary" onClick={loadPredictionData} variant="primary">
                     다시 시도
-                </button>
+                </MGButton>
             </div>
         );
     }
@@ -90,9 +91,9 @@ const PredictionDashboard = ({ clientId }) => {
         <div className={PREDICTION_CSS.DASHBOARD}>
             <div className={PREDICTION_CSS.DASHBOARD_HEADER}>
                 <h2>📊 예측 기반 경과 모니터링</h2>
-                <button className="btn btn-secondary" onClick={loadPredictionData}>
+                <MGButton className="btn btn-secondary" onClick={loadPredictionData} variant="secondary">
                     🔄 새로고침
-                </button>
+                </MGButton>
             </div>
 
             <div className={PREDICTION_CSS.DASHBOARD_GRID}>

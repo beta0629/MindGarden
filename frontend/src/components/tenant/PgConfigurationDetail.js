@@ -410,32 +410,40 @@ const PgConfigurationDetail = () => {
                   <label>API 키</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.apiKey || '***'}</code>
-                    <button
+                    <MGButton
+                      type="button"
                       className="key-copy-button"
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
                         showNotification('API 키가 복사되었습니다.', 'success');
                       }}
                       title="복사"
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
                     >
                       복사
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
                 <div className="key-item">
                   <label>시크릿 키</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.secretKey || '***'}</code>
-                    <button
+                    <MGButton
+                      type="button"
                       className="key-copy-button"
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
                         showNotification('시크릿 키가 복사되었습니다.', 'success');
                       }}
                       title="복사"
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
                     >
                       복사
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
                 {decryptedKeys?.decryptedAt && (

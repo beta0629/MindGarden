@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import MGButton from '../common/MGButton';
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -310,22 +311,23 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
 
             {/* 버튼 */}
             <div className="academy-form-actions">
-              <button className="mg-button"
+              <MGButton
                 type="submit"
                 variant="primary"
                 loading={loading}
+                loadingText="처리 중..."
                 disabled={loading}
               >
                 {enrollment ? '수정' : '등록'}
-              </button>
-              <button className="mg-button"
+              </MGButton>
+              <MGButton
                 type="button"
                 variant="secondary"
                 onClick={onCancel}
                 disabled={loading}
               >
                 취소
-              </button>
+              </MGButton>
             </div>
           </form>
         </div>

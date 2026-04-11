@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 
 const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
@@ -118,16 +119,26 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             </p>
           ) : null}
           <div className="mg-mypage-password-form__actions">
-            <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={onClose} disabled={isLoading}>
+            <MGButton
+              type="button"
+              className="mg-v2-button mg-v2-button--outline"
+              onClick={onClose}
+              disabled={isLoading}
+              variant="outline"
+              preventDoubleClick={false}
+            >
               취소
-            </button>
-            <button
+            </MGButton>
+            <MGButton
               type="submit"
               className="mg-v2-button mg-v2-button--primary"
               disabled={isLoading || cooldown > 0 || !email.trim()}
+              loading={isLoading}
+              loadingText="발송 중..."
+              variant="primary"
             >
-              {isLoading ? '발송 중...' : '재설정 이메일 발송'}
-            </button>
+              재설정 이메일 발송
+            </MGButton>
           </div>
         </form>
       ) : (
@@ -144,17 +155,24 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             <li>메일의 링크로 새 비밀번호를 설정하세요</li>
           </ol>
           <div className="mg-mypage-password-form__actions mg-mypage-password-form__actions--center">
-            <button
+            <MGButton
               type="button"
               className="mg-v2-button mg-v2-button--outline"
               onClick={handleRetry}
               disabled={cooldown > 0}
+              variant="outline"
+              preventDoubleClick={false}
             >
               다시 발송
-            </button>
-            <button type="button" className="mg-v2-button mg-v2-button--primary" onClick={onClose}>
+            </MGButton>
+            <MGButton
+              type="button"
+              className="mg-v2-button mg-v2-button--primary"
+              onClick={onClose}
+              variant="primary"
+            >
               확인
-            </button>
+            </MGButton>
           </div>
           {cooldown > 0 ? (
             <p className="mg-mypage-cooldown">

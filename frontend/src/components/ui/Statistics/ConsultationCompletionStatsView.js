@@ -1,4 +1,4 @@
-// import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
 import { StatusBadge } from '../../common';
 
 /**
@@ -34,9 +34,9 @@ const ConsultationCompletionStatsView = ({
         return (
             <div className="mg-v2-error-state">
                 <p>{error}</p>
-                <button className="mg-button" variant="primary" className="mg-v2-button mg-button-danger" onClick={onRetry}>
+                <MGButton className="mg-v2-button mg-button-danger" onClick={onRetry} variant="danger">
                     다시 시도
-                </button>
+                </MGButton>
             </div>
         );
     }

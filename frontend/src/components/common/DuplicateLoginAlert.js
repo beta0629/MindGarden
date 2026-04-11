@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MGButton from './MGButton';
 import './DuplicateLoginAlert.css';
 
 /**
@@ -87,19 +88,24 @@ const DuplicateLoginAlert = ({
                 </div>
 
                 <div className="alert-actions">
-                    <button 
+                    <MGButton
+                        type="button"
                         className="btn-cancel"
                         onClick={handleCancel}
                         disabled={timeLeft <= 0}
+                        variant="outline"
+                        preventDoubleClick={false}
                     >
                         취소
-                    </button>
-                    <button 
+                    </MGButton>
+                    <MGButton
+                        type="button"
                         className="btn-confirm"
                         onClick={handleConfirm}
+                        variant="primary"
                     >
                         확인 ({timeLeft}초)
-                    </button>
+                    </MGButton>
                 </div>
 
                 <div className="countdown-bar">

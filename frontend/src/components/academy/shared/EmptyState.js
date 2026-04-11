@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import MGButton from '../../common/MGButton';
 import './EmptyState.css';
 
 /**
@@ -24,13 +25,15 @@ const EmptyState = ({ message = '데이터가 없습니다.', actionLabel = null
       <div className="academy-empty-icon">📭</div>
       <p className="academy-empty-message">{message}</p>
       {actionLabel && onAction && (
-        <button
+        <MGButton
           type="button"
           className="academy-empty-action"
           onClick={onAction}
+          variant="primary"
+          preventDoubleClick={false}
         >
           {actionLabel}
-        </button>
+        </MGButton>
       )}
     </div>
   );

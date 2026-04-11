@@ -3,6 +3,7 @@ import { apiPut, apiPost } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
 import './SOAPNoteEditor.css';
 
 /**
@@ -200,21 +201,27 @@ const SOAPNoteEditor = ({ report, onSave }) => {
 
             {/* 액션 버튼 */}
             <div className="editor-actions">
-                <button
+                <MGButton
                     className="btn btn-secondary btn-save"
                     onClick={handleSave}
                     disabled={isSaving || editedReport.humanReviewed}
+                    loading={isSaving}
+                    loadingText="저장 중..."
+                    variant="secondary"
                 >
-                    {isSaving ? '💾 저장 중...' : '💾 저장'}
-                </button>
+                    💾 저장
+                </MGButton>
 
-                <button
+                <MGButton
                     className="btn btn-success btn-approve"
                     onClick={handleApprove}
                     disabled={isApproving || editedReport.humanReviewed}
+                    loading={isApproving}
+                    loadingText="승인 중..."
+                    variant="success"
                 >
-                    {isApproving ? '⏳ 승인 중...' : '✅ 최종 승인'}
-                </button>
+                    ✅ 최종 승인
+                </MGButton>
 
                 {editedReport.humanReviewed && (
                     <span className="approval-notice">

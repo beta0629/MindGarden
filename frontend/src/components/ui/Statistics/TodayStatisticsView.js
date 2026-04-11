@@ -1,4 +1,6 @@
+import React from 'react';
 import { FaChartLine, FaSync } from 'react-icons/fa';
+import MGButton from '../../common/MGButton';
 
 /**
  * 오늘의 통계 뷰 컴포넌트 (Presentational)
@@ -24,22 +26,28 @@ const TodayStatisticsView = ({
                     오늘의 통계
                 </h3>
                 <div className="statistics-actions">
-                    <button
+                    <MGButton
+                        type="button"
                         className="statistics-view-btn"
                         onClick={onShowStatistics}
                         title="전체 통계 보기"
+                        variant="outline"
+                        preventDoubleClick={false}
                     >
                         <i className="bi bi-graph-up"></i>
                         통계 보기
-                    </button>
-                    <button 
+                    </MGButton>
+                    <MGButton
+                        type="button"
                         className="refresh-btn"
                         onClick={onRefresh}
                         disabled={loading}
                         title="새로고침"
+                        variant="outline"
+                        preventDoubleClick={false}
                     >
                         <FaSync className={loading ? 'spinning' : ''} />
-                    </button>
+                    </MGButton>
                 </div>
             </div>
             

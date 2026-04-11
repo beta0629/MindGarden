@@ -356,13 +356,15 @@ const AcademyRegister = () => {
                         className="academy-form-input"
                         required
                       />
-                      <button
+                      <MGButton
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="academy-form-password-toggle"
+                        variant="outline"
+                        preventDoubleClick={false}
                       >
                         {showPassword ? '👁️' : '👁️‍🗨️'}
-                      </button>
+                      </MGButton>
                     </div>
                     {errors.password && <span className="academy-form-error">{errors.password}</span>}
                   </div>
@@ -377,13 +379,15 @@ const AcademyRegister = () => {
                         className="academy-form-input"
                         required
                       />
-                      <button
+                      <MGButton
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="academy-form-password-toggle"
+                        variant="outline"
+                        preventDoubleClick={false}
                       >
                         {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                      </button>
+                      </MGButton>
                     </div>
                     {errors.confirmPassword && <span className="academy-form-error">{errors.confirmPassword}</span>}
                   </div>

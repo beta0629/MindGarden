@@ -279,14 +279,17 @@ const PgConfigurationForm = ({
               aria-invalid={getFieldError('apiKey') ? 'true' : 'false'}
               aria-describedby={getFieldError('apiKey') ? 'apiKey-error' : 'apiKey-help'}
             />
-            <button
+            <MGButton
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
               className="icon-button"
               aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
+              variant="outline"
+              size="small"
+              preventDoubleClick={false}
             >
               {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+            </MGButton>
           </div>
           {getFieldError('apiKey') && (
             <span id="apiKey-error" className="error-message" role="alert">
@@ -318,14 +321,17 @@ const PgConfigurationForm = ({
               aria-invalid={getFieldError('secretKey') ? 'true' : 'false'}
               aria-describedby={getFieldError('secretKey') ? 'secretKey-error' : 'secretKey-help'}
             />
-            <button
+            <MGButton
               type="button"
               onClick={() => setShowSecretKey(!showSecretKey)}
               className="icon-button"
               aria-label={showSecretKey ? '시크릿 키 숨기기' : '시크릿 키 보기'}
+              variant="outline"
+              size="small"
+              preventDoubleClick={false}
             >
               {showSecretKey ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+            </MGButton>
           </div>
           {getFieldError('secretKey') && (
             <span id="secretKey-error" className="error-message" role="alert">

@@ -3,6 +3,7 @@ import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCirc
 import { apiGet } from '../../../utils/ajax';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import { StatusBadge, ActionButton } from '../../common';
 import './MappingDetailModal.css';
 
@@ -92,46 +93,61 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                     <>
                         {/* 탭 네비게이션 - B0KlA pill 스타일 */}
                         <div className="mg-v2-ad-b0kla__pill-toggle mapping-detail-tabs">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('basic')}
+                                preventDoubleClick={false}
                             >
                                 <User size={18} />
                                 기본 정보
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('payment')}
+                                preventDoubleClick={false}
                             >
                                 <CreditCard size={18} />
                                 결제 정보
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'sessions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('sessions')}
+                                preventDoubleClick={false}
                             >
                                 <Calendar size={18} />
                                 회기 정보
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'erp' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('erp')}
+                                preventDoubleClick={false}
                             >
                                 <TrendingUp size={18} />
                                 ERP 연동
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'history' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('history')}
+                                preventDoubleClick={false}
                             >
                                 <Clock size={18} />
                                 변경 이력
-                            </button>
+                            </MGButton>
                         </div>
 
                         <div className="mg-v2-modal-body">

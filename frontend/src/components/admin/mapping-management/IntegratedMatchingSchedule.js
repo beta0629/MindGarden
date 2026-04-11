@@ -307,19 +307,22 @@ const IntegratedMatchingSchedule = () => {
                 const count = getStatusCount(opt.value);
                 const isSelected = statusFilter === opt.value;
                 return (
-                  <button
+                  <MGButton
                     key={opt.value || 'all'}
                     type="button"
+                    variant="outline"
+                    size="small"
                     className={`integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`}
                     onClick={() => setStatusFilter(opt.value)}
                     aria-pressed={isSelected}
                     aria-label={`${toDisplayString(opt.label)} (${count}건)`}
+                    preventDoubleClick={false}
                   >
                     <span className="integrated-schedule__status-btn-text">{toDisplayString(opt.label)}</span>
                     <span className="integrated-schedule__status-badge" aria-hidden="true">
                       {count}
                     </span>
-                  </button>
+                  </MGButton>
                 );
               })}
             </div>

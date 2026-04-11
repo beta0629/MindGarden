@@ -496,8 +496,9 @@ const ClientModal = ({
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">주소 검색</label>
                     <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <button
+                        <MGButton
                             type="button"
+                            variant="secondary"
                             className="mg-v2-button mg-v2-button-secondary"
                             disabled={type === 'view'}
                             onClick={() => {
@@ -519,7 +520,7 @@ const ClientModal = ({
                             }}
                         >
                             주소 검색
-                        </button>
+                        </MGButton>
                         <input
                             type="text"
                             readOnly
@@ -575,15 +576,18 @@ const ClientModal = ({
                             />
                         </div>
                         {type === 'create' && (
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="secondary"
                                 onClick={handleEmailDuplicateCheck}
                                 disabled={isCheckingEmail || !safeFormData.email?.trim()}
                                 className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                                 data-action="email-duplicate-check"
+                                loading={isCheckingEmail}
+                                loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
                             >
-                                {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                            </button>
+                                {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                            </MGButton>
                         )}
                     </div>
                     {type === 'edit' && (

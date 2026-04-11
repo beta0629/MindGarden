@@ -327,27 +327,36 @@ const SessionManagement = () => {
                     {/* 회기 추가 방법 선택 탭 */}
                     <div className="mg-v2-card">
                         <div className="mg-tabs">
-                            <button 
+                            <MGButton 
+                                type="button"
+                                variant="outline"
                                 className={`mg-tab ${activeTab === 'quick' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('quick')}
+                                preventDoubleClick={false}
                             >
                                 <Zap size={18} />
                                 빠른 추가
-                            </button>
-                            <button 
+                            </MGButton>
+                            <MGButton 
+                                type="button"
+                                variant="outline"
                                 className={`mg-tab ${activeTab === 'search' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('search')}
+                                preventDoubleClick={false}
                             >
                                 <Users size={18} />
                                 내담자 검색
-                            </button>
-                            <button 
+                            </MGButton>
+                            <MGButton 
+                                type="button"
+                                variant="outline"
                                 className={`mg-tab ${activeTab === 'mapping' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('mapping')}
+                                preventDoubleClick={false}
                             >
                                 <Calendar size={18} />
                                 전체 매핑
-                            </button>
+                            </MGButton>
                         </div>
 
                         {/* 회기 추가 섹션 */}

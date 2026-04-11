@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../../utils/ajax';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import MGButton from '../../common/MGButton';
 import './CommonCodeForm.css';
 
 /**
@@ -182,13 +183,17 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             <div className="common-code-form-modal">
                 <div className="form-header">
                     <h3>{code ? '공통코드 수정' : '새 공통코드 추가'}</h3>
-                    <button 
+                    <MGButton 
+                        type="button"
+                        variant="outline"
+                        size="small"
                         className="close-btn"
                         onClick={onClose}
-                        type="button"
+                        preventDoubleClick={false}
+                        aria-label="닫기"
                     >
                         <i className="bi bi-x"></i>
-                    </button>
+                    </MGButton>
                 </div>
 
                 <form onSubmit={handleSubmit} className="common-code-form">
@@ -433,21 +438,25 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                     </div>
 
                     <div className="form-actions">
-                        <button 
+                        <MGButton 
                             type="button" 
+                            variant="secondary"
                             className="btn btn-secondary"
                             onClick={onClose}
                             disabled={isSubmitting}
                         >
                             취소
-                        </button>
-                        <button 
+                        </MGButton>
+                        <MGButton 
                             type="submit" 
+                            variant="primary"
                             className="btn btn-primary"
                             disabled={isSubmitting}
+                            loading={isSubmitting}
+                            loadingText="처리 중..."
                         >
-                            {isSubmitting ? '처리 중...' : (code ? '수정' : '생성')}
-                        </button>
+                            {code ? '수정' : '생성'}
+                        </MGButton>
                     </div>
                 </form>
             </div>

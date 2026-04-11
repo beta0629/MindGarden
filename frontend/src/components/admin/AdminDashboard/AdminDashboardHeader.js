@@ -53,39 +53,39 @@ const AdminDashboardHeader = ({
             <div className="mg-v2-admin-dashboard-header-right">
                 <div className="mg-v2-admin-dashboard-actions">
                     {hasNotificationPermission && (
-                        <button className="mg-button"
+                        <MGButton
                             variant="outline"
                             size="small"
-                            onClick={() => onNavigate('/admin/notifications')}
                             className="mg-v2-admin-dashboard-action-btn"
+                            onClick={() => onNavigate('/admin/notifications')}
                         >
                             <Bell className="mg-v2-icon" />
                             알림 관리
-                        </button>
+                        </MGButton>
                     )}
                     
                     {hasSystemConfigPermission && (
-                        <button className="mg-button"
+                        <MGButton
                             variant="outline"
                             size="small"
-                            onClick={() => onNavigate('/admin/system-config')}
                             className="mg-v2-admin-dashboard-action-btn"
+                            onClick={() => onNavigate('/admin/system-config')}
                         >
                             <Settings className="mg-v2-icon" />
                             시스템 설정
-                        </button>
+                        </MGButton>
                     )}
                     
                     {hasUserManagementPermission && (
-                        <button className="mg-button"
+                        <MGButton
                             variant="outline"
                             size="small"
-                            onClick={() => onNavigate('/admin/user-management')}
                             className="mg-v2-admin-dashboard-action-btn"
+                            onClick={() => onNavigate('/admin/user-management')}
                         >
                             <User className="mg-v2-icon" />
                             사용자 관리
-                        </button>
+                        </MGButton>
                     )}
                 </div>
             </div>

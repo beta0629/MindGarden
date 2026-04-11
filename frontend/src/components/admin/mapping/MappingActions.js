@@ -4,7 +4,21 @@ import {
     MAPPING_ACTION_BUTTONS 
 } from '../../../constants/mapping';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import MGButton from '../../common/MGButton';
 import './MappingActions.css';
+
+const BOOTSTRAP_CLASS_TO_MG_VARIANT = {
+    'btn-success': 'success',
+    'btn-danger': 'danger',
+    'btn-warning': 'warning',
+    'btn-info': 'info',
+    'btn-secondary': 'secondary'
+};
+
+const getVariantFromBootstrapClass = (className) => {
+    const found = Object.keys(BOOTSTRAP_CLASS_TO_MG_VARIANT).find((k) => className.includes(k));
+    return found ? BOOTSTRAP_CLASS_TO_MG_VARIANT[found] : 'primary';
+};
 
 /**
  * 매핑 액션 컴포넌트
@@ -119,35 +133,44 @@ const MappingActions = ({
         <div className="mapping-actions">
             <div className="actions-primary">
                 {actions.map((action, index) => (
-                    <button
+                    <MGButton
                         key={index}
+                        type="button"
+                        variant={getVariantFromBootstrapClass(action.className)}
+                        size="small"
                         className={`btn ${action.className} btn-sm`}
                         onClick={action.onClick}
                         title={toDisplayString(action.label)}
                     >
                         <i className={action.icon}></i>
                         <span className="action-label">{toDisplayString(action.label)}</span>
-                    </button>
+                    </MGButton>
                 ))}
             </div>
             
             <div className="actions-secondary">
-                <button
+                <MGButton
+                    type="button"
+                    variant="info"
+                    size="small"
                     className="btn btn-outline-info btn-sm"
                     onClick={() => onView?.(mapping)}
                     title="상세보기"
                 >
                     <i className="bi bi-eye"></i>
-                </button>
+                </MGButton>
                 
                 {mapping.status !== 'TERMINATED' && mapping.status !== 'SESSIONS_EXHAUSTED' && (
-                    <button
+                    <MGButton
+                        type="button"
+                        variant="danger"
+                        size="small"
                         className="btn btn-outline-danger btn-sm"
                         onClick={() => onDelete?.(mapping.id)}
                         title="삭제"
                     >
                         <i className="bi bi-trash"></i>
-                    </button>
+                    </MGButton>
                 )}
             </div>
         </div>

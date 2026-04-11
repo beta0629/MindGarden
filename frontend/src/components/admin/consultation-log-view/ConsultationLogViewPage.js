@@ -12,6 +12,7 @@ import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ConsultationLogFilterSection from './ConsultationLogFilterSection';
@@ -225,16 +226,19 @@ const ConsultationLogViewPage = () => {
 
         <nav className="mg-v2-consultation-log-view-tabs" aria-label="뷰 전환">
           {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => (
-            <button
+            <MGButton
               key={mode}
               type="button"
+              variant="outline"
+              size="small"
               className={`mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`}
               onClick={() => setViewMode(mode)}
               aria-pressed={viewMode === mode}
               aria-current={viewMode === mode ? 'true' : undefined}
+              preventDoubleClick={false}
             >
               {TAB_LABELS[mode]}
-            </button>
+            </MGButton>
           ))}
         </nav>
 

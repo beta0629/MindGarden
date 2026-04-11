@@ -352,16 +352,19 @@ const SystemConfigManagement = () => {
               title="시스템 설정 관리"
               subtitle="AI API 키(OpenAI·Gemini·Claude·Replicate)·웰니스 자동 발송 등 시스템 설정을 관리합니다."
               actions={
-                <button
+                <MGButton
                   type="button"
+                  variant="primary"
                   className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                   onClick={handleSave}
                   disabled={saving}
                   title="설정 저장"
+                  loading={saving}
+                  loadingText="저장 중..."
                 >
-                  {saving ? <RefreshCw size={20} className="mg-spinning" /> : <Save size={20} />}
-                  {saving ? '저장 중...' : '설정 저장'}
-                </button>
+                  <Save size={20} />
+                  설정 저장
+                </MGButton>
               }
             />
 

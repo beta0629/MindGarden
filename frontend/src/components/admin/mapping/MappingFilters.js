@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Filter, RotateCcw, X } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
-// import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../../components/common/MGButton';
 import './MappingFilters.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -35,13 +35,13 @@ const MappingFilters = ({
         <div className="mg-v2-mapping-filters">
             <div className="mg-v2-mapping-filters-header">
                 <h3 className="mg-v2-mapping-filters-title">🔍 필터 및 검색</h3>
-                <button className="mg-button" 
+                <MGButton
                     variant="secondary"
                     size="small"
                     onClick={onReset}
                 >
                     <RotateCcw size={16} /> 초기화
-                </button>
+                </MGButton>
             </div>
             
             <div className="mg-v2-mapping-filters-content">
@@ -77,12 +77,17 @@ const MappingFilters = ({
                             className="mg-v2-mapping-filters-input"
                         />
                         {searchTerm && (
-                            <button 
-                                className="mg-v2-mapping-filters-clear-btn"
+                            <MGButton
+                                type="button"
+                                variant="outline"
+                                size="small"
+                                className="mapping-filters-clear-btn"
                                 onClick={() => onSearchChange('')}
+                                preventDoubleClick={false}
+                                aria-label="검색어 지우기"
                             >
                                 <X size={16} />
-                            </button>
+                            </MGButton>
                         )}
                     </div>
                 </div>

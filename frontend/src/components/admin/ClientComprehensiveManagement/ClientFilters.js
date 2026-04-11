@@ -17,12 +17,12 @@ const ClientFilters = ({
         <div className="mg-v2-filters-section">
             <div className="mg-v2-filters-header">
                 <h3>필터 및 검색</h3>
-                <button className="mg-button"
+                <MGButton
                     variant="primary"
                     onClick={onCreateClient}
                 >
                     <FaPlus /> 새 내담자 등록
-                </button>
+                </MGButton>
             </div>
             
             <div className="mg-v2-filters-content mg-v2-filters-horizontal">
@@ -53,7 +53,7 @@ const ClientFilters = ({
                     </select>
                 </div>
                 
-                <button className="mg-button"
+                <MGButton
                     variant="outline"
                     onClick={() => {
                         setSearchTerm('');
@@ -61,7 +61,7 @@ const ClientFilters = ({
                     }}
                 >
                     필터 초기화
-                </button>
+                </MGButton>
             </div>
         </div>
     );

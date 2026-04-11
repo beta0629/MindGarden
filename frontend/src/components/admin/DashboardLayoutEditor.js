@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ReactSortable } from 'react-sortablejs';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { FaGripVertical, FaTrash, FaCog } from 'react-icons/fa';
 import './DashboardLayoutEditor.css';
 
@@ -229,21 +229,29 @@ const DashboardLayoutEditor = ({
                   </div>
                   <div className="widget-item-actions">
                     {onWidgetConfig && (
-                      <button
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
                         className="widget-action-btn"
                         onClick={() => onWidgetConfig(widget)}
                         title="설정"
+                        preventDoubleClick={false}
                       >
                         <FaCog />
-                      </button>
+                      </MGButton>
                     )}
-                    <button
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="small"
                       className="widget-action-btn widget-delete-btn"
                       onClick={() => handleDelete(widget.id)}
                       title="삭제"
+                      preventDoubleClick={false}
                     >
                       <FaTrash />
-                    </button>
+                    </MGButton>
                   </div>
                 </div>
                 <div className="widget-item-preview">

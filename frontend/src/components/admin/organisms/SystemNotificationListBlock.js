@@ -12,6 +12,7 @@ import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
@@ -301,41 +302,49 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                   </div>
                   <div className="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
                     {notification.status === 'DRAFT' && (
-                      <button
+                      <MGButton
                         type="button"
+                        variant="outline"
+                        size="small"
                         className="mg-v2-button mg-v2-button--outline"
                         aria-label="게시"
                         onClick={() => handlePublish(notification.id)}
                       >
                         <Send size={16} />
-                      </button>
+                      </MGButton>
                     )}
                     {notification.status === 'PUBLISHED' && (
-                      <button
+                      <MGButton
                         type="button"
+                        variant="outline"
+                        size="small"
                         className="mg-v2-button mg-v2-button--outline"
                         aria-label="보관"
                         onClick={() => handleArchive(notification.id)}
                       >
                         <Archive size={16} />
-                      </button>
+                      </MGButton>
                     )}
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="mg-v2-button mg-v2-button--outline"
                       aria-label="수정"
                       onClick={() => handleEdit(notification)}
                     >
                       <Edit size={16} />
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="mg-v2-button mg-v2-button--outline"
                       aria-label="삭제"
                       onClick={() => handleDelete(notification.id)}
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </MGButton>
                   </div>
                 </li>
               ))}

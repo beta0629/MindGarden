@@ -21,6 +21,7 @@ import {
   DollarSign,
   Database
 } from 'lucide-react';
+import MGButton from '../../../common/MGButton';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { ActionButton, StatusBadge } from '../../../common';
@@ -124,14 +125,17 @@ const MappingListRow = ({
         <div className="mg-v2-mapping-list-row__sessions">
           <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
           {mapping.totalSessions > 0 && (
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="small"
               className="mg-v2-mapping-list-row__schedule-link"
               onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
               title="스케줄 보기"
+              preventDoubleClick={false}
             >
               <CalendarClock size={14} />
-            </button>
+            </MGButton>
           )}
         </div>
         <div className="mg-v2-mapping-list-row__date">

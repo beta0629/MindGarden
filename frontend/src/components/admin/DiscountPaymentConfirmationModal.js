@@ -3,6 +3,7 @@ import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import SafeText from '../common/SafeText';
 
@@ -225,26 +226,26 @@ const DiscountPaymentConfirmationModal = ({
       loading={loading}
       actions={
         <>
-          <button
+          <MGButton
+            type="button"
+            variant="secondary"
             className="mg-v2-button mg-v2-button-secondary"
             onClick={onClose}
           >
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="success"
             className="mg-v2-button mg-v2-button-success"
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
+            loading={loading}
+            loadingText="처리 중..."
           >
-            {loading ? (
-              <span>처리 중...</span>
-            ) : (
-              <>
-                <CheckCircle size={18} />
-                결제 확인
-              </>
-            )}
-          </button>
+            <CheckCircle size={18} />
+            결제 확인
+          </MGButton>
         </>
       }
     >
@@ -288,7 +289,9 @@ const DiscountPaymentConfirmationModal = ({
                 onChange={(e) => setPaymentData(prev => ({ ...prev, discountCode: e.target.value }))}
                 disabled={discountInfo.applied}
               />
-              <button
+              <MGButton
+                type="button"
+                variant={discountInfo.applied ? 'success' : 'primary'}
                 className={`mg-v2-button ${discountInfo.applied ? 'mg-v2-button-success' : 'mg-v2-button-primary'}`}
                 onClick={applyDiscount}
                 disabled={loading || discountInfo.applied}
@@ -301,15 +304,17 @@ const DiscountPaymentConfirmationModal = ({
                 ) : (
                   '할인 적용'
                 )}
-              </button>
+              </MGButton>
               {discountInfo.applied && (
-                <button
+                <MGButton
+                  type="button"
+                  variant="danger"
                   className="mg-v2-button mg-v2-button-danger"
                   onClick={removeDiscount}
                 >
                   <XCircle size={18} />
                   제거
-                </button>
+                </MGButton>
               )}
             </div>
             

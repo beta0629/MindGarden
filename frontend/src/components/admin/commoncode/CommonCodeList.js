@@ -1,5 +1,6 @@
 import React from 'react';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
 import './CommonCodeList.css';
 
 /**
@@ -167,22 +168,28 @@ const CommonCodeList = ({
                         
                         <div className="card-footer">
                             <div className="action-buttons">
-                                <button 
+                                <MGButton 
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
                                     className="btn btn-sm btn-outline-primary"
                                     onClick={() => onEdit(code)}
                                     title="편집"
                                 >
                                     <i className="bi bi-pencil"></i>
                                     <span>편집</span>
-                                </button>
-                                <button 
+                                </MGButton>
+                                <MGButton 
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
                                     className="btn btn-sm btn-outline-danger"
                                     onClick={() => onDelete(code.id)}
                                     title="삭제"
                                 >
                                     <i className="bi bi-trash"></i>
                                     <span>삭제</span>
-                                </button>
+                                </MGButton>
                             </div>
                         </div>
                     </div>

@@ -299,8 +299,9 @@ const PaymentConfirmationModal = ({
       loading={loading}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
+            variant="secondary"
             className="mg-v2-button mg-v2-button-secondary"
             onClick={(e) => {
               e?.preventDefault();
@@ -310,7 +311,7 @@ const PaymentConfirmationModal = ({
             disabled={loading}
           >
             취소
-          </button>
+          </MGButton>
           <MGButton
             type="button"
             variant="danger"

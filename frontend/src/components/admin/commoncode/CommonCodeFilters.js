@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import MGButton from '../../common/MGButton';
 import './CommonCodeFilters.css';
 
 /**
@@ -92,13 +93,15 @@ const CommonCodeFilters = ({
         <div className="common-code-filters">
             <div className="filters-header">
                 <h3>필터 및 검색</h3>
-                <button 
+                <MGButton 
+                    type="button"
+                    variant="primary"
                     className="btn btn-primary"
                     onClick={onNewCode}
                 >
                     <i className="bi bi-plus-circle"></i>
                     새 공통코드 추가
-                </button>
+                </MGButton>
             </div>
 
             <div className="filters-content">
@@ -149,26 +152,32 @@ const CommonCodeFilters = ({
                                 className="form-control search-input"
                             />
                             {filters.searchTerm && (
-                                <button
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
                                     className="clear-search-btn"
                                     onClick={() => handleFilterChange('searchTerm', '')}
                                     title="검색어 지우기"
+                                    preventDoubleClick={false}
                                 >
                                     <i className="bi bi-x"></i>
-                                </button>
+                                </MGButton>
                             )}
                         </div>
                     </div>
 
                     <div className="filter-actions">
                         {hasActiveFilters && (
-                            <button 
+                            <MGButton 
+                                type="button"
+                                variant="outline"
                                 className="btn btn-outline-secondary"
                                 onClick={clearFilters}
                             >
                                 <i className="bi bi-arrow-clockwise"></i>
                                 필터 초기화
-                            </button>
+                            </MGButton>
                         )}
                     </div>
                 </div>

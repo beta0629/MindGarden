@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { ReactSortable } from 'react-sortablejs';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import { 
   getSupportedWidgetTypes,
   getCommonWidgetTypes,
@@ -319,39 +319,41 @@ const DashboardWidgetEditor = ({
                   </span>
                 </div>
                 <div className="widget-item-actions">
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     onClick={() => handleConfigWidget(widget)}
                     className="widget-action-btn widget-config-btn"
                     title="위젯 설정"
+                    preventDoubleClick={false}
                     style={{
                       padding: '6px 12px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                       border: '1px solid #ddd',
                       borderRadius: '4px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                       backgroundColor: '#fff',
                       cursor: 'pointer',
                       fontSize: '12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                       color: '#666'
                     }}
                   >
                     <FaCog /> 설정
-                  </button>
-                  <button
+                  </MGButton>
+                  <MGButton
                     type="button"
+                    variant="danger"
+                    size="small"
                     onClick={() => handleDeleteWidget(widget.id)}
                     className="widget-action-btn widget-delete-btn"
                     title="위젯 삭제"
+                    preventDoubleClick={false}
                     style={{
                       padding: '6px 12px',
                       border: '1px solid var(--mg-error-500)',
                       borderRadius: '4px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                       backgroundColor: '#fff',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -362,7 +364,7 @@ const DashboardWidgetEditor = ({
                     }}
                   >
                     <FaTrash /> 삭제
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             ))}

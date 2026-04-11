@@ -1175,14 +1175,16 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     역할 <span className="required">*</span>
                   </label>
                   {!isEditMode && (
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       onClick={() => setShowAddRoleModal(true)}
                       className="mg-btn-add-role"
                       disabled={loading || loadingRoles}
                     >
                       <FaPlus /> 역할 추가
-                    </button>
+                    </MGButton>
                   )}
                 </div>
                 <select
@@ -1241,15 +1243,17 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                         {tenantRoles.map(role => (
                           <div key={role.tenantRoleId} className="mg-role-item">
                             <span>{role.nameKo || role.name}</span>
-                            <button
+                            <MGButton
                               type="button"
+                              variant="danger"
+                              size="small"
                               onClick={() => handleDeleteRole(role.tenantRoleId, role.nameKo || role.name)}
                               className="mg-btn-delete-role"
                               disabled={loading}
                               title="역할 삭제"
                             >
                               <FaTrash /> 삭제
-                            </button>
+                            </MGButton>
                           </div>
                         ))}
                       </div>

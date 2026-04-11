@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import MGButton from '../../../common/MGButton';
 import { SearchInput } from '../../../dashboard-v2/atoms';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import { MAPPING_FILTER_OPTIONS } from '../../../../constants/mapping';
@@ -32,16 +33,19 @@ const MappingSearchSection = ({
         </div>
         <div className="mg-v2-mapping-search-section__chips">
           {MAPPING_FILTER_OPTIONS.map((opt) => (
-            <button
+            <MGButton
               key={opt.value}
               type="button"
+              variant="outline"
+              size="small"
               className={`mg-v2-mapping-search-section__chip ${
                 filterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''
               }`}
               onClick={() => onFilterChange && onFilterChange(opt.value)}
+              preventDoubleClick={false}
             >
               {toDisplayString(opt.label)}
-            </button>
+            </MGButton>
           ))}
         </div>
       </div>

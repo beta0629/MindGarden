@@ -92,7 +92,8 @@
   padding-right: var(--spacing-xl, 2rem);
 }
 
-.mapping-filters-clear-btn {
+.mapping-filters-clear-btn,
+.mapping-filters-clear-btn.mg-button.mg-button--outline {
   position: absolute;
   right: var(--spacing-sm, 0.75rem);
   top: 50%;
@@ -110,14 +111,18 @@
   width: 24px;
   height: 24px;
   font-size: var(--font-size-sm, 0.875rem);
+  min-height: auto;
+  box-shadow: none;
 }
 
-.mapping-filters-clear-btn:hover {
+.mapping-filters-clear-btn:hover,
+.mapping-filters-clear-btn.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--color-bg-secondary, #F5F5F7);
   color: var(--color-danger, var(--mg-error-500));
 }
 
-.mapping-filters-clear-btn:active {
+.mapping-filters-clear-btn:active,
+.mapping-filters-clear-btn.mg-button.mg-button--outline:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(-50%) scale(0.95);
 }
 

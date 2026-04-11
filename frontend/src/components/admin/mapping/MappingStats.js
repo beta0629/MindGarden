@@ -6,6 +6,7 @@ import {
 } from '../../../utils/codeHelper';
 import { getLucideIcon } from '../../../utils/iconUtils';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 
 /**
@@ -211,12 +212,14 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 const valueLine =
                     `${numericValue}건${percentage > 0 ? ` (${percentage}%)` : ''}`;
                 return (
-                    <button
+                    <MGButton
                         key={stat.id || index}
                         type="button"
+                        variant="outline"
                         className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={titleHint}
+                        preventDoubleClick={false}
                     >
                         <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
                             <span className="mg-v2-content-kpi-card__icon-emoji">{getLucideIcon(stat.icon, { size: 24 })}</span>
@@ -232,7 +235,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             </div>
                             <SafeText className="mg-v2-content-kpi-card__value">{valueLine}</SafeText>
                         </div>
-                    </button>
+                    </MGButton>
                 );
             })}
         </div>

@@ -220,7 +220,7 @@ const VacationStatistics = ({ className = "" }) => {
                         <Calendar size={48} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
-                    <button className="mg-button" variant="primary" onClick={loadVacationStats}>다시 시도</button>
+                    <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
                 </div>
             </div>
         );
@@ -241,7 +241,7 @@ const VacationStatistics = ({ className = "" }) => {
                     <div className="mg-dashboard-header-right">
                         <div className="period-selector">
                             {['week', 'month', 'quarter', 'year'].map(period => (
-                                <button className="mg-button"
+                                <MGButton
                                     key={period}
                                     variant={selectedPeriod === period ? 'primary' : 'outline'}
                                     size="small"
@@ -251,7 +251,7 @@ const VacationStatistics = ({ className = "" }) => {
                                     {period === 'month' && '1개월'}
                                     {period === 'quarter' && '3개월'}
                                     {period === 'year' && '1년'}
-                                </button>
+                                </MGButton>
                             ))}
                         </div>
                     </div>

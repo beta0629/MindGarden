@@ -137,6 +137,19 @@
   color: var(--ad-b0kla-green, #4b745c);
 }
 
+.mg-v2-mapping-list-row__schedule-link.mg-button.mg-button--outline {
+  min-height: auto;
+  min-width: auto;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+.mg-v2-mapping-list-row__schedule-link.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  background: rgba(75, 116, 92, 0.1);
+}
+
 .mg-v2-mapping-list-row__date {
   display: inline-flex;
   align-items: center;

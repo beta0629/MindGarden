@@ -132,7 +132,7 @@ const AdminDashboardActions = ({
                             if (!action.permission) return null;
                             
                             return (
-                                <button className="mg-button"
+                                <MGButton
                                     key={actionIndex}
                                     variant={action.variant}
                                     onClick={action.onClick}
@@ -148,7 +148,7 @@ const AdminDashboardActions = ({
                                             <SafeText>{action.description}</SafeText>
                                         </span>
                                     </div>
-                                </button>
+                                </MGButton>
                             );
                         })}
                     </div>

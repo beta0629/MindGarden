@@ -55,6 +55,30 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
+/* G8-B15b: 패키지 카드 MGButton */
+.mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline {
+  width: 100%;
+  min-height: auto;
+  font-weight: inherit;
+  box-shadow: none;
+}
+
+.mg-v2-mapping-edit-modal__package-card.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-mapping-edit-modal__package-card.mg-button .mg-button__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+.mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
 /* 금액·회기수 강조 (font-weight 700, --ad-b0kla-green) */
 .mg-v2-mapping-edit-modal__value-emphasis {
   font-weight: 700;

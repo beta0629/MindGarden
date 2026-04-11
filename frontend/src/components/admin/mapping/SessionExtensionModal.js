@@ -4,6 +4,7 @@ import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
 
 /**
@@ -164,32 +165,27 @@ const SessionExtensionModal = ({
             loading={isLoading}
             actions={
                 <>
-                    <button
+                    <MGButton
                         type="button"
+                        variant="secondary"
                         className="mg-v2-button mg-v2-button-secondary"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
+                        variant="primary"
                         className="mg-v2-button mg-v2-button-primary"
                         onClick={handleSubmit}
                         disabled={isLoading || additionalSessions <= 0}
+                        loading={isLoading}
+                        loadingText="요청 중..."
                     >
-                        {isLoading ? (
-                            <>
-                                <div className="loading-spinner"></div>
-                                요청 중...
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={16} />
-                                {additionalSessions}회기 추가 요청
-                            </>
-                        )}
-                    </button>
+                        <Plus size={16} />
+                        {additionalSessions}회기 추가 요청
+                    </MGButton>
                 </>
             }
         >

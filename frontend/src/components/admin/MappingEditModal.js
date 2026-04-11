@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
 import './MappingEditModal.css';
@@ -288,18 +289,20 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </h3>
               <div className="mg-v2-mapping-edit-modal__package-grid">
                 {packageOptions.map(pkg => (
-                  <button
+                  <MGButton
                     key={pkg.value}
                     type="button"
+                    variant="outline"
                     className={`mg-v2-mapping-edit-modal__package-card ${formData.packageName === pkg.value ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`}
                     onClick={() => handlePackageSelect(pkg)}
                     disabled={loading}
+                    preventDoubleClick={false}
                   >
                     <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
                     <span className="mg-v2-mapping-edit-modal__package-card-meta">
                       {pkg.sessions}회기 · {pkg.price.toLocaleString()}원
                     </span>
-                  </button>
+                  </MGButton>
                 ))}
               </div>
               {errors.packageName && (

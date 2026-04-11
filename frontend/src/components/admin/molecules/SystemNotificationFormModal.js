@@ -7,6 +7,7 @@
 
 import React from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
 import '../../../styles/unified-design-tokens.css';
@@ -86,24 +87,26 @@ const SystemNotificationFormModal = ({
       loading={loading}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-button mg-v2-button--outline"
             aria-label="취소"
             onClick={onClose}
             disabled={loading}
           >
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
+            variant="primary"
             className="mg-v2-button mg-v2-button--primary"
             aria-label="저장"
             onClick={() => onSave?.(formData)}
             disabled={loading}
           >
             저장
-          </button>
+          </MGButton>
         </>
       }
     >

@@ -11,6 +11,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Upload, FileSearch, FileCheck2 } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
+import MGButton from '../../../common/MGButton';
 import './PsychKpiSection.css';
 import SafeText from '../../../common/SafeText';
 
@@ -48,11 +49,13 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
           const Icon = item.icon;
           const value = stats[item.key] ?? 0;
           return (
-            <button
+            <MGButton
               key={item.id}
               type="button"
+              variant="outline"
               className="mg-v2-psych-kpi-section__card"
               onClick={() => onStatCardClick && onStatCardClick(item)}
+              preventDoubleClick={false}
             >
               <div className={`mg-v2-psych-kpi-section__icon mg-v2-psych-kpi-section__icon--${item.iconVariant}`}>
                 <Icon size={ICON_SIZE} />
@@ -61,7 +64,7 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
                 <span className="mg-v2-psych-kpi-section__label"><SafeText>{item.label}</SafeText></span>
                 <span className="mg-v2-psych-kpi-section__value">{value.toLocaleString()}</span>
               </div>
-            </button>
+            </MGButton>
           );
         })}
       </div>

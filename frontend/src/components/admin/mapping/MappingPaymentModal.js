@@ -3,6 +3,7 @@ import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
 /**
  * 매칭 입금확인 모달 컴포넌트
@@ -122,8 +123,9 @@ const MappingPaymentModal = ({
             loading={loading}
             actions={
                 <>
-                    <button
+                    <MGButton
                         type="button"
+                        variant="secondary"
                         className="mg-v2-button mg-v2-button-secondary"
                         onClick={(e) => {
                             e?.preventDefault();
@@ -133,16 +135,19 @@ const MappingPaymentModal = ({
                         disabled={loading}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
+                        variant="primary"
                         className="mg-v2-button mg-v2-button-primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
+                        loading={loading}
+                        loadingText="처리 중..."
                     >
                         <CheckCircle size={18} />
                         입금 확인
-                    </button>
+                    </MGButton>
                 </>
             }
         >

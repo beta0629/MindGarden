@@ -35,6 +35,7 @@ import {
   FaHome,
   FaLayerGroup
 } from 'react-icons/fa';
+import MGButton from '../common/MGButton';
 import './ModernDashboardEditor.css';
 import './CompactWidgetEditor.css';
 
@@ -177,15 +178,19 @@ const ModernDashboardEditor = ({
             
             <div className="palette-categories">
               {['all', 'common', 'admin', 'consultation', 'academy', 'erp'].map(category => (
-                <button
+                <MGButton
                   key={category}
+                  type="button"
+                  variant="outline"
+                  size="small"
                   onClick={() => setSelectedCategory(category)}
                   className={`category-filter ${selectedCategory === category ? 'active' : ''} ${
                     category !== 'all' ? (WIDGET_CATEGORIES[category]?.cssClass || 'widget-category-common') : ''
                   }`}
+                  preventDoubleClick={false}
                 >
                   {category === 'all' ? '전체' : WIDGET_CATEGORIES[category]?.label || category}
-                </button>
+                </MGButton>
               ))}
             </div>
           </div>
@@ -297,20 +302,28 @@ const ModernDashboardEditor = ({
                     
                     {/* 위젯 액션 버튼들 */}
                     <div className="widget-actions">
-                      <button
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
                         className="widget-action-btn config-btn"
                         onClick={() => {/* 설정 모달 */}}
                         title="설정"
+                        preventDoubleClick={false}
                       >
                         <FaCog />
-                      </button>
-                      <button
+                      </MGButton>
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
                         className="widget-action-btn delete-btn"
                         onClick={() => handleDeleteWidget(widget.id)}
                         title="삭제"
+                        preventDoubleClick={false}
                       >
                         <FaTrash />
-                      </button>
+                      </MGButton>
                     </div>
                   </div>
                 );

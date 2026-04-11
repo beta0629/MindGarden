@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XCircle, Clock } from 'lucide-react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import './ConsultantTransferHistory.css';
 
 /**
@@ -85,14 +86,15 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
       showCloseButton
       loading={loading}
       actions={
-        <button
+        <MGButton
           type="button"
+          variant="secondary"
           className="mg-v2-button mg-v2-button-secondary"
           onClick={onClose}
         >
           <XCircle size={18} />
           닫기
-        </button>
+        </MGButton>
       }
     >
         <div className="mg-v2-modal-body">
@@ -104,13 +106,14 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           ) : error ? (
             <div className="transfer-history-error">
               <p>❌ {error}</p>
-              <button
+              <MGButton
                 type="button"
+                variant="primary"
                 className="mg-v2-button mg-v2-button-primary"
                 onClick={loadTransferHistory}
               >
                 다시 시도
-              </button>
+              </MGButton>
             </div>
           ) : transferHistory.length === 0 ? (
             <div className="transfer-history-empty">

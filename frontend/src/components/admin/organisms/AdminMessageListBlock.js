@@ -10,6 +10,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
 import SafeText from '../../common/SafeText';
@@ -128,14 +129,15 @@ const AdminMessageListBlock = () => {
             placeholder="읽음 상태"
             aria-label="읽음 상태 선택"
           />
-          <button
+          <MGButton
             type="button"
+            variant="outline"
             className="mg-v2-button mg-v2-button--outline"
             aria-label="일괄 읽음"
             disabled
           >
             일괄 읽음
-          </button>
+          </MGButton>
         </div>
 
         <div className="mg-v2-ad-notifications__list">
@@ -186,14 +188,15 @@ const AdminMessageListBlock = () => {
                     </span>
                   </div>
                   <div className="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
                       className="mg-v2-button mg-v2-button--outline"
                       aria-label="상세 보기"
                       onClick={() => handleMessageClick(message)}
                     >
                       상세
-                    </button>
+                    </MGButton>
                   </div>
                 </li>
               ))}

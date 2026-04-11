@@ -419,14 +419,15 @@ const MappingManagementPage = () => {
           subtitle="상담사와 내담자 간의 매칭을 관리합니다."
           titleId="mapping-management-title"
           actions={
-            <button
+            <MGButton
               type="button"
+              variant="primary"
               className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus size={20} />
               새 매칭 생성
-            </button>
+            </MGButton>
           }
         />
 

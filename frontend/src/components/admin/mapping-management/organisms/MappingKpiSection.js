@@ -9,6 +9,7 @@
 import React from 'react';
 import { Clock, CheckCircle, CreditCard, LayoutGrid, XCircle, RotateCcw } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
+import MGButton from '../../../common/MGButton';
 import './MappingKpiSection.css';
 import SafeText from '../../../common/SafeText';
 
@@ -89,11 +90,13 @@ const MappingKpiSection = ({ mappings = [], onStatCardClick }) => {
     <ContentSection noCard className="mg-v2-mapping-kpi-section">
       <div className="mg-v2-mapping-kpi-section__grid">
         {items.map((item) => (
-          <button
+          <MGButton
             key={item.id}
             type="button"
+            variant="outline"
             className="mg-v2-mapping-kpi-section__card"
             onClick={() => onStatCardClick && onStatCardClick(item)}
+            preventDoubleClick={false}
           >
             <div className={`mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--${item.iconVariant}`}>
               {item.icon}
@@ -102,7 +105,7 @@ const MappingKpiSection = ({ mappings = [], onStatCardClick }) => {
               <span className="mg-v2-mapping-kpi-section__label"><SafeText>{item.label}</SafeText></span>
               <span className="mg-v2-mapping-kpi-section__value"><SafeText>{item.value}</SafeText></span>
             </div>
-          </button>
+          </MGButton>
         ))}
       </div>
     </ContentSection>

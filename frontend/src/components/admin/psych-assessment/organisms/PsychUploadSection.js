@@ -166,14 +166,17 @@ const PsychUploadSection = ({
                       <span className="mg-v2-psych-upload-section__client-selected-tag-label">
                         {getClientLabel(selectedClient)}
                       </span>
-                      <button
+                      <MGButton
                         type="button"
+                        variant="outline"
+                        size="small"
                         className="mg-v2-psych-upload-section__client-selected-tag-remove"
                         onClick={() => onClientIdChange(null)}
                         aria-label="내담자 선택 해제"
+                        preventDoubleClick={false}
                       >
                         <X size={14} />
-                      </button>
+                      </MGButton>
                     </div>
                   ) : (
                     <div className="mg-v2-psych-upload-section__client-selected-tag mg-v2-psych-upload-section__client-selected-tag--none">
@@ -197,32 +200,38 @@ const PsychUploadSection = ({
               </div>
               <ul className="mg-v2-psych-upload-section__client-tags" aria-label="내담자 해시태그 필터">
                 <li>
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     className={`mg-v2-psych-upload-section__client-tag mg-v2-psych-upload-section__client-tag--none ${selectedClient ? '' : 'mg-v2-psych-upload-section__client-tag--selected'}`}
                     onClick={() => onClientIdChange(null)}
                     aria-pressed={!selectedClient}
                     disabled={clientsLoading}
+                    preventDoubleClick={false}
                   >
                     <span className="mg-v2-psych-upload-section__tag-hash">#</span>
                     {' '}
                     선택 안 함
-                  </button>
+                  </MGButton>
                 </li>
                 {filteredClients.map((c) => {
                   const isSelected = selectedClient && Number(c.id) === Number(clientId);
                   return (
                     <li key={c.id}>
-                      <button
+                      <MGButton
                         type="button"
+                        variant="outline"
+                        size="small"
                         className={`mg-v2-psych-upload-section__client-tag ${isSelected ? 'mg-v2-psych-upload-section__client-tag--selected' : ''}`}
                         onClick={() => onClientIdChange(Number(c.id))}
                         aria-pressed={isSelected}
                         disabled={clientsLoading}
+                        preventDoubleClick={false}
                       >
                         <span className="mg-v2-psych-upload-section__tag-hash">#</span>
                         {getClientLabel(c)}
-                      </button>
+                      </MGButton>
                     </li>
                   );
                 })}
@@ -237,19 +246,22 @@ const PsychUploadSection = ({
           <div className="mg-v2-psych-upload-section__form-row">
             <fieldset className="mg-v2-psych-upload-section__type-options" aria-label="검사 유형">
               <legend className="mg-v2-psych-upload-section__type-legend">검사 유형</legend>
-              {['TCI', 'MMPI'].map((type) => {
+                {['TCI', 'MMPI'].map((type) => {
                 const isSelected = uploadType === type;
                 return (
-                  <button
+                  <MGButton
                     key={type}
                     type="button"
+                    variant="outline"
+                    size="small"
                     className={`mg-v2-psych-upload-section__type-option ${isSelected ? 'mg-v2-psych-upload-section__type-option--selected' : ''}`}
                     onClick={() => onUploadTypeChange(type)}
                     aria-pressed={isSelected}
                     aria-label={`검사 유형 ${type}${isSelected ? ' 선택됨' : ''}`}
+                    preventDoubleClick={false}
                   >
                     {type}
-                  </button>
+                  </MGButton>
                 );
               })}
             </fieldset>

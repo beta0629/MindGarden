@@ -7,6 +7,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -606,13 +607,16 @@ const VacationManagementModal = ({
                                 </div>
 
                                 <div className="form-actions">
-                                    <button 
-                                        type="submit" 
+                                    <MGButton
+                                        type="submit"
+                                        variant="primary"
                                         className="submit-button"
                                         disabled={loading}
+                                        loading={loading}
+                                        loadingText="등록 중..."
                                     >
-                                        {loading ? '등록 중...' : '휴가 등록'}
-                                    </button>
+                                        휴가 등록
+                                    </MGButton>
                                 </div>
                             </form>
 
@@ -639,13 +643,16 @@ const VacationManagementModal = ({
                                                     </div>
                                                     <div className="vacation-reason"><SafeText>{vacation.reason}</SafeText></div>
                                                 </div>
-                                                <button
+                                                <MGButton
+                                                    type="button"
+                                                    variant="danger"
+                                                    size="small"
                                                     className="delete-button"
                                                     onClick={() => handleDeleteVacation(vacation.id, vacation.date)}
                                                     disabled={loading}
                                                 >
                                                     삭제
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         ))}
                                     </div>

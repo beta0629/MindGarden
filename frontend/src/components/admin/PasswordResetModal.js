@@ -67,13 +67,14 @@ const PasswordResetModal = ({
             showCloseButton
             actions={
                 <>
-                    <button
+                    <MGButton
                         type="button"
+                        variant="secondary"
                         className="mg-v2-button mg-v2-button-secondary"
                         onClick={onClose}
                     >
                         취소
-                    </button>
+                    </MGButton>
                     <MGButton
                         type="submit"
                         form="admin-password-reset-form"
@@ -121,18 +122,21 @@ const PasswordResetModal = ({
                             placeholder="새 비밀번호를 입력하세요"
                             autoComplete="new-password"
                         />
-                        <button
+                        <MGButton
                             type="button"
+                            variant="outline"
+                            size="small"
                             className="mg-v2-form-input-toggle"
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            preventDoubleClick={false}
                         >
                             {showPassword ? (
                                 <EyeOff size={18} aria-hidden />
                             ) : (
                                 <Eye size={18} aria-hidden />
                             )}
-                        </button>
+                        </MGButton>
                     </div>
                     {errors.newPassword && (
                         <span className="mg-v2-form-error" role="alert">
@@ -161,18 +165,21 @@ const PasswordResetModal = ({
                             placeholder="비밀번호를 다시 입력하세요"
                             autoComplete="new-password"
                         />
-                        <button
+                        <MGButton
                             type="button"
+                            variant="outline"
+                            size="small"
                             className="mg-v2-form-input-toggle"
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            preventDoubleClick={false}
                         >
                             {showPassword ? (
                                 <EyeOff size={18} aria-hidden />
                             ) : (
                                 <Eye size={18} aria-hidden />
                             )}
-                        </button>
+                        </MGButton>
                     </div>
                     {errors.confirmPassword && (
                         <span className="mg-v2-form-error" role="alert">

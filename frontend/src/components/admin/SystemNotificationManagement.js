@@ -11,6 +11,7 @@ import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils
 import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -83,14 +84,15 @@ const SystemNotificationManagement = () => {
           title="시스템 공지 관리"
           subtitle="공지를 작성·수정·게시·보관할 수 있습니다."
           actions={
-            <button
+            <MGButton
               type="button"
+              variant="primary"
               className="mg-v2-button mg-v2-button--primary"
               aria-label="공지 작성"
               onClick={() => globalThis.dispatchEvent(new CustomEvent('admin-notifications-create-notice'))}
             >
               공지 작성
-            </button>
+            </MGButton>
           }
         />
         <SystemNotificationListBlock

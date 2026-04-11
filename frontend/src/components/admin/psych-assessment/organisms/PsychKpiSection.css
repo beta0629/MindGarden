@@ -29,9 +29,36 @@
   text-align: left;
 }
 
+.mg-v2-psych-kpi-section__card.mg-button.mg-button--outline {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: auto;
+  font-weight: inherit;
+  box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));
+}
+
+.mg-v2-psych-kpi-section__card.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-psych-kpi-section__card.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
 .mg-v2-psych-kpi-section__card:hover {
   border-color: var(--ad-b0kla-green, #4b745c);
   box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
+}
+
+.mg-v2-psych-kpi-section__card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--ad-b0kla-green, #4b745c);
+  box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
+  transform: none;
+  color: inherit;
 }
 
 .mg-v2-psych-kpi-section__icon {

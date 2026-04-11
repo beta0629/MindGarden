@@ -189,6 +189,21 @@
   color: var(--ad-b0kla-title-color);
 }
 
+.mg-v2-psych-upload-section__client-selected-tag-remove.mg-button.mg-button--outline {
+  min-height: auto;
+  min-width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mg-v2-psych-upload-section__client-selected-tag-remove.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  background: transparent;
+  box-shadow: none;
+}
+
 /* 해시태그 목록: # 선택 안 함, # 이름 등 */
 .mg-v2-psych-upload-section__client-tags {
   display: flex;
@@ -228,6 +243,18 @@
 }
 
 .mg-v2-psych-upload-section__client-tag:hover:not(:disabled) {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline {
+  min-height: auto;
+  font-weight: inherit;
+  box-shadow: none;
+}
+
+.mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
   border-color: var(--ad-b0kla-green, var(--mg-success-500));
   color: var(--ad-b0kla-title-color);
 }
@@ -306,6 +333,18 @@
 .mg-v2-psych-upload-section__type-option--selected {
   border-color: var(--ad-b0kla-green, var(--mg-success-500));
   background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline {
+  min-height: auto;
+  font-weight: inherit;
+  box-shadow: none;
+}
+
+.mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
   color: var(--ad-b0kla-title-color);
 }
 

@@ -3306,6 +3306,43 @@ body {
   border-bottom: 2px solid var(--color-primary);
 }
 
+/* G8-B15b: 네이티브 탭을 MGButton으로 교체할 때 동일 시각 */
+.mg-tabs .mg-button.mg-tab.mg-button--outline {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: none;
+  min-height: auto;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.mg-tabs .mg-button.mg-tab.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  background: var(--color-neutral);
+  color: var(--color-text-primary);
+}
+
+.mg-tabs .mg-button.mg-tab.mg-button--outline.mg-tab-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.mg-tabs .mg-button.mg-tab .mg-button__content {
+  display: contents;
+}
+
+.mg-tabs .mg-button.mg-tab .mg-button__text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
 .mg-modal-content {
   flex: 1;
   overflow-y: auto;

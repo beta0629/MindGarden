@@ -107,14 +107,15 @@ function PackagePricingListPage() {
             title={LABELS.PAGE_TITLE}
             subtitle={LABELS.PAGE_SUBTITLE}
             actions={
-              <button
+              <MGButton
                 type="button"
+                variant="primary"
                 className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                 onClick={() => navigate('/admin/package-pricing/new')}
               >
                 <Plus size={20} />
                 {LABELS.ADD_BUTTON}
-              </button>
+              </MGButton>
             }
           />
 
@@ -155,14 +156,15 @@ function PackagePricingListPage() {
                         </div>
                       </dl>
                       <div className="mg-v2-package-pricing-card__actions">
-                        <button
+                        <MGButton
                           type="button"
+                          variant="secondary"
                           className="mg-v2-button mg-v2-button-secondary"
                           onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
                         >
                           <Edit3 size={14} />
                           {LABELS.EDIT}
-                        </button>
+                        </MGButton>
                         <MGButton
                           type="button"
                           variant={row.isActive === true || row.isActive === undefined ? 'danger' : 'success'}

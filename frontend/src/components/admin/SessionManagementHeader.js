@@ -1,6 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import './SessionManagementHeader.css';
+import MGButton from '../../components/common/MGButton';
 
 /**
  * 세션 관리 페이지 헤더 컴포넌트
@@ -36,31 +36,39 @@ const SessionManagementHeader = ({
                 </div>
                 
                 <div className="header-actions">
-                    <button 
+                    <MGButton
+                        type="button"
+                        variant="primary"
                         className="add-session-btn"
                         onClick={onAddSession}
                     >
                         <i className="bi bi-plus-circle"></i>
                         회기 추가 요청
-                    </button>
+                    </MGButton>
                 </div>
             </div>
             
             <div className="tab-navigation">
-                <button 
+                <MGButton
+                    type="button"
+                    variant="outline"
                     className={`tab-btn ${activeTab === 'mappings' ? 'active' : ''}`}
                     onClick={() => onTabChange('mappings')}
+                    preventDoubleClick={false}
                 >
                     <i className="bi bi-diagram-3"></i>
                     회기 관리
-                </button>
-                <button 
+                </MGButton>
+                <MGButton
+                    type="button"
+                    variant="outline"
                     className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
                     onClick={() => onTabChange('sessions')}
+                    preventDoubleClick={false}
                 >
                     <i className="bi bi-clock-history"></i>
                     세션 이력
-                </button>
+                </MGButton>
             </div>
         </div>
     );

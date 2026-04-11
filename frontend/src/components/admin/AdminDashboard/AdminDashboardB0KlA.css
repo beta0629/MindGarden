@@ -1520,6 +1520,16 @@
   cursor: pointer;
 }
 
+.mg-v2-ad-b0kla .mg-v2-form-input-toggle.mg-button.mg-button--outline {
+  min-height: auto;
+  box-shadow: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-form-input-toggle.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  background: var(--ad-b0kla-card-bg);
+}
+
 /* 검색바·헤더 액션 반응형 */
 @media (max-width: 768px) {
   .mg-v2-ad-b0kla__search {
@@ -1676,4 +1686,27 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
 .mg-v2-ad-b0kla .mg-toast-close.mg-button .mg-button__content,
 .mg-v2-ad-b0kla .mg-toast-close.mg-button .mg-button__text {
   display: contents;
+}
+
+/* G8-B15b: AdminDashboard 헤더/액션 — MGButton 자식 정렬 */
+.mg-v2-admin-dashboard-action-btn.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-admin-dashboard-action-btn.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mg-v2-admin-dashboard-action-button.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-admin-dashboard-action-button.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
 }

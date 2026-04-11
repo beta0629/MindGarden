@@ -198,14 +198,15 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
             title={pageTitle}
             subtitle={LABELS.PAGE_SUBTITLE}
             actions={
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
                 className="mg-v2-package-header-btn--secondary"
                 onClick={goToList}
               >
                 <ArrowLeft size={20} />
                 {LABELS.LIST_BACK}
-              </button>
+              </MGButton>
             }
           />
 
@@ -299,14 +300,15 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 </select>
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
                   className="mg-v2-package-header-btn--secondary"
                   onClick={goToList}
                   disabled={submitLoading}
                 >
                   {LABELS.LIST_BACK}
-                </button>
+                </MGButton>
                 <MGButton
                   type="button"
                   variant="primary"

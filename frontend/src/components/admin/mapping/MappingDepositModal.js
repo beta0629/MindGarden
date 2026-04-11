@@ -5,6 +5,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
 import { apiPost } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import '../MappingCreationModal.css';
 
 /**
@@ -102,8 +103,9 @@ const MappingDepositModal = ({
             loading={isLoading}
             actions={
                 <>
-                    <button
+                    <MGButton
                         type="button"
+                        variant="secondary"
                         className="mg-v2-button mg-v2-button-secondary"
                         onClick={(e) => {
                             e?.preventDefault();
@@ -113,16 +115,19 @@ const MappingDepositModal = ({
                         disabled={isLoading}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
+                        variant="primary"
                         className="mg-v2-button mg-v2-button-primary"
                         onClick={handleSubmit}
                         disabled={isLoading}
+                        loading={isLoading}
+                        loadingText="처리 중..."
                     >
                         <CheckCircle size={18} />
                         입금 확인
-                    </button>
+                    </MGButton>
                 </>
             }
         >

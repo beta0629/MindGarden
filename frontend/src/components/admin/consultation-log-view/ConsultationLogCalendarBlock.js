@@ -14,6 +14,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
+import MGButton from '../../common/MGButton';
 import { FileText } from 'lucide-react';
 import { toDateStr } from '../../../utils/dateUtils';
 import { getConsultantColor } from '../../schedule/ScheduleCalendar/ScheduleCalendarUtils';
@@ -169,13 +170,16 @@ const ConsultationLogCalendarBlock = ({
                   `내담자 #${r.clientId}`;
                 return (
                   <li key={r.id}>
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="mg-v2-consultation-log-calendar-popover__item"
                       onClick={() => handleSelectRecord(r.id)}
+                      preventDoubleClick={false}
                     >
                       {clientName}
-                    </button>
+                    </MGButton>
                   </li>
                 );
               })}

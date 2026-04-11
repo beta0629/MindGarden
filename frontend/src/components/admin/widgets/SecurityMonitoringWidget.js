@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaShieldAlt, FaExclamationTriangle, FaBan, FaEye, FaChartPie } from 'react-icons/fa';
 import { SecurityDataProcessor, SecurityAnalyzer, SecurityDataManager } from '../../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
+import MGButton from '../../common/MGButton';
 import './SecurityMonitoringWidget.css';
 
 /**
@@ -191,18 +192,26 @@ const SecurityMonitoringWidget = ({
           <h3>{title}</h3>
         </div>
         <div className="view-selector">
-          <button 
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className={`view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW ? 'active' : ''}`}
             onClick={() => setSelectedView(WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW)}
+            preventDoubleClick={false}
           >
             개요
-          </button>
-          <button 
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className={`view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.EVENTS ? 'active' : ''}`}
             onClick={() => setSelectedView(WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.EVENTS)}
+            preventDoubleClick={false}
           >
             이벤트
-          </button>
+          </MGButton>
         </div>
       </div>
 

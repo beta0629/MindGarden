@@ -226,6 +226,25 @@
   color: var(--mg-color-primary-inverse, var(--mg-white));
 }
 
+.integrated-schedule__status-btn.mg-button.mg-button--outline {
+  font-family: inherit;
+  box-shadow: none;
+}
+
+.integrated-schedule__status-btn.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+.integrated-schedule__status-btn.mg-button .mg-button__content {
+  display: contents;
+}
+
+.integrated-schedule__status-btn.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-6, 6px);
+}
+
 .integrated-schedule__filter-label {
   display: inline-flex;
   align-items: center;

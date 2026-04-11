@@ -450,11 +450,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredConsultants.length > 0 ? (
                 filteredConsultants.map(c => (
-                  <button
+                  <MGButton
                     key={c.id}
                     type="button"
+                    variant="outline"
                     className={`mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedConsultant(c)}
+                    preventDoubleClick={false}
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}
@@ -465,7 +467,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       <strong><SafeText tag="span">{c.name}</SafeText></strong>
                       <span>{toDisplayString(c.email)}</span>
                     </div>
-                  </button>
+                  </MGButton>
                 ))
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">
@@ -501,9 +503,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             ) : (
               <div className="mg-v2-mapping-creation-modal__pkg-grid">
                 {packageOptions.filter(p => p.price > 0).map(pkg => (
-                  <button
+                  <MGButton
                     key={pkg.value}
                     type="button"
+                    variant="outline"
                     className={`mg-v2-mapping-creation-modal__pkg-card ${paymentInfo.packageName === pkg.label ? 'mg-v2-mapping-creation-modal__pkg-card--selected' : ''}`}
                     onClick={() => setPaymentInfo(prev => ({
                       ...prev,
@@ -511,11 +514,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       totalSessions: pkg.sessions,
                       packagePrice: pkg.price
                     }))}
+                    preventDoubleClick={false}
                   >
                     <Package size={24} />
                     <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
                     <span>{pkg.sessions}회기 · {pkg.price.toLocaleString()}원</span>
-                  </button>
+                  </MGButton>
                 ))}
               </div>
             )}
@@ -565,11 +569,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredClients.length > 0 ? (
                 filteredClients.map(c => (
-                  <button
+                  <MGButton
                     key={c.id}
                     type="button"
+                    variant="outline"
                     className={`mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedClient(c)}
+                    preventDoubleClick={false}
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}
@@ -580,7 +586,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       <strong><SafeText tag="span">{c.name}</SafeText></strong>
                       <span>{toDisplayString(c.email)}</span>
                     </div>
-                  </button>
+                  </MGButton>
                 ))
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">

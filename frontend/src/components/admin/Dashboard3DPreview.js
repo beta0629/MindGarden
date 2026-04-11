@@ -16,6 +16,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FaRedo, FaExpand, FaCompress, FaEye } from 'react-icons/fa';
+import MGButton from '../common/MGButton';
 import './Dashboard3DPreview.css';
 
 const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미리보기' }) => {
@@ -137,37 +138,53 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
           </h3>
         </div>
         <div className="preview-controls-right">
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className="preview-control-btn"
             onClick={handleResetRotation}
             title="회전 리셋"
+            preventDoubleClick={false}
           >
             <FaRedo /> 리셋
-          </button>
-          <button
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className="preview-control-btn"
             onClick={handleZoomOut}
             title="축소"
+            preventDoubleClick={false}
           >
             <FaCompress />
-          </button>
+          </MGButton>
           <span className="preview-scale-indicator">
             {Math.round(scale * 100)}%
           </span>
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className="preview-control-btn"
             onClick={handleZoomIn}
             title="확대"
+            preventDoubleClick={false}
           >
             <FaExpand />
-          </button>
-          <button
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             className="preview-control-btn"
             onClick={handleToggleFullscreen}
             title="전체화면"
+            preventDoubleClick={false}
           >
             {isFullscreen ? <FaCompress /> : <FaExpand />}
-          </button>
+          </MGButton>
         </div>
       </div>
 

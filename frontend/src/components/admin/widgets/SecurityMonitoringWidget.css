@@ -68,9 +68,20 @@
   color: var(--color-text-primary);
 }
 
-.view-button.active {
+.view-button.active,
+.view-button.mg-button.mg-button--outline.active {
   background: var(--color-primary);
   color: var(--color-text-light);
+}
+
+.view-button.mg-button.mg-button--outline {
+  min-height: auto;
+  box-shadow: none;
+}
+
+.view-button.mg-button.mg-button--outline:not(.active):hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
 }
 
 /* 위젯 콘텐츠 */

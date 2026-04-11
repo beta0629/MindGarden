@@ -94,8 +94,9 @@ const AdminNotificationsPage = () => {
                 role="tablist"
                 aria-label="알림·메시지 탭"
               >
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
                   role="tab"
                   id="admin-tab-system"
                   aria-selected={activeTab === TAB_SYSTEM}
@@ -105,11 +106,13 @@ const AdminNotificationsPage = () => {
                   }`}
                   onClick={() => setTab(TAB_SYSTEM)}
                   onKeyDown={handleTabKeyDown}
+                  preventDoubleClick={false}
                 >
                   시스템 공지
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
+                  variant="outline"
                   role="tab"
                   id="admin-tab-messages"
                   aria-selected={activeTab === TAB_MESSAGES}
@@ -119,9 +122,10 @@ const AdminNotificationsPage = () => {
                   }`}
                   onClick={() => setTab(TAB_MESSAGES)}
                   onKeyDown={handleTabKeyDown}
+                  preventDoubleClick={false}
                 >
                   메시지
-                </button>
+                </MGButton>
               </div>
 
               <section

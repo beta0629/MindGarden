@@ -77,6 +77,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
+    const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
 
     const loadConsultants = useCallback(async() => {
@@ -939,7 +941,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const handleModalSubmit = useCallback(async (e) => {
         e.preventDefault();
-        
+        setModalSubmitLoading(true);
         try {
             let result;
 
@@ -958,7 +960,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 result = await deleteConsultant(selectedConsultant.id);
             }
 
-            if (result.success) {
+            if (result && result.success) {
                 handleCloseModal();
             }
         } catch (error) {
@@ -966,6 +968,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             window.dispatchEvent(new CustomEvent('showNotification', {
                 detail: { message: '작업 중 오류가 발생했습니다.', type: 'error' }
             }));
+        } finally {
+            setModalSubmitLoading(false);
         }
     }, [modalType, formData, selectedConsultant, emailCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
 
@@ -1002,34 +1006,40 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     title="상담사 관리"
                     subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
                     actions={
-                        <button
+                        <MGButton
                             type="button"
+                            variant="primary"
+                            preventDoubleClick={false}
                             className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                             onClick={() => handleOpenModal('create')}
                         >
                             <Plus size={20} />
                             새 상담사 등록
-                        </button>
+                        </MGButton>
                     }
                 />
             )}
 
             <ContentSection noCard>
                 <div className="mg-v2-ad-b0kla__pill-toggle">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('comprehensive')}
                             >
                                 종합관리
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('basic')}
                             >
                                 기본관리
-                            </button>
+                            </MGButton>
                         </div>
             </ContentSection>
 
@@ -1087,25 +1097,30 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
                                             {embedded && (
-                                                <button
+                                                <MGButton
                                                     type="button"
-                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                                    variant="primary"
+                                                    size="small"
+                                                    preventDoubleClick={false}
+                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                                     onClick={() => handleOpenModal('create')}
-                                                    style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
                                                 >
-                                                    <Plus size={16} style={{ marginRight: '4px' }} />
+                                                    <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                                     새 상담사 등록
-                                                </button>
+                                                </MGButton>
                                             )}
                                             {consultantFilterOptions.map((opt) => (
-                                                <button
+                                                <MGButton
                                                     key={opt.value}
                                                     type="button"
+                                                    variant="outline"
+                                                    size="small"
+                                                    preventDoubleClick={false}
                                                     className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
                                                     {toDisplayString(opt.label)}
-                                                </button>
+                                                </MGButton>
                                             ))}
                                         </div>
                                     </div>
@@ -1129,14 +1144,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 </div>
                                                 <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
-                                                <button
+                                                <MGButton
                                                     type="button"
+                                                    variant="primary"
+                                                    preventDoubleClick={false}
                                                     className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                     <Plus size={20} />
                                                     새 상담사 등록
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
@@ -1312,25 +1329,30 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
                                             {embedded && (
-                                                <button
+                                                <MGButton
                                                     type="button"
-                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                                    variant="primary"
+                                                    size="small"
+                                                    preventDoubleClick={false}
+                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                                     onClick={() => handleOpenModal('create')}
-                                                    style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
                                                 >
-                                                    <Plus size={16} style={{ marginRight: '4px' }} />
+                                                    <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                                     새 상담사 등록
-                                                </button>
+                                                </MGButton>
                                             )}
                                             {consultantFilterOptions.map((opt) => (
-                                                <button
+                                                <MGButton
                                                     key={opt.value}
                                                     type="button"
+                                                    variant="outline"
+                                                    size="small"
+                                                    preventDoubleClick={false}
                                                     className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
                                                     {toDisplayString(opt.label)}
-                                                </button>
+                                                </MGButton>
                                             ))}
                                         </div>
                                     </div>
@@ -1354,14 +1376,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 </div>
                                                 <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
-                                                <button
+                                                <MGButton
                                                     type="button"
+                                                    variant="primary"
+                                                    preventDoubleClick={false}
                                                     className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                     <Plus size={20} />
                                                     새 상담사 등록
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
@@ -1738,8 +1762,10 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">주소 검색</label>
                         <div className="mg-v2-address-search-row">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="secondary"
+                                preventDoubleClick={false}
                                 className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => {
                                     if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
@@ -1760,7 +1786,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 }}
                             >
                                 주소 검색
-                            </button>
+                            </MGButton>
                             <input
                                 type="text"
                                 readOnly
@@ -1811,15 +1837,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 />
                             </div>
                             {modalType === 'create' && (
-                                <button
+                                <MGButton
                                     type="button"
+                                    variant="secondary"
+                                    size="small"
+                                    preventDoubleClick={false}
                                     onClick={handleEmailDuplicateCheck}
                                     disabled={isCheckingEmail || !formData.email?.trim()}
+                                    loading={isCheckingEmail}
+                                    loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
                                     className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                                     data-action="email-duplicate-check"
                                 >
-                                    {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                                </button>
+                                    {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                                </MGButton>
                             )}
                         </div>
                         {modalType === 'edit' && (
@@ -1856,14 +1887,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             {specialtyCodes.map((opt) => {
                                 const isSelected = (formData.specialty || []).includes(opt.codeValue);
                                 return (
-                                    <button
+                                    <MGButton
                                         key={opt.codeValue}
                                         type="button"
+                                        variant="outline"
+                                        size="small"
+                                        preventDoubleClick={false}
                                         className={`mg-v2-specialty-tag ${isSelected ? 'mg-v2-specialty-tag--selected' : ''}`}
                                         onClick={() => handleSpecialtyTagClick(opt.codeValue)}
                                     >
                                         {toDisplayString(opt.codeName || opt.codeLabel || opt.codeValue)}
-                                    </button>
+                                    </MGButton>
                                 );
                             })}
                         </div>
@@ -1909,35 +1943,52 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         if (modalType === 'view') {
             return (
                 <>
-                    <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={handleCloseModal}>
-                        닫기
-                    </button>
-                    <button
+                    <MGButton
                         type="button"
+                        variant="secondary"
+                        preventDoubleClick={false}
+                        className="mg-v2-button mg-v2-button-secondary"
+                        onClick={handleCloseModal}
+                    >
+                        닫기
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        variant="primary"
+                        preventDoubleClick={false}
                         className="mg-v2-button mg-v2-button-primary"
                         onClick={() => handleOpenModal('edit', selectedConsultant)}
                     >
                         <Edit size={16} /> 수정
-                    </button>
+                    </MGButton>
                 </>
             );
         }
         const isCreateSubmitDisabled = modalType === 'create' && (formData.email != null && String(formData.email).trim() !== '') && emailCheckStatus !== 'available';
         return (
             <>
-                <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={handleCloseModal}>
-                    취소
-                </button>
-                <button
+                <MGButton
                     type="button"
+                    variant="secondary"
+                    preventDoubleClick={false}
+                    className="mg-v2-button mg-v2-button-secondary"
+                    onClick={handleCloseModal}
+                >
+                    취소
+                </MGButton>
+                <MGButton
+                    type="button"
+                    variant={modalType === 'delete' ? 'danger' : 'primary'}
                     className={modalType === 'delete' ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-primary'}
                     onClick={handleModalSubmit}
                     disabled={isCreateSubmitDisabled}
+                    loading={modalSubmitLoading}
+                    loadingText="처리 중..."
                 >
                     {modalType === 'create' && '등록'}
                     {modalType === 'edit' && '수정'}
                     {modalType === 'delete' && '삭제'}
-                </button>
+                </MGButton>
             </>
         );
     };
@@ -1968,25 +2019,35 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 showCloseButton
                 actions={
                     <>
-                        <button
+                        <MGButton
                             type="button"
+                            variant="secondary"
+                            preventDoubleClick={false}
                             className="mg-v2-button mg-v2-button-secondary"
                             onClick={() => setShowDeleteConfirm(false)}
+                            disabled={deleteConfirmLoading}
                         >
                             취소
-                        </button>
-                        <button
+                        </MGButton>
+                        <MGButton
                             type="button"
+                            variant="danger"
                             className="mg-v2-button mg-v2-button-danger"
+                            loading={deleteConfirmLoading}
+                            loadingText="삭제 중..."
                             onClick={async () => {
-                                if (selectedConsultant) {
+                                if (!selectedConsultant) return;
+                                setDeleteConfirmLoading(true);
+                                try {
                                     const result = await deleteConsultant(selectedConsultant.id);
                                     if (result?.success) setShowDeleteConfirm(false);
+                                } finally {
+                                    setDeleteConfirmLoading(false);
                                 }
                             }}
                         >
                             삭제
-                        </button>
+                        </MGButton>
                     </>
                 }
             >

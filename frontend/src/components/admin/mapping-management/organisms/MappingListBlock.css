@@ -158,6 +158,13 @@
   transform: translateY(-1px);
 }
 
+/* G8-B8a: MGButton 병합 — 빈 목록 CTA */
+.mg-v2-mapping-list-block__empty-btn.mg-button.mg-button--primary {
+  border: none;
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
+}
+
 .mg-v2-mapping-list-block__placeholder {
   padding: 2rem;
   text-align: center;

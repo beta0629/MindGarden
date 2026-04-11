@@ -23,6 +23,7 @@ import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatistic
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import PasswordResetModal from './PasswordResetModal';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -483,48 +484,58 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                     title="내담자 관리"
                     subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
                     actions={
-                        <button
+                        <MGButton
                             type="button"
+                            variant="primary"
+                            preventDoubleClick={false}
                             className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                             onClick={handleCreateClient}
                         >
                             <Plus size={20} />
                             새 내담자 등록
-                        </button>
+                        </MGButton>
                     }
                 />
             )}
 
             <ContentSection noCard>
                 <div className="mg-v2-ad-b0kla__pill-toggle">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => handleMainTabChange('overview')}
                             >
                                 개요
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'consultation' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => handleMainTabChange('consultation')}
                             >
                                 상담이력
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'mapping' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => handleMainTabChange('mapping')}
                             >
                                 매칭
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="primary"
+                                preventDoubleClick={false}
                                 className={`mg-v2-ad-b0kla__pill ${mainTab === 'statistics' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => handleMainTabChange('statistics')}
                             >
                                 통계
-                            </button>
+                            </MGButton>
                         </div>
             </ContentSection>
 
@@ -580,25 +591,30 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-search-section__chips">
                                     {embedded && (
-                                        <button
+                                        <MGButton
                                             type="button"
-                                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                            variant="primary"
+                                            size="small"
+                                            preventDoubleClick={false}
+                                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                             onClick={handleCreateClient}
-                                            style={{ marginRight: '8px', height: '32px', fontSize: '13px' }}
                                         >
-                                            <Plus size={16} style={{ marginRight: '4px' }} />
+                                            <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                             새 내담자 등록
-                                        </button>
+                                        </MGButton>
                                     )}
                                     {clientFilterOptions.map((opt) => (
-                                        <button
+                                        <MGButton
                                             key={opt.value}
                                             type="button"
+                                            variant="outline"
+                                            size="small"
+                                            preventDoubleClick={false}
                                             className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                             onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                         >
                                             <SafeText>{opt.label}</SafeText>
-                                        </button>
+                                        </MGButton>
                                     ))}
                                 </div>
                             </div>

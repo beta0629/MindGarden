@@ -61,3 +61,40 @@
   border-color: var(--ad-b0kla-green, #4b745c);
   color: var(--ad-b0kla-green, #4b745c);
 }
+
+/* G8-B8a: MGButton 병합 — 검색 필터 칩·임베디드 등록 */
+.mg-v2-mapping-search-section__chip.mg-button.mg-button--outline {
+  min-height: auto;
+  box-shadow: none;
+  font-family: inherit;
+  padding: 0.5rem 1rem;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.mg-v2-mapping-search-section__chip.mg-button.mg-button--outline:not(.mg-v2-mapping-search-section__chip--active) {
+  color: var(--ad-b0kla-text-secondary, #64748b);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+}
+
+.mg-v2-mapping-search-section__chip.mg-button.mg-button--outline.mg-v2-mapping-search-section__chip--active {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  border-color: var(--ad-b0kla-green, #4b745c);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-mapping-search-section__chip.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--ad-b0kla-green, #4b745c);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-mapping-header-btn.mg-v2-mapping-search-section__embedded-create.mg-button {
+  margin-right: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-mapping-search-section__embedded-create-icon {
+  margin-right: var(--mg-spacing-xs, 0.25rem);
+  flex-shrink: 0;
+}

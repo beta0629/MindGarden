@@ -28,6 +28,13 @@
   transform: translateY(-1px);
 }
 
+/* G8-B8a: MGButton 병합 — 헤더 등록 버튼 */
+.mg-v2-mapping-header-btn.mg-button.mg-button--primary {
+  background: var(--ad-b0kla-green, #4b745c);
+  color: #fff;
+  border: none;
+}
+
 /* ContentArea에 부여한 페이지 클래스 (AdminCommonLayout·본문 main이 padding 제공) */
 .mg-v2-mapping-management {
   min-height: 100%;

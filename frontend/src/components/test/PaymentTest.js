@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import MGButton from '../common/MGButton';
 import { PAYMENT_TEST_CSS } from '../../constants/css';
 import { API_BASE_URL } from '../../constants/api';
 import ENV from '../../constants/environment';
@@ -283,12 +284,9 @@ const PaymentTest = () => {
         <div className={PAYMENT_TEST_CSS.HEADER}>
           <h1 className={PAYMENT_TEST_CSS.TITLE}>{PAGE_TITLES.MAIN}</h1>
           <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
-              onClick={clearResults}
-            >
+            <MGButton variant="secondary" size="medium" onClick={clearResults}>
               {BUTTON_TEXT.CLEAR_RESULTS}
-            </button>
+            </MGButton>
           </div>
         </div>
 
@@ -354,69 +352,87 @@ const PaymentTest = () => {
         <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
           <h3>테스트 실행</h3>
           <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_PRIMARY}`}
+            <MGButton
+              variant="primary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testCreatePayment, PAGE_TITLES.CREATE_PAYMENT)}
-              disabled={loading}
             >
               {BUTTON_TEXT.CREATE_PAYMENT}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testPaymentScenarios, PAGE_TITLES.SCENARIOS)}
-              disabled={loading}
             >
               {BUTTON_TEXT.SCENARIOS}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testPaymentStatus, PAGE_TITLES.STATUS_UPDATE)}
-              disabled={loading}
             >
               {BUTTON_TEXT.STATUS_UPDATE}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testWebhook, PAGE_TITLES.WEBHOOK)}
-              disabled={loading}
             >
               {BUTTON_TEXT.WEBHOOK_TEST}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SUCCESS}`}
+            </MGButton>
+            <MGButton
+              variant="success"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testStatistics, PAGE_TITLES.STATISTICS)}
-              disabled={loading}
             >
               {BUTTON_TEXT.STATISTICS}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testDepositConfirmation, '입금 확인 테스트')}
-              disabled={loading}
             >
               {BUTTON_TEXT.DEPOSIT_CONFIRM}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_DANGER}`}
+            </MGButton>
+            <MGButton
+              variant="danger"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testCancelRefund, '취소/환불 테스트')}
-              disabled={loading}
             >
               취소/환불
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testBulkCreate, '대량 데이터 생성')}
-              disabled={loading}
             >
               {BUTTON_TEXT.BULK_CREATE}
-            </button>
-            <button 
-              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SUCCESS}`}
+            </MGButton>
+            <MGButton
+              variant="success"
+              size="medium"
+              loading={loading}
+              loadingText="테스트 실행 중..."
               onClick={() => executeTest(testSystemHealth, PAGE_TITLES.HEALTH)}
-              disabled={loading}
             >
               {BUTTON_TEXT.HEALTH_CHECK}
-            </button>
+            </MGButton>
           </div>
         </div>
 

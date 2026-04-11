@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import MGButton from '../common/MGButton';
 // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 /**
  * UnifiedModal 테스트 컴포넌트
@@ -34,42 +35,25 @@ const UnifiedModalTest = () => {
       <p>다양한 모달 설정을 테스트해보세요.</p>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <button 
-          onClick={() => openModal('basic')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-primary-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        <MGButton variant="primary" size="medium" onClick={() => openModal('basic')}>
           기본 모달
-        </button>
-        
-        <button 
-          onClick={() => openModal('confirm')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-warning-500)', color: 'black', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="warning" size="medium" onClick={() => openModal('confirm')}>
           확인 모달
-        </button>
-        
-        <button 
-          onClick={() => openModal('form')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-success-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="success" size="medium" onClick={() => openModal('form')}>
           폼 모달
-        </button>
-        
-        <button 
-          onClick={() => openModal('large')}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
-          style={{ padding: '10px 20px', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="info" size="medium" onClick={() => openModal('large')}>
           큰 모달
-        </button>
-        
-        <button 
-          onClick={() => openModal('loading')}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
-          style={{ padding: '10px 20px', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="warning" size="medium" onClick={() => openModal('loading')}>
           로딩 모달
-        </button>
+        </MGButton>
       </div>
 
       {/* 기본 모달 */}
@@ -95,18 +79,12 @@ const UnifiedModalTest = () => {
         variant="confirm"
         actions={
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={() => closeModal('confirm')}
-              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-secondary-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+            <MGButton variant="secondary" size="small" onClick={() => closeModal('confirm')}>
               취소
-            </button>
-            <button 
-              onClick={() => closeModal('confirm')}
-              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-error-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+            </MGButton>
+            <MGButton variant="danger" size="small" onClick={() => closeModal('confirm')}>
               확인
-            </button>
+            </MGButton>
           </div>
         }
       >
@@ -123,20 +101,17 @@ const UnifiedModalTest = () => {
         variant="form"
         actions={
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button 
+            <MGButton
               type="button"
+              variant="secondary"
+              size="small"
               onClick={() => closeModal('form')}
-              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-secondary-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               취소
-            </button>
-            <button 
-              type="submit"
-              form="test-form"
-              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-success-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+            </MGButton>
+            <MGButton type="submit" form="test-form" variant="success" size="small">
               저장
-            </button>
+            </MGButton>
           </div>
         }
       >

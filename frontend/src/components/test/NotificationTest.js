@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import './NotificationTest.css';
 
@@ -136,30 +137,18 @@ const NotificationTest = () => {
             <div className="notification-test-section">
                 <h2>기본 알림 타입</h2>
                 <div className="test-buttons">
-                    <button 
-                        className="test-btn test-btn-success" 
-                        onClick={testSuccess}
-                    >
+                    <MGButton variant="success" className="test-btn" onClick={testSuccess}>
                         성공 알림
-                    </button>
-                    <button 
-                        className="test-btn test-btn-error" 
-                        onClick={testError}
-                    >
+                    </MGButton>
+                    <MGButton variant="danger" className="test-btn" onClick={testError}>
                         오류 알림
-                    </button>
-                    <button 
-                        className="test-btn test-btn-warning" 
-                        onClick={testWarning}
-                    >
+                    </MGButton>
+                    <MGButton variant="warning" className="test-btn" onClick={testWarning}>
                         경고 알림
-                    </button>
-                    <button 
-                        className="test-btn test-btn-info" 
-                        onClick={testInfo}
-                    >
+                    </MGButton>
+                    <MGButton variant="info" className="test-btn" onClick={testInfo}>
                         정보 알림
-                    </button>
+                    </MGButton>
                 </div>
             </div>
 
@@ -202,54 +191,36 @@ const NotificationTest = () => {
                             step="500"
                         />
                     </div>
-                    <button 
-                        className="test-btn test-btn-primary" 
-                        onClick={testCustom}
-                    >
+                    <MGButton variant="primary" className="test-btn" onClick={testCustom}>
                         커스텀 알림 보내기
-                    </button>
+                    </MGButton>
                 </div>
             </div>
 
             <div className="notification-test-section">
                 <h2>API 시뮬레이션</h2>
                 <div className="test-buttons">
-                    <button 
-                        className="test-btn test-btn-secondary" 
-                        onClick={testApiSuccess}
-                    >
+                    <MGButton variant="secondary" className="test-btn" onClick={testApiSuccess}>
                         API 성공 시뮬레이션
-                    </button>
-                    <button 
-                        className="test-btn test-btn-secondary" 
-                        onClick={testApiError}
-                    >
+                    </MGButton>
+                    <MGButton variant="secondary" className="test-btn" onClick={testApiError}>
                         API 오류 시뮬레이션
-                    </button>
+                    </MGButton>
                 </div>
             </div>
 
             <div className="notification-test-section">
                 <h2>특수 테스트</h2>
                 <div className="test-buttons">
-                    <button 
-                        className="test-btn test-btn-special" 
-                        onClick={testMultiple}
-                    >
+                    <MGButton variant="outline" className="test-btn" onClick={testMultiple}>
                         연속 알림 (4개)
-                    </button>
-                    <button 
-                        className="test-btn test-btn-special" 
-                        onClick={testLongMessage}
-                    >
+                    </MGButton>
+                    <MGButton variant="outline" className="test-btn" onClick={testLongMessage}>
                         긴 메시지 테스트
-                    </button>
-                    <button 
-                        className="test-btn test-btn-special" 
-                        onClick={testRapid}
-                    >
+                    </MGButton>
+                    <MGButton variant="outline" className="test-btn" onClick={testRapid}>
                         빠른 연속 알림 (5개)
-                    </button>
+                    </MGButton>
                 </div>
             </div>
 

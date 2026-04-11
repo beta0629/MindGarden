@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import MGButton from '../common/MGButton';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * UnifiedLoading 테스트 컴포넌트
@@ -26,57 +27,33 @@ const UnifiedLoadingTest = () => {
       <p>다양한 로딩 설정을 테스트해보세요.</p>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <button 
-          onClick={() => toggleLoading('inline')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-primary-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        <MGButton variant="primary" size="medium" onClick={() => toggleLoading('inline')}>
           인라인 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('fullscreen')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-error-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="danger" size="medium" onClick={() => toggleLoading('fullscreen')}>
           전체화면 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('page')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-success-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="success" size="medium" onClick={() => toggleLoading('page')}>
           페이지 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('button')}
-          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-warning-500)', color: 'black', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="warning" size="medium" onClick={() => toggleLoading('button')}>
           버튼 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('dots')}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
-          style={{ padding: '10px 20px', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="info" size="medium" onClick={() => toggleLoading('dots')}>
           도트 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('pulse')}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
-          style={{ padding: '10px 20px', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="outline" size="medium" onClick={() => toggleLoading('pulse')}>
           펄스 로딩
-        </button>
-        
-        <button 
-          onClick={() => toggleLoading('bars')}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #20c997 -> var(--mg-custom-20c997)
-          style={{ padding: '10px 20px', backgroundColor: '#20c997', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
+        </MGButton>
+
+        <MGButton variant="secondary" size="medium" onClick={() => toggleLoading('bars')}>
           바 로딩
-        </button>
+        </MGButton>
       </div>
 
       {/* 인라인 로딩 */}
@@ -102,20 +79,9 @@ const UnifiedLoadingTest = () => {
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
         <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
           <h3>버튼 로딩</h3>
-          <button style={{ 
-            padding: '10px 20px', 
-            backgroundColor: 'var(--mg-primary-500)', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <div className="mg-loading">로딩중...</div>
-            저장 중...
-          </button>
+          <MGButton variant="primary" size="medium" loading loadingText="저장 중...">
+            저장
+          </MGButton>
         </div>
       )}
 

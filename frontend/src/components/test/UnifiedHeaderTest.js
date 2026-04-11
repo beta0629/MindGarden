@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import MGButton from '../common/MGButton';
 import UnifiedHeader from "../common/UnifiedHeader";
 import '../../styles/main.css';
 
@@ -97,12 +98,12 @@ const UnifiedHeaderTest = () => {
         showHamburger={true}
         extraActions={
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="mg-btn mg-btn--secondary mg-btn--small">
+            <MGButton type="button" variant="secondary" size="small">
               알림
-            </button>
-            <button className="mg-btn mg-btn--primary mg-btn--small">
+            </MGButton>
+            <MGButton type="button" variant="primary" size="small">
               새로고침
-            </button>
+            </MGButton>
           </div>
         }
       />

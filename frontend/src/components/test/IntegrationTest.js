@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
-import { PAYMENT_TEST_CSS } from '../../constants/css';
+import MGButton from '../common/MGButton';
 import { API_BASE_URL } from '../../constants/api';
 import { 
   INTEGRATION_TEST_API,
@@ -229,37 +229,10 @@ const IntegrationTest = () => {
             gap: '12px',
             alignItems: 'center'
           }}>
-            <button 
-              onClick={clearResults}
-              style={{
-                padding: '12px 24px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                backgroundColor: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onMouseOver={(e) => {
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4b5563 -> var(--mg-custom-4b5563)
-                e.target.style.backgroundColor = '#4b5563';
-                e.target.style.transform = 'translateY(-1px)';
-              }}
-              onMouseOut={(e) => {
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                e.target.style.backgroundColor = '#6b7280';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
+            <MGButton variant="secondary" size="medium" onClick={clearResults}>
               <span>🗑️</span>
               {BUTTON_TEXT.CLEAR_RESULTS}
-            </button>
+            </MGButton>
           </div>
         </div>
 
@@ -291,152 +264,46 @@ const IntegrationTest = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px'
           }}>
-            <button 
+            <MGButton
+              variant="primary"
+              size="medium"
+              loading={loading}
+              loadingText={MESSAGES.LOADING.RUNNING_TEST}
               onClick={runFullIntegrationTest}
-              disabled={loading}
-              style={{
-                padding: '16px 24px',
-                backgroundColor: 'var(--mg-primary-500)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                opacity: loading ? 0.6 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!loading) {
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
-                  e.target.style.backgroundColor = '#2563eb';
-                  e.target.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!loading) {
-                  e.target.style.backgroundColor = 'var(--mg-primary-500)';
-                  e.target.style.transform = 'translateY(0)';
-                }
-              }}
             >
               <span>🚀</span>
               {BUTTON_TEXT.RUN_FULL_TEST}
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              variant="success"
+              size="medium"
+              loading={loading}
+              loadingText={MESSAGES.LOADING.RUNNING_TEST}
               onClick={checkSystemHealth}
-              disabled={loading}
-              style={{
-                padding: '16px 24px',
-                backgroundColor: 'var(--mg-success-500)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                opacity: loading ? 0.6 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!loading) {
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
-                  e.target.style.backgroundColor = '#059669';
-                  e.target.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!loading) {
-                  e.target.style.backgroundColor = 'var(--mg-success-500)';
-                  e.target.style.transform = 'translateY(0)';
-                }
-              }}
             >
               <span>💚</span>
               {BUTTON_TEXT.HEALTH_CHECK}
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              loading={loading}
+              loadingText={MESSAGES.LOADING.RUNNING_TEST}
               onClick={runPerformanceTest}
-              disabled={loading}
-              style={{
-                padding: '16px 24px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                backgroundColor: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                opacity: loading ? 0.6 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!loading) {
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4b5563 -> var(--mg-custom-4b5563)
-                  e.target.style.backgroundColor = '#4b5563';
-                  e.target.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!loading) {
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                  e.target.style.backgroundColor = '#6b7280';
-                  e.target.style.transform = 'translateY(0)';
-                }
-              }}
             >
               <span>⚡</span>
               {BUTTON_TEXT.PERFORMANCE_TEST}
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              variant="danger"
+              size="medium"
+              loading={loading}
+              loadingText={MESSAGES.LOADING.RUNNING_TEST}
               onClick={runSecurityTest}
-              disabled={loading}
-              style={{
-                padding: '16px 24px',
-                backgroundColor: 'var(--mg-error-500)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                opacity: loading ? 0.6 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!loading) {
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
-                  e.target.style.backgroundColor = '#dc2626';
-                  e.target.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!loading) {
-                  e.target.style.backgroundColor = 'var(--mg-error-500)';
-                  e.target.style.transform = 'translateY(0)';
-                }
-              }}
             >
               <span>🔒</span>
               {BUTTON_TEXT.SECURITY_TEST}
-            </button>
+            </MGButton>
           </div>
         </div>
 

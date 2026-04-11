@@ -147,7 +147,8 @@ export const exportSvgToSvg = (svg, filename = 'erd-diagram') => {
  */
 export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', options = {}) => {
   try {
-    // Mermaid를 렌더링하여 SVG 가져오기
+    // Mermaid를 렌더링하여 SVG 가져오기 (선택 의존성)
+    // eslint-disable-next-line import/no-unresolved -- 런타임 동적 로드
     const mermaid = (await import('mermaid')).default;
     
     // 고유 ID 생성
@@ -173,7 +174,8 @@ export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', 
  */
 export const exportMermaidToSvg = async (mermaidCode, filename = 'erd-diagram') => {
   try {
-    // Mermaid를 렌더링하여 SVG 가져오기
+    // Mermaid를 렌더링하여 SVG 가져오기 (선택 의존성)
+    // eslint-disable-next-line import/no-unresolved -- 런타임 동적 로드
     const mermaid = (await import('mermaid')).default;
     
     // 고유 ID 생성

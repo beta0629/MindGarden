@@ -8,6 +8,10 @@ import {useSession} from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
 import './NotificationBadge.css';
 
+const BellIcon = ICONS.BELL;
+const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
+const ChevronRightIcon = ICONS.CHEVRON_RIGHT;
+
 /**
  * 알림 배지 컴포넌트 (레거시 - 모달·컨텍스트 연동형)
  * @deprecated 알림 개수만 표시할 경우 dashboard-v2/atoms/NotificationBadge (count prop) 단일 소스 사용 권장.
@@ -91,7 +95,7 @@ const NotificationBadge = ({
         title={`읽지 않은 알림 ${totalCount}개 (메시지: ${messageCount}, 공지: ${systemCount})`}
         {...props}
       >
-        <ICONS.BELL size={16} className="mg-notification-badge__icon" />
+        <BellIcon size={16} className="mg-notification-badge__icon" />
         <span className="mg-notification-badge__count">
           {totalCount > 99 ? '99+' : totalCount}
         </span>
@@ -122,7 +126,7 @@ const NotificationBadge = ({
                 tabIndex={0}
               >
                 <div className="mg-notification-modal__item-icon">
-                  <ICONS.MESSAGE_CIRCLE size={20} />
+                  <MessageCircleIcon size={20} />
                 </div>
                 <div className="mg-notification-modal__item-content">
                   <div className="mg-notification-modal__item-title">새 메시지</div>
@@ -130,7 +134,7 @@ const NotificationBadge = ({
                     {messageCount}개의 읽지 않은 메시지
                   </div>
                 </div>
-                <ICONS.CHEVRON_RIGHT size={16} className="mg-notification-modal__item-arrow" />
+                <ChevronRightIcon size={16} className="mg-notification-modal__item-arrow" />
               </div>
             )}
 
@@ -156,13 +160,13 @@ const NotificationBadge = ({
                     {systemCount}개의 새로운 공지
                   </div>
                 </div>
-                <ICONS.CHEVRON_RIGHT size={16} className="mg-notification-modal__item-arrow" />
+                <ChevronRightIcon size={16} className="mg-notification-modal__item-arrow" />
               </div>
             )}
 
             {totalCount === 0 && (
               <div className="mg-notification-modal__empty">
-                <ICONS.BELL size={32} className="mg-notification-modal__empty-icon" />
+                <BellIcon size={32} className="mg-notification-modal__empty-icon" />
                 <div className="mg-notification-modal__empty-text">새로운 알림이 없습니다</div>
               </div>
             )}

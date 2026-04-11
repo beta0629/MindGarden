@@ -1,5 +1,5 @@
 import React from 'react';
-import PendingDepositsWidget from './PendingDepositsWidget.js';
+import PendingDepositsWidget from '../admin/PendingDepositsWidget';
 
 export default {
   title: 'Widgets/admin/PendingDeposits',

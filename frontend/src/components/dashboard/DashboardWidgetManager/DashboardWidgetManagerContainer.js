@@ -25,6 +25,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import notificationManager from '../../../utils/notification';
 import DashboardWidgetManagerPresentation from './DashboardWidgetManagerPresentation';
 
 const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) => {

@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (UI-02 GNB 드롭다운 포털 공통화)  
+**최종 갱신**: 2026-04-11 (ESLint 오류 0건·lint:check 게이트)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -247,10 +247,10 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `CI=true npm test -- --watchAll=false` **전 스위트 통과**(craco `react-router/dom`·관리자 파이프라인·ThemeSelector·App 스모크 등); `npm run lint:check`·`npm run verify:erp`는 잔여 부채로 별도 배치 권장.
+- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `CI=true npm test -- --watchAll=false` 전 스위트 통과; **`npx eslint src --quiet` 오류 0건** 배치 반영(파싱·import·상수·온보딩 TS→JSX 등). **`npm run lint:check`**는 `--max-warnings 0`이라 **경고 1만 건 이상**이면 여전히 실패 — 경고 축소는 별도 장기 배치.
 
 **권장 다음 단계 (마스터 진행)**  
-1) **전역 린트 부채** — `npm run lint:check` 에러 축소 배치(ERP·앱 전역, G-01과 별도).  
+1) **ESLint 경고 부채** — `no-magic-numbers`·`complexity` 등 대량 경고 단계적 완화(별도 배치, `lint:check` 완전 통과는 장기 목표).  
 2) **UI-01·UI-03** — 관리자 레이아웃 잔여·컴포넌트 공통화 체크리스트 후속.  
 3) **ERP-P4 잔여** — `components/erp` 내 인벤토리·MGButton 패턴(ERP-P4-05 비고).  
 4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.

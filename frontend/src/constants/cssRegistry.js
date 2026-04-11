@@ -6,6 +6,8 @@
  * Core Solution 디자인 시스템 v2.0
  */
 
+import { BUSINESS_CONSTANTS } from './magicNumbers';
+
 export const CSS_REGISTRY = {// 기존 클래스 (레거시)
   EXISTING: ['mg-button',
     'mg-card',

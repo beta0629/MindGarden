@@ -15,8 +15,8 @@
 import { apiGet } from './ajax';
 
 // 테마 색상 캐시 (5분간 유지)
-let themeColorCache = new Map();
-let cacheTimestamp = new Map();
+const themeColorCache = new Map();
+const cacheTimestamp = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 /**

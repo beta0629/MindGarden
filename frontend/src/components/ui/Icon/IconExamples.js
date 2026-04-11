@@ -147,11 +147,11 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-center">
               {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키(ICON_COLORS_BY_ROLE), ARIA role 아님 */}
-              <Icon name="CALENDAR" role="CLIENT" color="PRIMARY" />
+              <Icon name="CALENDAR" userRole="CLIENT" color="PRIMARY" />
               {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키, ARIA role 아님 */}
-              <Icon name="CALENDAR" role="CONSULTANT" color="PRIMARY" />
+              <Icon name="CALENDAR" userRole="CONSULTANT" color="PRIMARY" />
               {/* eslint-disable-next-line jsx-a11y/aria-role -- Icon의 role은 테마 키, ARIA role 아님 */}
-              <Icon name="CALENDAR" role="ADMIN" color="PRIMARY" />
+              <Icon name="CALENDAR" userRole="ADMIN" color="PRIMARY" />
             </div>
           </div>
         </div>

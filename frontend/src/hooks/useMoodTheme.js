@@ -1,4 +1,4 @@
-// import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * 간단한 분위기 테마 관리 훅

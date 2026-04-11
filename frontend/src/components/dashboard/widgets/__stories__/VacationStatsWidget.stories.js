@@ -1,5 +1,5 @@
 import React from 'react';
-import VacationStatsWidget from './VacationStatsWidget.js';
+import VacationStatsWidget from '../admin/VacationStatsWidget';
 
 export default {
   title: 'Widgets/admin/VacationStats',

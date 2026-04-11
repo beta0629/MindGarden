@@ -3,8 +3,8 @@
  */
 
 
-import Icon from '../../components/ui/Icon/Icon';
-import {ICONS} from '../../constants/icons';
+import Icon from './Icon';
+import { ICONS } from '../../../constants/icons';
 
 export default {title: 'UI Components/Icon',
   component: Icon,
@@ -18,7 +18,7 @@ export default {title: 'UI Components/Icon',
     color: {control: 'select',
       options: ['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT'],
       description: '아이콘 색상'},
-    role: {control: 'select',
+    userRole: {control: 'select',
       options: ['CLIENT', 'CONSULTANT', 'ADMIN'],
       description: '사용자 역할 (테마 적용)'},
     variant: {control: 'select',
@@ -109,9 +109,9 @@ export const RoleThemes = () => (<div className="story-container">
     <div className="story-section">
       <h3>역할별 테마</h3>
       <div className="story-flex">
-        <Icon name="CALENDAR" role="CLIENT" color="PRIMARY" />
-        <Icon name="CALENDAR" role="CONSULTANT" color="PRIMARY" />
-        <Icon name="CALENDAR" role="ADMIN" color="PRIMARY" />
+        <Icon name="CALENDAR" userRole="CLIENT" color="PRIMARY" />
+        <Icon name="CALENDAR" userRole="CONSULTANT" color="PRIMARY" />
+        <Icon name="CALENDAR" userRole="ADMIN" color="PRIMARY" />
       </div>
     </div>
   </div>);

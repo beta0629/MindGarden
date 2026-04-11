@@ -76,7 +76,7 @@ describe('Icon Component', () => {// 기본 렌더링 테스트
     expect(iconElement).toHaveClass('custom-class');});
 
   // 역할별 테마 테스트
-  test('applies role-based theme', () => {render(<Icon name="CALENDAR" role="CLIENT" color="PRIMARY" />);
+  test('applies role-based theme', () => {render(<Icon name="CALENDAR" userRole="CLIENT" color="PRIMARY" />);
     const iconElement = screen.getByRole('img');
     expect(iconElement).toBeInTheDocument();});
 

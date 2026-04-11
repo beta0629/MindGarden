@@ -13,7 +13,7 @@ import './Icon.css';
 const Icon = ({name,
   size = 'MD',
   color = 'PRIMARY',
-  role = null,
+  userRole = null,
   variant = 'default',
   className = '',
   onClick,
@@ -29,8 +29,8 @@ const Icon = ({name,
   const iconSize = ICON_SIZES[size] || ICON_SIZES.MD;
   
   // 색상 설정
-  const iconColor = role && ICON_COLORS_BY_ROLE[role] 
-    ? ICON_COLORS_BY_ROLE[role][color] || ICON_COLORS_BY_ROLE[role].PRIMARY
+  const iconColor = userRole && ICON_COLORS_BY_ROLE[userRole]
+    ? ICON_COLORS_BY_ROLE[userRole][color] || ICON_COLORS_BY_ROLE[userRole].PRIMARY
     : ICON_COLORS[color] || ICON_COLORS.PRIMARY;
 
   // CSS 클래스 생성
@@ -90,7 +90,7 @@ Icon.propTypes = {/** 아이콘 이름 (ICONS 객체의 키) */
   color: PropTypes.oneOf(['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT']),
   
   /** 사용자 역할 (테마 적용) */
-  role: PropTypes.oneOf(['CLIENT', 'CONSULTANT', 'ADMIN']),
+  userRole: PropTypes.oneOf(['CLIENT', 'CONSULTANT', 'ADMIN']),
   
   /** 아이콘 변형 */
   variant: PropTypes.oneOf(['default', 'outlined', 'filled', 'minimal']),
@@ -112,7 +112,7 @@ Icon.propTypes = {/** 아이콘 이름 (ICONS 객체의 키) */
 
 Icon.defaultProps = {size: 'MD',
   color: 'PRIMARY',
-  role: null,
+  userRole: null,
   variant: 'default',
   className: '',
   onClick: null,

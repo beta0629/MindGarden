@@ -1,85 +1,53 @@
 import React from 'react';
-import LoadingSpinner from './LoadingSpinner';
+import UnifiedLoading from './UnifiedLoading';
 import './CommonLoading.css';
 
 /**
- * 공통 로딩 컴포넌트 - 간편 사용을 위한 래퍼
+ * 공통 로딩 컴포넌트 - UnifiedLoading 기반 래퍼
  */
 
-// 전체 화면 로딩 (스케줄 스타일)
-export const FullscreenLoading = ({ text = "로딩 중..." }) => (
-    <LoadingSpinner 
-        text={text}
-        size="large"
-        variant="default"
-        fullscreen={true}
-    />
+export const FullscreenLoading = ({ text = '로딩 중...' }) => (
+  <UnifiedLoading text={text} size="large" variant="spinner" type="fullscreen" showText />
 );
 
-// 인라인 로딩 (카드 내부용, 스케줄 스타일)
-export const InlineLoading = ({ text = "로딩 중...", size = "medium" }) => (
-    <LoadingSpinner 
-        text={text}
-        size={size}
-        variant="default"
-        inline={true}
-    />
+export const InlineLoading = ({ text = '로딩 중...', size = 'medium' }) => (
+  <UnifiedLoading text={text} size={size} variant="spinner" type="inline" showText />
 );
 
-// 페이지 로딩 (페이지 중앙, 스케줄 스타일)
-export const PageLoading = ({ text = "페이지를 불러오는 중..." }) => (
-    <div className="page-loading-container">
-        <LoadingSpinner 
-            text={text}
-            size="large"
-            variant="default"
-            inline={true}
-        />
-    </div>
+export const PageLoading = ({ text = '페이지를 불러오는 중...' }) => (
+  <div className="page-loading-container">
+    <UnifiedLoading text={text} size="large" variant="spinner" type="page" showText />
+  </div>
 );
 
-// 작은 로딩 (버튼 내부용, 스케줄 스타일)
-export const ButtonLoading = ({ text = "처리 중..." }) => (
-    <LoadingSpinner 
-        text={text}
-        size="small"
-        variant="default"
-        showText={false}
-    />
+export const ButtonLoading = ({ text = '처리 중...' }) => (
+  <UnifiedLoading text={text} size="small" variant="spinner" type="button" showText={false} />
 );
 
-// 데이터 로딩 (테이블/리스트용, 스케줄 스타일)
-export const DataLoading = ({ text = "데이터를 불러오는 중..." }) => (
-    <div className="data-loading-container">
-        <LoadingSpinner 
-            text={text}
-            size="medium"
-            variant="default"
-            inline={true}
-        />
-    </div>
+export const DataLoading = ({ text = '데이터를 불러오는 중...' }) => (
+  <div className="data-loading-container">
+    <UnifiedLoading text={text} size="medium" variant="spinner" type="inline" showText />
+  </div>
 );
 
-// 기본 로딩 (일반적인 용도, 스케줄 스타일)
-const CommonLoading = ({ 
-    text = "로딩 중...", 
-    size = "medium", 
-    variant = "default",
-    type = "inline" // fullscreen, page, inline, data, button
+const CommonLoading = ({
+  text = '로딩 중...',
+  size = 'medium',
+  type = 'inline',
 }) => {
-    switch (type) {
-        case 'fullscreen':
-            return <FullscreenLoading text={text} />;
-        case 'page':
-            return <PageLoading text={text} />;
-        case 'data':
-            return <DataLoading text={text} />;
-        case 'button':
-            return <ButtonLoading text={text} />;
-        case 'inline':
-        default:
-            return <InlineLoading text={text} size={size} />;
-    }
+  switch (type) {
+    case 'fullscreen':
+      return <FullscreenLoading text={text} />;
+    case 'page':
+      return <PageLoading text={text} />;
+    case 'data':
+      return <DataLoading text={text} />;
+    case 'button':
+      return <ButtonLoading text={text} />;
+    case 'inline':
+    default:
+      return <InlineLoading text={text} size={size} />;
+  }
 };
 
 export default CommonLoading;

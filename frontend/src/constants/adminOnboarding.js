@@ -1,7 +1,7 @@
 /**
  * 어드민 온보딩 심사 화면용 상수
  * 하드코딩 지양을 위한 상수화
- * 
+ *
  * @author CoreSolution
  * @since 2026-03-29
  */
@@ -17,14 +17,14 @@ export const ONBOARDING_TEXT = {
   LABEL_ADMIN_NAME: '관리자 이름',
   LABEL_ADMIN_EMAIL: '관리자 이메일',
   SECTION_FINAL_REVIEW: '최종 심사',
-  DESC_FINAL_REVIEW: '입력된 모든 정보를 확인했습니다. 승인 또는 반려를 선택해주세요.',
-} as const;
+  DESC_FINAL_REVIEW: '입력된 모든 정보를 확인했습니다. 승인 또는 반려를 선택해주세요.'
+};
 
 export const ONBOARDING_STEPS = [
   { id: 1, label: ONBOARDING_TEXT.SECTION_BASIC_INFO },
   { id: 2, label: ONBOARDING_TEXT.SECTION_ADMIN_INFO },
   { id: 3, label: ONBOARDING_TEXT.SECTION_FINAL_REVIEW }
-] as const;
+];
 
 export const ONBOARDING_MOCK_DATA = {
   TENANT_NAME: '테스트 기관',
@@ -32,8 +32,8 @@ export const ONBOARDING_MOCK_DATA = {
   BUSINESS_TYPE: '심리상담센터',
   ADMIN_NAME: '홍길동',
   ADMIN_EMAIL: 'admin@test.com',
-  NOTE_APPROVE: '승인 처리',
-} as const;
+  NOTE_APPROVE: '승인 처리'
+};
 
 export const ONBOARDING_MESSAGES = {
   APPROVE_SUCCESS: '온보딩이 성공적으로 승인되었습니다.',
@@ -49,9 +49,9 @@ export const ONBOARDING_MESSAGES = {
   BTN_APPROVE: '승인',
   BTN_REJECT: '거절',
   BTN_CANCEL: '취소',
-  BTN_CONFIRM: '확인',
-} as const;
+  BTN_CONFIRM: '확인'
+};
 
 export const ONBOARDING_API_ENDPOINTS = {
-  DECISION: (id: string) => `/api/v1/admin/onboarding/requests/${id}/decision`, // 또는 /ops/onboarding
-} as const;
+  DECISION: (id) => `/api/v1/admin/onboarding/requests/${id}/decision`
+};

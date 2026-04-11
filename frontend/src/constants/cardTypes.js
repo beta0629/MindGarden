@@ -4,6 +4,8 @@
  * 통일된 카드 시스템을 위한 정의
  */
 
+import { UI_CONSTANTS } from './magicNumbers';
+
 /**
  * 카드 변형 타입
  */
@@ -124,9 +126,9 @@ export const CARD_TYPES = {STAT: {name: '통계 카드',
 export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
     description: '카드들을 그리드 형태로 배치',
     cssClass: 'mg-v2-card-grid',
-    responsive: {mobile: {columns: DEFAULT_VALUES.CURRENT_PAGE, gap: '12px'},
-      tablet: {columns: FORM_CONSTANTS.MIN_INPUT_LENGTH, gap: '16px'},
-      desktop: {columns: BUSINESS_CONSTANTS.MAX_RETRY_ATTEMPTS, gap: '20px'}}},
+    responsive: {mobile: {columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px'},
+      tablet: {columns: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px'},
+      desktop: {columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px'}}},
   
   LIST: {name: '리스트 레이아웃',
     description: '카드들을 세로로 나열',
@@ -138,16 +140,16 @@ export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
   CAROUSEL: {name: '캐러셀 레이아웃',
     description: '카드들을 가로로 스크롤',
     cssClass: 'mg-v2-card-carousel',
-    responsive: {mobile: {visible: DEFAULT_VALUES.CURRENT_PAGE, gap: '12px'},
-      tablet: {visible: FORM_CONSTANTS.MIN_INPUT_LENGTH, gap: '16px'},
-      desktop: {visible: BUSINESS_CONSTANTS.MAX_RETRY_ATTEMPTS, gap: '20px'}}},
+    responsive: {mobile: {visible: UI_CONSTANTS.GRID_COLUMNS_MOBILE, gap: '12px'},
+      tablet: {visible: UI_CONSTANTS.GRID_COLUMNS_TABLET, gap: '16px'},
+      desktop: {visible: UI_CONSTANTS.GRID_COLUMNS_DESKTOP, gap: '20px'}}},
   
   MASONRY: {name: '메이슨리 레이아웃',
     description: '카드들을 높이에 따라 배치',
     cssClass: 'mg-v2-card-masonry',
-    responsive: {mobile: {columns: DEFAULT_VALUES.CURRENT_PAGE},
-      tablet: {columns: FORM_CONSTANTS.MIN_INPUT_LENGTH},
-      desktop: {columns: BUSINESS_CONSTANTS.MAX_RETRY_ATTEMPTS}}}};
+    responsive: {mobile: {columns: UI_CONSTANTS.GRID_COLUMNS_MOBILE},
+      tablet: {columns: UI_CONSTANTS.GRID_COLUMNS_TABLET},
+      desktop: {columns: UI_CONSTANTS.GRID_COLUMNS_DESKTOP}}}};
 
 /**
  * 카드 상태
@@ -208,7 +210,7 @@ export const validateCardStructure = (cardType, structure) => {const type = getC
   
   if (required.footer === 'required' && !structure.footer) {errors.push(`${cardType} 카드는 footer가 필수입니다.`);}
   
-  return {isValid: errors.length === COLOR_CONSTANTS.ALPHA_TRANSPARENT,
+  return {isValid: errors.length === 0,
     errors};};
 
 export const getCardLayoutPattern = (patternName) => {return CARD_LAYOUT_PATTERNS[patternName.toUpperCase()] || CARD_LAYOUT_PATTERNS.GRID;};

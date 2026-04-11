@@ -195,7 +195,7 @@ class NotificationManager {
 }
 
 // 싱글톤 인스턴스
-const notificationManager = new NotificationManager();
+export const notificationManager = new NotificationManager();
 
 // 편의 함수들
 export const showNotification = (message, type = 'success', duration = 3000) => {

@@ -11,6 +11,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import './UserManagement.css';
 import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
@@ -37,6 +38,7 @@ const UserManagement = ({ onUpdate }) => {
     const [form, setForm] = useState({
         newRole: ''
     });
+    const [roleSubmitting, setRoleSubmitting] = useState(false);
 
     // 역할 코드 로드
     const loadRoleCodes = useCallback(async () => {
@@ -158,6 +160,7 @@ const UserManagement = ({ onUpdate }) => {
             if (!confirmed) return;
         }
         
+        setRoleSubmitting(true);
         try {
             const response = await csrfTokenManager.put(`/api/admin/users/${selectedUser.id}/role?newRole=${form.newRole}`);
 
@@ -178,6 +181,8 @@ const UserManagement = ({ onUpdate }) => {
         } catch (error) {
             console.error('역할 변경 실패:', error);
             toast('역할 변경에 실패했습니다.', 'danger');
+        } finally {
+            setRoleSubmitting(false);
         }
     };
 
@@ -267,7 +272,10 @@ const UserManagement = ({ onUpdate }) => {
 
                         <div className="user-mgmt-actions">
                             {user.role === USER_ROLES.CLIENT && (
-                                <button
+                                <MGButton
+                                    type="button"
+                                    variant="success"
+                                    size="small"
                                     className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
                                     onClick={() => {
                                         setSelectedUser(user);
@@ -275,12 +283,16 @@ const UserManagement = ({ onUpdate }) => {
                                         setShowRoleModal(true);
                                     }}
                                     title="내담자를 상담사로 변경"
+                                    preventDoubleClick={false}
                                 >
                                     상담사로
-                                </button>
+                                </MGButton>
                             )}
 
-                            <button
+                            <MGButton
+                                type="button"
+                                variant="outline"
+                                size="small"
                                 className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
                                 onClick={() => {
                                     setSelectedUser(user);
@@ -288,10 +300,11 @@ const UserManagement = ({ onUpdate }) => {
                                     setShowRoleModal(true);
                                 }}
                                 title="역할 변경"
+                                preventDoubleClick={false}
                             >
                                 <Pencil className="mg-v2-button-icon" size={16} />
                                 변경
-                            </button>
+                            </MGButton>
                         </div>
                     </div>
                 ))}
@@ -307,14 +320,17 @@ const UserManagement = ({ onUpdate }) => {
                     subtitle={`전체 ${filteredUsers.length}명의 사용자를 관리합니다`}
                     titleId={USER_MANAGEMENT_PAGE_TITLE_ID}
                     actions={(
-                        <button
+                        <MGButton
                             type="button"
+                            variant="primary"
+                            size="small"
                             className="mg-v2-dashboard-icon-btn"
                             onClick={loadData}
                             title="새로고침"
+                            preventDoubleClick={false}
                         >
                             <RefreshCw size={18} />
-                        </button>
+                        </MGButton>
                     )}
                 />
 
@@ -354,17 +370,21 @@ const UserManagement = ({ onUpdate }) => {
                                 />
                                 <span>비활성 사용자 포함</span>
                             </label>
-                            <button 
+                            <MGButton
+                                type="button"
+                                variant="outline"
+                                size="small"
                                 className="mg-v2-button mg-v2-button-ghost mg-v2-button-sm"
                                 onClick={() => {
                                     setSearchTerm('');
                                     setSelectedRole('');
                                     setIncludeInactive(false);
                                 }}
+                                preventDoubleClick={false}
                             >
                                 <Filter className="mg-v2-button-icon" size={16} />
                                 초기화
-                            </button>
+                            </MGButton>
                         </div>
                         {renderUserListBody()}
                     </div>
@@ -422,22 +442,29 @@ const UserManagement = ({ onUpdate }) => {
                         </div>
 
                         <div className="mg-v2-modal-footer">
-                            <button
+                            <MGButton
                                 type="button"
-                                onClick={() => setShowRoleModal(false)}
+                                variant="secondary"
                                 className="mg-v2-button mg-v2-button-secondary"
+                                onClick={() => setShowRoleModal(false)}
+                                disabled={roleSubmitting}
+                                preventDoubleClick={false}
                             >
                                 취소
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="submit"
-                                disabled={form.newRole === selectedUser.role}
+                                variant="primary"
                                 className="mg-v2-button mg-v2-button-primary"
+                                disabled={form.newRole === selectedUser.role || roleSubmitting}
+                                loading={roleSubmitting}
+                                loadingText="역할 변경 중..."
+                                preventDoubleClick={false}
                             >
                                 {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT
                                     ? '상담사로 변경'
                                     : '역할 변경'}
-                            </button>
+                            </MGButton>
                         </div>
                     </form>
                 )}

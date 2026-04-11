@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -63,29 +64,38 @@ const UserManagementPage = () => {
       <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
         <ContentSection noCard>
           <div className="mg-v2-ad-b0kla__pill-toggle">
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="medium"
               className={`mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
               onClick={() => handleTypeChange(TYPE_CONSULTANT)}
+              preventDoubleClick={false}
             >
               상담사
-            </button>
+            </MGButton>
             {canManageClients && (
-              <button
+              <MGButton
                 type="button"
+                variant="outline"
+                size="medium"
                 className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => handleTypeChange(TYPE_CLIENT)}
+                preventDoubleClick={false}
               >
                 내담자
-              </button>
+              </MGButton>
             )}
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="medium"
               className={`mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
               onClick={() => handleTypeChange(TYPE_STAFF)}
+              preventDoubleClick={false}
             >
               스태프
-            </button>
+            </MGButton>
           </div>
         </ContentSection>
 

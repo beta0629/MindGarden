@@ -150,7 +150,8 @@
     gap: var(--spacing-sm);
 }
 
-.user-mgmt-actions .mg-btn {
+.user-mgmt-actions .mg-btn,
+.user-mgmt-actions .mg-button {
     flex: 1;
 }
 
@@ -246,7 +247,8 @@
         flex-direction: column;
     }
     
-    .user-mgmt-actions .mg-btn {
+    .user-mgmt-actions .mg-btn,
+    .user-mgmt-actions .mg-button {
         width: 100%;
     }
 }
@@ -267,6 +269,25 @@
 }
 
 /* ==================== 다크모드 대비 ==================== */
+/* G8-B10a: MGButton + 기존 대시보드 아이콘 버튼 병합 */
+button.mg-v2-dashboard-icon-btn.mg-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    min-width: unset;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+}
+
+button.mg-v2-dashboard-icon-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    transform: none;
+}
+
 @media (prefers-color-scheme: dark) {
     .user-mgmt-card {
         background: var(--color-bg-secondary);

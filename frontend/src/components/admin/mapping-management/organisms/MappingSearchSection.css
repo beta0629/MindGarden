@@ -94,6 +94,19 @@
   margin-right: var(--mg-spacing-sm, 0.5rem);
 }
 
+/* G8-B10a: MGButton 병합 — 스태프 목록 새로고침 등 secondary 헤더 버튼 */
+.mg-v2-mapping-header-btn.mg-v2-mapping-header-btn--secondary.mg-button.mg-button--secondary {
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  color: var(--ad-b0kla-title-color);
+  border: 1px solid var(--ad-b0kla-border);
+  box-shadow: none;
+}
+
+.mg-v2-mapping-header-btn.mg-v2-mapping-header-btn--secondary.mg-button.mg-button--secondary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: translateY(-1px);
+  background: var(--ad-b0kla-bg);
+}
+
 .mg-v2-mapping-search-section__embedded-create-icon {
   margin-right: var(--mg-spacing-xs, 0.25rem);
   flex-shrink: 0;

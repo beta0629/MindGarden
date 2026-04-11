@@ -98,11 +98,14 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                 </div>
                 <div className="mg-v2-profile-card__footer">
                   <MGButton
+                    type="button"
                     variant="primary"
                     size="small"
                     onClick={() => onAssign(u)}
                     disabled={assigning}
-                    preventDoubleClick
+                    loading={assigning}
+                    loadingText="지정 중..."
+                    preventDoubleClick={false}
                   >
                     스태프로 지정
                   </MGButton>
@@ -475,13 +478,13 @@ const StaffManagement = ({ embedded = false }) => {
           role="group"
           aria-label="스태프 작업"
         >
-          <MGButton variant="secondary" size="small" onClick={() => openStaffDetail(staff)} preventDoubleClick>
+          <MGButton type="button" variant="secondary" size="small" onClick={() => openStaffDetail(staff)} preventDoubleClick={false}>
             <Eye size={14} /> 상세
           </MGButton>
-          <MGButton variant="primary" size="small" onClick={() => openStaffEdit(staff)} preventDoubleClick>
+          <MGButton type="button" variant="primary" size="small" onClick={() => openStaffEdit(staff)} preventDoubleClick={false}>
             <Edit size={14} /> 수정
           </MGButton>
-          <MGButton variant="secondary" size="small" onClick={() => handleOpenRoleChange(staff)} preventDoubleClick>
+          <MGButton type="button" variant="secondary" size="small" onClick={() => handleOpenRoleChange(staff)} preventDoubleClick={false}>
             역할 변경
           </MGButton>
         </div>
@@ -550,7 +553,7 @@ const StaffManagement = ({ embedded = false }) => {
               size="small"
               onClick={openCreateStaffModal}
               disabled={loading}
-              preventDoubleClick
+              preventDoubleClick={false}
             >
               <UserPlus size={16} /> 새 스태프 등록
             </MGButton>
@@ -560,18 +563,23 @@ const StaffManagement = ({ embedded = false }) => {
               size="small"
               onClick={openAddStaffModal}
               disabled={loading}
-              preventDoubleClick
+              preventDoubleClick={false}
             >
               스태프로 지정
             </MGButton>
-            <button
+            <MGButton
               type="button"
+              variant="secondary"
+              size="small"
               className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--secondary"
               onClick={loadUsers}
               disabled={loading}
+              loading={loading}
+              loadingText="불러오는 중..."
+              preventDoubleClick={false}
             >
               <RefreshCw size={16} /> 새로고침
-            </button>
+            </MGButton>
           </div>
         </div>
       </ContentSection>
@@ -713,7 +721,7 @@ const StaffManagement = ({ embedded = false }) => {
         size="medium"
         variant="default"
         actions={
-          <MGButton variant="secondary" onClick={closeStaffDetail}>
+          <MGButton type="button" variant="secondary" onClick={closeStaffDetail} preventDoubleClick={false}>
             닫기
           </MGButton>
         }
@@ -774,14 +782,17 @@ const StaffManagement = ({ embedded = false }) => {
         loading={staffEditSubmitting}
         actions={
           <>
-            <MGButton variant="secondary" onClick={closeStaffEdit} disabled={staffEditSubmitting}>
+            <MGButton type="button" variant="secondary" onClick={closeStaffEdit} disabled={staffEditSubmitting} preventDoubleClick={false}>
               취소
             </MGButton>
             <MGButton
+              type="button"
               variant="primary"
               onClick={handleStaffEditSubmit}
               disabled={staffEditSubmitting}
-              preventDoubleClick
+              loading={staffEditSubmitting}
+              loadingText="저장 중..."
+              preventDoubleClick={false}
             >
               저장
             </MGButton>
@@ -840,14 +851,17 @@ const StaffManagement = ({ embedded = false }) => {
         loading={roleChangeSubmitting}
         actions={
           <>
-            <MGButton variant="secondary" onClick={handleCloseRoleChange} disabled={roleChangeSubmitting}>
+            <MGButton type="button" variant="secondary" onClick={handleCloseRoleChange} disabled={roleChangeSubmitting} preventDoubleClick={false}>
               취소
             </MGButton>
             <MGButton
+              type="button"
               variant="primary"
               onClick={handleConfirmRoleChange}
               disabled={roleChangeSubmitting || !selectedNewRole || selectedNewRole === roleChangeModal.user?.role}
-              preventDoubleClick
+              loading={roleChangeSubmitting}
+              loadingText="변경 중..."
+              preventDoubleClick={false}
             >
               확인
             </MGButton>
@@ -888,7 +902,7 @@ const StaffManagement = ({ embedded = false }) => {
         variant="form"
         loading={addStaffModal.loading}
         actions={
-          <MGButton variant="secondary" onClick={closeAddStaffModal}>
+          <MGButton type="button" variant="secondary" onClick={closeAddStaffModal} preventDoubleClick={false}>
             닫기
           </MGButton>
         }
@@ -918,14 +932,17 @@ const StaffManagement = ({ embedded = false }) => {
         loading={createStaffModal.submitting}
         actions={
           <>
-            <MGButton variant="secondary" onClick={closeCreateStaffModal} disabled={createStaffModal.submitting}>
+            <MGButton type="button" variant="secondary" onClick={closeCreateStaffModal} disabled={createStaffModal.submitting} preventDoubleClick={false}>
               취소
             </MGButton>
             <MGButton
+              type="button"
               variant="primary"
               onClick={handleCreateStaffSubmit}
               disabled={createStaffModal.submitting || !(createForm.email || '').trim()}
-              preventDoubleClick
+              loading={createStaffModal.submitting}
+              loadingText="등록 중..."
+              preventDoubleClick={false}
             >
               등록
             </MGButton>
@@ -1010,8 +1027,10 @@ const StaffManagement = ({ embedded = false }) => {
             <div className="mg-v2-form-group">
               <label htmlFor="staff-address-input" className="mg-v2-form-label">주소 검색</label>
               <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
+                  size="small"
                   className="mg-v2-button mg-v2-button-secondary"
                   onClick={() => {
                     if (globalThis.window?.daum?.Postcode) {
@@ -1028,9 +1047,11 @@ const StaffManagement = ({ embedded = false }) => {
                       showError('주소 검색 서비스를 불러올 수 없습니다.');
                     }
                   }}
+                  disabled={createStaffModal.submitting}
+                  preventDoubleClick={false}
                 >
                   주소 검색
-                </button>
+                </MGButton>
                 <input
                   id="staff-address-input"
                   type="text"
@@ -1084,15 +1105,20 @@ const StaffManagement = ({ embedded = false }) => {
                     autocompleteMode="datalist"
                   />
                 </div>
-                <button
+                <MGButton
                   type="button"
+                  variant="secondary"
+                  size="small"
                   onClick={handleStaffEmailDuplicateCheck}
-                  disabled={isCheckingStaffEmail || !(createForm.email || '').trim()}
+                  disabled={isCheckingStaffEmail || !(createForm.email || '').trim() || createStaffModal.submitting}
                   className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                   data-action="email-duplicate-check"
+                  loading={isCheckingStaffEmail}
+                  loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
+                  preventDoubleClick={false}
                 >
-                  {isCheckingStaffEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                </button>
+                  {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                </MGButton>
               </div>
               {staffEmailCheckStatus === 'duplicate' && (
                 <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.EMAIL_EXISTS}</small>

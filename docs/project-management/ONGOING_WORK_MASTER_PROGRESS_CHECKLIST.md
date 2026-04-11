@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (UI-02 2차 일부·UnifiedModal)  
+**최종 갱신**: 2026-04-11 (UI-02 GNB 드롭다운 포털 공통화)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -192,7 +192,7 @@
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
 | UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | 1차 병렬 적용 이력 있음 — 잔여 점검 |
-| UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | B5·B6 `ErpModal`→`UnifiedModal` ☑. **추가**: 계좌 `AccountForm`/관리 화면·내담자 `ClientMessageSection` 상세 모달을 `UnifiedModal`로 통일(div 오용 수정). 잔여: 드롭다운 포털 등 |
+| UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | B5·B6·계좌/내담자 메시지 `UnifiedModal` ☑. **추가**: GNB `Profile`/`QuickActions`/`Notification` 드롭다운 → `GnbDropdownPortal` + `aria-controls`/고유 `panelId`, `NavIcon` props 전달. 잔여: UI-01·UI-03·전역 린트 등 |
 | UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리 |
 | UI-04 | 상담사 콘솔 **상담일지** — 레이아웃·메모·맥락 API (`UnifiedModal`·토큰) | ☑ | 병렬 블록 **CL-B1** · 커밋 `89e03b2b9` |
 
@@ -250,8 +250,8 @@
 - **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: `CI=true npm test -- --watchAll=false` **전 스위트 통과**(craco `react-router/dom`·관리자 파이프라인·ThemeSelector·App 스모크 등); `npm run lint:check`·`npm run verify:erp`는 잔여 부채로 별도 배치 권장.
 
 **권장 다음 단계 (마스터 진행)**  
-1) **UI-02 2차 (잔여)** — `ProfileDropdown`/`NotificationDropdown`/`QuickActionsDropdown` 등 **createPortal** 드롭다운·기타 커스텀 오버레이 점검·필요 시 패턴 통일.  
-2) **전역 린트 부채** — `npm run lint:check` 에러 축소 배치(ERP·앱 전역, G-01과 별도).  
+1) **전역 린트 부채** — `npm run lint:check` 에러 축소 배치(ERP·앱 전역, G-01과 별도).  
+2) **UI-01·UI-03** — 관리자 레이아웃 잔여·컴포넌트 공통화 체크리스트 후속.  
 3) **ERP-P4 잔여** — `components/erp` 내 인벤토리·MGButton 패턴(ERP-P4-05 비고).  
 4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
 

@@ -10,7 +10,7 @@ import React from 'react';
 import MGButton from '../../common/MGButton';
 import './NavIcon.css';
 
-const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false }) => {
+const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false, ...rest }) => {
   return (
     <MGButton
       type="button"
@@ -21,6 +21,7 @@ const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false 
       onClick={onClick}
       disabled={disabled}
       aria-label={label || '아이콘 버튼'}
+      {...rest}
     >
       {Icon && <Icon size={22} strokeWidth={1.8} aria-hidden="true" />}
     </MGButton>

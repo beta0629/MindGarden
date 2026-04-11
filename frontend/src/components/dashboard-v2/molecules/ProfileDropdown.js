@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,8 +17,10 @@ import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenant
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
 import MGButton from '../../common/MGButton';
-import '../styles/dropdown-common.css';
+import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
+
+const PROFILE_DROPDOWN_PANEL_ID = 'mg-v2-profile-dropdown-panel';
 
 const ROLE_LABELS = {
   ADMIN: '관리자',
@@ -112,6 +113,7 @@ const ProfileDropdown = ({ onLogout }) => {
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-haspopup="menu"
+          aria-controls={PROFILE_DROPDOWN_PANEL_ID}
         >
           <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="small" />
           <span className="mg-v2-profile-trigger__name">{userName}</span>
@@ -119,73 +121,63 @@ const ProfileDropdown = ({ onLogout }) => {
         </MGButton>
       </div>
 
-      {isOpen && ReactDOM.createPortal(
-        <>
+      <GnbDropdownPortal
+        isOpen={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+        panelRef={panelRef}
+        panelStyle={panelStyle}
+        panelClassName="mg-v2-dropdown-panel mg-v2-profile-dropdown__panel"
+        panelRole="menu"
+        panelId={PROFILE_DROPDOWN_PANEL_ID}
+      >
+        <div className="mg-v2-profile-dropdown__header">
+          <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="medium" />
+          <div className="mg-v2-profile-dropdown__info">
+            <div className="mg-v2-profile-dropdown__name">{userName}</div>
+            {userEmail && (
+              <div className="mg-v2-profile-dropdown__email">{userEmail}</div>
+            )}
+            {roleLabel && (
+              <span className={`mg-v2-badge mg-v2-badge-role mg-v2-badge-role--${userRole.toLowerCase()}`}>
+                {roleLabel}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="mg-v2-profile-dropdown__menu">
           <MGButton
             type="button"
             variant="outline"
             preventDoubleClick={false}
-            className="mg-v2-dropdown-overlay"
-            onClick={() => setIsOpen(false)}
-            aria-label="드롭다운 닫기"
-          />
-          <div
-            ref={panelRef}
-            className="mg-v2-dropdown-panel mg-v2-profile-dropdown__panel"
-            role="menu"
-            style={panelStyle}
+            className="mg-v2-profile-menu-item"
+            onClick={() => handleMenuClick('mypage')}
           >
-            <div className="mg-v2-profile-dropdown__header">
-              <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="medium" />
-              <div className="mg-v2-profile-dropdown__info">
-                <div className="mg-v2-profile-dropdown__name">{userName}</div>
-                {userEmail && (
-                  <div className="mg-v2-profile-dropdown__email">{userEmail}</div>
-                )}
-                {roleLabel && (
-                  <span className={`mg-v2-badge mg-v2-badge-role mg-v2-badge-role--${userRole.toLowerCase()}`}>
-                    {roleLabel}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="mg-v2-profile-dropdown__menu">
-              <MGButton
-                type="button"
-                variant="outline"
-                preventDoubleClick={false}
-                className="mg-v2-profile-menu-item"
-                onClick={() => handleMenuClick('mypage')}
-              >
-                <User size={18} />
-                <span>내 정보</span>
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="outline"
-                preventDoubleClick={false}
-                className="mg-v2-profile-menu-item"
-                onClick={() => handleMenuClick('settings')}
-              >
-                <Settings size={18} />
-                <span>설정</span>
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="outline"
-                preventDoubleClick={false}
-                className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
-                onClick={() => handleMenuClick('logout')}
-              >
-                <LogOut size={18} />
-                <span>로그아웃</span>
-              </MGButton>
-            </div>
-          </div>
-        </>,
-        document.body
-      )}
+            <User size={18} />
+            <span>내 정보</span>
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
+            className="mg-v2-profile-menu-item"
+            onClick={() => handleMenuClick('settings')}
+          >
+            <Settings size={18} />
+            <span>설정</span>
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
+            className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
+            onClick={() => handleMenuClick('logout')}
+          >
+            <LogOut size={18} />
+            <span>로그아웃</span>
+          </MGButton>
+        </div>
+      </GnbDropdownPortal>
     </div>
   );
 };

@@ -8,7 +8,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Bell, MessageSquare, Info } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
@@ -20,8 +19,10 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
-import '../styles/dropdown-common.css';
+import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
+
+const NOTIFICATION_PANEL_ID = 'mg-v2-notification-panel';
 
 const TAB_SYSTEM = 'system';
 const TAB_MESSAGES = 'messages';
@@ -287,233 +288,223 @@ const NotificationDropdown = () => {
           className="mg-v2-notification-trigger"
           aria-expanded={isOpen}
           aria-haspopup="true"
+          aria-controls={NOTIFICATION_PANEL_ID}
         />
         <NotificationBadge count={totalUnread} />
       </div>
 
-      {isOpen &&
-        ReactDOM.createPortal(
-          <>
+      <GnbDropdownPortal
+        isOpen={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+        panelRef={panelRef}
+        panelStyle={panelStyle}
+        panelClassName="mg-v2-dropdown-panel mg-v2-notification-dropdown__panel"
+        panelRole="dialog"
+        panelId={NOTIFICATION_PANEL_ID}
+        ariaLabel="알림 패널"
+        ariaModal={false}
+      >
+        <div className="mg-v2-dropdown-panel__header">
+          <h2 className="mg-v2-dropdown-panel__title">알림</h2>
+          {totalUnread > 0 && (
             <MGButton
               type="button"
               variant="outline"
               preventDoubleClick={false}
-              className="mg-v2-dropdown-overlay"
-              onClick={() => setIsOpen(false)}
-              aria-label="드롭다운 닫기"
-            />
-            <div
-              ref={panelRef}
-              className="mg-v2-dropdown-panel mg-v2-notification-dropdown__panel"
-              role="dialog"
-              aria-label="알림 패널"
-              aria-modal="false"
-              style={panelStyle}
+              className="mg-v2-btn-text mg-v2-btn-sm"
+              aria-label="모두 읽음으로 표시"
+              onClick={handleMarkAllRead}
             >
-              <div className="mg-v2-dropdown-panel__header">
-                <h2 className="mg-v2-dropdown-panel__title">알림</h2>
-                {totalUnread > 0 && (
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    preventDoubleClick={false}
-                    className="mg-v2-btn-text mg-v2-btn-sm"
-                    aria-label="모두 읽음으로 표시"
-                    onClick={handleMarkAllRead}
-                  >
-                    모두 읽음
-                  </MGButton>
-                )}
-              </div>
+              모두 읽음
+            </MGButton>
+          )}
+        </div>
 
-              <div
-                className="mg-v2-notification-dropdown__tabs"
-                role="tablist"
-                aria-label="알림 유형"
-              >
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  preventDoubleClick={false}
-                  role="tab"
-                  id="tab-system"
-                  aria-selected={activeTab === TAB_SYSTEM}
-                  aria-controls="panel-system"
-                  className={`mg-v2-notification-dropdown__tab ${
-                    activeTab === TAB_SYSTEM ? 'mg-v2-notification-dropdown__tab--active' : ''
-                  }`}
-                  onClick={() => setActiveTab(TAB_SYSTEM)}
-                >
-                  시스템 공지
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  preventDoubleClick={false}
-                  role="tab"
-                  id="tab-messages"
-                  aria-selected={activeTab === TAB_MESSAGES}
-                  aria-controls="panel-messages"
-                  className={`mg-v2-notification-dropdown__tab ${
-                    activeTab === TAB_MESSAGES ? 'mg-v2-notification-dropdown__tab--active' : ''
-                  }`}
-                  onClick={() => setActiveTab(TAB_MESSAGES)}
-                >
-                  메시지
-                </MGButton>
-              </div>
+        <div
+          className="mg-v2-notification-dropdown__tabs"
+          role="tablist"
+          aria-label="알림 유형"
+        >
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
+            role="tab"
+            id="tab-system"
+            aria-selected={activeTab === TAB_SYSTEM}
+            aria-controls="panel-system"
+            className={`mg-v2-notification-dropdown__tab ${
+              activeTab === TAB_SYSTEM ? 'mg-v2-notification-dropdown__tab--active' : ''
+            }`}
+            onClick={() => setActiveTab(TAB_SYSTEM)}
+          >
+            시스템 공지
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
+            role="tab"
+            id="tab-messages"
+            aria-selected={activeTab === TAB_MESSAGES}
+            aria-controls="panel-messages"
+            className={`mg-v2-notification-dropdown__tab ${
+              activeTab === TAB_MESSAGES ? 'mg-v2-notification-dropdown__tab--active' : ''
+            }`}
+            onClick={() => setActiveTab(TAB_MESSAGES)}
+          >
+            메시지
+          </MGButton>
+        </div>
 
-              <div
-                id="panel-system"
-                role="tabpanel"
-                aria-labelledby="tab-system"
-                className="mg-v2-notification-dropdown__panel-content"
-                hidden={activeTab !== TAB_SYSTEM}
-              >
-                <ul className="mg-v2-notification-list" aria-label="시스템 공지 목록">
-                  {loadingSystem && (
-                    <li>
-                      <div className="mg-v2-notification-empty">로딩 중...</div>
-                    </li>
-                  )}
-                  {!loadingSystem && systemList.length === 0 && (
-                    <li>
-                      <div className="mg-v2-notification-empty">새로운 공지가 없습니다</div>
-                    </li>
-                  )}
-                  {!loadingSystem &&
-                    systemList.map((item) => {
-                      const isUnread = !item.isRead;
-                      return (
-                        <li key={item.id}>
-                          <MGButton
-                            type="button"
-                            variant="outline"
-                            preventDoubleClick={false}
-                            className={`mg-v2-notification-item ${
-                              isUnread ? 'mg-v2-notification-item--unread' : ''
-                            }`}
-                            onClick={(event) => handleSystemItemClick(event, item)}
-                            onKeyDown={(event) =>
-                              handleNotificationItemKeyDown(event, item, TAB_SYSTEM)
-                            }
-                          >
-                            {isUnread && (
-                              <span
-                                className="mg-v2-notification-item__unread-dot"
-                                aria-hidden="true"
-                              />
-                            )}
-                            <div
-                              className="mg-v2-notification-item__icon"
-                              aria-hidden="true"
-                            >
-                              <Info size={16} />
-                            </div>
-                            <div className="mg-v2-notification-item__content">
-                              <div className="mg-v2-notification-item__header">
-                                <span className="mg-v2-notification-item__title">
-                                  {toDisplayString(item.title, '제목 없음')}
-                                </span>
-                                <span className="mg-v2-notification-item__time">
-                                  {formatTime(item.createdAt)}
-                                </span>
-                              </div>
-                              <p className="mg-v2-notification-item__message">시스템</p>
-                            </div>
-                          </MGButton>
-                        </li>
-                      );
-                    })}
-                </ul>
-              </div>
+        <div
+          id="panel-system"
+          role="tabpanel"
+          aria-labelledby="tab-system"
+          className="mg-v2-notification-dropdown__panel-content"
+          hidden={activeTab !== TAB_SYSTEM}
+        >
+          <ul className="mg-v2-notification-list" aria-label="시스템 공지 목록">
+            {loadingSystem && (
+              <li>
+                <div className="mg-v2-notification-empty">로딩 중...</div>
+              </li>
+            )}
+            {!loadingSystem && systemList.length === 0 && (
+              <li>
+                <div className="mg-v2-notification-empty">새로운 공지가 없습니다</div>
+              </li>
+            )}
+            {!loadingSystem &&
+              systemList.map((item) => {
+                const isUnread = !item.isRead;
+                return (
+                  <li key={item.id}>
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      preventDoubleClick={false}
+                      className={`mg-v2-notification-item ${
+                        isUnread ? 'mg-v2-notification-item--unread' : ''
+                      }`}
+                      onClick={(event) => handleSystemItemClick(event, item)}
+                      onKeyDown={(event) =>
+                        handleNotificationItemKeyDown(event, item, TAB_SYSTEM)
+                      }
+                    >
+                      {isUnread && (
+                        <span
+                          className="mg-v2-notification-item__unread-dot"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div
+                        className="mg-v2-notification-item__icon"
+                        aria-hidden="true"
+                      >
+                        <Info size={16} />
+                      </div>
+                      <div className="mg-v2-notification-item__content">
+                        <div className="mg-v2-notification-item__header">
+                          <span className="mg-v2-notification-item__title">
+                            {toDisplayString(item.title, '제목 없음')}
+                          </span>
+                          <span className="mg-v2-notification-item__time">
+                            {formatTime(item.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mg-v2-notification-item__message">시스템</p>
+                      </div>
+                    </MGButton>
+                  </li>
+                );
+              })}
+          </ul>
+        </div>
 
-              <div
-                id="panel-messages"
-                role="tabpanel"
-                aria-labelledby="tab-messages"
-                className="mg-v2-notification-dropdown__panel-content"
-                hidden={activeTab !== TAB_MESSAGES}
-              >
-                <ul className="mg-v2-notification-list" aria-label="메시지 목록">
-                  {loadingMessages && (
-                    <li>
-                      <div className="mg-v2-notification-empty">로딩 중...</div>
-                    </li>
-                  )}
-                  {!loadingMessages && messageList.length === 0 && (
-                    <li>
-                      <div className="mg-v2-notification-empty">새로운 메시지가 없습니다</div>
-                    </li>
-                  )}
-                  {!loadingMessages &&
-                    messageList.map((item) => {
-                      const isUnread = !item.isRead;
-                      const sn = toDisplayString(item.senderName, '');
-                      const rn = toDisplayString(item.receiverName, '');
-                      const senderLabel =
-                        sn && rn ? `${sn} → ${rn}` : sn || '메시지';
-                      return (
-                        <li key={item.id}>
-                          <MGButton
-                            type="button"
-                            variant="outline"
-                            preventDoubleClick={false}
-                            className={`mg-v2-notification-item ${
-                              isUnread ? 'mg-v2-notification-item--unread' : ''
-                            }`}
-                            onClick={(event) => handleMessageItemClick(event, item)}
-                            onKeyDown={(event) =>
-                              handleNotificationItemKeyDown(event, item, TAB_MESSAGES)
-                            }
-                          >
-                            {isUnread && (
-                              <span
-                                className="mg-v2-notification-item__unread-dot"
-                                aria-hidden="true"
-                              />
-                            )}
-                            <div
-                              className="mg-v2-notification-item__icon"
-                              aria-hidden="true"
-                            >
-                              <MessageSquare size={16} />
-                            </div>
-                            <div className="mg-v2-notification-item__content">
-                              <div className="mg-v2-notification-item__header">
-                                <span className="mg-v2-notification-item__title">
-                                  {item.title != null && item.title !== ''
-                                    ? toDisplayString(item.title, '메시지')
-                                    : sliceContentPreview(item.content) || '메시지'}
-                                </span>
-                                <span className="mg-v2-notification-item__time">
-                                  {formatTime(item.createdAt)}
-                                </span>
-                              </div>
-                              <p className="mg-v2-notification-item__message mg-v2-notification-item__sender">
-                                {senderLabel}
-                              </p>
-                            </div>
-                          </MGButton>
-                        </li>
-                      );
-                    })}
-                </ul>
-              </div>
+        <div
+          id="panel-messages"
+          role="tabpanel"
+          aria-labelledby="tab-messages"
+          className="mg-v2-notification-dropdown__panel-content"
+          hidden={activeTab !== TAB_MESSAGES}
+        >
+          <ul className="mg-v2-notification-list" aria-label="메시지 목록">
+            {loadingMessages && (
+              <li>
+                <div className="mg-v2-notification-empty">로딩 중...</div>
+              </li>
+            )}
+            {!loadingMessages && messageList.length === 0 && (
+              <li>
+                <div className="mg-v2-notification-empty">새로운 메시지가 없습니다</div>
+              </li>
+            )}
+            {!loadingMessages &&
+              messageList.map((item) => {
+                const isUnread = !item.isRead;
+                const sn = toDisplayString(item.senderName, '');
+                const rn = toDisplayString(item.receiverName, '');
+                const senderLabel =
+                  sn && rn ? `${sn} → ${rn}` : sn || '메시지';
+                return (
+                  <li key={item.id}>
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      preventDoubleClick={false}
+                      className={`mg-v2-notification-item ${
+                        isUnread ? 'mg-v2-notification-item--unread' : ''
+                      }`}
+                      onClick={(event) => handleMessageItemClick(event, item)}
+                      onKeyDown={(event) =>
+                        handleNotificationItemKeyDown(event, item, TAB_MESSAGES)
+                      }
+                    >
+                      {isUnread && (
+                        <span
+                          className="mg-v2-notification-item__unread-dot"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div
+                        className="mg-v2-notification-item__icon"
+                        aria-hidden="true"
+                      >
+                        <MessageSquare size={16} />
+                      </div>
+                      <div className="mg-v2-notification-item__content">
+                        <div className="mg-v2-notification-item__header">
+                          <span className="mg-v2-notification-item__title">
+                            {item.title != null && item.title !== ''
+                              ? toDisplayString(item.title, '메시지')
+                              : sliceContentPreview(item.content) || '메시지'}
+                          </span>
+                          <span className="mg-v2-notification-item__time">
+                            {formatTime(item.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mg-v2-notification-item__message mg-v2-notification-item__sender">
+                          {senderLabel}
+                        </p>
+                      </div>
+                    </MGButton>
+                  </li>
+                );
+              })}
+          </ul>
+        </div>
 
-              <div className="mg-v2-dropdown-panel__footer">
-                <Link
-                  to="/notifications"
-                  className="mg-v2-dropdown-panel__footer-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  알림 전체 보기
-                </Link>
-              </div>
-            </div>
-          </>,
-          document.body
-        )}
+        <div className="mg-v2-dropdown-panel__footer">
+          <Link
+            to="/notifications"
+            className="mg-v2-dropdown-panel__footer-link"
+            onClick={() => setIsOpen(false)}
+          >
+            알림 전체 보기
+          </Link>
+        </div>
+      </GnbDropdownPortal>
       {selectedItem && (
         <UnifiedModal
           isOpen={!!selectedItem}

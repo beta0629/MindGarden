@@ -7,7 +7,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Zap, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,8 +16,10 @@ import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
-import '../styles/dropdown-common.css';
+import GnbDropdownPortal from './GnbDropdownPortal';
 import './QuickActionsDropdown.css';
+
+const QUICK_ACTIONS_PANEL_ID = 'mg-v2-quick-actions-panel';
 
 const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -99,52 +100,43 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
           className="mg-v2-quick-actions-trigger"
           aria-expanded={isOpen}
           aria-haspopup="menu"
+          aria-controls={QUICK_ACTIONS_PANEL_ID}
         />
       </div>
 
-      {isOpen && ReactDOM.createPortal(
-        <>
-          <MGButton
-            type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            className="mg-v2-dropdown-overlay"
-            onClick={() => setIsOpen(false)}
-            aria-label="드롭다운 닫기"
-          />
-          <div
-            ref={panelRef}
-            className="mg-v2-dropdown-panel mg-v2-quick-actions-dropdown__panel"
-            role="menu"
-            style={panelStyle}
-          >
-            <div className="mg-v2-dropdown-panel__header">
-              <span className="mg-v2-dropdown-panel__title">빠른 액션</span>
-            </div>
+      <GnbDropdownPortal
+        isOpen={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+        panelRef={panelRef}
+        panelStyle={panelStyle}
+        panelClassName="mg-v2-dropdown-panel mg-v2-quick-actions-dropdown__panel"
+        panelRole="menu"
+        panelId={QUICK_ACTIONS_PANEL_ID}
+      >
+        <div className="mg-v2-dropdown-panel__header">
+          <span className="mg-v2-dropdown-panel__title">빠른 액션</span>
+        </div>
 
-            <div className="mg-v2-quick-actions-list">
-              {actions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <MGButton
-                    key={action.id}
-                    type="button"
-                    variant="outline"
-                    preventDoubleClick={false}
-                    className="mg-v2-quick-action-item"
-                    onClick={() => handleActionClick(action)}
-                  >
-                    <Icon size={20} className="mg-v2-quick-action-item__icon" />
-                    <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
-                    <ChevronRight size={16} className="mg-v2-quick-action-item__arrow" />
-                  </MGButton>
-                );
-              })}
-            </div>
-          </div>
-        </>,
-        document.body
-      )}
+        <div className="mg-v2-quick-actions-list">
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <MGButton
+                key={action.id}
+                type="button"
+                variant="outline"
+                preventDoubleClick={false}
+                className="mg-v2-quick-action-item"
+                onClick={() => handleActionClick(action)}
+              >
+                <Icon size={20} className="mg-v2-quick-action-item__icon" />
+                <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
+                <ChevronRight size={16} className="mg-v2-quick-action-item__arrow" />
+              </MGButton>
+            );
+          })}
+        </div>
+      </GnbDropdownPortal>
     </div>
   );
 };

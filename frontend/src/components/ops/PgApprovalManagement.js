@@ -27,7 +27,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -397,14 +397,14 @@ const PgApprovalManagement = () => {
               ))}
             </select>
             
-            <button className="mg-button"
+            <MGButton
               variant="secondary"
               size="small"
               onClick={loadPendingConfigurations}
             >
               <RefreshCw size={16} />
               새로고침
-            </button>
+            </MGButton>
           </div>
         </div>
         
@@ -490,7 +490,7 @@ const PgApprovalManagement = () => {
                 
                 <div className="card-footer">
                   <div className="card-actions">
-                    <button className="mg-button"
+                    <MGButton
                       variant="secondary"
                       size="small"
                       onClick={() => loadConfigDetail(config.configId)}
@@ -498,9 +498,9 @@ const PgApprovalManagement = () => {
                     >
                       <Eye size={16} />
                       상세보기
-                    </button>
+                    </MGButton>
                     
-                    <button className="mg-button"
+                    <MGButton
                       variant="secondary"
                       size="small"
                       onClick={() => handleTestConnection(config.configId)}
@@ -509,9 +509,9 @@ const PgApprovalManagement = () => {
                     >
                       <RefreshCw size={16} />
                       연결 테스트
-                    </button>
+                    </MGButton>
                     
-                    <button className="mg-button"
+                    <MGButton
                       variant="success"
                       size="small"
                       onClick={() => {
@@ -521,9 +521,9 @@ const PgApprovalManagement = () => {
                     >
                       <CheckCircle size={16} />
                       승인
-                    </button>
+                    </MGButton>
                     
-                    <button className="mg-button"
+                    <MGButton
                       variant="danger"
                       size="small"
                       onClick={() => {
@@ -533,7 +533,7 @@ const PgApprovalManagement = () => {
                     >
                       <XCircle size={16} />
                       거부
-                    </button>
+                    </MGButton>
                   </div>
                   
                   {testResult && testResult.configId === config.configId && (
@@ -804,9 +804,12 @@ const PgApprovalManagement = () => {
                         <label>API 키</label>
                         <div className="key-value">
                           <code><SafeText>{decryptedKeys?.apiKey || '***'}</SafeText></code>
-                          <button
+                          <MGButton
                             type="button"
+                            variant="secondary"
+                            size="small"
                             className="key-copy-button"
+                            preventDoubleClick={false}
                             onClick={() => {
                               navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
                               showNotification('API 키가 복사되었습니다.', 'success');
@@ -814,16 +817,19 @@ const PgApprovalManagement = () => {
                             title={toDisplayString('복사')}
                           >
                             복사
-                          </button>
+                          </MGButton>
                         </div>
                       </div>
                       <div className="key-item">
                         <label>시크릿 키</label>
                         <div className="key-value">
                           <code><SafeText>{decryptedKeys?.secretKey || '***'}</SafeText></code>
-                          <button
+                          <MGButton
                             type="button"
+                            variant="secondary"
+                            size="small"
                             className="key-copy-button"
+                            preventDoubleClick={false}
                             onClick={() => {
                               navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
                               showNotification('시크릿 키가 복사되었습니다.', 'success');
@@ -831,7 +837,7 @@ const PgApprovalManagement = () => {
                             title={toDisplayString('복사')}
                           >
                             복사
-                          </button>
+                          </MGButton>
                         </div>
                       </div>
                       <MGButton

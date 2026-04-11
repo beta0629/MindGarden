@@ -263,9 +263,16 @@ const WidgetBasedAdminDashboard = () => {
                             </span>
                         )}
                         {widget.isConfigurable && (
-                            <button className="btn-config" onClick={() => console.log('설정:', widget.widgetId)}>
+                            <MGButton
+                                type="button"
+                                variant="primary"
+                                size="small"
+                                className="btn-config"
+                                preventDoubleClick={false}
+                                onClick={() => console.log('설정:', widget.widgetId)}
+                            >
                                 설정
-                            </button>
+                            </MGButton>
                         )}
                     </div>
                 )}
@@ -291,15 +298,18 @@ const WidgetBasedAdminDashboard = () => {
                             {group.widgets?.length || 0}개 위젯
                         </span>
                         {isManageMode && canAddWidget && (
-                            <button 
+                            <MGButton
+                                type="button"
+                                variant="outline"
                                 className="btn-add-widget"
+                                preventDoubleClick={false}
                                 onClick={() => {
                                     setShowAddWidgetModal(true);
                                     // TODO: 그룹 ID 저장
                                 }}
                             >
                                 + 위젯 추가
-                            </button>
+                            </MGButton>
                         )}
                     </div>
                 </div>
@@ -310,12 +320,15 @@ const WidgetBasedAdminDashboard = () => {
                         <div className="empty-state">
                             <p>이 그룹에는 위젯이 없습니다.</p>
                             {isManageMode && canAddWidget && (
-                                <button 
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
                                     className="btn-add-widget-empty"
+                                    preventDoubleClick={false}
                                     onClick={() => setShowAddWidgetModal(true)}
                                 >
                                     + 첫 위젯 추가하기
-                                </button>
+                                </MGButton>
                             )}
                             <small>그룹 ID: {group.groupId}</small>
                         </div>
@@ -337,13 +350,21 @@ const WidgetBasedAdminDashboard = () => {
                 <div className="error-container">
                     <h2>오류 발생</h2>
                     <p>{error}</p>
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                        <button onClick={() => navigate('/admin/dashboard-old')}>
+                    <div className="widget-based-dashboard__error-actions">
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            onClick={() => navigate('/admin/dashboard-old')}
+                        >
                             이전 대시보드로
-                        </button>
-                        <button onClick={() => window.location.reload()}>
+                        </MGButton>
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            onClick={() => window.location.reload()}
+                        >
                             다시 시도
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             ) : (
@@ -378,12 +399,15 @@ const WidgetBasedAdminDashboard = () => {
                         )}
                         
                         {/* 관리 모드 토글 */}
-                        <button 
+                        <MGButton
+                            type="button"
+                            variant={isManageMode ? 'primary' : 'outline'}
                             className={`btn-manage-mode ${isManageMode ? 'active' : ''}`}
+                            preventDoubleClick={false}
                             onClick={() => setIsManageMode(!isManageMode)}
                         >
                             {isManageMode ? '✓ 관리 모드' : '⚙️ 대시보드 관리'}
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
 

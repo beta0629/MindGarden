@@ -12,6 +12,7 @@ import { Eye, Edit, XCircle, CheckCircle, CreditCard, DollarSign, Database, Cale
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { StatusBadge } from '../../../common';
+import MGButton from '../../../common/MGButton';
 import './MappingTableView.css';
 
 const formatDate = (dateString) => {
@@ -145,80 +146,107 @@ const MappingTableView = ({
                 <td>
                   <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
                   {mapping.totalSessions > 0 && (
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="mg-v2-mapping-table__schedule-link"
+                      preventDoubleClick={false}
                       onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
                       title="스케줄 보기"
                     >
                       <Calendar size={14} />
-                    </button>
+                    </MGButton>
                   )}
                 </td>
                 <td>{formatDate(mapping.startDate || mapping.createdAt)}</td>
                 <td className="mg-v2-mapping-table__actions">
                   <div className="mg-v2-mapping-table__actions-inner">
                     {onView && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+                        variant="primary"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => onView(mapping)}
                         title="상세"
+                        loadingText=""
                       >
                         <Eye size={14} />
-                      </button>
+                      </MGButton>
                     )}
                     {mapping.status === 'PENDING_PAYMENT' && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+                        variant="success"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => openPaymentModal(mapping)}
                         title="결제 확인"
+                        loadingText=""
                       >
                         <CreditCard size={14} />
-                      </button>
+                      </MGButton>
                     )}
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+                        variant="primary"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => openDepositModal(mapping)}
                         title="입금 확인"
+                        loadingText=""
                       >
                         <DollarSign size={14} />
-                      </button>
+                      </MGButton>
                     )}
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+                        variant="success"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
                         disabled={processing}
                         title="승인"
+                        loadingText=""
                       >
                         <CheckCircle size={14} />
-                      </button>
+                      </MGButton>
                     )}
                     {onEdit && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+                        variant="outline"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => onEdit(mapping)}
                         title="수정"
+                        loadingText=""
                       >
                         <Edit size={14} />
-                      </button>
+                      </MGButton>
                     )}
                     {onRefund && (
-                      <button
+                      <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button-danger mg-v2-button-sm"
+                        variant="danger"
+                        size="small"
+                        className="mg-v2-mapping-table__action-icon"
+                        preventDoubleClick={false}
                         onClick={() => handleCriticalAction(() => onRefund(mapping))}
                         disabled={processing}
                         title="환불"
+                        loadingText=""
                       >
                         <XCircle size={14} />
-                      </button>
+                      </MGButton>
                     )}
                   </div>
                 </td>

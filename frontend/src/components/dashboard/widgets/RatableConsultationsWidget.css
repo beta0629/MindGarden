@@ -154,7 +154,8 @@
 /* ============================================================================
    평가 버튼
    ============================================================================ */
-.ratable-consultation-rate-btn {
+.ratable-consultation-rate-btn,
+.ratable-consultation-rate-btn.mg-button {
   display: flex;
   align-items: center;
   gap: var(--cs-spacing-xs);
@@ -168,15 +169,18 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  min-height: auto;
 }
 
-.ratable-consultation-rate-btn:hover {
+.ratable-consultation-rate-btn:hover,
+.ratable-consultation-rate-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-600);
   transform: translateY(-1px);
   box-shadow: var(--cs-shadow-md);
 }
 
-.ratable-consultation-rate-btn:active {
+.ratable-consultation-rate-btn:active,
+.ratable-consultation-rate-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(0);
 }
 

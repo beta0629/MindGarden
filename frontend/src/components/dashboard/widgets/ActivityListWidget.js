@@ -18,6 +18,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import MGButton from '../../common/MGButton';
 
 const ActivityListWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -137,13 +138,15 @@ const ActivityListWidget = ({ widget, user }) => {
         
         <div className="activity-footer">
           <span className="activity-count">최근 {data.length}개 활동</span>
-          <button 
+          <MGButton
             className="show-more-btn"
+            variant="outline"
+            type="button"
             onClick={() => navigate(detailPageUrl)}
             title="전체 활동 보기"
           >
             더 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

@@ -61,14 +61,18 @@
   margin: 0;
 }
 
-/* 새로고침 버튼 */
-.healing-refresh-btn {
+/* 새로고침 버튼 (MGButton + 원형 위젯 스타일) */
+.healing-refresh-btn.mg-button {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  min-width: auto;
+  min-height: auto;
+  padding: 0;
   border: none;
+  box-shadow: none;
   border-radius: 50%;
   background: var(--cs-glass-light-subtle);
   color: var(--cs-primary-600);
@@ -77,18 +81,18 @@
   position: relative;
 }
 
-.healing-refresh-btn:hover:not(:disabled) {
+.healing-refresh-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-100);
   color: var(--cs-primary-700);
   transform: scale(1.05);
   box-shadow: var(--cs-shadow-sm);
 }
 
-.healing-refresh-btn:active:not(:disabled) {
+.healing-refresh-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: scale(0.95);
 }
 
-.healing-refresh-btn:disabled {
+.healing-refresh-btn.mg-button.mg-button--disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -16,6 +16,7 @@ import React from 'react';
 import { Heart, RefreshCw } from 'lucide-react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import { RoleUtils } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
@@ -144,9 +145,11 @@ const HealingCardWidget = ({ widget, user }) => {
               {currentHealingData?.title || '오늘의 힐링'}
             </h3>
           </div>
-          <button
-            onClick={handleRefresh}
+          <MGButton
             className="healing-refresh-btn"
+            variant="outline"
+            type="button"
+            onClick={handleRefresh}
             title="새로운 메시지 보기"
             disabled={loading}
           >
@@ -155,7 +158,7 @@ const HealingCardWidget = ({ widget, user }) => {
             ) : (
               <RefreshCw size={18} />
             )}
-          </button>
+          </MGButton>
         </div>
 
         {/* 힐링 컨텐츠 */}

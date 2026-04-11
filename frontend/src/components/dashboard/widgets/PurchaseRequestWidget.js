@@ -20,6 +20,7 @@ import { ShoppingCart, ChevronDown, ChevronUp, ShoppingBag, Plus, ChevronRight }
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 
 const PurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -192,15 +193,25 @@ const PurchaseRequestWidget = ({ widget, user }) => {
           )}
           
           <div className="purchase-request-actions">
-            <button className="widget-btn widget-btn-primary mg-btn mg-btn-primary" onClick={handleCreateRequest}>
+            <MGButton
+              className="widget-btn widget-btn-primary mg-btn mg-btn-primary"
+              variant="primary"
+              type="button"
+              onClick={handleCreateRequest}
+            >
               <Plus size={16} aria-hidden />
               새 요청
-            </button>
+            </MGButton>
             {config.viewAllUrl && (
-              <button className="widget-btn mg-btn mg-btn-ghost" onClick={handleViewAll}>
+              <MGButton
+                className="widget-btn mg-btn mg-btn-ghost"
+                variant="outline"
+                type="button"
+                onClick={handleViewAll}
+              >
                 전체보기
                 <ChevronRight size={16} aria-hidden />
-              </button>
+              </MGButton>
             )}
           </div>
         </div>

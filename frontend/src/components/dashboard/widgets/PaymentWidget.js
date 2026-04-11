@@ -15,6 +15,7 @@
 import React from 'react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
@@ -105,13 +106,13 @@ const PaymentWidget = ({ widget, user }) => {
             <div className="payment-actions">
               {config.showActions && (
                 <>
-                  <button className="payment-action-btn view" title="상세보기">
+                  <MGButton className="payment-action-btn view" variant="outline" size="small" type="button" title="상세보기">
                     <i className="bi bi-eye"></i>
-                  </button>
+                  </MGButton>
                   {payment.status === 'completed' && (
-                    <button className="payment-action-btn receipt" title="영수증">
+                    <MGButton className="payment-action-btn receipt" variant="outline" size="small" type="button" title="영수증">
                       <i className="bi bi-receipt"></i>
-                    </button>
+                    </MGButton>
                   )}
                 </>
               )}

@@ -15,6 +15,7 @@
 import React from 'react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
@@ -53,12 +54,12 @@ const CalendarWidget = ({ widget, user }) => {
         <div className="calendar-header">
           <h4 className="calendar-month">{currentMonth}</h4>
           <div className="calendar-nav">
-            <button className="nav-btn prev" title="이전 달">
+            <MGButton className="nav-btn prev" variant="outline" type="button" title="이전 달">
               <i className="bi bi-chevron-left"></i>
-            </button>
-            <button className="nav-btn next" title="다음 달">
+            </MGButton>
+            <MGButton className="nav-btn next" variant="outline" type="button" title="다음 달">
               <i className="bi bi-chevron-right"></i>
-            </button>
+            </MGButton>
           </div>
         </div>
         

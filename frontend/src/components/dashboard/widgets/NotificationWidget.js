@@ -21,6 +21,7 @@ import BaseWidget from './BaseWidget';
 import { apiPost } from '../../../utils/ajax';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 
 const NotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -122,9 +123,9 @@ const NotificationWidget = ({ widget, user }) => {
   
   // 헤더 액션 설정
   const headerActions = unreadCount > 0 ? (
-    <button className="widget-view-all" onClick={handleViewAll}>
+    <MGButton className="widget-view-all" variant="outline" type="button" onClick={handleViewAll}>
       {unreadCount > maxItems ? `전체 보기 (+${unreadCount - maxItems})` : '전체 보기'}
-    </button>
+    </MGButton>
   ) : null;
   
   return (

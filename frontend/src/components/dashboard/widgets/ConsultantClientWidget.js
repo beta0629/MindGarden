@@ -4,6 +4,7 @@ import { Users, Calendar } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import './ConsultantClientWidget.css';
 
@@ -166,12 +167,14 @@ const ConsultantClientWidget = ({ widget, user }) => {
       </div>
     ),
     actions: (
-      <button 
+      <MGButton
         className="consultant-client-view-all-btn"
+        variant="outline"
+        type="button"
         onClick={handleViewAllClients}
       >
         전체보기 →
-      </button>
+      </MGButton>
     )
   };
 

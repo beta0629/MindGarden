@@ -22,6 +22,7 @@ import { redirectToDynamicDashboard } from '../../../../utils/dashboardUtils';
 import { sessionManager } from '../../../../utils/sessionManager';
 import ConfirmModal from '../../../common/ConfirmModal';
 import Avatar from '../../../common/Avatar';
+import MGButton from '../../../common/MGButton';
 import '../Widget.css';
 import './HeaderWidget.css';
 
@@ -141,13 +142,15 @@ const HeaderWidget = ({ widget, user }) => {
           {/* 왼쪽 영역 */}
           <div className="widget-header-left">
             {shouldShowBackButton() && (
-              <button 
-                className="widget-header-back-button" 
+              <MGButton
+                className="widget-header-back-button"
+                variant="outline"
+                type="button"
                 onClick={handleBackClick}
                 title="뒤로가기"
               >
                 <i className="bi bi-arrow-left"></i>
-              </button>
+              </MGButton>
             )}
             
             {showLogo && (
@@ -186,14 +189,16 @@ const HeaderWidget = ({ widget, user }) => {
                 )}
 
                 {showLogoutButton && (
-                  <button 
+                  <MGButton
                     className="widget-header-logout-button"
+                    variant="danger"
+                    type="button"
                     onClick={handleLogout}
                     title="로그아웃"
                   >
                     <i className="bi bi-box-arrow-right"></i>
                     <span>로그아웃</span>
-                  </button>
+                  </MGButton>
                 )}
               </>
             ) : (

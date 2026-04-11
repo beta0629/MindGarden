@@ -16,6 +16,7 @@ import React from 'react';
 import { Calendar, ArrowRight, Clock, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import { RoleUtils } from '../../../constants/roles';
 import './ScheduleWidget.css';
 
@@ -76,21 +77,25 @@ const ScheduleWidget = ({ widget, user }) => {
 
         {/* 빠른 액션 버튼들 */}
         <div className="schedule-quick-actions">
-          <button
+          <MGButton
             className="schedule-action-btn primary"
+            variant="primary"
+            type="button"
             onClick={handleScheduleClick}
           >
             <Clock size={18} />
             오늘의 스케줄
-          </button>
-          
-          <button
+          </MGButton>
+
+          <MGButton
             className="schedule-action-btn secondary"
+            variant="outline"
+            type="button"
             onClick={handleNewScheduleClick}
           >
             <Plus size={18} />
             새 일정 등록
-          </button>
+          </MGButton>
         </div>
 
         {/* 상담사 전용 안내 메시지 */}

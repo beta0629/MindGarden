@@ -21,6 +21,7 @@ import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import './Widget.css';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const MessageWidget = ({ widget, user }) => {
@@ -147,9 +148,9 @@ const MessageWidget = ({ widget, user }) => {
           )}
         </div>
         {config.viewAllUrl && (
-          <button className="widget-view-all" onClick={handleViewAll}>
+          <MGButton className="widget-view-all" variant="outline" type="button" onClick={handleViewAll}>
             전체보기 →
-          </button>
+          </MGButton>
         )}
       </div>
       <div className="widget-body">

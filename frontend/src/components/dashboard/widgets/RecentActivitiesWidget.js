@@ -22,6 +22,7 @@ import { getStatusLabel } from '../../../utils/colorUtils';
 import { RECENT_ACTIVITIES_CSS } from '../../../constants/css';
 import './RecentActivitiesWidget.css';
 import '../RecentActivities.css';
+import MGButton from '../../common/MGButton';
 
 const RecentActivitiesWidget = ({ widget, user }) => {
   // 역할별 API 엔드포인트 결정
@@ -271,13 +272,16 @@ const RecentActivitiesWidget = ({ widget, user }) => {
             최근 활동
           </h3>
           {hasMoreActivities && (
-            <button 
+            <MGButton
               className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
+              variant="outline"
+              size="small"
+              type="button"
               onClick={handleViewAll}
             >
               <i className="bi bi-arrow-right"></i>
               전체보기
-            </button>
+            </MGButton>
           )}
         </div>
 

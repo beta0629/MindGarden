@@ -354,7 +354,8 @@
   margin-top: 1rem;
 }
 
-.form-actions button {
+.form-actions button,
+.form-actions .mg-button.submit-btn {
   padding: 0.75rem 1.5rem;
   background: var(--mg-primary-500);
   color: white;
@@ -364,7 +365,8 @@
   font-size: 1rem;
 }
 
-.form-actions button:disabled {
+.form-actions button:disabled,
+.form-actions .mg-button.submit-btn.mg-button--disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -426,6 +428,22 @@
   font-size: 0.9rem;
   font-weight: 500;
   text-align: center;
+}
+
+.widget-quick-actions .quick-action-btn.mg-button {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--mg-gray-100);
+  border: 1px solid var(--cs-gray-200);
+  color: var(--cs-gray-600);
+}
+
+.widget-quick-actions .quick-action-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--cs-gray-200);
+  border-color: var(--mg-primary-500);
+  color: var(--mg-primary-500);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--mg-shadow-light);
 }
 
 /* System Overview Widget - 카드 스타일 개선 */

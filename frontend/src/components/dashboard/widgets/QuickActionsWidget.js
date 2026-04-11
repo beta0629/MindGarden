@@ -20,6 +20,7 @@ import { Zap } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
 
@@ -115,9 +116,11 @@ const QuickActionsWidget = ({ widget, user }) => {
           <div className="mg-card-body">
             <div className="quick-actions-grid">
               {visibleActions.map((action, index) => (
-                <button
+                <MGButton
                   key={action.id || index}
                   className="quick-action-btn"
+                  variant="outline"
+                  type="button"
                   onClick={() => handleActionClick(action)}
                   title={toDisplayString(action.tooltip || action.label)}
                 >
@@ -129,7 +132,7 @@ const QuickActionsWidget = ({ widget, user }) => {
                     )
                   )}
                   <span><SafeText>{action.label}</SafeText></span>
-                </button>
+                </MGButton>
               ))}
             </div>
           </div>

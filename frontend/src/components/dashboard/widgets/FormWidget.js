@@ -18,6 +18,7 @@ import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const FormWidget = ({ widget, user }) => {
@@ -171,20 +172,23 @@ const FormWidget = ({ widget, user }) => {
           {fields.map((field, index) => renderField(field, index))}
           
           <div className="form-actions">
-            <button 
-              type="submit" 
-              disabled={submitting}
+            <MGButton
+              type="submit"
               className="submit-btn"
+              variant="primary"
+              loading={submitting}
+              loadingText="제출 중..."
             >
-              {submitting ? '제출 중...' : '제출'}
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setFormData({})}
+              제출
+            </MGButton>
+            <MGButton
+              type="button"
               className="reset-btn"
+              variant="outline"
+              onClick={() => setFormData({})}
             >
               초기화
-            </button>
+            </MGButton>
           </div>
         </form>
 

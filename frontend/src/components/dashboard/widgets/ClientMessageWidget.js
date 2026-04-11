@@ -19,6 +19,7 @@ import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const ClientMessageWidget = ({ widget, user }) => {
@@ -265,12 +266,14 @@ const ClientMessageWidget = ({ widget, user }) => {
       </div>
     ),
     actions: allMessages.length > 0 && (
-      <button 
+      <MGButton
         className="client-message-view-all-btn"
+        variant="outline"
+        type="button"
         onClick={handleViewAllMessages}
       >
         전체보기
-      </button>
+      </MGButton>
     )
   };
 

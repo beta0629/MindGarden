@@ -25,6 +25,7 @@ import { SUMMARY_PANELS_CSS } from '../../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../../constants/dashboard';
 import { useWidget } from '../../../hooks/useWidget';
 import './SummaryPanelsWidget.css';
+import MGButton from '../../common/MGButton';
 import '../SummaryPanels.css';
 
 const SummaryPanelsWidget = ({ widget, user }) => {
@@ -181,12 +182,14 @@ const SummaryPanelsWidget = ({ widget, user }) => {
                         {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
                         {upcomingCount > 3 && (
                           <div className="summary-more-indicator">
-                            <button 
-                              onClick={() => navigate('/consultant/schedule')}
+                            <MGButton
                               className="summary-more-btn"
+                              variant="outline"
+                              type="button"
+                              onClick={() => navigate('/consultant/schedule')}
                             >
                               +{upcomingCount - 3}건 더 보기 →
-                            </button>
+                            </MGButton>
                           </div>
                         )}
                       </div>
@@ -355,13 +358,15 @@ const SummaryPanelsWidget = ({ widget, user }) => {
             </div>
             
             <div className="mapping-actions">
-              <button 
+              <MGButton
                 className="mapping-manage-btn"
+                variant="primary"
+                type="button"
                 onClick={handleMappingManagement}
               >
                 <Settings size={16} />
                 매핑 관리
-              </button>
+              </MGButton>
             </div>
           </div>
         </BaseWidget>

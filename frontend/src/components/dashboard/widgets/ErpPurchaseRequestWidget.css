@@ -76,7 +76,8 @@
   margin-bottom: var(--cs-spacing-lg);
 }
 
-.erp-purchase-empty-btn {
+.erp-purchase-empty-btn,
+.erp-purchase-empty-btn.mg-button {
   display: inline-flex;
   align-items: center;
   gap: var(--cs-spacing-xs);
@@ -89,9 +90,11 @@
   border-radius: var(--cs-radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: auto;
 }
 
-.erp-purchase-empty-btn:hover {
+.erp-purchase-empty-btn:hover,
+.erp-purchase-empty-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-600);
   transform: translateY(-1px);
 }
@@ -199,7 +202,8 @@
   border: 1px solid var(--cs-border-secondary);
 }
 
-.erp-purchase-action-btn {
+.erp-purchase-action-btn,
+.erp-purchase-action-btn.mg-button {
   display: flex;
   align-items: center;
   gap: var(--cs-spacing-xs);
@@ -212,27 +216,32 @@
   transition: all 0.2s ease;
   flex: 1;
   justify-content: center;
+  min-height: auto;
 }
 
-.erp-purchase-action-btn.primary {
+.erp-purchase-action-btn.primary,
+.erp-purchase-action-btn.primary.mg-button {
   background: var(--cs-primary-500);
   border-color: var(--cs-primary-500);
   color: white;
 }
 
-.erp-purchase-action-btn.primary:hover {
+.erp-purchase-action-btn.primary:hover,
+.erp-purchase-action-btn.primary.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-600);
   border-color: var(--cs-primary-600);
   transform: translateY(-1px);
 }
 
-.erp-purchase-action-btn.secondary {
+.erp-purchase-action-btn.secondary,
+.erp-purchase-action-btn.secondary.mg-button {
   background: transparent;
   border-color: var(--cs-border-primary);
   color: var(--cs-text-primary);
 }
 
-.erp-purchase-action-btn.secondary:hover {
+.erp-purchase-action-btn.secondary:hover,
+.erp-purchase-action-btn.secondary.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-bg-hover);
   border-color: var(--cs-primary-300);
 }
@@ -386,11 +395,13 @@
 }
 
 /* 버튼 호버 효과 */
-.erp-purchase-action-btn:active {
+.erp-purchase-action-btn:active,
+.erp-purchase-action-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(1px);
 }
 
-.erp-purchase-empty-btn:active {
+.erp-purchase-empty-btn:active,
+.erp-purchase-empty-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(0);
 }
 

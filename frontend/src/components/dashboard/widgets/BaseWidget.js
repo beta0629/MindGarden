@@ -23,6 +23,7 @@
 
 import React from 'react';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
+import MGButton from '../../common/MGButton';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
 import './Widget.css';
@@ -109,13 +110,14 @@ const BaseWidget = ({
           <strong>오류 발생</strong>
           <SafeErrorDisplay error={error} variant="inline" icon={false} />
           {onRefresh && (
-            <button 
-              className="mg-button mg-button--sm mg-button--outline"
-              onClick={onRefresh}
+            <MGButton
+              variant="outline"
+              size="small"
               type="button"
+              onClick={onRefresh}
             >
               {WIDGET_CONSTANTS.ICONS.REFRESH} 다시 시도
-            </button>
+            </MGButton>
           )}
         </div>
       </div>
@@ -137,14 +139,15 @@ const BaseWidget = ({
         {config.emptyMessage || '표시할 데이터가 없습니다'}
       </p>
       {onRefresh && (
-        <button 
-          className="mg-button mg-button--sm mg-button--ghost"
-          onClick={onRefresh}
+        <MGButton
+          variant="outline"
+          size="small"
           type="button"
+          onClick={onRefresh}
           style={{ marginTop: '1rem' }}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH} 새로고침
-        </button>
+        </MGButton>
       )}
     </div>
   );
@@ -188,15 +191,16 @@ const BaseWidget = ({
             <div className="mg-widget-actions">
               {headerActions}
               {onRefresh && (
-                <button 
-                  className="mg-button mg-button--sm mg-button--ghost"
-                  onClick={onRefresh}
+                <MGButton
+                  variant="outline"
+                  size="small"
                   type="button"
+                  onClick={onRefresh}
                   title="새로고침"
                   disabled={loading}
                 >
                   {WIDGET_CONSTANTS.ICONS.REFRESH}
-                </button>
+                </MGButton>
               )}
             </div>
           )}

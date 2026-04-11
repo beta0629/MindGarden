@@ -11,6 +11,7 @@ import {
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import './RatableConsultationsWidget.css';
 
 const RatableConsultationsWidget = ({ widget, user }) => {
@@ -170,13 +171,15 @@ const RatableConsultationsWidget = ({ widget, user }) => {
                 </span>
               </div>
             </div>
-            <button
+            <MGButton
               className="ratable-consultation-rate-btn"
+              variant="primary"
+              type="button"
               onClick={() => handleRateConsultant(schedule)}
             >
               <Heart size={16} />
               평가하기
-            </button>
+            </MGButton>
           </div>
         ))}
       </div>

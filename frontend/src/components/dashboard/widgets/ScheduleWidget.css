@@ -102,7 +102,8 @@
   gap: var(--cs-spacing-md);
 }
 
-.schedule-action-btn {
+.schedule-action-btn,
+.schedule-action-btn.mg-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,33 +116,39 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: var(--cs-shadow-sm);
+  min-height: auto;
 }
 
-.schedule-action-btn.primary {
+.schedule-action-btn.primary,
+.schedule-action-btn.primary.mg-button {
   background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
   color: white;
 }
 
-.schedule-action-btn.primary:hover {
+.schedule-action-btn.primary:hover,
+.schedule-action-btn.primary.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: linear-gradient(135deg, var(--cs-primary-600), var(--cs-primary-700));
   box-shadow: var(--cs-shadow-md);
   transform: translateY(-2px);
 }
 
-.schedule-action-btn.secondary {
+.schedule-action-btn.secondary,
+.schedule-action-btn.secondary.mg-button {
   background: var(--cs-glass-light);
   color: var(--cs-primary-700);
   border: 2px solid var(--cs-primary-200);
 }
 
-.schedule-action-btn.secondary:hover {
+.schedule-action-btn.secondary:hover,
+.schedule-action-btn.secondary.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-50);
   border-color: var(--cs-primary-400);
   transform: translateY(-2px);
   box-shadow: var(--cs-shadow-md);
 }
 
-.schedule-action-btn:active {
+.schedule-action-btn:active,
+.schedule-action-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(0);
 }
 

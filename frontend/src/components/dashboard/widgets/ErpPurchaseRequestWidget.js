@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import './ErpPurchaseRequestWidget.css';
 
 const ErpPurchaseRequestWidget = ({ widget, user }) => {
@@ -123,13 +124,15 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
           <div className="erp-purchase-empty-hint">
             필요한 비품이 있으시면 구매 요청을 해보세요
           </div>
-          <button 
+          <MGButton
             className="erp-purchase-empty-btn"
+            variant="primary"
+            type="button"
             onClick={handleNewPurchaseRequest}
           >
             <Plus size={16} />
             새 구매 요청
-          </button>
+          </MGButton>
         </div>
       );
     }
@@ -177,20 +180,24 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
 
         {/* 액션 버튼 */}
         <div className="erp-purchase-actions">
-          <button 
+          <MGButton
             className="erp-purchase-action-btn primary"
+            variant="primary"
+            type="button"
             onClick={handleNewPurchaseRequest}
           >
             <Plus size={16} />
             새 구매 요청
-          </button>
-          <button 
+          </MGButton>
+          <MGButton
             className="erp-purchase-action-btn secondary"
+            variant="outline"
+            type="button"
             onClick={handleViewRequestHistory}
           >
             <FileText size={16} />
             요청 내역
-          </button>
+          </MGButton>
         </div>
       </div>
     );

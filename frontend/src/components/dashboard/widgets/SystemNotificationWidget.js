@@ -6,6 +6,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import { useNotification } from '../../../contexts/NotificationContext';
 import Badge from '../../common/Badge';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import './SystemNotificationWidget.css';
 
 const SystemNotificationWidget = ({ widget, user }) => {
@@ -93,12 +94,14 @@ const SystemNotificationWidget = ({ widget, user }) => {
       </div>
     ),
     actions: totalUnreadCount > 0 && (
-      <button
+      <MGButton
         className="system-notification-view-all-btn"
+        variant="outline"
+        type="button"
         onClick={handleViewAll}
       >
         {totalUnreadCount > 5 ? `전체 보기 (+${totalUnreadCount - 5})` : '전체 보기'}
-      </button>
+      </MGButton>
     )
   };
 

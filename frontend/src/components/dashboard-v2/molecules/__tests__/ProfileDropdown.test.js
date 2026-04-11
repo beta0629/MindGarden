@@ -5,7 +5,7 @@
  * @see docs/project-management/GNB_DROPDOWN_VERIFICATION_CHECKLIST.md
  */
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProfileDropdown from '../ProfileDropdown';
 
@@ -14,11 +14,13 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate
 }));
 
-const mockGetUser = jest.fn();
-jest.mock('../../../../utils/sessionManager', () => ({
-  sessionManager: {
-    getUser: () => mockGetUser()
-  }
+const sessionState = { user: null };
+jest.mock('../../../../contexts/SessionContext', () => ({
+  useSession: () => ({ user: sessionState.user })
+}));
+
+jest.mock('../../../../hooks/useBranding', () => ({
+  useBranding: () => ({ brandingInfo: null })
 }));
 
 describe('ProfileDropdown', () => {
@@ -31,7 +33,7 @@ describe('ProfileDropdown', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetUser.mockReturnValue(defaultUser);
+    sessionState.user = defaultUser;
   });
 
   describe('렌더링', () => {
@@ -42,7 +44,7 @@ describe('ProfileDropdown', () => {
     });
 
     it('user가 null이면 아무것도 렌더하지 않는다', () => {
-      mockGetUser.mockReturnValue(null);
+      sessionState.user = null;
       const { container } = render(<ProfileDropdown />);
       expect(container.firstChild).toBeNull();
     });
@@ -111,7 +113,7 @@ describe('ProfileDropdown', () => {
       await userEvent.click(screen.getByRole('button', { expanded: false }));
       await userEvent.click(screen.getByText('내 정보'));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/mypage');
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/mypage');
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 

@@ -20,3 +20,11 @@ export const TEST_DATA = {
     { key: 'email', header: '이메일' }
   ]
 };
+
+// __tests__ 내 헬퍼 파일이 단독 테스트 스위트로 수집되므로 최소 1개 테스트 유지
+describe('testUtils', () => {
+  it('exports TestWrapper and TEST_DATA', () => {
+    expect(TestWrapper).toBeDefined();
+    expect(TEST_DATA.COLUMNS.length).toBeGreaterThan(0);
+  });
+});

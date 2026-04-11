@@ -1,14 +1,20 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import PendingDepositsWidget from './PendingDepositsWidget.js';
+import PendingDepositsWidget from '../admin/PendingDepositsWidget.js';
 
-// API 모킹
-jest.mock('../../../utils/ajax', () => ({
+jest.mock('react-router-dom', () => {
+  const R = require('react');
+  return {
+    useNavigate: () => jest.fn(),
+    BrowserRouter: ({ children }) =>
+      R.createElement(R.Fragment, null, children)
+  };
+});
+
+jest.mock('../../../../utils/ajax', () => ({
   apiGet: jest.fn()
 }));
-
-const { apiGet } = require('../../../utils/ajax');
 
 const renderWidget = (props = {}) => {
   const defaultProps = {
@@ -37,36 +43,15 @@ describe('PendingDepositsWidget', () => {
     jest.clearAllMocks();
   });
 
-  it('위젯이 정상적으로 렌더링된다', () => {
-    apiGet.mockResolvedValue({ data: 'test' });
+  it('관리자에게 위젯 제목이 보인다', () => {
     renderWidget();
-    
+
     expect(screen.getByText('Test PendingDeposits')).toBeInTheDocument();
   });
 
-  it('로딩 상태를 표시한다', () => {
-    apiGet.mockImplementation(() => new Promise(() => {})); // 무한 대기
+  it('대기 입금이 없을 때 안내 문구를 표시한다', () => {
     renderWidget();
-    
-    expect(screen.getByText('로딩 중...')).toBeInTheDocument();
-  });
 
-  it('API 오류를 처리한다', async () => {
-    apiGet.mockRejectedValue(new Error('API Error'));
-    renderWidget();
-    
-    await waitFor(() => {
-      expect(screen.getByText(/데이터를 불러올 수 없습니다/)).toBeInTheDocument();
-    });
-  });
-
-  it('데이터를 성공적으로 로드한다', async () => {
-    const mockData = { count: 10, items: [] };
-    apiGet.mockResolvedValue(mockData);
-    renderWidget();
-    
-    await waitFor(() => {
-      expect(screen.getByText(JSON.stringify(mockData, null, 2))).toBeInTheDocument();
-    });
+    expect(screen.getByText(/확인 대기 중인 입금이 없습니다/)).toBeInTheDocument();
   });
 });

@@ -11,3 +11,29 @@
   margin: 0;
   padding: var(--spacing-md) var(--spacing-sm);
 }
+
+/* MGButton — 기존 링크형 ‘자세히 보기’와 동일한 톤 */
+.privacy-consent-modal .privacy-consent-modal__legal-toggle.mg-button {
+  background: none;
+  border: none;
+  box-shadow: none;
+  min-height: unset;
+  padding: 0;
+  color: var(--mg-primary-500, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.privacy-consent-modal .privacy-consent-modal__legal-toggle.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  text-decoration: underline;
+  transform: none;
+}
+
+.privacy-consent-modal .privacy-consent-modal__legal-toggle.mg-button .mg-button__content,
+.privacy-consent-modal .privacy-consent-modal__legal-toggle.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}

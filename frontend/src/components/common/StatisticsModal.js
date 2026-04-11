@@ -18,6 +18,8 @@ import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
 import StatisticsGrid from './StatsGrid';
 import UnifiedModal from './modals/UnifiedModal';
+import MGButton from './MGButton';
+import './StatisticsModal.css';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   const [statistics, setStatistics] = useState(null);
@@ -172,39 +174,44 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       loading={loading}
       actions={
         <>
-          <button
-            className="mg-button mg-button-outline"
+          <MGButton
+            type="button"
+            variant="outline"
             onClick={handleRefresh}
             disabled={loading}
+            preventDoubleClick={false}
           >
             <RefreshCw size={16} />
             새로고침
-          </button>
-          <button
-            className="mg-button mg-button-primary"
-            onClick={onClose}
-          >
+          </MGButton>
+          <MGButton type="button" variant="primary" onClick={onClose} preventDoubleClick={false}>
             닫기
-          </button>
+          </MGButton>
         </>
       }
     >
         <div className="mg-modal-body">
           <div className="mg-tabs">
-            <button 
+            <MGButton
+              type="button"
+              variant="outline"
               className={`mg-tab ${activeTab === 'overall' ? 'mg-tab-active' : ''}`}
               onClick={() => setActiveTab('overall')}
+              preventDoubleClick={false}
             >
               <BarChart size={16} />
               전체 통계
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               className={`mg-tab ${activeTab === 'today' ? 'mg-tab-active' : ''}`}
               onClick={() => setActiveTab('today')}
+              preventDoubleClick={false}
             >
               <Calendar size={16} />
               오늘 통계
-            </button>
+            </MGButton>
           </div>
           
           <div className="mg-modal-content">

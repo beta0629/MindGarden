@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
+import MGButton from './MGButton';
 
 /**
  * 확인 모달 컴포넌트 (단일 소스)
@@ -50,16 +51,16 @@ const ConfirmModal = ({
     }
   };
 
-  const getConfirmButtonClass = () => {
+  const getConfirmVariant = () => {
     switch (type) {
       case 'danger':
-        return 'mg-v2-button--danger';
+        return 'danger';
       case 'warning':
-        return 'mg-v2-button--warning';
+        return 'warning';
       case 'success':
-        return 'mg-v2-button--success';
+        return 'success';
       default:
-        return 'mg-v2-button--primary';
+        return 'primary';
     }
   };
 
@@ -73,18 +74,12 @@ const ConfirmModal = ({
       backdropClick={true}
       actions={
         <>
-          <button
-            className="mg-v2-button mg-v2-button--secondary"
-            onClick={onClose}
-          >
+          <MGButton type="button" variant="secondary" onClick={onClose}>
             {cancelText}
-          </button>
-          <button
-            className={`mg-v2-button ${getConfirmButtonClass()}`}
-            onClick={handleConfirm}
-          >
+          </MGButton>
+          <MGButton type="button" variant={getConfirmVariant()} onClick={handleConfirm}>
             {confirmText}
-          </button>
+          </MGButton>
         </>
       }
     >

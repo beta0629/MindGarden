@@ -200,6 +200,29 @@
   cursor: not-allowed;
 }
 
+/* MGButton — 기존 초기화 버튼 톤 유지 */
+.mg-filter__reset.mg-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-height: unset;
+  box-shadow: none;
+}
+
+.mg-filter__reset.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--bg-hover);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: none;
+}
+
 /* ===== 반응형 디자인 ===== */
 @media (max-width: 768px) {
   .mg-filter {

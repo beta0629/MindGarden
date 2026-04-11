@@ -8,6 +8,7 @@ import React, { useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { User } from 'lucide-react';
 import { processProfileImage } from '../../utils/imageResizeCrop';
+import MGButton from './MGButton';
 
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 const DEFAULT_CROP_SIZE = 400;
@@ -92,14 +93,15 @@ const ProfileImageInput = ({
             {selectLabel}
           </label>
           {value && (
-            <button
+            <MGButton
               type="button"
+              variant="outline"
               className="mg-v2-button mg-v2-button-outline"
               onClick={handleRemove}
               disabled={disabled}
             >
               {removeLabel}
-            </button>
+            </MGButton>
           )}
         </div>
       </div>

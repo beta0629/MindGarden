@@ -168,10 +168,13 @@ const PrivacyConsentModal = ({
                 <div className="mg-v2-form-checkbox-description">
                   서비스 이용을 위해 필요한 개인정보 수집 및 이용에 동의합니다.
                 </div>
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  size="small"
+                  className="privacy-consent-modal__legal-toggle mg-v2-mt-xs"
                   onClick={() => setShowPrivacyDetail(!showPrivacyDetail)}
-                  className="mg-v2-button mg-v2-button--link mg-v2-mt-xs"
+                  preventDoubleClick={false}
                 >
                   {showPrivacyDetail ? (
                     <>
@@ -184,7 +187,7 @@ const PrivacyConsentModal = ({
                       자세히 보기
                     </>
                   )}
-                </button>
+                </MGButton>
               </div>
             </label>
 
@@ -210,10 +213,13 @@ const PrivacyConsentModal = ({
                 <div className="mg-v2-form-checkbox-description">
                   서비스 이용을 위한 이용약관에 동의합니다.
                 </div>
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  size="small"
+                  className="privacy-consent-modal__legal-toggle mg-v2-mt-xs"
                   onClick={() => setShowTermsDetail(!showTermsDetail)}
-                  className="mg-v2-button mg-v2-button--link mg-v2-mt-xs"
+                  preventDoubleClick={false}
                 >
                   {showTermsDetail ? (
                     <>
@@ -226,7 +232,7 @@ const PrivacyConsentModal = ({
                       자세히 보기
                     </>
                   )}
-                </button>
+                </MGButton>
               </div>
             </label>
 

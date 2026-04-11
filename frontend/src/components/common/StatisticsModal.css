@@ -1,0 +1,36 @@
+/* StatisticsModal — MGButton + 기존 .mg-tab 시각 정합 */
+
+.mg-modal-body .mg-tabs .mg-button.mg-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  min-height: unset;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  box-shadow: none;
+  color: var(--color-text-secondary);
+  transition: var(--transition-fast);
+}
+
+.mg-modal-body .mg-tabs .mg-button.mg-tab:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-neutral);
+  color: var(--color-text-primary);
+  transform: none;
+}
+
+.mg-modal-body .mg-tabs .mg-button.mg-tab.mg-tab-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.mg-modal-body .mg-tabs .mg-button.mg-tab .mg-button__content,
+.mg-modal-body .mg-tabs .mg-button.mg-tab .mg-button__text {
+  display: contents;
+}

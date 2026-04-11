@@ -1,6 +1,9 @@
 import React from 'react';
 import UnifiedModal from './UnifiedModal';
-import '../../styles/main.css';
+import MGButton from '../MGButton';
+import '../../../styles/main.css';
+
+const SUBMIT_VARIANTS = new Set(['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'outline']);
 
 /**
  * 폼 모달 컴포넌트 - UnifiedModal 기반
@@ -25,12 +28,7 @@ const FormModal = ({
     }
   };
 
-  const getSubmitButtonClass = () => {
-    const baseClass = 'mg-btn';
-    const typeClass = `mg-btn--${submitType}`;
-    const loadingClass = loading ? 'mg-btn--loading' : '';
-    return [baseClass, typeClass, loadingClass].filter(Boolean).join(' ');
-  };
+  const submitVariant = SUBMIT_VARIANTS.has(submitType) ? submitType : 'primary';
 
   return (
     <UnifiedModal
@@ -42,22 +40,24 @@ const FormModal = ({
       loading={loading}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
-            className="mg-btn mg-btn--secondary"
+            variant="secondary"
             onClick={onClose}
             disabled={loading}
           >
             {cancelText}
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
-            className={getSubmitButtonClass()}
+            variant={submitVariant}
             onClick={handleSubmit}
             disabled={loading}
+            loading={loading}
+            loadingText="저장중..."
           >
-            {loading ? '저장중...' : submitText}
-          </button>
+            {submitText}
+          </MGButton>
         </>
       }
     >

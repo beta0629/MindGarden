@@ -96,6 +96,18 @@
   white-space: nowrap;
 }
 
+/* MGButton — 칩 레이아웃·기존 배지 스타일 정합 */
+.mg-v2-badge-select__item.mg-button {
+  font-family: inherit;
+  line-height: inherit;
+}
+
+.mg-v2-badge-select__item.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Small variant */
 .mg-v2-badge-select--small {
   min-height: 28px;

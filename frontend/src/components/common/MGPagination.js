@@ -1,4 +1,5 @@
 import React from 'react';
+import MGButton from './MGButton';
 import './MGPagination.css';
 
 /**
@@ -102,14 +103,17 @@ const MGPagination = ({
       
       <div className="mg-pagination__content">
         {/* 이전 페이지 버튼 */}
-        <button
+        <MGButton
+          type="button"
+          variant="outline"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1 || loading}
           className="mg-pagination__button mg-pagination__button--prev"
           title="이전 페이지"
+          preventDoubleClick={false}
         >
           ←
-        </button>
+        </MGButton>
         
         {/* 페이지 번호들 */}
         <div className="mg-pagination__pages">
@@ -119,29 +123,35 @@ const MGPagination = ({
                 ...
               </span>
             ) : (
-              <button
+              <MGButton
                 key={page}
+                type="button"
+                variant="outline"
                 onClick={() => handlePageChange(page)}
                 disabled={loading}
                 className={`mg-pagination__button mg-pagination__button--page ${
                   page === currentPage ? 'mg-pagination__button--active' : ''
                 }`}
+                preventDoubleClick={false}
               >
                 {page}
-              </button>
+              </MGButton>
             )
           ))}
         </div>
         
         {/* 다음 페이지 버튼 */}
-        <button
+        <MGButton
+          type="button"
+          variant="outline"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || loading}
           className="mg-pagination__button mg-pagination__button--next"
           title="다음 페이지"
+          preventDoubleClick={false}
         >
           →
-        </button>
+        </MGButton>
       </div>
       
       {/* 페이지당 항목 수 선택 */}

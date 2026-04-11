@@ -1,5 +1,6 @@
 import React from 'react';
 import { toDisplayString } from '../../utils/safeDisplay';
+import MGButton from './MGButton';
 import './MGFilter.css';
 
 /**
@@ -139,13 +140,16 @@ const MGFilter = ({
         ))}
         
         {onReset && (
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
             onClick={handleReset}
             className="mg-filter__reset"
             disabled={loading}
+            preventDoubleClick={false}
           >
             초기화
-          </button>
+          </MGButton>
         )}
       </div>
     </div>

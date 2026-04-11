@@ -1,5 +1,6 @@
 import React, { useRef, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import MGButton from './MGButton';
 import './PrintComponent.css';
 
 /**
@@ -146,12 +147,15 @@ const PrintComponent = forwardRef(({
   return (
     <div>
       {/* 프린트 버튼 */}
-      <button 
+      <MGButton
+        type="button"
+        variant="primary"
         onClick={handlePrint}
         className="print-button"
+        preventDoubleClick={false}
       >
-        🖨️ 프린트
-      </button>
+        프린트
+      </MGButton>
       
       {/* 프린트할 내용 */}
       <div 

@@ -11,6 +11,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { LayoutGrid, Grid2X2, List } from 'lucide-react';
 import { toDisplayString } from '../../utils/safeDisplay';
+import MGButton from './MGButton';
 
 /** 기본 옵션: 큰 카드 / 작은 카드 / 리스트 (문서 §3.3) */
 const DEFAULT_OPTIONS = [
@@ -48,17 +49,20 @@ function ViewModeToggle({
         const isActive = viewMode === opt.value;
         const title = toDisplayString(opt.title ?? opt.label);
         return (
-          <button
+          <MGButton
             key={opt.value}
             type="button"
+            variant="outline"
+            size="small"
             className={`mg-v2-ad-b0kla__pill ${isActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
             onClick={() => onViewModeChange(opt.value)}
             aria-pressed={isActive}
             aria-label={toDisplayString(opt.label)}
             title={title}
+            preventDoubleClick={false}
           >
             <Icon size={16} />
-          </button>
+          </MGButton>
         );
       })}
     </div>

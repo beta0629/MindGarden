@@ -141,6 +141,20 @@
   margin-left: var(--spacing-sm);
 }
 
+/* MGButton — 기존 페이징 버튼 크기·정렬 유지 */
+.mg-pagination__button.mg-button {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 var(--spacing-sm);
+  box-shadow: none;
+  font-weight: 500;
+}
+
+.mg-pagination__button.mg-button .mg-button__content,
+.mg-pagination__button.mg-button .mg-button__text {
+  display: contents;
+}
+
 /* ===== 생략 표시 ===== */
 .mg-pagination__ellipsis {
   display: flex;

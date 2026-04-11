@@ -1,6 +1,7 @@
 import React from 'react';
 import { Book, Check, Info, Heart, Lightbulb, Phone, Wifi, Video, Battery, Headphones, Shield, Circle } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
+import MGButton from './MGButton';
 
 const ConsultationGuideModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -105,13 +106,10 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
       backdropClick={true}
       showCloseButton={true}
       actions={
-        <button
-          className="mg-v2-button mg-v2-button--primary"
-          onClick={onClose}
-        >
+        <MGButton type="button" variant="primary" onClick={onClose}>
           <Check size={20} className="mg-v2-icon-inline" />
           확인했습니다
-        </button>
+        </MGButton>
       }
     >
           {/* 상담 전 준비사항 */}

@@ -1,6 +1,7 @@
 /* PrintComponent 스타일 - 새로운 디자인 시스템 적용 */
 
-.print-button {
+.print-button,
+.print-button.mg-button {
   background-color: var(--ios-blue);
   color: var(--ios-text-primary-light);
   border: none;
@@ -11,6 +12,15 @@
   margin-right: var(--spacing-sm);
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: unset;
+  box-shadow: none;
+}
+
+.print-button.mg-button .mg-button__content,
+.print-button.mg-button .mg-button__text {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);

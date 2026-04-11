@@ -1,4 +1,5 @@
 import React from 'react';
+import MGButton from './MGButton';
 import './BadgeSelect.css';
 
 /**
@@ -106,20 +107,24 @@ const BadgeSelect = ({
           const selected = isSelected(optValue);
 
           return (
-            <button
+            <MGButton
               key={optValue}
               type="button"
+              variant="outline"
+              size="medium"
               role={itemRole}
               aria-checked={selected}
               aria-disabled={disabled}
               tabIndex={disabled ? -1 : 0}
+              disabled={disabled}
               className={`mg-v2-badge-select__item ${selected ? 'mg-v2-badge-select__item--selected' : ''} ${disabled ? 'mg-v2-badge-select__item--disabled' : ''}`}
               onClick={() => handleClick(optValue)}
               onKeyDown={(e) => handleKeyDown(e, optValue)}
+              preventDoubleClick={false}
             >
               {option.icon != null && <span className="mg-v2-badge-select__item-icon" aria-hidden>{option.icon}</span>}
               <span className="mg-v2-badge-select__item-label">{label}</span>
-            </button>
+            </MGButton>
           );
         }
         return null;

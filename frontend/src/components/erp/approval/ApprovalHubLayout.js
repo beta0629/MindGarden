@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import '../../dashboard-v2/content/ContentHeader.css';
 import ErpPageShell from '../shell/ErpPageShell';
 import { buildErpApprovalHubPath } from './erpApprovalHubRoutes';
@@ -69,11 +70,15 @@ const ApprovalHubLayout = ({
         <MGButton
           variant="primary"
           size="small"
-          className="mg-v2-button mg-v2-button-primary"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: refreshing
+          })}
           onClick={onRefresh}
           disabled={loading}
           loading={refreshing}
-          loadingText="새로고침 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           aria-label="새로고침"
         >
           새로고침

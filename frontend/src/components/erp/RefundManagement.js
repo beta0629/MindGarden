@@ -28,6 +28,7 @@ import './refund-management/RefundManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useErpSilentRefresh } from './common';
+import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 
 /** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
@@ -198,7 +199,10 @@ const RefundManagement = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="mg-v2-button mg-v2-button-outline refund-management__nav-back"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              className: 'refund-management__nav-back'
+            })}
             onClick={() => navigate('/erp/dashboard')}
             aria-label="운영 현황으로 돌아가기"
             preventDoubleClick={false}

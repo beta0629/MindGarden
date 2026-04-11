@@ -40,6 +40,7 @@ import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import ErpPageShell from './shell/ErpPageShell';
 import { ErpFilterToolbar, useErpSilentRefresh } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
@@ -441,7 +442,11 @@ const SalaryManagement = () => {
                         size="small"
                         onClick={() => setIsConfigModalOpen(true)}
                         aria-label="급여 기산일 설정"
-                        className="salary-management__header-btn"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          className: 'salary-management__header-btn'
+                        })}
                       >
                         <Settings size={18} aria-hidden />
                         <span className="salary-management__header-btn-text">기산일 설정</span>
@@ -450,7 +455,11 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="small"
                         onClick={() => setActiveTabAndUrl(TAB_CALC)}
-                        className="salary-management__header-btn salary-management__header-btn--primary mg-v2-button mg-v2-button--primary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'sm',
+                          className: 'salary-management__header-btn salary-management__header-btn--primary'
+                        })}
                         aria-label="한 번에 계산"
                       >
                         <Calculator size={18} aria-hidden />
@@ -622,10 +631,14 @@ const SalaryManagement = () => {
                       size="small"
                       onClick={handleDataRefresh}
                       loading={silentListRefreshing}
-                      loadingText="새로고침 중..."
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading}
                       aria-label="데이터 새로고침"
-                      className="mg-v2-button mg-v2-button--secondary"
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: silentListRefreshing
+                      })}
                     >
                       데이터 새로고침
                     </MGButton>
@@ -641,8 +654,11 @@ const SalaryManagement = () => {
                         salaryProfiles.length === 0
                       }
                       loading={loading}
-                      loadingText="계산 중..."
-                      className="mg-v2-button mg-v2-button--primary"
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        loading
+                      })}
                     >
                       계산하기
                     </MGButton>
@@ -674,7 +690,10 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="small"
                         onClick={openConsultantPicker}
-                        className="mg-v2-button mg-v2-button--primary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'sm'
+                        })}
                       >
                         새 프로필 생성
                       </MGButton>
@@ -690,7 +709,7 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="medium"
                         onClick={openConsultantPicker}
-                        className="mg-v2-button mg-v2-button--primary"
+                        className={buildErpMgButtonClassName({ variant: 'primary' })}
                       >
                         지금 프로필 작성하기
                       </MGButton>
@@ -741,7 +760,10 @@ const SalaryManagement = () => {
                                     variant="outline"
                                     size="small"
                                     onClick={(e) => { e.stopPropagation(); handleCreateProfile(c); }}
-                                    className="mg-v2-button mg-v2-button--outline"
+                                    className={buildErpMgButtonClassName({
+                                      variant: 'outline',
+                                      size: 'sm'
+                                    })}
                                   >
                                     편집
                                   </MGButton>
@@ -772,7 +794,10 @@ const SalaryManagement = () => {
                                       variant="secondary"
                                       size="small"
                                       onClick={() => openModal(c)}
-                                      className="mg-v2-button mg-v2-button--outline"
+                                      className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm'
+                                      })}
                                     >
                                       프로필 조회
                                     </MGButton>
@@ -780,7 +805,10 @@ const SalaryManagement = () => {
                                       variant="outline"
                                       size="small"
                                       onClick={() => handleCreateProfile(c)}
-                                      className="mg-v2-button mg-v2-button--outline"
+                                      className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm'
+                                      })}
                                     >
                                       편집
                                     </MGButton>
@@ -809,7 +837,15 @@ const SalaryManagement = () => {
                       급여 계산
                     </h2>
                     {salaryProfiles.length === 0 && (
-                      <MGButton variant="outline" size="small" onClick={() => setActiveTab('profiles')}>
+                      <MGButton
+                        variant="outline"
+                        size="small"
+                        onClick={() => setActiveTab('profiles')}
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm'
+                        })}
+                      >
                         지금 작성하기
                       </MGButton>
                     )}
@@ -882,8 +918,11 @@ const SalaryManagement = () => {
                             }}
                             disabled={loading || confirmSalaryLoading}
                             loading={confirmSalaryLoading}
-                            loadingText="확정 중..."
-                            className="mg-v2-button mg-v2-button--primary"
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              loading: confirmSalaryLoading
+                            })}
                           >
                             확정
                           </MGButton>
@@ -891,7 +930,7 @@ const SalaryManagement = () => {
                             variant="outline"
                             size="medium"
                             onClick={() => setPreviewResult(null)}
-                            className="mg-v2-button mg-v2-button--outline"
+                            className={buildErpMgButtonClassName({ variant: 'outline' })}
                           >
                             다시 계산
                           </MGButton>
@@ -948,7 +987,10 @@ const SalaryManagement = () => {
                               setSelectedCalculation(calculation);
                               setIsTaxDetailsOpen(true);
                             }}
-                            className="mg-v2-button mg-v2-button--secondary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'secondary',
+                              size: 'sm'
+                            })}
                           >
                             세금 내역 보기
                           </MGButton>
@@ -959,7 +1001,10 @@ const SalaryManagement = () => {
                               setSelectedCalculation(calculation);
                               setIsExportModalOpen(true);
                             }}
-                            className="mg-v2-button mg-v2-button--primary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'sm'
+                            })}
                           >
                             출력
                           </MGButton>
@@ -994,9 +1039,13 @@ const SalaryManagement = () => {
                       size="small"
                       onClick={() => loadTaxStatistics(selectedPeriod)}
                       loading={loading && activeTab === TAB_TAX}
-                      loadingText="조회 중..."
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={!selectedPeriod || loading || silentListRefreshing}
-                      className="mg-v2-button mg-v2-button--primary"
+                      className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'sm',
+                        loading: loading && activeTab === TAB_TAX
+                      })}
                     >
                       세금 통계 조회
                     </MGButton>
@@ -1031,10 +1080,24 @@ const SalaryManagement = () => {
                         </div>
                       </div>
                       <div className="mg-v2-card-actions salary-tax-block__actions">
-                        <MGButton variant="secondary" size="small" className="mg-v2-button mg-v2-button--secondary">
+                        <MGButton
+                          variant="secondary"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'sm'
+                          })}
+                        >
                           세금 상세 내역 보기
                         </MGButton>
-                        <MGButton variant="primary" size="small" className="mg-v2-button mg-v2-button--primary">
+                        <MGButton
+                          variant="primary"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'sm'
+                          })}
+                        >
                           출력
                         </MGButton>
                       </div>

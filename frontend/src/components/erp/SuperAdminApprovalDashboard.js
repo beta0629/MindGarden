@@ -7,7 +7,7 @@ import {
   mapErpSizeToMg,
   mapErpVariantToMg
 } from './common/erpMgButtonProps';
-import { ErpSafeText } from './common';
+import { ErpSafeText, useErpSilentRefresh } from './common';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
@@ -24,7 +24,7 @@ import { ERP_API } from '../../constants/api';
 const SuperAdminApprovalDashboard = () => {
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -39,12 +39,7 @@ const SuperAdminApprovalDashboard = () => {
 
   const loadPendingRequests = async(options = {}) => {
     const silent = options.silent === true;
-    try {
-      if (silent) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+    const run = async() => {
       setError('');
       const list = await StandardizedApi.get(ERP_API.PURCHASE_REQUESTS_PENDING_SUPER_ADMIN);
       if (Array.isArray(list)) {
@@ -53,13 +48,19 @@ const SuperAdminApprovalDashboard = () => {
         setRequests([]);
         setError('승인 대기 목록을 불러오는데 실패했습니다.');
       }
+    };
+    try {
+      if (silent) {
+        await runSilentListRefresh(run);
+      } else {
+        setLoading(true);
+        await run();
+      }
     } catch (err) {
       console.error('승인 대기 목록 로드 실패:', err);
       setError(err?.message || '승인 대기 목록을 불러오는데 실패했습니다.');
     } finally {
-      if (silent) {
-        setRefreshing(false);
-      } else {
+      if (!silent) {
         setLoading(false);
       }
     }
@@ -145,7 +146,7 @@ const SuperAdminApprovalDashboard = () => {
       headerSubtitle="관리자 승인된 구매 요청의 최종 승인"
       loading={loading}
       loadingText="수퍼 관리자 승인 대기 요청을 불러오는 중..."
-      refreshing={refreshing}
+      refreshing={silentListRefreshing}
       onRefresh={() => loadPendingRequests({ silent: true })}
       activeMode="super"
     >

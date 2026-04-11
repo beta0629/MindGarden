@@ -43,6 +43,7 @@ import {
   ErpFilterToolbar,
   useErpSilentRefresh
 } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 /** 신고 탭 데모 문구(백엔드 연동 전) */
 const REPORT_TAB_COPY = {
@@ -330,7 +331,10 @@ const ImprovedTaxManagement = () => {
                         variant="primary"
                         size="medium"
                         type="button"
-                        className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
+                        })}
                         onClick={() => setShowCreateModal(true)}
                       >
                         <Plus size={16} aria-hidden />
@@ -344,10 +348,14 @@ const ImprovedTaxManagement = () => {
                     <MGButton
                       variant="secondary"
                       size="small"
-                      className="mg-v2-button mg-v2-button--secondary"
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: silentListRefreshing
+                      })}
                       onClick={() => loadData({ silent: true })}
                       loading={silentListRefreshing}
-                      loadingText="새로고침 중..."
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading || silentListRefreshing}
                       aria-label="데이터 새로고침"
                     >
@@ -418,9 +426,14 @@ const ImprovedTaxManagement = () => {
                   size="small"
                   onClick={() => loadData({})}
                   loading={loading}
-                  loadingText="로딩 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading || silentListRefreshing}
                   aria-label="다시 시도"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading
+                  })}
                 >
                   다시 시도
                 </MGButton>
@@ -535,7 +548,10 @@ const ImprovedTaxManagement = () => {
                             variant="primary"
                             size="medium"
                             type="button"
-                            className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
+                            })}
                           >
                             <FilePlus size={16} aria-hidden />
                             신고서 작성
@@ -565,7 +581,10 @@ const ImprovedTaxManagement = () => {
                             variant="primary"
                             size="medium"
                             type="button"
-                            className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
+                            })}
                           >
                             <FileCheck size={16} aria-hidden />
                             신고서 확인
@@ -640,7 +659,7 @@ const ImprovedTaxManagement = () => {
               variant="secondary"
               size="medium"
               type="button"
-              className="mg-v2-button mg-v2-button-secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary' })}
               onClick={() => setShowCreateModal(false)}
               disabled={loading}
             >
@@ -650,10 +669,13 @@ const ImprovedTaxManagement = () => {
               variant="primary"
               size="medium"
               type="button"
-              className="mg-v2-button mg-v2-button--primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                loading
+              })}
               onClick={handleCreateTaxItem}
               loading={loading}
-              loadingText="계산 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               계산 반영
             </MGButton>

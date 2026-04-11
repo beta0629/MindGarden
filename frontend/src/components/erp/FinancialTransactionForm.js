@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
@@ -11,6 +12,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 /**
  * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
@@ -338,9 +340,13 @@ const FinancialTransactionForm = ({
               className="mg-v2-form-badge-select"
             />
             {loadingCodes && (
-              <div className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
-                공통 코드 로딩 중...
-              </div>
+              <UnifiedLoading
+                type="inline"
+                size="small"
+                centered={false}
+                text="공통 코드를 불러오는 중..."
+                className="financial-transaction-form-field-hint"
+              />
             )}
           </div>
 
@@ -441,7 +447,7 @@ const FinancialTransactionForm = ({
             <MGButton
               type="button"
               variant="secondary"
-              className="mg-v2-button mg-v2-button-secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
               onClick={onClose}
               preventDoubleClick={false}
             >
@@ -451,8 +457,9 @@ const FinancialTransactionForm = ({
             <MGButton
               type="submit"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', loading })}
               loading={loading}
-              loadingText={mode === 'edit' ? '저장 중...' : '등록 중...'}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
               disabled={isApprovedReadOnly}
             >

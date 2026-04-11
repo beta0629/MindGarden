@@ -5,10 +5,12 @@ import { getDefaultApiHeadersAsync } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -32,6 +34,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
     const [branchCode, setBranchCode] = useState('');
     const [reportData, setReportData] = useState(null);
     const [branches, setBranches] = useState([]);
+    const [loadingBranches, setLoadingBranches] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -47,11 +50,14 @@ const ErpReportModal = ({ isOpen, onClose }) => {
      */
     const loadBranches = async() => {
         try {
+            setLoadingBranches(true);
             const raw = await StandardizedApi.get('/api/v1/branches');
             const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
             setBranches(Array.isArray(list) ? list : []);
         } catch (error) {
             console.error('지점 목록 로드 실패:', error);
+        } finally {
+            setLoadingBranches(false);
         }
     };
 
@@ -255,20 +261,29 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 <Building size={20} className="mg-v2-form-label-icon" />
                                 지점 선택
                             </label>
-                            <CustomSelect
-                                value={branchCode}
-                                onChange={(val) => setBranchCode(val)}
-                                options={[
-                                    { value: '', label: '전체 지점' },
-                                    ...branches.map(branch => ({
-                                        value: branch.code,
-                                        label: branch.name
-                                    }))
-                                ]}
-                                placeholder="전체 지점"
-                                disabled={loading}
-                                className="mg-v2-form-select"
-                            />
+                            {loadingBranches ? (
+                                <UnifiedLoading
+                                    type="inline"
+                                    size="small"
+                                    centered={false}
+                                    text="지점 목록을 불러오는 중..."
+                                />
+                            ) : (
+                                <CustomSelect
+                                    value={branchCode}
+                                    onChange={(val) => setBranchCode(val)}
+                                    options={[
+                                        { value: '', label: '전체 지점' },
+                                        ...branches.map(branch => ({
+                                            value: branch.code,
+                                            label: branch.name
+                                        }))
+                                    ]}
+                                    placeholder="전체 지점"
+                                    disabled={loading}
+                                    className="mg-v2-form-select"
+                                />
+                            )}
                         </div>
 
                         <div className="mg-v2-modal-footer">
@@ -276,7 +291,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 variant="secondary"
                                 size="medium"
                                 type="button"
-                                className="mg-v2-button mg-v2-button--secondary"
+                                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                                 onClick={handleClose}
                                 disabled={loading}
                             >
@@ -287,11 +302,11 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 variant="primary"
                                 size="medium"
                                 type="button"
-                                className="mg-v2-button mg-v2-button--primary"
+                                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
                                 onClick={handleGenerateReport}
                                 disabled={loading || !period}
                                 loading={loading}
-                                loadingText="로딩 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 <TrendingUp size={20} className="mg-v2-icon-inline" aria-hidden />
                                 보고서 생성

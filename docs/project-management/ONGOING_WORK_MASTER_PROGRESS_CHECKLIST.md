@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (ERP-P4-02·UI-01·테스트 프로파일 PlSqlInitializer 비활성화·SSOT)  
+**최종 갱신**: 2026-04-11 (ERP-P4 배치 A 통합재무·모달폼·UI-01·PlSql 테스트·SSOT)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -177,10 +177,10 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | 화면별 잔여 점검 |
+| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **배치 A-1** `IntegratedFinanceDashboard`·`FinancialCalendarView` ☑. **배치 A-2** `ErpReportModal`(지점 로딩)·`FinancialTransactionForm`·`QuickExpenseForm`(공통코드 로딩) 인라인 정리 ☑ (2026-04-11). 잔여 화면별 점검. |
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | ☑ | **`useErpSilentRefresh`** (`erp/common/useErpSilentRefresh.js`)·상태명 **`silentListRefreshing`** 통일, `ErpDashboard`·환불 필터 prop·급여 `runSilentListRefresh` (2026-04-11). 잔여: 화면별 `aria-busy` 점검은 P4-01과 병행 가능. |
 | ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | |
-| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10) |
+| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **배치 A-2**: `ErpReportModal`·`FinancialTransactionForm`·`QuickExpenseForm`에 `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT`; 퀵비용 카테고리 버튼 전역 loading 제거 (2026-04-11). |
 | ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
 
 ---
@@ -191,10 +191,24 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | **인벤토리(2026-04-11)**: `AdminCommonLayout` import **88파일**. 의도적 비적용 후보 — `AdminDashboardV2`(v2 셸), 레거시 `AdminDashboard`, `StatisticsDashboard`, `IntegratedMatchingSchedule`, 하위 `MappingManagementPage`/`ConsultationLogViewPage`, `ComplianceDashboard`(쉘 위임). **`PgApprovalManagement`**: `/admin/ops/pg-approval` + LNB 폴백 ☑. **`ComingSoon` 이중 래핑 제거** ☑ — `/admin/branches`, `PsychAssessmentManagement` 권한 없음 분기 (2026-04-11). |
+| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | **인벤토리(2026-04-11)**: `AdminCommonLayout` import **88파일**. **의도적 비적용**은 아래 표와 동일(파일 경로 SSOT). **`PgApprovalManagement`**: `/admin/ops/pg-approval` + LNB 폴백 ☑. **`ComingSoon` 이중 래핑 제거** ☑ — `/admin/branches`, `PsychAssessmentManagement` 권한 없음 분기 (2026-04-11). |
 | UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | B5·B6·계좌/내담자 메시지 `UnifiedModal` ☑. **추가**: GNB `Profile`/`QuickActions`/`Notification` 드롭다운 → `GnbDropdownPortal` + `aria-controls`/고유 `panelId`, `NavIcon` props 전달. 잔여: UI-01·UI-03·전역 린트 등 |
-| UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리 |
+| UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리. `COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md`는 표상 잔여 ☐/🔄 없음(2026-04-11 explore) — 마스터 후속은 UI-01·ERP 등 별도 트랙. |
 | UI-04 | 상담사 콘솔 **상담일지** — 레이아웃·메모·맥락 API (`UnifiedModal`·토큰) | ☑ | 병렬 블록 **CL-B1** · 커밋 `89e03b2b9` |
+
+**UI-01 — 의도적 비적용 (파일 경로 SSOT)**
+
+| 의도적 비적용 페이지·컴포넌트 | 이유 | 파일 |
+|------------------------------|------|------|
+| 관리자 대시보드 v2 셸 | v2 전용 GNB/LNB·라우팅 | `frontend/src/components/dashboard-v2/AdminDashboardV2.js` |
+| 레거시 관리자 대시보드 | 레거시 셸 | `frontend/src/components/admin/AdminDashboard.js` |
+| 통계 대시보드 | 임베드·탭 위젯 중심 | `frontend/src/components/admin/StatisticsDashboard.js` |
+| 통합 매칭 스케줄 | 별도 풀페이지 레이아웃 | `frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.js` |
+| 매칭 관리 페이지 본문 | 래퍼 `MappingManagement`가 ACL | `frontend/src/components/admin/mapping-management/pages/MappingManagementPage.js` |
+| 상담일지 조회 본문 | 래퍼 `ConsultationLogView`가 ACL | `frontend/src/components/admin/consultation-log-view/ConsultationLogViewPage.js` |
+| 컴플라이언스 라우트 엔트리 | 쉘에 ACL 위임 | `frontend/src/components/compliance/ComplianceDashboard.js` |
+
+**보강**: 실제 ACL 적용은 `ComplianceDashboardShell.js`, `MappingManagement.js`, `ConsultationLogView.js` 등 래퍼를 참고한다.
 
 ---
 
@@ -251,7 +265,7 @@
 
 **권장 다음 단계 (마스터 진행)**  
 1) ~~**`lint:strict` 게이트`**~~ — **통과(설정 조정)** · 잔여는 팀 정책에 따라 규칙을 다시 켜며 코드 정리 가능.  
-2) **UI-01·UI-03** — ~~`PgApprovalManagement` 라우트~~ ☑ · **의도적 비적용 페이지 문서화**·UI-03 체크리스트 잔여.  
+2) **UI-01·UI-03** — ~~`PgApprovalManagement` 라우트~~ ☑ · ~~**의도적 비적용** 파일 경로 표(구역 2 하단)~~ ☑ (2026-04-11) · UI-03은 병렬 체크리스트 표 잔여 없음 — 마스터 후속은 UI-01 잔여·ERP 등 별도 트랙.  
 3) **ERP-P4 잔여** — ~~`ErpButton` 정리~~ ☑ · **`silentRefreshing`/`refreshingToolbar` 네이밍·훅 통일**은 별 배치.  
 4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.
 
@@ -336,8 +350,10 @@
 | 2026-04-11 | ERP **`ErpButton` 제거** — `erpMgButtonProps.js`·5파일 `MGButton` 통일, `ErpButton.js` 삭제 |
 | 2026-04-11 | **ERP-P4-02** `useErpSilentRefresh`·`silentListRefreshing` 통일·환불 필터 prop 정렬 |
 | 2026-04-11 | **UI-01** `ComingSoon` + `AdminCommonLayout` 이중 래핑 제거 (`App.js` `/admin/branches`, `PsychAssessmentManagement` 권한 없음) |
+| 2026-04-11 | **DOC-UI**: UI-01 의도적 비적용 표·ACL 래퍼 보강, UI-03 `COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST` 잔여 ☐/🔄 없음 명시 — 마스터 SSOT는 `CORE_PLANNER_DELEGATION_ORDER.md` 원칙과 본 문서 구역 2 |
 | 2026-04-11 | **SEC-01 1차** 계정 연동 이메일 인증 — 쿨다운·일일 상한·IP 레이트리밋·429, `AccountIntegrationServiceImplEmailVerificationTest` |
 | 2026-04-11 | **SEC-01 2차** `POST /api/v1/onboarding/requests` IP 레이트리밋(ops 제외)·`MindgardenSecurityPropertiesRateLimitTest` |
 | 2026-04-11 | **SEC-01 3차** `mindgarden.rate_limit.blocked` Micrometer·`PERMISSION_SYSTEM_STANDARD` 공개 API·레이트리밋 절·TODO 모니터링/문서 부분 갱신 |
 | 2026-04-11 | **SEC-01 엣지 문서** `docs/deployment/NGINX_RATE_LIMIT_PUBLIC_API.md`·워크플로 인덱스 링크 — QA: frontend+compile+타깃 테스트 통과, 전체 `mvn test`는 기존 JPA/통합 이슈로 실패 보고 |
 | 2026-04-11 | **백엔드 테스트 부트스트랩**: `PlSqlInitializer`에 `@ConditionalOnProperty`(`mindgarden.plsql-initializer.enabled`, 기본 true), `application-test.yml`에서 false — H2에서 MySQL 저장 프로시저 DDL 실행으로 `SuperAdminBypassTest` 등 컨텍스트 로드 실패하던 원인 제거. 검증: `mvn -Dtest=SuperAdminBypassTest test` 통과 |
+| 2026-04-11 | **ERP-P4 배치 A-2** (core-coder): `ErpReportModal.js`·`FinancialTransactionForm.js`·`QuickExpenseForm.js` — `UnifiedLoading` 인라인·`erpMgButtonProps`/`ERP_MG_BUTTON_LOADING_TEXT`·퀵비용 카테고리 로딩 분리. ESLint `--quiet` 3파일 통과 |

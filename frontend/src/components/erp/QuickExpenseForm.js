@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
 import { getLucideIcon } from '../../utils/iconUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { ErpSafeText } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 
 /**
@@ -162,9 +164,12 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
       )}
 
       {loadingCodes ? (
-        <div className="quick-expense-loading">
-          <ErpSafeText value="공통 코드 로딩 중..." />
-        </div>
+        <UnifiedLoading
+          type="inline"
+          size="small"
+          text="공통 코드를 불러오는 중..."
+          className="quick-expense-loading"
+        />
       ) : selectedExpense ? (
         <div className="quick-expense-amount-form">
           <p className="quick-expense-selected-label">
@@ -190,6 +195,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             <MGButton
               type="button"
               variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
               onClick={closeAmountForm}
               disabled={loading}
             >
@@ -198,9 +204,10 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', loading })}
               onClick={submitQuickExpense}
               loading={loading}
-              loadingText="등록 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick
             >
               등록
@@ -216,8 +223,11 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                 type="button"
                 variant="secondary"
                 onClick={() => openAmountForm(expense)}
-                loading={loading}
-                className="quick-expense-category-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  loading: false,
+                  className: 'quick-expense-category-btn'
+                })}
               >
                 <div className="quick-expense-category-icon">
                   {getLucideIcon(expense.icon, { size: 20 })}

@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (G8-B6a/B6b·마스터 진행도 반영)  
+**최종 갱신**: 2026-04-11 (G8-B7a/B7b·마스터 진행도 반영)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -44,6 +44,8 @@
 | **G8-B5b** | **G-01** — `dashboard/QuickActions`·`landing/CounselingHero`·`CounselingContact` → `MGButton` | core-coder | ☑ | `develop` · `8d642ca87` (2026-04-11) |
 | **G8-B6a** | **G-01** — `dashboard-v2` 분자·원자(`NotificationDropdown`·`ProfileDropdown`·`QuickActionsDropdown`·`NavLink`·`NavIcon`) + 관련 CSS → `MGButton` | core-coder | ☑ | `develop` · `e6e302951` (2026-04-11) |
 | **G8-B6b** | **G-01** — `MobileLnbDrawer`·`DesktopLnb`·`ContentKpiRow`·`consultant/*`(상담사 6파일) + CSS → `MGButton` (`AdminDashboardV2` 제외) | core-coder | ☑ | `develop` · `4a801abd4` (2026-04-11) |
+| **G8-B7a** | **G-01** — `dashboard-v2/AdminDashboardV2.js` + `admin/AdminDashboard/AdminDashboardB0KlA.css` → `MGButton` | core-coder | ☑ | `develop` · `c56ff9f53` (2026-04-11) |
+| **G8-B7b** | **G-01** — `schedule/ScheduleDetailModal.js`·`ScheduleB0KlA.css`·`erd/ErdDetailPage.js`·`ErdDetailPage.css` → `MGButton` | core-coder | ☑ | `develop` · `90af6cdb8` (2026-04-11) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -78,6 +80,10 @@
 **G8-B6a**: `molecules/NotificationDropdown.js`, `ProfileDropdown.js`, `QuickActionsDropdown.js`, `atoms/NavLink.js`, `NavIcon.js` (+ 드롭다운·네비 관련 `.css`)
 
 **G8-B6b**: `organisms/MobileLnbDrawer.js`, `DesktopLnb.js`, `content/ContentKpiRow.js`, `consultant/IncompleteRecordsAlert.js`, `QuickActionBar.js`, `UrgentClientsSection.js`, `UrgentClientCard.js`, `NextConsultationCard.js`, `ConsultantDashboardV2.js` (+ LNB·KPI·상담사 대시보드 관련 `.css`)
+
+**G8-B7a**: `dashboard-v2/AdminDashboardV2.js`, `admin/AdminDashboard/AdminDashboardB0KlA.css`
+
+**G8-B7b**: `schedule/ScheduleDetailModal.js`, `schedule/ScheduleB0KlA.css`, `erd/ErdDetailPage.js`, `erd/ErdDetailPage.css`
 
 ---
 
@@ -178,7 +184,7 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B6b** 일부 ☑; **G-01** 잔여 — 우선 **`AdminDashboardV2.js`**(대용량)·기타 `components` `rg '<button'` 인벤토리.
+- **전역 확대 검토 상태**: 🔄 — **G7·CL-B1·G8-B1a~B7b** 일부 ☑; **G-01** 잔여 — `ConsultantComprehensiveManagement`·`TenantProfile`·위젯 등 `rg '<button'` 인벤토리(테스트·`*_backup*` 제외 권장).
 
 **권장 다음 단계 (마스터 진행)**  
 1) **ERP-P4 잔여** — `components/erp` 내 `RefreshCw`·네이티브 버튼 인벤토리 → MGButton 패턴(ERP-P4-05 비고 참고).  
@@ -242,3 +248,4 @@
 | 2026-04-11 | **G8-B4a** Forgot·Reset·Tenant MGButton `53245620a`, **G8-B4b** TabletRegister·SocialSignup·AccountIntegration `8b301d37c` |
 | 2026-04-11 | **G8-B5a** 헤더 3종·CSS MGButton `1620964d6`, **G8-B5b** QuickActions·Counseling 랜딩 `8d642ca87` |
 | 2026-04-11 | **G8-B6a** dashboard-v2 분자·원자 MGButton `e6e302951`, **G8-B6b** LNB·KPI·상담사 MGButton `4a801abd4` |
+| 2026-04-11 | **G8-B7a** AdminDashboardV2 MGButton `c56ff9f53`, **G8-B7b** ScheduleDetailModal·ErdDetailPage MGButton `90af6cdb8` |

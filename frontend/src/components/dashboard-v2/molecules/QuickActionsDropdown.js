@@ -16,6 +16,7 @@ import { sessionManager } from '../../../utils/sessionManager';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
@@ -103,10 +104,12 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
 
       {isOpen && ReactDOM.createPortal(
         <>
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
             className="mg-v2-dropdown-overlay"
             onClick={() => setIsOpen(false)}
-            type="button"
             aria-label="드롭다운 닫기"
           />
           <div
@@ -123,16 +126,18 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
               {actions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <button
+                  <MGButton
                     key={action.id}
+                    type="button"
+                    variant="outline"
+                    preventDoubleClick={false}
                     className="mg-v2-quick-action-item"
                     onClick={() => handleActionClick(action)}
-                    type="button"
                   >
                     <Icon size={20} className="mg-v2-quick-action-item__icon" />
                     <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
                     <ChevronRight size={16} className="mg-v2-quick-action-item__arrow" />
-                  </button>
+                  </MGButton>
                 );
               })}
             </div>

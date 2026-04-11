@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
+import MGButton from '../../common/MGButton';
 import './NavLink.css';
 
 const NavLink = ({ to, icon: Icon, children, active, className = '', asButton = false, onClick }) => {
@@ -27,13 +28,15 @@ const NavLink = ({ to, icon: Icon, children, active, className = '', asButton = 
 
   if (asButton) {
     return (
-      <button
+      <MGButton
         type="button"
+        variant="outline"
+        preventDoubleClick={false}
         className={`${baseClass} ${stateClass} ${className}`}
         onClick={onClick}
       >
         {content}
-      </button>
+      </MGButton>
     );
   }
 

@@ -18,6 +18,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './NotificationDropdown.css';
@@ -293,8 +294,10 @@ const NotificationDropdown = () => {
       {isOpen &&
         ReactDOM.createPortal(
           <>
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              preventDoubleClick={false}
               className="mg-v2-dropdown-overlay"
               onClick={() => setIsOpen(false)}
               aria-label="드롭다운 닫기"
@@ -310,14 +313,16 @@ const NotificationDropdown = () => {
               <div className="mg-v2-dropdown-panel__header">
                 <h2 className="mg-v2-dropdown-panel__title">알림</h2>
                 {totalUnread > 0 && (
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    preventDoubleClick={false}
                     className="mg-v2-btn-text mg-v2-btn-sm"
                     aria-label="모두 읽음으로 표시"
                     onClick={handleMarkAllRead}
                   >
                     모두 읽음
-                  </button>
+                  </MGButton>
                 )}
               </div>
 
@@ -326,8 +331,10 @@ const NotificationDropdown = () => {
                 role="tablist"
                 aria-label="알림 유형"
               >
-                <button
+                <MGButton
                   type="button"
+                  variant="outline"
+                  preventDoubleClick={false}
                   role="tab"
                   id="tab-system"
                   aria-selected={activeTab === TAB_SYSTEM}
@@ -338,9 +345,11 @@ const NotificationDropdown = () => {
                   onClick={() => setActiveTab(TAB_SYSTEM)}
                 >
                   시스템 공지
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
+                  variant="outline"
+                  preventDoubleClick={false}
                   role="tab"
                   id="tab-messages"
                   aria-selected={activeTab === TAB_MESSAGES}
@@ -351,7 +360,7 @@ const NotificationDropdown = () => {
                   onClick={() => setActiveTab(TAB_MESSAGES)}
                 >
                   메시지
-                </button>
+                </MGButton>
               </div>
 
               <div
@@ -377,8 +386,10 @@ const NotificationDropdown = () => {
                       const isUnread = !item.isRead;
                       return (
                         <li key={item.id}>
-                          <button
+                          <MGButton
                             type="button"
+                            variant="outline"
+                            preventDoubleClick={false}
                             className={`mg-v2-notification-item ${
                               isUnread ? 'mg-v2-notification-item--unread' : ''
                             }`}
@@ -410,7 +421,7 @@ const NotificationDropdown = () => {
                               </div>
                               <p className="mg-v2-notification-item__message">시스템</p>
                             </div>
-                          </button>
+                          </MGButton>
                         </li>
                       );
                     })}
@@ -444,8 +455,10 @@ const NotificationDropdown = () => {
                         sn && rn ? `${sn} → ${rn}` : sn || '메시지';
                       return (
                         <li key={item.id}>
-                          <button
+                          <MGButton
                             type="button"
+                            variant="outline"
+                            preventDoubleClick={false}
                             className={`mg-v2-notification-item ${
                               isUnread ? 'mg-v2-notification-item--unread' : ''
                             }`}
@@ -481,7 +494,7 @@ const NotificationDropdown = () => {
                                 {senderLabel}
                               </p>
                             </div>
-                          </button>
+                          </MGButton>
                         </li>
                       );
                     })}
@@ -514,9 +527,9 @@ const NotificationDropdown = () => {
           )} · ${formatDateTime(selectedItem.data?.publishedAt || selectedItem.data?.createdAt)}`}
           size="large"
           actions={
-            <button type="button" className="mg-button mg-button-primary" onClick={closeDetailModal}>
+            <MGButton type="button" variant="primary" preventDoubleClick={false} onClick={closeDetailModal}>
               확인
-            </button>
+            </MGButton>
           }
         >
           <div className="mg-v2-notification-modal-content">

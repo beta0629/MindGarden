@@ -235,3 +235,65 @@
 .mg-v2-dropdown-panel__footer-link:hover {
   text-decoration: underline;
 }
+
+/* MGButton(G8): 텍스트 링크형 · 탭 · 알림 행 — 내부 래퍼와 outline 기본값 보정 */
+.mg-v2-btn-text.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+  min-height: unset;
+  padding: 0;
+  width: auto;
+  justify-content: flex-start;
+}
+
+.mg-v2-btn-text.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: none;
+  transform: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+.mg-v2-notification-dropdown__tab.mg-button.mg-button--outline {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 0;
+  justify-content: center;
+}
+
+.mg-v2-notification-dropdown__tab.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+  color: var(--mg-color-text-main, #2C2C2C);
+  background: none;
+}
+
+.mg-v2-notification-item.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+  min-height: unset;
+  justify-content: flex-start;
+  font-weight: inherit;
+}
+
+.mg-v2-notification-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+}
+
+.mg-v2-notification-item.mg-button .mg-button__content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.mg-v2-notification-item.mg-button .mg-button__text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  gap: 12px;
+  align-items: flex-start;
+  white-space: normal;
+}

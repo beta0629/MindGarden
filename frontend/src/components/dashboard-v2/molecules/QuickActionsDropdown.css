@@ -71,3 +71,27 @@
   margin-left: auto;
   flex-shrink: 0;
 }
+
+/* MGButton(G8): 빠른 액션 행 — outline·내부 래퍼 보정 */
+.mg-v2-quick-action-item.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+  min-height: unset;
+  justify-content: flex-start;
+  font-weight: inherit;
+}
+
+.mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+.mg-v2-quick-action-item.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+}

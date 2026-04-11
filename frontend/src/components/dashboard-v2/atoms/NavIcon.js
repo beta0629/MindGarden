@@ -7,19 +7,23 @@
  */
 
 import React from 'react';
+import MGButton from '../../common/MGButton';
 import './NavIcon.css';
 
 const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false }) => {
   return (
-    <button
+    <MGButton
       type="button"
+      variant="outline"
+      size="small"
+      preventDoubleClick={false}
       className={`mg-v2-nav-icon ${className}`}
       onClick={onClick}
       disabled={disabled}
       aria-label={label || '아이콘 버튼'}
     >
       {Icon && <Icon size={22} strokeWidth={1.8} aria-hidden="true" />}
-    </button>
+    </MGButton>
   );
 };
 

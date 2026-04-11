@@ -9,6 +9,11 @@
   overflow: visible;
 }
 
+.mg-v2-profile-trigger-outer {
+  display: inline-flex;
+  align-items: center;
+}
+
 .mg-v2-profile-trigger {
   display: flex;
   align-items: center;
@@ -190,4 +195,49 @@
 
 .mg-v2-profile-menu-item--danger svg {
   color: var(--mg-color-error-500, #EF4444);
+}
+
+/* MGButton(G8): 프로필 트리거·메뉴 — outline 기본·내부 래퍼 보정 */
+.mg-v2-profile-trigger.mg-button.mg-button--outline {
+  border: none;
+  background-color: transparent;
+  min-height: 44px;
+  justify-content: flex-start;
+  color: inherit;
+}
+
+.mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-surface-main, #F5F3EF);
+  color: inherit;
+  transform: none;
+  box-shadow: none;
+}
+
+.mg-v2-profile-trigger.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.mg-v2-profile-menu-item.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+  min-height: unset;
+  justify-content: flex-start;
+  font-weight: inherit;
+}
+
+.mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-background-main, #FAF9F7);
+  transform: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+.mg-v2-profile-menu-item.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }

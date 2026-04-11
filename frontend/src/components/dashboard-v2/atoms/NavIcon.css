@@ -31,3 +31,31 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* MGButton(G8): GNB 아이콘 — outline·small 보정 */
+.mg-v2-nav-icon.mg-button.mg-button--outline {
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  color: inherit;
+  justify-content: center;
+}
+
+.mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-bg, #fcfbfa);
+  transform: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+.mg-v2-nav-icon.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}

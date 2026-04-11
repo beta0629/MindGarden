@@ -45,3 +45,44 @@
   flex: 1;
   text-align: left;
 }
+
+/* MGButton(G8): LNB asButton — outline·내부 래퍼 보정 */
+.mg-v2-nav-link.mg-button.mg-button--outline {
+  border: none;
+  background: transparent;
+  min-height: 44px;
+  width: 100%;
+  justify-content: flex-start;
+  color: inherit;
+}
+
+.mg-v2-nav-link.mg-button .mg-button__content {
+  width: 100%;
+}
+
+.mg-v2-nav-link.mg-button .mg-button__text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
+}
+
+.mg-v2-nav-link.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mg-v2-nav-link--active.mg-button.mg-button--outline {
+  background: var(--mg-layout-sidebar-active-bg, #3D5246);
+  color: var(--mg-white);
+}
+
+.mg-v2-nav-link--active.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-layout-sidebar-active-bg, #3D5246);
+  color: var(--mg-white);
+  transform: none;
+  box-shadow: none;
+}

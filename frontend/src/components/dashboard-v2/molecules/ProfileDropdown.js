@@ -17,6 +17,7 @@ import { useBranding } from '../../../hooks/useBranding';
 import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
+import MGButton from '../../common/MGButton';
 import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
 
@@ -102,25 +103,30 @@ const ProfileDropdown = ({ onLogout }) => {
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
-      <button
-        ref={triggerRef}
-        className="mg-v2-profile-trigger"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-        type="button"
-      >
-        <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="small" />
-        <span className="mg-v2-profile-trigger__name">{userName}</span>
-        <ChevronDown size={16} className="mg-v2-profile-trigger__icon" />
-      </button>
+      <div ref={triggerRef} className="mg-v2-profile-trigger-outer">
+        <MGButton
+          type="button"
+          variant="outline"
+          preventDoubleClick={false}
+          className="mg-v2-profile-trigger"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+        >
+          <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="small" />
+          <span className="mg-v2-profile-trigger__name">{userName}</span>
+          <ChevronDown size={16} className="mg-v2-profile-trigger__icon" />
+        </MGButton>
+      </div>
 
       {isOpen && ReactDOM.createPortal(
         <>
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
+            preventDoubleClick={false}
             className="mg-v2-dropdown-overlay"
             onClick={() => setIsOpen(false)}
-            type="button"
             aria-label="드롭다운 닫기"
           />
           <div
@@ -145,30 +151,36 @@ const ProfileDropdown = ({ onLogout }) => {
             </div>
 
             <div className="mg-v2-profile-dropdown__menu">
-              <button
+              <MGButton
+                type="button"
+                variant="outline"
+                preventDoubleClick={false}
                 className="mg-v2-profile-menu-item"
                 onClick={() => handleMenuClick('mypage')}
-                type="button"
               >
                 <User size={18} />
                 <span>내 정보</span>
-              </button>
-              <button
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="outline"
+                preventDoubleClick={false}
                 className="mg-v2-profile-menu-item"
                 onClick={() => handleMenuClick('settings')}
-                type="button"
               >
                 <Settings size={18} />
                 <span>설정</span>
-              </button>
-              <button
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="outline"
+                preventDoubleClick={false}
                 className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
                 onClick={() => handleMenuClick('logout')}
-                type="button"
               >
                 <LogOut size={18} />
                 <span>로그아웃</span>
-              </button>
+              </MGButton>
             </div>
           </div>
         </>,

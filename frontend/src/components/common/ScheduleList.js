@@ -26,6 +26,7 @@ import {
   SCHEDULE_ERROR_MESSAGES
 } from '../../constants/schedule';
 import ScheduleCard from './ScheduleCard';
+import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
 
@@ -310,10 +311,17 @@ const ScheduleList = ({
         <div className="schedule-error">
           <i className="bi bi-exclamation-triangle"></i>
           <p>{SCHEDULE_ERROR_MESSAGES.LOAD_FAILED}</p>
-          <button className="btn btn-primary" onClick={handleRefresh}>
+          <MGButton
+            type="button"
+            variant="primary"
+            preventDoubleClick={false}
+            loading={loading}
+            loadingText="불러오는 중..."
+            onClick={handleRefresh}
+          >
             <i className="bi bi-arrow-clockwise"></i>
             다시 시도
-          </button>
+          </MGButton>
         </div>
       </div>
     );
@@ -323,10 +331,18 @@ const ScheduleList = ({
     <div className="schedule-list">
       <div className="schedule-list-header">
         <h2>전체 스케줄</h2>
-        <button className="btn btn-outline-primary" onClick={handleRefresh} disabled={loading}>
+        <MGButton
+          type="button"
+          variant="outline"
+          preventDoubleClick={false}
+          loading={loading}
+          loadingText="새로고침 중..."
+          disabled={loading}
+          onClick={handleRefresh}
+        >
           <i className="bi bi-arrow-clockwise"></i>
           새로고침
-        </button>
+        </MGButton>
       </div>
 
       <div className="schedule-filters">
@@ -440,39 +456,55 @@ const ScheduleList = ({
           </div>
           
           <div className="pagination-controls">
-            <button
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               className="pagination-btn"
+              preventDoubleClick={false}
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
             >
               {PAGINATION_LABELS.FIRST}
-            </button>
-            <button
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               className="pagination-btn"
+              preventDoubleClick={false}
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
             >
               {PAGINATION_LABELS.PREVIOUS}
-            </button>
+            </MGButton>
             
             <span className="pagination-pages">
               {currentPage} / {totalPages}
             </span>
             
-            <button
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               className="pagination-btn"
+              preventDoubleClick={false}
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
               {PAGINATION_LABELS.NEXT}
-            </button>
-            <button
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               className="pagination-btn"
+              preventDoubleClick={false}
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
             >
               {PAGINATION_LABELS.LAST}
-            </button>
+            </MGButton>
           </div>
         </div>
       )}

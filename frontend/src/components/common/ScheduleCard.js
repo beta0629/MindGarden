@@ -22,6 +22,7 @@ import {
   TIME_FORMATS
 } from '../../constants/schedule';
 import './ScheduleCard.css';
+import MGButton from './MGButton';
 import SafeText from './SafeText';
 
 const ScheduleCard = ({ 
@@ -57,82 +58,106 @@ const ScheduleCard = ({
 
     if (onView) {
       actions.push(
-        <button
+        <MGButton
           key="view"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn view"
           onClick={() => onView(schedule)}
           title={SCHEDULE_ACTION_LABELS.view}
         >
           <i className={SCHEDULE_ACTION_ICONS.view}></i>
-        </button>
+        </MGButton>
       );
     }
 
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'BOOKED' && onConfirm) {
       actions.push(
-        <button
+        <MGButton
           key="confirm"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn confirm"
           onClick={() => onConfirm(schedule)}
           title={SCHEDULE_ACTION_LABELS.confirm}
         >
           <i className={SCHEDULE_ACTION_ICONS.confirm}></i>
-        </button>
+        </MGButton>
       );
     }
 
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'CONFIRMED' && onComplete) {
       actions.push(
-        <button
+        <MGButton
           key="complete"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn complete"
           onClick={() => onComplete(schedule)}
           title={SCHEDULE_ACTION_LABELS.complete}
         >
           <i className={SCHEDULE_ACTION_ICONS.complete}></i>
-        </button>
+        </MGButton>
       );
     }
 
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if ((schedule.status === 'BOOKED' || schedule.status === 'CONFIRMED') && onCancel) {
       actions.push(
-        <button
+        <MGButton
           key="cancel"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn cancel"
           onClick={() => onCancel(schedule)}
           title={SCHEDULE_ACTION_LABELS.cancel}
         >
           <i className={SCHEDULE_ACTION_ICONS.cancel}></i>
-        </button>
+        </MGButton>
       );
     }
 
     if (onEdit) {
       actions.push(
-        <button
+        <MGButton
           key="edit"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn edit"
           onClick={() => onEdit(schedule)}
           title={SCHEDULE_ACTION_LABELS.edit}
         >
           <i className={SCHEDULE_ACTION_ICONS.edit}></i>
-        </button>
+        </MGButton>
       );
     }
 
     if (onDelete) {
       actions.push(
-        <button
+        <MGButton
           key="delete"
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
           className="schedule-action-btn delete"
           onClick={() => onDelete(schedule)}
           title={SCHEDULE_ACTION_LABELS.delete}
         >
           <i className={SCHEDULE_ACTION_ICONS.delete}></i>
-        </button>
+        </MGButton>
       );
     }
 

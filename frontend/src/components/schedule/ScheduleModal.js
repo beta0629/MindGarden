@@ -214,17 +214,23 @@ const ScheduleModalNew = ({
     const renderActions = () => (
       <>
         {step > 1 && (
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
             className="mg-v2-btn--outline"
+            preventDoubleClick={false}
             onClick={handlePrevStep}
             disabled={loading}
           >
             이전
-          </button>
+          </MGButton>
         )}
         {step < 4 ? (
-          <button
+          <MGButton
+            type="button"
+            variant="primary"
             className="mg-v2-btn--primary"
+            preventDoubleClick={false}
             onClick={() => {
               if (step === 1 && selectedConsultant) setStep(2);
               else if (step === 2 && selectedClient) setStep(3);
@@ -237,7 +243,7 @@ const ScheduleModalNew = ({
             }
           >
             다음
-          </button>
+          </MGButton>
         ) : (
           <MGButton
             type="button"
@@ -245,7 +251,7 @@ const ScheduleModalNew = ({
             className="mg-v2-btn--primary"
             onClick={handleCreateSchedule}
             loading={loading}
-            preventDoubleClick={true}
+            preventDoubleClick={false}
             loadingText="생성 중..."
           >
             스케줄 생성

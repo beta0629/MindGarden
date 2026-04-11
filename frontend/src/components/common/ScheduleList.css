@@ -311,6 +311,34 @@
   opacity: 0.6;
 }
 
+/* MGButton 병합: 페이지네이션 토큰·비활성 유지 */
+.pagination-controls .pagination-btn.mg-button.mg-button--outline {
+  padding: var(--schedule-pagination-btn-padding);
+  border: var(--schedule-pagination-btn-border);
+  border-radius: var(--schedule-pagination-btn-border-radius);
+  background: var(--schedule-pagination-btn-bg);
+  color: var(--schedule-pagination-btn-color);
+  font-size: var(--schedule-pagination-btn-font-size);
+  min-width: 40px;
+  min-height: unset;
+  box-shadow: none;
+}
+
+.pagination-controls .pagination-btn.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--schedule-pagination-btn-hover-bg);
+  color: var(--schedule-pagination-btn-hover-color);
+  border-color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+.pagination-controls .pagination-btn.mg-button.mg-button--outline.mg-button--disabled {
+  background: var(--schedule-pagination-btn-disabled-bg);
+  color: var(--schedule-pagination-btn-disabled-color);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .pagination-pages {
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -396,7 +424,8 @@
     font-size: var(--font-size-base); /* iOS 줌 방지 */
   }
   
-  .pagination-btn {
+  .pagination-btn,
+  .pagination-controls .pagination-btn.mg-button.mg-button--outline {
     padding: var(--spacing-xs);
     font-size: var(--font-size-xs);
     min-width: 32px;

@@ -360,3 +360,5 @@
 | 2026-04-11 | **ERP-P4 배치 B1** (core-coder): `ErpDashboard.js`·`FinancialManagement.js` — `MGButton`에 `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` 통일. ESLint `--quiet` 2파일 통과 |
 | 2026-04-11 | **ERP-P4 배치 B2** (core-coder): `PurchaseManagement.js`·`PurchaseRequestForm.js`·`BudgetManagement.js` — 동일 MGButton 패턴·`BudgetManagement` variant/size 정리. ESLint `--quiet` 3파일 통과 |
 | 2026-04-11 | **ERP-P4 배치 B3** (core-coder): `SalaryManagement`·`ImprovedTaxManagement`·`RefundManagement`·승인 대시보드 2종·`approval/ApprovalHubLayout.js` — MGButton 정합·승인 무음 재조회. ESLint `--quiet` |
+| 2026-04-11 | **QA-01 백엔드 `mvn test` 1차**: `FullSystemIntegrationTest`·`UserScenarioTest` — `ObjectProvider<Flyway>`, 가이드 비밀번호 평문 제거 |
+| 2026-04-11 | **QA-01 백엔드 `mvn test` 2차**: `OnboardingApprovalServiceIntegrationTest`·`OnboardingOpsIntegrationTest`·`ErdGenerationServiceIntegrationTest` — H2에서 MySQL 의존 시 Assumptions 스킵·BCrypt·`Pageable` 수정 |

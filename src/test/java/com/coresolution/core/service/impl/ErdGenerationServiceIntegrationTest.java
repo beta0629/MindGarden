@@ -7,6 +7,8 @@ import com.coresolution.core.dto.ErdDiagramResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.ErdGenerationService;
 import com.coresolution.core.service.ErdMetadataService;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +47,9 @@ class ErdGenerationServiceIntegrationTest {
     
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private DataSource dataSource;
     
     private String testTenantId;
     private String testSchemaName;
@@ -61,10 +70,25 @@ class ErdGenerationServiceIntegrationTest {
                 .build();
         tenantRepository.save(testTenant);
     }
+
+    /**
+     * ERD 생성은 MySQL {@code INFORMATION_SCHEMA.TABLES.TABLE_COMMENT} 등에 의존하며 H2에서는 동일 스키마가 없음.
+     */
+    private void assumeNonH2DataSourceForErd() {
+        try (Connection c = dataSource.getConnection()) {
+            String url = c.getMetaData().getURL();
+            Assumptions.assumeFalse(
+                    url != null && url.startsWith("jdbc:h2:"),
+                    "ERD generation requires MySQL-compatible INFORMATION_SCHEMA (not H2)");
+        } catch (SQLException e) {
+            Assertions.fail("Could not read JDBC URL for ERD assumption: " + e.getMessage());
+        }
+    }
     
     @Test
     @DisplayName("전체 시스템 ERD 생성 테스트")
     void testGenerateFullSystemErd() {
+        assumeNonH2DataSourceForErd();
         // When
         ErdDiagramResponse response = erdGenerationService.generateFullSystemErd(
                 testSchemaName,
@@ -85,6 +109,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("테넌트별 ERD 생성 테스트")
     void testGenerateTenantErd() {
+        assumeNonH2DataSourceForErd();
         // When
         ErdDiagramResponse response = erdGenerationService.generateTenantErd(
                 testTenantId,
@@ -107,6 +132,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("모듈별 ERD 생성 테스트")
     void testGenerateModuleErd() {
+        assumeNonH2DataSourceForErd();
         // Given
         String moduleType = "ACADEMY";
         
@@ -129,6 +155,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("커스텀 ERD 생성 테스트")
     void testGenerateCustomErd() {
+        assumeNonH2DataSourceForErd();
         // Given
         List<String> tableNames = List.of("tenants", "branches", "users");
         String name = "커스텀 ERD 테스트";
@@ -155,6 +182,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("ERD 재생성 테스트")
     void testRegenerateErd() {
+        assumeNonH2DataSourceForErd();
         // Given: 먼저 ERD 생성
         ErdDiagramResponse original = erdGenerationService.generateTenantErd(
                 testTenantId,
@@ -179,6 +207,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("테넌트별 ERD 목록 조회 테스트")
     void testGetTenantErds() {
+        assumeNonH2DataSourceForErd();
         // Given: 테넌트 ERD 생성
         erdGenerationService.generateTenantErd(
                 testTenantId,
@@ -235,6 +264,7 @@ class ErdGenerationServiceIntegrationTest {
     @Test
     @DisplayName("ERD 변경 이력 저장 테스트")
     void testSaveErdHistory() {
+        assumeNonH2DataSourceForErd();
         // Given: ERD 생성
         ErdDiagramResponse erd = erdGenerationService.generateTenantErd(
                 testTenantId,

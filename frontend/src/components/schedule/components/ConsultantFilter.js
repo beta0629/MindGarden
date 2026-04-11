@@ -1,5 +1,6 @@
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 import './ConsultantFilter.css';
 
 /**
@@ -101,13 +102,16 @@ const ConsultantFilterNew = ({
                 {/* 초기화 버튼 */}
                 <div className="consultant-filter-field consultant-filter-field--reset">
                     <label className="consultant-filter-label">&nbsp;</label>
-                    <button
-                        className="mg-btn mg-btn--sm mg-btn--secondary"
+                    <MGButton
+                        variant="secondary"
+                        size="small"
+                        className="consultant-filter-reset-button"
                         onClick={onResetFilters}
+                        preventDoubleClick={false}
                     >
                         <RotateCcw size={16} />
                         초기화
-                    </button>
+                    </MGButton>
                 </div>
 
                 {/* 상담사 수 표시 */}
@@ -122,15 +126,18 @@ const ConsultantFilterNew = ({
                     <label className="consultant-filter-label">가용성</label>
                     <div className="consultant-filter-availability-buttons">
                         {availabilityOptions.map(option => (
-                            <button
+                            <MGButton
                                 key={option.value}
+                                type="button"
+                                variant="outline"
                                 className={`consultant-filter-availability-btn ${filters.availability === option.value ? 'active' : ''}`}
                                 data-option-color={option.color}
                                 onClick={() => handleAvailabilityChange(option.value)}
+                                preventDoubleClick={false}
                             >
                                 <div className="consultant-filter-availability-dot"></div>
                                 {option.label}
-                            </button>
+                            </MGButton>
                         ))}
                     </div>
                 </div>

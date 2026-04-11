@@ -176,6 +176,13 @@
   box-shadow: var(--shadow-sky-sm);
 }
 
+.payment-filter__buttons .mg-button.payment-filter__button.active {
+  background: var(--gradient-sky);
+  border-color: transparent;
+  color: var(--color-white);
+  box-shadow: var(--shadow-sky-sm);
+}
+
 /* 결제 내역 목록 */
 .payment-list {
   display: flex;

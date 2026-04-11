@@ -167,6 +167,16 @@
   transition: all 0.2s ease;
 }
 
+.client-session-menu-content .client-session-menu-item.mg-button {
+  justify-content: flex-start;
+  box-shadow: none;
+}
+
+.client-session-menu-content .client-session-menu-item.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+}
+
 .client-session-menu-item:hover {
   background: var(--color-bg-accent-light);
   color: var(--color-primary);

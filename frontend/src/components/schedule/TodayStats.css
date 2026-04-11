@@ -1,4 +1,15 @@
 /* 오늘의 통계 컴포넌트 스타일 */
+.today-stats-wrapper .today-stats-refresh.mg-button {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.today-stats-wrapper .today-stats-refresh.mg-button:hover {
+  background: var(--mg-gray-100);
+}
+
 .today-stats-container {
     width: 100%;
 }

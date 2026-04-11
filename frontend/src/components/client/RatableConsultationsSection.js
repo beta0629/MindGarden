@@ -10,6 +10,7 @@ import {
 import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
 
@@ -180,13 +181,14 @@ const RatableConsultationsSection = () => {
                     </span>
                   </div>
                 </div>
-                <button
+                <MGButton
+                  variant="primary"
                   className="mg-v2-button mg-v2-button-primary ratable-consultation-item__button"
                   onClick={() => handleRateConsultant(schedule)}
                 >
                   <Heart size={16} />
                   평가하기
-                </button>
+                </MGButton>
               </div>
             ))
           ) : (

@@ -59,6 +59,18 @@
   flex-wrap: wrap;
 }
 
+.activity-history-filter-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.activity-history-back-btn.mg-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
 .activity-history-list {
   background: var(--color-bg-primary);
   border-radius: var(--border-radius-xl);

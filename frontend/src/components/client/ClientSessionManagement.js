@@ -196,34 +196,42 @@ const ClientSessionManagement = () => {
         {isMenuOpen && (
           <div className="client-session-menu-dropdown">
             <div className="client-session-menu-content">
-              <button 
+              <MGButton
+                variant="outline"
                 className="client-session-menu-item"
                 onClick={() => handleMenuAction('dashboard')}
+                preventDoubleClick={false}
               >
                 <i className="bi bi-house client-session-menu-icon"></i>
                 대시보드
-              </button>
-              <button 
+              </MGButton>
+              <MGButton
+                variant="outline"
                 className="client-session-menu-item"
                 onClick={() => handleMenuAction('session-management')}
+                preventDoubleClick={false}
               >
                 <i className="bi bi-clock-history client-session-menu-icon"></i>
                 회기 관리
-              </button>
-              <button 
+              </MGButton>
+              <MGButton
+                variant="outline"
                 className="client-session-menu-item"
                 onClick={() => handleMenuAction('payment-history')}
+                preventDoubleClick={false}
               >
                 <i className="bi bi-credit-card client-session-menu-icon"></i>
                 결제 내역
-              </button>
-              <button 
+              </MGButton>
+              <MGButton
+                variant="outline"
                 className="client-session-menu-item"
                 onClick={() => handleMenuAction('consultation-guide')}
+                preventDoubleClick={false}
               >
                 <i className="bi bi-book client-session-menu-icon"></i>
                 상담 가이드
-              </button>
+              </MGButton>
             </div>
           </div>
         )}

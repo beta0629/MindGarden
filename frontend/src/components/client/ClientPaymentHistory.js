@@ -274,30 +274,42 @@ const ClientPaymentHistory = () => {
         <div className="payment-filter">
           <h3 className="payment-filter__title">결제 내역</h3>
           <div className="payment-filter__buttons">
-            <button 
+            <MGButton
+              type="button"
+              variant="outline"
               className={`payment-filter__button ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
+              preventDoubleClick={false}
             >
               전체
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               className={`payment-filter__button ${filter === 'completed' ? 'active' : ''}`}
               onClick={() => setFilter('completed')}
+              preventDoubleClick={false}
             >
               결제완료
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               className={`payment-filter__button ${filter === 'pending' ? 'active' : ''}`}
               onClick={() => setFilter('pending')}
+              preventDoubleClick={false}
             >
               결제대기
-            </button>
-            <button 
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               className={`payment-filter__button ${filter === 'refunded' ? 'active' : ''}`}
               onClick={() => setFilter('refunded')}
+              preventDoubleClick={false}
             >
               환불완료
-            </button>
+            </MGButton>
           </div>
         </div>
 

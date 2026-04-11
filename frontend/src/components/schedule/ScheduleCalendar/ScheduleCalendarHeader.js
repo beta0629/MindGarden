@@ -1,5 +1,4 @@
-// import React from 'react';
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
 import { Calendar, Users, RefreshCw, Smartphone, Monitor } from 'lucide-react';
 
@@ -63,11 +62,12 @@ const ScheduleCalendarHeader = ({
 
             <div className="mg-v2-calendar-header-right">
                 {/* 모바일 모드 토글 */}
-                <button className="mg-button"
+                <MGButton
                     variant="outline"
                     size="small"
                     onClick={() => setForceMobileMode(!forceMobileMode)}
                     className="mg-v2-mobile-toggle"
+                    preventDoubleClick={false}
                 >
                     {forceMobileMode ? (
                         <>
@@ -80,19 +80,21 @@ const ScheduleCalendarHeader = ({
                             모바일 모드
                         </>
                     )}
-                </button>
+                </MGButton>
 
                 {/* 새로고침 버튼 */}
-                <button className="mg-button"
+                <MGButton
                     variant="secondary"
                     size="small"
                     onClick={onRefresh}
                     loading={loading}
+                    loadingText="불러오는 중..."
                     className="mg-v2-refresh-button"
+                    preventDoubleClick={false}
                 >
                     <RefreshCw className="mg-v2-icon" />
                     새로고침
-                </button>
+                </MGButton>
             </div>
         </div>
     );

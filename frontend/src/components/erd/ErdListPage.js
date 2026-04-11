@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
 import { getTenantErds } from '../../utils/erdApi';
 import StatusBadge from '../common/StatusBadge';
+import MGButton from '../common/MGButton';
 import './ErdListPage.css';
 
 /**
@@ -103,9 +104,9 @@ const ErdListPage = () => {
       <div className="erd-list-page">
         <div className="erd-error">
           <p className="error-message">{error}</p>
-          <button onClick={loadErds} className="retry-button">
+          <MGButton variant="primary" onClick={loadErds} className="retry-button" preventDoubleClick={false}>
             다시 시도
-          </button>
+          </MGButton>
         </div>
       </div>
     );
@@ -121,24 +122,33 @@ const ErdListPage = () => {
       </div>
 
       <div className="erd-list-filters">
-        <button
+        <MGButton
+          type="button"
+          variant="outline"
           className={`filter-button ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
+          preventDoubleClick={false}
         >
           전체
-        </button>
-        <button
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="outline"
           className={`filter-button ${filter === 'tenant' ? 'active' : ''}`}
           onClick={() => setFilter('tenant')}
+          preventDoubleClick={false}
         >
           테넌트 ERD
-        </button>
-        <button
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="outline"
           className={`filter-button ${filter === 'public' ? 'active' : ''}`}
           onClick={() => setFilter('public')}
+          preventDoubleClick={false}
         >
           공개 ERD
-        </button>
+        </MGButton>
       </div>
 
       {erds.length === 0 ? (
@@ -195,9 +205,18 @@ const ErdListPage = () => {
               </div>
               
               <div className="erd-card-footer">
-                <button className="erd-view-button">
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  className="erd-view-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleErdClick(erd.diagramId);
+                  }}
+                  preventDoubleClick={false}
+                >
                   ERD 보기
-                </button>
+                </MGButton>
               </div>
             </div>
           ))}

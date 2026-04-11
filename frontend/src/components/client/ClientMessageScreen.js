@@ -6,6 +6,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import MGButton from '../common/MGButton';
 import './ClientMessageScreen.css';
 
 const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
@@ -284,12 +285,15 @@ const ClientMessageScreen = () => {
       {selectedMessage && (
         <div className="client-message-screen-message-detail-modal" onClick={(e) => e.target === e.currentTarget && setSelectedMessage(null)}>
           <div className="client-message-screen-message-detail-card">
-            <button 
+            <MGButton
+              variant="outline"
               className="client-message-screen-close-button"
               onClick={() => setSelectedMessage(null)}
+              title="닫기"
+              preventDoubleClick={false}
             >
               ×
-            </button>
+            </MGButton>
             
             <div className="client-message-screen-message-detail-header">
               <div>
@@ -317,19 +321,25 @@ const ClientMessageScreen = () => {
                 placeholder="답장 내용을 입력하세요..."
               />
               <div className="client-message-screen-button-group">
-                <button
+                <MGButton
+                  variant="secondary"
                   className="client-message-screen-secondary-button"
                   onClick={() => setSelectedMessage(null)}
+                  disabled={replying}
+                  preventDoubleClick={false}
                 >
                   닫기
-                </button>
-                <button
+                </MGButton>
+                <MGButton
+                  variant="primary"
                   className="client-message-screen-primary-button"
                   onClick={handleReply}
                   disabled={replying || !replyContent.trim()}
+                  loading={replying}
+                  loadingText="전송 중..."
                 >
-                  {replying ? <div className="mg-loading">로딩중...</div> : '📤 답장 전송'}
-                </button>
+                  📤 답장 전송
+                </MGButton>
               </div>
             </div>
           </div>

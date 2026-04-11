@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../../components/common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 
 /**
@@ -128,18 +129,21 @@ const TimeSelectionModal = ({
             className="mg-v2-ad-b0kla"
             actions={
                 <>
-                    <button
+                    <MGButton
+                        variant="secondary"
                         className="mg-btn mg-btn--secondary"
                         onClick={onClose}
+                        preventDoubleClick={false}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
+                        variant="primary"
                         className="mg-btn mg-btn--primary"
                         onClick={handleConfirm}
                     >
                         확인
-                    </button>
+                    </MGButton>
                 </>
             }
         >

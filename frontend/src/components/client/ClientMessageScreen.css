@@ -623,6 +623,17 @@
   color: var(--color-text-secondary);
 }
 
+.client-message-screen-close-button.mg-button {
+  min-height: auto;
+  padding: 0;
+  box-shadow: none;
+}
+
+.client-message-screen-close-button.mg-button.mg-button--outline {
+  border: none;
+  background: none;
+}
+
 .client-message-screen-message-detail-header {
   display: flex;
   justify-content: space-between;

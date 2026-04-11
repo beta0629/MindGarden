@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -226,22 +227,27 @@ const RescheduleScheduleModal = ({
       loading={saving}
       actions={
         <>
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-btn--outline"
+            variant="outline"
             onClick={onClose}
             disabled={saving}
+            className="mg-v2-btn--outline"
+            preventDoubleClick={false}
           >
             {BTN_CANCEL}
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
-            className="mg-v2-btn--primary"
+            variant="primary"
             onClick={handleSave}
             disabled={saving}
+            loading={saving}
+            loadingText={SAVING}
+            className="mg-v2-btn--primary"
           >
-            {saving ? SAVING : BTN_SAVE}
-          </button>
+            {BTN_SAVE}
+          </MGButton>
         </>
       }
     >

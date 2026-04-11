@@ -54,6 +54,12 @@
   border-color: var(--primary-color, var(--mg-primary-500));
 }
 
+.erd-list-filters .mg-button.filter-button.active {
+  background: var(--primary-color, var(--mg-primary-500));
+  color: #fff;
+  border-color: var(--primary-color, var(--mg-primary-500));
+}
+
 /* 로딩 상태 */
 .erd-loading {
   display: flex;

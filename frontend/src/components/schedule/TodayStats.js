@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { ContentKpiRow } from '../dashboard-v2/content';
+import MGButton from '../common/MGButton';
 import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import './TodayStats.css';
 
@@ -90,14 +91,16 @@ const TodayStats = () => {
     return (
         <div className="today-stats-wrapper">
             <div className="mg-v2-flex mg-v2-justify-end mg-v2-mb-md">
-                <button 
-                    className="mg-v2-btn-icon mg-v2-text-secondary" 
+                <MGButton
+                    variant="outline"
+                    size="small"
+                    className="today-stats-refresh mg-v2-btn-icon mg-v2-text-secondary"
                     onClick={loadTodayStats}
                     title="새로고침"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                    preventDoubleClick={false}
                 >
                     🔄 새로고침
-                </button>
+                </MGButton>
             </div>
             <ContentKpiRow items={kpiItems} />
         </div>

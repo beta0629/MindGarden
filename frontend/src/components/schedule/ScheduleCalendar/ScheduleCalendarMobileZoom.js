@@ -1,5 +1,4 @@
-// import React from 'react';
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
 import { X, Plus, Calendar } from 'lucide-react';
 
 /**
@@ -45,14 +44,16 @@ const ScheduleCalendarMobileZoom = ({
                         <Calendar className="mg-v2-icon" />
                         {formatDate(date)}
                     </h3>
-                    <button className="mg-button" 
-                        variant="text" 
+                    <MGButton
+                        variant="outline"
                         size="small"
                         onClick={onClose}
                         className="mg-v2-mobile-zoom-close"
+                        title="닫기"
+                        preventDoubleClick={false}
                     >
                         <X className="mg-v2-icon" />
-                    </button>
+                    </MGButton>
                 </div>
 
                 <div className="mg-v2-mobile-zoom-content">
@@ -89,14 +90,14 @@ const ScheduleCalendarMobileZoom = ({
                 </div>
 
                 <div className="mg-v2-mobile-zoom-footer">
-                    <button className="mg-button" 
+                    <MGButton
                         variant="primary"
                         onClick={onAddSchedule}
                         className="mg-v2-mobile-zoom-add-button"
                     >
                         <Plus className="mg-v2-icon" />
                         일정 추가
-                    </button>
+                    </MGButton>
                 </div>
             </div>
         </div>

@@ -171,6 +171,11 @@
   background: var(--mg-white);
 }
 
+.consultant-filter-availability-buttons .consultant-filter-availability-btn.mg-button.mg-button--outline {
+  height: auto;
+  min-height: auto;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .consultant-filter {

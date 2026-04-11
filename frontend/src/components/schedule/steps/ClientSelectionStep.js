@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link2 } from 'lucide-react';
 import MappingCreationModal from '../../admin/MappingCreationModal';
+import MGButton from '../../common/MGButton';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ClientSelector from '../ClientSelector';
@@ -253,14 +254,15 @@ const ClientSelectionStep = ({
                         매핑 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.
                     </p>
                     <div className="mg-v2-ad-client-step__empty-actions">
-                        <button
+                        <MGButton
                             type="button"
+                            variant="primary"
                             className="mg-v2-btn--primary mg-v2-ad-client-step__cta"
                             onClick={() => setShowMappingModal(true)}
                         >
                             <Link2 size={16} aria-hidden />
                             <span>매핑 생성하기</span>
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             ) : (

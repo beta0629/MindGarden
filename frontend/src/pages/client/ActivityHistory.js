@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { API_BASE_URL } from '../../constants/api';
 import AdminCommonLayout from '../../components/layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../../components/common/MGButton';
 import './ActivityHistory.css';
 
 const ActivityHistory = () => {
@@ -140,13 +141,15 @@ const ActivityHistory = () => {
               최근 활동과 시스템 알림을 확인하세요
             </p>
           </div>
-          <button 
-            className="btn btn-outline-secondary"
+          <MGButton
+            variant="outline"
+            className="activity-history-back-btn"
             onClick={() => navigate('/client/dashboard')}
+            preventDoubleClick={false}
           >
             <i className="bi bi-arrow-left"></i>
             대시보드로
-          </button>
+          </MGButton>
         </div>
 
         {loading ? (
@@ -161,15 +164,17 @@ const ActivityHistory = () => {
           <>
       {/* 필터 */}
       <div className="activity-history-filters">
-        <div className="btn-group" role="group">
+        <div className="activity-history-filter-group" role="group">
           {['all', 'consultation', 'payment', 'system'].map(type => (
-            <button
+            <MGButton
               key={type}
-              className={`btn ${filter === type ? 'btn-primary' : 'btn-outline-primary'}`}
+              variant={filter === type ? 'primary' : 'outline'}
+              className="activity-history-filter-btn"
               onClick={() => setFilter(type)}
+              preventDoubleClick={false}
             >
               {getActivityTypeLabel(type)}
-            </button>
+            </MGButton>
           ))}
         </div>
       </div>

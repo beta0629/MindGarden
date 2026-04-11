@@ -7,6 +7,8 @@ import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
+import MGButton from '../common/MGButton';
+import './ConsultantRatingModal.css';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -115,28 +117,27 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
             showCloseButton={true}
             actions={
                 <>
-                    <button
+                    <MGButton
+                        variant="secondary"
                         className="mg-v2-button mg-v2-button--secondary"
                         onClick={onClose}
                         disabled={isSubmitting}
+                        preventDoubleClick={false}
                     >
                         <XCircle size={20} className="mg-v2-icon-inline" />
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
+                        variant="primary"
                         className="mg-v2-button mg-v2-button--primary"
                         onClick={handleSubmit}
                         disabled={isSubmitDisabled}
+                        loading={isSubmitting}
+                        loadingText="등록 중..."
                     >
-                        {isSubmitting ? (
-                            <div className="mg-loading">로딩중...</div>
-                        ) : (
-                            <>
-                                <CheckCircle size={20} className="mg-v2-icon-inline" />
-                                평가 완료
-                            </>
-                        )}
-                    </button>
+                        <CheckCircle size={20} className="mg-v2-icon-inline" />
+                        평가 완료
+                    </MGButton>
                 </>
             }
         >
@@ -169,16 +170,18 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         </label>
                         <div className="mg-v2-heart-rating">
                             {[1, 2, 3, 4, 5].map(score => (
-                                <button
+                                <MGButton
                                     key={score}
                                     type="button"
+                                    variant="outline"
                                     className={`mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
                                     onMouseEnter={() => setHoveredScore(score)}
                                     onMouseLeave={() => setHoveredScore(0)}
                                     onClick={() => setHeartScore(score)}
+                                    preventDoubleClick={false}
                                 >
                                     {(hoveredScore >= score || heartScore >= score) ? '💖' : '🤍'}
-                                </button>
+                                </MGButton>
                             ))}
                         </div>
                         {heartScore > 0 && (
@@ -193,14 +196,16 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         <label className="mg-v2-form-label">어떤 점이 좋았나요? (선택사항)</label>
                         <div className="mg-v2-tag-group">
                             {ratingTags.map(tag => (
-                                <button
+                                <MGButton
                                     key={tag}
                                     type="button"
+                                    variant="outline"
                                     className={`mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
                                     onClick={() => handleTagToggle(tag)}
+                                    preventDoubleClick={false}
                                 >
                                     {tag}
-                                </button>
+                                </MGButton>
                             ))}
                         </div>
                     </div>

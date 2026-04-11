@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../common/MGButton';
 import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 const CounselingContact = () => {
   const [formData, setFormData] = useState({
@@ -85,9 +85,9 @@ const CounselingContact = () => {
                 />
               </div>
               
-              <button className="mg-button" type="submit" variant="primary" size="large">
+              <MGButton type="submit" variant="primary" size="large">
                 문의하기
-              </button>
+              </MGButton>
             </form>
           </div>
           

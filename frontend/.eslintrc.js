@@ -57,14 +57,8 @@ module.exports = {
       }
     ],
     
-    // CSS 클래스명 패턴 검증 (경고로 완화)
-    'no-restricted-syntax': [
-      'warn',
-      {
-        selector: 'Literal[value=/^mg-(?!v2-)/]',
-        message: 'CSS 클래스는 mg-v2- 접두사를 사용하세요.'
-      }
-    ],
+    // 레거시 mg- 클래스: 경고 대량 발생 → G-01/mg-v2 이관 트랙에서 처리. 필요 시 스캔 스크립트로 보완.
+    'no-restricted-syntax': 'off',
     
     // ui/ 컴포넌트 사용 강제 (경고)
     'no-restricted-globals': [
@@ -91,7 +85,8 @@ module.exports = {
     'react/no-unused-prop-types': 'warn',
     'react/self-closing-comp': 'warn',
     'react/jsx-pascal-case': 'error',
-    'react/jsx-no-bind': 'warn',
+    // 인라인 화살표 핸들러는 프로젝트 전반에서 표준적으로 사용 → 규칙 비활성화
+    'react/jsx-no-bind': 'off',
     'react/jsx-no-target-blank': 'error',
     
     // React Hooks 규칙

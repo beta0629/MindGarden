@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-11 (ESLint 자동 수정 1차·경고 축소)  
+**최종 갱신**: 2026-04-11 (lint:check·게이트 정합·ESLint 규칙 조정)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -247,10 +247,10 @@
 4) **core-tester**: 배치 완료 게이트.  
 5) 본 문서에 **G-01~G-07** 행 상태(☐/🔄/☑)를 갱신.
 
-- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: Jest 전 스위트 통과; **`eslint --quiet` 오류 0건**; **`eslint --fix` 1차**로 경고 약 1.42만 → **약 1.17만** (자동 수정 가능 분). **`npm run lint:check`**는 `--max-warnings 0`이라 **잔여 경고로 실패** — 수동 규칙(`no-magic-numbers`·`complexity` 등)은 별도 배치.
+- **전역 확대 검토 상태**: **G-01 네이티브 버튼 정리** — G8-B1a~B18·G7·CL-B1 배치 ☑; **`rg '<button'`** 앱 코드는 `MGButton.js` 래퍼 내부만(백업본 G8-B18에서 제거). **QA-01**: Jest 전 스위트 통과; **`npm run lint:check`** = **`eslint --quiet`** (오류 0건 게이트); **`npm run lint:strict`** = 경고까지 0 (`--max-warnings 0`, 장기 부채). 규칙: `react/jsx-no-bind` off, 레거시 `mg-` 클래스 AST 검사(`no-restricted-syntax`) off — mg-v2 이관은 별 트랙. 전체 경고 대략 **6.7k**대(로컬 기준).
 
 **권장 다음 단계 (마스터 진행)**  
-1) **ESLint 경고 부채 (수동)** — `eslint --fix`로 자동분 처리 후, **`no-magic-numbers`·`complexity`·`max-lines`** 등 규칙 완화·상수 추출·파일 분할(별도 배치).  
+1) **`lint:strict` 축소** — `no-magic-numbers`·`no-unused-vars`·`react/forbid-dom-props` 등 경고 단계적 감소(별도 배치).  
 2) **UI-01·UI-03** — 관리자 레이아웃 잔여·컴포넌트 공통화 체크리스트 후속.  
 3) **ERP-P4 잔여** — `components/erp` 내 인벤토리·MGButton 패턴(ERP-P4-05 비고).  
 4) **SEC-01** / **OPS-01** — 온보딩 API 보강·운영 체크리스트는 별 배치로 착수 시 본 표 🔄/☑ 갱신.

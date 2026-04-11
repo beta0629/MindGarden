@@ -333,33 +333,39 @@ const TenantProfile = () => {
               role="tablist"
               aria-label="테넌트 프로필 섹션"
             >
-              <button
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'overview'}
+                variant="outline"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('overview')}
+                preventDoubleClick={false}
               >
                 <LayoutDashboard size={18} aria-hidden /> 개요
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'subscription'}
+                variant="outline"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'subscription' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('subscription')}
+                preventDoubleClick={false}
               >
                 <Package size={18} aria-hidden /> 구독 관리
-              </button>
-              <button
+              </MGButton>
+              <MGButton
                 type="button"
                 role="tab"
                 aria-selected={activeTab === 'payment'}
+                variant="outline"
                 className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('payment')}
+                preventDoubleClick={false}
               >
                 <CreditCard size={18} aria-hidden /> 결제 수단
-              </button>
+              </MGButton>
             </div>
 
             <div
@@ -372,14 +378,16 @@ const TenantProfile = () => {
                     title="테넌트 정보"
                     actions={
                       canRenameTenant ? (
-                        <button
+                        <MGButton
                           type="button"
-                          className="mg-v2-button mg-v2-button--outline mg-v2-button--medium"
+                          variant="outline"
+                          size="medium"
                           onClick={openTenantNameModal}
                           data-testid="tenant-profile-rename-open"
+                          preventDoubleClick={false}
                         >
                           이름 변경
-                        </button>
+                        </MGButton>
                       ) : null
                     }
                   >
@@ -509,23 +517,29 @@ const TenantProfile = () => {
                           </div>
                           <div className="payment-method-actions">
                             {!pm.isDefault && (
-                              <button
+                              <MGButton
                                 type="button"
+                                variant="outline"
+                                size="small"
                                 className="payment-method-action-btn"
                                 onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
                                 title={toDisplayString('기본 결제 수단으로 설정')}
+                                preventDoubleClick={false}
                               >
                                 <Edit2 size={16} />
-                              </button>
+                              </MGButton>
                             )}
-                            <button
+                            <MGButton
                               type="button"
+                              variant="outline"
+                              size="small"
                               className="payment-method-action-btn payment-method-action-btn--danger"
                               onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
                               title={toDisplayString('삭제')}
+                              preventDoubleClick={false}
                             >
                               <Trash2 size={16} />
-                            </button>
+                            </MGButton>
                           </div>
                         </div>
                       ))
@@ -564,23 +578,27 @@ const TenantProfile = () => {
             }
             actions={
               <>
-                <button
+                <MGButton
                   type="button"
-                  className="mg-v2-button mg-v2-button--outline mg-v2-button--medium"
+                  variant="outline"
+                  size="medium"
                   onClick={closeTenantNameModal}
                   disabled={tenantNameSaving}
+                  preventDoubleClick={false}
                 >
                   취소
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="submit"
                   form="tenant-profile-rename-form"
-                  className="mg-v2-button mg-v2-button--primary mg-v2-button--medium"
+                  variant="primary"
+                  size="medium"
                   disabled={tenantNameSaving}
                   data-testid="tenant-profile-rename-save"
+                  preventDoubleClick={false}
                 >
                   저장
-                </button>
+                </MGButton>
               </>
             }
           >

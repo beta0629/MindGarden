@@ -23,6 +23,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { 
     FaBuilding, 
@@ -310,13 +311,15 @@ const TenantCodeManagement = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <button className="mg-button"
+                        <MGButton
+                            type="button"
                             variant="primary"
                             onClick={() => handleOpenModal()}
                             disabled={!permissions.canEdit}
+                            preventDoubleClick={false}
                         >
                             <FaPlus /> {UI_TEXT.ADD_CODE}
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
 
@@ -326,12 +329,14 @@ const TenantCodeManagement = () => {
                             <FaTag size={32} />
                             <p>{UI_TEXT.NO_CODES}</p>
                             {permissions.canEdit && (
-                                <button className="mg-button"
+                                <MGButton
+                                    type="button"
                                     variant="outline"
                                     onClick={() => handleOpenModal()}
+                                    preventDoubleClick={false}
                                 >
                                     {UI_TEXT.FIRST_CODE}
-                                </button>
+                                </MGButton>
                             )}
                         </div>
                     ) : (
@@ -373,30 +378,42 @@ const TenantCodeManagement = () => {
                                     <span className="sort-order">{UI_TEXT.SORT_ORDER}: {code.sortOrder}</span>
                                 </div>
                                 <div className="code-actions">
-                                    <button
+                                    <MGButton
+                                        type="button"
+                                        variant="outline"
+                                        size="small"
                                         className="action-btn view"
                                         onClick={() => handleOpenModal(code)}
                                         title={UI_TEXT.TOOLTIP_VIEW}
+                                        preventDoubleClick={false}
                                     >
                                         <FaEye />
-                                    </button>
+                                    </MGButton>
                                     {permissions.canEdit && (
-                                        <button
+                                        <MGButton
+                                            type="button"
+                                            variant="outline"
+                                            size="small"
                                             className="action-btn edit"
                                             onClick={() => handleOpenModal(code)}
                                             title={UI_TEXT.TOOLTIP_EDIT}
+                                            preventDoubleClick={false}
                                         >
                                             <FaEdit />
-                                        </button>
+                                        </MGButton>
                                     )}
                                     {permissions.canDelete && (
-                                        <button
+                                        <MGButton
+                                            type="button"
+                                            variant="outline"
+                                            size="small"
                                             className="action-btn delete"
                                             onClick={() => handleDeleteCode(code.id)}
                                             title={UI_TEXT.TOOLTIP_DELETE}
+                                            preventDoubleClick={false}
                                         >
                                             <FaTrash />
-                                        </button>
+                                        </MGButton>
                                     )}
                                 </div>
                             </div>
@@ -420,28 +437,34 @@ const TenantCodeManagement = () => {
 
                 <div className="tenant-code-management">
                 <div className="tab-navigation">
-                    <button
+                    <MGButton
+                        type="button"
+                        variant="outline"
                         className={`tab-btn ${activeTab === TAB_TYPES.TENANT ? 'active' : ''}`}
                         onClick={() => {
                             setActiveTab(TAB_TYPES.TENANT);
                             setSelectedGroup(null);
                             setCodes([]);
                         }}
+                        preventDoubleClick={false}
                     >
                         <FaBuilding /> {UI_TEXT.TAB_TENANT}
                         <span className="tab-count">{TENANT_CODE_GROUPS.length}</span>
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        variant="outline"
                         className={`tab-btn ${activeTab === TAB_TYPES.CORE ? 'active' : ''}`}
                         onClick={() => {
                             setActiveTab(TAB_TYPES.CORE);
                             setSelectedGroup(null);
                             setCodes([]);
                         }}
+                        preventDoubleClick={false}
                     >
                         <FaGlobe /> {UI_TEXT.TAB_CORE}
                         <span className="tab-count">{CORE_CODE_GROUPS.length}</span>
-                    </button>
+                    </MGButton>
                 </div>
 
                 <div className="management-container">
@@ -482,18 +505,18 @@ const TenantCodeManagement = () => {
                     showCloseButton
                     actions={(
                         <>
-                            <button type="button" className="mg-button" variant="outline" onClick={handleCloseModal}>
+                            <MGButton type="button" variant="outline" onClick={handleCloseModal} preventDoubleClick={false}>
                                 {UI_TEXT.BTN_CANCEL}
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
-                                className="mg-button"
                                 variant="primary"
                                 onClick={handleSaveCode}
                                 disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
+                                preventDoubleClick={false}
                             >
                                 {editingCode ? UI_TEXT.BTN_EDIT : UI_TEXT.BTN_ADD}
-                            </button>
+                            </MGButton>
                         </>
                     )}
                 >

@@ -4,6 +4,14 @@
   margin: 0 auto;
 }
 
+/* ContentHeader 액션: MGButton 행 레이아웃 (G8-B8b) */
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  align-items: center;
+}
+
 .payment-header {
   display: flex;
   justify-content: space-between;

@@ -197,6 +197,23 @@
   color: var(--ad-b0kla-danger);
 }
 
+/* MGButton: 결제 수단 카드 아이콘 버튼 레이아웃 (G8-B8b) */
+.payment-method-actions .mg-button.payment-method-action-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.payment-method-actions .mg-button.payment-method-action-btn .mg-button__content,
+.payment-method-actions .mg-button.payment-method-action-btn .mg-button__text {
+  display: contents;
+}
+
+.payment-method-actions .mg-button.payment-method-action-btn:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
 .no-payment-methods {
   display: flex;
   flex-direction: column;

@@ -570,6 +570,51 @@
     color: var(--mg-error-500);
 }
 
+/* MGButton: 탭 네비·코드 카드 액션 아이콘 레이아웃 (G8-B8b) */
+.tab-navigation .mg-button.tab-btn {
+    border: 2px solid var(--tenant-border-default);
+    border-radius: var(--tenant-border-radius-lg);
+    background: var(--tenant-bg);
+    color: var(--tenant-text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: var(--tenant-spacing-md) var(--tenant-spacing-xl);
+    min-height: unset;
+    box-shadow: none;
+}
+
+.tab-navigation .mg-button.tab-btn:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    border-color: var(--tenant-border-hover);
+    background: var(--tenant-surface);
+    color: var(--tenant-text-secondary);
+    transform: none;
+}
+
+.tab-navigation .mg-button.tab-btn.active {
+    border-color: var(--action-view);
+    background: var(--action-view);
+    color: var(--tenant-bg);
+}
+
+.tab-navigation .mg-button.tab-btn.active:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    border-color: var(--action-view);
+    background: var(--action-view);
+    color: var(--tenant-bg);
+    filter: brightness(1.02);
+}
+
+.code-actions .mg-button.action-btn {
+    width: 2rem;
+    height: 2rem;
+    min-height: 2rem;
+    padding: 0;
+}
+
+.code-actions .mg-button.action-btn .mg-button__content,
+.code-actions .mg-button.action-btn .mg-button__text {
+    display: contents;
+}
+
 /* 모달 스타일 */
 .mg-modal__overlay {
     position: fixed;

@@ -442,24 +442,30 @@ const PaymentManagement = () => {
           titleId={PAYMENT_PAGE_TITLE_ID}
           actions={(
             <div className="header-actions">
-            <button 
-              className="btn btn-success"
-              onClick={() => exportPayments()}
-            >
-              데이터 내보내기
-            </button>
-            <button 
-              className="btn btn-info"
-              onClick={() => showPaymentAnalytics()}
-            >
-              결제 분석
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={() => loadPayments()}
-            >
-              새로고침
-            </button>
+              <MGButton
+                type="button"
+                variant="success"
+                onClick={() => exportPayments()}
+                preventDoubleClick={false}
+              >
+                데이터 내보내기
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="info"
+                onClick={() => showPaymentAnalytics()}
+                preventDoubleClick={false}
+              >
+                결제 분석
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="primary"
+                onClick={() => loadPayments()}
+                preventDoubleClick={false}
+              >
+                새로고침
+              </MGButton>
             </div>
           )}
         />
@@ -571,30 +577,42 @@ const PaymentManagement = () => {
               {selectedPayments.length}건 선택됨
             </div>
             <div className="bulk-buttons">
-              <button 
-                className="btn btn-success btn-sm"
+              <MGButton
+                type="button"
+                variant="success"
+                size="small"
                 onClick={() => handleBulkAction('approve', selectedPayments)}
+                preventDoubleClick={false}
               >
                 일괄 승인
-              </button>
-              <button 
-                className="btn btn-warning btn-sm"
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="warning"
+                size="small"
                 onClick={() => handleBulkAction('cancel', selectedPayments)}
+                preventDoubleClick={false}
               >
                 일괄 취소
-              </button>
-              <button 
-                className="btn btn-danger btn-sm"
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="danger"
+                size="small"
                 onClick={() => handleBulkAction('refund', selectedPayments)}
+                preventDoubleClick={false}
               >
                 일괄 환불
-              </button>
-              <button 
-                className="btn btn-secondary btn-sm"
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="secondary"
+                size="small"
                 onClick={() => setSelectedPayments([])}
+                preventDoubleClick={false}
               >
                 선택 해제
-              </button>
+              </MGButton>
             </div>
           </div>
         )}
@@ -718,26 +736,30 @@ const PaymentManagement = () => {
 
         {/* 페이지네이션 */}
         <div className="pagination">
-          <button
+          <MGButton
             type="button"
-            className="btn btn-sm"
+            variant="outline"
+            size="small"
             disabled={pagination.currentPage === 0}
             onClick={() => handlePageChange(pagination.currentPage - 1)}
+            preventDoubleClick={false}
           >
             이전
-          </button>
+          </MGButton>
           <span>
             {pagination.currentPage + 1} / {pagination.totalPages}
             (총 {pagination.totalElements}건)
           </span>
-          <button
+          <MGButton
             type="button"
-            className="btn btn-sm"
+            variant="outline"
+            size="small"
             disabled={pagination.currentPage >= pagination.totalPages - 1}
             onClick={() => handlePageChange(pagination.currentPage + 1)}
+            preventDoubleClick={false}
           >
             다음
-          </button>
+          </MGButton>
         </div>
 
         {error && (

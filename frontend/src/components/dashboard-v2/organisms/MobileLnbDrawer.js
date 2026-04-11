@@ -13,6 +13,7 @@ import { LogOut, ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './MobileLnbDrawer.css';
 
@@ -84,10 +85,13 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                   className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === item.to ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''}`}
                 >
                   <div className="mg-v2-mobile-lnb-drawer__group-head">
-                    <button
+                    <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
                       className="mg-v2-mobile-lnb-drawer__group-chevron"
                       onClick={(e) => handleGroupToggle(e, item.to)}
+                      preventDoubleClick={false}
                       aria-expanded={expandedGroupKey === item.to}
                       aria-controls={sublistId('mg-v2-mobile-lnb', item.to)}
                       aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
@@ -97,7 +101,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       ) : (
                         <ChevronRight size={18} aria-hidden />
                       )}
-                    </button>
+                    </MGButton>
                     <NavLinkWithRouter
                       to={item.to}
                       icon={item.icon}
@@ -142,15 +146,19 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
         </nav>
         {onLogout && (
           <div className="mg-v2-mobile-lnb-drawer__footer">
-            <button
+            <MGButton
               type="button"
+              variant="outline"
+              size="medium"
+              fullWidth
               className="mg-v2-mobile-lnb-drawer__logout"
               onClick={onLogout}
+              preventDoubleClick={false}
               aria-label="로그아웃"
             >
               <LogOut size={20} aria-hidden />
               <span>로그아웃</span>
-            </button>
+            </MGButton>
           </div>
         )}
       </aside>

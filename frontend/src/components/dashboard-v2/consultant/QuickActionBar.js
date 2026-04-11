@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Zap, FileText, Calendar, Users, MessageSquare } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -53,16 +54,19 @@ const QuickActionBar = ({ onNavigate, className = '' }) => {
         {actions.map(action => {
           const Icon = action.icon;
           return (
-            <button
+            <MGButton
               key={action.id}
-              className={`mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`}
-              onClick={() => onNavigate(action.path)}
               type="button"
+              variant={action.variant === 'primary' ? 'primary' : 'outline'}
+              size="medium"
+              className={`mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md mg-button--with-icon`}
+              onClick={() => onNavigate(action.path)}
+              preventDoubleClick={false}
               aria-label={toDisplayString(action.label)}
             >
               <Icon size={16} />
               <SafeText tag="span">{action.label}</SafeText>
-            </button>
+            </MGButton>
           );
         })}
       </div>

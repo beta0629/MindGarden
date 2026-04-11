@@ -77,6 +77,26 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.mg-v2-desktop-lnb__group-chevron.mg-button.mg-button--outline {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.mg-v2-desktop-lnb__group-chevron.mg-button {
+  min-height: unset;
+  box-shadow: none;
+}
+
+.mg-v2-desktop-lnb__group-chevron.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+.mg-v2-desktop-lnb__group-chevron .mg-button__content,
+.mg-v2-desktop-lnb__group-chevron .mg-button__text {
+  display: contents;
+}
+
 .mg-v2-desktop-lnb__group-head .mg-v2-nav-link {
   flex: 1;
   font-weight: 600;

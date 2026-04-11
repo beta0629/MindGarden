@@ -14,6 +14,7 @@ import { ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './DesktopLnb.css';
 
@@ -63,10 +64,13 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                 className={`mg-v2-desktop-lnb__group ${expandedGroupKey === item.to ? 'mg-v2-desktop-lnb__group--expanded' : ''}`}
               >
                 <div className="mg-v2-desktop-lnb__group-head">
-                  <button
+                  <MGButton
                     type="button"
+                    variant="outline"
+                    size="small"
                     className="mg-v2-desktop-lnb__group-chevron"
                     onClick={(e) => handleGroupToggle(e, item.to)}
+                    preventDoubleClick={false}
                     aria-expanded={expandedGroupKey === item.to}
                     aria-controls={sublistId('mg-v2-desktop-lnb', item.to)}
                     aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
@@ -76,7 +80,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     ) : (
                       <ChevronRight size={18} aria-hidden />
                     )}
-                  </button>
+                  </MGButton>
                   <NavLinkWithRouter
                     to={item.to}
                     icon={item.icon}

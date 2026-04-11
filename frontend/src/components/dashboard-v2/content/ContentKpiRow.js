@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './ContentKpiRow.css';
 
@@ -64,14 +65,17 @@ const ContentKpiRow = ({ items = [] }) => {
         const cardClassName = `mg-v2-content-kpi-card ${accentClass}`;
         if (hasClick) {
           return (
-            <button
+            <MGButton
               key={item.id || idx}
               type="button"
+              variant="primary"
+              size="medium"
               className={`${cardClassName} mg-v2-content-kpi-card--clickable`}
               onClick={item.onClick}
+              preventDoubleClick={false}
             >
               {cardContent}
-            </button>
+            </MGButton>
           );
         }
         return (

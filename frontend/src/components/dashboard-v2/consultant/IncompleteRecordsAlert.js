@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AlertTriangle, FileText } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 /**
  * 미작성 상담일지 알림 컴포넌트
@@ -33,15 +34,18 @@ const IncompleteRecordsAlert = ({
         </div>
       </div>
       <div className="mg-v2-alert__action">
-        <button
-          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-md"
-          onClick={onAction}
+        <MGButton
           type="button"
+          variant="primary"
+          size="medium"
+          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-md mg-button--with-icon"
+          onClick={onAction}
+          preventDoubleClick={false}
           aria-label={`미작성 상담일지 ${count}건 작성하기`}
         >
           <FileText size={16} />
           바로 작성하기
-        </button>
+        </MGButton>
       </div>
     </div>
   );

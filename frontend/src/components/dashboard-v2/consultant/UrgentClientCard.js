@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Calendar, ChevronRight } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 /**
  * 긴급 내담자 카드 컴포넌트 (Molecule)
@@ -46,10 +47,13 @@ const UrgentClientCard = ({ client, onClick, className = '' }) => {
   };
 
   return (
-    <button
+    <MGButton
+      type="button"
+      variant="outline"
+      size="medium"
       className={`mg-v2-urgent-client-card ${className}`}
       onClick={onClick}
-      type="button"
+      preventDoubleClick={false}
       aria-label={`${client.clientName} 상세보기`}
     >
       <div className="mg-v2-urgent-client-card__info">
@@ -68,7 +72,7 @@ const UrgentClientCard = ({ client, onClick, className = '' }) => {
         </div>
       </div>
       <ChevronRight size={20} className="mg-v2-urgent-client-card__icon" />
-    </button>
+    </MGButton>
   );
 };
 

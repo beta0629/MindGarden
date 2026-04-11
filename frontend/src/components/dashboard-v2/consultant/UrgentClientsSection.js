@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AlertCircle, ChevronRight } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 import UrgentClientCard from './UrgentClientCard';
 import { ContentSection } from '../content';
 
@@ -30,14 +31,17 @@ const UrgentClientsSection = ({
         </div>
       }
       actions={
-        <button
-          className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
-          onClick={onViewAllClients}
+        <MGButton
           type="button"
+          variant="outline"
+          size="small"
+          className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
+          onClick={onViewAllClients}
+          preventDoubleClick={false}
           aria-label="긴급 내담자 전체보기"
         >
           전체보기 <ChevronRight size={16} />
-        </button>
+        </MGButton>
       }
       className={`mg-v2-urgent-clients-section ${className}`}
     >

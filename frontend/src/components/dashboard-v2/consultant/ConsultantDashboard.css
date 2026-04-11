@@ -395,6 +395,42 @@
   background-color: var(--mg-v2-color-primary-100, #dbeafe);
 }
 
+/* MGButton: 다가오는 상담 행 레이아웃 유지 */
+.upcoming-schedule-item.mg-button {
+  min-height: unset;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  box-shadow: none;
+  justify-content: flex-start;
+}
+
+.upcoming-schedule-item.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: translateY(-1px);
+}
+
+.upcoming-schedule-item.mg-button .mg-button__content,
+.upcoming-schedule-item.mg-button .mg-button__text {
+  display: contents;
+}
+
+.upcoming-schedule-item.mg-button.mg-button--outline {
+  background-color: var(--mg-v2-color-background, #f9fafb);
+  border: 1px solid var(--mg-v2-color-border-light, #f3f4f6);
+  color: inherit;
+}
+
+.upcoming-schedule-item--highlighted.mg-button.mg-button--outline {
+  background-color: var(--mg-v2-color-primary-50, #eff6ff);
+  border: 2px solid var(--mg-v2-color-primary-200, #bfdbfe);
+  padding-left: calc(var(--mg-v2-spacing-md, 12px) + 8px);
+}
+
+.upcoming-schedule-item--highlighted.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-color-primary-100, #dbeafe);
+}
+
 /* Upcoming Schedule Date */
 .upcoming-schedule-date {
   display: flex;
@@ -831,6 +867,26 @@
 .mg-v2-urgent-client-card:hover {
   border-color: var(--mg-color-error-main, #EF4444);
   background: rgba(239, 68, 68, 0.02);
+}
+
+.mg-v2-urgent-client-card.mg-button {
+  min-height: unset;
+  box-shadow: none;
+}
+
+.mg-v2-urgent-client-card.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+.mg-v2-urgent-client-card .mg-button__content,
+.mg-v2-urgent-client-card .mg-button__text {
+  display: contents;
+}
+
+.mg-v2-urgent-client-card.mg-button.mg-button--outline {
+  background: var(--mg-color-background-main, #FAF9F7);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  color: inherit;
 }
 
 .mg-v2-urgent-client-card__info {

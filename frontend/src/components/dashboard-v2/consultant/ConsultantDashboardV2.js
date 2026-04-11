@@ -22,6 +22,7 @@ import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
+import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -541,11 +542,14 @@ const ConsultantDashboardV2 = ({ user }) => {
             const { dateStr, weekday, timeStr } = formatUpcomingSchedule(schedule);
             
             return (
-              <button 
-                key={schedule.id || `upcoming-schedule-${idx}`} 
+              <MGButton
+                key={schedule.id || `upcoming-schedule-${idx}`}
+                type="button"
+                variant="outline"
+                size="small"
                 className={`upcoming-schedule-item ${isHighlighted ? 'upcoming-schedule-item--highlighted' : ''}`}
                 onClick={() => handleScheduleClick(schedule.id)}
-                type="button"
+                preventDoubleClick={false}
                 aria-label={`${dateStr} ${timeStr} ${schedule.clientName} ${schedule.consultationType} ${schedule.status === 'CONFIRMED' ? '확정' : '대기'}`}
               >
                 <div className="upcoming-schedule-date">
@@ -568,7 +572,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 <div className={`schedule-status ${schedule.status === 'CONFIRMED' ? 'status-confirmed' : 'status-pending'}`}>
                   {schedule.status === 'CONFIRMED' ? '확정' : '대기'}
                 </div>
-              </button>
+              </MGButton>
             );
           })}
         </div>
@@ -678,12 +682,16 @@ const ConsultantDashboardV2 = ({ user }) => {
             title="최근 일정 (오늘·어제)"
             titleIcon={<Clock size={18} />}
             actions={
-              <button 
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
                 onClick={() => navigate('/consultant/schedule')}
+                preventDoubleClick={false}
               >
                 전체보기 <ChevronRight size={16} />
-              </button>
+              </MGButton>
             }
           >
             <div className="card-body">
@@ -696,12 +704,16 @@ const ConsultantDashboardV2 = ({ user }) => {
             title="다가오는 상담"
             titleIcon={<Calendar size={18} />}
             actions={
-              <button 
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
                 onClick={() => navigate('/consultant/schedule')}
+                preventDoubleClick={false}
               >
                 전체보기 <ChevronRight size={16} />
-              </button>
+              </MGButton>
             }
           >
             <div className="card-body">
@@ -714,12 +726,16 @@ const ConsultantDashboardV2 = ({ user }) => {
             title="최근 알림"
             titleIcon={<Bell size={18} />}
             actions={
-              <button 
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
                 onClick={() => navigate('/notifications')}
+                preventDoubleClick={false}
               >
                 전체보기 <ChevronRight size={16} />
-              </button>
+              </MGButton>
             }
           >
             <div className="card-body">

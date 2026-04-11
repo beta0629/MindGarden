@@ -61,6 +61,28 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable:hover {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
 }
 
+/* MGButton 래퍼: KPI 카드 가로 레이아웃·B0KlA 카드 외형 유지 */
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable.mg-button {
+  min-height: unset;
+  font-weight: inherit;
+  line-height: inherit;
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
+  color: inherit;
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  padding: 1.5rem;
+}
+
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__content,
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text {
+  display: contents;
+}
+
 .mg-v2-content-kpi-card__icon {
   width: 56px;
   height: 56px;

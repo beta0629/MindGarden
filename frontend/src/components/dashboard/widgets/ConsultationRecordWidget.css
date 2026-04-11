@@ -17,41 +17,7 @@
   gap: var(--cs-spacing-sm);
 }
 
-.consultation-record-btn-ghost {
-  background: transparent;
-  border: 1px solid var(--cs-border-primary);
-  color: var(--cs-text-primary);
-  font-size: var(--cs-text-sm);
-  font-weight: var(--cs-font-medium);
-  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
-  border-radius: var(--cs-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.consultation-record-btn-ghost:hover {
-  background: var(--cs-bg-hover);
-  border-color: var(--cs-primary-300);
-}
-
-.consultation-record-btn-primary {
-  display: flex;
-  align-items: center;
-  gap: var(--cs-spacing-xs);
-  background: var(--cs-primary-500);
-  border: none;
-  color: white;
-  font-size: var(--cs-text-sm);
-  font-weight: var(--cs-font-medium);
-  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
-  border-radius: var(--cs-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.consultation-record-btn-primary:hover {
-  background: var(--cs-primary-600);
-}
+/* 헤더 액션: MGButton(consultation-record-btn-ghost|primary) — 스타일은 MGButton.css */
 
 /* ============================================================================
    에러 상태 스타일
@@ -100,23 +66,7 @@
   margin-bottom: var(--cs-spacing-lg);
 }
 
-.consultation-record-empty-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--cs-spacing-xs);
-  background: var(--cs-primary-500);
-  border: none;
-  color: white;
-  font-size: var(--cs-text-sm);
-  font-weight: var(--cs-font-medium);
-  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
-  border-radius: var(--cs-radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.consultation-record-empty-btn:hover {
-  background: var(--cs-primary-600);
+.consultation-record-empty-btn.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(-1px);
 }
 
@@ -305,25 +255,21 @@
   color: var(--cs-text-secondary);
 }
 
-.consultation-record-view-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--cs-spacing-xs);
-  background: transparent;
-  border: 1px solid var(--cs-primary-300);
-  color: var(--cs-primary-600);
-  font-size: var(--cs-text-sm);
-  font-weight: var(--cs-font-medium);
-  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
-  border-radius: var(--cs-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* 보기 버튼: MGButton outline + 위젯 톤 */
+.consultation-record-view-btn.mg-button {
   flex-shrink: 0;
 }
 
-.consultation-record-view-btn:hover {
+.consultation-record-view-btn.mg-button--outline {
+  border-color: var(--cs-primary-300);
+  color: var(--cs-primary-600);
+}
+
+.consultation-record-view-btn.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-50);
   border-color: var(--cs-primary-400);
+  color: var(--cs-primary-600);
+  transform: translateX(2px);
 }
 
 /* ============================================================================
@@ -339,52 +285,10 @@
   border-top: 1px solid var(--cs-border-primary);
 }
 
-.consultation-record-action-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--cs-spacing-xs);
-  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
-  border: 1px solid;
-  border-radius: var(--cs-radius-md);
-  font-size: var(--cs-text-sm);
-  font-weight: var(--cs-font-medium);
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* 빠른 액션: 색상·호버는 MGButton; 레이아웃만 유지 */
+.consultation-record-action-btn.mg-button {
   flex: 1;
   justify-content: center;
-}
-
-.consultation-record-action-btn.primary {
-  background: var(--cs-primary-500);
-  border-color: var(--cs-primary-500);
-  color: white;
-}
-
-.consultation-record-action-btn.primary:hover {
-  background: var(--cs-primary-600);
-  border-color: var(--cs-primary-600);
-}
-
-.consultation-record-action-btn.secondary {
-  background: transparent;
-  border-color: var(--cs-border-primary);
-  color: var(--cs-text-primary);
-}
-
-.consultation-record-action-btn.secondary:hover {
-  background: var(--cs-bg-hover);
-  border-color: var(--cs-primary-300);
-}
-
-.consultation-record-action-btn.tertiary {
-  background: transparent;
-  border-color: var(--cs-teal-300);
-  color: var(--cs-teal-600);
-}
-
-.consultation-record-action-btn.tertiary:hover {
-  background: var(--cs-teal-50);
-  border-color: var(--cs-teal-400);
 }
 
 /* ============================================================================
@@ -396,8 +300,7 @@
     gap: var(--cs-spacing-xs);
   }
 
-  .consultation-record-btn-ghost,
-  .consultation-record-btn-primary {
+  .consultation-record-header-actions .mg-button {
     width: 100%;
     justify-content: center;
   }
@@ -522,11 +425,24 @@
   animation-delay: 0.2s;
 }
 
-/* 호버 애니메이션 */
-.consultation-record-action-btn:hover {
-  transform: translateY(-1px);
+.consultation-record-action-btn.tertiary.mg-button--outline {
+  border-color: var(--cs-teal-300);
+  color: var(--cs-teal-600);
 }
 
-.consultation-record-view-btn:hover {
-  transform: translateX(2px);
+.consultation-record-action-btn.tertiary.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--cs-teal-50);
+  border-color: var(--cs-teal-400);
+  color: var(--cs-teal-600);
+}
+
+.consultation-record-action-btn.secondary.mg-button--outline {
+  border-color: var(--cs-border-primary);
+  color: var(--cs-text-primary);
+}
+
+.consultation-record-action-btn.secondary.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-300);
+  color: var(--cs-text-primary);
 }

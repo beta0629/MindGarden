@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
+import MGButton from '../common/MGButton';
 
 const ConsultationRecordSection = ({ consultantId }) => {
   const navigate = useNavigate();
@@ -79,18 +80,24 @@ const ConsultationRecordSection = ({ consultantId }) => {
         <div className="mg-flex mg-justify-between mg-align-center consultation-record-header">
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
           <div className="mg-flex mg-gap-sm consultation-record-header-buttons">
-            <button 
-              className="mg-v2-button mg-v2-button-ghost mg-v2-button-small"
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               onClick={handleViewAllRecords}
+              preventDoubleClick={false}
             >
               전체보기
-            </button>
-            <button 
-              className="mg-v2-button mg-v2-button-primary mg-v2-button-small"
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
               onClick={handleCreateRecord}
+              preventDoubleClick={false}
             >
               새 일지 작성
-            </button>
+            </MGButton>
           </div>
         </div>
       </div>
@@ -154,12 +161,16 @@ const ConsultationRecordSection = ({ consultantId }) => {
                           </span>
                         </div>
                       </div>
-                      <button 
-                        className="mg-v2-button mg-v2-button-ghost mg-v2-button-small record-view-btn"
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        className="record-view-btn"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
+                        preventDoubleClick={false}
                       >
                         보기
-                      </button>
+                      </MGButton>
                     </div>
                   </div>
                 ))}
@@ -174,35 +185,43 @@ const ConsultationRecordSection = ({ consultantId }) => {
               <div className="mg-empty-state__hint mg-mb-md">
                 첫 번째 상담일지를 작성해보세요
               </div>
-              <button 
-                className="mg-v2-button mg-v2-button-primary"
+              <MGButton
+                type="button"
+                variant="primary"
                 onClick={handleCreateRecord}
+                preventDoubleClick={false}
               >
                 상담일지 작성하기
-              </button>
+              </MGButton>
             </div>
           )}
 
           {/* 빠른 액션 */}
           <div className="quick-actions-grid mg-mt-lg mg-pt-lg mg-border-top">
-            <button 
-              className="mg-v2-button mg-v2-button-primary"
+            <MGButton
+              type="button"
+              variant="primary"
               onClick={handleCreateRecord}
+              preventDoubleClick={false}
             >
               새 일지 작성
-            </button>
-            <button 
-              className="mg-v2-button mg-v2-button-ghost"
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               onClick={handleViewAllRecords}
+              preventDoubleClick={false}
             >
               전체 목록
-            </button>
-            <button 
-              className="mg-v2-button mg-v2-button-ghost"
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
               onClick={() => navigate('/consultant/consultation-records/statistics')}
+              preventDoubleClick={false}
             >
               통계 보기
-            </button>
+            </MGButton>
           </div>
         </>
         )}

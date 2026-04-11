@@ -358,6 +358,39 @@
   color: var(--mg-color-primary-light, var(--mg-color-primary-main));
 }
 
+/* G8-B10b: MGButton — 링크형(전체 약관 보기) */
+.mg-mypage__link.mg-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-height: unset;
+  min-width: unset;
+  box-shadow: none;
+  color: var(--mg-color-primary-main);
+  text-decoration: underline;
+  text-underline-offset: var(--mg-spacing-2xs);
+  font-size: var(--mg-font-sm);
+  font-weight: inherit;
+}
+
+.mg-mypage__link.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: transparent;
+  color: var(--mg-color-primary-light, var(--mg-color-primary-main));
+  transform: none;
+  box-shadow: none;
+}
+
+.mg-mypage__danger-withdraw.mg-button--outline {
+  border-color: var(--mg-error-500);
+  color: var(--mg-error-500);
+}
+
+.mg-mypage__danger-withdraw.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-error-50, transparent);
+  border-color: var(--mg-error-500);
+  color: var(--mg-error-500);
+}
+
 .mg-mypage__modal-scroll {
   max-height: min(70vh, 28rem);
   overflow-y: auto;

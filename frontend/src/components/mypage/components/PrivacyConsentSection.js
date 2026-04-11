@@ -3,6 +3,7 @@ import PrivacyConsentModal from '../../common/PrivacyConsentModal';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import ConfirmModal from '../../common/ConfirmModal';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 
@@ -118,9 +119,15 @@ const PrivacyConsentSection = () => {
               {consentStatus.isComplete ? '동의 완료' : '동의 미완료'}
             </span>
           </div>
-          <button type="button" className="mg-mypage__link" onClick={() => setTermsModalOpen(true)}>
+          <MGButton
+            type="button"
+            variant="outline"
+            className="mg-mypage__link"
+            onClick={() => setTermsModalOpen(true)}
+            preventDoubleClick={false}
+          >
             전체 약관 보기
-          </button>
+          </MGButton>
         </div>
       </article>
 
@@ -141,13 +148,15 @@ const PrivacyConsentSection = () => {
                 필수
               </span>
               <p className="mg-mypage__section-description">서비스 이용에 필요한 최소 동의입니다.</p>
-              <button
+              <MGButton
                 type="button"
-                className="mg-v2-button mg-v2-button--outline"
+                variant="outline"
+                size="small"
                 onClick={() => setTermsModalOpen(true)}
+                preventDoubleClick={false}
               >
                 약관 전문
-              </button>
+              </MGButton>
             </div>
             <div className="mg-mypage__list-item-meta">
               <input
@@ -200,22 +209,24 @@ const PrivacyConsentSection = () => {
           </li>
         </ul>
         <div className="mg-mypage__consent-actions">
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button--primary"
+            variant="primary"
             onClick={() => setShowConsentModal(true)}
             disabled={updating}
+            preventDoubleClick={false}
           >
             {consentStatus.hasConsent ? '동의 상태 수정' : '개인정보 동의하기'}
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button--outline"
+            variant="outline"
             onClick={loadConsentStatus}
             disabled={updating}
+            preventDoubleClick={false}
           >
             새로고침
-          </button>
+          </MGButton>
         </div>
         {!consentStatus.isComplete ? (
           <div className="mg-mypage-consent-notice" role="alert">
@@ -240,16 +251,23 @@ const PrivacyConsentSection = () => {
           </div>
         </div>
         <div className="mg-mypage__card-body">
-          <button type="button" className="mg-v2-button mg-v2-button--outline" onClick={() => setDataRequestOpen(true)}>
-            내 데이터 요청
-          </button>
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button--danger mg-v2-button--outline"
+            variant="outline"
+            onClick={() => setDataRequestOpen(true)}
+            preventDoubleClick={false}
+          >
+            내 데이터 요청
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            className="mg-mypage__danger-withdraw"
             onClick={() => setWithdrawOpen(true)}
+            preventDoubleClick={false}
           >
             회원 탈퇴
-          </button>
+          </MGButton>
         </div>
       </article>
 
@@ -269,9 +287,14 @@ const PrivacyConsentSection = () => {
         backdropClick
         showCloseButton
         actions={
-          <button type="button" className="mg-v2-button mg-v2-button--primary" onClick={() => setTermsModalOpen(false)}>
+          <MGButton
+            type="button"
+            variant="primary"
+            onClick={() => setTermsModalOpen(false)}
+            preventDoubleClick={false}
+          >
             닫기
-          </button>
+          </MGButton>
         }
       >
         <div className="mg-mypage__modal-scroll">

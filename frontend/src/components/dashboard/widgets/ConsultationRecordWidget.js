@@ -14,6 +14,7 @@ import {
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import MGButton from '../../common/MGButton';
 import './ConsultationRecordWidget.css';
 
 const ConsultationRecordWidget = ({ widget, user }) => {
@@ -122,19 +123,25 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     ),
     actions: (
       <div className="consultation-record-header-actions">
-        <button 
-          className="consultation-record-btn-ghost"
+        <MGButton
+          type="button"
+          variant="outline"
+          size="small"
           onClick={handleViewAllRecords}
+          preventDoubleClick={false}
         >
           전체보기
-        </button>
-        <button 
-          className="consultation-record-btn-primary"
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="primary"
+          size="small"
           onClick={handleCreateRecord}
+          preventDoubleClick={false}
         >
           <Plus size={16} />
           새 일지 작성
-        </button>
+        </MGButton>
       </div>
     )
   };
@@ -162,13 +169,16 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           <div className="consultation-record-empty-hint">
             첫 번째 상담일지를 작성해보세요
           </div>
-          <button 
+          <MGButton
+            type="button"
+            variant="primary"
             className="consultation-record-empty-btn"
             onClick={handleCreateRecord}
+            preventDoubleClick={false}
           >
             <Plus size={16} />
             상담일지 작성하기
-          </button>
+          </MGButton>
         </div>
       );
     }
@@ -251,13 +261,17 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                       </div>
                     </div>
                   </div>
-                  <button 
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
                     className="consultation-record-view-btn"
                     onClick={() => handleViewRecord(record.id)}
+                    preventDoubleClick={false}
                   >
                     <ExternalLink size={16} />
                     보기
-                  </button>
+                  </MGButton>
                 </div>
               ))}
             </div>
@@ -266,27 +280,36 @@ const ConsultationRecordWidget = ({ widget, user }) => {
 
         {/* 빠른 액션 */}
         <div className="consultation-record-actions">
-          <button 
+          <MGButton
+            type="button"
+            variant="primary"
             className="consultation-record-action-btn primary"
             onClick={handleCreateRecord}
+            preventDoubleClick={false}
           >
             <Plus size={16} />
             새 일지 작성
-          </button>
-          <button 
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
             className="consultation-record-action-btn secondary"
             onClick={handleViewAllRecords}
+            preventDoubleClick={false}
           >
             <FileText size={16} />
             전체 목록
-          </button>
-          <button 
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
             className="consultation-record-action-btn tertiary"
             onClick={handleViewStatistics}
+            preventDoubleClick={false}
           >
             <TrendingUp size={16} />
             통계 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

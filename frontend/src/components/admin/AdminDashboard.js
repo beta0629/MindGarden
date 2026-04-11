@@ -654,20 +654,21 @@ const AdminDashboard = ({ user: propUser }) => {
                             size="small"
                             className="mg-v2-ad-b0kla__icon-btn"
                             onClick={() => setShowStatisticsModal(true)}
-                            preventDoubleClick={true}
+                            type="button"
+                            preventDoubleClick={false}
                             aria-label="통계"
                         >
                             <BarChart size={20} />
                         </MGButton>
-                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더">
+                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더" preventDoubleClick={false}>
                             <Calendar size={20} />
-                        </button>
-                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="알림" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>
+                        </MGButton>
+                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="알림" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)} preventDoubleClick={false}>
                             <Bell size={20} />
-                        </button>
-                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="테마">
+                        </MGButton>
+                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="테마" preventDoubleClick={false}>
                             <Moon size={20} />
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             </header>
@@ -758,20 +759,24 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-v2-ad-b0kla__chart-desc">최근 6개월 간의 예약 및 완료 추이</p>
                         </div>
                         <div className="mg-v2-ad-b0kla__pill-toggle">
-                            <button
+                            <MGButton
                                 type="button"
+                                variant="outline"
                                 className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setChartPeriod('monthly')}
+                                preventDoubleClick={false}
                             >
                                 월간
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
                                 type="button"
+                                variant="outline"
                                 className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setChartPeriod('weekly')}
+                                preventDoubleClick={false}
                             >
                                 주간
-                            </button>
+                            </MGButton>
                         </div>
                     </div>
                     <div className="mg-v2-ad-b0kla__chart-placeholder">
@@ -1201,39 +1206,45 @@ const AdminDashboard = ({ user: propUser }) => {
                 icon={<Settings />}
             >
                 <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
-                    <button
+                    <MGButton
                         type="button"
+                        variant="outline"
                         className="mg-v2-ad-b0kla__admin-card"
                         onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
+                        preventDoubleClick={false}
                     >
                         <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
                             <FaUserCog size={28} />
                         </div>
                         <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
+                        variant="outline"
                         className="mg-v2-ad-b0kla__admin-card"
                         onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+                        preventDoubleClick={false}
                     >
                         <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
                             <FaCalendarCheck size={28} />
                         </div>
                         <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
+                        variant="outline"
                         className="mg-v2-ad-b0kla__admin-card"
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
+                        preventDoubleClick={false}
                     >
                         <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
                             <FaFileAlt size={28} />
                         </div>
                         <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
-                    </button>
+                    </MGButton>
                 </div>
                 <div className="mg-management-grid">
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}>
@@ -1257,7 +1268,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         className="mg-management-card"
                         onClick={handleAutoCompleteSchedules}
                         loading={autoCompleteLoading}
-                        preventDoubleClick={true}
+                        preventDoubleClick={false}
                         loadingText="처리 중..."
                     >
                         <div className="mg-management-icon">
@@ -1272,7 +1283,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         className="mg-management-card"
                         onClick={handleAutoCompleteWithReminder}
                         loading={autoCompleteWithReminderLoading}
-                        preventDoubleClick={true}
+                        preventDoubleClick={false}
                         loadingText="처리 중..."
                     >
                         <div className="mg-management-icon">
@@ -1647,7 +1658,9 @@ const AdminDashboard = ({ user: propUser }) => {
                 <div className={`mg-toast mg-toast-${toastType}`}>
                     <div className="mg-toast-header">
                         <strong className="me-auto">알림</strong>
-                        <button type="button" className="mg-toast-close" onClick={() => setShowToastState(false)}></button>
+                        <MGButton type="button" variant="outline" className="mg-toast-close" onClick={() => setShowToastState(false)} preventDoubleClick={false} aria-label="알림 닫기">
+                            ×
+                        </MGButton>
                     </div>
                     <div className="mg-toast-body">{toastMessage}</div>
                 </div>

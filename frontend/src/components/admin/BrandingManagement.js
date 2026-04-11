@@ -24,6 +24,7 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
+import MGButton from '../common/MGButton';
 
 const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
 
@@ -334,16 +335,20 @@ const BrandingManagement = ({ onClose }) => {
                     alt="로고 미리보기" 
                     className="branding-management__logo-image"
                   />
-                  <button 
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
                     className="branding-management__logo-remove"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleLogoRemove();
                     }}
                     title="로고 제거"
+                    preventDoubleClick={false}
                   >
                     <X size={16} />
-                  </button>
+                  </MGButton>
                 </div>
               ) : (
                 <div className="branding-management__upload-placeholder">
@@ -483,36 +488,43 @@ const BrandingManagement = ({ onClose }) => {
 
       {/* 액션 버튼 */}
       <div className="branding-management__actions">
-        <button
+        <MGButton
+          type="button"
+          variant="outline"
           className="branding-management__button branding-management__button--preview"
           onClick={() => setShowPreview(true)}
           disabled={isSaving || isUploading}
+          preventDoubleClick={false}
         >
           <Eye size={20} />
           미리보기
-        </button>
-        
-        <button
+        </MGButton>
+
+        <MGButton
+          type="button"
+          variant="outline"
           className="branding-management__button branding-management__button--reset"
           onClick={handleReset}
           disabled={!hasChanges || isSaving || isUploading}
+          preventDoubleClick={false}
         >
           <RotateCcw size={20} />
           초기화
-        </button>
-        
-        <button
+        </MGButton>
+
+        <MGButton
+          type="button"
+          variant="primary"
           className="branding-management__button branding-management__button--save"
           onClick={handleSave}
           disabled={!hasChanges || isSaving || isUploading}
+          loading={isSaving || isUploading}
+          loadingText={isUploading ? '업로드 중...' : '저장 중...'}
+          preventDoubleClick={false}
         >
-          {isSaving || isUploading ? (
-            <div className="mg-loading">로딩중...</div>
-          ) : (
-            <Save size={20} />
-          )}
-          {isUploading ? '업로드 중...' : isSaving ? '저장 중...' : '저장'}
-        </button>
+          <Save size={20} />
+          저장
+        </MGButton>
       </div>
 
       {/* 미리보기 모달 */}
@@ -583,13 +595,16 @@ const ColorPicker = ({ value, onChange, error }) => {
           placeholder="var(--mg-primary-500)"
           maxLength={7}
         />
-        <button 
+        <MGButton
           type="button"
+          variant="outline"
+          size="small"
           className="color-picker__toggle"
           onClick={() => setIsOpen(!isOpen)}
+          preventDoubleClick={false}
         >
           🎨
-        </button>
+        </MGButton>
       </div>
       
       {isOpen && (
@@ -598,14 +613,19 @@ const ColorPicker = ({ value, onChange, error }) => {
             <h4>색상 팔레트</h4>
             <div className="color-picker__palette">
               {colorPalette.map((color, index) => (
-                <button
+                <MGButton
                   key={index}
                   type="button"
+                  variant="outline"
                   className={`color-picker__color ${value === color ? 'selected' : ''}`}
                   style={{ backgroundColor: color }}
                   onClick={() => handleColorSelect(color)}
                   title={color}
-                />
+                  aria-label={color}
+                  preventDoubleClick={false}
+                >
+                  {'\u00A0'}
+                </MGButton>
               ))}
             </div>
           </div>
@@ -634,13 +654,15 @@ const ColorPicker = ({ value, onChange, error }) => {
           </div>
           
           <div className="color-picker__actions">
-            <button
+            <MGButton
               type="button"
+              variant="secondary"
               className="color-picker__close"
               onClick={() => setIsOpen(false)}
+              preventDoubleClick={false}
             >
               닫기
-            </button>
+            </MGButton>
           </div>
         </div>
       )}
@@ -704,12 +726,15 @@ const BrandingPreviewModal = ({ brandingData, onClose }) => {
         </div>
         
         <div className="branding-preview__actions">
-          <button
+          <MGButton
+            type="button"
+            variant="primary"
             className="branding-preview__close-button"
             onClick={onClose}
+            preventDoubleClick={false}
           >
             닫기
-          </button>
+          </MGButton>
         </div>
       </div>
     </div>

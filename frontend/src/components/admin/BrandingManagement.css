@@ -144,6 +144,18 @@
   transform: scale(1.1);
 }
 
+.branding-management__logo-remove.mg-button {
+  min-height: unset;
+  min-width: unset;
+  padding: 0;
+  box-shadow: none;
+}
+
+.branding-management__logo-remove.mg-button .mg-button__content,
+.branding-management__logo-remove.mg-button .mg-button__text {
+  display: contents;
+}
+
 /* 폼 */
 .branding-management__form-grid {
   display: grid;
@@ -288,6 +300,45 @@
   background: var(--color-success-dark, #218838);
 }
 
+/* MGButton 병합: 액션 버튼 룩 유지 */
+.branding-management__button.mg-button {
+  min-height: unset;
+  box-shadow: none;
+}
+
+.branding-management__button.mg-button--outline.branding-management__button--preview {
+  background: var(--color-info, var(--mg-info-500));
+  color: white;
+  border-color: transparent;
+}
+
+.branding-management__button.mg-button--outline.branding-management__button--preview:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-info-dark, #138496);
+  transform: none;
+}
+
+.branding-management__button.mg-button--outline.branding-management__button--reset {
+  background: var(--color-secondary, var(--mg-secondary-500));
+  color: white;
+  border-color: transparent;
+}
+
+.branding-management__button.mg-button--outline.branding-management__button--reset:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-secondary-dark, #5a6268);
+  transform: none;
+}
+
+.branding-management__button.mg-button--primary.branding-management__button--save {
+  background: var(--color-success, var(--mg-success-500));
+  color: white;
+  border-color: transparent;
+}
+
+.branding-management__button.mg-button--primary.branding-management__button--save:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-success-dark, #218838);
+  transform: none;
+}
+
 /* 로딩 상태 */
 .branding-management__loading {
   display: flex;
@@ -392,6 +443,22 @@
 
 .branding-preview__close-button:hover {
   background: var(--color-secondary-dark, #5a6268);
+}
+
+.branding-preview__close-button.mg-button {
+  min-height: unset;
+  box-shadow: none;
+}
+
+.branding-preview__close-button.mg-button--primary {
+  background: var(--color-secondary, var(--mg-secondary-500));
+  color: white;
+  border-color: transparent;
+}
+
+.branding-preview__close-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-secondary-dark, #5a6268);
+  transform: none;
 }
 
 /* 색상 선택기 */
@@ -591,6 +658,49 @@
 
 .color-picker__close:hover {
   background: var(--color-secondary-dark, #5a6268);
+}
+
+.color-picker__toggle.mg-button {
+  min-height: unset;
+  min-width: unset;
+  padding: 0;
+  box-shadow: none;
+}
+
+.color-picker__toggle.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+.color-picker__color.mg-button {
+  min-height: unset;
+  min-width: unset;
+  padding: 0;
+  box-shadow: none;
+}
+
+.color-picker__color.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: scale(1.1);
+}
+
+.color-picker__color.mg-button .mg-button__content,
+.color-picker__color.mg-button .mg-button__text {
+  display: contents;
+}
+
+.color-picker__close.mg-button {
+  min-height: unset;
+  box-shadow: none;
+}
+
+.color-picker__close.mg-button--secondary {
+  background: var(--color-secondary, var(--mg-secondary-500));
+  color: white;
+  border-color: transparent;
+}
+
+.color-picker__close.mg-button--secondary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--color-secondary-dark, #5a6268);
+  transform: none;
 }
 
 /* 반응형 */

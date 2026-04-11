@@ -26,6 +26,7 @@ import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './CommonCodeManagementB0KlA.css';
+import MGButton from '../common/MGButton';
 
 /**
  * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
@@ -656,11 +657,14 @@ const CommonCodeManagement = () => {
 
                         <div className="mg-v2-ad-b0kla__group-list">
                             {getFilteredCodeGroups().map((group) => (
-                                <button 
-                                    key={group} 
+                                <MGButton
+                                    key={group}
+                                    type="button"
+                                    variant="outline"
+                                    fullWidth
                                     className={`mg-v2-ad-b0kla__group-card ${selectedGroup === group ? 'mg-v2-ad-b0kla__group-card--selected' : ''}`}
-                                    onClick={ () => handleGroupSelect(group) }
-                                    style={{ textAlign: 'left', width: '100%', border: 'none', borderBottom: '1px solid var(--ad-b0kla-border)', outline: 'none' }}
+                                    onClick={() => handleGroupSelect(group)}
+                                    preventDoubleClick={false}
                                 >
                                     <div className="mg-v2-ad-b0kla__group-card-header">
                                         <div className="mg-v2-ad-b0kla__group-icon">{ getGroupIcon(group) }</div>
@@ -669,7 +673,7 @@ const CommonCodeManagement = () => {
                                         </h3>
                                     </div>
                                     <span className="mg-v2-ad-b0kla__group-code">{ group }</span>
-                                </button>
+                                </MGButton>
                             ))}
                         </div>
                     </div>
@@ -691,7 +695,9 @@ const CommonCodeManagement = () => {
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">
                                         {!showAddForm && (
-                                            <button 
+                                            <MGButton
+                                                type="button"
+                                                variant="primary"
                                                 className="mg-v2-btn mg-v2-btn--primary"
                                                 onClick={() => {
                                                     setEditingCode(null);
@@ -713,9 +719,10 @@ const CommonCodeManagement = () => {
                                                     setShowAddForm(true);
                                                 }}
                                                 disabled={loading}
+                                                preventDoubleClick={false}
                                             >
                                                 <i className="bi bi-plus-lg"></i> 신규 추가
-                                            </button>
+                                            </MGButton>
                                         )}
                                     </div>
                                 </div>
@@ -724,13 +731,15 @@ const CommonCodeManagement = () => {
                                     <div className="mg-v2-ad-b0kla__form-container">
                                         <div className="mg-v2-ad-b0kla__form-header">
                                             <h3 className="mg-v2-ad-b0kla__form-title">{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
-                                            <button 
-                                                className="mg-v2-btn mg-v2-btn--secondary"
+                                            <MGButton
+                                                type="button"
+                                                variant="secondary"
+                                                className="mg-v2-btn mg-v2-btn--secondary mg-v2-ad-b0kla__form-header-close"
                                                 onClick={handleCancelForm}
-                                                style={{ padding: '4px 8px' }}
+                                                preventDoubleClick={false}
                                             >
                                                 <i className="bi bi-x-lg"></i>
-                                            </button>
+                                            </MGButton>
                                         </div>
                                         <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                                             <div className="mg-v2-ad-b0kla__form-row">
@@ -816,20 +825,26 @@ const CommonCodeManagement = () => {
                                                 </div>
                                             </div>
                                             <div className="mg-v2-ad-b0kla__form-actions">
-                                                <button 
-                                                    type="button" 
+                                                <MGButton
+                                                    type="button"
+                                                    variant="secondary"
                                                     className="mg-v2-btn mg-v2-btn--secondary"
                                                     onClick={handleCancelForm}
+                                                    preventDoubleClick={false}
                                                 >
                                                     취소
-                                                </button>
-                                                <button 
-                                                    type="submit" 
+                                                </MGButton>
+                                                <MGButton
+                                                    type="submit"
+                                                    variant="primary"
                                                     className="mg-v2-btn mg-v2-btn--primary"
                                                     disabled={loading}
+                                                    loading={loading}
+                                                    loadingText="처리 중..."
+                                                    preventDoubleClick={false}
                                                 >
                                                     {editingCode ? '수정' : '추가'}
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         </form>
                                     </div>
@@ -878,15 +893,15 @@ const CommonCodeManagement = () => {
                                                         </td>
                                                         <td style={{ textAlign: 'center' }}>
                                                             <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
-                                                                <button onClick={() => handleEditCode(code)} title="수정" style={{ color: 'var(--ad-b0kla-green)' }}>
+                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleEditCode(code)} title="수정" style={{ color: 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
                                                                     <i className="bi bi-pencil-square"></i>
-                                                                </button>
-                                                                <button onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}>
+                                                                </MGButton>
+                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
                                                                     <i className={`bi ${code.isActive ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
-                                                                </button>
-                                                                <button onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500)' }}>
+                                                                </MGButton>
+                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500)' }} preventDoubleClick={false}>
                                                                     <i className="bi bi-trash"></i>
-                                                                </button>
+                                                                </MGButton>
                                                             </div>
                                                         </td>
                                                     </tr>

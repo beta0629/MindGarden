@@ -326,4 +326,4 @@
 | 2026-04-11 | **G8-B18** 미사용 백업 JS 제거·문서 보정 `77ac0f292`; QA-01 린트·테스트·`verify:erp` 권장 |
 | 2026-04-11 | **QA-01** Jest 일부 스위트 수정(ProfileDropdown·Table·위젯·testUtils) `0f69e2cf4` — UI-02 인벤토리: `UnifiedModal` 광범위 적용·RB Modal 없음(explore) |
 | 2026-04-11 | **QA-01** Jest 전체 그린 `be919d459` (react-router v7·craco·setupTests·App·ThemeSelector·파이프라인)·develop·main 반영·운영 프론트 배포(`deploy-frontend-prod`) 트리거 |
-| 2026-04-11 | **UI-02 2차** `AccountManagement`/`AccountForm`/`ClientMessageSection` — `UnifiedModal` 적용, 내담자 메시지 상세의 잘못된 `div` 모달 마크업 수정 |
+| 2026-04-11 | **UI-02 2차** `AccountManagement`/`AccountForm`/`ClientMessageSection` — `UnifiedModal` 적용·div 모달 오용 수정 `e04da6290` |

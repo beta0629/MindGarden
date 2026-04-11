@@ -330,3 +330,4 @@
 | 2026-04-11 | **UI-02** GNB `GnbDropdownPortal`·`aria-controls`/`panelId`·`NavIcon` `9fa8c92c6` |
 | 2026-04-11 | **QA-01** ESLint `--quiet` 오류 0건(import·파싱·상수·온보딩 TS→JSX·Icon `userRole` 등) `28d02dab6` — `lint:check`(max-warnings 0)는 경고로 아직 실패 가능 |
 | 2026-04-11 | **QA-01** ESLint `--fix` 1차(경고 대략 1.42만→1.17만) `51e8155b8` |
+| 2026-04-11 | **QA-01** `lint:check`=`--quiet`·`lint:strict`·`jsx-no-bind`/`no-restricted-syntax(mg-)` `8de6e57d5` |

@@ -9,6 +9,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -271,20 +272,24 @@ const UnifiedNotifications = () => {
         {/* 탭 */}
         <div className="mg-card mg-mb-lg">
           <div className="mg-flex mg-gap-sm">
-            <button
+            <MGButton
+              type="button"
+              variant={activeTab === 'system' ? 'primary' : 'outline'}
               onClick={() => handleTabChange('system')}
-              className={`mg-button ${activeTab === 'system' ? 'mg-button-primary' : 'mg-button-outline'}`}
+              preventDoubleClick={false}
             >
               <Bell size={16} className="mg-mr-xs" />
               시스템 공지
-            </button>
-            <button
+            </MGButton>
+            <MGButton
+              type="button"
+              variant={activeTab === 'messages' ? 'primary' : 'outline'}
               onClick={() => handleTabChange('messages')}
-              className={`mg-button ${activeTab === 'messages' ? 'mg-button-primary' : 'mg-button-outline'}`}
+              preventDoubleClick={false}
             >
               <MessageSquare size={16} className="mg-mr-xs" />
               일반 메시지
-            </button>
+            </MGButton>
           </div>
         </div>
 
@@ -422,9 +427,9 @@ const UnifiedNotifications = () => {
             subtitle={`${selectedItem.data.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedItem.data.authorName || selectedItem.data.senderName || '관리자')} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
             size="large"
             actions={
-              <button onClick={closeModal} className="mg-button mg-button-primary">
+              <MGButton type="button" variant="primary" onClick={closeModal}>
                 확인
-              </button>
+              </MGButton>
             }
           >
             <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">

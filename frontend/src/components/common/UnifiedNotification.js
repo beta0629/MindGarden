@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import MGButton from './MGButton';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
+
+const NOTIFICATION_ACTION_VARIANTS = new Set([
+  'primary',
+  'secondary',
+  'success',
+  'danger',
+  'warning',
+  'info',
+  'outline'
+]);
+
+const getNotificationActionVariant = (variant) => {
+  const key = String(variant || 'secondary').toLowerCase();
+  return NOTIFICATION_ACTION_VARIANTS.has(key) ? key : 'secondary';
+};
 
 /**
  * 통합 알림 컴포넌트 (UnifiedNotification)
@@ -179,15 +195,20 @@ const UnifiedNotification = ({
               <div className="mg-notification-message">
                 {toDisplayString(notification.message)}
               </div>
-              <button 
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
                 className="mg-notification-close"
+                preventDoubleClick={false}
                 onClick={(e) => {
                   e.stopPropagation();
                   removeNotification(notification.id);
                 }}
+                aria-label="닫기"
               >
                 ×
-              </button>
+              </MGButton>
             </div>
             <div className="mg-notification-progress">
               <div 
@@ -239,15 +260,16 @@ const UnifiedNotification = ({
               {notification.actions && notification.actions.length > 0 && (
                 <div className="mg-notification-actions">
                   {notification.actions.map((action, index) => (
-                    <button
+                    <MGButton
                       key={index}
-                      className={`mg-btn mg-btn--${action.variant || 'secondary'}`}
+                      type="button"
+                      variant={getNotificationActionVariant(action.variant)}
                       onClick={() => handleAction(action, notification.id)}
                     >
                       {countdowns[notification.id] && action.showCountdown
                         ? `${toDisplayString(action.label)} (${countdowns[notification.id]}초)`
                         : toDisplayString(action.label)}
-                    </button>
+                    </MGButton>
                   ))}
                 </div>
               )}
@@ -286,12 +308,17 @@ const UnifiedNotification = ({
             <div className="mg-notification-banner-message">
               {toDisplayString(notification.message)}
             </div>
-            <button 
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
               className="mg-notification-banner-close"
+              preventDoubleClick={false}
               onClick={() => removeNotification(notification.id)}
+              aria-label="닫기"
             >
               ×
-            </button>
+            </MGButton>
           </div>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
@@ -198,23 +199,27 @@ const SystemNotifications = () => {
             {/* 페이지네이션 */}
             {totalPages > 1 && (
               <div className="mg-flex mg-justify-center mg-gap-sm mg-mt-lg">
-                <button
+                <MGButton
+                  type="button"
+                  variant="outline"
                   onClick={() => loadNotifications(currentPage - 1)}
                   disabled={currentPage === 0}
-                  className="mg-button mg-button-outline"
+                  preventDoubleClick={false}
                 >
                   이전
-                </button>
+                </MGButton>
                 <span className="mg-v2-text-sm mg-v2-color-text-secondary mg-flex mg-align-center">
                   {currentPage + 1} / {totalPages}
                 </span>
-                <button
+                <MGButton
+                  type="button"
+                  variant="outline"
                   onClick={() => loadNotifications(currentPage + 1)}
                   disabled={currentPage >= totalPages - 1}
-                  className="mg-button mg-button-outline"
+                  preventDoubleClick={false}
                 >
                   다음
-                </button>
+                </MGButton>
               </div>
             )}
           </div>
@@ -235,9 +240,9 @@ const SystemNotifications = () => {
           backdropClick
           showCloseButton
           actions={(
-            <button type="button" onClick={closeModal} className="mg-button mg-button-primary">
+            <MGButton type="button" variant="primary" onClick={closeModal}>
               확인
-            </button>
+            </MGButton>
           )}
         >
           {selectedNotification && (

@@ -108,6 +108,22 @@
   color: var(--color-text-primary);
 }
 
+/* MGButton 병합 (G8-B11b): 토스트 닫기 레이아웃·아이콘 영역 유지 */
+.mg-notification-close.mg-button {
+  min-width: auto;
+  padding: 0;
+}
+
+.mg-notification-close.mg-button .mg-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-notification-close.mg-button .mg-button__text {
+  line-height: 1;
+}
+
 /* 진행바 */
 .mg-notification-progress {
   height: var(--notification-progress-height);
@@ -230,6 +246,22 @@
 
 .mg-notification-banner-close:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* MGButton 병합 (G8-B11b): 배너 닫기 레이아웃 유지 */
+.mg-notification-banner-close.mg-button {
+  min-width: auto;
+  padding: 0;
+}
+
+.mg-notification-banner-close.mg-button .mg-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-notification-banner-close.mg-button .mg-button__text {
+  line-height: 1;
 }
 
 /* ===== 모달 알림 스타일 ===== */
@@ -486,7 +518,8 @@
     gap: var(--notification-actions-gap-mobile);
   }
 
-  .mg-notification-actions .mg-btn {
+  .mg-notification-actions .mg-btn,
+  .mg-notification-actions .mg-button {
     width: 100%;
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: 13px;

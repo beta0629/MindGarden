@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
+import MGButton from '../../../common/MGButton';
 
 const AIUsageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -296,14 +297,17 @@ const AIUsageWidget = ({ widget, user }) => {
       size="lg"
       variant="default"
       headerActions={
-        <button 
+        <MGButton
           onClick={() => handleAction('refresh')}
-          className="mg-button mg-button--sm mg-button--ghost"
+          variant="outline"
+          size="small"
           type="button"
           aria-label="새로고침"
+          title="새로고침"
+          preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}
-        </button>
+        </MGButton>
       }
     >
       {renderContent()}

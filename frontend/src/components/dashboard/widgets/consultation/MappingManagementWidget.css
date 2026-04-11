@@ -281,9 +281,11 @@
   gap: var(--cs-spacing-xs);
 }
 
-.action-btn {
+.action-btn.mg-button {
   width: 32px;
   height: 32px;
+  padding: 0;
+  min-height: unset;
   border: none;
   border-radius: var(--cs-radius-xs);
   display: flex;
@@ -293,12 +295,12 @@
   transition: all 0.2s ease;
 }
 
-.view-btn {
+.view-btn.mg-button {
   background: var(--cs-glass-primary-20);
   color: var(--cs-primary-500);
 }
 
-.view-btn:hover {
+.view-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-500);
   color: var(--cs-white);
 }

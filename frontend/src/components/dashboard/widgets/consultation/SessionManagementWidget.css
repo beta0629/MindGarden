@@ -376,9 +376,11 @@
   gap: var(--cs-spacing-xs);
 }
 
-.action-btn {
+.action-btn.mg-button {
   width: 32px;
   height: 32px;
+  padding: 0;
+  min-height: unset;
   border: none;
   border-radius: var(--cs-radius-xs);
   display: flex;
@@ -388,32 +390,32 @@
   transition: all 0.2s ease;
 }
 
-.view-btn {
+.view-btn.mg-button {
   background: var(--cs-glass-primary-20);
   color: var(--cs-primary-500);
 }
 
-.view-btn:hover {
+.view-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-500);
   color: var(--cs-white);
 }
 
-.record-btn {
+.record-btn.mg-button {
   background: var(--cs-glass-success-light);
   color: var(--cs-success-500);
 }
 
-.record-btn:hover {
+.record-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-success-500);
   color: var(--cs-white);
 }
 
-.review-btn {
+.review-btn.mg-button {
   background: var(--cs-glass-warning-light);
   color: var(--cs-warning-500);
 }
 
-.review-btn:hover {
+.review-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-warning-500);
   color: var(--cs-white);
 }

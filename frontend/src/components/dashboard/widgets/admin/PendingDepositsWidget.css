@@ -171,7 +171,7 @@
   flex-shrink: 0;
 }
 
-.deposit-btn {
+.deposit-btn.mg-button {
   display: flex;
   align-items: center;
   gap: var(--cs-spacing-xs);
@@ -192,31 +192,31 @@
   height: 16px;
 }
 
-.deposit-btn-confirm {
+.deposit-btn.deposit-btn-confirm.mg-button {
   background: var(--cs-success-500);
   color: white;
   border-color: var(--cs-success-600);
 }
 
-.deposit-btn-confirm:hover {
+.deposit-btn.deposit-btn-confirm.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-success-600);
   transform: translateY(-1px);
   box-shadow: var(--cs-shadow-sm);
 }
 
-.deposit-btn-reject {
+.deposit-btn.deposit-btn-reject.mg-button {
   background: var(--cs-error-500);
   color: white;
   border-color: var(--cs-error-600);
 }
 
-.deposit-btn-reject:hover {
+.deposit-btn.deposit-btn-reject.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-error-600);
   transform: translateY(-1px);
   box-shadow: var(--cs-shadow-sm);
 }
 
-.deposit-btn:active {
+.deposit-btn.mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(0);
 }
 
@@ -259,7 +259,7 @@
     justify-content: flex-end;
   }
   
-  .deposit-btn {
+  .deposit-btn.mg-button {
     min-width: 70px;
     padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
   }

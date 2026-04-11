@@ -111,9 +111,11 @@
   height: 14px;
 }
 
-.schedule-view-btn {
+.schedule-view-btn.mg-button {
   width: 32px;
   height: 32px;
+  padding: 0;
+  min-height: unset;
   border: none;
   border-radius: var(--cs-radius-xs);
   display: flex;
@@ -125,7 +127,7 @@
   transition: all 0.2s ease;
 }
 
-.schedule-view-btn:hover {
+.schedule-view-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-500);
   color: var(--cs-white);
 }
@@ -154,7 +156,7 @@
     gap: var(--cs-spacing-sm);
   }
   
-  .schedule-view-btn {
+  .schedule-view-btn.mg-button {
     align-self: flex-end;
   }
 }

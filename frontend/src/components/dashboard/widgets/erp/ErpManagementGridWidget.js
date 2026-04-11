@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
+import MGButton from '../../../common/MGButton';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 import SafeText from '../../../common/SafeText';
@@ -279,12 +280,9 @@ const ErpManagementGridWidget = ({ widget, user }) => {
           <div className="erp-management-empty">
             <Settings className="empty-icon" />
             <p>사용 가능한 ERP 관리 메뉴가 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               권한 새로고침
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

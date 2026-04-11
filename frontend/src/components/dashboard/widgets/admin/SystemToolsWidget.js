@@ -18,6 +18,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../Widget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
+import './SystemToolsWidget.css';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 
 const SystemToolsWidget = ({ widget, user }) => {
@@ -117,8 +119,10 @@ const SystemToolsWidget = ({ widget, user }) => {
       <div className="widget-body">
         <div className="system-tools-grid">
           {tools.map((tool) => (
-            <button
+            <MGButton
               key={tool.id}
+              type="button"
+              variant="outline"
               className={`system-tool-card ${getVariantClass(tool.variant)}`}
               onClick={() => handleToolClick(tool)}
               title={toDisplayString(tool.description, '')}
@@ -132,7 +136,7 @@ const SystemToolsWidget = ({ widget, user }) => {
                   <SafeText tag="div" className="system-tool-description">{tool.description}</SafeText>
                 )}
               </div>
-            </button>
+            </MGButton>
           ))}
         </div>
       </div>

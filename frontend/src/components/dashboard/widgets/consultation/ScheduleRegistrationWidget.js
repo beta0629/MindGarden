@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ScheduleRegistrationWidget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
 
 const ScheduleRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -196,13 +197,10 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '새로운 상담 일정을 등록해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
-            <button 
-              className="mg-btn mg-btn-primary"
-              onClick={handleCreateSchedule}
-            >
+            <MGButton variant="primary" onClick={handleCreateSchedule}>
               <Plus className="btn-icon" />
               새 일정 등록
-            </button>
+            </MGButton>
           )}
         </div>
       );
@@ -268,12 +266,9 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
             <h4 className="list-title">
               {widget.config?.showTodayOnly !== false ? '오늘의 일정' : '최근 일정'}
             </h4>
-            <button 
-              className="mg-btn mg-btn-ghost mg-btn-sm"
-              onClick={handleViewAll}
-            >
+            <MGButton variant="outline" size="small" onClick={handleViewAll}>
               전체 보기
-            </button>
+            </MGButton>
           </div>
           <div className="schedule-items">
             {schedules.map((schedule) => (
@@ -328,13 +323,16 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                   </div>
                 </div>
                 <div className="schedule-actions">
-                  <button 
+                  <MGButton
+                    variant="outline"
+                    size="small"
                     className="action-btn view-btn"
                     onClick={() => handleViewSchedule(schedule.id)}
                     title="상세 보기"
+                    preventDoubleClick={false}
                   >
                     <Eye className="action-icon" />
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             ))}
@@ -344,13 +342,10 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="schedule-quick-actions">
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={handleCreateSchedule}
-            >
+            <MGButton variant="primary" size="small" onClick={handleCreateSchedule}>
               <CalendarPlus className="btn-icon" />
               새 일정 등록
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

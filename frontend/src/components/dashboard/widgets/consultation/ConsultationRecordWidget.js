@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationRecordWidget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
 
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -101,19 +102,23 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                   <SafeText tag="div" className="record-summary">{record.summary}</SafeText>
                 )}
               </div>
-              <button 
-                className="record-view-btn" 
+              <MGButton
+                variant="outline"
+                size="small"
+                className="record-view-btn"
                 onClick={() => navigate(`/records/${record.id}`)}
+                title="상세 보기"
+                preventDoubleClick={false}
               >
                 <Eye className="view-icon" />
-              </button>
+              </MGButton>
             </div>
           ))}
         </div>
         <div className="record-actions">
-          <button className="mg-btn mg-btn-ghost mg-btn-sm" onClick={() => navigate('/records')}>
+          <MGButton variant="outline" size="small" onClick={() => navigate('/records')}>
             전체 기록 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

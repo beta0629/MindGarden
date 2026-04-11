@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const PendingDepositWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -191,12 +192,9 @@ const PendingDepositWidget = ({ widget, user }) => {
         <div className="deposit-list">
           <div className="list-header">
             <h4 className="list-title">미결제 보증금</h4>
-            <button 
-              className="mg-btn mg-btn-ghost mg-btn-sm"
-              onClick={handleViewAll}
-            >
+            <MGButton variant="outline" size="small" onClick={handleViewAll}>
               전체 보기
-            </button>
+            </MGButton>
           </div>
           <div className="deposit-items">
             {deposits.map((deposit) => (
@@ -230,13 +228,16 @@ const PendingDepositWidget = ({ widget, user }) => {
                   </div>
                 </div>
                 <div className="deposit-actions">
-                  <button 
+                  <MGButton
+                    variant="outline"
+                    size="small"
                     className="action-btn view-btn"
                     onClick={() => handleViewDeposit(deposit.id)}
                     title="상세 보기"
+                    preventDoubleClick={false}
                   >
                     <Eye className="action-icon" />
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             ))}

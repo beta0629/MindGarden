@@ -21,6 +21,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import { formatCurrency, formatNumber, formatPercent } from '../../../../utils/formatUtils';
 import './ErpStatsGridWidget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
 
 const ErpStatsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -272,12 +273,9 @@ const ErpStatsGridWidget = ({ widget, user }) => {
           <div className="erp-stats-empty">
             <TrendingUp className="empty-icon" />
             <p>ERP 통계 데이터가 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

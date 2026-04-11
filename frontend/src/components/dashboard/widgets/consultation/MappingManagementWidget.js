@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const MappingManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -162,13 +163,10 @@ const MappingManagementWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '상담사와 내담자 간의 매칭을 생성해보세요.'}
           </p>
           {RoleUtils.isAdmin(user) && (
-            <button 
-              className="mg-btn mg-btn-primary"
-              onClick={handleCreateMapping}
-            >
+            <MGButton variant="primary" onClick={handleCreateMapping}>
               <Plus className="btn-icon" />
               새 매칭 만들기
-            </button>
+            </MGButton>
           )}
         </div>
       );
@@ -224,12 +222,9 @@ const MappingManagementWidget = ({ widget, user }) => {
         <div className="mapping-list">
           <div className="list-header">
             <h4 className="list-title">최근 매칭 현황</h4>
-            <button 
-              className="mg-btn mg-btn-ghost mg-btn-sm"
-              onClick={handleViewAll}
-            >
+            <MGButton variant="outline" size="small" onClick={handleViewAll}>
               전체 보기
-            </button>
+            </MGButton>
           </div>
           <div className="mapping-items">
             {mappings.map((mapping) => (
@@ -274,13 +269,16 @@ const MappingManagementWidget = ({ widget, user }) => {
                   </div>
                 </div>
                 <div className="mapping-actions">
-                  <button 
+                  <MGButton
+                    variant="outline"
+                    size="small"
                     className="action-btn view-btn"
                     onClick={() => handleViewMapping(mapping.id)}
                     title="상세 보기"
+                    preventDoubleClick={false}
                   >
                     <Eye className="action-icon" />
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             ))}
@@ -290,13 +288,10 @@ const MappingManagementWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {RoleUtils.isAdmin(user) && (
           <div className="mapping-quick-actions">
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={handleCreateMapping}
-            >
+            <MGButton variant="primary" size="small" onClick={handleCreateMapping}>
               <Plus className="btn-icon" />
               새 매칭 생성
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

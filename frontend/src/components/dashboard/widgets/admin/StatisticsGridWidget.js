@@ -22,6 +22,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency } from '../../../../utils/formatUtils';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const StatisticsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -245,12 +246,9 @@ const StatisticsGridWidget = ({ widget, user }) => {
           <div className="statistics-grid-empty">
             <TrendingUp className="empty-icon" />
             <p>통계 데이터가 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

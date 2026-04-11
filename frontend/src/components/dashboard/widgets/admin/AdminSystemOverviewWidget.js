@@ -6,6 +6,7 @@ import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
 import { RoleUtils } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
+import MGButton from '../../../common/MGButton';
 
 /**
  * 관리자 시스템 개요 위젯 - 표준화된 위젯
@@ -21,12 +22,9 @@ import './AdminSystemOverviewWidget.css';
  * @since 2025-11-29
  */
 const AdminSystemOverviewWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
+  const isAllowedForWidget =
+    RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
   // 다중 API 엔드포인트를 위한 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -79,10 +77,14 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: !!(user && user.id),
+    immediate: !!(user && user.id) && isAllowedForWidget,
     cache: true,
     retryCount: 3
   });
+
+  if (!isAllowedForWidget) {
+    return null;
+  }
 
   // 기본 통계 데이터 구조
   const defaultStats = {
@@ -197,12 +199,9 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
           <div className="admin-system-overview-empty">
             <Activity className="empty-icon" />
             <p>시스템 통계 데이터가 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

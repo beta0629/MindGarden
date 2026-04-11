@@ -1,0 +1,13 @@
+/**
+ * System tools widget — MGButton 카드 레이아웃 (G8-B13a)
+ */
+.widget-system-tools .system-tools-grid .system-tool-card.mg-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: unset;
+  text-align: left;
+}

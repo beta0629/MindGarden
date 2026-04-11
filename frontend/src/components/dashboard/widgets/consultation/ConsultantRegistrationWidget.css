@@ -89,17 +89,18 @@
   margin: 0;
 }
 
-.form-close-btn {
+.form-close-btn.mg-button {
   background: none;
   border: none;
   padding: var(--cs-spacing-xs);
+  min-height: unset;
   border-radius: var(--cs-radius-sm);
   cursor: pointer;
   color: var(--cs-text-secondary);
   transition: all 0.2s ease;
 }
 
-.form-close-btn:hover {
+.form-close-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-bg-hover);
   color: var(--cs-text-primary);
 }
@@ -160,7 +161,7 @@
   align-items: stretch;
 }
 
-.address-search-btn {
+.address-search-btn.mg-button {
   flex-shrink: 0;
   height: 40px;
   border-radius: 10px;
@@ -277,7 +278,7 @@ textarea.form-control {
     flex-direction: column;
   }
   
-  .form-actions .mg-btn {
+  .form-actions .mg-button {
     width: 100%;
   }
   

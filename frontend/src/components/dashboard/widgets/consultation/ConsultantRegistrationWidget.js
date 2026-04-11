@@ -21,6 +21,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import './ConsultantRegistrationWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -299,27 +300,32 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 '새로운 상담사를 등록하여 상담 서비스를 확장하세요.'
               }
             </p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-lg registration-start-btn"
+            <MGButton
+              variant="primary"
+              size="large"
+              className="registration-start-btn"
               onClick={() => setShowForm(true)}
             >
               <Users className="btn-icon" />
               상담사 등록 시작
-            </button>
+            </MGButton>
           </div>
         ) : (
           // 등록 폼
           <div className="registration-form-container">
             <div className="form-header">
               <h3 className="form-title">상담사 정보 입력</h3>
-              <button 
+              <MGButton
+                variant="outline"
+                size="small"
                 className="form-close-btn"
                 onClick={handleCloseForm}
                 type="button"
                 title="닫기"
+                preventDoubleClick={false}
               >
                 <X className="close-icon" />
-              </button>
+              </MGButton>
             </div>
             <form onSubmit={handleSubmit} className="consultant-registration-form">
               {/* 필수 필드 */}
@@ -541,9 +547,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     <div className="form-group full-width">
                       <label className="form-label">주소 검색</label>
                       <div className="address-search-row">
-                        <button
+                        <MGButton
                           type="button"
-                          className="mg-btn mg-btn-outline address-search-btn"
+                          variant="outline"
+                          className="address-search-btn"
                           onClick={() => {
                             if (window.daum && window.daum.Postcode) {
                               new window.daum.Postcode({
@@ -561,7 +568,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                           }}
                         >
                           주소 검색
-                        </button>
+                        </MGButton>
                         <input
                           type="text"
                           readOnly
@@ -617,39 +624,32 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
               {/* 폼 액션 버튼 */}
               <div className="form-actions">
-                <button
+                <MGButton
                   type="button"
-                  className="mg-btn mg-btn-secondary"
+                  variant="secondary"
                   onClick={handleCloseForm}
                 >
                   <X className="btn-icon" />
                   취소
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="button"
-                  className="mg-btn mg-btn-ghost"
+                  variant="outline"
                   onClick={handleReset}
                 >
                   <RotateCcw className="btn-icon" />
                   초기화
-                </button>
-                <button
+                </MGButton>
+                <MGButton
                   type="submit"
-                  className="mg-btn mg-btn-primary"
+                  variant="primary"
                   disabled={submitting || Object.keys(validationErrors).length > 0}
+                  loading={submitting}
+                  loadingText="등록 중..."
                 >
-                  {submitting ? (
-                    <>
-                      <div className="loading-spinner" />
-                      등록 중...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="btn-icon" />
-                      상담사 등록
-                    </>
-                  )}
-                </button>
+                  <CheckCircle className="btn-icon" />
+                  상담사 등록
+                </MGButton>
               </div>
             </form>
           </div>

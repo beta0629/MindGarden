@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
+import MGButton from '../../../common/MGButton';
 
 const SchedulerStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -213,13 +214,15 @@ const SchedulerStatusWidget = ({ widget, user }) => {
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
             <Clock size={16} />
             <h4 className="mg-h5 mg-mb-0">최근 실행 내역</h4>
-            <button 
+            <MGButton
               onClick={() => handleAction('view-all')}
-              className="mg-button mg-button--sm mg-button--text mg-ml-auto"
+              className="mg-ml-auto"
+              variant="outline"
+              size="small"
               type="button"
             >
               전체보기
-            </button>
+            </MGButton>
           </div>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>
             {recentExecutions.length === 0 ? (
@@ -286,14 +289,17 @@ const SchedulerStatusWidget = ({ widget, user }) => {
         {/* 실패 내역 바로가기 */}
         {failureCount > 0 && (
           <div className="mg-mt-md">
-            <button 
+            <MGButton
               onClick={() => handleAction('view-failures')}
-              className="mg-button mg-button--sm mg-button--error mg-button--outline mg-w-full"
+              className="mg-w-full"
+              variant="danger"
+              size="small"
+              fullWidth
               type="button"
             >
               <AlertTriangle size={16} />
               실패 내역 {failureCount}건 확인
-            </button>
+            </MGButton>
           </div>
         )}
       </div>
@@ -309,14 +315,17 @@ const SchedulerStatusWidget = ({ widget, user }) => {
       size="lg"
       variant="default"
       headerActions={
-        <button 
+        <MGButton
           onClick={() => handleAction('refresh')}
-          className="mg-button mg-button--sm mg-button--ghost"
+          variant="outline"
+          size="small"
           type="button"
           aria-label="새로고침"
+          title="새로고침"
+          preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}
-        </button>
+        </MGButton>
       }
     >
       {renderContent()}

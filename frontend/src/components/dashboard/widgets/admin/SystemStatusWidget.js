@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
+import MGButton from '../../../common/MGButton';
 import SafeText from '../../../common/SafeText';
 
 const SystemStatusWidget = ({ widget, user }) => {
@@ -356,12 +357,9 @@ const SystemStatusWidget = ({ widget, user }) => {
           <div className="system-status-empty">
             <Server className="empty-icon" />
             <p>시스템 상태 정보를 가져올 수 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               재시도
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

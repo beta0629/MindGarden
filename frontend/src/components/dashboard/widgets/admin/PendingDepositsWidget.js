@@ -6,6 +6,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
+import MGButton from '../../../common/MGButton';
 
 /**
  * 입금 확인 대기 목록 위젯 - 표준화된 위젯
@@ -192,22 +193,24 @@ const PendingDepositsWidget = ({ widget, user }) => {
                   </div>
                 </div>
                 <div className="deposit-actions">
-                  <button 
+                  <MGButton
+                    variant="success"
                     className="deposit-btn deposit-btn-confirm"
                     onClick={() => handleConfirmDeposit(deposit.id)}
                     title="입금 확인"
                   >
                     <CheckCircle className="btn-icon" />
                     확인
-                  </button>
-                  <button 
+                  </MGButton>
+                  <MGButton
+                    variant="danger"
                     className="deposit-btn deposit-btn-reject"
                     onClick={() => handleRejectDeposit(deposit.id)}
                     title="입금 거부"
                   >
                     <AlertCircle className="btn-icon" />
                     거부
-                  </button>
+                  </MGButton>
                 </div>
               </div>
             ))}
@@ -216,12 +219,9 @@ const PendingDepositsWidget = ({ widget, user }) => {
           <div className="pending-deposits-empty">
             <CreditCard className="empty-icon" />
             <p>확인 대기 중인 입금이 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               새로고침
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

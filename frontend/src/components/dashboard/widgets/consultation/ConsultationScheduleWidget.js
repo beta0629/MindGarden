@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationScheduleWidget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
 
 const ConsultationScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -75,10 +76,10 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
           </div>
           <h3 className="empty-title">오늘 일정 없음</h3>
           <p className="empty-description">새로운 상담 일정을 추가하세요.</p>
-          <button className="mg-btn mg-btn-primary" onClick={() => navigate('/schedules/new')}>
+          <MGButton variant="primary" onClick={() => navigate('/schedules/new')}>
             <Plus className="btn-icon" />
             일정 추가
-          </button>
+          </MGButton>
         </div>
       );
     }
@@ -101,19 +102,23 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
                   <span><SafeText>{schedule.clientName}</SafeText></span>
                 </div>
               </div>
-              <button 
-                className="schedule-view-btn" 
+              <MGButton
+                variant="outline"
+                size="small"
+                className="schedule-view-btn"
                 onClick={() => navigate(`/schedules/${schedule.id}`)}
+                title="상세 보기"
+                preventDoubleClick={false}
               >
                 <Eye className="view-icon" />
-              </button>
+              </MGButton>
             </div>
           ))}
         </div>
         <div className="schedule-actions">
-          <button className="mg-btn mg-btn-ghost mg-btn-sm" onClick={() => navigate('/schedules')}>
+          <MGButton variant="outline" size="small" onClick={() => navigate('/schedules')}>
             전체 일정 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

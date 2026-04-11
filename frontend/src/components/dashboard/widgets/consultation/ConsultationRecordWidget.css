@@ -128,9 +128,11 @@
   overflow: hidden;
 }
 
-.record-view-btn {
+.record-view-btn.mg-button {
   width: 32px;
   height: 32px;
+  padding: 0;
+  min-height: unset;
   border: none;
   border-radius: var(--cs-radius-xs);
   display: flex;
@@ -143,7 +145,7 @@
   flex-shrink: 0;
 }
 
-.record-view-btn:hover {
+.record-view-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-primary-500);
   color: var(--cs-white);
 }
@@ -166,7 +168,7 @@
     align-items: flex-start;
   }
   
-  .record-view-btn {
+  .record-view-btn.mg-button {
     align-self: flex-end;
   }
   

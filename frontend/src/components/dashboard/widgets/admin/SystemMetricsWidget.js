@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
+import MGButton from '../../../common/MGButton';
 
 const SystemMetricsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -319,14 +320,17 @@ const SystemMetricsWidget = ({ widget, user }) => {
       size="md"
       variant="default"
       headerActions={
-        <button 
+        <MGButton
           onClick={() => handleAction('refresh')}
-          className="mg-button mg-button--sm mg-button--ghost"
+          variant="outline"
+          size="small"
           type="button"
           aria-label="새로고침"
+          title="새로고침"
+          preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}
-        </button>
+        </MGButton>
       }
     >
       {renderContent()}

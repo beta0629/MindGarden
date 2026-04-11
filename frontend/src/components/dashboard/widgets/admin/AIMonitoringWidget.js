@@ -22,6 +22,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
+import MGButton from '../../../common/MGButton';
 
 const AIMonitoringWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -194,13 +195,15 @@ const AIMonitoringWidget = ({ widget, user }) => {
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
             <Activity size={16} />
             <h4 className="mg-h5 mg-mb-0">최근 이상 탐지</h4>
-            <button 
+            <MGButton
               onClick={() => handleAction('view-anomalies')}
-              className="mg-button mg-button--sm mg-button--text mg-ml-auto"
+              className="mg-ml-auto"
+              variant="outline"
+              size="small"
               type="button"
             >
               전체보기
-            </button>
+            </MGButton>
           </div>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>
             {recentAnomalies.length === 0 ? (
@@ -264,13 +267,15 @@ const AIMonitoringWidget = ({ widget, user }) => {
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
             <Shield size={16} />
             <h4 className="mg-h5 mg-mb-0">최근 보안 위협</h4>
-            <button 
+            <MGButton
               onClick={() => handleAction('view-threats')}
-              className="mg-button mg-button--sm mg-button--text mg-ml-auto"
+              className="mg-ml-auto"
+              variant="outline"
+              size="small"
               type="button"
             >
               전체보기
-            </button>
+            </MGButton>
           </div>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>
             {recentThreats.length === 0 ? (
@@ -377,14 +382,17 @@ const AIMonitoringWidget = ({ widget, user }) => {
       size="lg"
       variant="default"
       headerActions={
-        <button 
+        <MGButton
           onClick={() => handleAction('refresh')}
-          className="mg-button mg-button--sm mg-button--ghost"
+          variant="outline"
+          size="small"
           type="button"
           aria-label="새로고침"
+          title="새로고침"
+          preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}
-        </button>
+        </MGButton>
       }
     >
       {renderContent()}

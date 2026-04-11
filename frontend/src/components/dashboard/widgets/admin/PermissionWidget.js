@@ -22,6 +22,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import './PermissionWidget.css';
 import SafeText from '../../../common/SafeText';
+import MGButton from '../../../common/MGButton';
 
 const PermissionWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -251,13 +252,14 @@ const PermissionWidget = ({ widget, user }) => {
                     {/* 더 보기 버튼 */}
                     {permissions.length > maxItems && (
                       <div className="permission-more">
-                        <button 
+                        <MGButton
                           type="button"
-                          className="mg-btn mg-btn-ghost mg-btn-sm"
+                          variant="outline"
+                          size="small"
                           onClick={goUserManagement}
                         >
                           {permissions.length - maxItems}개 더 보기
-                        </button>
+                        </MGButton>
                       </div>
                     )}
                   </div>
@@ -266,26 +268,24 @@ const PermissionWidget = ({ widget, user }) => {
             ))}
             
             <div className="permission-actions">
-              <button 
+              <MGButton
                 type="button"
-                className="mg-btn mg-btn-outline mg-btn-sm"
+                variant="outline"
+                size="small"
                 onClick={goUserManagement}
               >
                 <Settings className="btn-icon" />
                 사용자 관리로 이동
-              </button>
+              </MGButton>
             </div>
           </div>
         ) : (
           <div className="permission-empty">
             <Shield className="empty-icon" />
             <p>권한 정보가 없습니다</p>
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={refresh}
-            >
+            <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

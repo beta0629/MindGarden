@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationSummaryWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const ConsultationSummaryWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -245,13 +246,10 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
 
         {/* 빠른 액션 */}
         <div className="summary-actions">
-          <button 
-            className="mg-btn mg-btn-primary mg-btn-sm"
-            onClick={handleViewReports}
-          >
+          <MGButton variant="primary" size="small" onClick={handleViewReports}>
             <FileText className="btn-icon" />
             상세 보고서 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

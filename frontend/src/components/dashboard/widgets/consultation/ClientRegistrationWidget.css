@@ -87,12 +87,14 @@
   margin: 0;
 }
 
-.form-close-btn {
+.form-close-btn.mg-button {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
+  min-height: unset;
   background: transparent;
   border: none;
   border-radius: var(--cs-radius-md);
@@ -100,7 +102,7 @@
   transition: all 0.2s ease;
 }
 
-.form-close-btn:hover {
+.form-close-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--cs-glass-gray-light);
 }
 
@@ -152,7 +154,7 @@
   align-items: stretch;
 }
 
-.address-search-btn {
+.address-search-btn.mg-button {
   flex-shrink: 0;
   height: 40px;
   border-radius: 10px;
@@ -314,7 +316,7 @@ textarea.form-control {
     gap: var(--cs-spacing-sm);
   }
   
-  .form-actions .mg-btn {
+  .form-actions .mg-button {
     width: 100%;
     justify-content: center;
   }
@@ -372,7 +374,7 @@ textarea.form-control {
     border-color: var(--cs-gray-700);
   }
   
-  .form-close-btn:hover {
+  .form-close-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background: var(--cs-glass-gray-dark);
   }
 }

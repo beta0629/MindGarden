@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationStatsWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const ConsultationStatsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -105,10 +106,10 @@ const ConsultationStatsWidget = ({ widget, user }) => {
           </div>
         </div>
         <div className="stats-actions">
-          <button className="mg-btn mg-btn-primary mg-btn-sm" onClick={() => navigate('/reports/stats')}>
+          <MGButton variant="primary" size="small" onClick={() => navigate('/reports/stats')}>
             <TrendingUp className="btn-icon" />
             상세 통계 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

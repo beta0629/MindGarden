@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const SessionManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -197,13 +198,10 @@ const SessionManagementWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '새로운 상담 세션을 예약해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
-            <button 
-              className="mg-btn mg-btn-primary"
-              onClick={handleCreateSession}
-            >
+            <MGButton variant="primary" onClick={handleCreateSession}>
               <Plus className="btn-icon" />
               새 세션 예약
-            </button>
+            </MGButton>
           )}
         </div>
       );
@@ -279,13 +277,16 @@ const SessionManagementWidget = ({ widget, user }) => {
                       {request.reason || '사유 없음'}
                     </div>
                   </div>
-                  <button
+                  <MGButton
+                    variant="outline"
+                    size="small"
                     className="action-btn review-btn"
                     onClick={() => handleExtensionRequest(request.id)}
                     title="검토하기"
+                    preventDoubleClick={false}
                   >
                     <Eye className="action-icon" />
-                  </button>
+                  </MGButton>
                 </div>
               ))}
             </div>
@@ -296,12 +297,9 @@ const SessionManagementWidget = ({ widget, user }) => {
         <div className="session-list">
           <div className="list-header">
             <h4 className="list-title">최근 세션 현황</h4>
-            <button 
-              className="mg-btn mg-btn-ghost mg-btn-sm"
-              onClick={handleViewAll}
-            >
+            <MGButton variant="outline" size="small" onClick={handleViewAll}>
               전체 보기
-            </button>
+            </MGButton>
           </div>
           <div className="session-items">
             {sessions.map((session) => (
@@ -346,21 +344,27 @@ const SessionManagementWidget = ({ widget, user }) => {
                   </div>
                 </div>
                 <div className="session-actions">
-                  <button 
+                  <MGButton
+                    variant="outline"
+                    size="small"
                     className="action-btn view-btn"
                     onClick={() => handleViewSession(session.id)}
                     title="상세 보기"
+                    preventDoubleClick={false}
                   >
                     <Eye className="action-icon" />
-                  </button>
+                  </MGButton>
                   {session.recordUrl && (
-                    <button 
+                    <MGButton
+                      variant="outline"
+                      size="small"
                       className="action-btn record-btn"
                       onClick={() => window.open(session.recordUrl, '_blank')}
                       title="기록 보기"
+                      preventDoubleClick={false}
                     >
                       <FileText className="action-icon" />
-                    </button>
+                    </MGButton>
                   )}
                 </div>
               </div>
@@ -371,13 +375,10 @@ const SessionManagementWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="session-quick-actions">
-            <button 
-              className="mg-btn mg-btn-primary mg-btn-sm"
-              onClick={handleCreateSession}
-            >
+            <MGButton variant="primary" size="small" onClick={handleCreateSession}>
               <Plus className="btn-icon" />
               새 세션 예약
-            </button>
+            </MGButton>
           </div>
         )}
       </div>

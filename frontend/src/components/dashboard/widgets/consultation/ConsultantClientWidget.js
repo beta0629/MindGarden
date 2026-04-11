@@ -22,6 +22,7 @@ import { toDisplayString } from '../../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
+import MGButton from '../../../common/MGButton';
 
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -107,12 +108,10 @@ const ConsultantClientWidget = ({ widget, user }) => {
                 <SafeText tag="div" className="client-name">{client.name}</SafeText>
                 <div className="client-details">
                   <div className={`client-status ${getStatusClass(client.status)}`}>
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                    {client.status === 'ACTIVE' ? '활성' : 
-                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                     client.status === 'PENDING' ? '대기' : 
-                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                     client.status === 'COMPLETED' ? '완료' : '비활성'}
+                    {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
+                    {client.status === 'ACTIVE' ? '활성'
+                      : client.status === 'PENDING' ? '대기'
+                        : client.status === 'COMPLETED' ? '완료' : '비활성'}
                   </div>
                   {client.lastSessionAt && (
                     <div className="last-session">
@@ -128,28 +127,34 @@ const ConsultantClientWidget = ({ widget, user }) => {
                 </div>
               </div>
               <div className="client-actions">
-                <button 
+                <MGButton
+                  variant="outline"
+                  size="small"
                   className="action-btn message-btn"
                   onClick={() => navigate(`/messages/${client.id}`)}
                   title="메시지"
+                  preventDoubleClick={false}
                 >
                   <MessageCircle className="action-icon" />
-                </button>
-                <button 
+                </MGButton>
+                <MGButton
+                  variant="outline"
+                  size="small"
                   className="action-btn view-btn"
                   onClick={() => navigate(`/clients/${client.id}`)}
                   title="상세보기"
+                  preventDoubleClick={false}
                 >
                   <Eye className="action-icon" />
-                </button>
+                </MGButton>
               </div>
             </div>
           ))}
         </div>
         <div className="client-actions-footer">
-          <button className="mg-btn mg-btn-ghost mg-btn-sm" onClick={() => navigate('/clients')}>
+          <MGButton variant="outline" size="small" onClick={() => navigate('/clients')}>
             전체 내담자 보기
-          </button>
+          </MGButton>
         </div>
       </div>
     );

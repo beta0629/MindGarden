@@ -72,6 +72,7 @@
 - [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)
 
 ### 기타
+- **Trinity CI·E2E·배포 구분**: [TRINITY_CI_AND_E2E](./guides/development/TRINITY_CI_AND_E2E.md) — ERP 스모크(`frontend/`) vs Trinity 빌드 스모크(`frontend-trinity/`) vs Trinity 배포 워크플로
 - **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
 - **디버깅·원인 분석 문서 목록**: [docs/debug/README.md](./debug/README.md)

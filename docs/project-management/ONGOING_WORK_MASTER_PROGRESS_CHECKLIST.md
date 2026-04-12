@@ -225,7 +225,7 @@
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
 | QA-01 | 코드 변경 배치 — `core-tester` 스모크·회귀 (프로젝트 표준) | 🔄 | 프론트 Jest·lint 통과. **백엔드 전체 `mvn test` 통과**(2026-04-11, 로컬 `pipefail` 검증). 배치마다 `core-tester` 권장 |
-| QA-02 | ERP E2E·스모크 (저장소 워크플로·시나리오가 있는 경우) | 🔄 | **`.github/workflows/e2e-erp-smoke.yml`**: PR(paths)·`npm run verify:erp`·Playwright(chromium, `BASE_URL=localhost`, **Secrets 불필요**) — `erp-legacy-path-redirects` 전체·`erp-approval-hub-redirect` 중 `super-approvals` grep 1건만(리다이렉트 스모크). 로그인·메뉴/리스트 스펙은 CI 미포함 — 회귀는 별도. `docs/planning/ERP_TEST_SCENARIOS.md` |
+| QA-02 | ERP E2E·스모크 (저장소 워크플로·시나리오가 있는 경우) | 🔄 | **ERP**: `e2e-erp-smoke.yml` — `verify:erp`·Playwright 리다이렉트, **Secrets 불필요**. **Trinity**: `e2e-trinity-build-smoke.yml` — `frontend-trinity` 빌드만(paths·PR/push 동일 범위). ERP 스모크는 `frontend-trinity/**`와 무관. `docs/planning/ERP_TEST_SCENARIOS.md` |
 
 ---
 
@@ -368,3 +368,5 @@
 | 2026-04-11 | **위임**: `core-coder` — `.gitignore`에 `uploads/psych-assessments/`, `tmp/`, `tmp_error_tail*.txt`; Playwright 리포트는 주석 안내만. **`core-tester`** — `e2e-erp-smoke.yml`·QA-02 비고 정리(Secrets 없음, 리다이렉트 스모크 범위) |
 | 2026-04-11 | **SEC-01 CAPTCHA(백엔드·테스트)**: `OnboardingController`·`CaptchaVerifier.requiresCaptchaToken()`·`OnboardingControllerCaptchaWebMvcTest`(MockMvc 최소 부트스트랩 `OnboardingControllerMvcTestApplication`). `TODO_ONBOARDING_PUBLIC_API_HARDENING` 봇 완화 `[~]` |
 | 2026-04-11 | **SEC-01 병렬**: Trinity 콜백 `sessionStorage`로 `captchaToken` 전달(`SESSION_STORAGE_KEYS`)·`core-deployer` `docs/deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md`·Nginx 가이드 상호 링크 — `mvn`/ESLint 타깃 회귀 통과 |
+| 2026-04-11 | **위임 병렬**: `core-deployer` `POST_DEPLOY_VERIFY_CAPTCHA_ONBOARDING.md` — `core-coder` Trinity 콜백 타이밍 상수(`ONBOARDING_CALLBACK_TIMING`) — `core-tester` QA-02·`e2e-erp-smoke` paths·Trinity 자동 미실행 문구·Playwright ERP 스모크 3 passed |
+| 2026-04-12 | **위임 병렬**: `core-coder` `e2e-trinity-build-smoke.yml` — `core-tester` `BACKEND_MYSQL_INTEGRATION_TESTS.md` 검수·체크리스트 — `GITHUB_ACTIONS_WORKFLOW_INDEX`·QA-02 보강 |

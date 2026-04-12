@@ -67,6 +67,7 @@
 | 파일 | 역할 | 트리거 요약 | dev/prod 쌍 | reusable | 비고 |
 |------|------|-------------|-------------|----------|------|
 | `code-quality-check.yml` | 코드 품질 | PR/push main·develop, dispatch | — | — | |
+| `e2e-trinity-build-smoke.yml` | Trinity 빌드 스모크 | PR/push main·develop, paths `frontend-trinity/**` 등, `workflow_dispatch` | — | — | `frontend-trinity`에서 `npm ci` → `npm run build:ci` (`ESLINT_NO_DEV_ERRORS=true next build`). Playwright 없음. Secrets 불필요. |
 | `ci-bi-protection.yml` | CI/BI 보호 | PR/push main·develop | — | — | |
 | `ops-frontend.yml` | Ops 프론트 CI | push/PR `frontend-ops/**` | — | — | |
 | `ops-backend.yml` | Ops 백엔드 CI | push/PR `backend-ops/**` | — | — | |

@@ -4,10 +4,18 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Button from "../../../components/Button";
-import { SESSION_STORAGE_KEYS, TRINITY_CONSTANTS } from "../../../constants/trinity";
+import {
+  ONBOARDING_CALLBACK_TIMING,
+  SESSION_STORAGE_KEYS,
+  TRINITY_CONSTANTS,
+} from "../../../constants/trinity";
 import { COMPONENT_CSS } from "../../../constants/css-variables";
 import { createPaymentMethod, createOnboardingRequest, type OnboardingCreateRequest } from "../../../utils/api";
 import { getDefaultRiskLevel } from "../../../utils/commonCodeUtils";
+
+function toStr(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
 
 export default function OnboardingCallbackPage() {
   const searchParams = useSearchParams();
@@ -74,7 +82,7 @@ export default function OnboardingCallbackPage() {
         // 메시지 전송 후 창 닫기
         setTimeout(() => {
           window.close();
-        }, 100);
+        }, ONBOARDING_CALLBACK_TIMING.POPUP_CLOSE_DELAY_MS);
       } else if (statusParam === "fail") {
         const errorMsg = errorMessage || errorCode || "카드 등록에 실패했습니다.";
         window.opener.postMessage(
@@ -87,7 +95,7 @@ export default function OnboardingCallbackPage() {
         // 메시지 전송 후 창 닫기
         setTimeout(() => {
           window.close();
-        }, 100);
+        }, ONBOARDING_CALLBACK_TIMING.POPUP_CLOSE_DELAY_MS);
       }
     }
   }, [statusParam, authKey, customerKey, errorCode, errorMessage]);
@@ -185,8 +193,10 @@ export default function OnboardingCallbackPage() {
           }
 
           // URL 파라미터에서 폼 데이터 보완
-          const finalTenantName = formData.tenantName || (tenantName ? decodeURIComponent(tenantName) : "");
-          const finalContactEmail = formData.contactEmail || (contactEmail ? decodeURIComponent(contactEmail) : "");
+          const finalTenantName =
+            toStr(formData.tenantName) || (tenantName ? decodeURIComponent(tenantName) : "");
+          const finalContactEmail =
+            toStr(formData.contactEmail) || (contactEmail ? decodeURIComponent(contactEmail) : "");
           
           if (!finalTenantName || !finalContactEmail) {
             const errorMsg = `필수 정보가 누락되었습니다. tenantName: ${finalTenantName ? '있음' : '없음'}, contactEmail: ${finalContactEmail ? '있음' : '없음'}`;
@@ -230,13 +240,13 @@ export default function OnboardingCallbackPage() {
             tenantName: finalTenantName,
             requestedBy: finalContactEmail,
             riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
-            businessType: formData.businessType || "",
-            adminPassword: formData.adminPassword || "", // 관리자 계정 비밀번호 (checklistJson에 포함)
+            businessType: toStr(formData.businessType),
+            adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (checklistJson에 포함)
             ...(storedCaptchaToken ? { captchaToken: storedCaptchaToken } : {}),
             checklistJson: JSON.stringify({
-              contactPhone: formData.contactPhone || "",
-              planId: formData.planId || "",
-              adminPassword: formData.adminPassword || "", // 관리자 계정 비밀번호 (승인 시 사용)
+              contactPhone: toStr(formData.contactPhone),
+              planId: toStr(formData.planId),
+              adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (승인 시 사용)
               paymentMethodId,
               customerKey,
               paymentType, // "register" 또는 "pay"
@@ -277,7 +287,7 @@ export default function OnboardingCallbackPage() {
               ? '/onboarding?paymentMethodRegistered=true'
               : '/onboarding?paymentCompleted=true';
             router.push(redirectUrl);
-          }, 2000);
+          }, ONBOARDING_CALLBACK_TIMING.REDIRECT_DELAY_MS);
         } catch (err) {
           console.error("[OnboardingCallback] 온보딩 요청 처리 실패:", err);
           console.error("[OnboardingCallback] 에러 상세:", {

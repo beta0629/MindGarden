@@ -3,6 +3,14 @@
  * 하드코딩 금지 - 모든 값은 여기에 정의
  */
 
+/** 온보딩 PG 콜백 페이지 타이밍 (ms) — no-magic-numbers */
+export const ONBOARDING_CALLBACK_TIMING = {
+  /** 성공 메시지 표시 후 온보딩으로 리다이렉트하기 전 대기 */
+  REDIRECT_DELAY_MS: 2000,
+  /** 팝업에서 postMessage 직후 창을 닫기 전 짧은 지연 */
+  POPUP_CLOSE_DELAY_MS: 100,
+} as const;
+
 /** sessionStorage 키 (온보딩·결제 콜백 등) */
 export const SESSION_STORAGE_KEYS = {
   /** Turnstile 응답 토큰 — 메인 온보딩 → PG 콜백에서 createOnboardingRequest 시 전달 */

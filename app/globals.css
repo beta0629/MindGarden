@@ -12,11 +12,11 @@
 
 /* CSS Reset & Variables */
 :root {
-    /* 따뜻한 톤 - 상담소에 맞는 부드러운 색상 */
-    --bg-color: #FFF8F0;
-    --bg-light: #FFF5E6;
-    --bg-pastel-1: #FEF7ED;
-    --bg-pastel-2: #FFF5E6;
+    /* 페이지 전체 배경: html/body/main 기준 화이트 */
+    --bg-color: #ffffff;
+    --bg-light: #ffffff;
+    --bg-pastel-1: #ffffff;
+    --bg-pastel-2: #ffffff;
     
     --text-main: #2c2c2c;
     --text-sub: #6b6b6b;
@@ -41,9 +41,9 @@
     --border-soft: rgba(168, 213, 186, 0.28);
     --border-strong: rgba(168, 213, 186, 0.42);
 
-    --surface-0: #FFFFFF;
-    --surface-1: rgba(255, 252, 248, 0.95);
-    --surface-2: rgba(255, 250, 245, 0.85);
+    --surface-0: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
 
     --shadow-1: 0 8px 30px rgba(0, 0, 0, 0.06);
     --shadow-2: 0 14px 45px rgba(0, 0, 0, 0.10);
@@ -195,9 +195,13 @@
     box-sizing: border-box;
 }
 
+html {
+    background-color: #ffffff;
+}
+
 body {
     font-family: var(--font-main);
-    background-color: var(--bg-color);
+    background-color: #ffffff;
     color: var(--text-main);
     line-height: 1.6;
     overflow-x: hidden;
@@ -215,7 +219,7 @@ h6 {
 }
 
 main {
-    background: linear-gradient(180deg, var(--bg-pastel-1) 0%, var(--bg-color) 60%, var(--bg-pastel-2) 100%);
+    background-color: #ffffff;
 }
 
 /* Navigation */
@@ -3076,7 +3080,7 @@ a.program-card:hover {
 /* —— 센터 소개(/about/mindgarden) 전문 통합 프로그램 플립 카드 —— */
 .mg-prog-section {
     --mg-prog-bg: #ffffff;
-    --mg-prog-cream: #f9f8f6;
+    --mg-prog-cream: #ffffff;
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
     --mg-prog-secondary: #8c7a6b;
@@ -3280,7 +3284,7 @@ a.program-card:hover {
     --mg-landing-cocoa: #685a50;
     --mg-landing-green: #4a5d4e;
     --mg-landing-taupe: #8c7a6b;
-    --mg-landing-cream: #f9f8f6;
+    --mg-landing-cream: #ffffff;
 }
 
 /* 시맨틱 figure — 브라우저 기본 마진 제거, 레이아웃은 기존 클래스 유지 */

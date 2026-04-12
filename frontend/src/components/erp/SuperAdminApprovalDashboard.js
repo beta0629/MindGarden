@@ -253,7 +253,7 @@ const SuperAdminApprovalDashboard = () => {
         className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
-          <div>
+          <div aria-busy={processing}>
             <div className="mg-v2-form-group">
               <h4>최종 승인할 구매 요청</h4>
               <div className="super-admin-info-box">
@@ -317,7 +317,7 @@ const SuperAdminApprovalDashboard = () => {
         className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
-          <div>
+          <div aria-busy={processing}>
             <div className="mg-v2-form-group">
               <h4>거부할 구매 요청</h4>
               <div className="super-admin-info-box">

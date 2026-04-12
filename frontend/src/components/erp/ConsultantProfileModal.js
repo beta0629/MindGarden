@@ -243,7 +243,7 @@ const ConsultantProfileModal = ({
             size="large"
             className="mg-v2-ad-b0kla consultant-profile-modal-content"
         >
-            <div className="consultant-profile-modal-body">
+            <div className="consultant-profile-modal-body" aria-busy={profileLoading || saving}>
                 <div className="consultant-profile-info-section salary-management__profile-view">
                     <div className="consultant-profile-info-header">
                         <h4 className="consultant-profile-info-title">급여 프로필</h4>

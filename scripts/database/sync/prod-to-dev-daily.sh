@@ -17,6 +17,9 @@
 #
 set -euo pipefail
 
+# cron은 최소 PATH만 잡는 경우가 많음 — mysql/mysqldump/gunzip 찾기 실패 방지
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 umask 077
 
@@ -81,6 +84,14 @@ LOG_FILE="${LOG_DIR}/prod-to-dev-sync_${RUN_ID}.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 log "=== 운영→개발 DB 동기화 시작 (mode=$SYNC_MODE, D-1 label=$(yesterday_ymd_dash)) ==="
+command -v mysql >/dev/null 2>&1 || die "mysql 클라이언트 없음(PATH 확인). which: $(command -v mysql || true)"
+command -v mysqldump >/dev/null 2>&1 || die "mysqldump 없음(PATH 확인). which: $(command -v mysqldump || true)"
+command -v gzip >/dev/null 2>&1 || die "gzip 없음"
+command -v gunzip >/dev/null 2>&1 || die "gunzip 없음"
+log "도구 경로: mysql=$(command -v mysql), mysqldump=$(command -v mysqldump)"
+if [[ "${NON_INTERACTIVE:-0}" != "1" ]]; then
+  log "경고: 대화형 모드입니다. cron에서는 NON_INTERACTIVE=1 필수."
+fi
 
 mysql_prod() {
   mysql -h "$PROD_MYSQL_HOST" -P "$PROD_MYSQL_PORT" -u "$PROD_MYSQL_USER" \
@@ -96,6 +107,7 @@ mysqldump_prod() {
   mysqldump -h "$PROD_MYSQL_HOST" -P "$PROD_MYSQL_PORT" -u "$PROD_MYSQL_USER" \
     ${PROD_MYSQL_PASSWORD:+-p"$PROD_MYSQL_PASSWORD"} \
     --single-transaction \
+    --no-tablespaces \
     --routines \
     --triggers \
     --events \

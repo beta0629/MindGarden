@@ -2,6 +2,10 @@
 # 적용: crontab -e 복사 또는 배치 전용 유저 crontab
 #
 # 스크립트 경로는 배포 위치에 맞게 수정하세요.
+# NON_INTERACTIVE=1 은 필수 — 없으면 대화형 확인에서 멈춤.
+# mysql 이 /usr/local/bin 등에만 있으면 아래 PATH 주석 해제 권장.
+
+# PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # 서버 시스템 타임존이 UTC 등이면 아래 한 줄로 “한국 새벽” 기준 실행 (cronie 등 지원)
 CRON_TZ=Asia/Seoul

@@ -76,7 +76,7 @@ export default function ProgramLNB() {
           display: block;
           padding: 16px 4px;
           font-size: 1rem;
-          color: var(--text-sub, #666);
+          color: var(--text-sub, #b58974);
           text-decoration: none;
           transition: color 0.2s ease, font-weight 0.2s ease;
           position: relative;

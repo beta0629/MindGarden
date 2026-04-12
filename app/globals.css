@@ -18,9 +18,10 @@
     --bg-pastel-1: #ffffff;
     --bg-pastel-2: #ffffff;
 
+    /* 메인 테라코타 + 같은 계열의 서브(밝기만 분리) */
     --text-main: #9b6546;
-    --text-sub: #9b6546;
-    --text-light: #9b6546;
+    --text-sub: #b58974;
+    --text-light: #c9a892;
 
     /* 액센트(히어로 등): 따뜻한 피치·베이지 대신 쿨 민트·라벤더 */
     --accent-sky: #a8d5ba;
@@ -2935,7 +2936,7 @@ a.program-card:hover {
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--text-sub, #9b6546);
+    color: var(--text-sub, #b58974);
 }
 
 .home-screening-promo-headline {
@@ -2948,7 +2949,7 @@ a.program-card:hover {
 
 .home-screening-promo-sub {
     font-size: clamp(0.75rem, 2vw, 0.875rem);
-    color: var(--text-sub, #9b6546);
+    color: var(--text-sub, #b58974);
     line-height: 1.4;
     margin-top: 0.15rem;
 }
@@ -3229,14 +3230,14 @@ a.program-card:hover {
 .mg-prog-cards-band {
     --mg-prog-bg: #f6f3ee;
     --mg-prog-cream: #ffffff;
-    --mg-prog-heading: #9b6546;
-    --mg-prog-lead: #9b6546;
+    --mg-prog-heading: var(--text-main);
+    --mg-prog-lead: var(--text-sub);
     --mg-prog-badge-bg: #e5f0e8;
-    --mg-prog-badge-text: #9b6546;
+    --mg-prog-badge-text: var(--text-main);
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #9b6546;
-    --mg-prog-text: #9b6546;
+    --mg-prog-secondary: var(--text-sub);
+    --mg-prog-text: var(--text-sub);
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -3475,9 +3476,9 @@ a.program-card:hover {
 
 /* —— /about/mindgarden 랜딩형 레이아웃 (히어로·아이덴티티·원장·철학) —— */
 .mg-landing {
-    --mg-landing-cocoa: #9b6546;
+    --mg-landing-cocoa: var(--text-main);
     --mg-landing-green: #4a5d4e;
-    --mg-landing-taupe: #9b6546;
+    --mg-landing-taupe: var(--text-sub);
     --mg-landing-cream: #ffffff;
 }
 

@@ -418,12 +418,13 @@ export default function ReviewsPage() {
                       전체 평균 만족도
                     </p>
                     <span style={{
-                      backgroundColor: 'rgba(99, 102, 241, 0.5)',
-                      color: 'rgba(199, 210, 254, 1)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                      color: 'rgba(255, 255, 255, 0.95)',
                       fontSize: '0.625rem',
+                      fontWeight: '600',
                       padding: '0.125rem 0.5rem',
                       borderRadius: '9999px',
-                      border: '1px solid rgba(99, 102, 241, 0.7)',
+                      border: '1px solid rgba(255, 255, 255, 0.35)',
                     }}>
                       Monthly
                     </span>
@@ -481,7 +482,7 @@ export default function ReviewsPage() {
                 padding: '1.25rem',
                 borderRadius: '1.5rem',
                 boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-                border: '1px solid #e2e8f0',
+                border: '1px solid rgba(89, 142, 62, 0.15)',
                 marginBottom: '1.25rem',
               }}>
                 <h3 style={{
@@ -493,7 +494,7 @@ export default function ReviewsPage() {
                   alignItems: 'center',
                   gap: '0.5rem',
                 }}>
-                  <span style={{ fontSize: '1rem', color: '#64748b', display: 'flex' }}>
+                  <span style={{ fontSize: '1rem', color: '#598e3e', display: 'flex' }}>
                     <ChartBarsGlyph size={18} />
                   </span>
                   평가 상세
@@ -509,14 +510,14 @@ export default function ReviewsPage() {
                         effectiveness: '효과',
                         facility: '시설',
                       };
-                      // 각 항목별 색상 정의
+                      /* 브랜드 그린 계열만 사용(항목별 살짝 다른 채도로 구분) */
                       const colorMap: Record<string, { dot: string; bar: string }> = {
-                        professionalism: { dot: '#3B82F6', bar: '#3B82F6' }, // 파란색
-                        kindness: { dot: '#598e3e', bar: '#598e3e' }, // 브랜드 그린
-                        effectiveness: { dot: '#F59E0B', bar: '#F59E0B' }, // 주황색
-                        facility: { dot: '#8B5CF6', bar: '#8B5CF6' }, // 보라색
+                        professionalism: { dot: '#598e3e', bar: '#598e3e' },
+                        kindness: { dot: '#6d9c55', bar: '#6d9c55' },
+                        effectiveness: { dot: '#4f7a3e', bar: '#4f7a3e' },
+                        facility: { dot: '#7a9a68', bar: '#7a9a68' },
                       };
-                      const colors = colorMap[key] || { dot: '#6366F1', bar: '#6366F1' };
+                      const colors = colorMap[key] || { dot: '#598e3e', bar: '#598e3e' };
                       const percentage = (stat.average / 5) * 100;
                       return (
                         <div key={key} style={{
@@ -538,7 +539,7 @@ export default function ReviewsPage() {
                             <span style={{
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: '#475569',
+                              color: 'rgba(74, 90, 64, 0.92)',
                             }}>
                               {labels[key] || key}
                             </span>
@@ -546,7 +547,7 @@ export default function ReviewsPage() {
                           <div style={{
                             width: '8rem',
                             height: '0.5rem',
-                            backgroundColor: '#f1f5f9',
+                            backgroundColor: 'rgba(89, 142, 62, 0.1)',
                             borderRadius: '9999px',
                             overflow: 'hidden',
                           }}>
@@ -562,7 +563,7 @@ export default function ReviewsPage() {
                           <span style={{
                             fontSize: '0.75rem',
                             fontWeight: '700',
-                            color: '#1e293b',
+                            color: '#4a6b3a',
                           }}>
                             {stat.average.toFixed(1)}
                           </span>
@@ -580,7 +581,7 @@ export default function ReviewsPage() {
                 padding: '1.25rem',
                 borderRadius: '1.5rem',
                 boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-                border: '1px solid #e2e8f0',
+                border: '1px solid rgba(89, 142, 62, 0.15)',
               }}>
                 <h3 style={{
                   fontSize: '0.875rem',
@@ -591,7 +592,7 @@ export default function ReviewsPage() {
                   alignItems: 'center',
                   gap: '0.5rem',
                 }}>
-                  <span style={{ fontSize: '1rem', color: '#64748b', display: 'flex' }}>
+                  <span style={{ fontSize: '1rem', color: '#598e3e', display: 'flex' }}>
                     <TagGlyph size={18} />
                   </span>
                   인기 키워드
@@ -605,16 +606,16 @@ export default function ReviewsPage() {
                     <span
                       key={tag}
                       style={{
-                        backgroundColor: '#eef2ff',
-                        color: '#1e1b4b',
+                        backgroundColor: 'rgba(89, 142, 62, 0.1)',
+                        color: '#4a6b3a',
                         padding: '0.375rem 0.75rem',
-                        borderRadius: '0.5rem',
+                        borderRadius: '9999px',
                         fontSize: '0.75rem',
-                        fontWeight: '500',
-                        border: '1px solid #c7d2fe',
+                        fontWeight: '600',
+                        border: '1px solid rgba(89, 142, 62, 0.22)',
                       }}
                     >
-                      <span style={{ color: '#4ADE80', fontWeight: '700' }}>#</span>
+                      <span style={{ color: '#598e3e', fontWeight: '700' }}>#</span>
                       {tag}
                     </span>
                   ))}

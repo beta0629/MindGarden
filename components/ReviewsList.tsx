@@ -48,6 +48,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  const displayAuthorName = (name: string) => {
+    const t = name?.trim();
+    return t || '익명';
+  };
+
   // 재미있는 랜덤 이름 생성 (후기 ID 기반으로 결정적 랜덤)
   const getRandomName = (reviewId: number) => {
     const names = [
@@ -757,308 +762,378 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
         {/* 최신 후기 섹션 */}
         {uniqueReviews.length > 0 && (
-          <section>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '2rem',
-            }}>
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
+          <section
+            className="reviews-latest-block"
+            style={{
+              marginTop: '2.5rem',
+              padding: '1.75rem 1rem 2rem',
+              background: 'var(--hero-cream, #f5f0e6)',
+              borderRadius: '1rem',
+              border: '1px solid rgba(89, 142, 62, 0.12)',
+            }}
+          >
+            <div
+              style={{
                 display: 'flex',
                 alignItems: 'center',
-              }}>
-                <span style={{
-                  width: '0.5rem',
-                  height: '2rem',
-                  background: '#598e3e',
-                  borderRadius: '9999px',
-                  marginRight: '0.75rem',
-                }} />
+                justifyContent: 'space-between',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: '1.375rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  margin: 0,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                <span
+                  style={{
+                    width: '4px',
+                    height: '1.5rem',
+                    background: '#598e3e',
+                    borderRadius: '2px',
+                    marginRight: '0.65rem',
+                    flexShrink: 0,
+                  }}
+                />
                 최신 후기
               </h2>
             </div>
-            <div
-              ref={containerRef}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                display: 'flex',
-                gap: '1.5rem',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                scrollBehavior: 'auto',
-                cursor: isDragging ? 'grabbing' : 'grab',
-                padding: '1rem 0',
-                margin: '0 -1rem',
-                paddingLeft: '1rem',
-                paddingRight: '1rem',
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#598e3e transparent',
-              }}
-              onScroll={() => {
-                // 자동 스크롤이 아닐 때만 lastScrollTime 업데이트
-                if (!isAutoScrolling.current) {
-                  lastScrollTime.current = Date.now();
-                }
-              }}
-            >
-              {latestReviews.map((review, index) => (
-                <Link
-                  key={`${review.id}-${index}`}
-                  href={`/reviews#review-${review.id}`}
-                  style={{
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    display: 'block',
-                    flexShrink: 0,
-                    width: '280px',
-                  }}
-                  className="latest-review-card"
-                  onClick={(e) => {
-                    // 드래그 중일 때는 링크 클릭 방지
-                    if (isDragging) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <article style={{
-                    background: 'white',
-                    borderRadius: '1rem',
-                    padding: '1.5rem',
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                    border: '1px solid rgba(226, 232, 240, 0.8)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '280px',
-                    transition: isDragging ? 'none' : 'all 0.3s',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    userSelect: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isDragging) {
-                      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isDragging) {
-                      e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }
-                  }}
-                  >
-                    {index === 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '4px',
-                        background: '#598e3e',
-                      }} />
-                    )}
-                    <div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'space-between',
-                        marginBottom: '1rem',
-                      }}>
-                        <div style={{
+            <div style={{ position: 'relative' }}>
+              <div
+                ref={containerRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                className="reviews-latest-track"
+                style={{
+                  display: 'flex',
+                  gap: '1.25rem',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  scrollBehavior: 'auto',
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  padding: '0.5rem 0 1rem',
+                  margin: '0 -0.25rem',
+                  paddingLeft: '0.25rem',
+                  paddingRight: '0.25rem',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#598e3e rgba(0,0,0,0.06)',
+                }}
+                onScroll={() => {
+                  if (!isAutoScrolling.current) {
+                    lastScrollTime.current = Date.now();
+                  }
+                }}
+              >
+                {latestReviews.map((review, index) => {
+                  const name = displayAuthorName(review.authorName);
+                  const initial = name.charAt(0);
+                  const overall =
+                    review.ratings?.overall && review.ratings.overall > 0
+                      ? Math.min(5, Math.round(Number(review.ratings.overall)))
+                      : null;
+                  return (
+                    <Link
+                      key={`${review.id}-${index}`}
+                      href={`/reviews#review-${review.id}`}
+                      style={{
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        display: 'block',
+                        flexShrink: 0,
+                        width: '300px',
+                      }}
+                      className="latest-review-card"
+                      onClick={(e) => {
+                        if (isDragging) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <article
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '14px',
+                          padding: '1.25rem 1.35rem',
+                          boxShadow:
+                            '0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+                          border: '1px solid rgba(226, 232, 240, 0.85)',
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                        }}>
-                          <div style={{
-                            width: '3rem',
-                            height: '3rem',
-                            borderRadius: '50%',
-                            background: index % 3 === 0
-                              ? 'rgba(209, 250, 229, 0.8)'
-                              : index % 3 === 1
-                              ? 'rgba(226, 232, 240, 0.8)'
-                              : 'rgba(224, 231, 255, 0.8)',
-                            color: index % 3 === 0
-                              ? '#598e3e'
-                              : index % 3 === 1
-                              ? 'var(--text-sub)'
-                              : '#4F46E5',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: '700',
-                            fontSize: '1.125rem',
-                          }}>
-                            {review.authorName.charAt(0)}
-                          </div>
-                          <div>
-                            <h3 style={{
-                              fontWeight: '700',
-                              color: 'var(--text-main)',
-                              fontSize: '1.125rem',
-                            }}>
-                              {review.authorName}
-                            </h3>
-                            <span style={{
-                              fontSize: '0.75rem',
-                              color: 'var(--text-sub)',
-                            }}>
-                              {new Date(review.createdAt).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                        {review.ratings && review.ratings.overall && review.ratings.overall > 0 && (
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-end',
-                          }}>
-                            <div style={{
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minHeight: '300px',
+                          transition: isDragging ? 'none' : 'box-shadow 0.25s ease, transform 0.25s ease',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          userSelect: 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isDragging) {
+                            e.currentTarget.style.boxShadow =
+                              '0 14px 28px -6px rgba(89, 142, 62, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.1)';
+                            e.currentTarget.style.transform = 'translateY(-3px)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isDragging) {
+                            e.currentTarget.style.boxShadow =
+                              '0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.05)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
                               display: 'flex',
-                              gap: '0.125rem',
-                              alignItems: 'center',
-                            }}>
-                              {[...Array(5)].map((_, i) => (
-                                <HeartGlyph
-                                  key={i}
-                                  filled={i < review.ratings!.overall!}
-                                  size={18}
-                                  style={{
-                                    color:
-                                      i < review.ratings!.overall!
-                                        ? '#EF4444'
-                                        : 'rgba(239, 68, 68, 0.35)',
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <span style={{
-                              fontSize: '0.625rem',
-                              color: '#598e3e',
-                              fontWeight: '700',
-                              marginTop: '0.25rem',
-                            }}>
-                              {review.ratings.overall}/5 만족
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {review.tags && review.tags.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.5rem',
-                          marginBottom: '1rem',
-                        }}>
-                          {review.tags.slice(0, 3).map((tag, idx) => (
-                            <span
-                              key={idx}
+                              alignItems: 'flex-start',
+                              justifyContent: 'space-between',
+                              gap: '0.75rem',
+                              marginBottom: '0.85rem',
+                            }}
+                          >
+                            <div
                               style={{
-                                padding: '0.25rem 0.5rem',
-                                background: 'rgba(241, 245, 249, 0.8)',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.75rem',
-                                color: 'var(--text-sub)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.65rem',
+                                minWidth: 0,
+                                flex: 1,
                               }}
                             >
-                              #{tag}
-                            </span>
-                          ))}
-                          {review.tags.length > 3 && (
-                            <span style={{
-                              padding: '0.25rem 0.5rem',
-                              fontSize: '0.75rem',
-                              color: 'var(--text-sub)',
-                            }}>
-                              +{review.tags.length - 3}
-                            </span>
+                              <div
+                                style={{
+                                  width: '2.75rem',
+                                  height: '2.75rem',
+                                  borderRadius: '50%',
+                                  flexShrink: 0,
+                                  background:
+                                    index % 3 === 0
+                                      ? 'rgba(209, 250, 229, 0.85)'
+                                      : index % 3 === 1
+                                        ? 'rgba(241, 245, 249, 0.95)'
+                                        : 'rgba(224, 231, 255, 0.9)',
+                                  color:
+                                    index % 3 === 0
+                                      ? '#598e3e'
+                                      : index % 3 === 1
+                                        ? 'var(--text-sub)'
+                                        : '#4b5bb5',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: '700',
+                                  fontSize: '1.05rem',
+                                }}
+                              >
+                                {initial}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <h3
+                                  style={{
+                                    fontWeight: '700',
+                                    color: 'var(--text-main)',
+                                    fontSize: '1rem',
+                                    margin: 0,
+                                    lineHeight: 1.35,
+                                    wordBreak: 'keep-all',
+                                  }}
+                                >
+                                  {name}
+                                </h3>
+                                <span
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    color: 'var(--text-sub)',
+                                    display: 'block',
+                                    marginTop: '2px',
+                                  }}
+                                >
+                                  {new Date(review.createdAt).toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                            {overall !== null && (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-end',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    gap: '2px',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  {[...Array(5)].map((_, i) => (
+                                    <HeartGlyph
+                                      key={i}
+                                      filled={i < overall}
+                                      size={17}
+                                      style={{
+                                        color:
+                                          i < overall ? '#e85d5d' : 'rgba(232, 93, 93, 0.28)',
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.65rem',
+                                    color: 'var(--text-sub)',
+                                    fontWeight: '600',
+                                    marginTop: '4px',
+                                    letterSpacing: '0.02em',
+                                  }}
+                                >
+                                  {overall}/5 만족
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {review.tags && review.tags.length > 0 && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '0.4rem',
+                                marginBottom: '0.85rem',
+                                alignItems: 'center',
+                              }}
+                            >
+                              {review.tags.slice(0, 3).map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    padding: '0.28rem 0.65rem',
+                                    background: 'rgba(241, 245, 249, 0.95)',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.7rem',
+                                    color: '#64748b',
+                                    fontWeight: '500',
+                                  }}
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                              {review.tags.length > 3 && (
+                                <span
+                                  style={{
+                                    padding: '0.28rem 0.5rem',
+                                    fontSize: '0.7rem',
+                                    color: 'var(--text-sub)',
+                                    fontWeight: '600',
+                                  }}
+                                >
+                                  +{review.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
                           )}
+                          <p
+                            style={{
+                              color: '#78716c',
+                              fontSize: '0.875rem',
+                              lineHeight: 1.65,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              margin: 0,
+                            }}
+                          >
+                            {getPreviewText(review.content, 120)}
+                          </p>
                         </div>
-                      )}
-                      <div style={{
-                        marginBottom: '1.5rem',
-                      }}>
-                        <p style={{
-                          color: 'var(--text-sub)',
-                          fontSize: '0.875rem',
-                          lineHeight: '1.6',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}>
-                          {getPreviewText(review.content, 120)}
-                        </p>
-                      </div>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingTop: '1rem',
-                      borderTop: '1px solid rgba(226, 232, 240, 0.8)',
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: '#EF4444',
-                        background: 'rgba(254, 242, 242, 0.8)',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                      }}>
-                        <span style={{ marginRight: '0.25rem', display: 'inline-flex', verticalAlign: 'middle' }}>
-                          <HeartGlyph filled size={16} style={{ color: '#EF4444' }} />
-                        </span>
-                        {review.likeCount || 0}
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '0.875rem',
-                        fontWeight: '700',
-                        color: 'var(--text-sub)',
-                        transition: 'all 0.3s',
-                      }}>
-                        자세히 보기
-                        <span style={{ marginLeft: '0.25rem' }}>→</span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingTop: '0.9rem',
+                            marginTop: '1rem',
+                            borderTop: '1px solid rgba(231, 229, 228, 0.9)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              color: '#e11d48',
+                              background: 'rgba(255, 241, 242, 0.95)',
+                              padding: '0.3rem 0.7rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.8125rem',
+                              fontWeight: '600',
+                              border: '1px solid rgba(254, 205, 211, 0.6)',
+                            }}
+                          >
+                            <HeartGlyph filled size={15} style={{ color: '#e11d48' }} />
+                            {review.likeCount ?? 0}
+                          </div>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontSize: '0.8125rem',
+                              fontWeight: '600',
+                              color: 'var(--text-main)',
+                            }}
+                          >
+                            자세히 보기
+                            <span style={{ marginLeft: '0.35rem', fontSize: '1rem', lineHeight: 1 }}>→</span>
+                          </span>
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
+              </div>
+              <div
+                aria-hidden
+                style={{
+                  height: '5px',
+                  background: '#598e3e',
+                  borderRadius: '3px',
+                  marginTop: '2px',
+                  opacity: 0.95,
+                }}
+              />
             </div>
             {/* 스크롤바 스타일 및 반응형 */}
             <style jsx>{`
-              div::-webkit-scrollbar {
+              .reviews-latest-track::-webkit-scrollbar {
                 height: 8px;
               }
-              div::-webkit-scrollbar-track {
+              .reviews-latest-track::-webkit-scrollbar-track {
                 background: rgba(241, 245, 249, 0.5);
                 border-radius: 4px;
               }
-              div::-webkit-scrollbar-thumb {
+              .reviews-latest-track::-webkit-scrollbar-thumb {
                 background: #598e3e;
                 border-radius: 4px;
               }
-              div::-webkit-scrollbar-thumb:hover {
+              .reviews-latest-track::-webkit-scrollbar-thumb:hover {
                 background: #4a7530;
               }
               
@@ -1090,7 +1165,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 padding: 1.5rem !important;
               }
               .latest-review-card {
-                width: 260px !important;
+                width: 280px !important;
               }
               
               /* 태블릿 (768px 이상) */

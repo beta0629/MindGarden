@@ -18,10 +18,10 @@
     --bg-pastel-1: #ffffff;
     --bg-pastel-2: #ffffff;
 
-    /* 메인 그린 + 같은 계열의 서브(밝기만 분리) */
-    --text-main: #598e3e;
-    --text-sub: #729d56;
-    --text-light: #9ab87a;
+    /* 메인 테라코타 + 같은 계열의 서브(밝기만 분리) */
+    --text-main: #9b6546;
+    --text-sub: #b58974;
+    --text-light: #c9a892;
 
     /* 액센트(히어로 등): 따뜻한 피치·베이지 대신 쿨 민트·라벤더 */
     --accent-sky: #a8d5ba;
@@ -2936,20 +2936,20 @@ a.program-card:hover {
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--text-sub, #729d56);
+    color: var(--text-sub, #b58974);
 }
 
 .home-screening-promo-headline {
     font-size: clamp(1.15rem, 3.8vw, 1.65rem);
     font-weight: 800;
     line-height: 1.25;
-    color: var(--text-main, #598e3e);
+    color: var(--text-main, #9b6546);
     letter-spacing: -0.02em;
 }
 
 .home-screening-promo-sub {
     font-size: clamp(0.75rem, 2vw, 0.875rem);
-    color: var(--text-sub, #729d56);
+    color: var(--text-sub, #b58974);
     line-height: 1.4;
     margin-top: 0.15rem;
 }

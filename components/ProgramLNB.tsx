@@ -76,18 +76,18 @@ export default function ProgramLNB() {
           display: block;
           padding: 16px 4px;
           font-size: 1rem;
-          color: var(--text-sub, #729d56);
+          color: var(--text-sub, #b58974);
           text-decoration: none;
           transition: color 0.2s ease, font-weight 0.2s ease;
           position: relative;
         }
 
         .program-lnb-link:hover {
-          color: var(--text-main, #598e3e);
+          color: var(--text-main, #9b6546);
         }
 
         .program-lnb-link.active {
-          color: var(--text-main, #598e3e);
+          color: var(--text-main, #9b6546);
           font-weight: 600;
         }
 
@@ -98,7 +98,7 @@ export default function ProgramLNB() {
           left: 0;
           width: 100%;
           height: 2px;
-          background-color: var(--text-main, #598e3e);
+          background-color: var(--text-main, #9b6546);
         }
 
         @media (max-width: 768px) {

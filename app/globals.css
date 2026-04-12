@@ -1338,6 +1338,33 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     margin-bottom: 26px;
 }
 
+/* 홈 #about: 도입 문단 */
+.about-intro-prose {
+    font-size: 1.0625rem;
+    line-height: 1.9;
+}
+
+.about-intro-prose p {
+    margin-bottom: 1rem;
+}
+
+.about-intro-prose p:last-child {
+    margin-bottom: 0;
+}
+
+.about-intro-prose strong {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.about-detail-stack {
+    margin-top: 0.5rem;
+}
+
+.about-visit-cta .counseling-type-links a {
+    font-weight: 600;
+}
+
 /* 상담의 종류 상세 (/counseling/[slug]) */
 .counseling-type-page {
     padding-top: 120px;

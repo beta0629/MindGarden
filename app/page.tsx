@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
+import HomeAboutSection from '@/components/HomeAboutSection';
 import HomeSectionVisual from '@/components/HomeSectionVisual';
 import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsList from '@/components/ReviewsList';
@@ -193,37 +194,7 @@ export default async function Home() {
 
       <div className="content-shell">
         <div className="content-main">
-          <section id="about" className="content-section">
-            <div className="section-intro-row">
-              <div className="section-intro-copy">
-                <h2 className="section-title">마인드 가든 소개</h2>
-                <p className="section-desc">
-                  내담자의 주호소 문제에 대해 풍부한 임상경력의 전문가가 객관화 된 검사와 내담자의 기질, 성격적 특성, 자라나온 양육환경 등을 고려해서 핵심문제를 찾습니다.<br /><br />
-                  내담자와 함께 상담 계획과 합의된 목표 세우고 최우선적으로<br />
-                  증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
-                </p>
-              </div>
-              <HomeSectionVisual
-                src={homeSectionImages.about.src}
-                alt={homeSectionImages.about.alt}
-                priority
-              />
-            </div>
-            <div className="feature-grid">
-              <a href="/about/mindgarden" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div className="feature-title">전문특화</div>
-                <div className="feature-body">15년의 임상경험과 전문성을 바탕으로 한 맞춤 상담</div>
-              </a>
-              <a href="/counselors" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div className="feature-title">전문가</div>
-                <div className="feature-body">프로필 및 약력 소개</div>
-              </a>
-              <div className="feature-card">
-                <div className="feature-title">지속 가능한 변화</div>
-                <div className="feature-body">일상에 적용 가능한 루틴/실행 전략 중심</div>
-              </div>
-            </div>
-          </section>
+          <HomeAboutSection />
 
           <section id="programs" className="content-section">
             <div className="section-intro-row section-intro-row--media-first">

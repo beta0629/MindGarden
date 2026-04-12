@@ -8,8 +8,8 @@ export default function LocationPage() {
   /** 단일 핀(좌표 고정) — `lib/location-map.ts` 참고. 퍼가기 URL 덮어쓰기는 NEXT_PUBLIC_GOOGLE_MAPS_EMBED_IFRAME_SRC */
   const googleMapEmbedSrc = getGoogleMapsEmbedSrc();
   const googleMapOpenUrl = getGoogleMapsOpenUrl();
-  // 네이버: 건물 도로명으로 검색(다지점 혼동 시 지도에서 확인)
-  const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent('인천 연수구 해돋이로120번길 23 아크리아2')}`;
+  // 네이버: 상호로 검색(아크리아2 건물명이 아닌 마인드가든 심리상담센터 노출) — Footer NAVER_MAP_URL과 동일 키워드
+  const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent('송도 마인드가든 심리상담센터')}`;
 
   return (
     <main id="top">

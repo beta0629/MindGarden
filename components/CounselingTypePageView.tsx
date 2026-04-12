@@ -7,7 +7,8 @@ import {
   COUNSELING_TYPE_IMAGE_PLAN,
   counselingTypeImageSrc,
 } from '@/lib/counseling-type-page-images';
-import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
+import ValuesSectionVisual from '@/components/ValuesSectionVisual';
+import CounselingNotebookBlocks from '@/components/CounselingNotebookBlocks';
 
 export default function CounselingTypePageView({
   data,
@@ -61,13 +62,21 @@ export default function CounselingTypePageView({
                     )}
                     <article
                       id={section.id}
-                      className="counseling-type-card value-section-card"
+                      className={
+                        section.notebookBlocks && section.notebookBlocks.length > 0
+                          ? 'counseling-type-card counseling-type-card--notebook value-section-card'
+                          : 'counseling-type-card value-section-card'
+                      }
                     >
                       <h2 className="counseling-type-card-title">{section.title}</h2>
                       <div className="counseling-type-card-body">
-                        {section.paragraphs.map((p, i) => (
-                          <p key={i}>{p}</p>
-                        ))}
+                        {section.notebookBlocks && section.notebookBlocks.length > 0 ? (
+                          <CounselingNotebookBlocks blocks={section.notebookBlocks} />
+                        ) : (
+                          section.paragraphs.map((p, i) => (
+                            <p key={i}>{p}</p>
+                          ))
+                        )}
                         {section.internalLinks && section.internalLinks.length > 0 && (
                           <div className="counseling-type-links">
                             {section.internalLinks.map((l) => (

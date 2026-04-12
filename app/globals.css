@@ -1645,6 +1645,242 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     margin-bottom: 0;
 }
 
+/* 상담 페이지 — NotebookLM 스타일(동반 영역 등) */
+article#areas.counseling-type-card--notebook {
+    scroll-margin-top: 96px;
+}
+
+.counseling-type-card--notebook .counseling-type-card-body {
+    max-width: 100%;
+}
+
+.counseling-notebook {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+@media (max-width: 479px) {
+    .counseling-notebook {
+        gap: 22px;
+    }
+}
+
+.counseling-notebook-intro {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: var(--text-sub);
+    margin: 0;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(89, 142, 62, 0.07) 0%, rgba(135, 180, 200, 0.09) 100%);
+    border-radius: var(--radius-md);
+    border-left: 4px solid rgba(89, 142, 62, 0.55);
+}
+
+@media (max-width: 479px) {
+    .counseling-notebook-intro {
+        padding: 14px 14px;
+    }
+}
+
+.counseling-notebook-h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(89, 142, 62, 0.22);
+    letter-spacing: -0.02em;
+}
+
+.counseling-notebook-h3--pair {
+    margin-top: 8px;
+}
+
+.counseling-notebook-category {
+    background: #fafbfc;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.counseling-notebook-category-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.counseling-notebook-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: #fff;
+    background: var(--accent-cta);
+    border-radius: 8px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.counseling-notebook-category-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.45;
+    padding-top: 2px;
+}
+
+.counseling-notebook-item-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.counseling-notebook-item-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 12px;
+    border-left: 2px solid rgba(89, 142, 62, 0.25);
+}
+
+@media (min-width: 640px) {
+    .counseling-notebook-item-list li {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px 12px;
+    }
+}
+
+.counseling-notebook-term {
+    font-weight: 700;
+    color: var(--text-main);
+    flex-shrink: 0;
+}
+
+.counseling-notebook-term::after {
+    content: ' —';
+    font-weight: 600;
+    color: rgba(74, 55, 48, 0.48);
+}
+
+@media (max-width: 639px) {
+    .counseling-notebook-term::after {
+        content: '';
+    }
+
+    .counseling-notebook-item-list li {
+        gap: 6px;
+    }
+}
+
+.counseling-notebook-desc {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-sub);
+    flex: 1;
+    min-width: 0;
+}
+
+.counseling-notebook-p {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: var(--text-sub);
+    margin: 0;
+}
+
+.counseling-notebook-pair-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.counseling-notebook-pair-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+/* 태블릿 세로·좁은 화면은 1열 유지, 넓은 화면에서만 2열 */
+@media (min-width: 960px) {
+    .counseling-notebook-pair-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+}
+
+.counseling-notebook-pair-card {
+    background: #fff;
+    border: 1px solid rgba(89, 142, 62, 0.2);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(89, 142, 62, 0.08);
+}
+
+.counseling-notebook-pair-card-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 14px;
+    line-height: 1.45;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(89, 142, 62, 0.25);
+}
+
+.counseling-notebook-pair-row {
+    margin-bottom: 12px;
+}
+
+.counseling-notebook-pair-row:last-child {
+    margin-bottom: 0;
+}
+
+.counseling-notebook-pair-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #4a6b38;
+    margin-bottom: 6px;
+}
+
+.counseling-notebook-pair-text {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text-sub);
+    margin: 0;
+}
+
+.counseling-notebook-note {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--text-sub);
+    margin: 0;
+    padding: 14px 16px;
+    background: rgba(89, 142, 62, 0.06);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(89, 142, 62, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .counseling-notebook-pair-card,
+    .counseling-notebook-category {
+        box-shadow: none;
+    }
+}
+
 .counseling-type-links {
     margin-top: 20px;
     display: flex;

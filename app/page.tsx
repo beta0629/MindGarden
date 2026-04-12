@@ -194,7 +194,7 @@ export default async function Home() {
 
       <MindgardenLandingSections showHero={false} />
 
-      <div className="content-shell">
+      <section className="content-shell" aria-label="프로그램, 갤러리, 후기">
         <div className="content-main">
           <section id="program-pages" className="content-section">
             <div className="section-intro-row section-intro-row--media-first">
@@ -238,7 +238,7 @@ export default async function Home() {
 
           <Footer />
         </div>
-      </div>
+      </section>
     </main>
   );
 }

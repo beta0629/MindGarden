@@ -39,10 +39,13 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
   }, [showHero]);
 
   return (
-    <div className={`mg-landing${showHero ? '' : ' mg-landing--no-hero'}`}>
+    <section
+      className={`mg-landing${showHero ? '' : ' mg-landing--no-hero'}`}
+      aria-label="마인드가든 센터 소개"
+    >
       {/* 1. Hero (전문특화 페이지 단독 / 메인에서는 기존 히어로 사용 시 생략) */}
       {showHero ? (
-      <section className="mg-hero-section" aria-label="마인드가든 소개 히어로">
+      <header className="mg-hero-section" aria-label="마인드가든 소개 히어로">
         <div className="mg-hero-bg">
           <Image
             src={HERO_BG}
@@ -79,14 +82,14 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
           <span>아래로 스크롤</span>
           <div className="mg-hero-scroll-line" />
         </div>
-      </section>
+      </header>
       ) : null}
 
       {/* 2. Identity */}
       <section id="about" className="mg-identity-section">
         <div className="mg-landing-container">
           <div className="mg-identity-grid">
-          <div className="mg-identity-visual mg-landing-fade">
+          <figure className="mg-identity-visual mg-landing-fade">
             <Image
               src={IDENTITY_IMG}
               alt="따뜻한 정원이 있는 건물 외관"
@@ -95,7 +98,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               className="mg-identity-img"
               sizes="(max-width: 900px) 100vw, 50vw"
             />
-          </div>
+          </figure>
           <div className="mg-identity-copy mg-landing-fade mg-landing-delay-2">
             <h2 className="mg-identity-title">
               &quot;단 한 번의 광고 없이,
@@ -131,7 +134,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
       <section id="director" className="mg-director-section">
         <div className="mg-landing-container">
           <div className="mg-director-grid">
-          <div className="mg-director-visual mg-landing-fade">
+          <figure className="mg-director-visual mg-landing-fade">
             <div className="mg-director-frame">
               <Image
                 src={DIRECTOR_IMG}
@@ -143,7 +146,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               />
               <div className="mg-director-decor" aria-hidden />
             </div>
-          </div>
+          </figure>
           <div className="mg-director-copy mg-landing-fade mg-landing-delay-2">
             <h2 className="mg-director-quote">
               &quot;15년, 수많은 마음의 숲을 지나오며 깨달은 것은
@@ -204,7 +207,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               </p>
             </article>
           </div>
-          <div className="mg-philosophy-visual mg-landing-fade mg-landing-delay-3">
+          <figure className="mg-philosophy-visual mg-landing-fade mg-landing-delay-3">
             <Image
               src={PHILOSOPHY_IMG}
               alt="편안한 라운지와 식물이 있는 공간"
@@ -213,10 +216,10 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               className="mg-philosophy-img"
               sizes="(max-width: 900px) 100vw, 50vw"
             />
-          </div>
+          </figure>
           </div>
         </div>
       </section>
-    </div>
+    </section>
   );
 }

@@ -3111,7 +3111,7 @@ a.program-card:hover {
     padding: 0 1.25rem;
 }
 
-.mg-prog-header {
+.mg-prog-section .mg-prog-header {
     margin-bottom: 2.5rem;
 }
 
@@ -3281,6 +3281,11 @@ a.program-card:hover {
     --mg-landing-green: #4a5d4e;
     --mg-landing-taupe: #8c7a6b;
     --mg-landing-cream: #f9f8f6;
+}
+
+/* 시맨틱 figure — 브라우저 기본 마진 제거, 레이아웃은 기존 클래스 유지 */
+.mg-landing figure {
+    margin: 0;
 }
 
 /* 메인: 기존 히어로 직후 — 상단 여백만 살짝 조정 */

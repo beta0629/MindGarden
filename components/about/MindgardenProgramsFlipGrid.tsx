@@ -61,18 +61,18 @@ export default function MindgardenProgramsFlipGrid() {
   return (
     <section id="programs" className="mg-prog-section" aria-labelledby="mg-prog-heading">
       <div className="mg-prog-container">
-        <div className="mg-prog-header mg-fade-in-up">
+        <header className="mg-prog-header mg-fade-in-up">
           <h2 id="mg-prog-heading" className="mg-prog-title">
             마음의 뿌리를 단단하게,
             <br />
             증상 너머의 사람을 봅니다
           </h2>
           <p className="mg-prog-subtitle">마인드가든만의 문제 해결 중심 전문 통합 상담 프로그램</p>
-        </div>
+        </header>
 
         <div className="mg-prog-cards-grid">
           {CARDS.map((card) => (
-            <div key={card.href} className={`mg-prog-card mg-fade-in-up ${card.delayClass}`}>
+            <article key={card.href} className={`mg-prog-card mg-fade-in-up ${card.delayClass}`}>
               <div className="mg-prog-card-inner">
                 <div className="mg-prog-card-front">
                   <h3>{card.title}</h3>
@@ -85,7 +85,7 @@ export default function MindgardenProgramsFlipGrid() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

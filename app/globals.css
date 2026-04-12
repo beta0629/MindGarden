@@ -3084,20 +3084,35 @@ a.program-card:hover {
 }
 
 /* —— 센터 소개(/about/mindgarden) 전문 통합 프로그램 플립 카드 —— */
-.mg-prog-section {
-    --mg-prog-bg: #ffffff;
+/* 따뜻한 오프화이트 배경 + 순백 카드 + 브라운 타이틀 + 민트 배지(참고 UI) */
+.mg-prog-section,
+.mg-prog-cards-band {
+    --mg-prog-bg: #f6f3ee;
     --mg-prog-cream: #ffffff;
+    --mg-prog-heading: #5c4033;
+    --mg-prog-lead: #8b7355;
+    --mg-prog-badge-bg: #e5f0e8;
+    --mg-prog-badge-text: #2d4a38;
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #6b6b6b;
-    --mg-prog-text: #2c2a29;
+    --mg-prog-secondary: #8b7355;
+    --mg-prog-text: #3d2e26;
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
 
+.mg-prog-section {
     background-color: var(--mg-prog-bg);
     text-align: center;
     padding: 4rem 0 3rem;
     margin: 0 -20px 48px;
     border-radius: var(--radius-lg);
+}
+
+.mg-prog-cards-band {
+    background-color: var(--mg-prog-bg);
+    padding: 1.75rem 1rem 2rem;
+    border-radius: var(--radius-lg);
+    margin-top: 1rem;
 }
 
 .mg-landing .mg-prog-section {
@@ -3131,14 +3146,14 @@ a.program-card:hover {
     line-height: 1.4;
     margin-bottom: 1rem;
     font-weight: 700;
-    color: var(--text-main);
+    color: var(--mg-prog-heading);
     word-break: keep-all;
 }
 
 .mg-prog-subtitle {
     font-family: var(--font-main);
     font-size: 1.1rem;
-    color: var(--text-sub);
+    color: var(--mg-prog-lead);
     margin-bottom: 0;
     word-break: keep-all;
 }
@@ -3174,17 +3189,7 @@ a.program-card:hover {
     transition-delay: 1s;
 }
 
-/* 홈 #program-pages: 센터 소개 블록 밖에 있어도 플립 카드 토큰 적용 */
-.mg-prog-cards-grid--program-pages {
-    --mg-prog-bg: #ffffff;
-    --mg-prog-cream: #ffffff;
-    --mg-prog-primary: #4a5d4e;
-    --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #6b6b6b;
-    --mg-prog-text: #2c2a29;
-    --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
+/* 홈 #program-pages: 토큰은 .mg-prog-cards-band 부모에서 상속 */
 .mg-prog-cards-grid--program-pages .mg-prog-card-front h3 {
     font-size: clamp(1.1rem, 2.5vw, 1.4rem);
     line-height: 1.35;
@@ -3233,7 +3238,7 @@ a.program-card:hover {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 28px rgba(55, 40, 30, 0.08);
 }
 
 .mg-prog-card-front {
@@ -3246,7 +3251,7 @@ a.program-card:hover {
     font-family: var(--font-serif);
     font-size: 1.5rem;
     margin-bottom: 0;
-    color: var(--mg-prog-primary);
+    color: var(--mg-prog-heading);
     font-weight: 600;
     word-break: keep-all;
     text-align: center;
@@ -3255,12 +3260,19 @@ a.program-card:hover {
 
 .mg-prog-highlight {
     font-family: var(--font-main);
-    font-size: 0.9rem;
-    color: var(--mg-prog-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
     letter-spacing: 0.02em;
     margin-top: auto;
     text-align: center;
-    width: 100%;
+    align-self: center;
+    max-width: 100%;
+    display: inline-block;
+    padding: 0.5em 0.95em;
+    border-radius: 999px;
+    background: var(--mg-prog-badge-bg);
+    color: var(--mg-prog-badge-text);
+    line-height: 1.35;
 }
 
 .mg-prog-card-back {

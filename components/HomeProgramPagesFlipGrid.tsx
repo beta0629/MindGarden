@@ -64,27 +64,29 @@ export default function HomeProgramPagesFlipGrid() {
   ];
 
   return (
-    <div
-      ref={containerRef}
-      className="mg-prog-cards-grid mg-prog-cards-grid--program-pages"
-      aria-label="프로그램 상세 안내 카드"
-    >
-      {items.map((card) => (
-        <article key={card.key} className={`mg-prog-card mg-fade-in-up ${card.delayClass}`}>
-          <div className="mg-prog-card-inner">
-            <div className="mg-prog-card-front">
-              <h3>{card.title}</h3>
-              <p className="mg-prog-highlight">{card.highlight}</p>
+    <div className="mg-prog-cards-band">
+      <div
+        ref={containerRef}
+        className="mg-prog-cards-grid mg-prog-cards-grid--program-pages"
+        aria-label="프로그램 상세 안내 카드"
+      >
+        {items.map((card) => (
+          <article key={card.key} className={`mg-prog-card mg-fade-in-up ${card.delayClass}`}>
+            <div className="mg-prog-card-inner">
+              <div className="mg-prog-card-front">
+                <h3>{card.title}</h3>
+                <p className="mg-prog-highlight">{card.highlight}</p>
+              </div>
+              <div className="mg-prog-card-back">
+                <p>{card.back}</p>
+                <Link href={card.href} className="mg-prog-more">
+                  자세히 보기 <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             </div>
-            <div className="mg-prog-card-back">
-              <p>{card.back}</p>
-              <Link href={card.href} className="mg-prog-more">
-                자세히 보기 <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-        </article>
-      ))}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

@@ -188,12 +188,14 @@ export default function AdhdProgramPage() {
                   <div style={{ padding: '32px' }}>
                     <div style={{
                       display: 'inline-block',
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
-                      color: 'var(--accent-peach)',
+                      padding: '5px 14px',
+                      backgroundColor: 'rgba(89, 142, 62, 0.12)',
+                      color: 'var(--text-main)',
+                      border: '1px solid rgba(89, 142, 62, 0.42)',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
+                      fontSize: '0.8125rem',
+                      fontWeight: '700',
+                      letterSpacing: '0.06em',
                       marginBottom: '16px'
                     }}>
                       STEP 1
@@ -238,12 +240,14 @@ export default function AdhdProgramPage() {
                   <div style={{ padding: '32px' }}>
                     <div style={{
                       display: 'inline-block',
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
-                      color: 'var(--accent-peach)',
+                      padding: '5px 14px',
+                      backgroundColor: 'rgba(89, 142, 62, 0.12)',
+                      color: 'var(--text-main)',
+                      border: '1px solid rgba(89, 142, 62, 0.42)',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
+                      fontSize: '0.8125rem',
+                      fontWeight: '700',
+                      letterSpacing: '0.06em',
                       marginBottom: '16px'
                     }}>
                       STEP 2
@@ -288,12 +292,14 @@ export default function AdhdProgramPage() {
                   <div style={{ padding: '32px' }}>
                     <div style={{
                       display: 'inline-block',
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
-                      color: 'var(--accent-peach)',
+                      padding: '5px 14px',
+                      backgroundColor: 'rgba(89, 142, 62, 0.12)',
+                      color: 'var(--text-main)',
+                      border: '1px solid rgba(89, 142, 62, 0.42)',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
+                      fontSize: '0.8125rem',
+                      fontWeight: '700',
+                      letterSpacing: '0.06em',
                       marginBottom: '16px'
                     }}>
                       STEP 3
@@ -338,12 +344,14 @@ export default function AdhdProgramPage() {
                   <div style={{ padding: '32px' }}>
                     <div style={{
                       display: 'inline-block',
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
-                      color: 'var(--accent-peach)',
+                      padding: '5px 14px',
+                      backgroundColor: 'rgba(89, 142, 62, 0.12)',
+                      color: 'var(--text-main)',
+                      border: '1px solid rgba(89, 142, 62, 0.42)',
                       borderRadius: 'var(--radius-full)',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
+                      fontSize: '0.8125rem',
+                      fontWeight: '700',
+                      letterSpacing: '0.06em',
                       marginBottom: '16px'
                     }}>
                       STEP 4

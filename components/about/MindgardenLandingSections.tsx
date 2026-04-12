@@ -5,15 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFlipGrid';
 
-/* Unsplash 일부 ID는 만료·차단될 수 있어 200 응답 확인된 URL만 사용 */
-const HERO_BG =
-  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=2000';
+/** 전문특화 히어로 배경 — 정원 테마 생성 이미지 */
+const HERO_BG = '/assets/images/generated-garden/mg-hero-bg.jpg';
 /** 로컬 생성 이미지 — 센터 외관·정원 톤(화이트·그린), JPEG로 용량 축소(서버 이미지 최적화 안정화) */
 const IDENTITY_IMG = '/assets/images/mg-identity-exterior.jpg';
 /** 대표원장 실사 — 상담사 페이지와 동일(얼굴·목 중심 크롭) */
 const DIRECTOR_IMG = '/assets/images/counselors/kim-sunhee-director.png';
-const PHILOSOPHY_IMG =
-  'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1000';
+const PHILOSOPHY_IMG = '/assets/images/generated-garden/mg-philosophy.jpg';
 
 export type MindgardenLandingSectionsProps = {
   /** false면 상단 히어로(전면 이미지)를 숨기고, 메인 기존 HeroSection 바로 아래에 붙일 때 사용 */

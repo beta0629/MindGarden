@@ -1,38 +1,40 @@
 /**
- * 전문특화(/about/mindgarden) 섹션별 보조 이미지 — Unsplash (next.config remotePatterns)
- * 이모지 대신 실제 사진으로 분위기 보조. alt는 제목과 중복되지 않게 장면 위주.
+ * 전문특화(/about/mindgarden) 섹션별 보조 이미지 — 정원 메타포(AI 생성)
+ * alt는 제목과 중복되지 않게 장면 위주.
  */
+const BASE = '/assets/images/generated-garden';
+
 export const mindgardenSectionImages = {
   responsibility: {
-    src: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1000&h=667&fit=crop&q=80',
-    alt: '따뜻한 햇살이 들어오는 편안한 실내',
+    src: `${BASE}/mg-responsibility.jpg`,
+    alt: '잘 가꿔진 텃밭과 도구가 놓인 책임과 돌봄을 상징하는 정원 풍경',
   },
   trust: {
-    src: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1000&h=667&fit=crop&q=80',
-    alt: '서로 협력하는 듯한 비즈니스 미팅 장면',
+    src: `${BASE}/mg-trust.jpg`,
+    alt: '연못과 벤치가 마주 보이는 정원에서 신뢰와 대화를 떠올리게 하는 풍경',
   },
   experience: {
-    src: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1000&h=667&fit=crop&q=80',
-    alt: '차분하고 평온한 분위기의 휴식 공간',
+    src: `${BASE}/mg-experience.jpg`,
+    alt: '모래가 고른 젠 가든, 차분한 경험과 성찰의 분위기',
   },
   origin: {
-    src: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1000&h=667&fit=crop&q=80',
-    alt: '집중해서 읽고 정리하는 책상 위의 책과 노트',
+    src: `${BASE}/mg-origin.jpg`,
+    alt: '흙 속에서 돋아난 새싹, 시작과 근원을 상징하는 장면',
   },
   'late-diagnosis': {
-    src: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1000&h=667&fit=crop&q=80',
-    alt: '전문적인 상담 대화를 나누는 장면',
+    src: `${BASE}/mg-late-diagnosis.jpg`,
+    alt: '살짝 열린 정원문 너머로 이어지는 길, 새로운 이해와 발견을 상징',
   },
   comprehensive: {
-    src: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1000&h=667&fit=crop&q=80',
-    alt: '가족과 함께하는 따뜻한 일상의 한 장면',
+    src: `${BASE}/mg-comprehensive.jpg`,
+    alt: '한 화단에 서로 다른 식물이 함께 자라는 모습, 포괄적 돌봄을 상징',
   },
   philosophy: {
-    src: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1000&h=667&fit=crop&q=80',
-    alt: '밝고 정돈된 건축 공간의 자연광',
+    src: `${BASE}/mg-philosophy.jpg`,
+    alt: '햇살이 스며드는 식물이 가득한 유리 온실, 철학과 성찰의 공간',
   },
   invitation: {
-    src: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1000&h=667&fit=crop&q=80',
-    alt: '밝은 회의실에서 악수를 나누는 협력적인 분위기',
+    src: `${BASE}/mg-invitation.jpg`,
+    alt: '덩굴 아치와 초대하는 정원 길, 따뜻한 환영의 풍경',
   },
 } as const;

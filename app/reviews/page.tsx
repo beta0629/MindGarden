@@ -236,7 +236,7 @@ export default function ReviewsPage() {
             content: {
               title: shareText,
               description: shareContent,
-              imageUrl: SITE_SHARE_PREVIEW_IMAGE_URL,
+              imageUrl: `${url}${SITE_SHARE_PREVIEW_IMAGE_URL}`,
               link: {
                 mobileWebUrl: shareUrl,
                 webUrl: shareUrl,

@@ -6,6 +6,7 @@
 import type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 import { COMORBIDITY_AREAS_NOTEBOOK_BLOCKS } from '@/lib/comorbidity-areas-notebook-data';
 import { COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS } from '@/lib/comorbidity-assessment-notebook-data';
+import { COUNSELING_AREAS_EXAMPLES_NOTEBOOK_BLOCKS } from '@/lib/counseling-areas-examples-notebook-data';
 
 export type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 
@@ -27,9 +28,6 @@ export type CounselingPageData = {
   h1: string;
   lead: string;
   sections: CounselingSection[];
-  /** 없거나 빈 배열이면 하단 CTA(aside) 미표시 */
-  ctaTitle?: string;
-  ctaLines?: string[];
 };
 
 export const COUNSELING_SLUGS = [
@@ -114,11 +112,6 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         variant: 'band',
       },
     ],
-    ctaTitle: '다음 단계',
-    ctaLines: [
-      '문의·상담 예약은 화면 하단 바텀시트(상담 예약·문의)를 이용해 주세요.',
-      'GNB 메뉴 구성은 센터 정책에 따릅니다.',
-    ],
   },
 
   'adult-adhd': {
@@ -192,10 +185,6 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         ],
         variant: 'band',
       },
-    ],
-    ctaTitle: '다음 단계',
-    ctaLines: [
-      '문의·상담 예약은 화면 하단 바텀시트(상담 예약·문의)를 이용해 주세요.',
     ],
   },
 
@@ -271,11 +260,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
       {
         id: 'examples',
         title: '세부상담분야 예시',
-        paragraphs: [
-          '아동·청소년: 학습 습관, 또래 관계, 가족 규칙, 자기조절 루틴 등.',
-          '성인: 업무·시간 관리, 관계 패턴, 번아웃·불안과의 공존 등.',
-          '구체적인 세부 분야는 초기 면담에서 호소에 맞춰 정리합니다.',
-        ],
+        paragraphs: [],
+        notebookBlocks: COUNSELING_AREAS_EXAMPLES_NOTEBOOK_BLOCKS,
         variant: 'accent',
       },
       {
@@ -315,10 +301,6 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
         ],
         variant: 'accent',
       },
-    ],
-    ctaTitle: '다음 단계',
-    ctaLines: [
-      '문의·상담 예약은 화면 하단 바텀시트(상담 예약·문의)를 이용해 주세요.',
     ],
   },
 };

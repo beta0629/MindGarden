@@ -1,34 +1,33 @@
 /**
  * 가치관 `/values` — 블록별 보조 이미지 (VALUES_PAGE_IMAGE_MEETING.md)
  *
- * 자산: Unsplash (`HomeSectionVisual`과 동일 — `next/image` 프록시 이슈 회피용 직접 img).
- * 이후 `public/images/values/*.webp`로 교체 시 이 파일의 `src`만 경로로 바꾸면 됨.
- *
- * 블록: V-hero / V-pro / V-human / V-growth. V-intro는 문서상 선택·미적용.
+ * 자산: `public/assets/images/generated-garden/` (AI 생성 · 정원·치유 테마 JPEG).
  */
+const BASE = '/assets/images/generated-garden';
+
 export const valuesPageImages = {
   hero: {
-    src: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1600&h=686&fit=crop&q=80',
-    alt: '따뜻한 햇살이 스며드는 편안한 실내와 식물이 있는 공간',
-    width: 1600,
-    height: 686,
+    src: `${BASE}/values-hero.jpg`,
+    alt: '이른 햇살이 비치는 정원 산책로와 꽃·나무가 어우러진 고요한 치유 정원 풍경',
+    width: 1376,
+    height: 768,
   },
   professionalism: {
-    src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=960&h=720&fit=crop&q=80',
-    alt: '책과 조용한 조도가 어우러진 독서·학습 공간의 분위기',
-    width: 960,
-    height: 720,
+    src: `${BASE}/values-professionalism.jpg`,
+    alt: '정돈된 화단과 독서용 정원 공간에서 느껴지는 차분하고 전문적인 분위기',
+    width: 1376,
+    height: 768,
   },
   humanity: {
-    src: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=640&h=640&fit=crop&q=80',
-    alt: '부드러운 빛 아래 피어 있는 꽃과 잎의 자연스러운 장면',
-    width: 640,
-    height: 640,
+    src: `${BASE}/values-humanity.jpg`,
+    alt: '부드러운 빛 아래 피어 있는 꽃과 잎이 어우러진 다정하고 인간적인 장면',
+    width: 1376,
+    height: 768,
   },
   growth: {
-    src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=600&fit=crop&q=80',
-    alt: '산맥과 하늘이 펼쳐진 고요한 풍경, 회복과 여정을 연상시키는 장면',
-    width: 1200,
-    height: 600,
+    src: `${BASE}/values-growth.jpg`,
+    alt: '새싹에서 숲까지 이어지는 정원 길, 성장과 회복의 여정을 떠올리게 하는 풍경',
+    width: 1376,
+    height: 768,
   },
 } as const;

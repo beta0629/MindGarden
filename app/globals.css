@@ -1095,6 +1095,18 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     transform: translateY(-1px);
 }
 
+/* 메인 히어로: 단일 CTA일 때 상담 예약 버튼 강조 */
+.hero-section--static .hero-btn--primary-prominent {
+    min-height: 56px;
+    padding: 0 2.25rem;
+    font-size: 1.0625rem;
+    box-shadow: 0 4px 14px rgba(89, 142, 62, 0.22);
+}
+
+.hero-section--static .hero-btn--primary-prominent:hover {
+    box-shadow: 0 6px 18px rgba(89, 142, 62, 0.28);
+}
+
 .hero-btn--secondary {
     background: var(--white);
     color: var(--text-main);

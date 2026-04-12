@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 export interface HeroSlogan {
   sub?: string;
   main?: string;
@@ -42,12 +40,9 @@ export default function HeroSection({ slogan }: HeroSectionProps) {
           <p className="slogan-sub">{finalSlogan.sub}</p>
           <p className="hero-tagline">{finalSlogan.tagline}</p>
           <div className="hero-cta-row">
-            <button type="button" className="hero-btn hero-btn--primary" onClick={openConsultation}>
+            <button type="button" className="hero-btn hero-btn--primary hero-btn--primary-prominent" onClick={openConsultation}>
               상담 예약하기
             </button>
-            <Link href="/#director" className="hero-btn hero-btn--secondary">
-              원장님께 문의하기
-            </Link>
           </div>
         </div>
       </div>

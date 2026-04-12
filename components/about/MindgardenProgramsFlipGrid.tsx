@@ -14,7 +14,7 @@ const CARDS: {
     title: 'ADHD & 동반질환 특화',
     highlight: '아동 · 청소년 · 성인',
     back: '단순한 진단이나 약물 권유를 넘어, 주의력 결핍이나 충동성에 수반되는 중독·틱·트라우마까지 삶의 전반을 아우르는 통합 케어를 제공합니다.',
-    href: '/programs/adhd',
+    href: '/about/mindgarden',
     delayClass: 'mg-delay-1',
   },
   {

@@ -175,7 +175,7 @@ export default function MindgardenOriginSectionContent() {
       </div>
 
       <p style={{ ...p, marginTop: '28px' }}>
-        이러한 고위험 질환군을 공존 질환으로 명시하는 것은 마인드가든의 <strong style={{ color: 'var(--text-main)' }}>압도적인 전문성</strong>을 드러내는 대목입니다.
+        이러한 고위험 질환군을 공존 질환으로 명시하는 것은 마인드가든의 <strong style={{ color: 'var(--text-main)' }}>압도적인 전문성</strong>을 나타냅니다.
       </p>
 
       <blockquote style={quote}>

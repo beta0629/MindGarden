@@ -2,10 +2,9 @@
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFlipGrid';
 import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
 import { mindgardenSectionImages } from '@/lib/mindgarden-section-images';
-import Link from 'next/link';
-
 interface ComorbidityData {
   overallRate: { min: number; max: number };
   disorders: Array<{ name: string; min: number; max: number }>;
@@ -139,6 +138,8 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                 ADHD와 동반질환을 함께 다루는 맞춤형 상담을 제공합니다
               </p>
             </div>
+
+            <MindgardenProgramsFlipGrid />
 
             {/* 섹션 목록 */}
             <div style={{

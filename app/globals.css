@@ -1,11 +1,10 @@
-/* Pretendard Font - CDN */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+/* Pretendard·Noto Serif: `app/layout.tsx` <link>와 중복 로드 방지 — 본문 폰트는 :root 참조 */
 
 /* Noto Sans KR - 코어솔루션 폰트 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 /* Quill 에디터 추가 폰트 (나눔·노토 세리프) */
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@300;400;600;700&display=swap');
 
 /* Quill: 젊은 층 인기 고딕·디스플레이 + 신문명조(KoPub 바탕) */
 @import url('https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Jua&family=KoPub+Batang:wght@400;700&family=Nanum+Square+Neo:wght@400;700;800&display=swap');
@@ -49,9 +48,9 @@
     --shadow-1: 0 8px 30px rgba(0, 0, 0, 0.06);
     --shadow-2: 0 14px 45px rgba(0, 0, 0, 0.10);
 
-    /* 폰트 설정 - 롤백 시 아래 주석 해제하고 위 줄 주석 처리 */
-    /* --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; */
-    --font-main: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    /* 본문: Pretendard / 제목: Noto Serif KR (layout 폰트 링크와 동기화) */
+    --font-main: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    --font-serif: 'Noto Serif KR', 'Nanum Myeongjo', Georgia, serif;
 
     --spacing-unit: 8px;
     --container-width: 1200px;
@@ -203,6 +202,16 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-serif);
+    font-weight: 600;
 }
 
 main {
@@ -3062,4 +3071,191 @@ a.program-card:hover {
 
 .screening-disclaimer p:last-child {
     margin-bottom: 0;
+}
+
+/* —— 센터 소개(/about/mindgarden) 전문 통합 프로그램 플립 카드 —— */
+.mg-prog-section {
+    --mg-prog-bg: #ffffff;
+    --mg-prog-cream: #f9f8f6;
+    --mg-prog-primary: #4a5d4e;
+    --mg-prog-primary-light: #5f7a64;
+    --mg-prog-secondary: #8c7a6b;
+    --mg-prog-text: #2c2a29;
+    --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+
+    background-color: var(--mg-prog-bg);
+    text-align: center;
+    padding: 4rem 0 3rem;
+    margin: 0 -20px 48px;
+    border-radius: var(--radius-lg);
+}
+
+@media (min-width: 900px) {
+    .mg-prog-section {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+.mg-prog-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.mg-prog-header {
+    margin-bottom: 2.5rem;
+}
+
+.mg-prog-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    word-break: keep-all;
+}
+
+.mg-prog-subtitle {
+    font-family: var(--font-main);
+    font-size: 1.1rem;
+    color: var(--text-sub);
+    margin-bottom: 0;
+    word-break: keep-all;
+}
+
+.mg-fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s ease-out, transform 1s ease-out;
+}
+
+.mg-fade-in-up.mg-fade-in-up--active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mg-delay-1 {
+    transition-delay: 0.2s;
+}
+
+.mg-delay-2 {
+    transition-delay: 0.4s;
+}
+
+.mg-delay-3 {
+    transition-delay: 0.6s;
+}
+
+.mg-delay-4 {
+    transition-delay: 0.8s;
+}
+
+.mg-prog-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+.mg-prog-card {
+    perspective: 1000px;
+    height: 350px;
+}
+
+.mg-prog-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .mg-prog-card:hover .mg-prog-card-inner {
+        transform: rotateY(180deg);
+    }
+}
+
+.mg-prog-card-front,
+.mg-prog-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.mg-prog-card-front {
+    background-color: var(--mg-prog-cream);
+}
+
+.mg-prog-card-front h3 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--mg-prog-primary);
+    font-weight: 600;
+    word-break: keep-all;
+}
+
+.mg-prog-highlight {
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    color: var(--mg-prog-secondary);
+    letter-spacing: 0.02em;
+}
+
+.mg-prog-card-back {
+    background-color: var(--mg-prog-primary);
+    color: var(--white);
+    transform: rotateY(180deg);
+    text-align: left;
+    align-items: flex-start;
+}
+
+.mg-prog-card-back p {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    word-break: keep-all;
+}
+
+.mg-prog-more {
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: auto;
+    color: var(--white);
+    text-decoration: none;
+    align-self: flex-start;
+    transition: var(--mg-prog-transition);
+}
+
+.mg-prog-more:hover {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 1024px) {
+    .mg-prog-cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .mg-prog-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-prog-card {
+        height: 320px;
+    }
 }

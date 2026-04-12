@@ -41,6 +41,33 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const animationRef = useRef<number | null>(null);
   const lastScrollTime = useRef<number>(Date.now());
   const isAutoScrolling = useRef<boolean>(false);
+  const isDraggingRef = useRef(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchScrollLeft = useRef<number>(0);
+
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
+  /** 가로 스크롤이 생기도록 베이스 행을 반복(카드 폭·갭 대비 넉넉히) */
+  const widenBaseForMarquee = (base: Review[], minCards: number): Review[] => {
+    if (base.length === 0) return base;
+    if (base.length >= minCards) return base;
+    const out: Review[] = [];
+    for (let i = 0; i < minCards; i += 1) {
+      out.push(base[i % base.length]);
+    }
+    return out;
+  };
+
+  const minCardsForViewport = () => {
+    if (typeof window === 'undefined') return 8;
+    const cardApprox = 328;
+    const w = window.innerWidth;
+    const perHalf = Math.max(2, Math.ceil(w / cardApprox) + 1);
+    return Math.max(6, perHalf * 2);
+  };
 
   // HTML 콘텐츠에서 텍스트만 추출
   const getPreviewText = (content: string, maxLength: number = 150) => {
@@ -116,9 +143,12 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
       const sorted = [...reviews].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-      setLatestReviews(
-        sorted.length > 1 ? [...sorted, ...sorted] : sorted
-      );
+      if (sorted.length > 1) {
+        const base = widenBaseForMarquee(sorted, minCardsForViewport());
+        setLatestReviews([...base, ...base]);
+      } else {
+        setLatestReviews(sorted);
+      }
       return;
     }
 
@@ -153,12 +183,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 10);
 
-    // 무한 롤링은 동일 카드 2열 노출을 막기 위해 2개 이상일 때만 복제
-    setLatestReviews(
-      finalLatest.length > 1
-        ? [...finalLatest, ...finalLatest]
-        : finalLatest
-    );
+    // 무한 롤링: [base, base] + 뷰포트보다 넓은 베이스(가로 스크롤 없으면 scrollLeft가 안 움직임)
+    if (finalLatest.length > 1) {
+      const base = widenBaseForMarquee(finalLatest, minCardsForViewport());
+      setLatestReviews([...base, ...base]);
+    } else {
+      setLatestReviews(finalLatest);
+    }
   }, [reviews]);
 
   // 무한 롤링 애니메이션 (항상 롤링)
@@ -175,8 +206,8 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     const animate = () => {
       if (!containerRef.current) return;
 
-      // 드래그 중이거나 터치 중일 때는 멈춤
-      if (isDragging || touchStartX.current !== null) {
+      // 드래그 중이거나 터치 중일 때는 멈춤 (isDragging은 ref로 최신값)
+      if (isDraggingRef.current || touchStartX.current !== null) {
         paused = true;
         animationRef.current = requestAnimationFrame(animate);
         return;
@@ -224,6 +255,20 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     };
   }, [latestReviews.length]);
 
+  // 창 크기 변경 시 스크롤 폭이 달라지면 한 바퀴 위치 보정
+  useEffect(() => {
+    const onResize = () => {
+      const el = containerRef.current;
+      if (!el || latestReviews.length < 2) return;
+      const half = el.scrollWidth / 2;
+      if (half > 0 && el.scrollLeft >= half - 2) {
+        el.scrollLeft = 0;
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [latestReviews.length]);
+
   // 마우스 드래그 시작
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -252,11 +297,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const handleMouseLeave = () => {
     setIsDragging(false);
   };
-
-  // 터치 이벤트 처리
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchScrollLeft = useRef<number>(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return;

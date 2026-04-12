@@ -4253,12 +4253,19 @@ a.program-card:hover {
 .mg-director-frame {
     position: relative;
     display: inline-block;
-    width: 100%;
-    max-width: 100%;
+    width: 104px;
+    max-width: 104px;
+    margin-inline: auto;
+}
+
+.mg-director-visual {
+    display: flex;
+    justify-content: center;
 }
 
 .mg-director-img {
-    width: 100%;
+    width: 104px;
+    max-width: 104px;
     height: auto;
     border-radius: 4px;
     position: relative;
@@ -4268,11 +4275,11 @@ a.program-card:hover {
 
 .mg-director-decor {
     position: absolute;
-    bottom: -16px;
-    right: -16px;
+    bottom: -4px;
+    right: -4px;
     width: 78%;
     height: 100%;
-    border: 2px solid var(--mg-landing-taupe);
+    border: 1px solid var(--mg-landing-taupe);
     z-index: 1;
     pointer-events: none;
     border-radius: 2px;

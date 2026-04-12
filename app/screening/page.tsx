@@ -12,7 +12,7 @@ export default function ScreeningHubPage() {
   const topics = SCREENING_TOPIC_ORDER.map((key) => screeningData[key]);
 
   return (
-    <main className="content-shell">
+    <main className="content-shell screening-layout">
       <div className="screening-hub">
         <h1 className="screening-hub-title">주제별 간이 체크리스트</h1>
         <p className="screening-hub-desc" style={{ marginBottom: '1rem' }}>

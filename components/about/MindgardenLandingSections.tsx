@@ -137,10 +137,10 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               <Image
                 src={DIRECTOR_IMG}
                 alt="대표원장"
-                width={520}
-                height={520}
+                width={104}
+                height={104}
                 className="mg-director-img"
-                sizes="(max-width: 900px) 100vw, 45vw"
+                sizes="104px"
               />
               <div className="mg-director-decor" aria-hidden />
             </div>

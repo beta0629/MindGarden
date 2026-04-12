@@ -26,7 +26,7 @@ export default function ScreeningTopicPage({ params }: { params: { topic: string
   }
 
   return (
-    <main className="content-shell">
+    <main className="content-shell screening-layout">
       <div className="screening-flow">
         <ScreeningFlow data={data} />
       </div>

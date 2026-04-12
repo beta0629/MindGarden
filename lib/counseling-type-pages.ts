@@ -1,6 +1,6 @@
 /**
  * 상담의 종류 상세 페이지 본문 (COUNSELING-TYPES-2026-04-02)
- * 효과·진단 보장 문구 없음. 문의는 GNB 정책(바텀시트) 준수.
+ * 효과·평가 보장 문구 없음. 문의는 GNB 정책(바텀시트) 준수.
  */
 
 import type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';

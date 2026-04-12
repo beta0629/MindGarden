@@ -1,4 +1,4 @@
--- 예시: 관리자 배너 테이블에 /screening 허브용 이미지 배너 1건 추가
+-- 예시: 관리자 배너 테이블에 /screening 체크리스트용 이미지 배너 1건 추가
 -- 운영 DB에 직접 실행 전 백업·중복(title·기간) 확인 필요.
 -- 이미지 URL은 관리자 업로드 경로로 교체하거나 `/assets/images/programs/adhd-testing.png` 등 공개 정적 경로 사용.
 

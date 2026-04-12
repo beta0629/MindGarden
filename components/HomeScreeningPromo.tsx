@@ -1,10 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-/** 메인 히어로 아래: /screening 체크리스트 허브로 이어지는 프로모 (상단 DB 배너와 별도) */
+/** 메인 히어로 아래: /screening 체크리스트로 이어지는 프로모 (상단 DB 배너와 별도) */
 export default function HomeScreeningPromo() {
   return (
-    <section className="home-screening-promo" aria-label="ADHD·공존질환 체크리스트 허브 바로가기">
+    <section className="home-screening-promo" aria-label="ADHD·공존질환 체크리스트 바로가기">
       <div className="home-screening-promo-inner">
         <Link href="/screening" className="home-screening-promo-link">
           <span className="home-screening-promo-visual">

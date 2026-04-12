@@ -3248,7 +3248,7 @@ a.program-card:hover {
     border: 0;
 }
 
-/* 메인: 체크리스트 허브 이미지 링크 (/screening) */
+/* 메인: 체크리스트(/screening) 이미지 링크 */
 .home-screening-promo {
     width: 100%;
     background: rgba(89, 142, 62, 0.12);
@@ -3425,7 +3425,7 @@ a.program-card:hover {
     gap: 24px;
 }
 
-/* 체크리스트 허브 카드 — 마우스 오버(및 키보드 포커스) 시 Y축 뒤집힘 */
+/* 체크리스트 카드 — 마우스 오버(및 키보드 포커스) 시 Y축 뒤집힘 */
 .screening-card-link {
     display: block;
     text-decoration: none;

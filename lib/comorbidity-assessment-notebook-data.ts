@@ -28,7 +28,7 @@ export const COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] =
     items: [
       {
         term: '배경',
-        text: 'ADHD 환자들은 반복되는 실수와 부정적인 피드백으로 인해 후천적인 정서적 어려움을 겪는 경우가 많습니다.',
+        text: 'ADHD 내담자들은 반복되는 실수와 부정적인 피드백으로 인해 후천적인 정서적 어려움을 겪는 경우가 많습니다.',
       },
       {
         term: '이차적 문제',
@@ -46,8 +46,8 @@ export const COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] =
     title: '상담 전략 및 치료 모델의 우선순위 설정',
     items: [
       {
-        term: '감별진단의 역할',
-        text: '제한된 상담 시간 내에서 가장 효율적인 치료 경로를 설계하기 위해 감별진단이 필요합니다.',
+        term: '감별 평가의 역할',
+        text: '제한된 상담 시간 내에서 가장 효율적인 치료 경로를 설계하기 위해 감별 평가가 필요합니다.',
       },
       {
         term: '품행장애·반항성 도전장애 동반 시',
@@ -55,7 +55,7 @@ export const COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] =
       },
       {
         term: '학습장애 동반 시',
-        text: '단순한 집중력 훈련만으로는 한계가 있습니다. 해당 학습 영역(읽기, 쓰기, 셈하기)에 특화된 교육적 개입이 병행되어야만 환자가 효능감을 느낄 수 있습니다.',
+        text: '단순한 집중력 훈련만으로는 한계가 있습니다. 해당 학습 영역(읽기, 쓰기, 셈하기)에 특화된 교육적 개입이 병행되어야만 내담자가 효능감을 느낄 수 있습니다.',
       },
     ],
   },
@@ -66,19 +66,19 @@ export const COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] =
     items: [
       {
         term: '원칙',
-        text: '감별진단 결과에 따라 주변인들이 환자를 대하는 방식이 완전히 달라져야 합니다.',
+        text: '감별 평가 결과에 따라 주변인들이 내담자를 대하는 방식이 완전히 달라져야 합니다.',
       },
       {
         term: 'ADHD 중심',
-        text: "환자의 의지 문제가 아닌 조절 능력의 부족임을 강조하여, 환경을 구조화하고 시각적 단서를 제공하는 방식의 코칭이 이루어집니다.",
+        text: "내담자의 의지 문제가 아닌 조절 능력의 부족임을 강조하여, 환경을 구조화하고 시각적 단서를 제공하는 방식의 코칭이 이루어집니다.",
       },
       {
         term: '정서 장애 중심',
-        text: '환자의 감정을 수용하고 심리적 안정감을 제공하는 데 더 비중을 둡니다.',
+        text: '내담자의 감정을 수용하고 심리적 안정감을 제공하는 데 더 비중을 둡니다.',
       },
       {
         term: '오진의 위험',
-        text: '만약 불안 장애가 주된 원인인데 ADHD식의 엄격한 행동 수정을 적용하면, 환자의 불안은 더욱 증폭되어 증상이 악화될 수 있습니다.',
+        text: '만약 불안 장애가 주된 원인인데 ADHD식의 엄격한 행동 수정을 적용하면, 내담자의 불안은 더욱 증폭되어 증상이 악화될 수 있습니다.',
       },
     ],
   },
@@ -99,7 +99,7 @@ export const COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] =
   },
   {
     type: 'paragraph',
-    text: '결국 상담 현장에서의 감별진단은 환자의 부적응 행동을 어떤 관점(Frame)으로 바라보고, 어떤 언어로 공감하며, 어떤 순서로 변화를 이끌어낼 것인가를 결정하는 설계도와 같습니다.',
+    text: '결국 상담 현장에서의 감별 평가는 내담자의 부적응 행동을 어떤 관점(Frame)으로 바라보고, 어떤 언어로 공감하며, 어떤 순서로 변화를 이끌어낼 것인가를 결정하는 설계도와 같습니다.',
   },
   {
     type: 'note',

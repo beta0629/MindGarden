@@ -128,7 +128,7 @@ export default function SymptomsPage() {
                     textUnderlineOffset: '3px',
                   }}
                 >
-                  체크리스트 허브
+                  체크리스트
                 </Link>
                 에서 이용하실 수 있습니다.
               </p>

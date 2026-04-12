@@ -35,7 +35,7 @@
 | `comorbidity` | `hero.webp`, `section-areas.webp`, (선택) `section-counseling.webp` |
 | `counseling-areas` | `hero.webp`, `section-examples.webp`, (선택) `section-intake.webp` |
 
-## alt 초안 (제목·진단명·효과 금지)
+## alt 초안 (제목·평가명·효과 금지)
 
 ### child-adolescent-adhd
 

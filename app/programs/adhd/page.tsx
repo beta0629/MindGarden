@@ -81,7 +81,7 @@ export default function AdhdProgramPage() {
                 color: 'var(--text-main)',
                 marginBottom: '24px'
               }}>
-                김선희 대표원장의 철학이 담긴 통합 접근
+                마인드가든의 철학이 담긴 통합 접근
               </h2>
               <p style={{ marginBottom: '24px' }}>
                 ADHD는 단순한 주의력의 문제를 넘어, 일상생활과 대인관계 전반에 영향을 미치는 복합적인 어려움입니다. 마인드가든은 증상 완화에만 머물지 않고, 내담자가 자신의 잠재력을 발휘하며 건강한 삶을 살아갈 수 있도록 돕습니다.
@@ -143,7 +143,7 @@ export default function AdhdProgramPage() {
                 className="adhd-self-check-btn adhd-self-check-btn-primary"
                 style={{ width: '100%', maxWidth: '280px' }}
               >
-                체크리스트 허브로 가기
+                체크리스트로 가기
               </Link>
             </div>
 
@@ -265,7 +265,7 @@ export default function AdhdProgramPage() {
                       lineHeight: '1.8',
                       color: 'var(--text-sub)'
                     }}>
-                      연령과 발달 단계에 맞춰 놀이치료, 미술치료, 인지행동치료 등을 적용합니다. 주의 집중력 향상과 충동 조절, 실행 기능 강화를 위한 실질적인 훈련을 병행합니다.
+                      연령과 발달 단계에 맞춰 놀이치료, 모래놀이, 미술치료, 인지행동치료, 내면아이치유, 경험적 가족치료, 애착, 양육코칭, 부부상담, 가족상담 등을 적용합니다. 주의 집중력 향상과 충동 조절, 실행 기능 강화를 위한 실질적인 훈련을 병행합니다.
                     </p>
                   </div>
                 </div>

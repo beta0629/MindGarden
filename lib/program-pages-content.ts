@@ -71,5 +71,5 @@ export const programScreeningFlipCard = {
   cardTitle: 'ADHD & 공존질환 체크리스트',
   cardLead: '주제별 간이 체크',
   cardFlipBack:
-    '주제별 간이 체크리스트로 먼저 살펴보실 수 있어요. 진단을 대신하지 않으며, 상담 전 참고용으로 활용하실 수 있습니다.',
+    '주제별 간이 체크리스트로 먼저 살펴보실 수 있어요. 평가를 대신하지 않으며, 상담 전 참고용으로 활용하실 수 있습니다.',
 };

@@ -54,7 +54,7 @@ export default function MindGardenAboutPage() {
       variant: 'band',
       comorbidityData: {
         overallRate: { min: 60, max: 80 },
-        donutTitle: 'ADHD 진단 시 동반질환 발생률',
+        donutTitle: 'ADHD 평가 시 동반질환 발생률',
         barSectionTitle: '주요 동반질환별 발생률',
         centerSubLabel: '동반질환 발생',
         chartCategories: [
@@ -113,7 +113,7 @@ export default function MindGardenAboutPage() {
       title: '고기능 성인, 그리고 여성 ADHD의 평가가 늦어지는 현실',
       content: `기능이 대체적으로 높은(인지학습기능) 아동.청소년과 성인이, 그리고 과잉행동이 두드러지지 않는 특성을 가질 때 평가가 늦어 집니다.
 ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니다.
-여성이 특별이 평가가 더 늦게되는 이유는, 아동과 성인남성에 비해, 여성에게 바라는 사회적 역할(소위 여성스러운, 조신하고 차분한 것 등)때문에, 순응성과 인정욕구가 높을수록, 요구에 부합하고자 자신의 특성과 기질을 숨기거나 억제하는 경향이 높기 때문에 진단이 늦어질 때도 있습니다.`,
+여성이 특별이 평가가 더 늦게되는 이유는, 아동과 성인남성에 비해, 여성에게 바라는 사회적 역할(소위 여성스러운, 조신하고 차분한 것 등)때문에, 순응성과 인정욕구가 높을수록, 요구에 부합하고자 자신의 특성과 기질을 숨기거나 억제하는 경향이 높기 때문에 평가가 늦어질 때도 있습니다.`,
       color: 'var(--accent-peach)',
       variant: 'hero',
     },

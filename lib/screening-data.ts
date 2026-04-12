@@ -11,7 +11,7 @@ export type Topic =
   | 'work'
   | 'addiction';
 
-/** 허브 카드 노출 순서 */
+/** 체크리스트 카드 노출 순서 */
 export const SCREENING_TOPIC_ORDER: Topic[] = [
   'adhd',
   'depression',

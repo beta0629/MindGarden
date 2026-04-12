@@ -4,7 +4,7 @@ import type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 export const COMORBIDITY_AREAS_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] = [
   {
     type: 'intro',
-    text: "ADHD(주의력결핍 과잉행동장애)는 단독으로 나타나기보다 약 60~80%의 확률로 하나 이상의 다른 질환을 동반하는 경우가 많습니다. 이를 '공존 질환'이라고도 하며, ADHD 증상과 겹쳐 나타나기 때문에 정확한 진단과 통합적인 케어가 매우 중요합니다.",
+    text: "ADHD(주의력결핍 과잉행동장애)는 단독으로 나타나기보다 약 60~80%의 확률로 하나 이상의 다른 질환을 동반하는 경우가 많습니다. 이를 '공존 질환'이라고도 하며, ADHD 증상과 겹쳐 나타나기 때문에 정확한 평가와 통합적인 케어가 매우 중요합니다.",
   },
   { type: 'subheading', text: '주요 동반질환 유형' },
   {
@@ -22,7 +22,7 @@ export const COMORBIDITY_AREAS_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] = [
       },
       {
         term: '양극성 장애(조울증)',
-        text: '감정 기복이 심하고 충동 조절이 어려운 특징이 ADHD와 유사하여 감별 진단이 필요합니다.',
+        text: '감정 기복이 심하고 충동 조절이 어려운 특징이 ADHD와 유사하여 감별 평가가 필요합니다.',
       },
     ],
   },
@@ -138,7 +138,7 @@ export const COMORBIDITY_AREAS_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] = [
           },
           {
             label: '개입 포인트',
-            text: '명확한 감별 진단이 우선이며, 약물치료와의 긴밀한 협조 하에 심리적 안정을 도모해야 합니다.',
+            text: '명확한 감별 평가가 우선이며, 병원과의 긴밀한 협조 하에 심리적 안정을 도모해야 합니다.',
           },
         ],
       },

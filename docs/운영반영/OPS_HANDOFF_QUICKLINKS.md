@@ -30,3 +30,11 @@
 ---
 
 *비밀값·토큰·운영 URL 평문은 문서에 적지 않는다. 시크릿·호스트 값은 운영 표준과 GitHub Secrets 정책을 따른다.*
+
+---
+
+## 다음 우선 액션 (저장소 기준)
+
+- **OPS-01**: 배포 전 [PRE_PRODUCTION 체크리스트](./PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 실행.
+- **SEC-01**: 엣지(Nginx·`limit_req`) [인프라 핸드오프](../deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md).
+- **QA-02**: [워크플로 인덱스](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md)로 Actions·E2E·스모크 경로 확인.

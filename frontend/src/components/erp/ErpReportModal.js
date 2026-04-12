@@ -167,7 +167,8 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             showCloseButton
             loading={loading}
         >
-                <div className="mg-v2-modal-body">
+                {/* 본문 영역 busy — UnifiedModal loading과 중복되어도 본문 a11y 명시 */}
+                <div className="mg-v2-modal-body" aria-busy={loading || loadingBranches}>
                     {/* 보고서 설정 */}
                     <div className="mg-v2-form-section">
                         <h3 className="mg-v2-section-title">

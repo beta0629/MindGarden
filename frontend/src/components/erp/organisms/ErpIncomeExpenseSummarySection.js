@@ -6,6 +6,7 @@
  */
 
 import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { ErpSafeNumber, ErpSafeText } from '../common';
 
 /**
@@ -22,6 +23,7 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
       className="erp-finance-summary"
       aria-labelledby="erp-finance-summary-heading"
       aria-label="수입·지출 요약"
+      aria-busy={financeLoading}
     >
       <h2 id="erp-finance-summary-heading" className="erp-finance__section-title">
         수입·지출 요약
@@ -45,7 +47,7 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
                 {financeLoading ? (
-                  <ErpSafeText value="—" />
+                  <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
                 ) : (
                   <ErpSafeNumber value={financialData != null ? financialData.totalIncome ?? 0 : 0} />
                 )}
@@ -65,7 +67,7 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
                 {financeLoading ? (
-                  <ErpSafeText value="—" />
+                  <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
                 ) : (
                   <ErpSafeNumber value={financialData != null ? financialData.totalExpense ?? 0 : 0} />
                 )}
@@ -87,7 +89,7 @@ const ErpIncomeExpenseSummarySection = ({ financeError, financeLoading, financia
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-erp-dashboard-kpi-value">
                 {financeLoading ? (
-                  <ErpSafeText value="—" />
+                  <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
                 ) : (
                   <ErpSafeNumber value={financialData != null ? Math.abs(financialData.netProfit ?? 0) : 0} />
                 )}

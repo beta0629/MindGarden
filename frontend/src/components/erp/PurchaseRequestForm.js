@@ -214,19 +214,20 @@ const PurchaseRequestForm = () => {
 
   return shell(
     <>
-      {showInitialInlineLoad ? (
-        <div
-          className="purchase-request-form__initial-load"
-          role="status"
-          aria-live="polite"
-        >
-          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
-        </div>
-      ) : (
       <section
         aria-labelledby={PURCHASE_REQUEST_TITLE_ID}
         className="purchase-request-form-container"
+        aria-busy={silentListRefreshing || loading}
       >
+        {showInitialInlineLoad ? (
+          <div
+            className="purchase-request-form__initial-load"
+            role="status"
+            aria-live="polite"
+          >
+            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+          </div>
+        ) : (
         <div className="mg-v2-container mg-v2-purchase-request-form__inner">
           {items.length === 0 ? (
             <>
@@ -444,8 +445,8 @@ const PurchaseRequestForm = () => {
             </section>
           )}
         </div>
+        )}
       </section>
-      )}
 
       <UnifiedModal
         isOpen={showSuccessModal}

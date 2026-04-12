@@ -2,7 +2,7 @@
 
 **문서 유형**: 운영 준비 · 전 에이전트 합의용  
 **버전**: 2.0.0  
-**최종 갱신**: 2026-02-12  
+**최종 갱신**: 2026-04-12  
 **상태**: 상시 업데이트 (배포 직전 반드시 최신본 확인)
 
 > **오케스트레이션 위임**: 운영 반영 플랜 수립·실행을 **core-planner(기획)** 에게 위임하면, 본 체크리스트·데이터 선별·서브에이전트(shell·core-debugger·core-tester·문서정리 등) 분배실행을 주관하여 오케스트레이션한다. "운영 반영 플랜 수립해줘", "Go-Live 오케스트레이션 진행해줘" 등으로 호출.
@@ -82,6 +82,8 @@
 | 2.4 | Nginx/프록시에서 **프록시 헤더** `X-Forwarded-Proto`, `Host`, `X-Forwarded-For` 정합(Spring 신뢰 프록시 설정) | coder/shell |
 | 2.5 | **압축·타임아웃·업로드 크기** 한도가 운영 정책과 일치 | shell |
 
+> **Nginx·엣지·공개 온보딩·운영**: [SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md](../deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md)
+
 ---
 
 ## 3. 애플리케이션 URL · CORS · API 게이트웨이
@@ -93,6 +95,8 @@
 | 3.3 | WebSocket/SSE 사용 시 운영 Origin 허용 | coder |
 | 3.4 | **Actuator / Swagger** 운영 공개 범위 최소화(필요 시 IP 제한 또는 비공개) | coder/shell |
 | 3.5 | **헬스체크 경로**가 로드밸런서·모니터링과 동일하게 설정됨 | shell | 예: `/actuator/health` |
+
+> **공개 API·엣지·CAPTCHA·온보딩**(Base URL·경로 정합): [SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md](../deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md)
 
 ---
 
@@ -119,7 +123,7 @@
 | 5.3 | 표준화 **프로시저** 변경 시 [deploy-procedures-prod.yml](../../.github/workflows/deploy-procedures-prod.yml) 등 별도 실행 여부 |
 | 5.4 | 운영 DB **네트워크 접근**(퍼블릭 X, bastion/VPN만) |
 | 5.5 | 연결 풀·타임아웃·읽기 부하(리플리카) 정책 |
-| 5.6 | **데이터 선별**: 마스터·참조는 Flyway, **개발 테스트·개인정보 덤프는 운영 미이관**. **운영 테넌트는 Mind Garden 온보딩으로만 생성**(개발 테넌트 덤프 금지) — [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) §1.1 |
+| 5.6 | **데이터 선별**: 마스터·참조는 Flyway, **개발 테스트·개인정보 덤프는 운영 미이관**. **운영 테넌트는 Mind Garden 온보딩으로만 생성**(개발 테넌트 덤프 금지) — [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) §1.1 · 온보딩·엣지: [SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md](../deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md) |
 | 5.7 | **MySQL 연결 합산(배포 전)**: `(앱 인스턴스 수 × Hikari maximum-pool-size)` + 기타 DB 클라이언트 ≤ MySQL `max_connections`. 초과 시 `Too many connections` 발생 가능. 풀 상한은 `HIKARI_MAXIMUM_POOL_SIZE` 등으로 조절 — [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md) 2.4 참고 |
 
 ---
@@ -146,6 +150,8 @@
 | 7.4 | **롤백**: 이전 JAR·정적 파일 백업 경로·복구 명령·헬스 검증 |
 | 7.5 | 배포 중 **다운타임 공지** 채널(기획) |
 
+> **Trinity CI·E2E**(빌드·파이프라인 재현): [TRINITY_CI_AND_E2E.md](../guides/development/TRINITY_CI_AND_E2E.md)
+
 ---
 
 ## 8. 관측성 · 로그 · 알림
@@ -159,6 +165,8 @@
 ---
 
 ## 9. 배포 직후 스모크(필수)
+
+온보딩·CAPTCHA 배포 후 검증 절차: [POST_DEPLOY_VERIFY_CAPTCHA_ONBOARDING.md](../deployment/POST_DEPLOY_VERIFY_CAPTCHA_ONBOARDING.md)
 
 | # | 시나리오 | 기대 |
 |---|----------|------|

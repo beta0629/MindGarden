@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
@@ -7,6 +8,7 @@ import MGButton from '../common/MGButton';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const ConsultantProfileModal = ({ 
@@ -16,7 +18,10 @@ const ConsultantProfileModal = ({
 }) => {
     const [salaryProfile, setSalaryProfile] = useState(null);
     const [showSalaryForm, setShowSalaryForm] = useState(false);
-    const [loading, setLoading] = useState(false);
+    /** 급여 프로필 조회 중 */
+    const [profileLoading, setProfileLoading] = useState(false);
+    /** 폼 저장 요청 중 */
+    const [saving, setSaving] = useState(false);
     const [salaryFormData, setSalaryFormData] = useState({
         salaryType: 'FREELANCE',
         contractTerms: '',
@@ -44,7 +49,7 @@ const ConsultantProfileModal = ({
     // 급여 프로필 조회
     const loadSalaryProfile = async() => {
         try {
-            setLoading(true);
+            setProfileLoading(true);
             const response = await StandardizedApi.get(
               `${SALARY_API_ENDPOINTS.PROFILES}/${consultant.id}`
             );
@@ -90,7 +95,7 @@ const ConsultantProfileModal = ({
                 businessName: ''
             });
         } finally {
-            setLoading(false);
+            setProfileLoading(false);
         }
     };
 
@@ -170,25 +175,25 @@ const ConsultantProfileModal = ({
     const handleSalaryProfileSubmit = async(e) => {
         e.preventDefault();
         try {
-            setLoading(true);
+            setSaving(true);
             
             // 사업자 등록 시 필수 필드 검사
             if (salaryFormData.isBusinessRegistered) {
                 if (!salaryFormData.businessRegistrationNumber) {
                     notificationManager.show('사업자 등록번호를 입력해주세요.', 'info');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
                 
                 if (!validateBusinessRegistrationNumber(salaryFormData.businessRegistrationNumber)) {
                     notificationManager.show('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)', 'info');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
                 
                 if (!salaryFormData.businessName) {
                     notificationManager.show('사업자명을 입력해주세요.', 'info');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
             }
@@ -224,7 +229,7 @@ const ConsultantProfileModal = ({
             console.error('급여 프로필 저장 실패:', error);
             notificationManager.show('급여 프로필 저장 중 오류가 발생했습니다.', 'info');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -247,7 +252,12 @@ const ConsultantProfileModal = ({
                                 type="button"
                                 variant="primary"
                                 size="medium"
-                                className="mg-v2-button mg-v2-button--primary consultant-profile-edit-btn"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    loading: false,
+                                    className: 'consultant-profile-edit-btn'
+                                })}
+                                disabled={profileLoading}
                                 onClick={() => setShowSalaryForm(true)}
                             >
                                 {salaryProfile ? '수정' : '생성'}
@@ -255,8 +265,8 @@ const ConsultantProfileModal = ({
                         )}
                     </div>
                         
-                        {loading ? (
-                            <div className="consultant-profile-loading"><ErpSafeText value="로딩 중..." /></div>
+                        {profileLoading ? (
+                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
                         ) : salaryProfile ? (
                             <div className="consultant-profile-info-grid">
                                 <div className="consultant-profile-info-item">
@@ -463,8 +473,9 @@ const ConsultantProfileModal = ({
                                         type="button"
                                         variant="outline"
                                         size="medium"
-                                        className="mg-v2-button mg-v2-button--outline"
+                                        className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
                                         onClick={() => setShowSalaryForm(false)}
+                                        disabled={saving}
                                     >
                                         취소
                                     </MGButton>
@@ -472,10 +483,10 @@ const ConsultantProfileModal = ({
                                         type="submit"
                                         variant="primary"
                                         size="medium"
-                                        className="mg-v2-button mg-v2-button--primary"
-                                        disabled={loading}
-                                        loading={loading}
-                                        loadingText="저장 중..."
+                                        className={buildErpMgButtonClassName({ variant: 'primary', loading: saving })}
+                                        disabled={saving}
+                                        loading={saving}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
                                         저장
                                     </MGButton>
@@ -490,8 +501,9 @@ const ConsultantProfileModal = ({
                     type="button"
                     variant="outline"
                     size="medium"
-                    className="mg-v2-button mg-v2-button--outline"
+                    className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
                     onClick={onClose}
+                    disabled={saving}
                 >
                     닫기
                 </MGButton>

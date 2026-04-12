@@ -9,6 +9,7 @@ import {
   buildRecentTransactionRowKey,
   formatRecentTransactionDate
 } from '../../../utils/erpFinanceDisplay';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { ErpSafeNumber, ErpSafeText } from '../common';
 
 /**
@@ -21,13 +22,18 @@ const ErpRecentTransactionsTable = ({ financeLoading, recentTransactions }) => (
     className="erp-finance-tx"
     aria-labelledby="erp-finance-tx-heading"
     aria-label="최근 거래 목록"
+    aria-busy={financeLoading}
   >
     <h3 id="erp-finance-tx-heading" className="erp-finance__section-title">
       최근 거래
     </h3>
     <div className="erp-finance-tx__table-wrap">
       {financeLoading ? (
-        <p className="erp-finance-tx__empty">불러오는 중...</p>
+        <UnifiedLoading
+          type="inline"
+          text="데이터를 불러오는 중..."
+          className="erp-finance-tx__empty"
+        />
       ) : recentTransactions.length === 0 ? (
         <p className="erp-finance-tx__empty">최근 거래 내역이 없습니다.</p>
       ) : (

@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import CardContainer from '../../common/CardContainer';
 import MGButton from '../../common/MGButton';
 import { ErpFilterToolbar } from '../common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './RefundFilters.css';
@@ -97,10 +98,14 @@ const RefundFilters = ({
                 <MGButton
                   variant="secondary"
                   size="small"
-                  className="mg-v2-button mg-v2-button--secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: silentListRefreshing
+                  })}
                   onClick={onRefresh}
                   loading={silentListRefreshing}
-                  loadingText="새로고침 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label="새로고침"
                 >
                   새로고침
@@ -109,7 +114,11 @@ const RefundFilters = ({
                   type="button"
                   variant="secondary"
                   size="small"
-                  className="mg-v2-button mg-v2-button--secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: false
+                  })}
                   onClick={onExportExcel}
                   aria-label="엑셀 내보내기"
                   preventDoubleClick={false}

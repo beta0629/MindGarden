@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
@@ -9,6 +9,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import './SalaryProfileFormModal.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
@@ -45,7 +46,10 @@ const SalaryProfileFormModal = ({
     const [salaryTypes, setSalaryTypes] = useState([]);
     const [optionTypes, setOptionTypes] = useState([]);
     const [selectedOptions, setSelectedOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
+    /** 공통코드 등 초기 폼 데이터 로드 */
+    const [initialLoading, setInitialLoading] = useState(false);
+    /** 저장 요청 중 (버튼 로딩만 사용) */
+    const [saving, setSaving] = useState(false);
     const [gradeTableData, setGradeTableData] = useState([]);
     /** 등급 한글명(표시용). async 결과만 넣어 React #31 방지 */
     const [gradeLabel, setGradeLabel] = useState('');
@@ -263,7 +267,7 @@ const SalaryProfileFormModal = ({
 
     const loadInitialData = async() => {
         try {
-            setLoading(true);
+            setInitialLoading(true);
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
             
             // 급여 유형 로드 (공통코드 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
@@ -302,7 +306,7 @@ const SalaryProfileFormModal = ({
             console.error('초기 데이터 로드 실패:', error);
             showNotification('데이터를 불러오는데 실패했습니다.', 'error');
         } finally {
-            setLoading(false);
+            setInitialLoading(false);
         }
     };
 
@@ -399,25 +403,25 @@ const SalaryProfileFormModal = ({
 
     const handleSave = async() => {
         try {
-            setLoading(true);
+            setSaving(true);
 
             // 사업자 등록 시 필수 필드 검사
             if (formData.isBusinessRegistered) {
                 if (!formData.businessRegistrationNumber) {
                     showNotification('사업자 등록번호를 입력해주세요.', 'error');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
                 
                 if (!validateBusinessRegistrationNumber(formData.businessRegistrationNumber)) {
                     showNotification('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)', 'error');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
                 
                 if (!formData.businessName) {
                     showNotification('사업자명을 입력해주세요.', 'error');
-                    setLoading(false);
+                    setSaving(false);
                     return;
                 }
             }
@@ -443,7 +447,7 @@ const SalaryProfileFormModal = ({
             console.error(existingProfileId ? '급여 프로필 수정 실패' : '급여 프로필 생성 실패', error);
             showNotification(existingProfileId ? '급여 프로필 수정에 실패했습니다.' : '급여 프로필 생성에 실패했습니다.', 'error');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -462,6 +466,10 @@ const SalaryProfileFormModal = ({
             className="mg-v2-ad-b0kla salary-profile-modal-content"
         >
             <div className="salary-profile-form">
+                {initialLoading ? (
+                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                ) : (
+                <>
                 {/* 기본 정보 */}
                 <div className="salary-profile-form__section consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
@@ -654,7 +662,13 @@ const SalaryProfileFormModal = ({
                     <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
                         <div className="option-header">
                             <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
-                            <MGButton type="button" variant="secondary" size="small" className="option-add-btn" onClick={addOption}>
+                            <MGButton
+                                type="button"
+                                variant="secondary"
+                                size="small"
+                                className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })} option-add-btn`}
+                                onClick={addOption}
+                            >
                                 + 옵션 추가
                             </MGButton>
                         </div>
@@ -701,7 +715,7 @@ const SalaryProfileFormModal = ({
                                     type="button"
                                     variant="danger"
                                     size="small"
-                                    className="option-remove-btn"
+                                    className={`${buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })} option-remove-btn`}
                                     onClick={() => removeOption(index)}
                                 >
                                     삭제
@@ -714,22 +728,26 @@ const SalaryProfileFormModal = ({
                     <MGButton
                         type="button"
                         variant="outline"
+                        className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
                         onClick={onClose}
-                        disabled={loading}
+                        disabled={saving || initialLoading}
                     >
                         취소
                     </MGButton>
                     <MGButton
                         type="button"
                         variant="primary"
+                        className={buildErpMgButtonClassName({ variant: 'primary', loading: saving })}
                         onClick={handleSave}
-                        disabled={loading}
-                        loading={loading}
-                        loadingText="저장 중..."
+                        disabled={saving || initialLoading}
+                        loading={saving}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        {loading ? '저장 중...' : '저장'}
+                        저장
                     </MGButton>
                 </div>
+                </>
+                )}
             </div>
         </UnifiedModal>
     );

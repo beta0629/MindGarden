@@ -46,4 +46,5 @@ cd frontend-trinity && npm run build:ci
 | 문서 | 용도 |
 |------|------|
 | [GITHUB_ACTIONS_WORKFLOW_INDEX.md](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md) | Trinity·Ops·Core 정적 프론트·CI 워크플로 **전체 인덱스** |
+| [TRINITY_NPM_AUDIT_LOG.md](./TRINITY_NPM_AUDIT_LOG.md) | `frontend-trinity` **npm audit** 스냅샷(high/critical 요약). 자동 fix 미실행·수정은 별도 PR·검토 |
 | [BACKEND_MYSQL_INTEGRATION_TESTS.md](./BACKEND_MYSQL_INTEGRATION_TESTS.md) | **백엔드(Java)** — MySQL을 쓰는 `@Disabled` 통합 테스트 실행 가이드. Trinity 프론트 CI·`build:ci`와는 **별 주제**이다. |

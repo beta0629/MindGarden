@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import MGChart from '../../common/MGChart';
+import UnifiedLoading from '../../common/UnifiedLoading';
 
 const ERP_INCOME_EXPENSE_CHART_CSS_TOKENS = {
   INCOME_FILL: '--mg-success-400',
@@ -69,6 +70,7 @@ const ErpIncomeExpenseBarChartSection = ({ financeLoading, financialData }) => {
       className="erp-finance-chart"
       aria-labelledby="erp-finance-chart-heading"
       aria-label="수입·지출 차트"
+      aria-busy={financeLoading}
     >
       <h3 id="erp-finance-chart-heading" className="erp-finance__section-title">
         수입·지출 비교
@@ -76,7 +78,11 @@ const ErpIncomeExpenseBarChartSection = ({ financeLoading, financialData }) => {
       <div className="erp-finance-chart__grid">
         <figure className="erp-finance-chart__item">
           {financeLoading ? (
-            <div className="erp-finance-chart__placeholder">차트를 불러오는 중...</div>
+            <UnifiedLoading
+              type="inline"
+              text="데이터를 불러오는 중..."
+              className="erp-finance-chart__placeholder"
+            />
           ) : (
             <MGChart
               type="bar"

@@ -2,6 +2,12 @@
 
 export interface ComorbidityChartData {
   overallRate: { min: number; max: number };
+  /** 도넛 위 짧은 제목 (예: ADHD 진단 시 동반질환 발생률) */
+  donutTitle?: string;
+  /** 막대 그룹 상단 제목 */
+  barSectionTitle?: string;
+  /** 도넛 중앙 아래 보조 문구 */
+  centerSubLabel?: string;
   disorders?: Array<{ name: string; min: number; max: number }>;
   chartCategories?: Array<{
     title: string;
@@ -29,6 +35,9 @@ const BAR_COLORS = [
 export default function MindgardenComorbidityChart({ cd }: { cd: ComorbidityChartData }) {
   const overallMid = (cd.overallRate.min + cd.overallRate.max) / 2;
   const circumference = 2 * Math.PI * 80;
+  const donutTitle = cd.donutTitle ?? 'ADHD 진단 시 동반질환 발생률';
+  const barSectionTitle = cd.barSectionTitle ?? '주요 동반질환별 발생률';
+  const centerSubLabel = cd.centerSubLabel ?? '동반질환 발생';
 
   return (
     <div
@@ -60,7 +69,7 @@ export default function MindgardenComorbidityChart({ cd }: { cd: ComorbidityChar
             fontWeight: '600',
           }}
         >
-          ADHD — 1개 이상의 공존 질환
+          {donutTitle}
         </div>
         <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto' }}>
           <svg width="200" height="200" viewBox="0 0 200 200" style={{ transform: 'rotate(-90deg)' }}>
@@ -96,7 +105,7 @@ export default function MindgardenComorbidityChart({ cd }: { cd: ComorbidityChar
             >
               {cd.overallRate.min}~{cd.overallRate.max}%
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', marginTop: '4px' }}>1개 이상 공존</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', marginTop: '4px' }}>{centerSubLabel}</div>
           </div>
         </div>
       </div>
@@ -111,7 +120,7 @@ export default function MindgardenComorbidityChart({ cd }: { cd: ComorbidityChar
             textAlign: 'center',
           }}
         >
-          범주별 대표 동반질환 (발생률)
+          {barSectionTitle}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {cd.chartCategories

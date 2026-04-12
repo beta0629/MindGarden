@@ -58,14 +58,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('Get popup error:', error);
-    const errorMessage = error?.message || '알 수 없는 오류';
-    const errorCode = error?.code || 'UNKNOWN';
-    console.error('Error details:', { message: errorMessage, code: errorCode, stack: error?.stack });
-    return NextResponse.json(
-      { success: false, error: `팝업을 불러오는데 실패했습니다: ${errorMessage} (${errorCode})` },
-      { status: 500 }
-    );
+    // 로컬·DB 단절 시에도 홈이 500으로 무너지지 않도록 빈 응답(팝업 없음)
+    console.warn('Get popup: DB unavailable, returning no popup:', error?.code || error?.message);
+    return NextResponse.json({ success: true, popup: null });
   } finally {
     if (connection) {
       connection.release();

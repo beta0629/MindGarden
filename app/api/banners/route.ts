@@ -68,13 +68,16 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error('Get banner error:', error);
-    const errorMessage = error?.message || '알 수 없는 오류';
-    const errorCode = error?.code || 'UNKNOWN';
-    console.error('Error details:', { message: errorMessage, code: errorCode, stack: error?.stack });
+    console.warn('Get banners: DB unavailable, returning empty list:', error?.code || error?.message);
     return NextResponse.json(
-      { success: false, error: `배너를 불러오는데 실패했습니다: ${errorMessage} (${errorCode})` },
-      { status: 500 }
+      { success: true, banners: [] },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
     );
   } finally {
     if (connection) {

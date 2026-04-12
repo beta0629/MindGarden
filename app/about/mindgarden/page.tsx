@@ -161,8 +161,8 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                     background: '#ffffff',
                     borderRadius: 'var(--radius-lg)',
                     padding: '40px 32px',
-                    boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                    border: '1px solid rgba(168, 213, 186, 0.35)',
+                    boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                    border: '1px solid rgba(89, 142, 62, 0.35)',
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -175,7 +175,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                       color: 'var(--text-main)',
                       marginBottom: '24px',
                       paddingBottom: '16px',
-                      borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
+                      borderBottom: '2px solid rgba(89, 142, 62, 0.3)',
                       lineHeight: '1.5',
                       letterSpacing: '-0.01em',
                       wordBreak: 'keep-all'
@@ -204,7 +204,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                       padding: '24px',
                       background: 'rgba(255, 255, 255, 0.6)',
                       borderRadius: 'var(--radius-md)',
-                      border: '1px solid rgba(168, 213, 186, 0.2)'
+                      border: '1px solid rgba(89, 142, 62, 0.2)'
                     }}>
                       {/* 전체 동반질환 비율 */}
                       <div style={{
@@ -231,7 +231,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                               cy="100"
                               r="80"
                               fill="none"
-                              stroke="rgba(168, 213, 186, 0.2)"
+                              stroke="rgba(89, 142, 62, 0.2)"
                               strokeWidth="20"
                             />
                             <circle
@@ -239,7 +239,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                               cy="100"
                               r="80"
                               fill="none"
-                              stroke="rgba(168, 213, 186, 0.8)"
+                              stroke="rgba(89, 142, 62, 0.8)"
                               strokeWidth="20"
                               strokeDasharray={`${(section.comorbidityData.overallRate.max * 2 * Math.PI * 80) / 100} ${2 * Math.PI * 80}`}
                               strokeLinecap="round"
@@ -293,12 +293,12 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                           {section.comorbidityData.disorders.map((disorder, idx) => {
                             const avgRate = (disorder.min + disorder.max) / 2;
                             const colors = [
-                              'rgba(168, 213, 186, 0.8)',
+                              'rgba(89, 142, 62, 0.8)',
                               'rgba(184, 212, 227, 0.8)',
                               'rgba(212, 240, 232, 0.8)',
                               'rgba(232, 213, 227, 0.8)',
                               'rgba(255, 244, 212, 0.8)',
-                              'rgba(168, 213, 186, 0.6)',
+                              'rgba(89, 142, 62, 0.6)',
                             ];
                             return (
                               <div key={idx} style={{
@@ -319,7 +319,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                                   flex: '1',
                                   position: 'relative',
                                   height: '28px',
-                                  background: 'rgba(168, 213, 186, 0.15)',
+                                  background: 'rgba(89, 142, 62, 0.15)',
                                   borderRadius: '14px',
                                   overflow: 'hidden'
                                 }}>
@@ -357,7 +357,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                       {/* 기타 동반질환 */}
                       <div style={{
                         paddingTop: '20px',
-                        borderTop: '1px solid rgba(168, 213, 186, 0.2)'
+                        borderTop: '1px solid rgba(89, 142, 62, 0.2)'
                       }}>
                         <div style={{
                           fontSize: '0.85rem',
@@ -380,7 +380,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                               style={{
                                 display: 'inline-block',
                                 padding: '6px 12px',
-                                background: 'rgba(168, 213, 186, 0.15)',
+                                background: 'rgba(89, 142, 62, 0.15)',
                                 borderRadius: '16px',
                                 fontSize: '0.8rem',
                                 color: 'var(--text-main)',

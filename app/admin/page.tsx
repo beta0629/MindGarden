@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       description: '상담 예약 확인 및 관리',
       href: '/admin/consultation',
       art: 'consultation',
-      color: '#10b981',
+      color: '#598e3e',
       badge: stats.pendingConsultations > 0 ? stats.pendingConsultations : undefined,
     },
     {

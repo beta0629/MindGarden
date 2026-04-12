@@ -267,7 +267,7 @@ export default function NewReviewPage() {
                         padding: '8px 16px',
                         borderRadius: 'var(--radius-sm)',
                         border: `1px solid ${formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--border-soft)'}`,
-                        backgroundColor: formData.tags.includes(tag) ? 'rgba(168, 213, 186, 0.2)' : 'var(--surface-0)',
+                        backgroundColor: formData.tags.includes(tag) ? 'rgba(89, 142, 62, 0.2)' : 'var(--surface-0)',
                         color: formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--text-sub)',
                         cursor: 'pointer',
                         fontSize: '0.9rem',

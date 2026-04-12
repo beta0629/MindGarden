@@ -240,7 +240,7 @@ export default function BlogAdminListPage() {
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                           <span style={{
                             padding: '0.25rem 0.75rem',
-                            backgroundColor: post.status === 'published' ? '#10b981' : '#f59e0b',
+                            backgroundColor: post.status === 'published' ? '#598e3e' : '#f59e0b',
                             color: 'white',
                             borderRadius: '9999px',
                             fontSize: '0.75rem',

@@ -98,8 +98,8 @@ export default function ValuesPage() {
                   background: '#ffffff',
                   borderRadius: 'var(--radius-lg)',
                   padding: '40px 32px',
-                  boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                  border: '1px solid rgba(168, 213, 186, 0.35)',
+                  boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(89, 142, 62, 0.35)',
                   transition: 'all 0.3s ease'
                 }}>
                   <h3 style={{
@@ -108,7 +108,7 @@ export default function ValuesPage() {
                     color: 'var(--text-main)',
                     marginBottom: '24px',
                     paddingBottom: '16px',
-                    borderBottom: '2px solid rgba(168, 213, 186, 0.3)'
+                    borderBottom: '2px solid rgba(89, 142, 62, 0.3)'
                   }}>
                     전문성(상담사로서의 윤리와 책임감)
                   </h3>
@@ -142,8 +142,8 @@ export default function ValuesPage() {
                   background: '#ffffff',
                   borderRadius: 'var(--radius-lg)',
                   padding: '40px 32px',
-                  boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                  border: '1px solid rgba(168, 213, 186, 0.35)',
+                  boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(89, 142, 62, 0.35)',
                   transition: 'all 0.3s ease'
                 }}>
                   <h3 style={{
@@ -152,7 +152,7 @@ export default function ValuesPage() {
                     color: 'var(--text-main)',
                     marginBottom: '24px',
                     paddingBottom: '16px',
-                    borderBottom: '2px solid rgba(168, 213, 186, 0.3)'
+                    borderBottom: '2px solid rgba(89, 142, 62, 0.3)'
                   }}>
                     인류애(인간적이고 따뜻한 마음과 존중)
                   </h3>
@@ -182,8 +182,8 @@ export default function ValuesPage() {
                   background: '#ffffff',
                   borderRadius: 'var(--radius-lg)',
                   padding: '40px 32px',
-                  boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                  border: '1px solid rgba(168, 213, 186, 0.35)',
+                  boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(89, 142, 62, 0.35)',
                   transition: 'all 0.3s ease'
                 }}>
                   <h3 style={{
@@ -192,7 +192,7 @@ export default function ValuesPage() {
                     color: 'var(--text-main)',
                     marginBottom: '24px',
                     paddingBottom: '16px',
-                    borderBottom: '2px solid rgba(168, 213, 186, 0.3)'
+                    borderBottom: '2px solid rgba(89, 142, 62, 0.3)'
                   }}>
                     회복과 성장. 건강한 독립
                   </h3>

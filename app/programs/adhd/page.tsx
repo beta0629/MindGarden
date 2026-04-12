@@ -97,8 +97,8 @@ export default function AdhdProgramPage() {
                 margin: '0 auto 56px',
                 padding: '24px 28px',
                 borderRadius: 'var(--radius-lg)',
-                background: 'rgba(168, 213, 186, 0.15)',
-                border: '1px solid rgba(168, 213, 186, 0.35)',
+                background: 'rgba(89, 142, 62, 0.15)',
+                border: '1px solid rgba(89, 142, 62, 0.35)',
                 textAlign: 'center',
               }}
             >
@@ -189,7 +189,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
+                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -239,7 +239,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
+                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -289,7 +289,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
+                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -339,7 +339,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
+                      backgroundColor: 'rgba(89, 142, 62, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -395,7 +395,7 @@ export default function AdhdProgramPage() {
                     color: 'white',
                     border: 'none',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(168, 213, 186, 0.4)',
+                    boxShadow: '0 4px 12px rgba(89, 142, 62, 0.4)',
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
                 >

@@ -279,7 +279,7 @@ export default function ReviewsPage() {
       ['#4ADE80', '#14B8A6'], // primary to teal
       ['#EC4899', '#F43F5E'], // pink to rose
       ['#3B82F6', '#06B6D4'], // blue to cyan
-      ['#10B981', '#059669'], // emerald to green
+      ['#598e3e', '#4a7530'], // brand green
       ['#F59E0B', '#F97316'], // amber to orange
       ['#8B5CF6', '#7C3AED'], // violet to purple
       ['#06B6D4', '#3B82F6'], // cyan to blue
@@ -512,7 +512,7 @@ export default function ReviewsPage() {
                       // 각 항목별 색상 정의
                       const colorMap: Record<string, { dot: string; bar: string }> = {
                         professionalism: { dot: '#3B82F6', bar: '#3B82F6' }, // 파란색
-                        kindness: { dot: '#10B981', bar: '#10B981' }, // 초록색
+                        kindness: { dot: '#598e3e', bar: '#598e3e' }, // 브랜드 그린
                         effectiveness: { dot: '#F59E0B', bar: '#F59E0B' }, // 주황색
                         facility: { dot: '#8B5CF6', bar: '#8B5CF6' }, // 보라색
                       };

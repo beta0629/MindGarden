@@ -211,7 +211,7 @@ export default function ConsultationAdminPage() {
     const colors: { [key: string]: string } = {
       pending: '#f59e0b',
       contacted: '#3b82f6',
-      completed: '#10b981',
+      completed: '#598e3e',
       cancelled: '#ef4444',
     };
     return colors[status] || '#6b7280';

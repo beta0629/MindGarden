@@ -301,7 +301,7 @@ export default function ConsultationForm() {
                     padding: '8px 16px',
                     borderRadius: 'var(--radius-sm)',
                     border: `1px solid ${isSelected ? 'var(--accent-sky)' : 'var(--border-soft)'}`,
-                    backgroundColor: isSelected ? 'rgba(168, 213, 186, 0.2)' : 'var(--surface-0)',
+                    backgroundColor: isSelected ? 'rgba(89, 142, 62, 0.2)' : 'var(--surface-0)',
                     color: isSelected ? 'var(--accent-sky)' : 'var(--text-main)',
                     fontSize: '0.875rem',
                     fontWeight: isSelected ? '600' : '400',
@@ -311,7 +311,7 @@ export default function ConsultationForm() {
                   onMouseEnter={(e) => {
                     if (!isSelected) {
                       e.currentTarget.style.borderColor = 'var(--accent-sky)';
-                      e.currentTarget.style.backgroundColor = 'rgba(168, 213, 186, 0.1)';
+                      e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.1)';
                     }
                   }}
                   onMouseLeave={(e) => {

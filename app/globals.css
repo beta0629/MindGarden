@@ -23,28 +23,28 @@
     --text-sub: #b58974;
     --text-light: #c9a892;
 
-    /* 액센트(히어로 등): 따뜻한 피치·베이지 대신 쿨 민트·라벤더 */
-    --accent-sky: #a8d5ba;
-    --accent-peach: #d4e8dc;
+    /* 액센트: 브랜드 그린 #598e3e 계열 */
+    --accent-sky: #598e3e;
+    --accent-peach: #d0e4c4;
     --accent-lavender: #e8e4ef;
-    --accent-mint: #c4e6d4;
+    --accent-mint: #b8d4a8;
     --accent-yellow: #eef6f1;
 
     --white: #ffffff;
     --shadow-soft: rgba(0, 0, 0, 0.05);
     --shadow-medium: rgba(0, 0, 0, 0.08);
 
-    /* 브랜드 CTA(구 베이지 브라운 대체) */
-    --accent-cta: #4a5d4e;
-    --accent-cta-hover: #3d4f42;
+    /* 브랜드 CTA */
+    --accent-cta: #598e3e;
+    --accent-cta-hover: #4a7530;
 
     /* Design tokens (consistency) */
     --radius-sm: 12px;
     --radius-md: 16px;
     --radius-lg: 20px;
 
-    --border-soft: rgba(168, 213, 186, 0.28);
-    --border-strong: rgba(168, 213, 186, 0.42);
+    --border-soft: rgba(89, 142, 62, 0.28);
+    --border-strong: rgba(89, 142, 62, 0.42);
 
     --surface-0: #ffffff;
     --surface-1: #ffffff;
@@ -311,7 +311,7 @@ main {
     backdrop-filter: blur(12px);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(168, 213, 186, 0.3);
+    border: 1px solid rgba(89, 142, 62, 0.3);
     min-width: 160px;
     z-index: 1000;
     opacity: 0;
@@ -359,7 +359,7 @@ main {
 }
 
 .gnb-submenu-link:hover {
-    background: rgba(168, 213, 186, 0.15);
+    background: rgba(89, 142, 62, 0.15);
     color: var(--accent-sky);
 }
 
@@ -386,8 +386,8 @@ main {
     border-radius: 999px;
     font-size: 0.9rem;
     font-weight: 600;
-    background: rgba(168, 213, 186, 0.35); /* 초기값을 어두운 배경으로 설정 */
-    border: 1px solid rgba(168, 213, 186, 0.55); /* 초기값을 어두운 테두리로 설정 */
+    background: rgba(89, 142, 62, 0.35); /* 초기값을 어두운 배경으로 설정 */
+    border: 1px solid rgba(89, 142, 62, 0.55); /* 초기값을 어두운 테두리로 설정 */
     color: var(--text-main); /* 초기값을 어두운 텍스트로 설정 */
     backdrop-filter: blur(10px);
     transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
@@ -401,8 +401,8 @@ main {
 }
 
 .gnb-cta.scrolled {
-    background: rgba(168, 213, 186, 0.35);
-    border-color: rgba(168, 213, 186, 0.55);
+    background: rgba(89, 142, 62, 0.35);
+    border-color: rgba(89, 142, 62, 0.55);
     color: var(--text-main);
 }
 
@@ -472,7 +472,7 @@ main {
     font-weight: 600;
     padding: 14px 14px;
     border-radius: 12px;
-    background: rgba(168, 213, 186, 0.18);
+    background: rgba(89, 142, 62, 0.18);
     border: none;
     font-size: inherit;
     font-family: inherit;
@@ -482,7 +482,7 @@ main {
 }
 
 .gnb-drawer-link-with-submenu {
-    background: rgba(168, 213, 186, 0.25);
+    background: rgba(89, 142, 62, 0.25);
 }
 
 .gnb-drawer-submenu {
@@ -501,18 +501,18 @@ main {
     font-size: 0.9rem;
     padding: 8px 12px;
     border-radius: 8px;
-    background: rgba(168, 213, 186, 0.1);
+    background: rgba(89, 142, 62, 0.1);
     transition: all 0.2s ease;
     display: block;
 }
 
 .gnb-drawer-submenu-link:hover {
-    background: rgba(168, 213, 186, 0.25);
+    background: rgba(89, 142, 62, 0.25);
     color: var(--text-main);
 }
 
 .gnb-drawer-submenu-link.active {
-    background: rgba(168, 213, 186, 0.35);
+    background: rgba(89, 142, 62, 0.35);
     color: var(--text-main);
     font-weight: 600;
 }
@@ -530,7 +530,7 @@ main {
     font-weight: 600;
     padding: 14px 14px;
     border-radius: 12px;
-    background: rgba(168, 213, 186, 0.18);
+    background: rgba(89, 142, 62, 0.18);
     display: block;
     min-height: 48px;
     box-sizing: border-box;
@@ -541,7 +541,7 @@ main {
 }
 
 .gnb-drawer-cta:hover {
-    background: rgba(168, 213, 186, 0.28);
+    background: rgba(89, 142, 62, 0.28);
     color: var(--text-main);
 }
 
@@ -549,7 +549,7 @@ main {
 .adhd-self-check {
     border-radius: var(--radius-lg);
     background: var(--surface-1);
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    border: 1px solid rgba(89, 142, 62, 0.35);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
     padding: clamp(20px, 4vw, 32px);
     margin-top: 8px;
@@ -583,7 +583,7 @@ main {
     margin: 20px 0 24px;
     padding: 16px 18px;
     border-radius: 12px;
-    background: rgba(168, 213, 186, 0.12);
+    background: rgba(89, 142, 62, 0.12);
     font-size: 0.9rem;
     line-height: 1.65;
     color: var(--text-sub);
@@ -657,7 +657,7 @@ main {
 .adhd-self-check-btn-primary {
     background-color: var(--accent-peach);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(168, 213, 186, 0.4);
+    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.4);
 }
 
 .adhd-self-check-btn-primary:hover {
@@ -666,13 +666,13 @@ main {
 }
 
 .adhd-self-check-btn-secondary {
-    background: rgba(168, 213, 186, 0.22);
+    background: rgba(89, 142, 62, 0.22);
     color: var(--text-main);
-    border: 1px solid rgba(168, 213, 186, 0.45);
+    border: 1px solid rgba(89, 142, 62, 0.45);
 }
 
 .adhd-self-check-btn-secondary:hover {
-    background: rgba(168, 213, 186, 0.32);
+    background: rgba(89, 142, 62, 0.32);
     color: var(--text-main);
 }
 
@@ -698,7 +698,7 @@ main {
     margin-bottom: 20px;
     padding: 10px 14px;
     border-radius: 10px;
-    background: rgba(168, 213, 186, 0.15);
+    background: rgba(89, 142, 62, 0.15);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-main);
@@ -746,7 +746,7 @@ main {
     min-height: 52px;
     padding: 14px 18px;
     border-radius: 12px;
-    border: 2px solid rgba(168, 213, 186, 0.5);
+    border: 2px solid rgba(89, 142, 62, 0.5);
     background: rgba(255, 255, 255, 0.85);
     font-size: 1rem;
     font-weight: 600;
@@ -758,8 +758,8 @@ main {
 }
 
 .adhd-self-check-option:hover {
-    background: rgba(168, 213, 186, 0.2);
-    border-color: rgba(168, 213, 186, 0.75);
+    background: rgba(89, 142, 62, 0.2);
+    border-color: rgba(89, 142, 62, 0.75);
 }
 
 .adhd-self-check-option:active {
@@ -772,8 +772,8 @@ main {
     color: var(--text-sub);
     margin: 0;
     padding: 12px 14px;
-    border-left: 3px solid rgba(168, 213, 186, 0.6);
-    background: rgba(168, 213, 186, 0.08);
+    border-left: 3px solid rgba(89, 142, 62, 0.6);
+    background: rgba(89, 142, 62, 0.08);
     border-radius: 0 8px 8px 0;
     word-break: keep-all;
 }
@@ -840,7 +840,7 @@ main {
         rgba(255, 255, 255, 0.95) 100%
     );
     box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
-    border-bottom: 1px solid rgba(168, 213, 186, 0.3);
+    border-bottom: 1px solid rgba(89, 142, 62, 0.3);
     backdrop-filter: blur(16px);
 }
 
@@ -858,7 +858,7 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb {
         rgba(255, 255, 255, 0.95) 100%
     );
     box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
-    border-bottom: 1px solid rgba(168, 213, 186, 0.3);
+    border-bottom: 1px solid rgba(89, 142, 62, 0.3);
 }
 
 main:not(:has(.hero-section, .mg-hero-section)) .gnb .logo,
@@ -873,8 +873,8 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .menu-trigger .line {
 }
 
 main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
-    background: rgba(168, 213, 186, 0.35);
-    border-color: rgba(168, 213, 186, 0.55);
+    background: rgba(89, 142, 62, 0.35);
+    border-color: rgba(89, 142, 62, 0.55);
     color: var(--text-main);
 }
 
@@ -1292,7 +1292,7 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
         rgba(255, 255, 255, 0.82) 100%
     );
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(168, 213, 186, 0.25);
+    border-bottom: 1px solid rgba(89, 142, 62, 0.25);
 }
 
 .section-tabs-inner {
@@ -1317,7 +1317,7 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     font-size: 0.95rem;
     padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(168, 213, 186, 0.14);
+    background: rgba(89, 142, 62, 0.14);
     border: 1px solid var(--border-soft);
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     white-space: nowrap;
@@ -1325,14 +1325,14 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 
 .section-tab:hover {
     color: var(--text-main);
-    background: rgba(168, 213, 186, 0.22);
-    border-color: rgba(168, 213, 186, 0.35);
+    background: rgba(89, 142, 62, 0.22);
+    border-color: rgba(89, 142, 62, 0.35);
 }
 
 .section-tab.active {
     color: var(--text-main);
-    background: rgba(168, 213, 186, 0.5);
-    border-color: rgba(168, 213, 186, 0.75);
+    background: rgba(89, 142, 62, 0.5);
+    border-color: rgba(89, 142, 62, 0.75);
 }
 
 .content-section {
@@ -1470,8 +1470,8 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     background: #ffffff;
     border-radius: var(--radius-lg);
     padding: 40px 32px;
-    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    box-shadow: 0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(89, 142, 62, 0.35);
 }
 
 .counseling-type-card-title {
@@ -1480,7 +1480,7 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     color: var(--text-main);
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 2px solid rgba(168, 213, 186, 0.3);
+    border-bottom: 2px solid rgba(89, 142, 62, 0.3);
     line-height: 1.5;
     letter-spacing: -0.01em;
     word-break: keep-all;
@@ -1521,8 +1521,8 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     padding: 32px;
     border-radius: var(--radius-lg);
     background: #ffffff;
-    border: 1px solid rgba(168, 213, 186, 0.35);
-    box-shadow: 0 4px 20px rgba(168, 213, 186, 0.2);
+    border: 1px solid rgba(89, 142, 62, 0.35);
+    box-shadow: 0 4px 20px rgba(89, 142, 62, 0.2);
 }
 
 .counseling-type-cta-title {
@@ -1681,9 +1681,9 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 .program-card,
 .contact-card {
     background: #ffffff;
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    border: 1px solid rgba(89, 142, 62, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     padding: 18px 16px;
     transition: all 0.2s ease;
 }
@@ -1699,8 +1699,8 @@ a.program-card {
 a.feature-card:hover,
 a.program-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(168, 213, 186, 0.55);
+    box-shadow: 0 10px 35px rgba(89, 142, 62, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(89, 142, 62, 0.55);
     background: #ffffff;
 }
 
@@ -1721,7 +1721,7 @@ a.program-card:hover {
     grid-template-columns: 80px 1fr;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(168, 213, 186, 0.25);
+    border-bottom: 1px solid rgba(89, 142, 62, 0.25);
 }
 
 .contact-row:last-child {
@@ -1875,7 +1875,7 @@ a.program-card:hover {
 }
 
 .marquee-indicator:hover {
-    background: rgba(168, 213, 186, 0.3);
+    background: rgba(89, 142, 62, 0.3);
     transform: scale(1.2);
 }
 
@@ -2273,9 +2273,9 @@ a.program-card:hover {
 
 .blog-card {
     background: #ffffff;
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    border: 1px solid rgba(89, 142, 62, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     text-decoration: none;
     color: inherit;
@@ -2286,8 +2286,8 @@ a.program-card:hover {
 
 .blog-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(168, 213, 186, 0.55);
+    box-shadow: 0 10px 35px rgba(89, 142, 62, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(89, 142, 62, 0.55);
     background: #ffffff;
 }
 
@@ -2296,15 +2296,15 @@ a.program-card:hover {
     background: #ffffff;
     border-radius: var(--radius-lg);
     padding: 40px;
-    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    box-shadow: 0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(89, 142, 62, 0.35);
     transition: all 0.3s ease;
 }
 
 .value-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(168, 213, 186, 0.55);
+    box-shadow: 0 10px 35px rgba(89, 142, 62, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(89, 142, 62, 0.55);
     background: #ffffff;
 }
 
@@ -2313,9 +2313,9 @@ a.program-card:hover {
 }
 
 .value-section-card:hover {
-    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 35px rgba(89, 142, 62, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     transform: translateY(-4px);
-    border-color: rgba(168, 213, 186, 0.55);
+    border-color: rgba(89, 142, 62, 0.55);
 }
 
 /* 가치관 `/values` — 블록별 비규격 이미지 (docs/VALUES_PAGE_IMAGE_MEETING.md) */
@@ -2326,8 +2326,8 @@ a.program-card:hover {
 .values-visual__frame {
     overflow: hidden;
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(168, 213, 186, 0.35);
-    box-shadow: 0 4px 18px rgba(168, 213, 186, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(89, 142, 62, 0.35);
+    box-shadow: 0 4px 18px rgba(89, 142, 62, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
     background: rgba(248, 250, 252, 0.95);
 }
 
@@ -2867,8 +2867,8 @@ a.program-card:hover {
 /* 메인: 체크리스트 허브 이미지 링크 (/screening) */
 .home-screening-promo {
     width: 100%;
-    background: rgba(168, 213, 186, 0.12);
-    border-bottom: 1px solid rgba(168, 213, 186, 0.25);
+    background: rgba(89, 142, 62, 0.12);
+    border-bottom: 1px solid rgba(89, 142, 62, 0.25);
 }
 
 .home-screening-promo-inner {
@@ -3008,7 +3008,7 @@ a.program-card:hover {
 
 .screening-card {
     background: #ffffff;
-    border: 1px solid rgba(168, 213, 186, 0.35);
+    border: 1px solid rgba(89, 142, 62, 0.35);
     border-radius: var(--radius-lg);
     padding: 32px 24px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
@@ -3024,7 +3024,7 @@ a.program-card:hover {
 .screening-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
-    border-color: rgba(168, 213, 186, 0.6);
+    border-color: rgba(89, 142, 62, 0.6);
 }
 
 .screening-card-icon {
@@ -3074,7 +3074,7 @@ a.program-card:hover {
 .screening-target-btn {
     padding: 20px;
     border-radius: var(--radius-md);
-    border: 2px solid rgba(168, 213, 186, 0.3);
+    border: 2px solid rgba(89, 142, 62, 0.3);
     background: var(--surface-1);
     font-size: 1.1rem;
     font-weight: 600;
@@ -3084,7 +3084,7 @@ a.program-card:hover {
 }
 
 .screening-target-btn:hover {
-    background: rgba(168, 213, 186, 0.1);
+    background: rgba(89, 142, 62, 0.1);
     border-color: var(--accent-sky);
 }
 
@@ -3108,7 +3108,7 @@ a.program-card:hover {
 
 .screening-progress-bar {
     height: 6px;
-    background: rgba(168, 213, 186, 0.2);
+    background: rgba(89, 142, 62, 0.2);
     border-radius: 3px;
     margin-bottom: 32px;
     overflow: hidden;
@@ -3148,7 +3148,7 @@ a.program-card:hover {
 }
 
 .screening-option-btn:hover {
-    background: rgba(168, 213, 186, 0.1);
+    background: rgba(89, 142, 62, 0.1);
     border-color: var(--accent-sky);
 }
 
@@ -3196,7 +3196,7 @@ a.program-card:hover {
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(168, 213, 186, 0.4);
+    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.4);
     text-decoration: none;
 }
 
@@ -3234,8 +3234,8 @@ a.program-card:hover {
     --mg-prog-lead: var(--text-sub);
     --mg-prog-badge-bg: #e5f0e8;
     --mg-prog-badge-text: var(--text-main);
-    --mg-prog-primary: #4a5d4e;
-    --mg-prog-primary-light: #5f7a64;
+    --mg-prog-primary: #598e3e;
+    --mg-prog-primary-light: #4a7530;
     --mg-prog-secondary: var(--text-sub);
     --mg-prog-text: var(--text-sub);
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
@@ -3477,7 +3477,7 @@ a.program-card:hover {
 /* —— /about/mindgarden 랜딩형 레이아웃 (히어로·아이덴티티·원장·철학) —— */
 .mg-landing {
     --mg-landing-cocoa: var(--text-main);
-    --mg-landing-green: #4a5d4e;
+    --mg-landing-green: #598e3e;
     --mg-landing-taupe: var(--text-sub);
     --mg-landing-cream: #ffffff;
 }
@@ -3595,8 +3595,8 @@ a.program-card:hover {
 }
 
 .mg-btn--primary:hover {
-    background-color: #5f7a64;
-    border-color: #5f7a64;
+    background-color: #4a7530;
+    border-color: #4a7530;
     color: var(--white);
 }
 
@@ -3871,10 +3871,10 @@ a.program-card:hover {
     margin-bottom: 0;
 }
 
-/* 철학 카드 소제목만 강조 — 전역 텍스트 토큰과 별도 */
+/* 철학 카드 소제목만 강조 — 브랜드 액센트와 동일 */
 .mg-phi-label {
     font-size: 0.85rem;
-    color: #598e3e;
+    color: var(--accent-sky);
     letter-spacing: 0.02em;
     margin-bottom: 0.75rem;
     font-weight: 600;

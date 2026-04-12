@@ -75,8 +75,8 @@ export default function LocationPage() {
                 background: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
                 padding: '40px 32px',
-                boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                border: '1px solid rgba(168, 213, 186, 0.35)',
+                boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(89, 142, 62, 0.35)',
                 transition: 'all 0.3s ease'
               }}>
                 <h2 style={{
@@ -85,7 +85,7 @@ export default function LocationPage() {
                   color: 'var(--text-main)',
                   marginBottom: '24px',
                   paddingBottom: '16px',
-                  borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
+                  borderBottom: '2px solid rgba(89, 142, 62, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px'
@@ -120,8 +120,8 @@ export default function LocationPage() {
                 background: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
                 padding: '40px 32px',
-                boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                border: '1px solid rgba(168, 213, 186, 0.35)',
+                boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(89, 142, 62, 0.35)',
                 transition: 'all 0.3s ease'
               }}>
                 <h2 style={{
@@ -130,7 +130,7 @@ export default function LocationPage() {
                   color: 'var(--text-main)',
                   marginBottom: '24px',
                   paddingBottom: '16px',
-                  borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
+                  borderBottom: '2px solid rgba(89, 142, 62, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px'
@@ -174,8 +174,8 @@ export default function LocationPage() {
               background: '#ffffff',
               borderRadius: 'var(--radius-lg)',
               padding: '40px 32px',
-              boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-              border: '1px solid rgba(168, 213, 186, 0.35)',
+              boxShadow: '0 6px 24px rgba(89, 142, 62, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+              border: '1px solid rgba(89, 142, 62, 0.35)',
               marginBottom: '64px'
             }}>
               <h2 style={{
@@ -184,7 +184,7 @@ export default function LocationPage() {
                 color: 'var(--text-main)',
                 marginBottom: '24px',
                 paddingBottom: '16px',
-                borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
+                borderBottom: '2px solid rgba(89, 142, 62, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
@@ -196,7 +196,7 @@ export default function LocationPage() {
                 height: '400px',
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
-                border: '2px solid rgba(168, 213, 186, 0.3)',
+                border: '2px solid rgba(89, 142, 62, 0.3)',
                 position: 'relative',
                 background: '#f5f5f5'
               }}>
@@ -235,16 +235,16 @@ export default function LocationPage() {
                     fontSize: '0.875rem',
                     fontWeight: '600',
                     textDecoration: 'none',
-                    border: '1px solid rgba(168, 213, 186, 0.3)',
+                    border: '1px solid rgba(89, 142, 62, 0.3)',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(168, 213, 186, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.5)';
+                    e.currentTarget.style.background = 'rgba(89, 142, 62, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(89, 142, 62, 0.5)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.3)';
+                    e.currentTarget.style.borderColor = 'rgba(89, 142, 62, 0.3)';
                   }}
                 >
                   구글 지도
@@ -261,16 +261,16 @@ export default function LocationPage() {
                     fontSize: '0.875rem',
                     fontWeight: '600',
                     textDecoration: 'none',
-                    border: '1px solid rgba(168, 213, 186, 0.3)',
+                    border: '1px solid rgba(89, 142, 62, 0.3)',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(168, 213, 186, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.5)';
+                    e.currentTarget.style.background = 'rgba(89, 142, 62, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(89, 142, 62, 0.5)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.3)';
+                    e.currentTarget.style.borderColor = 'rgba(89, 142, 62, 0.3)';
                   }}
                 >
                   네이버 지도

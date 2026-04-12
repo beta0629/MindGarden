@@ -368,7 +368,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               }} className="reviews-title">
                 마인드가든<br />
                 <span style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #4F46E5 100%)',
+                  background: 'linear-gradient(135deg, #598e3e 0%, #4F46E5 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -393,15 +393,15 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   marginTop: '1rem',
                   fontSize: '1rem',
                   fontWeight: '700',
-                  color: '#10B981',
+                  color: '#598e3e',
                   textDecoration: 'none',
                   transition: 'color 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#059669';
+                  e.currentTarget.style.color = '#4a7530';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#10B981';
+                  e.currentTarget.style.color = '#598e3e';
                 }}
               >
                 전체 후기 보러가기
@@ -517,13 +517,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           }}>
                             <div style={{
                               height: '100%',
-                              background: key === 'professionalism' ? '#4F46E5' : '#10B981',
+                              background: key === 'professionalism' ? '#4F46E5' : '#598e3e',
                               width: `${percentage}%`,
                               borderRadius: '9999px',
                             }} />
                           </div>
                           <span style={{
-                            color: key === 'professionalism' ? '#4F46E5' : '#10B981',
+                            color: key === 'professionalism' ? '#4F46E5' : '#598e3e',
                             fontWeight: '700',
                           }}>
                             {stat.average.toFixed(1)}
@@ -545,7 +545,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               className="best-review-section"
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #5f7a64 0%, var(--accent-cta) 100%)',
+                background: 'linear-gradient(135deg, #598e3e 0%, var(--accent-cta) 100%)',
                 borderRadius: '1.5rem',
                 padding: '2rem',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -695,7 +695,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         width: '2.5rem',
                         height: '2.5rem',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #5f7a64 0%, var(--accent-cta) 100%)',
+                        background: 'linear-gradient(135deg, #598e3e 0%, var(--accent-cta) 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -729,7 +729,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     <Link
                       href={`/reviews#review-${bestReview.id}`}
                       style={{
-                        background: '#5f7a64',
+                        background: '#598e3e',
                         color: 'white',
                         padding: '0.5rem 1rem',
                         borderRadius: '0.5rem',
@@ -743,7 +743,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         e.currentTarget.style.background = 'var(--accent-cta)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#5f7a64';
+                        e.currentTarget.style.background = '#598e3e';
                       }}
                     >
                       전체 읽기
@@ -774,7 +774,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 <span style={{
                   width: '0.5rem',
                   height: '2rem',
-                  background: '#10B981',
+                  background: '#598e3e',
                   borderRadius: '9999px',
                   marginRight: '0.75rem',
                 }} />
@@ -803,7 +803,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 paddingRight: '1rem',
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'thin',
-                scrollbarColor: '#10B981 transparent',
+                scrollbarColor: '#598e3e transparent',
               }}
               onScroll={() => {
                 // 자동 스크롤이 아닐 때만 lastScrollTime 업데이트
@@ -866,7 +866,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         left: 0,
                         right: 0,
                         height: '4px',
-                        background: '#10B981',
+                        background: '#598e3e',
                       }} />
                     )}
                     <div>
@@ -891,7 +891,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                               ? 'rgba(226, 232, 240, 0.8)'
                               : 'rgba(224, 231, 255, 0.8)',
                             color: index % 3 === 0
-                              ? '#10B981'
+                              ? '#598e3e'
                               : index % 3 === 1
                               ? 'var(--text-sub)'
                               : '#4F46E5',
@@ -950,7 +950,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                             </div>
                             <span style={{
                               fontSize: '0.625rem',
-                              color: '#10B981',
+                              color: '#598e3e',
                               fontWeight: '700',
                               marginTop: '0.25rem',
                             }}>
@@ -1055,11 +1055,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 border-radius: 4px;
               }
               div::-webkit-scrollbar-thumb {
-                background: #10B981;
+                background: #598e3e;
                 border-radius: 4px;
               }
               div::-webkit-scrollbar-thumb:hover {
-                background: #059669;
+                background: #4a7530;
               }
               
               /* 모바일 기본 스타일 */

@@ -376,3 +376,4 @@
 | 2026-04-10 | **ErpReportModal** 본문 `aria-busy` 코드 반영 확인(SSOT)·**ERP-P4-02** 비고 보강; **병렬 위임** 문서 동기(core-coder·explore·체크리스트) |
 | 2026-04-10 | **FinancialTransactionForm.js** `<form>` `aria-busy` ☑ (core-coder)·**ERP-P4-02** 비고 정합; P4-03 `PurchaseRequestForm` 툴바 도입 explore; **병렬 위임** |
 | 2026-04-10 | **PurchaseRequestForm** `ErpFilterToolbar`·**QuickExpenseForm** `aria-busy` 래퍼(core-coder)·**ERP-P4-02/03** 비고 정합(코드 대조) |
+| 2026-04-10 | develop·main 푸시 — 프론트 ERP P4 배치 반영; GitHub Actions `deploy-frontend-dev.yml`(develop)·`deploy-frontend-prod.yml`(main, paths `frontend/**`) 푸시 시 워크플로 자동 트리거 |

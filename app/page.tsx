@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import MindgardenLandingSections from '@/components/about/MindgardenLandingSections';
@@ -9,11 +8,11 @@ import Footer from '@/components/Footer';
 import HomeScreeningPromo from '@/components/HomeScreeningPromo';
 import SectionTabs from '@/components/SectionTabs';
 import HashScroll from '@/components/HashScroll';
+import HomeProgramPagesFlipGrid from '@/components/HomeProgramPagesFlipGrid';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
 import { homeSectionImages } from '@/lib/home-section-images';
 import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
-import { PROGRAM_PAGE_ORDER, programPageContent } from '@/lib/program-pages-content';
 
 // 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
 export const dynamic = 'force-dynamic';
@@ -207,23 +206,7 @@ export default async function Home() {
                 <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
               </div>
             </div>
-            <div className="program-grid">
-              {PROGRAM_PAGE_ORDER.map((id) => {
-                const p = programPageContent[id];
-                return (
-                  <Link key={id} href={p.href} className="program-card">
-                    <div className="program-title">{p.cardTitle}</div>
-                    <div className="program-body">{p.cardLead}</div>
-                  </Link>
-                );
-              })}
-              <Link href="/screening" className="program-card">
-                <div className="program-title">ADHD &amp; 공존질환 체크리스트</div>
-                <div className="program-body">
-                  주제별 간이 체크리스트로 먼저 살펴보실 수 있어요
-                </div>
-              </Link>
-            </div>
+            <HomeProgramPagesFlipGrid />
           </section>
 
           <section id="gallery" className="content-section content-section-full">

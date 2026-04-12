@@ -3164,6 +3164,26 @@ a.program-card:hover {
     transition-delay: 0.8s;
 }
 
+.mg-delay-5 {
+    transition-delay: 1s;
+}
+
+/* 홈 #program-pages: 센터 소개 블록 밖에 있어도 플립 카드 토큰 적용 */
+.mg-prog-cards-grid--program-pages {
+    --mg-prog-bg: #ffffff;
+    --mg-prog-cream: #f9f8f6;
+    --mg-prog-primary: #4a5d4e;
+    --mg-prog-primary-light: #5f7a64;
+    --mg-prog-secondary: #8c7a6b;
+    --mg-prog-text: #2c2a29;
+    --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.mg-prog-cards-grid--program-pages .mg-prog-card-front h3 {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    line-height: 1.35;
+}
+
 .mg-prog-cards-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

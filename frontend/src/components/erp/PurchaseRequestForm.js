@@ -18,6 +18,7 @@ import ErpPageShell from './shell/ErpPageShell';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import {
   ErpEmptyState,
+  ErpFilterToolbar,
   ErpKpiStatCard,
   ErpSafeNumber,
   ErpSafeText,
@@ -252,7 +253,28 @@ const PurchaseRequestForm = () => {
               />
             </>
           ) : (
-            <section className="mg-v2-purchase-request-form__panel" aria-label="구매 요청서 작성">
+            <>
+              <ErpFilterToolbar
+                ariaLabel="구매 요청 도구"
+                secondaryRow={
+                  <div className="purchase-request-form__toolbar-actions">
+                    <MGButton
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => loadItems({ silent: true })}
+                      loading={silentListRefreshing}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      disabled={loading}
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
+                      aria-label="아이템 목록 새로고침"
+                    >
+                      목록 새로고침
+                    </MGButton>
+                  </div>
+                }
+              />
+              <section className="mg-v2-purchase-request-form__panel" aria-label="구매 요청서 작성">
               <h2 className="mg-v2-purchase-request-form__panel-title">구매 요청서 작성</h2>
               <form onSubmit={handleSubmit}>
                 <div className="mg-v2-form-group">
@@ -442,7 +464,8 @@ const PurchaseRequestForm = () => {
                   </MGButton>
                 </div>
               </form>
-            </section>
+              </section>
+            </>
           )}
         </div>
         )}

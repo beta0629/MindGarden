@@ -163,91 +163,93 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         <SafeErrorDisplay error={error} variant="inline" className="quick-expense-error" />
       )}
 
-      {loadingCodes ? (
-        <UnifiedLoading
-          type="inline"
-          size="small"
-          text="공통 코드를 불러오는 중..."
-          className="quick-expense-loading"
-        />
-      ) : selectedExpense ? (
-        <div className="quick-expense-amount-form">
-          <p className="quick-expense-selected-label">
-            {getLucideIcon(selectedExpense.icon, { size: 20 })}{' '}
-            <ErpSafeText value={selectedExpense.displayName} /> &gt;{' '}
-            <ErpSafeText value={selectedExpense.subDisplayName} />
-          </p>
-          <p className="quick-expense-amount-hint">
-            {isVatApplicable ? '부가세 포함 금액(원)을 입력하세요.' : '금액(원)을 입력하세요. (급여는 부가세 없음)'}
-          </p>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            placeholder="금액 입력"
-            value={amountInput}
-            onChange={(e) => setAmountInput(e.target.value)}
-            className="quick-expense-amount-input"
-            disabled={loading}
-            autoFocus
+      <div className="quick-expense-modal-body" aria-busy={loadingCodes || loading}>
+        {loadingCodes ? (
+          <UnifiedLoading
+            type="inline"
+            size="small"
+            text="공통 코드를 불러오는 중..."
+            className="quick-expense-loading"
           />
-          <div className="quick-expense-amount-actions">
-            <MGButton
-              type="button"
-              variant="secondary"
-              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
-              onClick={closeAmountForm}
+        ) : selectedExpense ? (
+          <div className="quick-expense-amount-form">
+            <p className="quick-expense-selected-label">
+              {getLucideIcon(selectedExpense.icon, { size: 20 })}{' '}
+              <ErpSafeText value={selectedExpense.displayName} /> &gt;{' '}
+              <ErpSafeText value={selectedExpense.subDisplayName} />
+            </p>
+            <p className="quick-expense-amount-hint">
+              {isVatApplicable ? '부가세 포함 금액(원)을 입력하세요.' : '금액(원)을 입력하세요. (급여는 부가세 없음)'}
+            </p>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              placeholder="금액 입력"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value)}
+              className="quick-expense-amount-input"
               disabled={loading}
-            >
-              취소
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="primary"
-              className={buildErpMgButtonClassName({ variant: 'primary', loading })}
-              onClick={submitQuickExpense}
-              loading={loading}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              preventDoubleClick
-            >
-              등록
-            </MGButton>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="quick-expense-categories">
-            {getQuickExpenses().map((expense) => (
+              autoFocus
+            />
+            <div className="quick-expense-amount-actions">
               <MGButton
-                key={`${expense.categoryCode}-${expense.subcategoryCode}`}
                 type="button"
                 variant="secondary"
-                onClick={() => openAmountForm(expense)}
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  loading: false,
-                  className: 'quick-expense-category-btn'
-                })}
+                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                onClick={closeAmountForm}
+                disabled={loading}
               >
-                <div className="quick-expense-category-icon">
-                  {getLucideIcon(expense.icon, { size: 20 })}
-                </div>
-                <div className="quick-expense-category-name">
-                  <ErpSafeText value={expense.displayName} />
-                </div>
-                <div className="quick-expense-category-subname">
-                  <ErpSafeText value={expense.subDisplayName} />
-                </div>
+                취소
               </MGButton>
-            ))}
+              <MGButton
+                type="button"
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                onClick={submitQuickExpense}
+                loading={loading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick
+              >
+                등록
+              </MGButton>
+            </div>
           </div>
-          <div className="quick-expense-info-box">
-            <p className="quick-expense-info-text">
-              {getLucideIcon('Lightbulb', { size: 16 })} 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
-            </p>
-          </div>
-        </>
-      )}
+        ) : (
+          <>
+            <div className="quick-expense-categories">
+              {getQuickExpenses().map((expense) => (
+                <MGButton
+                  key={`${expense.categoryCode}-${expense.subcategoryCode}`}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => openAmountForm(expense)}
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    loading: false,
+                    className: 'quick-expense-category-btn'
+                  })}
+                >
+                  <div className="quick-expense-category-icon">
+                    {getLucideIcon(expense.icon, { size: 20 })}
+                  </div>
+                  <div className="quick-expense-category-name">
+                    <ErpSafeText value={expense.displayName} />
+                  </div>
+                  <div className="quick-expense-category-subname">
+                    <ErpSafeText value={expense.subDisplayName} />
+                  </div>
+                </MGButton>
+              ))}
+            </div>
+            <div className="quick-expense-info-box">
+              <p className="quick-expense-info-text">
+                {getLucideIcon('Lightbulb', { size: 16 })} 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+              </p>
+            </div>
+          </>
+        )}
+      </div>
     </UnifiedModal>
   );
 };

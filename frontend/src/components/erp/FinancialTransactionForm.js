@@ -282,7 +282,7 @@ const FinancialTransactionForm = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} aria-busy={loading || loadingCodes}>
           {/* 거래 유형 */}
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">

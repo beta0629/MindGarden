@@ -19,6 +19,13 @@
   margin-inline: auto;
 }
 
+.purchase-request-form__toolbar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
 .mg-v2-purchase-request-form__panel {
   background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);

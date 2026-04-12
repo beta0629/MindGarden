@@ -168,7 +168,6 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
                   이해 강의, 자기 이해·돌봄·성장 P 등 다수
                 </li>
                 <li>교육학 학사 / 상담학 석사 / 가족상담(박사일부수료)</li>
-                <li>1급 전문상담사 자격 및 다수 슈퍼비전·교육 경력</li>
               </ul>
             </div>
             <blockquote className="mg-director-blockquote">

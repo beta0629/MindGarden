@@ -22,7 +22,7 @@ interface Counselor {
 const HEAD_COUNSELOR = {
   name: '김선희',
   title: '대표원장',
-  imageUrl: '/assets/images/counselors/default-profile.png',
+  imageUrl: '/assets/images/counselors/kim-sunhee-director.png',
   specialties: [
     'ADHD, ADD(조용한 ADHD)',
     '틱, 투렛',

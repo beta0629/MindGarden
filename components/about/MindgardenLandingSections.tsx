@@ -10,8 +10,8 @@ const HERO_BG =
   'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=2000';
 /** 로컬 생성 이미지 — 센터 외관·정원 톤(화이트·그린), JPEG로 용량 축소(서버 이미지 최적화 안정화) */
 const IDENTITY_IMG = '/assets/images/mg-identity-exterior.jpg';
-/** 대표원장 실사 (카페 촬영 원본을 중앙·오프셋 크롭) */
-const DIRECTOR_IMG = '/images/director-portrait.png';
+/** 대표원장 실사 — 상담사 페이지와 동일(얼굴·목 중심 크롭) */
+const DIRECTOR_IMG = '/assets/images/counselors/kim-sunhee-director.png';
 const PHILOSOPHY_IMG =
   'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1000';
 
@@ -139,8 +139,8 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               <Image
                 src={DIRECTOR_IMG}
                 alt="대표원장"
-                width={620}
-                height={780}
+                width={520}
+                height={520}
                 className="mg-director-img"
                 sizes="(max-width: 900px) 100vw, 45vw"
               />

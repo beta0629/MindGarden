@@ -191,7 +191,7 @@ export default function Banner({ banners }: BannerProps) {
     <div
       style={{
         width: '100%',
-        backgroundColor: '#B8956A',
+        backgroundColor: 'var(--accent-cta)',
         borderBottom: '1px solid rgba(184, 149, 106, 0.3)',
         position: 'relative',
         overflow: 'hidden',

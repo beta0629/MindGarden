@@ -97,7 +97,7 @@ export default function GalleryPage() {
                   padding: '0.625rem 1.25rem',
                   borderRadius: '2rem',
                   border: 'none',
-                  backgroundColor: selectedCategory === null ? '#B8956A' : '#f1f5f9',
+                  backgroundColor: selectedCategory === null ? 'var(--accent-cta)' : '#f1f5f9',
                   color: selectedCategory === null ? 'white' : '#64748b',
                   fontSize: '0.875rem',
                   fontWeight: selectedCategory === null ? '600' : '500',
@@ -115,7 +115,7 @@ export default function GalleryPage() {
                     padding: '0.625rem 1.25rem',
                     borderRadius: '2rem',
                     border: 'none',
-                    backgroundColor: selectedCategory === cat.value ? '#B8956A' : '#f1f5f9',
+                    backgroundColor: selectedCategory === cat.value ? 'var(--accent-cta)' : '#f1f5f9',
                     color: selectedCategory === cat.value ? 'white' : '#64748b',
                     fontSize: '0.875rem',
                     fontWeight: selectedCategory === cat.value ? '600' : '500',
@@ -147,7 +147,7 @@ export default function GalleryPage() {
                       color: '#1e293b',
                       marginBottom: '1.5rem',
                       paddingBottom: '0.75rem',
-                      borderBottom: '2px solid #B8956A',
+                      borderBottom: '2px solid var(--accent-cta)',
                     }}>
                       {category}
                     </h2>

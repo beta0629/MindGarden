@@ -88,7 +88,7 @@ export default function CounselorDetailPage() {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.625rem 1.25rem',
-                  backgroundColor: '#B8956A',
+                  backgroundColor: 'var(--accent-cta)',
                   color: 'white',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -98,12 +98,12 @@ export default function CounselorDetailPage() {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#A0825A';
+                  e.currentTarget.style.backgroundColor = 'var(--accent-cta-hover)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#B8956A';
+                  e.currentTarget.style.backgroundColor = 'var(--accent-cta)';
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }}
@@ -136,7 +136,7 @@ export default function CounselorDetailPage() {
                   gap: '0.5rem',
                   marginBottom: '2rem',
                   padding: '0.625rem 1.25rem',
-                  backgroundColor: '#B8956A',
+                  backgroundColor: 'var(--accent-cta)',
                   color: 'white',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -146,12 +146,12 @@ export default function CounselorDetailPage() {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#A0825A';
+                  e.currentTarget.style.backgroundColor = 'var(--accent-cta-hover)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#B8956A';
+                  e.currentTarget.style.backgroundColor = 'var(--accent-cta)';
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }}

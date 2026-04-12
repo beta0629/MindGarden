@@ -330,7 +330,7 @@ export default function ReviewsPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
-              backgroundColor: '#B8956A',
+              backgroundColor: 'var(--accent-cta)',
               color: 'white',
               padding: '0.625rem 1.25rem',
               borderRadius: '0.75rem',
@@ -345,11 +345,11 @@ export default function ReviewsPage() {
             }}
             className="write-review-button"
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#A0825A';
+              e.currentTarget.style.backgroundColor = 'var(--accent-cta-hover)';
               e.currentTarget.style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#B8956A';
+              e.currentTarget.style.backgroundColor = 'var(--accent-cta)';
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
@@ -370,7 +370,7 @@ export default function ReviewsPage() {
             {/* 평균 만족도 카드 */}
             {stats && stats.ratingStats.overall.count > 0 && (
               <div style={{
-                backgroundColor: '#B8956A',
+                backgroundColor: 'var(--accent-cta)',
                 borderRadius: '1.5rem',
                 padding: '1.5rem',
                 color: 'white',
@@ -655,7 +655,7 @@ export default function ReviewsPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    backgroundColor: '#B8956A',
+                    backgroundColor: 'var(--accent-cta)',
                     color: 'white',
                     padding: '0.5rem 0.9rem',
                     borderRadius: '0.75rem',
@@ -679,7 +679,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'latest' ? '600' : '500',
-                    backgroundColor: sortBy === 'latest' ? '#B8956A' : 'transparent',
+                    backgroundColor: sortBy === 'latest' ? 'var(--accent-cta)' : 'transparent',
                     color: sortBy === 'latest' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -699,7 +699,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingHigh' ? '600' : '500',
-                    backgroundColor: sortBy === 'ratingHigh' ? '#B8956A' : 'transparent',
+                    backgroundColor: sortBy === 'ratingHigh' ? 'var(--accent-cta)' : 'transparent',
                     color: sortBy === 'ratingHigh' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -719,7 +719,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingLow' ? '600' : '500',
-                    backgroundColor: sortBy === 'ratingLow' ? '#B8956A' : 'transparent',
+                    backgroundColor: sortBy === 'ratingLow' ? 'var(--accent-cta)' : 'transparent',
                     color: sortBy === 'ratingLow' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -805,7 +805,7 @@ export default function ReviewsPage() {
                   style={{
                     display: 'inline-block',
                     padding: '0.625rem 1.25rem',
-                    backgroundColor: '#B8956A',
+                    backgroundColor: 'var(--accent-cta)',
                     color: 'white',
                     borderRadius: '0.75rem',
                     textDecoration: 'none',
@@ -814,10 +814,10 @@ export default function ReviewsPage() {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#A0825A';
+                    e.currentTarget.style.backgroundColor = 'var(--accent-cta-hover)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#B8956A';
+                    e.currentTarget.style.backgroundColor = 'var(--accent-cta)';
                   }}
                 >
                   첫 후기 작성하기

@@ -114,7 +114,7 @@ export default function TestPage() {
                   color: 'white',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(255, 212, 184, 0.4)',
+                  boxShadow: '0 4px 12px rgba(168, 213, 186, 0.4)',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
               >

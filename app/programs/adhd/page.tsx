@@ -189,7 +189,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(255, 212, 184, 0.3)',
+                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -239,7 +239,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(255, 212, 184, 0.3)',
+                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -289,7 +289,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(255, 212, 184, 0.3)',
+                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -339,7 +339,7 @@ export default function AdhdProgramPage() {
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      backgroundColor: 'rgba(255, 212, 184, 0.3)',
+                      backgroundColor: 'rgba(168, 213, 186, 0.3)',
                       color: 'var(--accent-peach)',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.875rem',
@@ -395,7 +395,7 @@ export default function AdhdProgramPage() {
                     color: 'white',
                     border: 'none',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(255, 212, 184, 0.4)',
+                    boxShadow: '0 4px 12px rgba(168, 213, 186, 0.4)',
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
                 >

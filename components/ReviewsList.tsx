@@ -545,7 +545,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               className="best-review-section"
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
+                background: 'linear-gradient(135deg, #5f7a64 0%, var(--accent-cta) 100%)',
                 borderRadius: '1.5rem',
                 padding: '2rem',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -634,7 +634,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </div>
                 <div style={{
                   gridColumn: 'span 12',
-                  background: '#FFF8E7',
+                  background: '#f8fafc',
                   backdropFilter: 'blur(12px)',
                   borderRadius: '1rem',
                   padding: '1.5rem',
@@ -695,7 +695,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         width: '2.5rem',
                         height: '2.5rem',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
+                        background: 'linear-gradient(135deg, #5f7a64 0%, var(--accent-cta) 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -729,7 +729,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     <Link
                       href={`/reviews#review-${bestReview.id}`}
                       style={{
-                        background: '#D4A574',
+                        background: '#5f7a64',
                         color: 'white',
                         padding: '0.5rem 1rem',
                         borderRadius: '0.5rem',
@@ -740,10 +740,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#B8956A';
+                        e.currentTarget.style.background = 'var(--accent-cta)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#D4A574';
+                        e.currentTarget.style.background = '#5f7a64';
                       }}
                     >
                       전체 읽기

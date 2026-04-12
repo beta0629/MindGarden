@@ -143,7 +143,7 @@ export default function GalleryDetailPage() {
                 style={{
                   display: 'inline-block',
                   padding: '0.625rem 1.25rem',
-                  backgroundColor: '#B8956A',
+                  backgroundColor: 'var(--accent-cta)',
                   color: 'white',
                   borderRadius: '0.5rem',
                   textDecoration: 'none',
@@ -175,7 +175,7 @@ export default function GalleryDetailPage() {
                 gap: '0.5rem',
                 marginBottom: '2rem',
                 padding: '0.625rem 1.25rem',
-                backgroundColor: '#B8956A',
+                backgroundColor: 'var(--accent-cta)',
                 color: 'white',
                 textDecoration: 'none',
                 fontSize: '0.875rem',
@@ -185,12 +185,12 @@ export default function GalleryDetailPage() {
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#A0825A';
+                e.currentTarget.style.backgroundColor = 'var(--accent-cta-hover)';
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8956A';
+                e.currentTarget.style.backgroundColor = 'var(--accent-cta)';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
@@ -313,7 +313,7 @@ export default function GalleryDetailPage() {
                 }}>
                   <span style={{
                     padding: '0.25rem 0.75rem',
-                    backgroundColor: '#B8956A',
+                    backgroundColor: 'var(--accent-cta)',
                     color: 'white',
                     borderRadius: '9999px',
                     fontSize: '0.75rem',
@@ -363,7 +363,7 @@ export default function GalleryDetailPage() {
                           borderRadius: '0.5rem',
                           overflow: 'hidden',
                           backgroundColor: '#f1f5f9',
-                          border: currentIndex === idx ? '3px solid #B8956A' : '1px solid #e2e8f0',
+                          border: currentIndex === idx ? '3px solid var(--accent-cta)' : '1px solid #e2e8f0',
                           cursor: 'pointer',
                           transition: 'all 0.2s',
                         }}

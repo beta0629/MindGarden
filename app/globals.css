@@ -12,26 +12,30 @@
 
 /* CSS Reset & Variables */
 :root {
-    /* 문서 바탕(html/body/main)은 아래에서 #fff 고정. 토큰은 섹션·카드 대비용 */
-    --bg-color: #fff8f0;
-    --bg-light: #fff5e6;
-    --bg-pastel-1: #fef7ed;
-    --bg-pastel-2: #fff5e6;
-    
+    /* 베이지·크림 제거 — 화이트 톤 + 민트 보더 */
+    --bg-color: #ffffff;
+    --bg-light: #ffffff;
+    --bg-pastel-1: #ffffff;
+    --bg-pastel-2: #ffffff;
+
     --text-main: #2c2c2c;
     --text-sub: #6b6b6b;
     --text-light: #9a9a9a;
-    
-    /* 파스텔 액센트 컬러 */
-    --accent-sky: #A8D5BA;
-    --accent-peach: #FFD4B8;
-    --accent-lavender: #E8D5E3;
-    --accent-mint: #C4E6D4;
-    --accent-yellow: #FFF4D4;
-    
+
+    /* 액센트(히어로 등): 따뜻한 피치·베이지 대신 쿨 민트·라벤더 */
+    --accent-sky: #a8d5ba;
+    --accent-peach: #d4e8dc;
+    --accent-lavender: #e8e4ef;
+    --accent-mint: #c4e6d4;
+    --accent-yellow: #eef6f1;
+
     --white: #ffffff;
     --shadow-soft: rgba(0, 0, 0, 0.05);
     --shadow-medium: rgba(0, 0, 0, 0.08);
+
+    /* 브랜드 CTA(구 베이지 브라운 대체) */
+    --accent-cta: #4a5d4e;
+    --accent-cta-hover: #3d4f42;
 
     /* Design tokens (consistency) */
     --radius-sm: 12px;
@@ -42,8 +46,8 @@
     --border-strong: rgba(168, 213, 186, 0.42);
 
     --surface-0: #ffffff;
-    --surface-1: rgba(255, 252, 248, 0.98);
-    --surface-2: rgba(255, 250, 245, 0.92);
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
 
     --shadow-1: 0 8px 30px rgba(0, 0, 0, 0.06);
     --shadow-2: 0 14px 45px rgba(0, 0, 0, 0.10);
@@ -652,7 +656,7 @@ main {
 .adhd-self-check-btn-primary {
     background-color: var(--accent-peach);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(255, 212, 184, 0.4);
+    box-shadow: 0 4px 12px rgba(168, 213, 186, 0.4);
 }
 
 .adhd-self-check-btn-primary:hover {
@@ -1326,8 +1330,8 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 
 .section-tab.active {
     color: var(--text-main);
-    background: rgba(255, 212, 184, 0.5);
-    border-color: rgba(255, 212, 184, 0.75);
+    background: rgba(168, 213, 186, 0.5);
+    border-color: rgba(168, 213, 186, 0.75);
 }
 
 .content-section {
@@ -1462,11 +1466,11 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 }
 
 .counseling-type-card {
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
+    background: #ffffff;
     border-radius: var(--radius-lg);
     padding: 40px 32px;
-    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(255, 212, 184, 0.35);
+    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(168, 213, 186, 0.35);
 }
 
 .counseling-type-card-title {
@@ -1475,7 +1479,7 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     color: var(--text-main);
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 2px solid rgba(255, 212, 184, 0.3);
+    border-bottom: 2px solid rgba(168, 213, 186, 0.3);
     line-height: 1.5;
     letter-spacing: -0.01em;
     word-break: keep-all;
@@ -1515,9 +1519,9 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     margin: 48px auto 64px;
     padding: 32px;
     border-radius: var(--radius-lg);
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
-    border: 1px solid rgba(255, 212, 184, 0.35);
-    box-shadow: 0 4px 20px rgba(255, 212, 184, 0.2);
+    background: #ffffff;
+    border: 1px solid rgba(168, 213, 186, 0.35);
+    box-shadow: 0 4px 20px rgba(168, 213, 186, 0.2);
 }
 
 .counseling-type-cta-title {
@@ -1675,10 +1679,10 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 .feature-card,
 .program-card,
 .contact-card {
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
-    border: 1px solid rgba(255, 212, 184, 0.35);
+    background: #ffffff;
+    border: 1px solid rgba(168, 213, 186, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     padding: 18px 16px;
     transition: all 0.2s ease;
 }
@@ -1694,9 +1698,9 @@ a.program-card {
 a.feature-card:hover,
 a.program-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 212, 184, 0.55);
-    background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
+    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(168, 213, 186, 0.55);
+    background: #ffffff;
 }
 
 .feature-title,
@@ -2127,10 +2131,10 @@ a.program-card:hover {
 }
 
 .blog-card {
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
-    border: 1px solid rgba(255, 212, 184, 0.35);
+    background: #ffffff;
+    border: 1px solid rgba(168, 213, 186, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     text-decoration: none;
     color: inherit;
@@ -2141,26 +2145,26 @@ a.program-card:hover {
 
 .blog-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 212, 184, 0.55);
-    background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
+    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(168, 213, 186, 0.55);
+    background: #ffffff;
 }
 
 /* Values Page Styles */
 .value-card {
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
+    background: #ffffff;
     border-radius: var(--radius-lg);
     padding: 40px;
-    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(255, 212, 184, 0.35);
+    box-shadow: 0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(168, 213, 186, 0.35);
     transition: all 0.3s ease;
 }
 
 .value-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 212, 184, 0.55);
-    background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
+    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(168, 213, 186, 0.55);
+    background: #ffffff;
 }
 
 .value-section-card {
@@ -2168,9 +2172,9 @@ a.program-card:hover {
 }
 
 .value-section-card:hover {
-    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 35px rgba(168, 213, 186, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     transform: translateY(-4px);
-    border-color: rgba(255, 212, 184, 0.55);
+    border-color: rgba(168, 213, 186, 0.55);
 }
 
 /* 가치관 `/values` — 블록별 비규격 이미지 (docs/VALUES_PAGE_IMAGE_MEETING.md) */
@@ -2181,9 +2185,9 @@ a.program-card:hover {
 .values-visual__frame {
     overflow: hidden;
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 212, 184, 0.35);
-    box-shadow: 0 4px 18px rgba(255, 212, 184, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
-    background: rgba(255, 252, 248, 0.5);
+    border: 1px solid rgba(168, 213, 186, 0.35);
+    box-shadow: 0 4px 18px rgba(168, 213, 186, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: rgba(248, 250, 252, 0.95);
 }
 
 .values-visual__img {
@@ -2490,7 +2494,7 @@ a.program-card:hover {
     gap: 0.5rem;
     margin-bottom: 2rem;
     padding: 0.625rem 1.25rem;
-    background-color: #B8956A;
+    background-color: var(--accent-cta);
     color: white;
     text-decoration: none;
     font-size: 0.875rem;
@@ -2501,7 +2505,7 @@ a.program-card:hover {
 }
 
 .blog-back-link:hover {
-    background-color: #A0825A;
+    background-color: var(--accent-cta-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -2860,7 +2864,7 @@ a.program-card:hover {
 }
 
 .screening-card {
-    background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
+    background: #ffffff;
     border: 1px solid rgba(168, 213, 186, 0.35);
     border-radius: var(--radius-lg);
     padding: 32px 24px;
@@ -3049,7 +3053,7 @@ a.program-card:hover {
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(255, 212, 184, 0.4);
+    box-shadow: 0 4px 12px rgba(168, 213, 186, 0.4);
     text-decoration: none;
 }
 
@@ -3080,10 +3084,10 @@ a.program-card:hover {
 /* —— 센터 소개(/about/mindgarden) 전문 통합 프로그램 플립 카드 —— */
 .mg-prog-section {
     --mg-prog-bg: #ffffff;
-    --mg-prog-cream: #f9f8f6;
+    --mg-prog-cream: #ffffff;
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #8c7a6b;
+    --mg-prog-secondary: #6b6b6b;
     --mg-prog-text: #2c2a29;
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 
@@ -3171,10 +3175,10 @@ a.program-card:hover {
 /* 홈 #program-pages: 센터 소개 블록 밖에 있어도 플립 카드 토큰 적용 */
 .mg-prog-cards-grid--program-pages {
     --mg-prog-bg: #ffffff;
-    --mg-prog-cream: #f9f8f6;
+    --mg-prog-cream: #ffffff;
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #8c7a6b;
+    --mg-prog-secondary: #6b6b6b;
     --mg-prog-text: #2c2a29;
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -3301,10 +3305,10 @@ a.program-card:hover {
 
 /* —— /about/mindgarden 랜딩형 레이아웃 (히어로·아이덴티티·원장·철학) —— */
 .mg-landing {
-    --mg-landing-cocoa: #685a50;
+    --mg-landing-cocoa: #3d3d3d;
     --mg-landing-green: #4a5d4e;
-    --mg-landing-taupe: #8c7a6b;
-    --mg-landing-cream: #f9f8f6;
+    --mg-landing-taupe: #6b6b6b;
+    --mg-landing-cream: #ffffff;
 }
 
 /* 시맨틱 figure — 그리드에서 넘침 방지 + 기본 마진 제거 */

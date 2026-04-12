@@ -72,11 +72,11 @@ export default function LocationPage() {
             }}>
               {/* 주소 정보 */}
               <div style={{
-                background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
+                background: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
                 padding: '40px 32px',
-                boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                border: '1px solid rgba(255, 212, 184, 0.35)',
+                boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(168, 213, 186, 0.35)',
                 transition: 'all 0.3s ease'
               }}>
                 <h2 style={{
@@ -85,7 +85,7 @@ export default function LocationPage() {
                   color: 'var(--text-main)',
                   marginBottom: '24px',
                   paddingBottom: '16px',
-                  borderBottom: '2px solid rgba(255, 212, 184, 0.3)',
+                  borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px'
@@ -117,11 +117,11 @@ export default function LocationPage() {
 
               {/* 교통 안내 */}
               <div style={{
-                background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
+                background: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
                 padding: '40px 32px',
-                boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-                border: '1px solid rgba(255, 212, 184, 0.35)',
+                boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(168, 213, 186, 0.35)',
                 transition: 'all 0.3s ease'
               }}>
                 <h2 style={{
@@ -130,7 +130,7 @@ export default function LocationPage() {
                   color: 'var(--text-main)',
                   marginBottom: '24px',
                   paddingBottom: '16px',
-                  borderBottom: '2px solid rgba(255, 212, 184, 0.3)',
+                  borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px'
@@ -171,11 +171,11 @@ export default function LocationPage() {
             <div style={{
               maxWidth: '1000px',
               margin: '0 auto',
-              background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
+              background: '#ffffff',
               borderRadius: 'var(--radius-lg)',
               padding: '40px 32px',
-              boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
-              border: '1px solid rgba(255, 212, 184, 0.35)',
+              boxShadow: '0 6px 24px rgba(168, 213, 186, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+              border: '1px solid rgba(168, 213, 186, 0.35)',
               marginBottom: '64px'
             }}>
               <h2 style={{
@@ -184,7 +184,7 @@ export default function LocationPage() {
                 color: 'var(--text-main)',
                 marginBottom: '24px',
                 paddingBottom: '16px',
-                borderBottom: '2px solid rgba(255, 212, 184, 0.3)',
+                borderBottom: '2px solid rgba(168, 213, 186, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
@@ -196,7 +196,7 @@ export default function LocationPage() {
                 height: '400px',
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
-                border: '2px solid rgba(255, 212, 184, 0.3)',
+                border: '2px solid rgba(168, 213, 186, 0.3)',
                 position: 'relative',
                 background: '#f5f5f5'
               }}>
@@ -235,7 +235,7 @@ export default function LocationPage() {
                     fontSize: '0.875rem',
                     fontWeight: '600',
                     textDecoration: 'none',
-                    border: '1px solid rgba(255, 212, 184, 0.3)',
+                    border: '1px solid rgba(168, 213, 186, 0.3)',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
@@ -244,7 +244,7 @@ export default function LocationPage() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 212, 184, 0.3)';
+                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.3)';
                   }}
                 >
                   구글 지도
@@ -261,7 +261,7 @@ export default function LocationPage() {
                     fontSize: '0.875rem',
                     fontWeight: '600',
                     textDecoration: 'none',
-                    border: '1px solid rgba(255, 212, 184, 0.3)',
+                    border: '1px solid rgba(168, 213, 186, 0.3)',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
@@ -270,7 +270,7 @@ export default function LocationPage() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 212, 184, 0.3)';
+                    e.currentTarget.style.borderColor = 'rgba(168, 213, 186, 0.3)';
                   }}
                 >
                   네이버 지도

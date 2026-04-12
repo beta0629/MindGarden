@@ -79,7 +79,7 @@ export default function HomeAboutSection() {
           <h3 className="counseling-type-card-title">🌿 3. 대표원장의 15년 임상 권위와 전문성</h3>
           <div className="counseling-type-card-body">
             <p>
-              <strong>학술:</strong> 교육학 학사 / 상담학 석사 / 가족상담 박사과정(일부 수료)
+              <strong>학술:</strong> 교육학 학사 / 상담학 석사 / 가족상담(박사일부수료)
             </p>
             <p>
               <strong>전문 경력:</strong> 전) 심리연구소 소장(5년), 유명 프랜차이즈 수석 상담사 역임,

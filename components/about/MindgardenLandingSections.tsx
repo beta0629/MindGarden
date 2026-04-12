@@ -159,7 +159,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
                 <li>현) 마인드가든 심리상담센터 대표원장</li>
                 <li>전) 해양경찰·소방 공무원 전문상담사 등 공공 재난·트라우마 현장 경험</li>
                 <li>전) 심리연구소 소장, 유명 프랜차이즈 수석 상담사</li>
-                <li>교육학 학사 / 상담학 석사 / 가족상담 박사과정(일부 수료)</li>
+                <li>교육학 학사 / 상담학 석사 / 가족상담(박사일부수료)</li>
                 <li>1급 전문상담사 자격 및 다수 슈퍼비전·교육 경력</li>
               </ul>
             </div>

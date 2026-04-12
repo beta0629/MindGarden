@@ -180,8 +180,11 @@ export async function POST(request: NextRequest) {
       ALLOW_DATA_ATTR: false,
     });
 
-    // 작성자 이름 검증 및 기본값 설정
-    const finalAuthorName = (authorName && authorName.trim()) ? authorName.trim().substring(0, 100) : '익명';
+    // 작성자 이름: 입력 시 그대로 저장, 미입력 시 UI·목록과 맞춘 중립 표기
+    const finalAuthorName =
+      authorName && String(authorName).trim()
+        ? String(authorName).trim().substring(0, 100)
+        : '고객님';
 
     // 비밀번호 해싱
     const saltRounds = 10;

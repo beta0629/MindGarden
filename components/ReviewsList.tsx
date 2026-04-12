@@ -48,9 +48,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  /** DB 기본값 '익명'은 UI에서 중립 표기로 바꿈. 직접 입력한 이름은 그대로 표시 */
   const displayAuthorName = (name: string) => {
-    const t = name?.trim();
-    return t || '익명';
+    const t = name?.trim() ?? '';
+    if (!t || t === '익명') return '고객님';
+    return t;
   };
 
   // 재미있는 랜덤 이름 생성 (후기 ID 기반으로 결정적 랜덤)
@@ -373,7 +375,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               }} className="reviews-title">
                 마인드가든<br />
                 <span style={{
-                  background: 'linear-gradient(135deg, #598e3e 0%, #4F46E5 100%)',
+                  background: 'linear-gradient(135deg, #598e3e 0%, var(--review-text-strong) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -398,15 +400,15 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   marginTop: '1rem',
                   fontSize: '1rem',
                   fontWeight: '700',
-                  color: '#598e3e',
+                  color: 'var(--review-text-strong)',
                   textDecoration: 'none',
                   transition: 'color 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#4a7530';
+                  e.currentTarget.style.color = 'var(--review-text)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#598e3e';
+                  e.currentTarget.style.color = 'var(--review-text-strong)';
                 }}
               >
                 전체 후기 보러가기
@@ -474,10 +476,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     alignItems: 'center',
                     gap: '0.25rem',
                     marginBottom: '1.5rem',
-                    color: '#FBBF24',
+                    color: '#598e3e',
                   }}>
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} style={{ fontSize: '1.25rem' }}>
+                      <span key={i} style={{ fontSize: '1.25rem', opacity: i < fullStars || (i === fullStars && hasHalfStar) ? 1 : 0.35 }}>
                         {i < fullStars ? '★' : i === fullStars && hasHalfStar ? '☆' : '☆'}
                       </span>
                     ))}
@@ -522,13 +524,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           }}>
                             <div style={{
                               height: '100%',
-                              background: key === 'professionalism' ? '#4F46E5' : '#598e3e',
+                              background: key === 'professionalism' ? '#5a8a42' : '#598e3e',
                               width: `${percentage}%`,
                               borderRadius: '9999px',
                             }} />
                           </div>
                           <span style={{
-                            color: key === 'professionalism' ? '#4F46E5' : '#598e3e',
+                            color: 'var(--review-text-strong)',
                             fontWeight: '700',
                           }}>
                             {stat.average.toFixed(1)}
@@ -625,10 +627,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           key={idx}
                           style={{
                             padding: '0.25rem 0.75rem',
-                            background: 'rgba(79, 70, 229, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.2)',
                             borderRadius: '9999px',
                             fontSize: '0.75rem',
-                            border: '1px solid rgba(129, 140, 248, 0.3)',
+                            border: '1px solid rgba(255, 255, 255, 0.35)',
+                            color: 'rgba(255, 255, 255, 0.95)',
                           }}
                         >
                           #{tag}
@@ -766,10 +769,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
             className="reviews-latest-block"
             style={{
               marginTop: '2.5rem',
-              padding: '1.75rem 1rem 2rem',
-              background: 'var(--hero-cream, #f5f0e6)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(89, 142, 62, 0.12)',
+              padding: '0.5rem 0 1.5rem',
+              background: 'transparent',
+              borderRadius: 0,
+              border: 'none',
             }}
           >
             <div
@@ -920,16 +923,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                                   flexShrink: 0,
                                   background:
                                     index % 3 === 0
-                                      ? 'rgba(209, 250, 229, 0.85)'
+                                      ? 'rgba(89, 142, 62, 0.14)'
                                       : index % 3 === 1
-                                        ? 'rgba(241, 245, 249, 0.95)'
-                                        : 'rgba(224, 231, 255, 0.9)',
-                                  color:
-                                    index % 3 === 0
-                                      ? '#598e3e'
-                                      : index % 3 === 1
-                                        ? 'var(--text-sub)'
-                                        : '#4b5bb5',
+                                        ? 'rgba(89, 142, 62, 0.1)'
+                                        : 'rgba(125, 156, 108, 0.18)',
+                                  color: 'var(--review-text-strong)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -991,7 +989,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                                       size={17}
                                       style={{
                                         color:
-                                          i < overall ? '#e85d5d' : 'rgba(232, 93, 93, 0.28)',
+                                          i < overall ? '#598e3e' : 'rgba(89, 142, 62, 0.28)',
                                       }}
                                     />
                                   ))}
@@ -1025,11 +1023,12 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                                   key={idx}
                                   style={{
                                     padding: '0.28rem 0.65rem',
-                                    background: 'rgba(241, 245, 249, 0.95)',
+                                    background: 'rgba(89, 142, 62, 0.1)',
                                     borderRadius: '9999px',
                                     fontSize: '0.7rem',
-                                    color: '#64748b',
-                                    fontWeight: '500',
+                                    color: 'var(--review-text-strong)',
+                                    fontWeight: '600',
+                                    border: '1px solid rgba(89, 142, 62, 0.2)',
                                   }}
                                 >
                                   #{tag}
@@ -1051,7 +1050,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           )}
                           <p
                             style={{
-                              color: '#78716c',
+                              color: 'var(--review-text-muted)',
                               fontSize: '0.875rem',
                               lineHeight: 1.65,
                               display: '-webkit-box',
@@ -1079,16 +1078,16 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '0.35rem',
-                              color: '#e11d48',
-                              background: 'rgba(255, 241, 242, 0.95)',
+                              color: 'var(--review-text-strong)',
+                              background: 'rgba(89, 142, 62, 0.1)',
                               padding: '0.3rem 0.7rem',
                               borderRadius: '9999px',
                               fontSize: '0.8125rem',
                               fontWeight: '600',
-                              border: '1px solid rgba(254, 205, 211, 0.6)',
+                              border: '1px solid rgba(89, 142, 62, 0.22)',
                             }}
                           >
-                            <HeartGlyph filled size={15} style={{ color: '#e11d48' }} />
+                            <HeartGlyph filled size={15} style={{ color: '#598e3e' }} />
                             {review.likeCount ?? 0}
                           </div>
                           <span

@@ -24,6 +24,12 @@
     --text-sub: #b58974;
     --text-light: #c9a892;
 
+    /* 후기 UI 타이포 — 그린 배지·버튼과 구분되는 갈색 계열 */
+    --review-text-strong: #4a3428;
+    --review-text: #6b4f3d;
+    --review-text-muted: #8b6f56;
+    --review-text-soft: #a68b76;
+
     /* 액센트: 브랜드 그린 #598e3e 계열 */
     --accent-sky: #598e3e;
     --accent-peach: #d0e4c4;
@@ -1312,15 +1318,15 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    background: rgba(241, 245, 249, 0.75);
-    color: #64748b;
+    border: 1px solid rgba(155, 101, 70, 0.2);
+    background: rgba(255, 252, 248, 0.9);
+    color: var(--review-text-muted);
 }
 
 .review-form-tag--on {
     border-color: var(--accent-sky);
     background: rgba(89, 142, 62, 0.12);
-    color: var(--accent-sky);
+    color: var(--review-text-strong);
     font-weight: 600;
 }
 
@@ -1353,6 +1359,14 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 
 .review-form-heart-btn:hover {
     transform: scale(1.08);
+}
+
+/* 후기 피드 본문(저장 HTML) — 기본 갈색, 링크만 그린 */
+.review-feed-html {
+    color: var(--review-text);
+}
+.review-feed-html a {
+    color: var(--accent-cta);
 }
 
 /* Content + LNB */

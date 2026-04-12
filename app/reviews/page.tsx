@@ -311,14 +311,14 @@ export default function ReviewsPage() {
             <h1 style={{
               fontSize: '1.5rem',
               fontWeight: '700',
-              color: '#1e1b4b',
+              color: 'var(--review-text-strong)',
               marginBottom: '0.25rem',
               letterSpacing: '-0.02em',
             }}>
               마인드가든 후기 피드
             </h1>
             <p style={{
-              color: '#64748b',
+              color: 'var(--review-text-muted)',
               fontSize: '0.875rem',
             }}>
               실시간으로 업데이트되는 내담자들의 생생한 후기를 확인하세요.
@@ -353,7 +353,7 @@ export default function ReviewsPage() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            <span style={{ fontSize: '1rem', color: '#4ADE80' }}>✏️</span>
+            <span style={{ fontSize: '1rem', color: '#a8d48a' }}>✏️</span>
             후기 작성하기
           </Link>
         </header>
@@ -488,7 +488,7 @@ export default function ReviewsPage() {
                 <h3 style={{
                   fontSize: '0.875rem',
                   fontWeight: '700',
-                  color: '#1e293b',
+                  color: 'var(--review-text-strong)',
                   marginBottom: '1rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -539,7 +539,7 @@ export default function ReviewsPage() {
                             <span style={{
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: 'rgba(74, 90, 64, 0.92)',
+                              color: 'var(--review-text)',
                             }}>
                               {labels[key] || key}
                             </span>
@@ -563,7 +563,7 @@ export default function ReviewsPage() {
                           <span style={{
                             fontSize: '0.75rem',
                             fontWeight: '700',
-                            color: '#4a6b3a',
+                            color: 'var(--review-text-strong)',
                           }}>
                             {stat.average.toFixed(1)}
                           </span>
@@ -586,7 +586,7 @@ export default function ReviewsPage() {
                 <h3 style={{
                   fontSize: '0.875rem',
                   fontWeight: '700',
-                  color: '#1e293b',
+                  color: 'var(--review-text-strong)',
                   marginBottom: '1rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -607,7 +607,7 @@ export default function ReviewsPage() {
                       key={tag}
                       style={{
                         backgroundColor: 'rgba(89, 142, 62, 0.1)',
-                        color: '#4a6b3a',
+                        color: 'var(--review-text-strong)',
                         padding: '0.375rem 0.75rem',
                         borderRadius: '9999px',
                         fontSize: '0.75rem',
@@ -615,7 +615,7 @@ export default function ReviewsPage() {
                         border: '1px solid rgba(89, 142, 62, 0.22)',
                       }}
                     >
-                      <span style={{ color: '#598e3e', fontWeight: '700' }}>#</span>
+                      <span style={{ color: 'var(--review-text-muted)', fontWeight: '700' }}>#</span>
                       {tag}
                     </span>
                   ))}
@@ -681,7 +681,7 @@ export default function ReviewsPage() {
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'latest' ? '600' : '500',
                     backgroundColor: sortBy === 'latest' ? 'var(--accent-cta)' : 'transparent',
-                    color: sortBy === 'latest' ? 'white' : '#475569',
+                    color: sortBy === 'latest' ? 'white' : 'var(--review-text-muted)',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -701,7 +701,7 @@ export default function ReviewsPage() {
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingHigh' ? '600' : '500',
                     backgroundColor: sortBy === 'ratingHigh' ? 'var(--accent-cta)' : 'transparent',
-                    color: sortBy === 'ratingHigh' ? 'white' : '#475569',
+                    color: sortBy === 'ratingHigh' ? 'white' : 'var(--review-text-muted)',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -721,7 +721,7 @@ export default function ReviewsPage() {
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingLow' ? '600' : '500',
                     backgroundColor: sortBy === 'ratingLow' ? 'var(--accent-cta)' : 'transparent',
-                    color: sortBy === 'ratingLow' ? 'white' : '#475569',
+                    color: sortBy === 'ratingLow' ? 'white' : 'var(--review-text-muted)',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -742,7 +742,7 @@ export default function ReviewsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   paddingLeft: '1rem',
-                  color: '#94a3b8',
+                  color: 'var(--review-text-soft)',
                   pointerEvents: 'none',
                 }}>
                   <SearchGlyph size={18} />
@@ -761,7 +761,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     border: 'none',
                     backgroundColor: '#f8fafc',
-                    color: '#1e293b',
+                    color: 'var(--review-text-strong)',
                     fontSize: '0.875rem',
                     boxShadow: 'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)',
                   }}
@@ -794,13 +794,13 @@ export default function ReviewsPage() {
                 <div className="spinner"></div>
                 <span style={{
                   fontSize: '0.875rem',
-                  color: '#94a3b8',
+                  color: 'var(--review-text-soft)',
                   fontWeight: '500',
                 }}>후기를 불러오는 중...</span>
               </div>
             ) : reviews.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-                <p style={{ color: '#64748b', marginBottom: '1rem' }}>등록된 후기가 없습니다.</p>
+                <p style={{ color: 'var(--review-text-muted)', marginBottom: '1rem' }}>등록된 후기가 없습니다.</p>
                 <Link
                   href="/reviews/new"
                   style={{
@@ -901,7 +901,7 @@ export default function ReviewsPage() {
                           <div>
                             <h3 style={{
                               fontWeight: '700',
-                              color: '#1e293b',
+                              color: 'var(--review-text-strong)',
                               fontSize: '1rem',
                               marginBottom: '0.25rem',
                             }} className="review-title">
@@ -913,7 +913,7 @@ export default function ReviewsPage() {
                               gap: '0.5rem',
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: 'rgba(74, 90, 64, 0.88)',
+                              color: 'var(--review-text-muted)',
                               marginTop: '0.25rem',
                             }}>
                               <span>
@@ -933,9 +933,9 @@ export default function ReviewsPage() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.25rem',
-                                color: 'rgba(74, 90, 64, 0.92)',
+                                color: 'var(--review-text)',
                               }}>
-                                <span style={{ fontSize: '0.8rem', color: 'rgba(89, 142, 62, 0.85)' }}>✓</span>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--review-text-muted)' }}>✓</span>
                                 {randomName}
                               </span>
                             </div>
@@ -974,7 +974,7 @@ export default function ReviewsPage() {
                                   <span style={{
                                     fontSize: '0.75rem',
                                     fontWeight: '600',
-                                    color: '#64748b',
+                                    color: 'var(--review-text-muted)',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
                                   }}>
@@ -990,8 +990,9 @@ export default function ReviewsPage() {
                       {/* 후기 내용 */}
                       <div style={{ marginBottom: '1.5rem', padding: '0 0.25rem' }}>
                         <div
+                          className="review-feed-html"
                           style={{
-                            color: '#334155',
+                            color: 'var(--review-text)',
                             fontSize: '0.9375rem',
                             lineHeight: '1.75',
                             whiteSpace: 'pre-line',
@@ -1012,7 +1013,7 @@ export default function ReviewsPage() {
                                   padding: '0.375rem 0.75rem',
                                   borderRadius: '9999px',
                                   backgroundColor: 'rgba(89, 142, 62, 0.1)',
-                                  color: '#4a6b3a',
+                                  color: 'var(--review-text-strong)',
                                   fontSize: '0.75rem',
                                   fontWeight: '700',
                                   border: '1px solid rgba(89, 142, 62, 0.22)',
@@ -1049,7 +1050,7 @@ export default function ReviewsPage() {
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: likedReviews.has(review.id) ? 'default' : 'pointer',
-                            color: likedReviews.has(review.id) ? '#598e3e' : '#64748b',
+                            color: likedReviews.has(review.id) ? '#598e3e' : 'var(--review-text-muted)',
                             fontSize: '0.875rem',
                             fontWeight: '600',
                             transition: 'all 0.2s',
@@ -1057,13 +1058,13 @@ export default function ReviewsPage() {
                           onMouseEnter={(e) => {
                             if (!likedReviews.has(review.id)) {
                               e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
-                              e.currentTarget.style.color = '#4a7530';
+                              e.currentTarget.style.color = 'var(--review-text-strong)';
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!likedReviews.has(review.id)) {
                               e.currentTarget.style.backgroundColor = 'transparent';
-                              e.currentTarget.style.color = '#64748b';
+                              e.currentTarget.style.color = 'var(--review-text-muted)';
                             }
                           }}
                         >
@@ -1072,7 +1073,7 @@ export default function ReviewsPage() {
                               filled={likedReviews.has(review.id)}
                               size={20}
                               style={{
-                                color: likedReviews.has(review.id) ? '#598e3e' : '#94a3b8',
+                                color: likedReviews.has(review.id) ? '#598e3e' : 'var(--review-text-soft)',
                               }}
                             />
                           </span>
@@ -1096,7 +1097,7 @@ export default function ReviewsPage() {
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#64748b',
+                            color: 'var(--review-text-muted)',
                             fontSize: '0.875rem',
                             fontWeight: '600',
                             textDecoration: 'none',
@@ -1105,11 +1106,11 @@ export default function ReviewsPage() {
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
-                            e.currentTarget.style.color = '#4a7530';
+                            e.currentTarget.style.color = 'var(--review-text-strong)';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#64748b';
+                            e.currentTarget.style.color = 'var(--review-text-muted)';
                           }}
                         >
                           수정
@@ -1128,21 +1129,21 @@ export default function ReviewsPage() {
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#64748b',
+                            color: 'var(--review-text-muted)',
                             fontSize: '0.875rem',
                             fontWeight: '600',
                             transition: 'all 0.2s',
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
-                            e.currentTarget.style.color = '#4a7530';
+                            e.currentTarget.style.color = 'var(--review-text-strong)';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#64748b';
+                            e.currentTarget.style.color = 'var(--review-text-muted)';
                           }}
                         >
-                          <span style={{ display: 'flex', color: '#64748b' }}>
+                          <span style={{ display: 'flex', color: 'inherit' }}>
                             <LinkGlyph size={20} />
                           </span>
                           <span>공유</span>
@@ -1165,7 +1166,7 @@ export default function ReviewsPage() {
                     <div className="spinner"></div>
                     <span style={{
                       fontSize: '0.875rem',
-                      color: '#94a3b8',
+                      color: 'var(--review-text-soft)',
                       fontWeight: '500',
                     }}>후기 더 불러오는 중...</span>
                   </div>
@@ -1185,7 +1186,7 @@ export default function ReviewsPage() {
         .spinner {
           border: 3px solid rgba(226, 232, 240, 0.3);
           border-radius: 50%;
-          border-top: 3px solid #4ADE80;
+          border-top: 3px solid #598e3e;
           width: 28px;
           height: 28px;
           animation: spin 1s linear infinite;

@@ -146,7 +146,7 @@ export default function NewReviewPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          authorName: formData.authorName || '익명',
+          authorName: formData.authorName.trim() || undefined,
           content: formData.content,
           password: formData.password,
           tags: formData.tags,
@@ -202,7 +202,7 @@ export default function NewReviewPage() {
                     type="text"
                     value={formData.authorName}
                     onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
-                    placeholder="비워두면 익명으로 표시됩니다"
+                    placeholder="입력 시 후기에 표시됩니다 (미입력 시 고객님)"
                     maxLength={100}
                     className="review-form-input"
                     autoComplete="nickname"
@@ -261,8 +261,8 @@ export default function NewReviewPage() {
                                 style={{
                                   color:
                                     heart <= formData.ratings[category.key as keyof typeof formData.ratings]
-                                      ? '#e85d5d'
-                                      : '#cbd5e1',
+                                      ? '#598e3e'
+                                      : 'rgba(89, 142, 62, 0.22)',
                                 }}
                               />
                             </button>

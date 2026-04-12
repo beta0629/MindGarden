@@ -663,14 +663,14 @@ main {
 
 .adhd-self-check-btn-primary {
     background-color: var(--accent-cta);
-    color: var(--text-main);
+    color: #fff;
     border: 1px solid rgba(74, 55, 48, 0.14);
     box-shadow: 0 4px 12px rgba(89, 142, 62, 0.38);
 }
 
 .adhd-self-check-btn-primary:hover {
     filter: brightness(1.06);
-    color: var(--text-main);
+    color: #fff;
 }
 
 /* 프로그램 하단 「상담 예약하기」— 그린 배경 + 화이트 텍스트 */
@@ -3362,6 +3362,39 @@ a.program-card:hover {
 }
 
 /* Screening Hub & Flow Styles */
+/* GNB·LNB·푸터: 스크리닝 페이지는 Navigation/Footer를 쓰지 않음(집중형). 루트 레이아웃의 바텀시트만 공통. */
+.screening-layout {
+    position: relative;
+    min-height: 100vh;
+    background: linear-gradient(165deg, #eef4f1 0%, #f8f6f2 48%, #f0f3f1 100%);
+}
+
+/* 마인드가든 로고(나비) 워터마크 — 고정·비포인터, 본문은 위 레이어 */
+.screening-layout::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('/assets/images/logo/logo.png');
+    background-repeat: no-repeat;
+    background-position: center 40%;
+    background-size: min(820px, 88vw);
+    opacity: 0.07;
+}
+
+.screening-layout > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 640px) {
+    .screening-layout::before {
+        background-size: min(520px, 96vw);
+        opacity: 0.07;
+    }
+}
+
 /* 하단: ConsultationBottomSheet 접힘 높이(~112px) + 스크롤 여유 — COLLAPSED_PX와 맞출 것 */
 .screening-hub {
     padding: 4rem 20px calc(112px + 4rem);
@@ -3390,25 +3423,107 @@ a.program-card:hover {
     gap: 24px;
 }
 
-.screening-card {
-    background: #ffffff;
-    border: 1px solid rgba(89, 142, 62, 0.35);
-    border-radius: var(--radius-lg);
-    padding: 32px 24px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+/* 체크리스트 허브 카드 — 마우스 오버(및 키보드 포커스) 시 Y축 뒤집힘 */
+.screening-card-link {
+    display: block;
     text-decoration: none;
     color: inherit;
-    transition: all 0.3s ease;
+    perspective: 1100px;
+    border-radius: var(--radius-lg);
+    outline: none;
+}
+
+.screening-card-link:focus-visible {
+    box-shadow: 0 0 0 3px rgba(89, 142, 62, 0.45);
+}
+
+.screening-card-flip {
+    min-height: 280px;
+}
+
+.screening-card-inner {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    transform-style: preserve-3d;
+    transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.screening-card-link:hover .screening-card-inner,
+.screening-card-link:focus-visible .screening-card-inner {
+    transform: rotateY(180deg);
+}
+
+.screening-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    box-sizing: border-box;
+}
+
+.screening-card-front {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     text-align: center;
+    padding: 32px 24px;
+    background: #ffffff;
+    border: 1px solid rgba(89, 142, 62, 0.35);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
 }
 
-.screening-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
-    border-color: rgba(89, 142, 62, 0.6);
+.screening-card-link:hover .screening-card-front,
+.screening-card-link:focus-visible .screening-card-front {
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+    border-color: rgba(89, 142, 62, 0.55);
+}
+
+.screening-card-back {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 28px 22px;
+    transform: rotateY(180deg);
+    background: linear-gradient(160deg, #f3f8f4 0%, #e8f0ea 55%, #f6f3ee 100%);
+    border: 1px solid rgba(89, 142, 62, 0.45);
+    box-shadow: 0 8px 28px rgba(89, 142, 62, 0.12);
+}
+
+.screening-card-back-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(89, 142, 62, 0.95);
+    margin-bottom: 10px;
+}
+
+.screening-card-back-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 14px;
+    line-height: 1.35;
+    word-break: keep-all;
+}
+
+.screening-card-back-hint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+    word-break: keep-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .screening-card-inner {
+        transition: none;
+    }
 }
 
 .screening-card-icon {
@@ -3416,6 +3531,7 @@ a.program-card:hover {
     height: 64px;
     margin-bottom: 20px;
     color: var(--accent-sky);
+    flex-shrink: 0;
 }
 
 .screening-card-title {
@@ -3573,7 +3689,7 @@ a.program-card:hover {
     justify-content: center;
     padding: 16px 32px;
     background-color: var(--accent-cta);
-    color: var(--text-main);
+    color: #fff;
     font-size: 1.1rem;
     font-weight: 600;
     border-radius: 999px;
@@ -3586,7 +3702,7 @@ a.program-card:hover {
 
 .screening-btn-primary:hover {
     filter: brightness(1.06);
-    color: var(--text-main);
+    color: #fff;
     transform: translateY(-2px);
 }
 

@@ -36,22 +36,33 @@ export default function ScreeningHubPage() {
 
         <div className="screening-grid">
           {topics.map((topic) => (
-            <Link 
-              key={topic.topic} 
+            <Link
+              key={topic.topic}
               href={`/screening/${topic.topic}`}
-              className="screening-card"
+              className="screening-card-link"
             >
-              <div className="screening-card-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
+              <div className="screening-card-flip">
+                <div className="screening-card-inner">
+                  <div className="screening-card-face screening-card-front">
+                    <div className="screening-card-icon" aria-hidden>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    </div>
+                    <h2 className="screening-card-title">{topic.title}</h2>
+                    <p className="screening-card-desc">{topic.description}</p>
+                  </div>
+                  <div className="screening-card-face screening-card-back" aria-hidden>
+                    <span className="screening-card-back-label">간이 점검</span>
+                    <p className="screening-card-back-title">{topic.title}</p>
+                    <p className="screening-card-back-hint">클릭하면 해당 주제로 이동합니다.</p>
+                  </div>
+                </div>
               </div>
-              <h2 className="screening-card-title">{topic.title}</h2>
-              <p className="screening-card-desc">{topic.description}</p>
             </Link>
           ))}
         </div>

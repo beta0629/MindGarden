@@ -430,7 +430,7 @@ const BudgetManagement = () => {
                 </div>
               }
             />
-            <div className="erp-content">
+            <div className="erp-content" aria-busy={loading || silentListRefreshing}>
             {showInitialInlineLoad && (
               <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
                 <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />

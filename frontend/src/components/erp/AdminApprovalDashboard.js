@@ -239,7 +239,7 @@ const AdminApprovalDashboard = () => {
         className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
-          <div>
+          <div aria-busy={processing}>
             <div className="approval-request-details">
               <h4>승인할 구매 요청</h4>
               <div className="approval-request-info-box">
@@ -302,7 +302,7 @@ const AdminApprovalDashboard = () => {
         className="mg-v2-ad-b0kla"
       >
         {selectedRequest && (
-          <div>
+          <div aria-busy={processing}>
             <div className="approval-request-comment-group">
               <h4>거부할 구매 요청</h4>
               <div className="approval-request-info-box">

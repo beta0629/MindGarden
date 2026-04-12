@@ -2440,6 +2440,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
         backdropClick={true}
         className="mg-v2-ad-b0kla"
       >
+        <div aria-busy={loading}>
         {loading ? (
           <UnifiedLoading text="거래 정보를 불러오는 중..." size="medium" type="inline" />
         ) : entryDetail ? (
@@ -2493,6 +2494,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
         ) : (
           <p className="mg-v2-text-center mg-v2-text-secondary">거래 정보를 불러올 수 없습니다.</p>
         )}
+        </div>
         <div className="mg-v2-modal-footer">
           <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
@@ -2689,7 +2691,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         </div>
       </div>
 
-      <div className="mg-v2-form-group">
+      <div className="mg-v2-form-group" aria-busy={loading || accountTypesLoading}>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
             기준일자 <span className="mg-v2-text-danger">*</span>
@@ -3329,7 +3331,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
       backdropClick={true}
       className="mg-v2-ad-b0kla"
     >
-      <div className="mg-v2-form-group">
+      <div className="mg-v2-form-group" aria-busy={loading || accountTypesLoading}>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
             거래번호

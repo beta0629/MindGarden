@@ -142,7 +142,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       size="medium"
       className="mg-v2-ad-b0kla salary-config-modal"
     >
-      <div className="salary-config-modal-body">
+      <div className="salary-config-modal-body" aria-busy={loading}>
           <ErpSafeText
             tag="p"
             className="salary-config-modal-intro"

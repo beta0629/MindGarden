@@ -22,7 +22,6 @@ import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } f
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { showSuccess, showError } from '../../utils/notification';
-import { apiGet } from '../../utils/ajax';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
@@ -202,7 +201,7 @@ const StaffManagement = ({ embedded = false }) => {
         includeInactive: true,
         role: ROLE_STAFF
       });
-      // apiGet이 { success, data } 응답 시 data만 반환하므로 배열 직접 처리
+      // 응답이 배열이거나 { data: 배열 } 형태일 수 있어 배열 직접 처리
       const list = Array.isArray(response) ? response : (response?.data && Array.isArray(response.data) ? response.data : []);
       setStaffList(list);
     } catch (err) {
@@ -283,7 +282,7 @@ const StaffManagement = ({ embedded = false }) => {
     setIsCheckingStaffEmail(true);
     setStaffEmailCheckStatus('checking');
     try {
-      const response = await apiGet(`/api/v1/admin/duplicate-check/email?email=${encodeURIComponent(email)}`);
+      const response = await StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email });
       if (response && typeof response.isDuplicate === 'boolean') {
         if (response.isDuplicate) {
           setStaffEmailCheckStatus('duplicate');
@@ -384,15 +383,18 @@ const StaffManagement = ({ embedded = false }) => {
     );
   }, [staffList, searchTerm]);
 
-  const roleOf = useCallback((u) => (typeof u.role === 'string' ? u.role : u.role?.name) || '', []);
+  const roleOf = useCallback(
+    (u) => (u == null ? '' : (typeof u.role === 'string' ? u.role : u.role?.name) || ''),
+    []
+  );
 
   const handleOpenRoleChange = useCallback(
     (user) => {
       setRoleChangeModal({ open: true, user });
-      setSelectedNewRole(user?.role || '');
+      setSelectedNewRole(roleOf(user) || '');
       if (roles.length === 0) loadRoles();
     },
-    [roles.length, loadRoles]
+    [roles.length, loadRoles, roleOf]
   );
 
   const handleCloseRoleChange = useCallback(() => {
@@ -403,7 +405,7 @@ const StaffManagement = ({ embedded = false }) => {
 
   const handleConfirmRoleChange = useCallback(async() => {
     const { user } = roleChangeModal;
-    if (!user || !selectedNewRole || selectedNewRole === user.role) return;
+    if (!user || !selectedNewRole || selectedNewRole === roleOf(user)) return;
     setRoleChangeSubmitting(true);
     try {
       const endpoint = `${API_USER_MANAGEMENT}/${user.id}/role?newRole=${encodeURIComponent(selectedNewRole)}`;
@@ -421,7 +423,7 @@ const StaffManagement = ({ embedded = false }) => {
     } finally {
       setRoleChangeSubmitting(false);
     }
-  }, [roleChangeModal, selectedNewRole, handleCloseRoleChange, loadUsers]);
+  }, [roleChangeModal, selectedNewRole, handleCloseRoleChange, loadUsers, roleOf]);
 
   const handleStaffEditSubmit = useCallback(async() => {
     const { staff } = staffEditModal;
@@ -858,7 +860,7 @@ const StaffManagement = ({ embedded = false }) => {
               type="button"
               variant="primary"
               onClick={handleConfirmRoleChange}
-              disabled={roleChangeSubmitting || !selectedNewRole || selectedNewRole === roleChangeModal.user?.role}
+              disabled={roleChangeSubmitting || !selectedNewRole || selectedNewRole === roleOf(roleChangeModal.user)}
               loading={roleChangeSubmitting}
               loadingText="변경 중..."
               preventDoubleClick={false}

@@ -33,8 +33,10 @@ const HEAD_COUNSELOR = {
     '우울, 양극성(조울)',
     '경계선 성격, 애착문제',
     '자해, 자살, 위기개입',
-    '아동, 청소년',
-    '부부, 커플, 가족상담'
+    '아동. 청소년(등교거부, 적응, 학폭, 따돌림, 게임중독, 사회성증진)',
+    '부부, 커플, 가족상담',
+    '(양육코칭 , 부모교육)',
+    '(부부갈등 , 이혼 재결합)',
   ],
   education: '청소년 교육(학사), 상담학(석사), 가족상담(박사일부수료)',
   certifications: [
@@ -50,12 +52,13 @@ const HEAD_COUNSELOR = {
     '전) 인천지역 초등학교 외부 전문상담사',
     '전) 아동보호전문기관(법원수탁프로그램)·부모교육·개인·가족상담',
     '전) 유명 프랜차이즈 심리상담센터 (아동, 청소년, 성인, 부부 가족, 수석상담사 역임)',
-    '전) 트리니티 연구소 소장(아동, 청소년, 부부, 가족) 외 다수',
+    '전) 트리니티 심리상담연구소 소장(아동, 청소년, 부부, 가족)',
     '전) 한부모가정지지·사회복지 사례담당자 힐링 프로그램',
     '전) 정서조절P·감정코칭·자기이해·자녀양육·청소년 진로집단P'
   ],
-  training:
-    '교육 수료 및 이수 / 사티어 경험적 가족치료, NLP, 미술치료, 모래놀이, 놀이치료, 교류분석, 종합심리검사 및 각종 검사 자격 이수',
+  trainingTitle: '교육 수료 및 이수',
+  trainingDetail:
+    '경험적 가족치료, 인간중심, 미술치료, 모래놀이, 놀이치료, 교류분석, 종합심리검사 및 각종 검사 자격이수',
 };
 
 export default function CounselorsPage() {
@@ -328,7 +331,27 @@ export default function CounselorsPage() {
                   </div>
 
                   <div>
-                    <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', lineHeight: '1.6', wordBreak: 'keep-all' }}>{HEAD_COUNSELOR.training}</p>
+                    <h4
+                      style={{
+                        fontSize: '1rem',
+                        fontWeight: '700',
+                        color: 'var(--text-main)',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      {HEAD_COUNSELOR.trainingTitle}
+                    </h4>
+                    <p
+                      style={{
+                        fontSize: '0.95rem',
+                        color: 'var(--text-sub)',
+                        lineHeight: '1.6',
+                        wordBreak: 'keep-all',
+                        margin: 0,
+                      }}
+                    >
+                      {HEAD_COUNSELOR.trainingDetail}
+                    </p>
                   </div>
                 </div>
               </div>

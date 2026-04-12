@@ -76,6 +76,8 @@ DEV_MYSQL_PORT="${DEV_MYSQL_PORT:-3306}"
 
 PROD_MYSQL_USER="${PROD_MYSQL_USER:-}"
 EXTRA_DUMP_OPTS="${EXTRA_DUMP_OPTS:-}"
+# 운영 덤프 계정에 SHOW ROUTINE 등이 없을 때 1 — 프로시저/이벤트는 Flyway·배포로 보완
+DUMP_SKIP_ROUTINES="${DUMP_SKIP_ROUTINES:-0}"
 
 mkdir -p "$LOG_DIR"
 RUN_ID="$(date +%Y%m%d_%H%M%S)"
@@ -104,13 +106,17 @@ mysql_dev() {
 }
 
 mysqldump_prod() {
+  local routine_flags
+  if [[ "$DUMP_SKIP_ROUTINES" == "1" ]]; then
+    routine_flags=(--skip-routines --skip-triggers --skip-events)
+  else
+    routine_flags=(--routines --triggers --events)
+  fi
   mysqldump -h "$PROD_MYSQL_HOST" -P "$PROD_MYSQL_PORT" -u "$PROD_MYSQL_USER" \
     ${PROD_MYSQL_PASSWORD:+-p"$PROD_MYSQL_PASSWORD"} \
     --single-transaction \
     --no-tablespaces \
-    --routines \
-    --triggers \
-    --events \
+    "${routine_flags[@]}" \
     --hex-blob \
     --complete-insert \
     --extended-insert \

@@ -3196,6 +3196,13 @@ a.program-card:hover {
     gap: 2rem;
 }
 
+/* 홈 #program-pages: 카드 5장 — 4열이면 5번째만 한 칸 너비로 깨져 보임 */
+@media (min-width: 1025px) {
+    .mg-prog-cards-grid.mg-prog-cards-grid--program-pages {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
 .mg-prog-card {
     perspective: 1000px;
     height: 350px;
@@ -3292,6 +3299,15 @@ a.program-card:hover {
 @media (max-width: 1024px) {
     .mg-prog-cards-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* 2열일 때 5번째 카드만 반쪽 줄에 붙는 문제 → 한 줄 전체 가운데 정렬 */
+@media (max-width: 1024px) and (min-width: 641px) {
+    .mg-prog-cards-grid.mg-prog-cards-grid--program-pages .mg-prog-card:nth-child(5) {
+        grid-column: 1 / -1;
+        max-width: min(28rem, 100%);
+        justify-self: center;
     }
 }
 

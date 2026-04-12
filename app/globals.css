@@ -996,6 +996,18 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 .hero-section--static {
     padding: clamp(6rem, 12vw, 8rem) 1.5rem 5rem;
     box-sizing: border-box;
+    /* 센터 실내 사진: 크림 톤 오버레이로 살짝만 비치게 */
+    background-image:
+        linear-gradient(
+            180deg,
+            rgba(245, 240, 230, 0.9) 0%,
+            rgba(245, 240, 230, 0.82) 42%,
+            rgba(245, 240, 230, 0.9) 100%
+        ),
+        url('/images/hero-mindgarden-interior.png');
+    background-size: cover, cover;
+    background-position: center center, center center;
+    background-repeat: no-repeat, no-repeat;
 }
 
 .hero-section--static .hero-text {

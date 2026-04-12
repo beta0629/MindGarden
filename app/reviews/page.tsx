@@ -272,17 +272,17 @@ export default function ReviewsPage() {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
-  // 아바타 그라데이션 색상 생성
+  // 아바타 그라데이션 — 브랜드 그린·세이지 톤만 사용 (목록·상세 카드 톤 통일)
   const getAvatarGradient = (id: number) => {
-    const gradients = [
-      ['#6366F1', '#8B5CF6'], // indigo to purple
-      ['#4ADE80', '#14B8A6'], // primary to teal
-      ['#EC4899', '#F43F5E'], // pink to rose
-      ['#3B82F6', '#06B6D4'], // blue to cyan
-      ['#598e3e', '#4a7530'], // brand green
-      ['#F59E0B', '#F97316'], // amber to orange
-      ['#8B5CF6', '#7C3AED'], // violet to purple
-      ['#06B6D4', '#3B82F6'], // cyan to blue
+    const gradients: [string, string][] = [
+      ['#598e3e', '#4a7530'],
+      ['#6b9e5a', '#598e3e'],
+      ['#5a7d47', '#7a9a68'],
+      ['#7d9c6c', '#598e3e'],
+      ['#8aab7e', '#6d8a5c'],
+      ['#4a7530', '#6b8f5a'],
+      ['#9bb89a', '#6d8558'],
+      ['#6d8e5c', '#4f6f42'],
     ];
     return gradients[id % gradients.length];
   };
@@ -453,7 +453,7 @@ export default function ReviewsPage() {
                     gap: '0.25rem',
                     marginBottom: '1rem',
                   }}>
-                    <RatingHeartsRow rating={stats.ratingStats.overall.average} size={20} />
+                    <RatingHeartsRow rating={stats.ratingStats.overall.average} size={20} variant="onDark" />
                   </div>
                   <div style={{
                     height: '1px',
@@ -845,7 +845,7 @@ export default function ReviewsPage() {
                       className="review-card"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.boxShadow = '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)';
-                        e.currentTarget.style.borderColor = '#c7d2fe';
+                        e.currentTarget.style.borderColor = 'rgba(89, 142, 62, 0.22)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.boxShadow = '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)';
@@ -884,8 +884,8 @@ export default function ReviewsPage() {
                                 position: 'absolute',
                                 top: '-0.5rem',
                                 right: '-0.5rem',
-                                backgroundColor: '#4ADE80',
-                                color: '#1e1b4b',
+                                backgroundColor: 'rgba(89, 142, 62, 0.95)',
+                                color: '#ffffff',
                                 fontSize: '0.625rem',
                                 fontWeight: '700',
                                 padding: '0.125rem 0.5rem',
@@ -912,7 +912,7 @@ export default function ReviewsPage() {
                               gap: '0.5rem',
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: '#64748b',
+                              color: 'rgba(74, 90, 64, 0.88)',
                               marginTop: '0.25rem',
                             }}>
                               <span>
@@ -925,15 +925,16 @@ export default function ReviewsPage() {
                               <span style={{
                                 width: '0.25rem',
                                 height: '0.25rem',
-                                backgroundColor: '#cbd5e1',
+                                backgroundColor: 'rgba(89, 142, 62, 0.35)',
                                 borderRadius: '50%',
                               }}></span>
                               <span style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.25rem',
+                                color: 'rgba(74, 90, 64, 0.92)',
                               }}>
-                                <span style={{ fontSize: '0.875rem' }}>✓</span>
+                                <span style={{ fontSize: '0.8rem', color: 'rgba(89, 142, 62, 0.85)' }}>✓</span>
                                 {randomName}
                               </span>
                             </div>
@@ -1009,11 +1010,11 @@ export default function ReviewsPage() {
                                 style={{
                                   padding: '0.375rem 0.75rem',
                                   borderRadius: '9999px',
-                                  backgroundColor: '#eef2ff',
-                                  color: '#4338ca',
+                                  backgroundColor: 'rgba(89, 142, 62, 0.1)',
+                                  color: '#4a6b3a',
                                   fontSize: '0.75rem',
                                   fontWeight: '700',
-                                  border: '1px solid #c7d2fe',
+                                  border: '1px solid rgba(89, 142, 62, 0.22)',
                                 }}
                               >
                                 #{tag}
@@ -1047,15 +1048,15 @@ export default function ReviewsPage() {
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: likedReviews.has(review.id) ? 'default' : 'pointer',
-                            color: likedReviews.has(review.id) ? '#ef4444' : '#64748b',
+                            color: likedReviews.has(review.id) ? '#598e3e' : '#64748b',
                             fontSize: '0.875rem',
                             fontWeight: '600',
                             transition: 'all 0.2s',
                           }}
                           onMouseEnter={(e) => {
                             if (!likedReviews.has(review.id)) {
-                              e.currentTarget.style.backgroundColor = '#f8fafc';
-                              e.currentTarget.style.color = '#6366F1';
+                              e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
+                              e.currentTarget.style.color = '#4a7530';
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -1070,7 +1071,7 @@ export default function ReviewsPage() {
                               filled={likedReviews.has(review.id)}
                               size={20}
                               style={{
-                                color: likedReviews.has(review.id) ? '#ef4444' : '#94a3b8',
+                                color: likedReviews.has(review.id) ? '#598e3e' : '#94a3b8',
                               }}
                             />
                           </span>
@@ -1102,8 +1103,8 @@ export default function ReviewsPage() {
                             boxSizing: 'border-box',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8fafc';
-                            e.currentTarget.style.color = '#6366F1';
+                            e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
+                            e.currentTarget.style.color = '#4a7530';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent';
@@ -1132,8 +1133,8 @@ export default function ReviewsPage() {
                             transition: 'all 0.2s',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8fafc';
-                            e.currentTarget.style.color = '#6366F1';
+                            e.currentTarget.style.backgroundColor = 'rgba(89, 142, 62, 0.06)';
+                            e.currentTarget.style.color = '#4a7530';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent';

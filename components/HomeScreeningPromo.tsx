@@ -13,6 +13,7 @@ export default function HomeScreeningPromo() {
               alt=""
               fill
               className="home-screening-promo-img"
+              style={{ objectFit: 'cover', objectPosition: '45% center' }}
               priority
               sizes="(max-width: 768px) 100vw, min(1200px, 100vw)"
             />

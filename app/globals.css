@@ -2765,6 +2765,8 @@ a.program-card:hover {
     max-height: 400px;
 }
 
+/* fill + 100% 크기일 때 기본은 늘어남(비율 깨짐) → cover + 인라인 style로 이중 고정 */
+.home-screening-promo-visual img.home-screening-promo-img[data-nimg='fill'],
 .home-screening-promo-img {
     object-fit: cover;
     object-position: 45% center;

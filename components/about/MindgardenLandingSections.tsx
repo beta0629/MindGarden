@@ -137,10 +137,10 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               <Image
                 src={DIRECTOR_IMG}
                 alt="대표원장"
-                width={104}
-                height={104}
+                width={312}
+                height={312}
                 className="mg-director-img"
-                sizes="104px"
+                sizes="(max-width: 900px) 72vw, 312px"
               />
               <div className="mg-director-decor" aria-hidden />
             </div>
@@ -155,8 +155,18 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
               <h3 className="mg-director-resume-title">대표원장</h3>
               <ul className="mg-director-resume-list">
                 <li>현) 마인드가든 심리상담센터 대표원장</li>
-                <li>전) 해양경찰·소방 공무원 전문상담사 등 공공 재난·트라우마 현장 경험</li>
-                <li>전) 심리연구소 소장, 유명 프랜차이즈 수석 상담사</li>
+                <li>전) 해양경찰·소방공무원 PTSD·트라우마 심리상담, 심리검사·PTSD 강사</li>
+                <li>전) 아동보호전문기관 법원수탁프로그램 행위자 심리치료(부모교육, 가족상담)</li>
+                <li>전) 건강가족·다문화 가족지원센터 전문상담사(청소년, 부부, 가족상담)·강사</li>
+                <li>전) 한국이민재단 조기적응 P(부부상호이해 과목) 강사</li>
+                <li>전) 유명 프랜차이즈(청소년, 성인, 부부, 가족상담 ADHD 및 동반질환) 수석상담사</li>
+                <li>전) 트리니티 심리상담연구소 소장 역임</li>
+                <li>전) 초·중학교(학폭, 게임중독, 따돌림, 등교 거부, 부모교육) 외부 전문상담사·부모교육강사</li>
+                <li>
+                  집단상담 및 강의: 청소년 진로 집단상담, 한부모 가정 지지 집단상담, 부모–자녀 감청코칭·부모교육 P
+                  강의, 다문화 가정 부부갈등, 부부 상호 이해를 위한 P, 사회복지기관 담당자 소진 회복 P, 소방공무원 PTSD
+                  이해 강의, 자기 이해·돌봄·성장 P 등 다수
+                </li>
                 <li>교육학 학사 / 상담학 석사 / 가족상담(박사일부수료)</li>
                 <li>1급 전문상담사 자격 및 다수 슈퍼비전·교육 경력</li>
               </ul>

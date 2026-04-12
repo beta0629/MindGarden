@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
+import ChecklistDisclaimerParagraphs from '@/components/ChecklistDisclaimerParagraphs';
 import { ScreeningData, TargetGroup } from '@/lib/screening-data';
 
 interface Props {
@@ -87,9 +87,7 @@ export default function ScreeningFlow({ data }: Props) {
           </button>
 
           <div className="screening-disclaimer" role="note" style={{ marginTop: '32px' }}>
-            {checklistLegalNotice.paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            <ChecklistDisclaimerParagraphs />
           </div>
         </div>
       )}
@@ -143,9 +141,7 @@ export default function ScreeningFlow({ data }: Props) {
           </div>
 
           <div className="screening-disclaimer" role="note">
-            {checklistLegalNotice.paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            <ChecklistDisclaimerParagraphs />
           </div>
         </div>
       )}

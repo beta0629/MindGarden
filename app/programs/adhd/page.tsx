@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import ValuesSectionVisual from '@/components/ValuesSectionVisual';
 import ProgramLNB from '@/components/ProgramLNB';
 import { adhdPageImages } from '@/lib/adhd-page-images';
-import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
+import ChecklistDisclaimerParagraphs from '@/components/ChecklistDisclaimerParagraphs';
 
 export default function AdhdProgramPage() {
   return (
@@ -123,20 +123,15 @@ export default function AdhdProgramPage() {
                   padding: '16px 18px',
                 }}
               >
-                {checklistLegalNotice.paragraphs.map((p, i) => (
-                  <p
-                    key={i}
-                    style={{
-                      fontSize: '0.9rem',
-                      lineHeight: 1.7,
-                      color: 'var(--text-sub)',
-                      marginBottom: i === checklistLegalNotice.paragraphs.length - 1 ? 0 : '10px',
-                      wordBreak: 'keep-all',
-                    }}
-                  >
-                    {p}
-                  </p>
-                ))}
+                <ChecklistDisclaimerParagraphs
+                  getPStyle={(i, total) => ({
+                    fontSize: '0.9rem',
+                    lineHeight: 1.7,
+                    color: 'var(--text-sub)',
+                    marginBottom: i === total - 1 ? 0 : '10px',
+                    wordBreak: 'keep-all',
+                  })}
+                />
               </div>
               <Link
                 href="/screening"

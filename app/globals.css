@@ -1,5 +1,18 @@
 /* Pretendard·Noto Serif: `app/layout.tsx` <link>와 중복 로드 방지 — 본문 폰트는 :root 참조 */
 
+/* 복사 억제 영역(완전 차단 아님): 상담사 프로필·면책 전문가 문단 등 */
+.no-user-copy,
+.no-user-copy * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.no-user-copy img {
+    -webkit-user-drag: none;
+}
+
 /* Noto Sans KR - 코어솔루션 폰트 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
@@ -4253,8 +4266,8 @@ a.program-card:hover {
 .mg-director-frame {
     position: relative;
     display: inline-block;
-    width: 104px;
-    max-width: 104px;
+    width: min(100%, 312px);
+    max-width: 312px;
     margin-inline: auto;
 }
 
@@ -4264,8 +4277,8 @@ a.program-card:hover {
 }
 
 .mg-director-img {
-    width: 104px;
-    max-width: 104px;
+    width: 100%;
+    max-width: 312px;
     height: auto;
     border-radius: 4px;
     position: relative;
@@ -4275,11 +4288,11 @@ a.program-card:hover {
 
 .mg-director-decor {
     position: absolute;
-    bottom: -4px;
-    right: -4px;
+    bottom: -10px;
+    right: -10px;
     width: 78%;
     height: 100%;
-    border: 1px solid var(--mg-landing-taupe);
+    border: 2px solid var(--mg-landing-taupe);
     z-index: 1;
     pointer-events: none;
     border-radius: 2px;

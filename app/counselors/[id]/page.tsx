@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
+import CopyGuard from '@/components/CopyGuard';
 
 interface Counselor {
   id: number;
@@ -160,6 +161,7 @@ export default function CounselorDetailPage() {
                 <span>전문가 목록으로</span>
               </Link>
 
+              <CopyGuard>
               {/* 프로필 헤더 */}
               <div style={{
                 display: 'flex',
@@ -374,6 +376,7 @@ export default function CounselorDetailPage() {
                 </div>
               )}
 
+              </CopyGuard>
             </div>
           </section>
         </div>

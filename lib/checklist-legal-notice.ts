@@ -3,6 +3,9 @@
  * ADHD 단일 체크리스트·/screening 플로우 등에서 동일하게 사용한다.
  */
 
+/** 면책문 중 전문가·심리검사 안내 문단 인덱스(복사 제한 UI에 사용) */
+export const CHECKLIST_EXPERT_PARAGRAPH_INDEX = 2;
+
 export const checklistLegalNotice = {
   paragraphs: [
     '간이 체크리스트는 아동·청소년과 성인이 일상에서 겪을 수 있는 패턴을 기준으로 스스로 살펴볼 수 있도록 구성했습니다.',

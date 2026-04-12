@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { checklistLegalNotice } from '@/lib/checklist-legal-notice';
+import ChecklistDisclaimerParagraphs from '@/components/ChecklistDisclaimerParagraphs';
 import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
 
 export const metadata = {
@@ -29,9 +29,7 @@ export default function ScreeningHubPage() {
             marginRight: 'auto',
           }}
         >
-          {checklistLegalNotice.paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
+          <ChecklistDisclaimerParagraphs />
         </div>
 
         <div className="screening-grid">

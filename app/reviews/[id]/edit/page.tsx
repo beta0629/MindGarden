@@ -151,184 +151,77 @@ export default function EditReviewPage() {
   };
 
   return (
-    <main
-      id="top"
-      style={{
-        paddingTop: 'clamp(5.25rem, 12vw, 7rem)',
-        minHeight: '100vh',
-        backgroundColor: '#F8FAFC',
-      }}
-    >
+    <main id="top" className="review-form-page">
       <Navigation />
       <div className="content-shell">
         <div className="content-main">
-          <section className="content-section" style={{ maxWidth: '800px', margin: '0 auto', padding: '0 0.75rem 2rem' }}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <Link
-                href="/reviews"
-                style={{
-                  fontSize: '0.875rem',
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  fontWeight: '500',
-                }}
-              >
+          <div className="review-form-wrap">
+            <section className="review-form-section">
+              <Link href="/reviews" className="review-form-back">
                 ← 후기 목록
               </Link>
-            </div>
-            <h2 className="section-title" style={{ marginBottom: '1.5rem' }}>
-              후기 수정
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem' }}>
-              본문만 수정할 수 있습니다. 태그·별점은 변경하려면 관리자에게 문의해 주세요.
-            </p>
 
-            {loadState === 'loading' && (
-              <p style={{ color: '#64748b', fontSize: '0.9375rem' }}>불러오는 중...</p>
-            )}
+              <h1 className="review-form-title">
+                <span className="review-form-title-bar" aria-hidden />
+                후기 수정
+              </h1>
 
-            {loadState === 'error' && (
-              <div
-                style={{
-                  padding: '1rem',
-                  marginBottom: '1.5rem',
-                  backgroundColor: '#fee2e2',
-                  color: '#991b1b',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid #fecaca',
-                }}
-              >
-                {error || '후기를 불러올 수 없습니다.'}
-              </div>
-            )}
+              <p className="review-form-muted">
+                본문만 수정할 수 있습니다. 태그·별점은 변경하려면 관리자에게 문의해 주세요.
+              </p>
 
-            {loadState === 'ok' && (
-              <form
-                onSubmit={handleSubmit}
-                style={{
-                  backgroundColor: 'var(--surface-0)',
-                  padding: '2rem',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-1)',
-                  border: '1px solid var(--border-soft)',
-                }}
-              >
-                {error && (
-                  <div
-                    style={{
-                      padding: '1rem',
-                      marginBottom: '1.5rem',
-                      backgroundColor: '#fee2e2',
-                      color: '#991b1b',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid #fecaca',
-                    }}
-                  >
-                    {error}
+              {loadState === 'loading' && (
+                <p className="review-form-muted" style={{ marginBottom: '1rem' }}>
+                  불러오는 중...
+                </p>
+              )}
+
+              {loadState === 'error' && (
+                <div className="review-form-alert review-form-alert--error">{error || '후기를 불러올 수 없습니다.'}</div>
+              )}
+
+              {loadState === 'ok' && (
+                <form onSubmit={handleSubmit} className="review-form-card">
+                  {error && <div className="review-form-alert review-form-alert--error">{error}</div>}
+                  {success && <div className="review-form-alert review-form-alert--success">{success}</div>}
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <span className="review-form-label">후기 내용 *</span>
+                    <BlogEditor
+                      value={content}
+                      onChange={handleContentChange}
+                      onImageUpload={handleBlogEditorImageUpload}
+                      placeholder="후기를 수정해주세요..."
+                    />
                   </div>
-                )}
-                {success && (
-                  <div
-                    style={{
-                      padding: '1rem',
-                      marginBottom: '1.5rem',
-                      backgroundColor: '#d1fae5',
-                      color: '#065f46',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid #a7f3d0',
-                    }}
-                  >
-                    {success}
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label className="review-form-label" htmlFor="edit-review-password">
+                      비밀번호 * (작성 시 설정한 비밀번호)
+                    </label>
+                    <input
+                      id="edit-review-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="비밀번호"
+                      autoComplete="current-password"
+                      className="review-form-input"
+                    />
                   </div>
-                )}
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: '500',
-                      color: 'var(--text-main)',
-                    }}
-                  >
-                    후기 내용 *
-                  </label>
-                  <BlogEditor
-                    value={content}
-                    onChange={handleContentChange}
-                    onImageUpload={handleBlogEditorImageUpload}
-                    placeholder="후기를 수정해주세요..."
-                  />
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: '500',
-                      color: 'var(--text-main)',
-                    }}
-                  >
-                    비밀번호 * (작성 시 설정한 비밀번호)
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="비밀번호"
-                    autoComplete="current-password"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid var(--border-soft)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '1rem',
-                      fontFamily: 'var(--font-main)',
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/reviews')}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: 'transparent',
-                      color: 'var(--text-sub)',
-                      border: '1px solid var(--border-soft)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-main)',
-                    }}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting || !id}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
-                      color: 'var(--text-main)',
-                      border: 'none',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      cursor: submitting || !id ? 'not-allowed' : 'pointer',
-                      opacity: submitting || !id ? 0.6 : 1,
-                      fontFamily: 'var(--font-main)',
-                    }}
-                  >
-                    {submitting ? '저장 중...' : '수정 저장'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </section>
+                  <div className="review-form-actions">
+                    <button type="button" className="review-form-btn review-form-btn--secondary" onClick={() => router.push('/reviews')}>
+                      취소
+                    </button>
+                    <button type="submit" disabled={submitting || !id} className="review-form-btn review-form-btn--primary">
+                      {submitting ? '저장 중...' : '수정 저장'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
+          </div>
         </div>
       </div>
       <Footer />

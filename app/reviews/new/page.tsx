@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -64,7 +65,7 @@ const convertImageToBase64 = async (
 
 // 해시태그 옵션
 const REVIEW_TAGS = [
-  '전문성', '친절도', '효과', '시설', '접근성', '가격', '추천', '재방문', '기타'
+  '전문성', '친절도', '효과', '시설', '접근성', '가격', '추천', '재방문', '기타',
 ];
 
 // 평가 항목
@@ -94,36 +95,31 @@ export default function NewReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  
-  // 해시태그 토글
+
   const handleTagToggle = (tag: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
+      tags: prev.tags.includes(tag) ? prev.tags.filter((t) => t !== tag) : [...prev.tags, tag],
     }));
   };
-  
-  // 점수 변경
+
   const handleRatingChange = (category: string, value: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       ratings: {
         ...prev.ratings,
         [category]: value,
-      }
+      },
     }));
   };
 
-  // BlogEditor에서 이미지 업로드 시 base64로 변환
   const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<{ imageUrl: string }> => {
     const base64 = await convertImageToBase64(file);
     return { imageUrl: base64 };
   }, []);
 
   const handleContentChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, content: value }));
+    setFormData((prev) => ({ ...prev, content: value }));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,247 +173,141 @@ export default function NewReviewPage() {
   };
 
   return (
-    <main id="top">
+    <main id="top" className="review-form-page">
       <Navigation />
       <div className="content-shell">
         <div className="content-main">
-          <section className="content-section" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ marginBottom: '2rem' }}>
-              후기 작성
-            </h2>
-            
-            {error && (
-              <div style={{
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                backgroundColor: '#fee2e2',
-                color: '#991b1b',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid #fecaca',
-              }}>
-                {error}
-              </div>
-            )}
+          <div className="review-form-wrap">
+            <section className="review-form-section">
+              <Link href="/reviews" className="review-form-back">
+                ← 후기 목록
+              </Link>
 
-            {success && (
-              <div style={{
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                backgroundColor: '#d1fae5',
-                color: '#065f46',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid #a7f3d0',
-              }}>
-                {success}
-              </div>
-            )}
+              <h1 className="review-form-title">
+                <span className="review-form-title-bar" aria-hidden />
+                후기 작성
+              </h1>
 
-            <form onSubmit={handleSubmit} style={{
-              backgroundColor: 'var(--surface-0)',
-              padding: '2rem',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-1)',
-              border: '1px solid var(--border-soft)',
-            }}>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  작성자 이름 (선택)
-                </label>
-                <input
-                  type="text"
-                  value={formData.authorName}
-                  onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
-                  placeholder="익명으로 표시됩니다"
-                  maxLength={100}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '1rem',
-                    fontFamily: 'var(--font-main)',
-                  }}
-                />
-              </div>
+              {error && <div className="review-form-alert review-form-alert--error">{error}</div>}
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  후기 내용 *
-                </label>
-                <BlogEditor
-                  value={formData.content}
-                  onChange={handleContentChange}
-                  onImageUpload={handleBlogEditorImageUpload}
-                  placeholder="후기를 작성해주세요..."
-                />
-              </div>
+              {success && <div className="review-form-alert review-form-alert--success">{success}</div>}
 
-              {/* 해시태그 선택 */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  관련 항목 선택 (복수 선택 가능)
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {REVIEW_TAGS.map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleTagToggle(tag)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: `1px solid ${formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--border-soft)'}`,
-                        backgroundColor: formData.tags.includes(tag) ? 'rgba(89, 142, 62, 0.2)' : 'var(--surface-0)',
-                        color: formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--text-sub)',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        fontWeight: '500',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      #{tag}
-                    </button>
-                  ))}
+              <form onSubmit={handleSubmit} className="review-form-card">
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="review-form-label" htmlFor="review-author-name">
+                    작성자 이름 (선택)
+                  </label>
+                  <input
+                    id="review-author-name"
+                    type="text"
+                    value={formData.authorName}
+                    onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
+                    placeholder="비워두면 익명으로 표시됩니다"
+                    maxLength={100}
+                    className="review-form-input"
+                    autoComplete="nickname"
+                  />
                 </div>
-                {formData.tags.length > 0 && (
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
-                    선택된 항목: {formData.tags.map(t => `#${t}`).join(', ')}
-                  </p>
-                )}
-              </div>
 
-              {/* 점수 평가 */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  평가 (선택사항)
-                </label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {RATING_CATEGORIES.map(category => (
-                    <div key={category.key} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <span style={{ minWidth: '120px', fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: '500' }}>
-                        {category.label}:
-                      </span>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        {[1, 2, 3, 4, 5].map(heart => (
-                          <button
-                            key={heart}
-                            type="button"
-                            onClick={() => handleRatingChange(category.key, heart)}
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              border: 'none',
-                              background: 'transparent',
-                              cursor: 'pointer',
-                              fontSize: '1.5rem',
-                              padding: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'transform 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (formData.ratings[category.key as keyof typeof formData.ratings] < heart) {
-                                e.currentTarget.style.transform = 'scale(1.2)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'scale(1)';
-                            }}
-                          >
-                            <HeartGlyph
-                              filled={
-                                heart <=
-                                formData.ratings[category.key as keyof typeof formData.ratings]
-                              }
-                              size={22}
-                              style={{
-                                color:
-                                  heart <=
-                                  formData.ratings[category.key as keyof typeof formData.ratings]
-                                    ? '#ef4444'
-                                    : '#cbd5e1',
-                              }}
-                            />
-                          </button>
-                        ))}
-                        {formData.ratings[category.key as keyof typeof formData.ratings] > 0 && (
-                          <span style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginLeft: '0.5rem' }}>
-                            {formData.ratings[category.key as keyof typeof formData.ratings]}점
-                          </span>
-                        )}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="review-form-label">후기 내용 *</span>
+                  <BlogEditor
+                    value={formData.content}
+                    onChange={handleContentChange}
+                    onImageUpload={handleBlogEditorImageUpload}
+                    placeholder="후기를 작성해주세요..."
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="review-form-label">관련 항목 선택 (복수 선택 가능)</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {REVIEW_TAGS.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className={`review-form-tag ${formData.tags.includes(tag) ? 'review-form-tag--on' : ''}`}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                  {formData.tags.length > 0 && (
+                    <p className="review-form-hint">선택된 항목: {formData.tags.map((t) => `#${t}`).join(', ')}</p>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="review-form-label">평가 (선택사항)</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.35rem' }}>
+                    {RATING_CATEGORIES.map((category) => (
+                      <div key={category.key} style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <span style={{ minWidth: '7.5rem', fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                          {category.label}
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {[1, 2, 3, 4, 5].map((heart) => (
+                            <button
+                              key={heart}
+                              type="button"
+                              className="review-form-heart-btn"
+                              onClick={() => handleRatingChange(category.key, heart)}
+                              aria-label={`${category.label} ${heart}점`}
+                            >
+                              <HeartGlyph
+                                filled={heart <= formData.ratings[category.key as keyof typeof formData.ratings]}
+                                size={22}
+                                style={{
+                                  color:
+                                    heart <= formData.ratings[category.key as keyof typeof formData.ratings]
+                                      ? '#e85d5d'
+                                      : '#cbd5e1',
+                                }}
+                              />
+                            </button>
+                          ))}
+                          {formData.ratings[category.key as keyof typeof formData.ratings] > 0 && (
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginLeft: '0.35rem', fontWeight: 600 }}>
+                              {formData.ratings[category.key as keyof typeof formData.ratings]}점
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  비밀번호 * (수정/삭제 시 필요)
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="4자 이상"
-                  minLength={4}
-                  maxLength={100}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '1rem',
-                    fontFamily: 'var(--font-main)',
-                  }}
-                />
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
-                  후기 수정 또는 삭제 시 필요합니다. 안전하게 보관해주세요.
-                </p>
-              </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="review-form-label" htmlFor="review-password">
+                    비밀번호 * (수정/삭제 시 필요)
+                  </label>
+                  <input
+                    id="review-password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="4자 이상"
+                    minLength={4}
+                    maxLength={100}
+                    required
+                    className="review-form-input"
+                    autoComplete="new-password"
+                  />
+                  <p className="review-form-hint">후기 수정 또는 삭제 시 필요합니다. 안전하게 보관해주세요.</p>
+                </div>
 
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => router.push('/reviews')}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-main)',
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
-                    color: 'var(--text-main)',
-                    border: 'none',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.6 : 1,
-                    fontFamily: 'var(--font-main)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {submitting ? '등록 중...' : '등록하기'}
-                </button>
-              </div>
-            </form>
-          </section>
+                <div className="review-form-actions">
+                  <button type="button" className="review-form-btn review-form-btn--secondary" onClick={() => router.push('/reviews')}>
+                    취소
+                  </button>
+                  <button type="submit" disabled={submitting} className="review-form-btn review-form-btn--primary">
+                    {submitting ? '등록 중...' : '등록하기'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
         </div>
       </div>
       <Footer />

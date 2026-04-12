@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.core.constant.TestDocumentationIps;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class TurnstileCaptchaVerifierTest {
         when(restTemplate.postForEntity(eq(CUSTOM_VERIFY), any(HttpEntity.class), eq(Map.class)))
             .thenReturn(ResponseEntity.ok(Map.of("success", true)));
 
-        assertThat(verifier.verify("token-from-client", "203.0.113.1")).isTrue();
+        assertThat(verifier.verify("token-from-client", TestDocumentationIps.DOC_NET_3_EXAMPLE)).isTrue();
 
         verify(restTemplate).postForEntity(eq(CUSTOM_VERIFY), any(HttpEntity.class), eq(Map.class));
     }

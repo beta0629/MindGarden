@@ -17,6 +17,7 @@ import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.RiskLevel;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.constant.TestDocumentationIps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -85,8 +86,9 @@ class OnboardingControllerTest {
     @DisplayName("실검증 모드에서 verify 실패 시 IllegalArgumentException")
     void create_whenCaptchaVerifyFails_throws() {
         when(captchaVerifier.requiresCaptchaToken()).thenReturn(true);
-        when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("198.51.100.2, 10.0.0.1");
-        when(captchaVerifier.verify("tok", "198.51.100.2")).thenReturn(false);
+        when(httpRequest.getHeader("X-Forwarded-For"))
+                .thenReturn(TestDocumentationIps.DOC_NET_2_EXAMPLE + ", 10.0.0.1");
+        when(captchaVerifier.verify("tok", TestDocumentationIps.DOC_NET_2_EXAMPLE)).thenReturn(false);
 
         OnboardingCreateRequest payload = new OnboardingCreateRequest(null, "테넌트", "a@b.com", RiskLevel.LOW,
                 null, "ACADEMY", null, null, null, "ValidPass1!", "tok");

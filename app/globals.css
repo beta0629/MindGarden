@@ -662,14 +662,36 @@ main {
 }
 
 .adhd-self-check-btn-primary {
-    background-color: var(--accent-peach);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.4);
+    background-color: var(--accent-cta);
+    color: var(--text-main);
+    border: 1px solid rgba(74, 55, 48, 0.14);
+    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.38);
 }
 
 .adhd-self-check-btn-primary:hover {
-    filter: brightness(1.03);
-    color: #fff;
+    filter: brightness(1.06);
+    color: var(--text-main);
+}
+
+/* 프로그램 하단 「상담 예약하기」— 그린 배경 + 갈색 텍스트 */
+.programs-consult-cta-btn {
+    font-size: 1.125rem;
+    padding: 16px 48px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-family: inherit;
+    background-color: var(--accent-cta);
+    color: var(--text-main);
+    border: 1px solid rgba(74, 55, 48, 0.14);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(89, 142, 62, 0.38);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.programs-consult-cta-btn:hover {
+    filter: brightness(1.06);
+    color: var(--text-main);
+    transform: translateY(-1px);
 }
 
 .adhd-self-check-btn-secondary {
@@ -1063,12 +1085,13 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 
 .hero-btn--primary {
     background: var(--accent-sky);
-    color: var(--white);
-    border-color: var(--accent-sky);
+    color: var(--text-main);
+    border-color: rgba(74, 55, 48, 0.18);
 }
 
 .hero-btn--primary:hover {
-    filter: brightness(1.05);
+    filter: brightness(1.06);
+    color: var(--text-main);
     transform: translateY(-1px);
 }
 
@@ -2033,6 +2056,15 @@ a.program-card:hover {
     padding-left: 1.25rem;
     padding-right: 1.25rem;
     -webkit-font-smoothing: antialiased;
+}
+
+/* 콘텐츠 쉘 안에 있을 때: 배경을 뷰포트 전체 너비로(내부 그리드는 footer-simple__inner가 1200px 유지) */
+.content-shell > .content-main > .footer-simple {
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    box-sizing: border-box;
 }
 
 .footer-simple__inner {
@@ -3277,20 +3309,21 @@ a.program-card:hover {
     align-items: center;
     justify-content: center;
     padding: 16px 32px;
-    background-color: var(--accent-peach);
-    color: var(--white);
+    background-color: var(--accent-cta);
+    color: var(--text-main);
     font-size: 1.1rem;
     font-weight: 600;
     border-radius: 999px;
-    border: none;
+    border: 1px solid rgba(74, 55, 48, 0.14);
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.4);
+    box-shadow: 0 4px 12px rgba(89, 142, 62, 0.38);
     text-decoration: none;
 }
 
 .screening-btn-primary:hover {
-    filter: brightness(1.05);
+    filter: brightness(1.06);
+    color: var(--text-main);
     transform: translateY(-2px);
 }
 

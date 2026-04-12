@@ -102,21 +102,10 @@ export default function TestPage() {
 
             {/* 상담 예약하기 버튼 */}
             <div style={{ marginTop: '80px', textAlign: 'center', marginBottom: '40px' }}>
-              <button 
-                className="btn btn-primary" 
+              <button
+                type="button"
+                className="programs-consult-cta-btn"
                 onClick={() => window.dispatchEvent(new Event('open-consultation-bottom-sheet'))}
-                style={{
-                  fontSize: '1.125rem',
-                  padding: '16px 48px',
-                  borderRadius: 'var(--radius-full)',
-                  fontWeight: '600',
-                  backgroundColor: 'var(--accent-peach)',
-                  color: 'white',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(89, 142, 62, 0.4)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                }}
               >
                 상담 예약하기
               </button>

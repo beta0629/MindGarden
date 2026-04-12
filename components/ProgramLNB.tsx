@@ -83,11 +83,11 @@ export default function ProgramLNB() {
         }
 
         .program-lnb-link:hover {
-          color: var(--text-main, #333);
+          color: var(--text-main, #9b6546);
         }
 
         .program-lnb-link.active {
-          color: var(--text-main, #333);
+          color: var(--text-main, #9b6546);
           font-weight: 600;
         }
 
@@ -98,7 +98,7 @@ export default function ProgramLNB() {
           left: 0;
           width: 100%;
           height: 2px;
-          background-color: var(--text-main, #333);
+          background-color: var(--text-main, #9b6546);
         }
 
         @media (max-width: 768px) {

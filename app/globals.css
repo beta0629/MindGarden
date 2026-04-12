@@ -18,9 +18,9 @@
     --bg-pastel-1: #ffffff;
     --bg-pastel-2: #ffffff;
 
-    --text-main: #2c2c2c;
-    --text-sub: #6b6b6b;
-    --text-light: #9a9a9a;
+    --text-main: #9b6546;
+    --text-sub: #9b6546;
+    --text-light: #9b6546;
 
     /* 액센트(히어로 등): 따뜻한 피치·베이지 대신 쿨 민트·라벤더 */
     --accent-sky: #a8d5ba;
@@ -2935,20 +2935,20 @@ a.program-card:hover {
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--text-sub, #5c6b6b);
+    color: var(--text-sub, #9b6546);
 }
 
 .home-screening-promo-headline {
     font-size: clamp(1.15rem, 3.8vw, 1.65rem);
     font-weight: 800;
     line-height: 1.25;
-    color: var(--text-main, #1a2e2e);
+    color: var(--text-main, #9b6546);
     letter-spacing: -0.02em;
 }
 
 .home-screening-promo-sub {
     font-size: clamp(0.75rem, 2vw, 0.875rem);
-    color: var(--text-sub, #5c6b6b);
+    color: var(--text-sub, #9b6546);
     line-height: 1.4;
     margin-top: 0.15rem;
 }
@@ -3229,14 +3229,14 @@ a.program-card:hover {
 .mg-prog-cards-band {
     --mg-prog-bg: #f6f3ee;
     --mg-prog-cream: #ffffff;
-    --mg-prog-heading: #5c4033;
-    --mg-prog-lead: #8b7355;
+    --mg-prog-heading: #9b6546;
+    --mg-prog-lead: #9b6546;
     --mg-prog-badge-bg: #e5f0e8;
-    --mg-prog-badge-text: #2d4a38;
+    --mg-prog-badge-text: #9b6546;
     --mg-prog-primary: #4a5d4e;
     --mg-prog-primary-light: #5f7a64;
-    --mg-prog-secondary: #8b7355;
-    --mg-prog-text: #3d2e26;
+    --mg-prog-secondary: #9b6546;
+    --mg-prog-text: #9b6546;
     --mg-prog-transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -3475,9 +3475,9 @@ a.program-card:hover {
 
 /* —— /about/mindgarden 랜딩형 레이아웃 (히어로·아이덴티티·원장·철학) —— */
 .mg-landing {
-    --mg-landing-cocoa: #3d3d3d;
+    --mg-landing-cocoa: #9b6546;
     --mg-landing-green: #4a5d4e;
-    --mg-landing-taupe: #6b6b6b;
+    --mg-landing-taupe: #9b6546;
     --mg-landing-cream: #ffffff;
 }
 
@@ -3552,7 +3552,7 @@ a.program-card:hover {
 .mg-hero-lead {
     font-family: var(--font-main);
     font-size: 1.15rem;
-    color: #555;
+    color: var(--text-main);
     font-weight: 400;
     line-height: 1.75;
     max-width: 36rem;
@@ -3812,7 +3812,7 @@ a.program-card:hover {
     font-size: 1.05rem;
     padding-left: 1.25rem;
     border-left: 3px solid var(--mg-landing-green);
-    color: #666;
+    color: var(--text-main);
     margin: 0 0 1rem;
     line-height: 1.65;
     font-family: var(--font-main);

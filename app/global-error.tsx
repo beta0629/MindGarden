@@ -10,8 +10,8 @@ export default function GlobalError({
   return (
     <html lang="ko">
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
-        <h1 style={{ fontSize: '1.25rem' }}>심각한 오류가 발생했습니다</h1>
-        <p style={{ color: '#555', marginTop: '0.75rem' }}>{error.message}</p>
+        <h1 style={{ fontSize: '1.25rem', color: '#9b6546' }}>심각한 오류가 발생했습니다</h1>
+        <p style={{ color: '#9b6546', marginTop: '0.75rem' }}>{error.message}</p>
         <button
           type="button"
           onClick={() => reset()}

@@ -3871,9 +3871,10 @@ a.program-card:hover {
     margin-bottom: 0;
 }
 
+/* 철학 카드 소제목만 강조 — 전역 텍스트 토큰과 별도 */
 .mg-phi-label {
     font-size: 0.85rem;
-    color: var(--mg-landing-taupe);
+    color: #598e3e;
     letter-spacing: 0.02em;
     margin-bottom: 0.75rem;
     font-weight: 600;

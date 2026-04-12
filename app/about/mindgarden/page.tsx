@@ -2,7 +2,6 @@
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFlipGrid';
 import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
 import { mindgardenSectionImages } from '@/lib/mindgarden-section-images';
 interface ComorbidityData {
@@ -105,41 +104,45 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
   return (
     <main id="top">
       <Navigation />
-      
+
       <div className="content-shell">
         <div className="content-main">
           <section className="content-section" style={{ paddingTop: '120px' }}>
-            {/* 헤더 */}
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '64px',
-              maxWidth: '900px',
-              margin: '0 auto 64px'
-            }}>
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                marginBottom: '24px',
-                lineHeight: '1.4',
-                letterSpacing: '-0.02em',
-                wordBreak: 'keep-all'
-              }}>
+            <div
+              style={{
+                textAlign: 'center',
+                marginBottom: '64px',
+                maxWidth: '900px',
+                margin: '0 auto 64px',
+              }}
+            >
+              <h1
+                style={{
+                  fontSize: '2.5rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  marginBottom: '24px',
+                  lineHeight: '1.4',
+                  letterSpacing: '-0.02em',
+                  wordBreak: 'keep-all',
+                }}
+              >
                 전문특화
               </h1>
-              <p style={{
-                fontSize: '1.25rem',
-                color: 'var(--text-sub)',
-                lineHeight: '1.8',
-                maxWidth: '700px',
-                margin: '0 auto'
-              }}>
-                15년의 임상경험과 전문성을 바탕으로<br />
+              <p
+                style={{
+                  fontSize: '1.25rem',
+                  color: 'var(--text-sub)',
+                  lineHeight: '1.8',
+                  maxWidth: '700px',
+                  margin: '0 auto',
+                }}
+              >
+                15년의 임상경험과 전문성을 바탕으로
+                <br />
                 ADHD와 동반질환을 함께 다루는 맞춤형 상담을 제공합니다
               </p>
             </div>
-
-            <MindgardenProgramsFlipGrid />
 
             {/* 섹션 목록 */}
             <div style={{

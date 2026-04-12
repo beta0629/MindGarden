@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
-import HomeAboutSection from '@/components/HomeAboutSection';
+import MindgardenLandingSections from '@/components/about/MindgardenLandingSections';
 import HomeSectionVisual from '@/components/HomeSectionVisual';
 import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsList from '@/components/ReviewsList';
@@ -192,11 +192,11 @@ export default async function Home() {
 
       <SectionTabs />
 
+      <MindgardenLandingSections showHero={false} />
+
       <div className="content-shell">
         <div className="content-main">
-          <HomeAboutSection />
-
-          <section id="programs" className="content-section">
+          <section id="program-pages" className="content-section">
             <div className="section-intro-row section-intro-row--media-first">
               <HomeSectionVisual
                 src={homeSectionImages.programs.src}

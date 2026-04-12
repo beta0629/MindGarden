@@ -1,7 +1,7 @@
 /**
  * 홈 메인 — 섹션 보조 이미지 (기획 반영)
  *
- * 범위: `app/page.tsx` 의 #about, #programs. 타 페이지는 `HomeSectionVisual` + 이 파일과
+ * 범위: 메인 `app/page.tsx`의 #program-pages 등. 랜딩 소개 블록은 `MindgardenLandingSections`. 타 페이지는 `HomeSectionVisual` + 이 파일과
  * 동일 패턴(데이터 모듈 분리)으로 확장.
  *
  * 자산: Unsplash (`images.unsplash.com`, `next.config.js` remotePatterns). 자체/정적 자산으로

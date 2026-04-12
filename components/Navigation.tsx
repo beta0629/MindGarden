@@ -29,7 +29,7 @@ export default function Navigation() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const heroSection = document.querySelector('.hero-section');
+      const heroSection = document.querySelector('.hero-section, .mg-hero-section');
       
       // 히어로 섹션이 없으면 (블로그 페이지 등) 자동으로 scrolled 상태
       if (!heroSection) {

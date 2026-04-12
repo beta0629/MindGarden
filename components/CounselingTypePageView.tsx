@@ -84,14 +84,16 @@ export default function CounselingTypePageView({
               })}
             </div>
 
-            <aside className="counseling-type-cta" aria-labelledby="counseling-cta-heading">
-              <h2 id="counseling-cta-heading" className="counseling-type-cta-title">
-                {data.ctaTitle}
-              </h2>
-              {data.ctaLines.map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </aside>
+            {data.ctaLines && data.ctaLines.length > 0 && (
+              <aside className="counseling-type-cta" aria-labelledby="counseling-cta-heading">
+                <h2 id="counseling-cta-heading" className="counseling-type-cta-title">
+                  {data.ctaTitle ?? '다음 단계'}
+                </h2>
+                {data.ctaLines.map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </aside>
+            )}
           </section>
         </div>
       </div>

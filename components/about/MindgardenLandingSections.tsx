@@ -8,8 +8,8 @@ import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFli
 /* Unsplash 일부 ID는 만료·차단될 수 있어 200 응답 확인된 URL만 사용 */
 const HERO_BG =
   'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=2000';
-const IDENTITY_IMG =
-  'https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&q=80&w=1000';
+/** 로컬 생성 이미지 — 센터 외관·정원 톤(화이트·그린) */
+const IDENTITY_IMG = '/assets/images/mg-identity-exterior.png';
 const DIRECTOR_IMG =
   'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&auto=format&fit=crop&w=800';
 const PHILOSOPHY_IMG =
@@ -92,7 +92,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
           <figure className="mg-identity-visual mg-landing-fade">
             <Image
               src={IDENTITY_IMG}
-              alt="따뜻한 정원이 있는 건물 외관"
+              alt="밝은 심리상담센터 건물 외관과 앞마당 녹지"
               width={1000}
               height={750}
               className="mg-identity-img"

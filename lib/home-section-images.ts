@@ -18,7 +18,7 @@ export const homeSectionImages = {
     alt: '따뜻한 햇살이 들어오는 편안한 실내와 식물이 있는 공간',
   },
   programs: {
-    src: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&h=900&fit=crop&q=80',
-    alt: '차분하고 평온한 분위기의 휴식 공간',
+    src: '/assets/images/home-programs-garden.png',
+    alt: '꽃과 녹음이 어우러진 아름다운 정원',
   },
 } as const;

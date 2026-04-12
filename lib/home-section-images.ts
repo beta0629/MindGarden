@@ -18,7 +18,7 @@ export const homeSectionImages = {
     alt: '따뜻한 햇살이 들어오는 편안한 실내와 식물이 있는 공간',
   },
   programs: {
-    src: '/assets/images/home-programs-garden.png',
+    src: '/assets/images/home-programs-garden.jpg',
     alt: '꽃과 녹음이 어우러진 아름다운 정원',
   },
 } as const;

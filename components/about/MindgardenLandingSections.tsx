@@ -8,8 +8,8 @@ import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFli
 /* Unsplash 일부 ID는 만료·차단될 수 있어 200 응답 확인된 URL만 사용 */
 const HERO_BG =
   'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=2000';
-/** 로컬 생성 이미지 — 센터 외관·정원 톤(화이트·그린) */
-const IDENTITY_IMG = '/assets/images/mg-identity-exterior.png';
+/** 로컬 생성 이미지 — 센터 외관·정원 톤(화이트·그린), JPEG로 용량 축소(서버 이미지 최적화 안정화) */
+const IDENTITY_IMG = '/assets/images/mg-identity-exterior.jpg';
 const DIRECTOR_IMG =
   'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&auto=format&fit=crop&w=800';
 const PHILOSOPHY_IMG =

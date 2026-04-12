@@ -156,7 +156,7 @@ async function getHomeData() {
     console.log('getHomeData - finalGallery:', finalGallery.length, finalGallery);
     
     return {
-      slogan: homeData.slogan || {
+      slogan: (homeData && homeData.slogan) || {
         sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
         main: 'ADHD 전문.심리상담센터'
       },

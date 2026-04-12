@@ -59,7 +59,8 @@ public class AccountingController extends BaseApiController {
             log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(),
                     currentUser.getRole());
             return ResponseEntity.status(403)
-                    .body(Map.of("success", false, "message", "ERP 접근 권한이 없습니다. 관리자만 접근 가능합니다."));
+                    .body(Map.of("success", false, "message",
+                            "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
         }
 
         return null; // 권한 있음

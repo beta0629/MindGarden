@@ -18,7 +18,6 @@ import com.coresolution.consultation.entity.PurchaseOrder;
 import com.coresolution.consultation.entity.PurchaseRequest;
 import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -92,7 +91,8 @@ public class ErpController extends BaseApiController {
             log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(),
                     currentUser.getRole());
             return ResponseEntity.status(403)
-                    .body(Map.of("success", false, "message", "ERP 접근 권한이 없습니다. 관리자만 접근 가능합니다."));
+                    .body(Map.of("success", false, "message",
+                            "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
         }
 
         return null; // 권한 있음
@@ -104,7 +104,6 @@ public class ErpController extends BaseApiController {
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
-    private final LegacyRolePermissionRepository rolePermissionRepository;
     private final org.springframework.core.env.Environment environment;
 
     // ==================== Item Management ====================
@@ -370,19 +369,24 @@ public class ErpController extends BaseApiController {
     }
 
     /**
-     * 아이템 삭제 (수퍼어드민 전용)
+     * 아이템 삭제 (테넌트 관리자 ADMIN 전용 — 재고 수정 API와 동일)
      */
     @DeleteMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> deleteItem(@PathVariable Long id,
             HttpSession session) {
         try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
             ResponseEntity<?> accessCheck = checkErpAccess(session);
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
 
             User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+                log.warn("아이템 삭제 권한 없음: 관리자만 가능, user={}",
+                        currentUser != null ? currentUser.getEmail() : "null");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "아이템 삭제는 테넌트 관리자(ADMIN)만 할 수 있습니다."));
+            }
 
             log.info("아이템 삭제 요청: id={}", id);
 
@@ -2171,63 +2175,22 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            log.info("🔍 재무 거래 삭제 요청: 사용자={}, 역할={}, 권한코드=FINANCIAL_TRANSACTION_DELETE",
-                    currentUser.getEmail(), currentUser.getRole());
-
-            // 캐시 우회하여 직접 DB에서 권한 확인 (운영 환경 대응)
-            String roleName = currentUser.getRole().name();
-            String permissionCode = "FINANCIAL_TRANSACTION_DELETE";
-
-            log.info("🔍 권한 체크 시작: 사용자={}, 역할={}, 역할명={}, 권한코드={}", currentUser.getEmail(),
-                    currentUser.getRole(), roleName, permissionCode);
-
-            // 먼저 해당 역할의 모든 권한 조회 (디버깅용)
-            var allRolePermissions =
-                    rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
-            List<String> allPermissionCodes =
-                    allRolePermissions.stream().map(rp -> rp.getPermissionCode())
-                            .collect(java.util.stream.Collectors.toList());
-            log.info("📋 {} 역할의 모든 활성 권한 ({}개): {}", roleName, allPermissionCodes.size(),
-                    allPermissionCodes);
-
-            // 특정 권한 존재 여부 확인
-            boolean hasPermission = rolePermissionRepository
-                    .existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
-
-            log.info("🔍 직접 DB 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode,
-                    hasPermission);
-
-            // 추가 확인: 직접 조회도 시도
-            var directPermission = rolePermissionRepository
-                    .findByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
-            if (directPermission.isPresent()) {
-                log.info("✅ 권한 직접 조회 성공: {}", directPermission.get());
-            } else {
-                log.warn("⚠️ 권한 직접 조회 실패: 역할={}, 권한={}", roleName, permissionCode);
-
-                // 권한이 있는지 확인 (대소문자 무시)
-                boolean foundIgnoreCase = allPermissionCodes.stream()
-                        .anyMatch(code -> code != null && code.equalsIgnoreCase(permissionCode));
-                log.info("🔍 대소문자 무시 검색 결과: {}", foundIgnoreCase);
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
 
-            if (!hasPermission) {
-                log.error("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}, 권한코드={}", currentUser.getEmail(),
-                        currentUser.getRole(), permissionCode);
-                log.error("❌ 필요 권한: {}, 보유 권한: {}", permissionCode, allPermissionCodes);
-
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message",
-                                "재무 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다.", "debug",
-                                Map.of("roleName", roleName, "permissionCode", permissionCode,
-                                        "hasPermission", hasPermission, "allPermissions",
-                                        allPermissionCodes)));
+            // 재무 거래 삭제: 테넌트 관리자(ADMIN)만. 별도 role_permissions 코드(FINANCIAL_TRANSACTION_DELETE)는 사용하지 않음.
+            if (!AdminRoleUtils.isAdmin(currentUser)) {
+                log.warn("재무 거래 삭제 거부: 관리자만 가능, user={}, role={}", currentUser.getEmail(),
+                        currentUser.getRole());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false,
+                        "message", "재무 거래는 테넌트 관리자(ADMIN)만 삭제할 수 있습니다."));
             }
 
-            log.info("✅ 재무 거래 삭제 권한 확인 완료: 사용자={}, 역할={}", currentUser.getEmail(),
+            log.info("재무 거래 삭제 허용: user={}, role={}", currentUser.getEmail(),
                     currentUser.getRole());
 
-            // 재무 거래 삭제
             financialTransactionService.deleteTransaction(id, currentUser);
 
             Map<String, Object> result = new HashMap<>();

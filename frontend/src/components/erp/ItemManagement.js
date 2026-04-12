@@ -26,14 +26,16 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import ErpPageShell from './shell/ErpPageShell';
+import { useSession } from '../../contexts/SessionContext';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
 
 /**
- * 아이템 관리 컴포넌트 (관리자/수퍼어드민 전용)
+ * 아이템 관리 컴포넌트 (테넌트 관리자 ADMIN — 삭제는 관리자만)
  */
 const ItemManagement = () => {
+  const { isAdmin } = useSession();
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [itemsInitialFetchDone, setItemsInitialFetchDone] = useState(false);
@@ -386,20 +388,22 @@ const ItemManagement = () => {
                               >
                                 <Pencil size={14} /> 수정
                               </MGButton>
-                              <MGButton
-                                variant={mapErpVariantToMg('outline-danger')}
-                                size={mapErpSizeToMg('small')}
-                                className={buildErpMgButtonClassName({
-                                  variant: 'outline-danger',
-                                  size: 'small',
-                                  loading: false
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                                onClick={() => handleDeleteItem(item)}
-                              >
-                                <Trash2 size={14} /> 삭제
-                              </MGButton>
+                              {isAdmin() && (
+                                <MGButton
+                                  variant={mapErpVariantToMg('outline-danger')}
+                                  size={mapErpSizeToMg('small')}
+                                  className={buildErpMgButtonClassName({
+                                    variant: 'outline-danger',
+                                    size: 'small',
+                                    loading: false
+                                  })}
+                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                  preventDoubleClick={false}
+                                  onClick={() => handleDeleteItem(item)}
+                                >
+                                  <Trash2 size={14} /> 삭제
+                                </MGButton>
+                              )}
                             </div>
                           </div>
                         ))}

@@ -79,7 +79,7 @@ public class AdminRoleUtils {
     }
     
     /**
-     * 사용자가 지점 수퍼 관리자인지 확인
+     * 레거시 브랜치 최고 관리자 역할 호환용(미사용)
      * 
      * @deprecated 표준화 2025-12-05: 브랜치 개념이 제거되었습니다. isAdmin()을 사용하세요.
      * @param user 사용자 객체

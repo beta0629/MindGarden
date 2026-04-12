@@ -52,7 +52,7 @@ public class PaymentController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
-     * 결제 생성 (수퍼 어드민 전용)
+     * 결제 생성 (테넌트 관리자 등 결제 권한 보유자)
      */
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(@Valid @RequestBody PaymentRequest request, HttpServletRequest httpRequest) {

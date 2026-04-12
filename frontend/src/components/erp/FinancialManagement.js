@@ -65,7 +65,7 @@ const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
  */
 const FinancialManagement = () => {
   const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user, isLoggedIn, isLoading: sessionLoading, isAdmin } = useSession();
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -901,21 +901,23 @@ const FinancialManagement = () => {
                               >
                                 <Pencil size={14} aria-hidden /> 수정
                               </MGButton>
-                              <MGButton
-                                type="button"
-                                variant="secondary"
-                                size="small"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'secondary',
-                                  size: 'sm',
-                                  loading: false
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                onClick={() => handleDeleteTransaction(transaction)}
-                                preventDoubleClick={false}
-                              >
-                                <Trash2 size={14} aria-hidden /> 삭제
-                              </MGButton>
+                              {isAdmin() && (
+                                <MGButton
+                                  type="button"
+                                  variant="secondary"
+                                  size="small"
+                                  className={buildErpMgButtonClassName({
+                                    variant: 'secondary',
+                                    size: 'sm',
+                                    loading: false
+                                  })}
+                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                  onClick={() => handleDeleteTransaction(transaction)}
+                                  preventDoubleClick={false}
+                                >
+                                  <Trash2 size={14} aria-hidden /> 삭제
+                                </MGButton>
+                              )}
                             </div>
                           </div>
                         </div>

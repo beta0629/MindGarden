@@ -673,7 +673,7 @@ main {
     color: var(--text-main);
 }
 
-/* 프로그램 하단 「상담 예약하기」— 그린 배경 + 갈색 텍스트 */
+/* 프로그램 하단 「상담 예약하기」— 그린 배경 + 화이트 텍스트 */
 .programs-consult-cta-btn {
     font-size: 1.125rem;
     padding: 16px 48px;
@@ -681,7 +681,7 @@ main {
     font-weight: 600;
     font-family: inherit;
     background-color: var(--accent-cta);
-    color: var(--text-main);
+    color: #fff;
     border: 1px solid rgba(74, 55, 48, 0.14);
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(89, 142, 62, 0.38);
@@ -690,7 +690,7 @@ main {
 
 .programs-consult-cta-btn:hover {
     filter: brightness(1.06);
-    color: var(--text-main);
+    color: #fff;
     transform: translateY(-1px);
 }
 

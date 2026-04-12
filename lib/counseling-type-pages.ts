@@ -5,6 +5,7 @@
 
 import type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 import { COMORBIDITY_AREAS_NOTEBOOK_BLOCKS } from '@/lib/comorbidity-areas-notebook-data';
+import { COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS } from '@/lib/comorbidity-assessment-notebook-data';
 
 export type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 
@@ -225,14 +226,8 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
       {
         id: 'assessment',
         title: '감별 평가',
-        paragraphs: [
-          '1. 증상의 원인(Etiology)에 따른 맞춤형 개입 — 상담 장면에서 겉으로 드러나는 행동은 비슷하더라도, 그 행동을 일으키는 심리적 기제는 전혀 다를 수 있습니다. 집중력 저하의 예: ADHD로 인한 생물학적 주의력 결핍인지, 불안 장애로 인한 과도한 걱정 때문에 집중을 못 하는 것인지, 혹은 우울감으로 인한 의욕 저하(무기력)인지를 구분해야 합니다. 결과: 원인이 불안이라면 이완 훈련이나 인지 재구조화가 우선되어야 하며, ADHD라면 실행 기능 향상을 위한 구체적인 행동 전략이 우선되어야 합니다.',
-          "2. '이차적 정서 문제'와 '독립적 질환'의 구별 — ADHD 환자들은 반복되는 실수와 부정적인 피드백으로 인해 후천적인 정서적 어려움을 겪는 경우가 많습니다. 이차적 문제: ADHD 증상 때문에 자존감이 낮아져 생긴 우울감은 ADHD 증상이 개선되면서 함께 호전될 가능성이 큽니다. 독립적 질환: ADHD와 별개로 타고난 기질이나 환경적 요인에 의해 발생한 우울 장애는 ADHD와는 별도의 독립적인 치료 목표로 설정하여 접근해야 합니다.",
-          '3. 상담 전략 및 치료 모델의 우선순위 설정 — 제한된 상담 시간 내에서 가장 효율적인 치료 경로를 설계하기 위해 감별진단이 필요합니다. 품행장애·반항성 도전장애 동반 시: ADHD의 주의력 문제보다 타인과의 갈등이나 공격성 조절이 더 시급한 과제가 됩니다. 이 경우 행동 수정(Behavior Modification) 모델이 강력하게 적용되어야 합니다. 학습장애 동반 시: 단순한 집중력 훈련만으로는 한계가 있습니다. 해당 학습 영역(읽기, 쓰기, 셈하기)에 특화된 교육적 개입이 병행되어야만 환자가 효능감을 느낄 수 있습니다.',
-          "4. 환경 조절 및 부모·보호자 코칭의 방향성 — 감별진단 결과에 따라 주변인들이 환자를 대하는 방식이 완전히 달라져야 합니다. ADHD 중심: 환자의 의지 문제가 아닌 조절 능력의 부족임을 강조하여, 환경을 구조화하고 시각적 단서를 제공하는 방식의 코칭이 이루어집니다. 정서 장애 중심: 환자의 감정을 수용하고 심리적 안정감을 제공하는 데 더 비중을 둡니다. 오진의 위험: 만약 불안 장애가 주된 원인인데 ADHD식의 엄격한 행동 수정을 적용하면, 환자의 불안은 더욱 증폭되어 증상이 악화될 수 있습니다.",
-          '5. 예후 예측 및 장기적 사례 관리 — 공존질환의 유무와 종류는 향후 적응 과정을 예측하는 중요한 지표가 됩니다. 공존질환이 많을수록 사회적 기술(Social Skills) 훈련이나 대인관계 치료의 비중을 높여야 하며, 장기적인 관점에서 재발 방지를 위한 지지 체계를 구축해야 합니다.',
-          '결국 상담 현장에서의 감별진단은 환자의 부적응 행동을 어떤 관점(Frame)으로 바라보고, 어떤 언어로 공감하며, 어떤 순서로 변화를 이끌어낼 것인가를 결정하는 설계도와 같습니다. 평가·해석은 전문 절차에 따릅니다.',
-        ],
+        paragraphs: [],
+        notebookBlocks: COMORBIDITY_ASSESSMENT_NOTEBOOK_BLOCKS,
         variant: 'split',
         imagePosition: 'left',
       },
@@ -258,11 +253,11 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
 
   'counseling-areas': {
     slug: 'counseling-areas',
-    metaTitle: '상담 과목 안내 | 마인드가든 심리상담센터',
+    metaTitle: '세부상담분야 안내 | 마인드가든 심리상담센터',
     metaDescription:
-      '마인드가든 심리상담센터의 상담 방향과 과목 예시, 초기 상담에서 다루는 내용을 안내합니다.',
-    h1: '상담 과목 안내',
-    lead: '센터는 ADHD 및 관련 발달·정서 어려움을 중심 주제로 상담을 진행합니다. 과목은 내담자 호소와 합의에 따라 조정됩니다.',
+      '마인드가든 심리상담센터의 상담 방향과 세부상담분야 예시, 초기 상담에서 다루는 내용을 안내합니다.',
+    h1: '세부상담분야 안내',
+    lead: '센터는 ADHD 및 관련 발달·정서 어려움을 중심 주제로 상담을 진행합니다. 세부상담분야는 내담자 호소와 합의에 따라 조정됩니다.',
     sections: [
       {
         id: 'direction',
@@ -275,11 +270,11 @@ export const COUNSELING_PAGES: Record<CounselingSlug, CounselingPageData> = {
       },
       {
         id: 'examples',
-        title: '상담 과목 예시',
+        title: '세부상담분야 예시',
         paragraphs: [
           '아동·청소년: 학습 습관, 또래 관계, 가족 규칙, 자기조절 루틴 등.',
           '성인: 업무·시간 관리, 관계 패턴, 번아웃·불안과의 공존 등.',
-          '구체 과목은 초기 면담에서 호소에 맞춰 정리합니다.',
+          '구체적인 세부 분야는 초기 면담에서 호소에 맞춰 정리합니다.',
         ],
         variant: 'accent',
       },

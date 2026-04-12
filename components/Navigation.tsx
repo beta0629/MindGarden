@@ -150,7 +150,7 @@ export default function Navigation() {
         { label: '아동.청소년ADHD', href: '/counseling/child-adolescent-adhd' },
         { label: '성인 ADHD', href: '/counseling/adult-adhd' },
         { label: '동반질환', href: '/counseling/comorbidity' },
-        { label: '상담과목', href: '/counseling/counseling-areas' },
+        { label: '세부상담분야', href: '/counseling/counseling-areas' },
       ]
     },
     { 

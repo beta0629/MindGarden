@@ -1113,10 +1113,12 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     padding: 0 2.25rem;
     font-size: 1.0625rem;
     box-shadow: 0 4px 14px rgba(89, 142, 62, 0.22);
+    color: #fff;
 }
 
 .hero-section--static .hero-btn--primary-prominent:hover {
     box-shadow: 0 6px 18px rgba(89, 142, 62, 0.28);
+    color: #fff;
 }
 
 .hero-btn--secondary {
@@ -1646,7 +1648,8 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
 }
 
 /* 상담 페이지 — NotebookLM 스타일(동반 영역 등) */
-article#areas.counseling-type-card--notebook {
+article#areas.counseling-type-card--notebook,
+article#assessment.counseling-type-card--notebook {
     scroll-margin-top: 96px;
 }
 

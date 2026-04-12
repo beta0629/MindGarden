@@ -3370,17 +3370,18 @@ a.program-card:hover {
 }
 
 /* 마인드가든 로고(나비) 워터마크 — 고정·비포인터, 본문은 위 레이어 */
+/* 주제별 간이 체크리스트 — 공식 가로 워드마크(나비+마인드가든 심리상담센터) 워터마크 */
 .screening-layout::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    background-image: url('/assets/images/logo/logo.png');
+    background-image: url('/assets/images/logo/screening-hub-wordmark.png');
     background-repeat: no-repeat;
-    background-position: center 40%;
-    background-size: min(820px, 88vw);
-    opacity: 0.07;
+    background-position: center 38%;
+    background-size: min(1100px, 94vw) auto;
+    opacity: 0.075;
 }
 
 .screening-layout > * {
@@ -3390,7 +3391,8 @@ a.program-card:hover {
 
 @media (max-width: 640px) {
     .screening-layout::before {
-        background-size: min(520px, 96vw);
+        background-position: center 36%;
+        background-size: min(100%, 420px) auto;
         opacity: 0.07;
     }
 }

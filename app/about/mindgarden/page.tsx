@@ -3,12 +3,10 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ValuesSectionVisual, { ValuesVisualVariant } from '@/components/ValuesSectionVisual';
+import MindgardenComorbidityChart, {
+  type ComorbidityChartData,
+} from '@/components/MindgardenComorbidityChart';
 import { mindgardenSectionImages } from '@/lib/mindgarden-section-images';
-interface ComorbidityData {
-  overallRate: { min: number; max: number };
-  disorders: Array<{ name: string; min: number; max: number }>;
-  otherDisorders: string[];
-}
 
 interface Section {
   id: keyof typeof mindgardenSectionImages;
@@ -16,9 +14,60 @@ interface Section {
   content: string;
   color: string;
   hasChart?: boolean;
-  comorbidityData?: ComorbidityData;
+  comorbidityData?: ComorbidityChartData;
   variant?: 'hero' | 'split' | 'accent' | 'band';
 }
+
+/** Origin 섹션 본문 — 동반질환·고위험군 설명 */
+const ORIGIN_SECTION_CONTENT = `ADHD(주의력결핍 과잉행동장애)는 단독으로 나타나기보다 약 60~80%의 확률로 하나 이상의 다른 질환을 동반하는 경우가 많습니다. 이를 '공존 질환'이라고도 하며, ADHD 증상과 겹쳐 나타나기 때문에 정확한 진단과 통합적인 케어가 매우 중요합니다.
+
+주요 동반질환은 다음과 같습니다.
+
+1. 정서 및 기분 관련 질환
+우울장애: 지속적인 실수나 부정적인 피드백으로 인해 자존감이 낮아지면서 우울증으로 이어지는 경우가 많습니다.
+불안장애: 과도한 걱정, 긴장감, 수행 불안 등을 느끼며 ADHD 증상을 더 악화시키기도 합니다.
+양극성 장애(조울증): 감정 기복이 심하고 충동 조절이 어려운 특징이 ADHD와 유사하여 감별 진단이 필요합니다.
+
+2. 행동 및 충동 조절 관련 질환
+적대적 반항장애: 권위적인 대상(부모, 교사 등)에게 반복적으로 화를 내거나 거부하는 태도를 보입니다.
+품행장애: 규칙 위반, 거짓말, 도벽 등 타인의 권리를 침해하는 행동이 나타날 수 있습니다.
+중독 문제: 자극적인 것을 추구하는 성향 때문에 게임 중독, 스마트폰 중독, 알코올 및 약물 남용에 취약할 수 있습니다.
+
+3. 발달 및 학습 관련 질환
+틱(Tic)장애 및 투렛 증후군: ADHD 아동의 상당수가 틱 증상을 동반하며, 신경계의 민감성과 관련이 깊습니다.
+학습장애: 지능은 정상이나 읽기, 쓰기, 셈하기 등 특정 학습 영역에서 현저한 어려움을 겪습니다.
+언어발달 지연: 자신의 생각을 논리적으로 전달하거나 상대방의 말을 끝까지 듣는 데 어려움을 겪어 의사소통 문제가 발생할 수 있습니다.
+
+4. 신경다양성 및 기타 질환
+자폐 스펙트럼 장애(ASD): 사회적 상호작용의 어려움과 ADHD의 산만함이 동시에 나타나는 경우가 빈번합니다.
+수면장애: 잠들기 어려워하거나 수면 유지에 문제가 생겨 낮 시간의 집중력을 더욱 떨어뜨립니다.
+HSP(매우 민감한 사람): 외부 자극에 과도하게 예민하게 반응하여 정서적 소모가 큰 상태를 동반하기도 합니다.
+
+마인드가든에서는 이러한 복합적인 동반질환을 단순한 개별 증상이 아닌, 하나의 통합된 시스템으로 보고 접근합니다. ADHD의 핵심 증상을 다루는 동시에 결합된 정서적·행동적 문제를 함께 중재해야 실질적인 삶의 질 개선이 가능하기 때문입니다.
+
+[고위험 공존 — 감별과 통합 케어가 특히 중요한 영역]
+
+1. 경계선 성격장애(BPD) & ADHD
+연결 고리: 두 질환 모두 충동 조절의 어려움과 정서 조절 실패라는 공통 분모를 가집니다.
+특징: ADHD의 충동성이 경계선 성격의 공허감·분노와 맞물릴 때 감정의 폭풍이 더 거세지며, 자해나 자살 시도 같은 극단적인 행동으로 이어질 위험이 큽니다.
+개입 포인트: 단순한 집중력 문제를 넘어 공허감·분노를 다루는 애착 중심 상담과 감정 조절 훈련이 병행되어야 합니다.
+
+2. 자기애성 성격장애(NPD) & ADHD
+연결 고리: ADHD의 보상 추구 성향과 자기애성 성격의 특별 대우 요구가 결합될 수 있습니다.
+특징: 자신의 산만함이나 실수를 인정하기보다 타인을 탓(가스라이팅)하거나 상황을 조작하여 자신의 우월함을 유지하려 합니다. 이 과정에서 주변 사람들을 착취적으로 대하는 양상이 나타날 수 있습니다.
+개입 포인트: 메타인지를 높여 자신의 행동이 타인에게 미치는 영향을 객관화하고, 진정한 자존감을 세우는 작업이 필요합니다.
+
+3. 양극성 장애(Bipolar Disorder) & ADHD
+연결 고리: ADHD의 과잉행동과 양극성 장애의 경조증·조증 상태는 외견상 매우 유사합니다.
+특징: 망상을 동반할 정도의 심한 양극성 장애는 ADHD 증상을 압도할 수 있습니다. 조증 삽화 시기의 에너지 과잉과 ADHD의 주의산만이 합쳐지면 사고의 비약과 판단력 상실이 극대화될 수 있습니다.
+개입 포인트: 명확한 감별 진단이 우선이며, 약물치료와의 긴밀한 협조 하에 심리적 안정을 도모해야 합니다.
+
+4. 조현병(Schizophrenia) & ADHD
+연결 고리: 최근 연구에 따르면 ADHD와 조현병 사이에는 유전적 취약성이 공유된다는 결과가 있습니다.
+특징: 조현병의 전구기에 ADHD 증상과 유사한 집중력 저하, 인지기능 저하가 먼저 나타나는 경우가 많습니다. 망상이나 환각이 동반될 경우 내담자의 현실 검증력이 급격히 떨어집니다.
+개입 포인트: 위기 관리 시스템을 가동하여 내담자의 안전을 확보하고, 인지 재활 및 사회적 기능 유지를 돕는 중재가 필요합니다.
+
+이러한 고위험 질환군을 공존 질환으로 명시하는 것은 마인드가든의 압도적인 전문성을 드러내는 대목입니다. 마인드가든은 가벼운 산만함을 넘어, 성격장애(경계선, 자기애성) 및 정신증적 양상(양극성 장애, 조현병 등)이 결합된 까다롭고 복합적인 케이스를 임상 15년의 내공으로 깊이 있게 다룹니다.`;
 
 export default function MindGardenAboutPage() {
   const sections: Section[] = [
@@ -49,23 +98,62 @@ export default function MindGardenAboutPage() {
     {
       id: 'origin',
       title: 'Origin 심층 근본문제. 감별평가의 중요성. 동반질환관리',
-      content: `ADHD 경향성으로 인한 2차문제로 자존감 하락, 가족갈등, 학습문제, 또래 관계 갈등, 과한 걱정.특정버릇 성향, 강박, 사회기술부족, 감정조절의 어려움, 공격성, 충동성, 짜증 등으로 문제의 반복으로 인해, 삶의 질이 전반적으로 낮아지게 됩니다.
-안타깝게도 다양한 기관을 다녔지만, 시간이 지나도 개선되지 않거나, 실제적인 도움을 받지 못해서, 방치되는 경우를 보게 됩니다. 증상만 다루다 끝나는 것이 아닌, 핵심문제를 정확히 파악해야 필요한 도움을 받을 수 있습니다. 감별평가가 제대로 될 때 조기개입이 가능해집니다. 평가 이후에도 높은 동반질환의 특성을 이해하고, 동반질환을 함께 다뤄주면 증상이 완화.개선되고 상담 이전보다 삶이 안정적으로 유지되는 것을 보게 됩니다.`,
+      content: ORIGIN_SECTION_CONTENT,
       color: 'var(--accent-sky)',
       hasChart: true,
       variant: 'band',
       comorbidityData: {
-        overallRate: { min: 67, max: 80 },
-        disorders: [
-          { name: '적대적 반항장애', min: 45, max: 84 },
-          { name: '품행장애', min: 25, max: 50 },
-          { name: '우울장애', min: 25, max: 30 },
-          { name: '틱장애', min: 8, max: 10 },
-          { name: '강박불안장애', min: 15, max: 25 },
-          { name: '양극성장애', min: 10, max: 20 },
+        overallRate: { min: 60, max: 80 },
+        chartCategories: [
+          {
+            title: '1. 정서 및 기분 관련',
+            items: [
+              { name: '우울장애', min: 25, max: 30 },
+              { name: '불안장애', min: 20, max: 40 },
+              { name: '양극성 장애', min: 10, max: 20 },
+            ],
+          },
+          {
+            title: '2. 행동 및 충동 조절',
+            items: [
+              { name: '적대적 반항장애', min: 45, max: 84 },
+              { name: '품행장애', min: 25, max: 50 },
+              { name: '중독·행동 문제', min: 15, max: 40 },
+            ],
+          },
+          {
+            title: '3. 발달 및 학습',
+            items: [
+              { name: '틱·투렛', min: 8, max: 20 },
+              { name: '학습장애', min: 10, max: 30 },
+              { name: '언어발달 지연', min: 8, max: 25 },
+            ],
+          },
+          {
+            title: '4. 신경다양성 및 기타',
+            items: [
+              { name: 'ASD', min: 20, max: 50 },
+              { name: '수면장애', min: 25, max: 50 },
+              { name: 'HSP·감각과민', min: 15, max: 35 },
+            ],
+          },
         ],
-        otherDisorders: ['학습장애', '언어장애', '지적장애', '자폐범주 장애', '수면장애', '유뇨증', '성격장애']
-      }
+        otherDisorders: [
+          '학습장애',
+          '언어장애',
+          '지적장애',
+          '자폐범주 장애',
+          '수면장애',
+          '유뇨증',
+          '성격장애',
+        ],
+        highRiskTags: [
+          '경계선 성격장애(BPD)',
+          '자기애성 성격장애(NPD)',
+          '양극성 장애',
+          '조현병',
+        ],
+      },
     },
     {
       id: 'late-diagnosis',
@@ -199,200 +287,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
 
                   {/* 그래프 (origin 섹션만) */}
                   {section.hasChart && section.comorbidityData && (
-                    <div style={{
-                      marginBottom: '32px',
-                      padding: '24px',
-                      background: 'rgba(255, 255, 255, 0.6)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid rgba(89, 142, 62, 0.2)'
-                    }}>
-                      {/* 전체 동반질환 비율 */}
-                      <div style={{
-                        marginBottom: '32px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{
-                          fontSize: '0.9rem',
-                          color: 'var(--text-sub)',
-                          marginBottom: '12px',
-                          fontWeight: '600'
-                        }}>
-                          ADHD 진단 시 동반질환 발생률
-                        </div>
-                        <div style={{
-                          position: 'relative',
-                          width: '200px',
-                          height: '200px',
-                          margin: '0 auto'
-                        }}>
-                          <svg width="200" height="200" viewBox="0 0 200 200" style={{ transform: 'rotate(-90deg)' }}>
-                            <circle
-                              cx="100"
-                              cy="100"
-                              r="80"
-                              fill="none"
-                              stroke="rgba(89, 142, 62, 0.2)"
-                              strokeWidth="20"
-                            />
-                            <circle
-                              cx="100"
-                              cy="100"
-                              r="80"
-                              fill="none"
-                              stroke="rgba(89, 142, 62, 0.8)"
-                              strokeWidth="20"
-                              strokeDasharray={`${(section.comorbidityData.overallRate.max * 2 * Math.PI * 80) / 100} ${2 * Math.PI * 80}`}
-                              strokeLinecap="round"
-                              style={{ transition: 'all 0.5s ease' }}
-                            />
-                          </svg>
-                          <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            textAlign: 'center'
-                          }}>
-                            <div style={{
-                              fontSize: '2rem',
-                              fontWeight: '700',
-                              color: 'var(--accent-peach)',
-                              lineHeight: '1.2'
-                            }}>
-                              {section.comorbidityData.overallRate.min}~{section.comorbidityData.overallRate.max}%
-                            </div>
-                            <div style={{
-                              fontSize: '0.85rem',
-                              color: 'var(--text-sub)',
-                              marginTop: '4px'
-                            }}>
-                              동반질환 발생
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 주요 동반질환 막대 그래프 */}
-                      <div style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div style={{
-                          fontSize: '0.9rem',
-                          color: 'var(--text-sub)',
-                          marginBottom: '16px',
-                          fontWeight: '600',
-                          textAlign: 'center'
-                        }}>
-                          주요 동반질환별 발생률
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '12px'
-                        }}>
-                          {section.comorbidityData.disorders.map((disorder, idx) => {
-                            const avgRate = (disorder.min + disorder.max) / 2;
-                            const colors = [
-                              'rgba(89, 142, 62, 0.8)',
-                              'rgba(184, 212, 227, 0.8)',
-                              'rgba(212, 240, 232, 0.8)',
-                              'rgba(232, 213, 227, 0.8)',
-                              'rgba(255, 244, 212, 0.8)',
-                              'rgba(89, 142, 62, 0.6)',
-                            ];
-                            return (
-                              <div key={idx} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px'
-                              }}>
-                                <div style={{
-                                  flex: '0 0 140px',
-                                  fontSize: '0.9rem',
-                                  color: 'var(--text-main)',
-                                  fontWeight: '500',
-                                  wordBreak: 'keep-all'
-                                }}>
-                                  {disorder.name}
-                                </div>
-                                <div style={{
-                                  flex: '1',
-                                  position: 'relative',
-                                  height: '28px',
-                                  background: 'rgba(89, 142, 62, 0.15)',
-                                  borderRadius: '14px',
-                                  overflow: 'hidden'
-                                }}>
-                                  <div style={{
-                                    position: 'absolute',
-                                    left: 0,
-                                    top: 0,
-                                    height: '100%',
-                                    width: `${avgRate}%`,
-                                    background: `linear-gradient(90deg, ${colors[idx % colors.length]} 0%, ${colors[idx % colors.length].replace('0.8', '0.6')} 100%)`,
-                                    borderRadius: '14px',
-                                    transition: 'width 0.8s ease',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-end',
-                                    paddingRight: '8px',
-                                    boxShadow: `0 2px 8px ${colors[idx % colors.length].replace('0.8', '0.3')}`
-                                  }}>
-                                    <span style={{
-                                      fontSize: '0.75rem',
-                                      fontWeight: '700',
-                                      color: 'var(--text-main)',
-                                      whiteSpace: 'nowrap'
-                                    }}>
-                                      {disorder.min}~{disorder.max}%
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* 기타 동반질환 */}
-                      <div style={{
-                        paddingTop: '20px',
-                        borderTop: '1px solid rgba(89, 142, 62, 0.2)'
-                      }}>
-                        <div style={{
-                          fontSize: '0.85rem',
-                          color: 'var(--text-sub)',
-                          marginBottom: '12px',
-                          fontWeight: '600',
-                          textAlign: 'center'
-                        }}>
-                          기타 동반질환
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                          justifyContent: 'center'
-                        }}>
-                          {section.comorbidityData.otherDisorders.map((disorder, idx) => (
-                            <span
-                              key={idx}
-                              style={{
-                                display: 'inline-block',
-                                padding: '6px 12px',
-                                background: 'rgba(89, 142, 62, 0.15)',
-                                borderRadius: '16px',
-                                fontSize: '0.8rem',
-                                color: 'var(--text-main)',
-                                fontWeight: '500'
-                              }}
-                            >
-                              {disorder}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                    <MindgardenComorbidityChart cd={section.comorbidityData} />
                   )}
 
                   {/* 내용 */}

@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl';
+import CopyGuard from '@/components/CopyGuard';
 
 interface Counselor {
   id: number;
@@ -188,19 +189,22 @@ export default function CounselorsPage() {
             </div>
 
             {/* 대표원장 섹션 */}
-            <div style={{
-              maxWidth: '1000px',
-              margin: '0 auto 64px',
-              background: 'linear-gradient(to bottom, var(--white) 0%, rgba(184, 212, 227, 0.05) 100%)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-1)',
-              border: '2px solid var(--accent-sky)40',
-              padding: isMobile ? '32px 24px' : '48px',
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              gap: '40px',
-              alignItems: isMobile ? 'center' : 'flex-start'
-            }}>
+            <CopyGuard
+              as="div"
+              style={{
+                maxWidth: '1000px',
+                margin: '0 auto 64px',
+                background: 'linear-gradient(to bottom, var(--white) 0%, rgba(184, 212, 227, 0.05) 100%)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-1)',
+                border: '2px solid var(--accent-sky)40',
+                padding: isMobile ? '32px 24px' : '48px',
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '40px',
+                alignItems: isMobile ? 'center' : 'flex-start',
+              }}
+            >
               {/* 왼쪽: 프로필 이미지 */}
               <div style={{
                 flexShrink: 0,
@@ -356,7 +360,7 @@ export default function CounselorsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </CopyGuard>
 
             {/* 상담사 목록 */}
             {loading ? (

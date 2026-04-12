@@ -10,11 +10,14 @@ export default function CopyGuard({
   children,
   className = '',
   style,
+  id,
   as: Tag = 'div',
 }: {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** 앵커·스크롤용 id (예: section#director) */
+  id?: string;
   as?: 'div' | 'section' | 'article' | 'span' | 'p';
 }) {
   const stopClipboard = (e: ClipboardEvent<HTMLElement>) => {
@@ -29,6 +32,7 @@ export default function CopyGuard({
 
   return (
     <Tag
+      id={id}
       className={`no-user-copy ${className}`.trim()}
       style={style}
       onCopy={stopClipboard}

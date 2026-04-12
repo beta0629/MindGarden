@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import MindgardenProgramsFlipGrid from '@/components/about/MindgardenProgramsFlipGrid';
+import CopyGuard from '@/components/CopyGuard';
 
 /** 전문특화 히어로 배경 — 정원 테마 생성 이미지 */
 const HERO_BG = '/assets/images/generated-garden/mg-hero-bg.jpg';
@@ -129,7 +130,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
       <MindgardenProgramsFlipGrid />
 
       {/* 4. Director */}
-      <section id="director" className="mg-director-section">
+      <CopyGuard as="section" id="director" className="mg-director-section">
         <div className="mg-landing-container">
           <div className="mg-director-grid">
           <figure className="mg-director-visual mg-landing-fade">
@@ -180,7 +181,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
           </div>
           </div>
         </div>
-      </section>
+      </CopyGuard>
 
       {/* 5. Philosophy & space */}
       <section id="philosophy" className="mg-philosophy-section">

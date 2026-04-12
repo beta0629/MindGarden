@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ChecklistDisclaimerParagraphs from '@/components/ChecklistDisclaimerParagraphs';
+import CopyGuard from '@/components/CopyGuard';
 import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
 
 export const metadata = {
@@ -13,7 +14,7 @@ export default function ScreeningHubPage() {
 
   return (
     <main className="content-shell screening-layout">
-      <div className="screening-hub">
+      <CopyGuard as="div" className="screening-hub">
         <h1 className="screening-hub-title">주제별 간이 체크리스트</h1>
         <p className="screening-hub-desc" style={{ marginBottom: '1rem' }}>
           현재 겪고 있는 어려움을 간단히 점검해 보세요.
@@ -64,7 +65,7 @@ export default function ScreeningHubPage() {
             </Link>
           ))}
         </div>
-      </div>
+      </CopyGuard>
     </main>
   );
 }

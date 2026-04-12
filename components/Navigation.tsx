@@ -42,12 +42,13 @@ export default function Navigation() {
       const heroBottom = heroRect.bottom;
       const heroTop = heroRect.top;
       const scrolled = heroBottom < 50;
-      
+      const isStaticHero = heroSection.classList.contains('hero-section--static');
+
       // 히어로 섹션이 화면 상단에 있고 네비게이션 영역이 히어로 섹션 내부에 있을 때만 흰색 사용
-      // 네비게이션은 top: 0에 있으므로, 히어로 섹션이 네비게이션 아래에 있으면 흰색 사용
+      // 크림 배경 정적 히어로에서는 어두운 텍스트 유지(비디오 오버레이용 흰색 GNB 비활성화)
       const navHeight = 80; // 네비게이션 높이 대략값
       const isNavOverHero = heroTop < navHeight && heroBottom > navHeight;
-      const shouldUseWhite = isNavOverHero && !scrolled;
+      const shouldUseWhite = !isStaticHero && isNavOverHero && !scrolled;
 
       setIsScrolled(scrolled);
       setIsWhite(shouldUseWhite);
@@ -244,11 +245,14 @@ export default function Navigation() {
               priority
               onError={onLogoError}
             />
-            <span style={{ 
-              fontSize: '1.125rem',
-              fontWeight: '700',
-              whiteSpace: 'nowrap',
-            }}>
+            <span
+              className="logo-text"
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: '700',
+                whiteSpace: 'nowrap',
+              }}
+            >
               마인드가든
             </span>
           </Link>
@@ -421,11 +425,7 @@ export default function Navigation() {
           })}
         </nav>
         <div className="gnb-drawer-footer">
-          <Link
-            href="/location"
-            className="gnb-drawer-cta"
-            onClick={() => setIsMenuOpen(false)}
-          >
+          <Link href="/location" className="gnb-drawer-cta" onClick={() => setIsMenuOpen(false)}>
             센터 위치
           </Link>
         </div>

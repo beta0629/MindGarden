@@ -389,11 +389,11 @@ class ApiService {
   getDefaultHomeData() {
     return {
       slogan: {
-        sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
-        main: 'ADHD 전문.심리상담센터'
+        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
+        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
+        tagline: '— 마인드가든이 함께 합니다 —',
       },
-      videoUrl: null, // 로컬 비디오 또는 기본 비디오 사용
-      gallery: [...FALLBACK_GALLERY_IMAGES]
+      gallery: [...FALLBACK_GALLERY_IMAGES],
     };
   }
 }

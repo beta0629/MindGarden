@@ -50,37 +50,6 @@ async function getGalleryImages() {
   }
 }
 
-// 활성 히어로 비디오 조회 (DB에서 직접 조회)
-async function getHeroVideo() {
-  let connection;
-  try {
-    connection = await getDbConnection();
-    const [rows] = await connection.execute(
-      `SELECT video_url, poster_url
-       FROM hero_videos
-       WHERE is_active = 1
-       ORDER BY display_order ASC, created_at DESC
-       LIMIT 1`
-    );
-
-    const videos = rows as any[];
-    if (videos.length === 0) {
-      // DB에 비디오가 없으면 기본 비디오 경로 반환
-      return '/assets/videos/hero-video.mp4';
-    }
-
-    return videos[0].video_url;
-  } catch (error) {
-    console.error('Failed to load hero video:', error);
-    // 에러 발생 시에도 기본 비디오 경로 반환
-    return '/assets/videos/hero-video.mp4';
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
-}
-
 // 후기 목록 조회 (전체 후기)
 async function getReviews() {
   let connection;
@@ -138,10 +107,7 @@ async function getHomeData() {
   try {
     const apiService = getApiService();
     const homeData = await apiService.getHomeData();
-    
-    // 히어로 비디오 조회 (DB에서 직접 조회)
-    const videoUrl = await getHeroVideo();
-    
+
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
     const galleryImages = await getGalleryImages();
     console.log('getHomeData - galleryImages:', galleryImages ? galleryImages.length : 'null', galleryImages);
@@ -157,10 +123,10 @@ async function getHomeData() {
     
     return {
       slogan: (homeData && homeData.slogan) || {
-        sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
-        main: 'ADHD 전문.심리상담센터'
+        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
+        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
+        tagline: '— 마인드가든이 함께 합니다 —',
       },
-      videoUrl: videoUrl || '/assets/videos/hero-video.mp4', // 기본 비디오 경로
       gallery: finalGallery,
       reviews: reviews,
     };
@@ -168,10 +134,10 @@ async function getHomeData() {
     console.error('Failed to load home data:', error);
     return {
       slogan: {
-        sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
-        main: 'ADHD 전문.심리상담센터'
+        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
+        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
+        tagline: '— 마인드가든이 함께 합니다 —',
       },
-      videoUrl: '/assets/videos/hero-video.mp4', // 기본 비디오 경로
       gallery: [...FALLBACK_GALLERY_IMAGES],
       reviews: [],
     };
@@ -185,7 +151,7 @@ export default async function Home() {
     <main id="top">
       <HashScroll />
       <Navigation />
-      <HeroSection slogan={homeData.slogan} videoUrl={homeData.videoUrl} />
+      <HeroSection slogan={homeData.slogan} />
 
       <HomeScreeningPromo />
 

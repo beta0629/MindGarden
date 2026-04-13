@@ -25,7 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementService {
-    
+
+    /**
+     * 시그니처 불일치로 판별될 때 API 응답에 포함할 안내(내부 경로·비밀 미포함).
+     */
+    private static final String CALCULATE_SALARY_PREVIEW_SIGNATURE_MISMATCH_HINT =
+            "DB 저장 프로시저 CalculateSalaryPreview의 파라미터 구성이 애플리케이션 기대와 다를 수 있습니다. "
+                    + "표준 CalculateSalaryPreview 프로시저 배포로 시그니처를 맞춰 주세요.";
+
     private final JdbcTemplate jdbcTemplate;
     
     @Override
@@ -311,22 +318,53 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
 
         } catch (Exception e) {
-            log.error("❌ PL/SQL 급여 미리보기 중 오류 발생: {}", e.getMessage(), e);
+            log.error("PL/SQL 급여 미리보기 실패: error={}", e.getMessage(), e);
             logCalculateSalaryPreviewParameterDiagnostics(e);
             result.put("success", false);
-            result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
+            if (shouldLogCalculateSalaryPreviewSignatureMismatch(e)) {
+                result.put("message",
+                        "급여 미리보기 중 오류가 발생했습니다. " + CALCULATE_SALARY_PREVIEW_SIGNATURE_MISMATCH_HINT
+                                + " 상세: " + e.getMessage());
+            } else {
+                result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
+            }
         }
         return result;
     }
 
     /**
-     * OUT 파라미터 바인딩 오류 시 DB에 적용된 시그니처를 로그로 남겨 배포 불일치 진단을 돕는다.
+     * CalculateSalaryPreview 호출 실패가 JDBC 시그니처 불일치로 의심될 때 true.
+     * 운영에서는 {@code database/schema/procedures_standardized/CalculateSalaryPreview_standardized.sql} 과
+     * 동일한 시그니처로 배포하는 것이 본조치이며, {@code scripts/automation/deployment/deploy-standardized-procedures.sh} 로
+     * 표준 프로시저를 반영할 수 있다.
+     *
+     * @param cause 호출 실패 원인(원인 체인 포함 검사)
+     * @return information_schema 진단 로그 및 사용자 메시지 분기 여부
+     */
+    private boolean shouldLogCalculateSalaryPreviewSignatureMismatch(Throwable cause) {
+        for (Throwable t = cause; t != null; t = t.getCause()) {
+            String msg = t.getMessage();
+            if (msg == null || msg.isEmpty()) {
+                continue;
+            }
+            if (msg.contains("OUT parameter")) {
+                return true;
+            }
+            if (msg.contains("Parameter index of") && msg.contains("out of range")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 시그니처 불일치로 추정될 때 DB에 적용된 파라미터 목록을 로그로 남겨 배포 불일치 진단을 돕는다.
+     * 본조치는 표준 프로시저 배포이며, {@link #shouldLogCalculateSalaryPreviewSignatureMismatch(Throwable)} 참고.
      *
      * @param cause 호출 실패 원인
      */
     private void logCalculateSalaryPreviewParameterDiagnostics(Throwable cause) {
-        String msg = cause != null ? cause.getMessage() : "";
-        if (msg == null || !msg.contains("OUT parameter")) {
+        if (!shouldLogCalculateSalaryPreviewSignatureMismatch(cause)) {
             return;
         }
         try {
@@ -335,9 +373,11 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = 'CalculateSalaryPreview' "
                     + "ORDER BY ORDINAL_POSITION";
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-            log.error("CalculateSalaryPreview information_schema.PARAMETERS (기대: 1-4 IN, 5-10 OUT): {}", rows);
+            log.error(
+                    "CalculateSalaryPreview 시그니처 진단: information_schema.PARAMETERS (기대 1-4 IN, 5-10 OUT): rows={}",
+                    rows);
         } catch (Exception ex) {
-            log.warn("프로시저 파라미터 진단 조회 실패: {}", ex.getMessage());
+            log.warn("프로시저 파라미터 진단 조회 실패: error={}", ex.getMessage(), ex);
         }
     }
 }

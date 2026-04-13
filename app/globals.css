@@ -4316,24 +4316,24 @@ a.program-card:hover {
     }
 
     .mg-director-frame {
-        width: min(62vw, 200px);
-        max-width: 200px;
+        width: min(31vw, 100px);
+        max-width: 100px;
     }
 
     .mg-director-img {
         width: 100%;
-        max-width: min(62vw, 200px);
+        max-width: min(31vw, 100px);
     }
 }
 
 @media (max-width: 480px) {
     .mg-director-frame {
-        width: min(56vw, 180px);
-        max-width: 180px;
+        width: min(28vw, 96px);
+        max-width: 96px;
     }
 
     .mg-director-img {
-        max-width: min(56vw, 180px);
+        max-width: min(28vw, 96px);
     }
 }
 

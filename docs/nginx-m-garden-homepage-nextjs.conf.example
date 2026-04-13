@@ -1,0 +1,42 @@
+# 운영(beta74)에서 실제 사용: /etc/nginx/conf.d/m-garden-homepage-nextjs.conf
+# sites-available 기존 파일은 건드리지 않고 이 파일만 추가하는 방식.
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ""      close;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name m-garden.co.kr www.m-garden.co.kr;
+    return 301 https://m-garden.co.kr$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name m-garden.co.kr www.m-garden.co.kr;
+
+    ssl_certificate /etc/letsencrypt/live/m-garden.co.kr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/m-garden.co.kr/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    access_log /var/log/nginx/m-garden-homepage.access.log;
+    error_log /var/log/nginx/m-garden-homepage.error.log;
+
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+}

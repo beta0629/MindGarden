@@ -7,11 +7,13 @@
 
 ## 1. SSH 접근
 
-| 항목 | 값 |
-|------|-----|
-| **호스트** | `beta0629.cafe24.com` |
-| **접속** | `ssh beta0629.cafe24.com` (로컬 SSH 키 사용, 별도 키 등록 없음) |
-| **비고** | 선택 시 Actions가 **CI 후 SSH 자동 배포** (`HOMEPAGE_DEV_SSH_DEPLOY` + `DEV_SSH_*` Secrets, `docs/DEV_DEPLOY_CI_SSH.md`). **로컬 PC의 `~/.ssh`는 변경하지 않음** (러너 전용 키를 Secrets에 넣음). |
+| 구분 | 호스트 | 접속 |
+|------|--------|------|
+| **개발** | `beta0629.cafe24.com` | `ssh beta0629.cafe24.com` (로컬 SSH 키) |
+| **운영** | `beta74.cafe24.com` | `ssh root@beta74.cafe24.com` |
+
+- **개발** 서버의 배포 경로·웹훅·PM2는 §2~§6. 선택 시 Actions **CI 후 SSH 자동 배포** (`HOMEPAGE_DEV_SSH_DEPLOY` + `DEV_SSH_*` Secrets, `docs/DEV_DEPLOY_CI_SSH.md`). **로컬 PC의 `~/.ssh`는 변경하지 않음** (러너 전용 키는 Secrets에만).
+- **운영** 서버 요약은 §8.
 
 ---
 
@@ -119,8 +121,22 @@ pm2 restart homepage-dev
 
 ## 8. 운영 서버
 
-- 현재 문서 작성 시점에는 **운영 서버 정보는 개발 서버와 동일**한 것으로 가정.  
-- 별도 운영 호스트/경로가 생기면 이 섹션을 갱신하세요.
+| 항목 | 값 |
+|------|-----|
+| **호스트** | `beta74.cafe24.com` |
+| **SSH** | `ssh root@beta74.cafe24.com` |
+| **공개 URL** | `https://m-garden.co.kr` |
+| **앱 배포 경로** | `/var/www/homepage` |
+| **PM2 앱 이름** | `homepage` (`npm start` → Next.js **포트 4000**) |
+| **nginx (추가만)** | `/etc/nginx/conf.d/m-garden-homepage-nextjs.conf` |
+| **배포 스크립트** | 레포 `scripts/deploy-production.sh` (서버에서 `bash scripts/deploy-production.sh`) |
+
+- 개발(`beta0629.cafe24.com`)과 **별도 호스트**다.
+- **도메인 연동**: 위 nginx 파일만 **추가**했고, `sites-available`·기존 블록은 **수정하지 않음**. `nginx.conf`는 `conf.d`를 `sites-enabled`보다 먼저 include하므로, 동일 `server_name`(m-garden.co.kr, www)에 대해 이 프록시가 **410 Gone** 등 후속 중복 블록보다 우선한다. (중복 경고는 무시되는 쪽이 후속 블록.)
+- SSL은 기존 Let’s Encrypt 인증서 경로 `/etc/letsencrypt/live/m-garden.co.kr/` 사용.
+- 레포 예시(백업·재현용): `docs/nginx-m-garden-homepage-nextjs.conf.example`
+- **운영 배포**: 서버에 `.env` 또는 `.env.production`을 두고(템플릿 `/.env.production.example`), DB는 개발과 **동일 계정·비밀번호**, **`DB_HOST` 만 운영 DB 주소**(같은 장비면 `127.0.0.1`)로 설정. 이후 `cd /var/www/homepage && bash scripts/deploy-production.sh`.
+- 비밀번호·개인키는 저장소/문서에 적지 않는다.
 
 ---
 
@@ -131,6 +147,7 @@ pm2 restart homepage-dev
 - `docs/AUTO_DEPLOY_SETUP.md` — 자동 배포 개요
 - `docs/AUTO_DEPLOY_TROUBLESHOOTING.md` — **자동 배포가 안 될 때 점검 절차** (웹훅 수신 → 재기동)
 - `docs/DEPLOY_SCRIPT_REFERENCE.md` — 배포 스크립트 예시·**재기동(pm2 restart) 확인** 방법
+- `docs/nginx-m-garden-homepage-nextjs.conf.example` — **운영** `m-garden.co.kr` → Next(:4000) nginx 추가 블록 예시
 - Webhook Secret: `mindgarden-webhook-secret-2025` (GitHub Webhooks 설정 시 사용)
 
 ---

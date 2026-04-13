@@ -29,6 +29,13 @@ git reset --hard "origin/${BRANCH}"
 npm ci
 npm run build
 
-pm2 restart "$PM2_APP" --update-env
+# PM2가 root 셸의 DB_*(다른 서비스)를 물려받지 않도록 ecosystem으로 .env 만 주입
+ECOSYSTEM="${APP_ROOT}/ecosystem.homepage.config.cjs"
+if [[ -f "$ECOSYSTEM" ]]; then
+  pm2 startOrReload "$ECOSYSTEM" --update-env
+else
+  echo "deploy-production: WARN — ecosystem.homepage.config.cjs 없음, pm2 restart만 시도" >&2
+  pm2 restart "$PM2_APP" --update-env
+fi
 
 echo "deploy-production: OK $(git rev-parse --short HEAD) branch=${BRANCH} pm2=${PM2_APP}"

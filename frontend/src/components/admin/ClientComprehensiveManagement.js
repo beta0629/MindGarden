@@ -31,6 +31,7 @@ import './mapping-management/organisms/MappingSearchSection.css';
 import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
+import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 
 /**
  * 내담자 종합관리 메인 컴포넌트
@@ -327,7 +328,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         setFormData({
             name: '',
             email: '',
-            password: '',
+            password: generateMgLoginPassword(),
             phone: '',
             status: 'ACTIVE',
             grade: 'BRONZE',

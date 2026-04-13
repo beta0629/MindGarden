@@ -40,6 +40,7 @@ import './ConsultantManagementPage.css';
 import './ProfileCard.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [consultants, setConsultants] = useState([]);
@@ -592,7 +593,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             setFormData({
                 name: '',
                 email: '',
-                password: '',
+                password: generateMgLoginPassword(),
                 phone: '',
                 status: 'ACTIVE',
                 specialty: [],
@@ -1670,7 +1671,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     {(modalType === 'create') && (
                         <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                             <p className="mg-v2-info-text">
-                                💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
+                                💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.
                             </p>
                         </div>
                     )}
@@ -1871,10 +1872,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 name="password"
                                 value={formData.password || ''}
                                 onChange={handleFormChange}
-                                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                                placeholder="정책 준수 자동 비밀번호(수정 가능)"
                                 className="mg-v2-form-input"
                             />
-                            <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+                            <small className="mg-v2-form-help">
+                                영문 대·소문자, 숫자, {'@$!%*?&'} 각 1자 이상, 연속·동일 3자 반복 불가. 비우면 임시 비밀번호로 등록됩니다.
+                            </small>
                         </div>
                     )}
                     <div className="mg-v2-form-group">

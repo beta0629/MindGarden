@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
+import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 
@@ -31,7 +32,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
   const [formData, setFormData] = useState({
     userId: '',
     email: '',
-    password: '',
+    password: generateMgLoginPassword(),
     name: '',
     phone: '',
     rrnFirst6: '',
@@ -235,7 +236,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     setFormData({
       userId: '',
       email: '',
-      password: '',
+      password: generateMgLoginPassword(),
       name: '',
       phone: '',
       rrnFirst6: '',

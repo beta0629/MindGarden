@@ -23,6 +23,7 @@ import { validateEmail, validatePhone } from '../../../../utils/validationUtils'
 import { VALIDATION_MESSAGES } from '../../../../constants/messages';
 import './ClientRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
+import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -263,7 +264,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     setFormData({
       userId: '',
       email: '',
-      password: '',
+      password: generateMgLoginPassword(),
       name: '',
       phone: '',
       rrnFirst6: '',

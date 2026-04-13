@@ -8,6 +8,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SafeText from '../common/SafeText';
+import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [consultants, setConsultants] = useState([]);
@@ -84,7 +85,9 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             if (response.ok) {
                 showToast('상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
-                setForm({ userId: '', email: '', password: '', name: '', phone: '', specialization: '' });
+                setForm({
+                    userId: '', email: '', password: generateMgLoginPassword(), name: '', phone: '', specialization: ''
+                });
                 loadConsultants();
                 onUpdate();
             } else {
@@ -191,7 +194,17 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         <i className="bi bi-person-badge" />
                         상담사 관리
                     </h3>
-                    <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => {
+                            setForm({
+                                userId: '', email: '', password: generateMgLoginPassword(),
+                                name: '', phone: '', specialization: ''
+                            });
+                            setShowModal(true);
+                        }}
+                    >
                         <FaPlus /> 등록
                     </Button>
                 </div>

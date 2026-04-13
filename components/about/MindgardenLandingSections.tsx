@@ -141,7 +141,7 @@ export default function MindgardenLandingSections({ showHero = true }: Mindgarde
                 width={312}
                 height={312}
                 className="mg-director-img"
-                sizes="(max-width: 900px) 72vw, 312px"
+                sizes="(max-width: 900px) 220px, 312px"
               />
               <div className="mg-director-decor" aria-hidden />
             </div>

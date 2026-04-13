@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   PROGRAM_PAGE_ORDER,
@@ -21,6 +21,26 @@ type FlipItem = {
 
 export default function HomeProgramPagesFlipGrid() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [tapFlip, setTapFlip] = useState(false);
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: none)');
+    const syncTapFlip = () => setTapFlip(mq.matches);
+    syncTapFlip();
+    mq.addEventListener('change', syncTapFlip);
+    return () => mq.removeEventListener('change', syncTapFlip);
+  }, []);
+
+  const toggleCardFlip = useCallback(
+    (key: string, target: EventTarget | null) => {
+      if (!tapFlip) return;
+      const el = target instanceof HTMLElement ? target : null;
+      if (el?.closest('a')) return;
+      setFlipped((prev) => ({ ...prev, [key]: !prev[key] }));
+    },
+    [tapFlip]
+  );
 
   useEffect(() => {
     const root = containerRef.current;
@@ -70,11 +90,23 @@ export default function HomeProgramPagesFlipGrid() {
         className="mg-prog-cards-grid mg-prog-cards-grid--program-pages"
         aria-label="프로그램 상세 안내 카드"
       >
-        {items.map((card) => (
-          <article key={card.key} className={`mg-prog-card mg-fade-in-up ${card.delayClass}`}>
+        {items.map((card, i) => (
+          <article
+            key={card.key}
+            className={`mg-prog-card mg-fade-in-up ${card.delayClass}${flipped[card.key] ? ' mg-prog-card--flipped' : ''}`}
+            tabIndex={tapFlip ? 0 : undefined}
+            aria-labelledby={tapFlip ? `mg-prog-pages-card-h-${i}` : undefined}
+            onClick={(e) => toggleCardFlip(card.key, e.target)}
+            onKeyDown={(e) => {
+              if (!tapFlip) return;
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              toggleCardFlip(card.key, e.target);
+            }}
+          >
             <div className="mg-prog-card-inner">
               <div className="mg-prog-card-front">
-                <h3>{card.title}</h3>
+                <h3 id={`mg-prog-pages-card-h-${i}`}>{card.title}</h3>
                 <p className="mg-prog-highlight">{card.highlight}</p>
               </div>
               <div className="mg-prog-card-back">

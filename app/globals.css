@@ -3870,12 +3870,24 @@ a.program-card:hover {
     height: 350px;
 }
 
+@media (hover: none) {
+    .mg-prog-card {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
 .mg-prog-card-inner {
     position: relative;
     width: 100%;
     height: 100%;
     transition: transform 0.8s;
     transform-style: preserve-3d;
+}
+
+/* 터치 기기: hover 미지원 → 탭으로 뒤집기(.mg-prog-card--flipped는 TS에서 토글) */
+.mg-prog-card--flipped .mg-prog-card-inner {
+    transform: rotateY(180deg);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -4260,6 +4272,15 @@ a.program-card:hover {
     .mg-director-grid {
         grid-template-columns: 1fr;
         gap: 2.5rem;
+    }
+
+    .mg-director-frame {
+        width: min(100%, 220px);
+        max-width: 220px;
+    }
+
+    .mg-director-img {
+        max-width: 220px;
     }
 }
 

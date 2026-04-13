@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.support.TenantOnboardingSalaryAndFinancialSeedDefinitions;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
@@ -1842,6 +1843,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
                     "ADMINISTRATION", "행정", "행정", "행정 업무", null, 2, createdByValue);
 
+            // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
+            // TenantOnboardingSalaryAndFinancialSeedDefinitions
+            for (TenantOnboardingSalaryAndFinancialSeedDefinitions.SeedRow row : TenantOnboardingSalaryAndFinancialSeedDefinitions
+                    .allRows()) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, row.codeGroup(),
+                        row.codeValue(), row.koreanName(), row.codeLabel(), row.description(),
+                        row.extraData(), row.sortOrder(), createdByValue, row.parentCodeGroup(),
+                        row.parentCodeValue());
+            }
+
             // 3. 배치 저장 (한 번의 쿼리로 모든 코드 삽입)
             if (!codesToInsert.isEmpty()) {
                 commonCodeRepository.saveAll(codesToInsert);
@@ -1864,6 +1875,17 @@ public class OnboardingServiceImpl implements OnboardingService {
             String tenantId, String codeGroup, String codeValue, String koreanName,
             String codeLabel, String description, String extraData, Integer sortOrder,
             String createdBy) {
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, codeGroup, codeValue,
+                koreanName, codeLabel, description, extraData, sortOrder, createdBy, null, null);
+    }
+
+    /**
+     * parentCodeGroup/parentCodeValue: INCOME_SUBCATEGORY·EXPENSE_SUBCATEGORY 등 계층 코드용 (없으면 null).
+     */
+    private void addCodeIfNotExists(List<CommonCode> codesToInsert, Set<String> existingCodeKeys,
+            String tenantId, String codeGroup, String codeValue, String koreanName,
+            String codeLabel, String description, String extraData, Integer sortOrder,
+            String createdBy, String parentCodeGroup, String parentCodeValue) {
         String codeKey = codeGroup + ":" + codeValue;
         if (existingCodeKeys.contains(codeKey)) {
             log.debug("공통코드가 이미 존재함 (건너뜀): tenantId={}, codeGroup={}, codeValue={}", tenantId,
@@ -1874,10 +1896,11 @@ public class OnboardingServiceImpl implements OnboardingService {
         CommonCode code = CommonCode.builder().codeGroup(codeGroup).codeValue(codeValue)
                 .koreanName(koreanName).codeLabel(codeLabel).codeDescription(description)
                 .sortOrder(sortOrder != null ? sortOrder : 0).isActive(true).extraData(extraData)
-                .build();
+                .parentCodeGroup(parentCodeGroup).parentCodeValue(parentCodeValue).build();
 
         code.setTenantId(tenantId);
         codesToInsert.add(code);
+        existingCodeKeys.add(codeKey);
     }
 
     /**

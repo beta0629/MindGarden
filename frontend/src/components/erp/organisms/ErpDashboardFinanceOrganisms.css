@@ -72,6 +72,47 @@
   padding-left: var(--mg-spacing-md, 16px);
 }
 
+.erp-finance-tx__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-bottom: var(--mg-spacing-md, 1rem);
+}
+
+.erp-finance-tx__header-text {
+  flex: 1 1 auto;
+  min-width: min(100%, 12rem);
+}
+
+.erp-finance-tx__header-text .erp-finance-tx__title {
+  margin-bottom: var(--mg-spacing-xs, 0.5rem);
+}
+
+.erp-finance-tx__subtitle {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.45;
+}
+
+.erp-finance-tx__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  flex-shrink: 0;
+}
+
+/* 읽기 전용 기간 칩: 배지 톤 유지, 호버·포인터는 변화 없음 */
+button.erp-finance-tx__period-chip.mg-erp-filter-badge:hover,
+button.erp-finance-tx__period-chip.mg-erp-filter-badge:focus-visible {
+  background: var(--mg-primary-500);
+  color: var(--mg-color-surface-main);
+  border-color: var(--mg-primary-500);
+}
+
 .erp-finance-tx__table-wrap {
   overflow-x: auto;
   border-radius: var(--radius-md, 8px);

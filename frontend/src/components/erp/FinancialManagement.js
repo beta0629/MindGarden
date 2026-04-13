@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -59,12 +59,21 @@ const TRANSACTION_VIEW_MODE_OPTIONS = [
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
 
+const ERP_FINANCIAL_ALLOWED_DATE_RANGES = ['MONTH', 'WEEK', 'TODAY', 'ALL', 'CUSTOM'];
+
+const parseDateRangeFromSearch = (search) => {
+  const params = new URLSearchParams(search);
+  const dr = params.get('dateRange');
+  return ERP_FINANCIAL_ALLOWED_DATE_RANGES.includes(dr) ? dr : 'MONTH';
+};
+
 /**
  * ERP 재무 관리 페이지
  * 재무 거래 및 회계 관리
  */
 const FinancialManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading, isAdmin } = useSession();
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState([]);
@@ -82,11 +91,28 @@ const FinancialManagement = () => {
     transactionType: 'ALL', // ALL, INCOME, EXPENSE
     category: 'ALL', // ALL, CONSULTATION, SALARY, etc.
     relatedEntityType: 'ALL', // ALL, CONSULTANT_CLIENT_MAPPING, PAYMENT, etc.
-    dateRange: 'MONTH', // ALL, TODAY, WEEK, MONTH, CUSTOM
+    dateRange: parseDateRangeFromSearch(location.search), // ALL, TODAY, WEEK, MONTH, CUSTOM
     startDate: '',
     endDate: '',
     searchText: '' // 상담사명, 내담자명, 설명 검색
   });
+
+  const dateRangeQueryStrippedRef = useRef(false);
+
+  useEffect(() => {
+    if (dateRangeQueryStrippedRef.current) {
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    if (!params.has('dateRange')) {
+      dateRangeQueryStrippedRef.current = true;
+      return;
+    }
+    dateRangeQueryStrippedRef.current = true;
+    params.delete('dateRange');
+    const qs = params.toString();
+    navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
+  }, [location.pathname, location.search, navigate]);
   
   const [transactionViewMode, setTransactionViewMode] = useState('card');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -522,9 +548,9 @@ const FinancialManagement = () => {
                             className="mg-v2-form-select mg-v2-erp-filter-toolbar__period-select"
                           >
                             <option value="ALL">전체</option>
-                            <option value="TODAY">오늘</option>
-                            <option value="WEEK">이번 주</option>
-                            <option value="MONTH">이번 달</option>
+                            <option value="TODAY">일간</option>
+                            <option value="WEEK">주간</option>
+                            <option value="MONTH">월간</option>
                             <option value="CUSTOM">직접 입력</option>
                           </select>
                           {filters.dateRange === 'CUSTOM' && (

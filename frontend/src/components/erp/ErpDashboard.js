@@ -495,6 +495,17 @@ const ErpDashboard = ({ user: propUser }) => {
     (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? PermissionChecks.canManageRefund(userPermissions, currentUser)) ||
     isAdmin;
 
+  const nowForFinancePeriod = new Date();
+  const financePeriodYear = nowForFinancePeriod.getFullYear();
+  const financePeriodMonth = nowForFinancePeriod.getMonth() + 1;
+  const financePeriodLastDay = new Date(
+    nowForFinancePeriod.getFullYear(),
+    nowForFinancePeriod.getMonth() + 1,
+    0
+  ).getDate();
+  const recentTransactionsSubtitle = `${financePeriodYear}년 ${financePeriodMonth}월 1일 ~ ${financePeriodMonth}월 ${financePeriodLastDay}일 기준 당월 거래입니다.`;
+  const recentTransactionsPeriodChipLabel = '이번 달';
+
   return (
     <AdminCommonLayout>
       <ContentHeader
@@ -547,6 +558,8 @@ const ErpDashboard = ({ user: propUser }) => {
             <ErpRecentTransactionsTable
               financeLoading={financeLoading}
               recentTransactions={recentTransactions}
+              recentTransactionsSubtitle={recentTransactionsSubtitle}
+              recentTransactionsPeriodChipLabel={recentTransactionsPeriodChipLabel}
             />
           )}
 

@@ -192,16 +192,30 @@
   box-shadow: 0 0 0 2px var(--mg-color-primary-main);
 }
 
-.integrated-schedule__status-btn--selected {
+/* MGButton.mg-button--outline 특이도(2클래스)가 단일 --selected보다 높아 덮어쓰임 → 선택 시 명시적으로 재정의 */
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline {
   background-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  color: var(--mg-color-primary-inverse, var(--mg-white));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: var(--mg-color-primary-main, var(--mg-primary-500));
 }
 
-.integrated-schedule__status-btn--selected:hover {
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
-  color: var(--mg-color-primary-inverse, var(--mg-white));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  transform: none;
+  box-shadow: none;
+}
+
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .mg-button__text,
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
+  color: inherit;
 }
 
 .integrated-schedule__status-btn-text {
@@ -221,9 +235,9 @@
   color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
-.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
+.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
   background-color: var(--mg-badge-on-primary-bg, rgba(255, 255, 255, 0.25));
-  color: var(--mg-color-primary-inverse, var(--mg-white));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
 }
 
 .integrated-schedule__status-btn.mg-button.mg-button--outline {

@@ -3772,6 +3772,21 @@ a.program-card:hover {
     margin-top: 1rem;
 }
 
+@media (max-width: 640px) {
+    .mg-prog-cards-band {
+        padding: 1.25rem 0.75rem 1.75rem;
+        margin-top: 0.65rem;
+    }
+
+    .mg-landing .mg-prog-section {
+        padding: 3.5rem 0 4rem;
+    }
+
+    .mg-prog-section .mg-prog-header {
+        margin-bottom: 2rem;
+    }
+}
+
 .mg-landing .mg-prog-section {
     margin: 0;
     border-radius: 0;
@@ -3813,6 +3828,32 @@ a.program-card:hover {
     color: var(--mg-prog-lead);
     margin-bottom: 0;
     word-break: keep-all;
+}
+
+/* 터치·호버 미세 환경에서만 플립 안내(기획 UX-1, 이모지 없음) */
+.mg-prog-flip-hint {
+    display: none;
+    font-family: var(--font-main);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text-sub);
+    margin: 0.85rem auto 0;
+    max-width: 28rem;
+    text-align: center;
+    word-break: keep-all;
+}
+
+@media (hover: none), (pointer: coarse) {
+    .mg-prog-flip-hint {
+        display: block;
+    }
+}
+
+.mg-prog-flip-hint--home {
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
+    max-width: 36rem;
 }
 
 /* 기본은 항상 표시(IntersectionObserver 미동작 시에도 빈 화면 방지) */

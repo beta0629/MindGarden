@@ -87,6 +87,9 @@ export default function MindgardenProgramsFlipGrid() {
             증상 너머의 사람을 봅니다
           </h2>
           <p className="mg-prog-subtitle">마인드가든만의 문제 해결 중심 전문 통합 상담 프로그램</p>
+          <p className="mg-prog-flip-hint" role="note">
+            터치로 보실 때는 카드를 탭하면 뒷면 설명이 열립니다. 한 번 더 탭하면 앞면으로 돌아갑니다.
+          </p>
         </header>
 
         <div className="mg-prog-cards-grid">

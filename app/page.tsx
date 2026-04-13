@@ -14,7 +14,7 @@ import { getDbConnection } from '@/lib/db';
 import { homeSectionImages } from '@/lib/home-section-images';
 import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
 
-// 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
+// 갤러리·후기 등 DB 기반 블록이 있어 요청 시 최신 데이터를 쓰도록 동적 렌더링 유지
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -38,7 +38,6 @@ async function getGalleryImages() {
       category: row.category || '기타',
     }));
 
-    console.log('Gallery images loaded:', images.length, images);
     return images.length > 0 ? images : null;
   } catch (error) {
     console.error('Failed to load gallery images:', error);
@@ -110,16 +109,13 @@ async function getHomeData() {
 
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
     const galleryImages = await getGalleryImages();
-    console.log('getHomeData - galleryImages:', galleryImages ? galleryImages.length : 'null', galleryImages);
-    
+
     // 후기 목록 조회
     const reviews = await getReviews();
-    console.log('getHomeData - reviews:', reviews.length);
-    
+
     const defaultGallery = [...FALLBACK_GALLERY_IMAGES];
-    
+
     const finalGallery = galleryImages || defaultGallery;
-    console.log('getHomeData - finalGallery:', finalGallery.length, finalGallery);
     
     return {
       slogan: (homeData && homeData.slogan) || {
@@ -170,6 +166,9 @@ export default async function Home() {
               <div className="section-intro-copy">
                 <h2 className="section-title">프로그램</h2>
                 <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
+                <p className="mg-prog-flip-hint mg-prog-flip-hint--home" role="note">
+                  터치로 보실 때는 카드를 탭하면 뒷면 설명이 열립니다. 한 번 더 탭하면 앞면으로 돌아갑니다.
+                </p>
               </div>
             </div>
             <HomeProgramPagesFlipGrid />

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -257,15 +258,9 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
     
     /**
-     * 급여 미리보기. DB 프로시저 시그니처는 {@code CalculateSalaryPreview_standardized.sql} 과 동일해야 한다.
-     * JDBC {@link CallableStatement} 위치는 MySQL {@code information_schema.PARAMETERS} 의
-     * {@code ORDINAL_POSITION} 과 일치한다.
-     * <ul>
-     * <li>1–4 IN: p_consultant_id, p_period_start, p_period_end, p_tenant_id</li>
-     * <li>5–10 OUT: p_success, p_message, p_gross_salary, p_net_salary, p_tax_amount, p_consultation_count</li>
-     * </ul>
-     * 구버전(3 IN + 6 OUT, tenant_id 없음)이 남아 있으면 OUT 바인딩 오류가 난다.
-     * {@code scripts/automation/deployment/deploy-standardized-procedures.sh} 로 표준 프로시저를 배포한다.
+     * 급여 미리보기. 표준 시그니처는 {@code CalculateSalaryPreview_standardized.sql} 과 동일(10파라미터).
+     * 운영에 구버전(3 IN + 6 OUT, 총 9파라미터·OUT 순서 상이)이 남은 경우 JDBC 단에서 분기한다.
+     * 배포 시 GitHub {@code PRODUCTION_DB_NAME} 과 앱 JDBC 스키마가 다르면 프로시저만 갱신되지 않을 수 있다.
      *
      * @param consultantId 상담사 ID
      * @param periodStart  기간 시작
@@ -274,49 +269,40 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
      */
     @Override
     public Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd) {
-        log.info("💰 PL/SQL 급여 미리보기 계산: ConsultantID={}, Period={} ~ {}", 
+        log.info("💰 PL/SQL 급여 미리보기 계산: ConsultantID={}, Period={} ~ {}",
                 consultantId, periodStart, periodEnd);
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> result = new HashMap<>();
-        
-        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
-             CallableStatement stmt = connection.prepareCall(
-                 "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
-            
-            // UTF-8 인코딩 설정
-            connection.createStatement().execute("SET character_set_client = utf8mb4");
-            connection.createStatement().execute("SET character_set_connection = utf8mb4");
-            connection.createStatement().execute("SET character_set_results = utf8mb4");
-            
-            // IN 파라미터 설정 (1~4)
-            stmt.setLong(1, consultantId);
-            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
-            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
-            stmt.setString(4, tenantId);
-            
-            // OUT 파라미터 등록 (5~10: success, message, gross_salary, net_salary, tax_amount, consultation_count)
-            stmt.registerOutParameter(5, java.sql.Types.BOOLEAN);   // p_success
-            stmt.registerOutParameter(6, java.sql.Types.VARCHAR);   // p_message
-            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // p_gross_salary
-            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // p_net_salary
-            stmt.registerOutParameter(9, java.sql.Types.DECIMAL);   // p_tax_amount
-            stmt.registerOutParameter(10, java.sql.Types.INTEGER);  // p_consultation_count
-            
-            // 프로시저 실행
-            stmt.execute();
-            
-            // 결과 추출
-            result.put("success", stmt.getBoolean(5));
-            result.put("message", stmt.getString(6));
-            result.put("grossSalary", stmt.getBigDecimal(7));
-            result.put("netSalary", stmt.getBigDecimal(8));
-            result.put("taxAmount", stmt.getBigDecimal(9));
-            result.put("consultationCount", stmt.getInt(10));
-            
-            log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}", 
-                    consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
 
+        try {
+            int paramCount = countCalculateSalaryPreviewParameters();
+            if (paramCount == 9) {
+                log.warn("⚠️ CalculateSalaryPreview 구버전(9파라미터) 사용 중. tenant_id IN 없음. "
+                        + "표준 프로시저 배포 시 CI PRODUCTION_DB_NAME 과 앱 DB 스키마가 동일한지 확인하세요.");
+                result.putAll(executeCalculateSalaryPreviewLegacy9(consultantId, periodStart, periodEnd));
+            } else if (paramCount == 10) {
+                result.putAll(executeCalculateSalaryPreviewStandard(consultantId, periodStart, periodEnd, tenantId));
+            } else if (paramCount < 0) {
+                try {
+                    result.putAll(executeCalculateSalaryPreviewStandard(consultantId, periodStart, periodEnd, tenantId));
+                } catch (SQLException ex) {
+                    if (shouldLogCalculateSalaryPreviewSignatureMismatch(ex)) {
+                        log.warn("파라미터 개수 미확인 상태에서 표준 호출 실패, 구버전(9) 재시도: {}", ex.getMessage());
+                        result.putAll(executeCalculateSalaryPreviewLegacy9(consultantId, periodStart, periodEnd));
+                    } else {
+                        throw ex;
+                    }
+                }
+            } else {
+                log.error("❌ CalculateSalaryPreview 파라미터 개수 비정상: count={}", paramCount);
+                result.put("success", false);
+                result.put("message",
+                        "CalculateSalaryPreview 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                return result;
+            }
+            log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}",
+                    consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
         } catch (Exception e) {
             log.error("PL/SQL 급여 미리보기 실패: error={}", e.getMessage(), e);
             logCalculateSalaryPreviewParameterDiagnostics(e);
@@ -328,6 +314,93 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             } else {
                 result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
             }
+        }
+        return result;
+    }
+
+    /**
+     * 현재 스키마의 CalculateSalaryPreview 파라미터 행 수 (information_schema).
+     *
+     * @return 9·10 등, 조회 실패 시 -1
+     */
+    private int countCalculateSalaryPreviewParameters() {
+        try {
+            String sql = "SELECT COUNT(*) FROM information_schema.PARAMETERS "
+                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = 'CalculateSalaryPreview'";
+            Integer c = jdbcTemplate.queryForObject(sql, Integer.class);
+            return c != null ? c : -1;
+        } catch (Exception e) {
+            log.warn("CalculateSalaryPreview 파라미터 개수 조회 실패: {}", e.getMessage());
+            return -1;
+        }
+    }
+
+    private void setConnectionUtf8mb4(Connection connection) throws SQLException {
+        try (java.sql.Statement st = connection.createStatement()) {
+            st.execute("SET character_set_client = utf8mb4");
+            st.execute("SET character_set_connection = utf8mb4");
+            st.execute("SET character_set_results = utf8mb4");
+        }
+    }
+
+    /**
+     * 표준 10파라미터: 4 IN(마지막 tenant_id) + 6 OUT(success, message, gross, net, tax, count).
+     */
+    private Map<String, Object> executeCalculateSalaryPreviewStandard(
+            Long consultantId, LocalDate periodStart, LocalDate periodEnd, String tenantId) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.setString(4, tenantId);
+            stmt.registerOutParameter(5, Types.BOOLEAN);
+            stmt.registerOutParameter(6, Types.VARCHAR);
+            stmt.registerOutParameter(7, Types.DECIMAL);
+            stmt.registerOutParameter(8, Types.DECIMAL);
+            stmt.registerOutParameter(9, Types.DECIMAL);
+            stmt.registerOutParameter(10, Types.INTEGER);
+            stmt.execute();
+            result.put("success", stmt.getBoolean(5));
+            result.put("message", stmt.getString(6));
+            result.put("grossSalary", stmt.getBigDecimal(7));
+            result.put("netSalary", stmt.getBigDecimal(8));
+            result.put("taxAmount", stmt.getBigDecimal(9));
+            result.put("consultationCount", stmt.getInt(10));
+        }
+        return result;
+    }
+
+    /**
+     * 구버전 9파라미터(운영 로그 기준): 3 IN + 6 OUT.
+     * OUT 순서: gross_salary, net_salary, tax_amount, consultation_count, success, message.
+     */
+    private Map<String, Object> executeCalculateSalaryPreviewLegacy9(
+            Long consultantId, LocalDate periodStart, LocalDate periodEnd) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.registerOutParameter(4, Types.DECIMAL);
+            stmt.registerOutParameter(5, Types.DECIMAL);
+            stmt.registerOutParameter(6, Types.DECIMAL);
+            stmt.registerOutParameter(7, Types.INTEGER);
+            stmt.registerOutParameter(8, Types.BOOLEAN);
+            stmt.registerOutParameter(9, Types.VARCHAR);
+            stmt.execute();
+            result.put("grossSalary", stmt.getBigDecimal(4));
+            result.put("netSalary", stmt.getBigDecimal(5));
+            result.put("taxAmount", stmt.getBigDecimal(6));
+            result.put("consultationCount", stmt.getInt(7));
+            result.put("success", stmt.getBoolean(8));
+            result.put("message", stmt.getString(9));
         }
         return result;
     }

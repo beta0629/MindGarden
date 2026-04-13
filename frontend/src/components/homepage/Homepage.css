@@ -374,6 +374,19 @@
   cursor: pointer;
 }
 
+.mg-v2-homepage-footer-link {
+  color: inherit;
+  font-size: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mg-v2-homepage-footer-link:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--mg-focus, var(--mg-primary-500));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: var(--mg-radius-sm, 4px);
+}
+
 /* Responsive */
 @media (max-width: 1199px) {
   .mg-v2-homepage-features-grid {

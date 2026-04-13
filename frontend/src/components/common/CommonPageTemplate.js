@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import DuplicateLoginModal from './DuplicateLoginModal';
 import '../../styles/main.css';
 import './CommonPageTemplate.css';
@@ -9,30 +9,29 @@ const CommonPageTemplate = ({
   children, 
   bodyClass = 'tablet-page'
 }) => {
-  
-  // 콜백 함수로 메모이제이션
-  const logMount = useCallback(() => {
-    console.log('🔄 CommonPageTemplate 마운트됨');
-    console.log('📱 bodyClass:', bodyClass);
-    console.log('📄 title:', title);
-    console.log('📝 description:', description);
-    console.log('✅ 페이지 로딩 완료');
-  }, [bodyClass, title, description]);
-
-  const logUnmount = useCallback(() => {
-    console.log('🔄 CommonPageTemplate 언마운트됨');
-  }, []);
-
   useEffect(() => {
-    logMount();
-    
-    // 간단한 헤드 관리
+    if (process.env.NODE_ENV === 'development') {
+      /* eslint-disable no-console -- 개발 환경에서만 CommonPageTemplate 마운트 추적 */
+      console.log('🔄 CommonPageTemplate 마운트됨');
+      console.log('📱 bodyClass:', bodyClass);
+      console.log('📄 title:', title);
+      console.log('📝 description:', description);
+      console.log('✅ 페이지 로딩 완료');
+      /* eslint-enable no-console */
+    }
+
     if (title) {
       document.title = title;
     }
-    
-    return logUnmount;
-  }, [title]); // logMount, logUnmount 의존성 제거 (무한루프 방지)
+
+    return () => {
+      if (process.env.NODE_ENV === 'development') {
+        /* eslint-disable no-console */
+        console.log('🔄 CommonPageTemplate 언마운트됨');
+        /* eslint-enable no-console */
+      }
+    };
+  }, [bodyClass, title, description]);
 
   return (
     <div className={`common-page-template ${bodyClass}`}>

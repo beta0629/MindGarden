@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
@@ -8,7 +8,6 @@ import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
-import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 import './Homepage.css';
 
@@ -26,6 +25,24 @@ const Homepage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return undefined;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
   const handleLogin = () => {
     navigate('/login');
   };
@@ -35,12 +52,11 @@ const Homepage = () => {
   };
 
   const handleHamburgerToggle = () => {
-    const { MESSAGES } = HOMEPAGE_CONSTANTS;
-    setIsMenuOpen(prev => {
-      const newState = !prev;
-      notificationManager.info(newState ? MESSAGES.MENU_OPENED : MESSAGES.MENU_CLOSED);
-      return newState;
-    });
+    setIsMenuOpen(prev => !prev);
+  };
+
+  const scrollToHomepageFeatures = () => {
+    document.getElementById('homepage-features')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleMenuClick = (menuItem) => {
@@ -58,16 +74,13 @@ const Homepage = () => {
         navigate('/register');
         break;
       case MENU_ITEMS.ABOUT:
-        navigate('/about');
-        break;
       case MENU_ITEMS.SERVICES:
-        navigate('/services');
-        break;
       case MENU_ITEMS.CONTACT:
-        navigate('/contact');
+        // 라우트 미제공: 동일 페이지 Features 앵커로 이동(임시)
+        scrollToHomepageFeatures();
         break;
       default:
-        console.log('알 수 없는 메뉴 항목:', menuItem);
+        break;
     }
   };
 
@@ -252,7 +265,7 @@ const Homepage = () => {
         </section>
 
         {/* Features Section */}
-        <section className="mg-v2-homepage-features">
+        <section id="homepage-features" className="mg-v2-homepage-features">
           <h2 className="mg-v2-homepage-section-title">복잡한 비즈니스, Core Solution 하나로 끝내세요</h2>
           <div className="mg-v2-homepage-features-grid">
             <div className="mg-v2-card">
@@ -290,7 +303,7 @@ const Homepage = () => {
               type="button"
               variant="outline"
               className="mg-v2-btn-text-link"
-              onClick={handleRegister}
+              onClick={scrollToHomepageFeatures}
               preventDoubleClick={false}
             >
               자세히 알아보기 →
@@ -315,8 +328,12 @@ const Homepage = () => {
         <footer className="mg-v2-homepage-footer">
           <p className="mg-v2-homepage-footer-text">© 2026 Core Solution. All rights reserved.</p>
           <div className="mg-v2-homepage-footer-links">
-            <span>이용약관</span>
-            <span>개인정보처리방침</span>
+            <Link className="mg-v2-homepage-footer-link" to="/terms">
+              이용약관
+            </Link>
+            <Link className="mg-v2-homepage-footer-link" to="/privacy">
+              개인정보처리방침
+            </Link>
           </div>
         </footer>
         

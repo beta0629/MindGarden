@@ -45,7 +45,8 @@ export default function MindgardenProgramsFlipGrid() {
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const mq = window.matchMedia('(hover: none)');
+    /* iOS Safari 등은 (hover: hover)로 보고하는 경우가 있어 (pointer: coarse)를 함께 본다 */
+    const mq = window.matchMedia('(hover: none), (pointer: coarse)');
     const syncTapFlip = () => setTapFlip(mq.matches);
     syncTapFlip();
     mq.addEventListener('change', syncTapFlip);

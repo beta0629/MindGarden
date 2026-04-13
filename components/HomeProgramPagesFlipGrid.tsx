@@ -25,7 +25,7 @@ export default function HomeProgramPagesFlipGrid() {
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const mq = window.matchMedia('(hover: none)');
+    const mq = window.matchMedia('(hover: none), (pointer: coarse)');
     const syncTapFlip = () => setTapFlip(mq.matches);
     syncTapFlip();
     mq.addEventListener('change', syncTapFlip);

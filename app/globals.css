@@ -3870,7 +3870,7 @@ a.program-card:hover {
     height: 350px;
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
     .mg-prog-card {
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
@@ -4275,12 +4275,24 @@ a.program-card:hover {
     }
 
     .mg-director-frame {
-        width: min(100%, 220px);
-        max-width: 220px;
+        width: min(62vw, 200px);
+        max-width: 200px;
     }
 
     .mg-director-img {
-        max-width: 220px;
+        width: 100%;
+        max-width: min(62vw, 200px);
+    }
+}
+
+@media (max-width: 480px) {
+    .mg-director-frame {
+        width: min(56vw, 180px);
+        max-width: 180px;
+    }
+
+    .mg-director-img {
+        max-width: min(56vw, 180px);
     }
 }
 

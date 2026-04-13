@@ -129,7 +129,9 @@ pm2 restart homepage-dev
 | **앱 배포 경로** | `/var/www/homepage` |
 | **PM2 앱 이름** | `homepage` (`npm start` → Next.js **포트 4000**) |
 | **nginx (추가만)** | `/etc/nginx/conf.d/m-garden-homepage-nextjs.conf` |
-| **배포 스크립트** | 레포 `scripts/deploy-production.sh` (서버에서 `bash scripts/deploy-production.sh`) |
+| **배포 스크립트** | `scripts/deploy-production.sh` (서버: `cd /var/www/homepage && bash scripts/deploy-production.sh`) |
+| **PM2** | `ecosystem.homepage.config.cjs` — **`.env`만** 주입 (root `.bashrc`의 `DB_*` 등과 분리). `pm2 startOrReload ecosystem.homepage.config.cjs` |
+| **Node** | 운영은 **Node 20** 권장(빌드·의존성). 시스템 패키지 `nodejs`(NodeSource 20.x) |
 
 - 개발(`beta0629.cafe24.com`)과 **별도 호스트**다.
 - **도메인 연동**: 위 nginx 파일만 **추가**했고, `sites-available`·기존 블록은 **수정하지 않음**. `nginx.conf`는 `conf.d`를 `sites-enabled`보다 먼저 include하므로, 동일 `server_name`(m-garden.co.kr, www)에 대해 이 프록시가 **410 Gone** 등 후속 중복 블록보다 우선한다. (중복 경고는 무시되는 쪽이 후속 블록.)

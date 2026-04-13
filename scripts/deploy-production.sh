@@ -27,6 +27,10 @@ git fetch origin "$BRANCH"
 git reset --hard "origin/${BRANCH}"
 
 npm ci
+# root 로그인 셸에 다른 프로젝트용 DB_* 가 있으면 next build 시 주입될 수 있음(.env보다 우선)
+for v in DB_PASSWORD DB_USERNAME DB_URL; do
+  unset "$v" 2>/dev/null || true
+done
 npm run build
 
 # PM2가 root 셸의 DB_*(다른 서비스)를 물려받지 않도록 ecosystem으로 .env 만 주입

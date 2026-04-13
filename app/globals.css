@@ -4315,25 +4315,29 @@ a.program-card:hover {
         gap: 2.5rem;
     }
 
+    /* 고정 정사각 + object-fit으로 표시 크기를 확실히 제한(모바일에서 과대 렌더 방지) */
     .mg-director-frame {
-        width: min(31vw, 100px);
-        max-width: 100px;
+        width: 80px;
+        height: 80px;
+        max-width: 80px;
+        overflow: hidden;
     }
 
     .mg-director-img {
+        display: block;
         width: 100%;
-        max-width: min(31vw, 100px);
+        height: 100%;
+        max-width: none;
+        object-fit: cover;
+        object-position: center 18%;
     }
 }
 
 @media (max-width: 480px) {
     .mg-director-frame {
-        width: min(28vw, 96px);
-        max-width: 96px;
-    }
-
-    .mg-director-img {
-        max-width: min(28vw, 96px);
+        width: 72px;
+        height: 72px;
+        max-width: 72px;
     }
 }
 
@@ -4370,6 +4374,14 @@ a.program-card:hover {
     z-index: 1;
     pointer-events: none;
     border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+    .mg-director-decor {
+        bottom: -5px;
+        right: -5px;
+        border-width: 1.5px;
+    }
 }
 
 .mg-director-quote {

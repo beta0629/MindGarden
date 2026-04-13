@@ -4320,15 +4320,15 @@ a.program-card:hover {
      * 높이가 0에 가깝게 잡혀 가로 띠로만 보일 수 있음 → 너비만 제한·비율 유지(height: auto).
      */
     .mg-director-frame {
-        width: 80px;
-        max-width: 80px;
+        width: 40px;
+        max-width: 40px;
         height: auto;
         overflow: visible;
     }
 
     .mg-director-frame > span {
         display: block;
-        max-width: 80px;
+        max-width: 40px;
         line-height: 0;
     }
 
@@ -4342,20 +4342,20 @@ a.program-card:hover {
 
 @media (max-width: 480px) {
     .mg-director-frame {
-        width: 72px;
-        max-width: 72px;
+        width: 36px;
+        max-width: 36px;
     }
 
     .mg-director-frame > span {
-        max-width: 72px;
+        max-width: 36px;
     }
 }
 
 .mg-director-frame {
     position: relative;
     display: inline-block;
-    width: min(100%, 312px);
-    max-width: 312px;
+    width: min(100%, 156px);
+    max-width: 156px;
     margin-inline: auto;
 }
 
@@ -4366,7 +4366,7 @@ a.program-card:hover {
 
 .mg-director-img {
     width: 100%;
-    max-width: 312px;
+    max-width: 156px;
     height: auto;
     border-radius: 4px;
     position: relative;

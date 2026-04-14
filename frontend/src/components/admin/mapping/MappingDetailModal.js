@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Info, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -78,7 +78,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             loading={loading}
             actions={
                 <ActionButton variant="secondary" onClick={onClose}>
-                    <XCircle size={18} />
                     닫기
                 </ActionButton>
             }
@@ -101,7 +100,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 onClick={() => setActiveTab('basic')}
                                 preventDoubleClick={false}
                             >
-                                <User size={18} />
                                 기본 정보
                             </MGButton>
                             <MGButton
@@ -112,7 +110,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 onClick={() => setActiveTab('payment')}
                                 preventDoubleClick={false}
                             >
-                                <CreditCard size={18} />
                                 결제 정보
                             </MGButton>
                             <MGButton
@@ -123,7 +120,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 onClick={() => setActiveTab('sessions')}
                                 preventDoubleClick={false}
                             >
-                                <Calendar size={18} />
                                 회기 정보
                             </MGButton>
                             <MGButton
@@ -134,7 +130,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 onClick={() => setActiveTab('erp')}
                                 preventDoubleClick={false}
                             >
-                                <TrendingUp size={18} />
                                 ERP 연동
                             </MGButton>
                             <MGButton
@@ -145,7 +140,6 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 onClick={() => setActiveTab('history')}
                                 preventDoubleClick={false}
                             >
-                                <Clock size={18} />
                                 변경 이력
                             </MGButton>
                         </div>

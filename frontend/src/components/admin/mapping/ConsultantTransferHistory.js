@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle, Clock } from 'lucide-react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import './ConsultantTransferHistory.css';
@@ -92,7 +91,6 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           className="mg-v2-button mg-v2-button-secondary"
           onClick={onClose}
         >
-          <XCircle size={18} />
           닫기
         </MGButton>
       }

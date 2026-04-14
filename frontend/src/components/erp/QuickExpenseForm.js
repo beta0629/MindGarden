@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
-import { getLucideIcon } from '../../utils/iconUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -51,18 +50,18 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
 
   const getQuickExpenses = () => {
     const quickExpenseConfigs = [
-      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: 'DollarSign', color: 'var(--mg-error-500)' },
-      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: 'Building2', color: 'var(--mg-finance-dark)' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: 'Zap', color: 'var(--mg-finance-primary)' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: 'Droplet', color: 'var(--mg-primary-500)' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: 'Flame', color: 'var(--mg-error-500)' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: 'Globe', color: 'var(--mg-purple-500)' },
-      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: 'ClipboardList', color: 'var(--mg-purple-500)' },
-      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: 'BarChart3', color: 'var(--mg-purple-600)' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: 'FileText', color: 'var(--mg-primary-500)' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: 'Monitor', color: 'var(--mg-color-text-main)' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: 'Megaphone', color: 'var(--mg-success-500)' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: 'TrendingUp', color: 'var(--mg-success-600)' }
+      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY' },
+      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET' },
+      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX' },
+      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION' }
     ];
 
     return quickExpenseConfigs.map(config => {
@@ -174,7 +173,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         ) : selectedExpense ? (
           <div className="quick-expense-amount-form">
             <p className="quick-expense-selected-label">
-              {getLucideIcon(selectedExpense.icon, { size: 20 })}{' '}
               <ErpSafeText value={selectedExpense.displayName} /> &gt;{' '}
               <ErpSafeText value={selectedExpense.subDisplayName} />
             </p>
@@ -230,9 +228,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                     className: 'quick-expense-category-btn'
                   })}
                 >
-                  <div className="quick-expense-category-icon">
-                    {getLucideIcon(expense.icon, { size: 20 })}
-                  </div>
                   <div className="quick-expense-category-name">
                     <ErpSafeText value={expense.displayName} />
                   </div>
@@ -244,7 +239,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             </div>
             <div className="quick-expense-info-box">
               <p className="quick-expense-info-text">
-                {getLucideIcon('Lightbulb', { size: 16 })} 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+                버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
               </p>
             </div>
           </>

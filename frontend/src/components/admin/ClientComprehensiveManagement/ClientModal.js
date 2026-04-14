@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CheckCircle, AlertTriangle, Link2, Calendar } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
@@ -12,7 +11,7 @@ import {
 import { isValidVehiclePlateOptional } from '../../../utils/validationUtils';
 import SafeText from '../../common/SafeText';
 import { formatConsultantGenderLabel, getConsultantAgeYears } from '../../../utils/consultantHelper';
-import { getUserGradeKoreanNameSync, getUserGradeIconSync } from '../../../utils/codeHelper';
+import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
@@ -132,14 +131,14 @@ const ClientModal = ({
       return [
         {
           id: 'currentConsultants',
-          icon: <Link2 size={24} />,
+          icon: <span className="mg-v2-content-kpi-card__icon-text" aria-hidden="true">연결</span>,
           label: CLIENT_MODAL_KPI_LABELS.CURRENT_CONSULTANTS,
           value: clientSummary.currentConsultants,
           iconVariant: 'blue'
         },
         {
           id: 'totalSessions',
-          icon: <Calendar size={24} />,
+          icon: <span className="mg-v2-content-kpi-card__icon-text" aria-hidden="true">일정</span>,
           label: CLIENT_MODAL_KPI_LABELS.TOTAL_SESSIONS,
           value: sessionsVal == null ? '—' : sessionsVal,
           iconVariant: 'green'
@@ -259,7 +258,6 @@ const ClientModal = ({
         }
         const persistedGrade = clientSummary?.persistedGrade;
         const hasGradeCode = persistedGrade != null && String(persistedGrade).trim() !== '';
-        const gradeIcon = hasGradeCode ? getUserGradeIconSync(persistedGrade) : '';
         const gradeKorean = hasGradeCode ? getUserGradeKoreanNameSync(persistedGrade) : '—';
 
         return (
@@ -280,15 +278,10 @@ const ClientModal = ({
                         <span className="mg-v2-ad-b0kla__client-modal-grade__label">
                             {CLIENT_MODAL_GRADE_LABEL}
                         </span>
-                        <div
+                                               <div
                             className="mg-v2-ad-b0kla__client-modal-grade__value"
                             aria-label={`${CLIENT_MODAL_GRADE_LABEL} ${toDisplayString(gradeKorean, '—')}`}
                         >
-                            {gradeIcon ? (
-                                <span className="mg-v2-ad-b0kla__client-modal-grade__icon" aria-hidden="true">
-                                    {gradeIcon}
-                                </span>
-                            ) : null}
                             <span className="mg-v2-ad-b0kla__client-modal-grade__name">
                                 <SafeText>{toDisplayString(gradeKorean, '—')}</SafeText>
                             </span>
@@ -766,11 +759,6 @@ const ClientModal = ({
                         preventDoubleClick={true}
                         clickDelay={1000}
                     >
-                        {type === 'delete' ? (
-                            <AlertTriangle size={18} />
-                        ) : (
-                            <CheckCircle size={18} />
-                        )}
                         {getSubmitText()}
                     </MGButton>
                 </>

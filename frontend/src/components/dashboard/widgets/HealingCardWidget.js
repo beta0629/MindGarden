@@ -13,14 +13,13 @@
  */
 
 import React from 'react';
-import { Heart, RefreshCw } from 'lucide-react';
+
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import { RoleUtils } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
-
 const HealingCardWidget = ({ widget, user }) => {
   // 역할별 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -127,7 +126,6 @@ const HealingCardWidget = ({ widget, user }) => {
       onRefresh={refresh}
       customActions={[
         {
-          icon: <RefreshCw size={16} />,
           label: '새로운 메시지',
           onClick: handleRefresh,
           disabled: loading
@@ -153,11 +151,7 @@ const HealingCardWidget = ({ widget, user }) => {
             title="새로운 메시지 보기"
             disabled={loading}
           >
-            {loading ? (
-              <div className="healing-refresh-loading">⏳</div>
-            ) : (
-              <RefreshCw size={18} />
-            )}
+            {loading ? '불러오는 중...' : '새로고침'}
           </MGButton>
         </div>
 
@@ -175,7 +169,7 @@ const HealingCardWidget = ({ widget, user }) => {
         {currentHealingData?.category && (
           <div className="healing-category-section">
             <span className="healing-category-badge">
-              <Heart size={14} />
+              
               {getCategoryDisplayName(currentHealingData.category)}
             </span>
           </div>

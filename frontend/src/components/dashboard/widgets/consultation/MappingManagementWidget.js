@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Link2, Users, TrendingUp, Clock, CheckCircle, XCircle, Pause, Eye, Plus } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const MappingManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -107,20 +106,20 @@ const MappingManagementWidget = ({ widget, user }) => {
     switch (status) {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
-        return <CheckCircle className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
-        return <Clock className="status-icon" />;
+        return null;
       case 'TERMINATED':
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       // eslint-disable-next-line no-fallthrough
       case 'CANCELLED':
-        return <XCircle className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
-        return <CheckCircle className="status-icon" />;
+        return null;
       default:
-        return <Pause className="status-icon" />;
+        return null;
     }
   };
 
@@ -155,16 +154,14 @@ const MappingManagementWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="mapping-empty-state">
-          <div className="empty-icon-wrapper">
-            <Link2 className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">등록된 매칭이 없습니다</h3>
           <p className="empty-description">
             {widget.config?.emptyMessage || '상담사와 내담자 간의 매칭을 생성해보세요.'}
           </p>
           {RoleUtils.isAdmin(user) && (
             <MGButton variant="primary" onClick={handleCreateMapping}>
-              <Plus className="btn-icon" />
+              
               새 매칭 만들기
             </MGButton>
           )}
@@ -180,36 +177,28 @@ const MappingManagementWidget = ({ widget, user }) => {
         {widget.config?.showStats !== false && stats && (
           <div className="mapping-stats">
             <div className="stat-card">
-              <div className="stat-icon total">
-                <Link2 />
-              </div>
+              <div className="stat-icon total" />
               <div className="stat-info">
                 <div className="stat-number">{stats.total}</div>
                 <div className="stat-label">전체 매칭</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon active">
-                <CheckCircle />
-              </div>
+              <div className="stat-icon active" />
               <div className="stat-info">
                 <div className="stat-number">{stats.active}</div>
                 <div className="stat-label">활성 매칭</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon pending">
-                <Clock />
-              </div>
+              <div className="stat-icon pending" />
               <div className="stat-info">
                 <div className="stat-number">{stats.pending}</div>
                 <div className="stat-label">대기 중</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon terminated">
-                <XCircle />
-              </div>
+              <div className="stat-icon terminated" />
               <div className="stat-info">
                 <div className="stat-number">{stats.terminated}</div>
                 <div className="stat-label">종료됨</div>
@@ -235,7 +224,7 @@ const MappingManagementWidget = ({ widget, user }) => {
                       <span className="participant consultant">
                         {mapping.consultantName || '미배정'}
                       </span>
-                      <Link2 className="mapping-connector" />
+                      
                       <span className="participant client">
                         {mapping.clientName || '미배정'}
                       </span>
@@ -276,9 +265,7 @@ const MappingManagementWidget = ({ widget, user }) => {
                     onClick={() => handleViewMapping(mapping.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                  >
-                    <Eye className="action-icon" />
-                  </MGButton>
+                   />
                 </div>
               </div>
             ))}
@@ -289,7 +276,7 @@ const MappingManagementWidget = ({ widget, user }) => {
         {RoleUtils.isAdmin(user) && (
           <div className="mapping-quick-actions">
             <MGButton variant="primary" size="small" onClick={handleCreateMapping}>
-              <Plus className="btn-icon" />
+              
               새 매칭 생성
             </MGButton>
           </div>
@@ -299,21 +286,20 @@ const MappingManagementWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <Link2 className="widget-header-icon" />,
     subtitle: '상담사-내담자 매칭 관리',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       ...(RoleUtils.isAdmin(user) ? [{
-        icon: 'Plus',
+        icon: 'PLUS',
         label: '새 매칭',
         onClick: handleCreateMapping
       }] : []),
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '전체 보기',
         onClick: handleViewAll
       }

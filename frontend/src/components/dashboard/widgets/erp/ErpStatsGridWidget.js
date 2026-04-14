@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, DollarSign, ShoppingCart, PieChart, Calculator, Target, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
@@ -22,7 +22,6 @@ import { formatCurrency, formatNumber, formatPercent } from '../../../../utils/f
 import './ErpStatsGridWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
-
 const ErpStatsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -114,16 +113,15 @@ const ErpStatsGridWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <TrendingUp className="widget-header-icon" />,
     subtitle: `${widget.config?.period === 'year' ? '연간' : '월간'} ERP 통계`,
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: 'ERP 대시보드',
         onClick: () => navigate('/erp/dashboard')
       }
@@ -162,7 +160,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
     return {
       value: formatPercent(percentage / 100),
       isPositive,
-      icon: isPositive ? ArrowUpCircle : ArrowDownCircle
+      iconName: isPositive ? 'ARROW_UP_CIRCLE' : 'ARROW_DOWN_CIRCLE'
     };
   };
   
@@ -172,7 +170,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'revenue',
       title: '총 매출',
       value: formatCurrency(displayStats.totalRevenue),
-      icon: <DollarSign className="stat-card-icon" />,
       category: 'revenue',
       change: getChangeInfo(displayStats.totalRevenue, displayStats.revenueChange),
       onClick: () => handleStatClick('revenue')
@@ -181,7 +178,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'expenses', 
       title: '총 지출',
       value: formatCurrency(displayStats.totalExpenses),
-      icon: <ShoppingCart className="stat-card-icon" />,
       category: 'expenses',
       change: getChangeInfo(displayStats.totalExpenses, displayStats.expensesChange),
       onClick: () => handleStatClick('expenses')
@@ -190,7 +186,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'profit',
       title: '순이익',
       value: formatCurrency(displayStats.netProfit),
-      icon: <TrendingUp className="stat-card-icon" />,
       category: displayStats.netProfit >= 0 ? 'profit' : 'loss',
       change: getChangeInfo(displayStats.netProfit, displayStats.profitChange),
       onClick: () => handleStatClick('revenue')
@@ -199,7 +194,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'margin',
       title: '수익률',
       value: formatPercent(displayStats.profitMargin / 100),
-      icon: <PieChart className="stat-card-icon" />,
       category: 'margin',
       onClick: () => handleStatClick('revenue')
     },
@@ -207,7 +201,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'purchase-requests',
       title: '구매 요청',
       value: displayStats.purchaseRequests.toLocaleString(),
-      icon: <Calculator className="stat-card-icon" />,
       category: 'purchase',
       badge: displayStats.purchaseRequests > 0 ? {
         text: `${displayStats.approvedRequests}/승인`,
@@ -219,7 +212,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       id: 'budget',
       title: '예산 사용률',
       value: formatPercent(displayStats.budgetUtilization / 100),
-      icon: <Target className="stat-card-icon" />,
       category: 'budget',
       status: displayStats.budgetUtilization > 90 ? 'warning' : displayStats.budgetUtilization > 100 ? 'error' : 'normal',
       onClick: () => handleStatClick('budget')
@@ -259,7 +251,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
                 <div className="erp-stat-value"><SafeText>{card.value}</SafeText></div>
                 {card.change && (
                   <div className={`erp-stat-change ${card.change.isPositive ? 'positive' : 'negative'}`}>
-                    {React.createElement(card.change.icon, { className: "change-icon" })}
+                    
                     <span><SafeText>{card.change.value}</SafeText></span>
                   </div>
                 )}
@@ -271,7 +263,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
         {/* 빈 상태 처리 */}
         {isEmpty && (
           <div className="erp-stats-empty">
-            <TrendingUp className="empty-icon" />
+            
             <p>ERP 통계 데이터가 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도

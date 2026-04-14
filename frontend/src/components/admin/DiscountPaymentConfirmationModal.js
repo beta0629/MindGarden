@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, Tag } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -243,7 +243,6 @@ const DiscountPaymentConfirmationModal = ({
             loading={loading}
             loadingText="처리 중..."
           >
-            <CheckCircle size={18} />
             결제 확인
           </MGButton>
         </>
@@ -296,14 +295,7 @@ const DiscountPaymentConfirmationModal = ({
                 onClick={applyDiscount}
                 disabled={loading || discountInfo.applied}
               >
-                {discountInfo.applied ? (
-                  <>
-                    <CheckCircle size={18} />
-                    적용됨
-                  </>
-                ) : (
-                  '할인 적용'
-                )}
+                {discountInfo.applied ? '적용됨' : '할인 적용'}
               </MGButton>
               {discountInfo.applied && (
                 <MGButton
@@ -312,7 +304,6 @@ const DiscountPaymentConfirmationModal = ({
                   className="mg-v2-button mg-v2-button-danger"
                   onClick={removeDiscount}
                 >
-                  <XCircle size={18} />
                   제거
                 </MGButton>
               )}

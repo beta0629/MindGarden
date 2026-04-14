@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import { Users, Calendar, TrendingUp } from 'lucide-react';
+
 import UnifiedLoading from '../common/UnifiedLoading';
 import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
-
 /**
  * 상담사용 내담자 섹션 컴포넌트
 /**
@@ -179,7 +178,7 @@ const ConsultantClientSection = ({ userId }) => {
     <div className="mg-v2-card">
       <div className="mg-v2-card-header">
         <div className="mg-v2-card-title">
-          <Users size={20} />
+          
           내 내담자 ({clients.length}명)
         </div>
         <MGButton
@@ -234,7 +233,7 @@ const ConsultantClientSection = ({ userId }) => {
                 </div>
 
                 <div className="mg-v2-client-card-footer">
-                  <Calendar size={14} />
+                  
                   마지막 상담: {client.lastConsultationDate ? 
                     new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
                     '없음'

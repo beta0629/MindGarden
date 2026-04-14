@@ -1,5 +1,4 @@
 import MGButton from '../../common/MGButton';
-import { User, Handshake, Calendar, Eye } from 'lucide-react';
 import { StatusBadge, CardContainer } from '../../common';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -34,7 +33,7 @@ const ClientMappingTab = ({
           <div className="mg-v2-mapping-info">
             <h4 className="mg-v2-mapping-card__title mg-v2-h4">매칭 #{mapping.id}</h4>
             <p className="mg-v2-mapping-date">
-              <Calendar size={14} /> {createdStr}
+              {createdStr}
             </p>
           </div>
           <div className="mg-v2-mapping-status">
@@ -85,7 +84,7 @@ const ClientMappingTab = ({
         </div>
         <div className="mg-v2-card-footer">
           <MGButton variant="secondary" size="small" preventDoubleClick={true}>
-            <Eye size={14} /> 상세보기
+            상세보기
           </MGButton>
           <MGButton variant="secondary" size="small" preventDoubleClick={true}>
             수정
@@ -113,16 +112,13 @@ const ClientMappingTab = ({
               onClick={() => onClientSelect(client)}
               preventDoubleClick={true}
             >
-              <Eye size={14} /> 상세보기
+              상세보기
             </MGButton>
           </div>
         </div>
         <p className="mg-v2-mapping-client-block__count">총 {clientMappings.length}건의 매칭</p>
         {clientMappings.length === 0 ? (
           <div className="mg-v2-mapping-list-block__empty">
-            <div className="mg-v2-mapping-list-block__empty-icon">
-              <Handshake size={32} />
-            </div>
             <p className="mg-v2-mapping-list-block__empty-desc">매칭 정보가 없습니다.</p>
           </div>
         ) : (
@@ -142,9 +138,6 @@ const ClientMappingTab = ({
       </header>
       {clients.length === 0 ? (
         <div className="mg-v2-mapping-list-block__empty">
-          <div className="mg-v2-mapping-list-block__empty-icon">
-            <User size={48} />
-          </div>
           <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
           <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 매칭 정보를 확인할 수 있습니다.</p>
         </div>

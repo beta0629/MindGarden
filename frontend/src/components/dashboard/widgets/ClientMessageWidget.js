@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Mail,
-  MessageSquare,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  FileText,
-  Bell,
-  Megaphone,
-  Star
-} from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
@@ -21,7 +11,6 @@ import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
-
 const ClientMessageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
@@ -68,37 +57,37 @@ const ClientMessageWidget = ({ widget, user }) => {
   const getMessageTypeInfo = (type) => {
     const types = {
       GENERAL: {
-        icon: MessageSquare,
+        iconName: 'MESSAGE_SQUARE',
         label: '일반',
         statusVariant: 'neutral',
         bgClass: 'message-type-general'
       },
       FOLLOW_UP: {
-        icon: FileText,
+        iconName: 'FILE_TEXT',
         label: '후속 조치',
         statusVariant: 'info',
         bgClass: 'message-type-followup'
       },
       HOMEWORK: {
-        icon: CheckCircle,
+        iconName: 'CHECK_CIRCLE',
         label: '과제 안내',
         statusVariant: 'success',
         bgClass: 'message-type-homework'
       },
       REMINDER: {
-        icon: Bell,
+        iconName: 'BELL',
         label: '알림',
         statusVariant: 'warning',
         bgClass: 'message-type-reminder'
       },
       URGENT: {
-        icon: AlertCircle,
+        iconName: 'ALERT_CIRCLE',
         label: '긴급',
         statusVariant: 'danger',
         bgClass: 'message-type-urgent'
       },
       SYSTEM_NOTICE: {
-        icon: Megaphone,
+        iconName: 'MEGAPHONE',
         label: '시스템 공지',
         statusVariant: 'info',
         bgClass: 'message-type-system'
@@ -258,7 +247,7 @@ const ClientMessageWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="client-message-header-title">
-        <Mail size={24} />
+        
         알림 및 메시지
         {unreadCount > 0 && (
           <Badge variant="count" count={unreadCount} maxCount={9} size="sm" className="client-message-header-title__count" />
@@ -283,9 +272,7 @@ const ClientMessageWidget = ({ widget, user }) => {
     if (allMessages.length === 0) {
       return (
         <div className="client-message-empty">
-          <div className="client-message-empty-icon">
-            <Mail size={48} />
-          </div>
+          <div className="client-message-empty-icon" />
           <p className="client-message-empty-text">받은 메시지가 없습니다.</p>
           <p className="client-message-empty-hint">
             공지사항과 상담사 메시지가 여기에 표시됩니다.
@@ -298,7 +285,6 @@ const ClientMessageWidget = ({ widget, user }) => {
       <div className="client-message-list">
         {allMessages.map((message) => {
           const messageTypeInfo = getMessageTypeInfo(message.messageType);
-          const MessageIcon = messageTypeInfo.icon;
           
           return (
             <div
@@ -306,13 +292,11 @@ const ClientMessageWidget = ({ widget, user }) => {
               className={`client-message-item ${!message.isRead ? 'unread' : ''} ${message.messageSource === 'SYSTEM' ? 'system' : ''}`}
               onClick={() => handleMessageClick(message)}
             >
-              <div className={`client-message-item-icon ${messageTypeInfo.bgClass}`}>
-                <MessageIcon size={20} />
-              </div>
+              <div className={`client-message-item-icon ${messageTypeInfo.bgClass}`} />
               <div className="client-message-item-content">
                 <div className="client-message-item-header">
                   <h4 className="client-message-item-title">
-                    {message.isImportant && <Star size={14} className="important-star" />}
+                    {message.isImportant && <span className="mg-text-warning mg-text-sm">[중요] </span>}
                     <SafeText>{message.title}</SafeText>
                   </h4>
                   {!message.isRead && (
@@ -336,7 +320,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                     <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                   <span className="client-message-item-date">
-                    <Clock size={12} />
+                    
                     {formatDate(message.displayDate)}
                   </span>
                 </div>
@@ -353,7 +337,6 @@ const ClientMessageWidget = ({ widget, user }) => {
     if (!selectedMessage) return null;
 
     const typeInfo = getMessageTypeInfo(selectedMessage.messageType);
-    const TypeIcon = typeInfo?.icon;
     const modalTitle = toDisplayString(selectedMessage.title, '메시지');
 
     return (
@@ -367,10 +350,8 @@ const ClientMessageWidget = ({ widget, user }) => {
         <div className="client-message-modal-body">
           <div className="client-message-detail-header">
             <div className="client-message-detail-type">
-              {TypeIcon && (
-                <div className={`client-message-detail-type-icon ${typeInfo.bgClass}`}>
-                  <TypeIcon size={20} />
-                </div>
+              {typeInfo?.iconName && (
+                <div className={`client-message-detail-type-icon ${typeInfo.bgClass}`} />
               )}
               <Badge variant="status" statusVariant={typeInfo.statusVariant} label={typeInfo.label} size="sm" />
               {selectedMessage.isImportant && (
@@ -381,7 +362,7 @@ const ClientMessageWidget = ({ widget, user }) => {
               )}
             </div>
             <span className="client-message-detail-date">
-              <Clock size={14} />
+              
               {new Date(selectedMessage.displayDate || selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
             </span>
           </div>

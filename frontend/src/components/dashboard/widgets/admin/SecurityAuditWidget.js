@@ -15,13 +15,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-import { Shield, UserCheck, Lock, AlertTriangle, Eye } from 'lucide-react';
+
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
-
 const SecurityAuditWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -101,29 +100,6 @@ const SecurityAuditWidget = ({ widget, user }) => {
     return classes[eventType] || 'mg-badge--secondary';
   };
 
-  // 이벤트 타입별 아이콘
-  const getEventTypeIcon = (eventType) => {
-    switch (eventType) {
-      case 'LOGIN_SUCCESS':
-        return <UserCheck size={16} />;
-      case 'LOGIN_FAILED':
-        return <AlertTriangle size={16} />;
-      case 'LOGOUT':
-        return <UserCheck size={16} />;
-      case 'PASSWORD_CHANGED':
-        return <Lock size={16} />;
-      case 'PERMISSION_CHANGED':
-        return <Shield size={16} />;
-      case 'DATA_ACCESS':
-        return <Eye size={16} />;
-      case 'DATA_MODIFIED':
-        return <AlertTriangle size={16} />;
-      case 'SUSPICIOUS_ACTIVITY':
-        return <AlertTriangle size={16} />;
-      default:
-        return <Shield size={16} />;
-    }
-  };
 
   // 이벤트 타입 한글명
   const getEventTypeName = (eventType) => {
@@ -164,9 +140,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon">
-              <Shield size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{totalEvents}</div>
               <div className="mg-stats-card__label">총 이벤트</div>
@@ -177,9 +151,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon">
-              <UserCheck size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{loginAttempts}</div>
               <div className="mg-stats-card__label">로그인 시도</div>
@@ -190,9 +162,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             suspiciousCount > 0 ? 'mg-stats-card--error' : 'mg-stats-card--secondary'
           )}>
-            <div className="mg-stats-card__icon">
-              <AlertTriangle size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{suspiciousCount}</div>
               <div className="mg-stats-card__label">의심 활동</div>
@@ -206,7 +176,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
           'mg-mt-md'
         )}>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-            <Shield size={16} />
+            
             <h4 className="mg-h5 mg-mb-0">최근 감사 로그</h4>
             <MGButton
               onClick={() => handleAction('view-all')}
@@ -234,7 +204,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
                       'mg-badge--sm',
                       getEventTypeClass(audit.eventType)
                     )}>
-                      {getEventTypeIcon(audit.eventType)}
+                      {getEventTypeName(audit.eventType)}
                     </div>
                     <div className="mg-list__content">
                       <div className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -296,7 +266,7 @@ const SecurityAuditWidget = ({ widget, user }) => {
                   WIDGET_CONSTANTS.CSS_CLASSES.MG_GAP_SM,
                   'mg-align-center'
                 )}>
-                  <AlertTriangle size={16} className="mg-text-error" />
+                  
                   <span className="mg-text-body">로그인 실패: {failedLogins}회</span>
                 </div>
                 <MGButton

@@ -1,5 +1,8 @@
 import React from 'react';
-import { Users, Calendar, Clock } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const ClockIcon = ICONS.CLOCK;
+const UsersIcon = ICONS.USERS;
 
 /**
  * 스케줄 달력 범례 컴포넌트
@@ -22,7 +25,7 @@ const ScheduleCalendarLegend = ({
             {/* 상태 범례 */}
             <div className="mg-v2-legend-section">
                 <h4 className="mg-v2-legend-title">
-                    <Clock className="mg-v2-icon" />
+                    <ClockIcon className="mg-v2-icon" />
                     일정 상태
                 </h4>
                 <div className="mg-v2-legend-items">
@@ -44,7 +47,7 @@ const ScheduleCalendarLegend = ({
             {consultants.length > 0 && (
                 <div className="mg-v2-legend-section">
                     <h4 className="mg-v2-legend-title">
-                        <Users className="mg-v2-icon" />
+                        <UsersIcon className="mg-v2-icon" />
                         상담사별 색상
                     </h4>
                     <div className="mg-v2-consultant-legend">

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, XCircle } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';

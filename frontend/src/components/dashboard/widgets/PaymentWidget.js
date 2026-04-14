@@ -107,11 +107,11 @@ const PaymentWidget = ({ widget, user }) => {
               {config.showActions && (
                 <>
                   <MGButton className="payment-action-btn view" variant="outline" size="small" type="button" title="상세보기">
-                    <i className="bi bi-eye" />
+                    상세
                   </MGButton>
                   {payment.status === 'completed' && (
                     <MGButton className="payment-action-btn receipt" variant="outline" size="small" type="button" title="영수증">
-                      <i className="bi bi-receipt" />
+                      영수증
                     </MGButton>
                   )}
                 </>

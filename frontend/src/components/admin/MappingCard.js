@@ -1,5 +1,4 @@
 import React from 'react';
-import { User, Package } from 'lucide-react';
 import Avatar from '../common/Avatar';
 import StatusBadge from '../common/StatusBadge';
 
@@ -34,11 +33,9 @@ const MappingCard = ({
 
             <div className="mg-v2-mapping-card-details">
                 <div className="mg-v2-mapping-detail-item">
-                    <User size={ 14 } />
                     { mapping.consultantName }
                 </div>
                 <div className="mg-v2-mapping-detail-item">
-                    <Package size={ 14 } />
                     { mapping.packageName }
                 </div>
             </div>

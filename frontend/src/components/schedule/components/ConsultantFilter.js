@@ -1,5 +1,7 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const RotateCcwIcon = ICONS.ROTATE_CCW;
 import MGButton from '../../common/MGButton';
 import './ConsultantFilter.css';
 
@@ -109,7 +111,7 @@ const ConsultantFilterNew = ({
                         onClick={onResetFilters}
                         preventDoubleClick={false}
                     >
-                        <RotateCcw size={16} />
+                        <RotateCcwIcon size={16} />
                         초기화
                     </MGButton>
                 </div>

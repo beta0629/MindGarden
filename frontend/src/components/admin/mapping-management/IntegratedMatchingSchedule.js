@@ -9,7 +9,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Draggable } from '@fullcalendar/interaction';
-import { UserPlus } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -245,7 +244,6 @@ const IntegratedMatchingSchedule = () => {
       className="integrated-schedule__btn-new-mapping"
       preventDoubleClick={false}
     >
-      <UserPlus size={18} aria-hidden />
       신규 매칭
     </MGButton>
   );

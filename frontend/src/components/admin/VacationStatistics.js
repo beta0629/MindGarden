@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import { Calendar, User, BarChart3, Clock } from 'lucide-react';
 import Avatar from '../common/Avatar';
 import './VacationStatistics.css';
 
@@ -217,7 +216,6 @@ const VacationStatistics = ({ className = "" }) => {
             <div className={`vacation-statistics mg-dashboard-layout ${className}`}>
                 <div className="mg-empty-state">
                     <div className="mg-empty-state__icon">
-                        <Calendar size={48} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
                     <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
@@ -232,7 +230,6 @@ const VacationStatistics = ({ className = "" }) => {
             <div className="mg-dashboard-header">
                 <div className="mg-dashboard-header-content">
                     <div className="mg-dashboard-header-left">
-                        <Calendar size={32} />
                         <div>
                             <h1 className="mg-dashboard-title">휴가 현황</h1>
                             <p className="mg-dashboard-subtitle">상담사별 휴가 사용 통계 및 현황</p>
@@ -261,19 +258,19 @@ const VacationStatistics = ({ className = "" }) => {
             {/* 요약 통계 */}
             <div className="mg-dashboard-stats">
                 <StatCard
-                    icon={<User />}
+                    
                     value={`${vacationStats.summary.totalConsultants}명`}
                     label="전체 상담사"
                 />
                 <StatCard
-                    icon={<Calendar />}
+                    
                     value={`${typeof vacationStats.summary.totalVacationDays === 'number' 
                         ? vacationStats.summary.totalVacationDays.toFixed(1)
                         : vacationStats.summary.totalVacationDays}일`}
                     label="총 휴가일수"
                 />
                 <StatCard
-                    icon={<BarChart3 />}
+                    
                     value={`${vacationStats.summary.averageVacationDays.toFixed(1)}일`}
                     label="평균 휴가일수"
                 />
@@ -283,7 +280,7 @@ const VacationStatistics = ({ className = "" }) => {
             <div className="mg-dashboard-content">
                 <DashboardSection
                     title="상담사별 휴가 현황"
-                    icon={<User size={24} />}
+                    
                 >
                     <div className="consultant-list">
                         {vacationStats.consultantStats.map(consultant => {
@@ -339,7 +336,6 @@ const VacationStatistics = ({ className = "" }) => {
                                             ))}
                                         </div>
                                         <div className="last-vacation">
-                                            <Clock size={16} className="clock-icon" />
                                             <span>최근: {formatDate(consultant.lastVacationDate)}</span>
                                         </div>
                                     </div>
@@ -352,7 +348,7 @@ const VacationStatistics = ({ className = "" }) => {
                 {/* 휴가 많은 상담사 TOP 3 */}
                 <DashboardSection
                     title="휴가 사용 TOP 3"
-                    icon={<BarChart3 size={24} />}
+                    
                 >
                     <div className="top-list">
                         {vacationStats.topVacationConsultants.map((consultant, index) => {

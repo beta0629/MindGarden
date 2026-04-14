@@ -14,14 +14,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Plus, Eye, CheckCircle, XCircle, AlertCircle, Users, CalendarPlus } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ScheduleRegistrationWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
-
 const ScheduleRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -115,20 +114,20 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     switch (status) {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
-        return <CheckCircle className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
-        return <Users className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
-        return <XCircle className="status-icon" />;
+        return null;
       case 'UPCOMING':
-        return <Calendar className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
-        return <Clock className="status-icon" />;
+        return null;
       default:
-        return <AlertCircle className="status-icon" />;
+        return null;
     }
   };
 
@@ -189,16 +188,14 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="schedule-empty-state">
-          <div className="empty-icon-wrapper">
-            <Calendar className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">등록된 일정이 없습니다</h3>
           <p className="empty-description">
             {widget.config?.emptyMessage || '새로운 상담 일정을 등록해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
             <MGButton variant="primary" onClick={handleCreateSchedule}>
-              <Plus className="btn-icon" />
+              
               새 일정 등록
             </MGButton>
           )}
@@ -215,42 +212,34 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
           <div className="today-stats">
             <div className="stats-header">
               <h4 className="stats-title">
-                <Calendar className="stats-icon" />
+                
                 {widget.config?.showTodayOnly !== false ? '오늘 일정' : '전체 일정'}
               </h4>
             </div>
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon total">
-                  <Calendar />
-                </div>
+                <div className="stat-icon total" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.total}</div>
                   <div className="stat-label">총 일정</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon completed">
-                  <CheckCircle />
-                </div>
+                <div className="stat-icon completed" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.completed}</div>
                   <div className="stat-label">완료</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon in-progress">
-                  <Users />
-                </div>
+                <div className="stat-icon in-progress" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.inProgress}</div>
                   <div className="stat-label">진행중</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon upcoming">
-                  <Clock />
-                </div>
+                <div className="stat-icon upcoming" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.upcoming}</div>
                   <div className="stat-label">예정</div>
@@ -277,7 +266,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                   <div className="schedule-header">
                     <div className="schedule-time-info">
                       <div className="schedule-time">
-                        <Clock className="time-icon" />
+                        
                         {formatDateTime(schedule.startTime)}
                         {schedule.endTime && (
                           <span className="time-separator">~{formatTime(schedule.endTime)}</span>
@@ -330,9 +319,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                     onClick={() => handleViewSchedule(schedule.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                  >
-                    <Eye className="action-icon" />
-                  </MGButton>
+                   />
                 </div>
               </div>
             ))}
@@ -343,7 +330,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="schedule-quick-actions">
             <MGButton variant="primary" size="small" onClick={handleCreateSchedule}>
-              <CalendarPlus className="btn-icon" />
+              
               새 일정 등록
             </MGButton>
           </div>
@@ -353,21 +340,20 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <Calendar className="widget-header-icon" />,
     subtitle: '상담 일정 관리',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       ...((RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) ? [{
-        icon: 'CalendarPlus',
+        icon: 'CALENDAR_PLUS',
         label: '새 일정',
         onClick: handleCreateSchedule
       }] : []),
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '전체 보기',
         onClick: handleViewAll
       }

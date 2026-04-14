@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, CheckCircle, XCircle, AlertTriangle, Eye, Plus, FileText, Users } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const SessionManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -126,20 +125,20 @@ const SessionManagementWidget = ({ widget, user }) => {
     switch (status) {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
-        return <CheckCircle className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
-        return <Clock className="status-icon" />;
+        return null;
       case 'UPCOMING':
-        return <Calendar className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
-        return <XCircle className="status-icon" />;
+        return null;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
-        return <Users className="status-icon" />;
+        return null;
       default:
-        return <AlertTriangle className="status-icon" />;
+        return null;
     }
   };
 
@@ -190,16 +189,14 @@ const SessionManagementWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="session-empty-state">
-          <div className="empty-icon-wrapper">
-            <Calendar className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">등록된 세션이 없습니다</h3>
           <p className="empty-description">
             {widget.config?.emptyMessage || '새로운 상담 세션을 예약해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
             <MGButton variant="primary" onClick={handleCreateSession}>
-              <Plus className="btn-icon" />
+              
               새 세션 예약
             </MGButton>
           )}
@@ -215,36 +212,28 @@ const SessionManagementWidget = ({ widget, user }) => {
         {widget.config?.showStats !== false && stats && (
           <div className="session-stats">
             <div className="stat-card">
-              <div className="stat-icon total">
-                <Calendar />
-              </div>
+              <div className="stat-icon total" />
               <div className="stat-info">
                 <div className="stat-number">{stats.total}</div>
                 <div className="stat-label">전체 세션</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon completed">
-                <CheckCircle />
-              </div>
+              <div className="stat-icon completed" />
               <div className="stat-info">
                 <div className="stat-number">{stats.completed}</div>
                 <div className="stat-label">완료</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon pending">
-                <Clock />
-              </div>
+              <div className="stat-icon pending" />
               <div className="stat-info">
                 <div className="stat-number">{stats.pending}</div>
                 <div className="stat-label">대기중</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon upcoming">
-                <Calendar />
-              </div>
+              <div className="stat-icon upcoming" />
               <div className="stat-info">
                 <div className="stat-number">{stats.upcoming}</div>
                 <div className="stat-label">예정</div>
@@ -258,7 +247,7 @@ const SessionManagementWidget = ({ widget, user }) => {
           <div className="extension-requests">
             <div className="section-header">
               <h4 className="section-title">
-                <AlertTriangle className="section-icon" />
+                
                 회기 연장 요청
               </h4>
               <div className="section-badge">{extensionRequests.length}</div>
@@ -284,9 +273,7 @@ const SessionManagementWidget = ({ widget, user }) => {
                     onClick={() => handleExtensionRequest(request.id)}
                     title="검토하기"
                     preventDoubleClick={false}
-                  >
-                    <Eye className="action-icon" />
-                  </MGButton>
+                   />
                 </div>
               ))}
             </div>
@@ -308,7 +295,7 @@ const SessionManagementWidget = ({ widget, user }) => {
                   <div className="session-header">
                     <div className="session-participants">
                       <div className="session-time">
-                        <Calendar className="time-icon" />
+                        
                         {formatDateTime(session.scheduledAt)}
                       </div>
                       <div className="session-duration">
@@ -351,9 +338,7 @@ const SessionManagementWidget = ({ widget, user }) => {
                     onClick={() => handleViewSession(session.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                  >
-                    <Eye className="action-icon" />
-                  </MGButton>
+                   />
                   {session.recordUrl && (
                     <MGButton
                       variant="outline"
@@ -362,9 +347,7 @@ const SessionManagementWidget = ({ widget, user }) => {
                       onClick={() => window.open(session.recordUrl, '_blank')}
                       title="기록 보기"
                       preventDoubleClick={false}
-                    >
-                      <FileText className="action-icon" />
-                    </MGButton>
+                     />
                   )}
                 </div>
               </div>
@@ -376,7 +359,7 @@ const SessionManagementWidget = ({ widget, user }) => {
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="session-quick-actions">
             <MGButton variant="primary" size="small" onClick={handleCreateSession}>
-              <Plus className="btn-icon" />
+              
               새 세션 예약
             </MGButton>
           </div>
@@ -386,21 +369,20 @@ const SessionManagementWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <Calendar className="widget-header-icon" />,
     subtitle: '상담 세션 관리',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       ...((RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) ? [{
-        icon: 'Plus',
+        icon: 'PLUS',
         label: '새 세션',
         onClick: handleCreateSession
       }] : []),
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '전체 보기',
         onClick: handleViewAll
       }

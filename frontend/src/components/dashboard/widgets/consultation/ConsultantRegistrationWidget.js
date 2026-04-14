@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Save, RotateCcw, X, CheckCircle, AlertCircle, Award, Briefcase } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
@@ -23,7 +23,6 @@ import { validateEmail, validatePhone } from '../../../../utils/validationUtils'
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -266,11 +265,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <Users className="widget-header-icon" />,
     subtitle: '전문 상담사 등록 대시보드',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       }
@@ -291,9 +289,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
         {!showForm ? (
           // 등록 버튼 화면
           <div className="registration-welcome">
-            <div className="welcome-icon-wrapper">
-              <Users className="welcome-icon" />
-            </div>
+            <div className="welcome-icon-wrapper" />
             <h3 className="welcome-title">상담사 등록</h3>
             <p className="welcome-description">
               {
@@ -307,7 +303,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               className="registration-start-btn"
               onClick={() => setShowForm(true)}
             >
-              <Users className="btn-icon" />
+              
               상담사 등록 시작
             </MGButton>
           </div>
@@ -324,9 +320,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 type="button"
                 title="닫기"
                 preventDoubleClick={false}
-              >
-                <X className="close-icon" />
-              </MGButton>
+               />
             </div>
             <form onSubmit={handleSubmit} className="consultant-registration-form">
               {/* 필수 필드 */}
@@ -349,7 +343,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     />
                     {getFieldError('userId') && (
                       <div className="field-error">
-                        <AlertCircle className="error-icon" />
+                        
                         {getFieldError('userId')}
                       </div>
                     )}
@@ -370,7 +364,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     />
                     {getFieldError('name') && (
                       <div className="field-error">
-                        <AlertCircle className="error-icon" />
+                        
                         {getFieldError('name')}
                       </div>
                     )}
@@ -391,7 +385,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     />
                     {getFieldError('email') && (
                       <div className="field-error">
-                        <AlertCircle className="error-icon" />
+                        
                         {getFieldError('email')}
                       </div>
                     )}
@@ -413,7 +407,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     />
                     {getFieldError('password') && (
                       <div className="field-error">
-                        <AlertCircle className="error-icon" />
+                        
                         {getFieldError('password')}
                       </div>
                     )}
@@ -435,7 +429,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     />
                     {getFieldError('phone') && (
                       <div className="field-error">
-                        <AlertCircle className="error-icon" />
+                        
                         {getFieldError('phone')}
                       </div>
                     )}
@@ -486,7 +480,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               {!showCompactForm && (
                 <div className="form-section">
                   <h4 className="section-title">
-                    <Briefcase className="section-icon" />
+                    
                     전문 정보
                   </h4>
                   <div className="form-grid">
@@ -630,7 +624,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   variant="secondary"
                   onClick={handleCloseForm}
                 >
-                  <X className="btn-icon" />
+                  
                   취소
                 </MGButton>
                 <MGButton
@@ -638,7 +632,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   variant="outline"
                   onClick={handleReset}
                 >
-                  <RotateCcw className="btn-icon" />
+                  
                   초기화
                 </MGButton>
                 <MGButton
@@ -648,7 +642,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   loading={submitting}
                   loadingText="등록 중..."
                 >
-                  <CheckCircle className="btn-icon" />
+                  
                   상담사 등록
                 </MGButton>
               </div>

@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertCircle,
-  Info,
-  History,
-  Key,
-  ExternalLink
-} from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CheckCircleIcon = ICONS.CHECK_CIRCLE;
+const XCircleIcon = ICONS.X_CIRCLE;
+const ClockIcon = ICONS.CLOCK;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
+const InfoIcon = ICONS.INFO;
+const HistoryIcon = ICONS.HISTORY;
+const KeyIcon = ICONS.KEY;
+const ExternalLinkIcon = ICONS.EXTERNAL_LINK;
 import { useSession } from '../../contexts/SessionContext';
 import { 
   getPgConfigurationDetail, 
@@ -142,11 +136,11 @@ const PgConfigurationDetail = () => {
   
   const renderStatusBadge = (status) => {
     const statusConfig = {
-      PENDING: { label: '대기 중', icon: Clock, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' },
-      ACTIVE: { label: '활성화', icon: CheckCircle, color: 'success' },
-      INACTIVE: { label: '비활성화', icon: XCircle, color: 'secondary' }
+      PENDING: { label: '대기 중', icon: ClockIcon, color: 'warning' },
+      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
+      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' },
+      ACTIVE: { label: '활성화', icon: CheckCircleIcon, color: 'success' },
+      INACTIVE: { label: '비활성화', icon: XCircleIcon, color: 'secondary' }
     };
     const config = statusConfig[status] || statusConfig.PENDING;
     const Icon = config.icon;
@@ -161,9 +155,9 @@ const PgConfigurationDetail = () => {
   
   const renderApprovalBadge = (approvalStatus) => {
     const statusConfig = {
-      PENDING: { label: '승인 대기', icon: Clock, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' }
+      PENDING: { label: '승인 대기', icon: ClockIcon, color: 'warning' },
+      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
+      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' }
     };
     const config = statusConfig[approvalStatus] || statusConfig.PENDING;
     const Icon = config.icon;
@@ -191,7 +185,7 @@ const PgConfigurationDetail = () => {
       <AdminCommonLayout title="PG 설정 상세">
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>로그인이 필요합니다.</p>
           </div>
         </ContentArea>
@@ -204,7 +198,7 @@ const PgConfigurationDetail = () => {
       <AdminCommonLayout title="PG 설정 상세">
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>테넌트 정보를 찾을 수 없습니다.</p>
           </div>
         </ContentArea>
@@ -217,7 +211,7 @@ const PgConfigurationDetail = () => {
       <AdminCommonLayout title="PG 설정 상세">
         <ContentArea ariaLabel="PG 설정 상세 오류" className="mg-v2-pg-config-detail">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
             <MGButton
               type="button"
@@ -225,7 +219,6 @@ const PgConfigurationDetail = () => {
               onClick={() => navigate('/tenant/pg-configurations')}
               preventDoubleClick={false}
             >
-              <ArrowLeft size={18} />
               목록으로
             </MGButton>
           </div>
@@ -259,7 +252,6 @@ const PgConfigurationDetail = () => {
                       onClick={() => navigate('/tenant/pg-configurations')}
                       preventDoubleClick={false}
                     >
-                      <ArrowLeft size={18} />
                       목록으로
                     </MGButton>
                     {config.approvalStatus === 'PENDING' && (
@@ -271,7 +263,6 @@ const PgConfigurationDetail = () => {
                           onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
                           preventDoubleClick={false}
                         >
-                          <Edit size={18} />
                           수정
                         </MGButton>
                         <MGButton
@@ -281,7 +272,6 @@ const PgConfigurationDetail = () => {
                           onClick={() => setShowDeleteModal(true)}
                           preventDoubleClick={false}
                         >
-                          <Trash2 size={18} />
                           삭제
                         </MGButton>
                       </>
@@ -297,7 +287,6 @@ const PgConfigurationDetail = () => {
                         loadingText="테스트 중..."
                         preventDoubleClick={false}
                       >
-                        <RefreshCw size={18} />
                         연결 테스트
                       </MGButton>
                     )}
@@ -352,7 +341,7 @@ const PgConfigurationDetail = () => {
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.webhookUrl}</SafeText>
-                      <ExternalLink size={14} />
+                      <ExternalLinkIcon size={14} />
                     </a>
                   </div>
                 </div>
@@ -363,7 +352,7 @@ const PgConfigurationDetail = () => {
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.returnUrl}</SafeText>
-                      <ExternalLink size={14} />
+                      <ExternalLinkIcon size={14} />
                     </a>
                   </div>
                 </div>
@@ -374,7 +363,7 @@ const PgConfigurationDetail = () => {
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.cancelUrl}</SafeText>
-                      <ExternalLink size={14} />
+                      <ExternalLinkIcon size={14} />
                     </a>
                   </div>
                 </div>
@@ -389,7 +378,7 @@ const PgConfigurationDetail = () => {
           <div className="key-info">
             {!showKeys ? (
               <div className="key-placeholder">
-                <Key size={24} />
+                <KeyIcon size={24} />
                 <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
                 <MGButton
                   type="button"
@@ -400,7 +389,6 @@ const PgConfigurationDetail = () => {
                   loadingText="처리 중..."
                   preventDoubleClick={false}
                 >
-                  <Eye size={18} />
                   키 확인
                 </MGButton>
               </div>
@@ -448,7 +436,7 @@ const PgConfigurationDetail = () => {
                 </div>
                 {decryptedKeys?.decryptedAt && (
                   <div className="key-info-footer">
-                    <Info size={14} />
+                    <InfoIcon size={14} />
                     <span>복호화 시각: {new Date(decryptedKeys.decryptedAt).toLocaleString('ko-KR')}</span>
                   </div>
                 )}
@@ -462,7 +450,6 @@ const PgConfigurationDetail = () => {
                   }}
                   preventDoubleClick={false}
                 >
-                  <EyeOff size={18} />
                   숨기기
                 </MGButton>
               </div>
@@ -478,9 +465,9 @@ const PgConfigurationDetail = () => {
               <div className="test-result-header">
                 <div className="test-result-status">
                   {config.connectionTestResult === 'SUCCESS' ? (
-                    <CheckCircle size={20} className="success" />
+                    <CheckCircleIcon size={20} className="success" />
                   ) : (
-                    <XCircle size={20} className="error" />
+                    <XCircleIcon size={20} className="error" />
                   )}
                   <span className={`test-result-label ${config.connectionTestResult === 'SUCCESS' ? 'success' : 'error'}`}>
                     {config.connectionTestResult === 'SUCCESS' ? '성공' : '실패'}
@@ -502,7 +489,7 @@ const PgConfigurationDetail = () => {
           <h2 id="approval-info-heading">승인 정보</h2>
           {config.approvalStatus === 'PENDING' && (
             <div className="approval-status-pending">
-              <Clock size={24} />
+              <ClockIcon size={24} />
               <div>
                 <h3>승인 대기 중</h3>
                 <p>이 PG 설정은 운영 포털에서 승인 대기 중입니다. 승인 후 사용할 수 있습니다.</p>
@@ -517,7 +504,7 @@ const PgConfigurationDetail = () => {
           )}
           {config.approvalStatus === 'APPROVED' && (
             <div className="approval-status-approved">
-              <CheckCircle size={24} />
+              <CheckCircleIcon size={24} />
               <div>
                 <h3>승인됨</h3>
                 <div className="detail-grid">
@@ -541,7 +528,7 @@ const PgConfigurationDetail = () => {
           )}
           {config.approvalStatus === 'REJECTED' && (
             <div className="approval-status-rejected">
-              <XCircle size={24} />
+              <XCircleIcon size={24} />
               <div>
                 <h3>거부됨</h3>
                 {config.rejectionReason && (
@@ -583,7 +570,7 @@ const PgConfigurationDetail = () => {
         {config.history && config.history.length > 0 && (
           <div className="detail-section">
             <h2>
-              <History size={20} />
+              <HistoryIcon size={20} />
               변경 이력
             </h2>
             <div className="history-list">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign, CreditCard } from 'lucide-react';
+import { RefreshCcw, Package, Clock, AlertTriangle, DollarSign, CreditCard } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -174,7 +174,6 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             disabled={loading}
             preventDoubleClick={false}
           >
-            <XCircle size={18} />
             취소
           </MGButton>
           <MGButton

@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -33,7 +32,7 @@ import notificationManager from '../../utils/notification';
 
 /** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
 const REFUND_VIEW_MODE_OPTIONS = [
-  { value: 'table', icon: List, label: '테이블' }
+  { value: 'table', label: '테이블' }
 ];
 
 const REFUND_STATISTICS_ENDPOINT = '/api/v1/admin/refund-statistics';

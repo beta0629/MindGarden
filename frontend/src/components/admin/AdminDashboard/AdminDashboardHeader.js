@@ -1,7 +1,5 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
-import { FaBell, FaCog, FaUserCog } from 'react-icons/fa';
-import { Bell, Settings, User } from 'lucide-react';
 import Avatar from '../../common/Avatar';
 
 /**
@@ -59,7 +57,6 @@ const AdminDashboardHeader = ({
                             className="mg-v2-admin-dashboard-action-btn"
                             onClick={() => onNavigate('/admin/notifications')}
                         >
-                            <Bell className="mg-v2-icon" />
                             알림 관리
                         </MGButton>
                     )}
@@ -71,7 +68,6 @@ const AdminDashboardHeader = ({
                             className="mg-v2-admin-dashboard-action-btn"
                             onClick={() => onNavigate('/admin/system-config')}
                         >
-                            <Settings className="mg-v2-icon" />
                             시스템 설정
                         </MGButton>
                     )}
@@ -83,7 +79,6 @@ const AdminDashboardHeader = ({
                             className="mg-v2-admin-dashboard-action-btn"
                             onClick={() => onNavigate('/admin/user-management')}
                         >
-                            <User className="mg-v2-icon" />
                             사용자 관리
                         </MGButton>
                     )}

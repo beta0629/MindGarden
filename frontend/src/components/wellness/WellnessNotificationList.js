@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Heart, AlertCircle, TrendingUp, Bell } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import Badge from '../common/Badge';
 import SafeText from '../common/SafeText';
@@ -85,14 +83,10 @@ const WellnessNotificationList = () => {
     navigate(`/client/wellness/${notification.id}`);
   };
 
-  const getNotificationIcon = (notification) => {
-    if (notification.isUrgent) {
-      return <AlertCircle size={24} />;
-    }
-    if (notification.isImportant) {
-      return <Heart size={24} />;
-    }
-    return <Bell size={24} />;
+  const getNotificationIconLabel = (notification) => {
+    if (notification.isUrgent) return '긴급';
+    if (notification.isImportant) return '중요';
+    return '알림';
   };
 
   if (loading) {
@@ -116,9 +110,9 @@ const WellnessNotificationList = () => {
           />
           <div className="wellness-notification-list">
             <div className="wellness-notification-empty">
-              <div className="empty-icon">
-                <AlertCircle size={48} />
-              </div>
+              <div className="empty-icon" aria-hidden="true">
+              오류
+            </div>
               <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
               <p className="empty-message"><SafeText>{error}</SafeText></p>
               <MGButton variant="primary" onClick={loadNotifications}>
@@ -144,8 +138,8 @@ const WellnessNotificationList = () => {
         {/* 알림 목록 */}
         {notifications.length === 0 ? (
           <div className="wellness-notification-empty">
-            <div className="empty-icon">
-              <Heart size={48} />
+            <div className="empty-icon" aria-hidden="true">
+              웰니스
             </div>
             <h2 className="empty-title">등록된 웰니스 알림이 없습니다</h2>
             <p className="empty-message">
@@ -178,8 +172,8 @@ const WellnessNotificationList = () => {
                 </div>
 
                 {/* 아이콘 */}
-                <div className="card-icon">
-                  {getNotificationIcon(notification)}
+                <div className="card-icon" aria-hidden="true">
+                  {getNotificationIconLabel(notification)}
                 </div>
 
                 {/* 내용 */}
@@ -198,7 +192,7 @@ const WellnessNotificationList = () => {
                   />
                   <div className="card-meta">
                     <div className="meta-item">
-                      <Calendar size={14} />
+                      <span className="meta-label">게시</span>
                       <span>
                         {toDisplayString(
                           new Date(
@@ -211,8 +205,8 @@ const WellnessNotificationList = () => {
                 </div>
 
                 {/* 화살표 */}
-                <div className="card-arrow">
-                  <TrendingUp size={20} />
+                <div className="card-arrow" aria-hidden="true">
+                  상세
                 </div>
               </div>
             ))}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -264,7 +263,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     {statistics && (
                         <div className="mg-v2-info-box mg-v2-mb-lg">
                             <h4 className="mg-v2-info-box-title">
-                                <RefreshCw size={20} className="mg-v2-section-title-icon" />
                                 반복 지출 통계
                             </h4>
                             <div className="mg-v2-info-grid">
@@ -273,14 +271,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                     <span className="mg-v2-info-value">{toDisplayString(statistics.totalExpenses ?? 0)}개</span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <DollarSign size={16} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">월 총액</span>
                                     <span className="mg-v2-info-value">
                                         {(statistics.monthlyTotal || 0).toLocaleString()}원
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <DollarSign size={16} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">연 총액</span>
                                     <span className="mg-v2-info-value">
                                         {(statistics.yearlyTotal || 0).toLocaleString()}원
@@ -298,7 +294,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                             disabled={loading}
                             variant="primary"
                         >
-                            <Plus size={20} className="mg-v2-icon-inline" />
                             새 반복 지출 추가
                         </MGButton>
                     </div>
@@ -343,7 +338,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 title="수정"
                                                 preventDoubleClick={false}
                                             >
-                                                <Edit2 size={20} />
+                                                수정
                                             </MGButton>
                                             <MGButton
                                                 className="mg-v2-button mg-v2-button--icon mg-v2-button--danger"
@@ -354,7 +349,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 title="삭제"
                                                 preventDoubleClick={false}
                                             >
-                                                <Trash2 size={20} />
+                                                 삭제
                                             </MGButton>
                                         </div>
                                     </div>
@@ -386,7 +381,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         variant="secondary"
                                         preventDoubleClick={false}
                                     >
-                                        <XCircle size={20} className="mg-v2-icon-inline" />
                                         취소
                                     </MGButton>
                                     <MGButton
@@ -398,7 +392,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         loadingText="저장 중..."
                                         variant="primary"
                                     >
-                                        <Edit2 size={20} className="mg-v2-icon-inline" />
                                         저장
                                     </MGButton>
                                 </>
@@ -477,7 +470,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                     <div className="mg-v2-form-row">
                                         <div className="mg-v2-form-group">
                                             <label htmlFor="startDate" className="mg-v2-form-label">
-                                                <Calendar size={16} className="mg-v2-form-label-icon" />
                                                 시작일
                                             </label>
                                             <input
@@ -492,7 +484,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                                         <div className="mg-v2-form-group">
                                             <label htmlFor="endDate" className="mg-v2-form-label">
-                                                <Calendar size={16} className="mg-v2-form-label-icon" />
                                                 종료일
                                             </label>
                                             <input
@@ -508,7 +499,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                                     <div className="mg-v2-form-group">
                                         <label htmlFor="description" className="mg-v2-form-label">
-                                            <FileText size={16} className="mg-v2-form-label-icon" />
                                             설명
                                         </label>
                                         <textarea

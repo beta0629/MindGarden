@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CalendarX, XCircle, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Clock, AlertTriangle } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
@@ -131,7 +131,6 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             onClick={handleClose}
             disabled={loading}
           >
-            <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </MGButton>
           <MGButton
@@ -143,7 +142,6 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             loading={loading}
             loadingText="설정 중..."
           >
-            <CheckCircle size={20} className="mg-v2-icon-inline" />
             휴무 설정
           </MGButton>
         </>

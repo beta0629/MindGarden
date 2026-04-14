@@ -9,7 +9,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, MessageSquare, Info } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
@@ -282,7 +281,7 @@ const NotificationDropdown = () => {
     >
       <div className="mg-v2-notification-trigger-wrapper" ref={triggerRef}>
         <NavIcon
-          icon={Bell}
+          icon="BELL"
           label="알림 열기"
           onClick={() => setIsOpen(!isOpen)}
           className="mg-v2-notification-trigger"
@@ -398,12 +397,6 @@ const NotificationDropdown = () => {
                           aria-hidden="true"
                         />
                       )}
-                      <div
-                        className="mg-v2-notification-item__icon"
-                        aria-hidden="true"
-                      >
-                        <Info size={16} />
-                      </div>
                       <div className="mg-v2-notification-item__content">
                         <div className="mg-v2-notification-item__header">
                           <span className="mg-v2-notification-item__title">
@@ -467,12 +460,6 @@ const NotificationDropdown = () => {
                           aria-hidden="true"
                         />
                       )}
-                      <div
-                        className="mg-v2-notification-item__icon"
-                        aria-hidden="true"
-                      >
-                        <MessageSquare size={16} />
-                      </div>
                       <div className="mg-v2-notification-item__content">
                         <div className="mg-v2-notification-item__header">
                           <span className="mg-v2-notification-item__title">

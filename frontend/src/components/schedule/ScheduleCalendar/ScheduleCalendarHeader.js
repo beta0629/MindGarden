@@ -1,6 +1,12 @@
 import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
-import { Calendar, Users, RefreshCw, Smartphone, Monitor } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const CalendarIcon = ICONS.CALENDAR;
+const UsersIcon = ICONS.USERS;
+const RefreshCwIcon = ICONS.REFRESH_CW;
+const SmartphoneIcon = ICONS.SMARTPHONE;
+const MonitorIcon = ICONS.MONITOR;
 
 /**
  * 스케줄 달력 헤더 컴포넌트
@@ -31,7 +37,7 @@ const ScheduleCalendarHeader = ({
         <div className="mg-v2-calendar-header">
             <div className="mg-v2-calendar-header-left">
                 <h2 className="mg-v2-calendar-title">
-                    <Calendar className="mg-v2-icon" />
+                    <CalendarIcon className="mg-v2-icon" />
                     스케줄 관리
                 </h2>
                 
@@ -39,7 +45,7 @@ const ScheduleCalendarHeader = ({
                 {isAdmin && (
                     <div className="mg-v2-calendar-filter">
                         <label htmlFor="consultant-filter" className="mg-v2-form-label">
-                            <Users className="mg-v2-icon" />
+                            <UsersIcon className="mg-v2-icon" />
                             상담사 필터
                         </label>
                         <CustomSelect
@@ -71,12 +77,12 @@ const ScheduleCalendarHeader = ({
                 >
                     {forceMobileMode ? (
                         <>
-                            <Monitor className="mg-v2-icon" />
+                            <MonitorIcon className="mg-v2-icon" />
                             데스크톱 모드
                         </>
                     ) : (
                         <>
-                            <Smartphone className="mg-v2-icon" />
+                            <SmartphoneIcon className="mg-v2-icon" />
                             모바일 모드
                         </>
                     )}
@@ -92,7 +98,7 @@ const ScheduleCalendarHeader = ({
                     className="mg-v2-refresh-button"
                     preventDoubleClick={false}
                 >
-                    <RefreshCw className="mg-v2-icon" />
+                    <RefreshCwIcon className="mg-v2-icon" />
                     새로고침
                 </MGButton>
             </div>

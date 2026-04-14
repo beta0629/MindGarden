@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  CreditCard,
-  Eye,
-  EyeOff,
-  Save,
-  X,
-  AlertCircle,
-  Info
-} from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
+const InfoIcon = ICONS.INFO;
 import { showNotification } from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import './PgConfigurationForm.css';
@@ -181,7 +177,7 @@ const PgConfigurationForm = ({
         {!hidePageTitle && (
           <>
             <h2>
-              <CreditCard size={24} />
+              <CreditCardIcon size={24} />
               {mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
             </h2>
             <p className="form-description">
@@ -191,7 +187,7 @@ const PgConfigurationForm = ({
         )}
         {mode === 'create' && (
           <div className="form-info-box">
-            <Info size={18} />
+            <InfoIcon size={18} />
             <div>
               <strong>안내사항</strong>
               <ul>
@@ -204,7 +200,7 @@ const PgConfigurationForm = ({
         )}
         {mode === 'edit' && initialData?.approvalStatus === 'PENDING' && (
           <div className="form-warning-box">
-            <AlertCircle size={18} />
+            <AlertCircleIcon size={18} />
             <div>
               <strong>수정 안내</strong>
               <p>승인 대기 중인 설정만 수정할 수 있습니다. 수정 후 다시 승인 절차를 거칩니다.</p>
@@ -235,7 +231,7 @@ const PgConfigurationForm = ({
           </select>
           {getFieldError('pgProvider') && (
             <span id="pgProvider-error" className="error-message" role="alert">
-              <AlertCircle size={14} aria-hidden="true" />
+              <AlertCircleIcon size={14} aria-hidden="true" />
               {getFieldError('pgProvider')}
             </span>
           )}
@@ -255,7 +251,7 @@ const PgConfigurationForm = ({
           />
           {getFieldError('pgName') && (
             <span className="error-message">
-              <AlertCircle size={14} />
+              <AlertCircleIcon size={14} />
               {getFieldError('pgName')}
             </span>
           )}
@@ -288,17 +284,17 @@ const PgConfigurationForm = ({
               size="small"
               preventDoubleClick={false}
             >
-              {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showApiKey ? '숨기기' : '보기'}
             </MGButton>
           </div>
           {getFieldError('apiKey') && (
             <span id="apiKey-error" className="error-message" role="alert">
-              <AlertCircle size={14} aria-hidden="true" />
+              <AlertCircleIcon size={14} aria-hidden="true" />
               {getFieldError('apiKey')}
             </span>
           )}
           <small id="apiKey-help" className="help-text">
-            <Info size={14} aria-hidden="true" />
+            <InfoIcon size={14} aria-hidden="true" />
             API 키는 암호화되어 저장됩니다.
           </small>
         </div>
@@ -330,17 +326,17 @@ const PgConfigurationForm = ({
               size="small"
               preventDoubleClick={false}
             >
-              {showSecretKey ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showSecretKey ? '숨기기' : '보기'}
             </MGButton>
           </div>
           {getFieldError('secretKey') && (
             <span id="secretKey-error" className="error-message" role="alert">
-              <AlertCircle size={14} aria-hidden="true" />
+              <AlertCircleIcon size={14} aria-hidden="true" />
               {getFieldError('secretKey')}
             </span>
           )}
           <small id="secretKey-help" className="help-text">
-            <Info size={14} aria-hidden="true" />
+            <InfoIcon size={14} aria-hidden="true" />
             시크릿 키는 암호화되어 저장됩니다.
           </small>
         </div>
@@ -387,7 +383,7 @@ const PgConfigurationForm = ({
           />
           {getFieldError('webhookUrl') && (
             <span className="error-message">
-              <AlertCircle size={14} />
+              <AlertCircleIcon size={14} />
               {getFieldError('webhookUrl')}
             </span>
           )}
@@ -407,7 +403,7 @@ const PgConfigurationForm = ({
           />
           {getFieldError('returnUrl') && (
             <span className="error-message">
-              <AlertCircle size={14} />
+              <AlertCircleIcon size={14} />
               {getFieldError('returnUrl')}
             </span>
           )}
@@ -427,7 +423,7 @@ const PgConfigurationForm = ({
           />
           {getFieldError('cancelUrl') && (
             <span className="error-message">
-              <AlertCircle size={14} />
+              <AlertCircleIcon size={14} />
               {getFieldError('cancelUrl')}
             </span>
           )}
@@ -445,7 +441,7 @@ const PgConfigurationForm = ({
             <span>테스트 모드</span>
           </label>
           <small className="help-text">
-            <Info size={14} />
+            <InfoIcon size={14} />
             테스트 모드에서는 실제 결제가 발생하지 않습니다.
           </small>
         </div>
@@ -467,7 +463,7 @@ const PgConfigurationForm = ({
           </small>
           {getFieldError('notes') && (
             <span className="error-message">
-              <AlertCircle size={14} />
+              <AlertCircleIcon size={14} />
               {getFieldError('notes')}
             </span>
           )}
@@ -482,7 +478,6 @@ const PgConfigurationForm = ({
           disabled={loading}
           preventDoubleClick={false}
         >
-          <X size={18} />
           취소
         </MGButton>
         <MGButton
@@ -494,7 +489,6 @@ const PgConfigurationForm = ({
           preventDoubleClick={false}
           aria-label={mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
         >
-          <Save size={18} aria-hidden="true" />
           {mode === 'create' ? '등록' : '수정'}
         </MGButton>
       </div>

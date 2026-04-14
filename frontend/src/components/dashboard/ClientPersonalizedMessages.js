@@ -1,27 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  UserPlus, 
-  Clock, 
-  CalendarCheck, 
-  ArrowRightCircle,
-  CreditCard,
-  Lightbulb,
-  Users,
-  Activity,
-  HeartPulse,
-  Book,
-  ArrowRight,
-  ClockIcon
-} from 'lucide-react';
+
 import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
-
 /**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
 /**
@@ -34,17 +19,17 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const [isLoading, setIsLoading] = useState(false);
   
   const iconMap = {
-    'heart': Heart,
-    'user-plus': UserPlus,
-    'clock': Clock,
-    'calendar-check': CalendarCheck,
-    'arrow-right-circle': ArrowRightCircle,
-    'credit-card': CreditCard,
-    'lightbulb': Lightbulb,
-    'users': Users,
-    'activity': Activity,
-    'heart-pulse': HeartPulse,
-    'book': Book
+    heart: 'HEART',
+    'user-plus': 'USER_PLUS',
+    clock: 'CLOCK',
+    'calendar-check': 'CALENDAR_CHECK',
+    'arrow-right-circle': 'ARROW_RIGHT_CIRCLE',
+    'credit-card': 'CREDIT_CARD',
+    lightbulb: 'LIGHTBULB',
+    users: 'USERS',
+    activity: 'ACTIVITY',
+    'heart-pulse': 'HEART_PULSE',
+    book: 'BOOK'
   };
 
   const handleCardClick = (action) => {
@@ -375,7 +360,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
           );
         }
 
-        const IconComponent = iconMap[message.icon];
+        const iconName = iconMap[message.icon] || 'HEART';
         const isClickable = message.action && message.action !== 'tip' && message.action !== 'pending';
 
         return (
@@ -394,9 +379,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
             }}
           >
             <div className="message-card-content">
-              <div className={`message-card-icon message-card-icon--${message.colorClass}`}>
-                {IconComponent && <IconComponent size={24} />}
-              </div>
+              <div className={`message-card-icon message-card-icon--${message.colorClass}`} />
               
               <div className="message-card-text">
                 <h3 className="message-card-title">
@@ -418,7 +401,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                         <span className="message-card-action-text">
                           자세히 보기
                         </span>
-                        <ArrowRight size={14} className="message-card-action-icon" />
+                        
                       </>
                     )}
                   </div>

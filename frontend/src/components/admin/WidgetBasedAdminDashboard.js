@@ -406,7 +406,7 @@ const WidgetBasedAdminDashboard = () => {
                             preventDoubleClick={false}
                             onClick={() => setIsManageMode(!isManageMode)}
                         >
-                            {isManageMode ? '✓ 관리 모드' : '⚙️ 대시보드 관리'}
+                            {isManageMode ? '관리 모드' : '대시보드 관리'}
                         </MGButton>
                     </div>
                 </div>

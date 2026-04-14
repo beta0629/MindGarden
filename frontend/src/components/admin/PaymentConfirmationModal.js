@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -321,7 +320,6 @@ const PaymentConfirmationModal = ({
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >
-            <XCircle size={18} />
             결제 취소
           </MGButton>
           <MGButton
@@ -333,7 +331,6 @@ const PaymentConfirmationModal = ({
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >
-            <CheckCircle size={18} />
             결제 확인
           </MGButton>
         </>

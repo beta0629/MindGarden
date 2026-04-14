@@ -14,25 +14,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  DollarSign, 
-  ShoppingCart, 
-  Calculator, 
-  TrendingUp, 
-  PieChart, 
-  Settings,
-  FileText,
-  BarChart3,
-  Target,
-  RefreshCw
-} from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import MGButton from '../../../common/MGButton';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 import SafeText from '../../../common/SafeText';
-
 const ErpManagementGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -103,16 +91,13 @@ const ErpManagementGridWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <Settings className="widget-header-icon" />,
     subtitle: 'ERP 관리 메뉴',
     actions: [
       {
-        icon: 'RefreshCw',
         label: '권한 새로고침',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
         label: 'ERP 대시보드',
         onClick: () => navigate('/erp/dashboard')
       }
@@ -125,7 +110,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'financial-management',
       title: '재무 관리',
       description: '수입, 지출, 예산 관리',
-      icon: DollarSign,
+      iconName: 'DOLLAR_SIGN',
       url: '/erp/financial',
       permission: 'ERP_FINANCIAL_READ',
       category: 'finance',
@@ -135,7 +120,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'purchase-management',
       title: '구매 관리',
       description: '구매 요청 및 승인 관리',
-      icon: ShoppingCart,
+      iconName: 'SHOPPING_CART',
       url: '/erp/purchase',
       permission: 'ERP_PURCHASE_READ',
       category: 'purchase',
@@ -145,7 +130,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'budget-management',
       title: '예산 관리',
       description: '예산 계획 및 모니터링',
-      icon: Target,
+      iconName: 'TARGET',
       url: '/erp/budget',
       permission: 'ERP_BUDGET_READ',
       category: 'budget',
@@ -155,7 +140,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'expense-form',
       title: '비용 등록',
       description: '빠른 비용 입력',
-      icon: Calculator,
+      iconName: 'CALCULATOR',
       url: '/erp/financial',
       permission: 'ERP_EXPENSE_CREATE',
       category: 'expense',
@@ -165,7 +150,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'reports',
       title: '리포트',
       description: '재무 및 비용 리포트',
-      icon: BarChart3,
+      iconName: 'BAR_CHART_3',
       url: '/erp/dashboard',
       permission: 'ERP_REPORT_READ',
       category: 'report',
@@ -175,7 +160,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'tax-management',
       title: '세무 관리',
       description: '세금계산 및 신고',
-      icon: FileText,
+      iconName: 'FILE_TEXT',
       url: '/erp/tax',
       permission: 'ERP_TAX_READ',
       category: 'tax',
@@ -185,7 +170,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'analytics',
       title: '데이터 분석',
       description: '재무 데이터 분석',
-      icon: TrendingUp,
+      iconName: 'TRENDING_UP',
       url: '/erp/dashboard',
       permission: 'ERP_ANALYTICS_READ',
       category: 'analytics',
@@ -195,7 +180,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       id: 'settings',
       title: 'ERP 설정',
       description: '시스템 및 계정 설정',
-      icon: Settings,
+      iconName: 'SETTINGS',
       url: '/erp/dashboard',
       permission: 'ERP_SETTINGS_READ',
       category: 'settings',
@@ -263,9 +248,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
                       className={`erp-action-card erp-action-${action.category} clickable`}
                       onClick={() => handleActionClick(action)}
                     >
-                      <div className="erp-action-icon-wrapper">
-                        <action.icon className="erp-action-icon" />
-                      </div>
+                      <div className="erp-action-icon-wrapper" />
                       <div className="erp-action-content">
                         <SafeText tag="h4" className="erp-action-title">{action.title}</SafeText>
                         <SafeText tag="p" className="erp-action-description">{action.description}</SafeText>
@@ -278,7 +261,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="erp-management-empty">
-            <Settings className="empty-icon" />
+            
             <p>사용 가능한 ERP 관리 메뉴가 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               권한 새로고침

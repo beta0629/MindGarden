@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { User, Users, Mail, Phone, RefreshCw, UserPlus, Eye, Edit } from 'lucide-react';
+import { User, Users, Mail, Phone } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -481,10 +481,10 @@ const StaffManagement = ({ embedded = false }) => {
           aria-label="스태프 작업"
         >
           <MGButton type="button" variant="secondary" size="small" onClick={() => openStaffDetail(staff)} preventDoubleClick={false}>
-            <Eye size={14} /> 상세
+            상세
           </MGButton>
           <MGButton type="button" variant="primary" size="small" onClick={() => openStaffEdit(staff)} preventDoubleClick={false}>
-            <Edit size={14} /> 수정
+            수정
           </MGButton>
           <MGButton type="button" variant="secondary" size="small" onClick={() => handleOpenRoleChange(staff)} preventDoubleClick={false}>
             역할 변경
@@ -557,7 +557,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={loading}
               preventDoubleClick={false}
             >
-              <UserPlus size={16} /> 새 스태프 등록
+              새 스태프 등록
             </MGButton>
             <MGButton
               type="button"
@@ -580,7 +580,7 @@ const StaffManagement = ({ embedded = false }) => {
               loadingText="불러오는 중..."
               preventDoubleClick={false}
             >
-              <RefreshCw size={16} /> 새로고침
+새로고침
             </MGButton>
           </div>
         </div>

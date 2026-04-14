@@ -9,7 +9,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, DollarSign, AlertCircle } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
+const CalendarIcon = ICONS.CALENDAR;
+const DollarSignIcon = ICONS.DOLLAR_SIGN;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { useSession } from '../../contexts/SessionContext';
 import {
   getSubscriptions,
@@ -206,7 +211,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     return (
       <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.CONTAINER}>
         <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.ERROR}>
-          <AlertCircle size={ICON_SIZES.MEDIUM} />
+          <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
           <span>{BILLING_MESSAGES.ERROR.TENANT_NOT_FOUND}</span>
         </div>
       </div>
@@ -217,7 +222,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     <SimpleLayout title={BILLING_MESSAGES.SUBSCRIPTION.TITLE}>
       <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.CONTAINER}>
         <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.HEADER}>
-          <CreditCard size={ICON_SIZES.LARGE} />
+          <CreditCardIcon size={ICON_SIZES.LARGE} />
           <h2>{BILLING_MESSAGES.SUBSCRIPTION.TITLE}</h2>
         </div>
 
@@ -261,7 +266,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
             <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHODS}>
               {paymentMethods.map((method) => (
                 <div key={method.paymentMethodId} className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHOD}>
-                  <CreditCard size={ICON_SIZES.MEDIUM} />
+                  <CreditCardIcon size={ICON_SIZES.MEDIUM} />
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHOD_INFO}>
                     <div>
                       <strong><SafeText fallback={BILLING_MESSAGES.SUBSCRIPTION.CARD_DEFAULT_LABEL}>{method.cardBrand}</SafeText></strong>
@@ -330,7 +335,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   )}
                   {selectedPlan && paymentMethods.length === 0 && (
                     <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.WARNING}>
-                      <AlertCircle size={ICON_SIZES.MEDIUM} />
+                      <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
                       <span>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHOD_FOR_SUBSCRIPTION}</span>
                     </div>
                   )}
@@ -353,7 +358,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_INFO}>
                     {subscription.billingCycle && (
                       <div>
-                        <Calendar size={ICON_SIZES.SMALL} />
+                        <CalendarIcon size={ICON_SIZES.SMALL} />
                         <span>
                           {BILLING_MESSAGES.SUBSCRIPTION.BILLING_CYCLE_LABEL}:{' '}
                           <BillingCycleLabel cycle={subscription.billingCycle} cycleCodes={billingCycleCodes} />
@@ -362,7 +367,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                     )}
                     {subscription.amount && (
                       <div>
-                        <DollarSign size={ICON_SIZES.SMALL} />
+                        <DollarSignIcon size={ICON_SIZES.SMALL} />
                         <span>{formatCurrency(subscription.amount, subscription.currency)}</span>
                       </div>
                     )}

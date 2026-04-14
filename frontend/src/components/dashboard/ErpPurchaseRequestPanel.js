@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, ShoppingCart, Clock, Check, ClipboardList } from 'lucide-react';
+
 import { apiGet } from '../../utils/ajax';
 import MGButton from '../common/MGButton';
-
 const ErpPurchaseRequestPanel = ({ user }) => {
   const [purchaseData, setPurchaseData] = useState({
     pendingRequests: 0,
@@ -71,7 +70,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       >
         <div className="mg-flex mg-justify-between mg-align-center">
           <h3 className="mg-h4 mg-mb-0 mg-flex mg-align-center mg-gap-sm">
-            <ShoppingCart size={20} aria-hidden />
+            
             비품 구매 요청
             {purchaseData.pendingRequests > 0 && (
               <span className="mg-badge mg-badge-warning">
@@ -79,7 +78,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </span>
             )}
           </h3>
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isExpanded ? '접기' : '펼치기'}
         </div>
       </div>
 
@@ -95,9 +94,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
             {/* 통계 카드 */}
             <div className="mg-dashboard-stats mg-mb-lg">
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-warning)' }}>
-                  <Clock size={24} aria-hidden />
-                </div>
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-warning)' }} />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.pendingRequests}</div>
                   <div className="mg-dashboard-stat-label">대기 중</div>
@@ -105,9 +102,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </div>
 
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-success)' }}>
-                  <Check size={24} aria-hidden />
-                </div>
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-success)' }} />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.approvedRequests}</div>
                   <div className="mg-dashboard-stat-label">승인됨</div>
@@ -115,9 +110,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </div>
 
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-info)' }}>
-                  <ClipboardList size={24} aria-hidden />
-                </div>
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-info)' }} />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.totalRequests}</div>
                   <div className="mg-dashboard-stat-label">전체</div>

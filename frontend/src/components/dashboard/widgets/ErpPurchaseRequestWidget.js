@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  ShoppingCart, 
-  Clock,
-  CheckCircle,
-  FileText,
-  Plus
-} from 'lucide-react';
+
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import './ErpPurchaseRequestWidget.css';
-
 const ErpPurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -92,7 +83,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="erp-purchase-title-content">
-          <ShoppingCart size={18} className="erp-purchase-title-icon" aria-hidden />
+          
           비품 구매 요청
           {purchaseData.pendingRequests > 0 && (
             <span className="erp-purchase-pending-badge">
@@ -101,7 +92,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
           )}
         </div>
         <div className="erp-purchase-expand-icon">
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isExpanded ? '접기' : '펼치기'}
         </div>
       </div>
     )
@@ -115,9 +106,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     if (isEmpty || purchaseData.totalRequests === 0) {
       return (
         <div className="erp-purchase-empty">
-          <div className="erp-purchase-empty-icon">
-            <ShoppingCart size={48} />
-          </div>
+          <div className="erp-purchase-empty-icon" />
           <div className="erp-purchase-empty-text">
             아직 구매 요청이 없습니다
           </div>
@@ -130,7 +119,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
             type="button"
             onClick={handleNewPurchaseRequest}
           >
-            <Plus size={16} />
+            
             새 구매 요청
           </MGButton>
         </div>
@@ -142,9 +131,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
         {/* 통계 카드 */}
         <div className="erp-purchase-stats">
           <div className="erp-purchase-stat-card pending">
-            <div className="erp-purchase-stat-icon">
-              <Clock size={24} />
-            </div>
+            <div className="erp-purchase-stat-icon" />
             <div className="erp-purchase-stat-content">
               <div className="erp-purchase-stat-value">
                 {purchaseData.pendingRequests}
@@ -154,9 +141,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
           </div>
 
           <div className="erp-purchase-stat-card approved">
-            <div className="erp-purchase-stat-icon">
-              <CheckCircle size={24} />
-            </div>
+            <div className="erp-purchase-stat-icon" />
             <div className="erp-purchase-stat-content">
               <div className="erp-purchase-stat-value">
                 {purchaseData.approvedRequests}
@@ -166,9 +151,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
           </div>
 
           <div className="erp-purchase-stat-card total">
-            <div className="erp-purchase-stat-icon">
-              <FileText size={24} />
-            </div>
+            <div className="erp-purchase-stat-icon" />
             <div className="erp-purchase-stat-content">
               <div className="erp-purchase-stat-value">
                 {purchaseData.totalRequests}
@@ -186,7 +169,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
             type="button"
             onClick={handleNewPurchaseRequest}
           >
-            <Plus size={16} />
+            
             새 구매 요청
           </MGButton>
           <MGButton
@@ -195,7 +178,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
             type="button"
             onClick={handleViewRequestHistory}
           >
-            <FileText size={16} />
+            
             요청 내역
           </MGButton>
         </div>

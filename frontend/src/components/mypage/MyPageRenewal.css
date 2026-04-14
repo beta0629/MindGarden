@@ -265,6 +265,20 @@
   flex-shrink: 0;
 }
 
+.mg-mypage__provider-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-spacing-xl);
+  height: var(--mg-spacing-xl);
+  border-radius: var(--mg-radius-full, 50%);
+  background: var(--mg-color-border-main);
+  flex-shrink: 0;
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-color-text-main);
+}
+
 .mg-mypage__empty {
   padding: var(--mg-spacing-lg);
   text-align: center;

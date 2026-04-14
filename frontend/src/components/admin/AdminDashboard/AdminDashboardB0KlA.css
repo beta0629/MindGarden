@@ -278,6 +278,25 @@
   background: var(--ad-b0kla-bg);
 }
 
+.mg-v2-ad-b0kla__icon-btn--text-label {
+  width: auto;
+  min-width: var(--mg-touch-target-min, 44px);
+  min-height: var(--mg-touch-target-min, 44px);
+  height: auto;
+  padding: 0 var(--mg-spacing-md, 0.75rem);
+  border-radius: var(--mg-radius-full, 9999px);
+  font-size: var(--mg-font-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
+  width: auto;
+  height: auto;
+  min-height: var(--mg-touch-target-min, 44px);
+  padding: 0 var(--mg-spacing-md, 0.75rem);
+}
+
 /* ===== KPI 카드 ===== */
 .mg-v2-ad-b0kla__kpi-row {
   display: grid;

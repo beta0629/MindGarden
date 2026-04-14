@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, XCircle, Edit3, Save, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
+import { User, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -70,22 +70,18 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
         isEditing ? (
           <>
             <MGButton variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
-              <XCircle size={20} className="mg-v2-icon-inline" />
               취소
             </MGButton>
             <MGButton variant="primary" size="medium" onClick={handleSave} preventDoubleClick={false}>
-              <Save size={20} className="mg-v2-icon-inline" />
               저장
             </MGButton>
           </>
         ) : (
           <>
             <MGButton variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-              <XCircle size={20} className="mg-v2-icon-inline" />
               닫기
             </MGButton>
             <MGButton variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
-              <Edit3 size={20} className="mg-v2-icon-inline" />
               수정
             </MGButton>
           </>

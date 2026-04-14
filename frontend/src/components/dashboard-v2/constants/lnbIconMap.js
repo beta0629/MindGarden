@@ -1,59 +1,55 @@
 /**
- * LNB 아이콘 매핑 (DB icon 문자열 → lucide-react 컴포넌트)
- * 스펙: docs/design-system/LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC.md §3
+ * LNB icon mapping (DB menus.icon string -> Icon registry key)
+ * Spec: docs/design-system/LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC.md
  *
  * @author Core Solution
  * @since 2026-02-25
  */
 
-import {
-  LayoutDashboard,
-  Link,
-  Settings,
-  Users,
-  FileText,
-  Calendar,
-  MessageCircle,
-  CreditCard,
-  ShoppingCart,
-  DollarSign,
-  PieChart,
-  Receipt,
-  Building2,
-  BarChart3
-} from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const DEFAULT_ICON_KEY = 'FILE_TEXT';
 
 const LNB_ICON_MAP = {
-  LayoutDashboard,
-  Link,
-  Settings,
-  Users,
-  FileText,
-  Calendar,
-  MessageCircle,
-  CreditCard,
-  ShoppingCart,
-  DollarSign,
-  PieChart,
-  Receipt,
-  Building2,
-  BarChart3,
-  'gear-fill': Settings,
-  speedometer2: LayoutDashboard,
-  'list-ul': FileText,
-  'people-fill': Users,
-  'cart-check': ShoppingCart,
-  'graph-up': DollarSign,
-  'piggy-bank': PieChart
+  LayoutDashboard: 'LAYOUT_DASHBOARD',
+  Link: 'LINK',
+  Settings: 'SETTINGS',
+  Users: 'USERS',
+  FileText: 'FILE_TEXT',
+  Calendar: 'CALENDAR',
+  MessageCircle: 'MESSAGE_CIRCLE',
+  CreditCard: 'CREDIT_CARD',
+  ShoppingCart: 'SHOPPING_CART',
+  DollarSign: 'DOLLAR_SIGN',
+  PieChart: 'PIE_CHART',
+  Receipt: 'RECEIPT',
+  Building2: 'BUILDING_2',
+  BarChart3: 'BAR_CHART_3',
+  'gear-fill': 'SETTINGS',
+  speedometer2: 'LAYOUT_DASHBOARD',
+  'list-ul': 'FILE_TEXT',
+  'people-fill': 'USERS',
+  'cart-check': 'SHOPPING_CART',
+  'graph-up': 'DOLLAR_SIGN',
+  'piggy-bank': 'PIE_CHART'
 };
 
 /**
- * @param {string} iconKey DB menus.icon 값
- * @returns {import('react').ComponentType} Lucide 컴포넌트 (없으면 FileText)
+ * @param {string} iconKey DB menus.icon value
+ * @returns {string} ICONS registry key
  */
 export function getLnbIcon(iconKey) {
-  if (!iconKey) return FileText;
-  return LNB_ICON_MAP[iconKey] || FileText;
+  if (!iconKey) {
+    return DEFAULT_ICON_KEY;
+  }
+  const mapped = LNB_ICON_MAP[iconKey];
+  if (mapped && ICONS[mapped]) {
+    return mapped;
+  }
+  if (ICONS[iconKey]) {
+    return iconKey;
+  }
+  return DEFAULT_ICON_KEY;
 }
 
 export default LNB_ICON_MAP;

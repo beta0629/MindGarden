@@ -104,24 +104,21 @@ const WelcomeWidget = ({ config }) => {
                         className="action-btn primary"
                         preventDoubleClick={true}
                     >
-                        <span className="btn-icon">➕</span>
-                        <span className="btn-text">새 상담 등록</span>
+                        새 상담 등록
                     </MGButton>
                     <MGButton 
                         variant="secondary"
                         className="action-btn secondary"
                         preventDoubleClick={true}
                     >
-                        <span className="btn-icon">📊</span>
-                        <span className="btn-text">통계 보기</span>
+                        통계 보기
                     </MGButton>
                     <MGButton 
                         variant="secondary"
                         className="action-btn secondary"
                         preventDoubleClick={true}
                     >
-                        <span className="btn-icon">⚙️</span>
-                        <span className="btn-text">설정</span>
+                        설정
                     </MGButton>
                 </div>
             </div>

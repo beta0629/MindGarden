@@ -14,14 +14,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Plus, Eye, Users, CalendarCheck } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationScheduleWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
-
 const ConsultationScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -71,13 +70,11 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="schedule-empty-state">
-          <div className="empty-icon-wrapper">
-            <CalendarCheck className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">오늘 일정 없음</h3>
           <p className="empty-description">새로운 상담 일정을 추가하세요.</p>
           <MGButton variant="primary" onClick={() => navigate('/schedules/new')}>
-            <Plus className="btn-icon" />
+            
             일정 추가
           </MGButton>
         </div>
@@ -92,13 +89,13 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
           {schedules.map((schedule) => (
             <div key={schedule.id} className="schedule-item">
               <div className="schedule-time">
-                <Clock className="time-icon" />
+                
                 <span><SafeText>{formatTime(schedule.startTime)}</SafeText></span>
               </div>
               <div className="schedule-info">
                 <SafeText tag="div" className="schedule-title" fallback="상담 세션">{schedule.title}</SafeText>
                 <div className="schedule-client">
-                  <Users className="client-icon" />
+                  
                   <span><SafeText>{schedule.clientName}</SafeText></span>
                 </div>
               </div>
@@ -109,9 +106,7 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
                 onClick={() => navigate(`/schedules/${schedule.id}`)}
                 title="상세 보기"
                 preventDoubleClick={false}
-              >
-                <Eye className="view-icon" />
-              </MGButton>
+               />
             </div>
           ))}
         </div>
@@ -125,11 +120,10 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <Calendar className="widget-header-icon" />,
     subtitle: '오늘의 상담 일정',
     actions: [
-      { icon: 'RefreshCw', label: '새로고침', onClick: refresh },
-      { icon: 'Plus', label: '일정 추가', onClick: () => navigate('/schedules/new') }
+      { icon: 'REFRESH_CW', label: '새로고침', onClick: refresh },
+      { icon: 'PLUS', label: '일정 추가', onClick: () => navigate('/schedules/new') }
     ]
   };
 

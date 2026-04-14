@@ -10,8 +10,8 @@
 
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
+import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
@@ -76,9 +76,9 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
                   >
                     {expandedGroupKey === item.to ? (
-                      <ChevronDown size={18} aria-hidden />
+                      <Icon name="CHEVRON_DOWN" size="MD" color="TRANSPARENT" aria-hidden />
                     ) : (
-                      <ChevronRight size={18} aria-hidden />
+                      <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
                     )}
                   </MGButton>
                   <NavLinkWithRouter

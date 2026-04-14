@@ -142,7 +142,6 @@ const MappingActions = ({
                         onClick={action.onClick}
                         title={toDisplayString(action.label)}
                     >
-                        <i className={action.icon} />
                         <span className="action-label">{toDisplayString(action.label)}</span>
                     </MGButton>
                 ))}
@@ -157,7 +156,7 @@ const MappingActions = ({
                     onClick={() => onView?.(mapping)}
                     title="상세보기"
                 >
-                    <i className="bi bi-eye" />
+                    상세보기
                 </MGButton>
                 
                 {mapping.status !== 'TERMINATED' && mapping.status !== 'SESSIONS_EXHAUSTED' && (
@@ -169,7 +168,7 @@ const MappingActions = ({
                         onClick={() => onDelete?.(mapping.id)}
                         title="삭제"
                     >
-                        <i className="bi bi-trash" />
+                        삭제
                     </MGButton>
                 )}
             </div>

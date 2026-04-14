@@ -242,8 +242,25 @@
   justify-content: center;
 }
 
-.mg-button__spinner {
-  animation: mg-spin 1s linear infinite;
+.mg-button__spinner-el {
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mg-spin 0.75s linear infinite;
+  opacity: 0.9;
+  box-sizing: border-box;
+}
+
+.mg-button__spinner-el--small {
+  width: 0.875em;
+  height: 0.875em;
+}
+
+.mg-button__spinner-el--medium {
+  width: 1em;
+  height: 1em;
 }
 
 @keyframes mg-spin {

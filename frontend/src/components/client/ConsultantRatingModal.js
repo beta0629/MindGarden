@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
+import { Heart, Calendar, User, Briefcase } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
@@ -124,7 +124,6 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         disabled={isSubmitting}
                         preventDoubleClick={false}
                     >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
                         취소
                     </MGButton>
                     <MGButton
@@ -135,7 +134,6 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         loading={isSubmitting}
                         loadingText="등록 중..."
                     >
-                        <CheckCircle size={20} className="mg-v2-icon-inline" />
                         평가 완료
                     </MGButton>
                 </>

@@ -16,14 +16,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Brain, AlertTriangle, Shield, Activity } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
-
 const AIMonitoringWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -108,19 +107,14 @@ const AIMonitoringWidget = ({ widget, user }) => {
     return classes[severity] || 'mg-badge--secondary';
   };
 
-  // 심각도별 아이콘
-  const getSeverityIcon = (severity) => {
-    switch (severity) {
-      case 'CRITICAL':
-      case 'HIGH':
-        return <AlertTriangle size={16} />;
-      case 'MEDIUM':
-        return <Activity size={16} />;
-      case 'LOW':
-        return <Shield size={16} />;
-      default:
-        return <Activity size={16} />;
-    }
+  const getSeverityLabel = (severity) => {
+    const labels = {
+      CRITICAL: '긴급',
+      HIGH: '높음',
+      MEDIUM: '보통',
+      LOW: '낮음'
+    };
+    return labels[severity] || severity;
   };
 
   // 위젯 컨텐츠 렌더링
@@ -151,9 +145,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--error'
           )}>
-            <div className="mg-stats-card__icon">
-              <AlertTriangle size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{criticalCount}</div>
               <div className="mg-stats-card__label">긴급</div>
@@ -164,9 +156,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--warning'
           )}>
-            <div className="mg-stats-card__icon">
-              <Shield size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{highCount}</div>
               <div className="mg-stats-card__label">높음</div>
@@ -177,9 +167,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon">
-              <Brain size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{aiUsage.todayCalls || 0}</div>
               <div className="mg-stats-card__label">오늘 AI 호출</div>
@@ -193,7 +181,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
           'mg-mt-md'
         )}>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-            <Activity size={16} />
+            
             <h4 className="mg-h5 mg-mb-0">최근 이상 탐지</h4>
             <MGButton
               onClick={() => handleAction('view-anomalies')}
@@ -221,7 +209,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
                       'mg-badge--sm',
                       getSeverityClass(anomaly.severity)
                     )}>
-                      {getSeverityIcon(anomaly.severity)}
+                      {getSeverityLabel(anomaly.severity)}
                     </div>
                     <div className="mg-list__content">
                       <div className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -246,7 +234,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
                         </span>
                         {anomaly.modelUsed === 'HYBRID_AI' && (
                           <span className="mg-badge mg-badge--primary mg-badge--sm">
-                            <Brain size={12} />
+                            
                             AI 분석
                           </span>
                         )}
@@ -265,7 +253,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
           'mg-mt-md'
         )}>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-            <Shield size={16} />
+            
             <h4 className="mg-h5 mg-mb-0">최근 보안 위협</h4>
             <MGButton
               onClick={() => handleAction('view-threats')}
@@ -293,7 +281,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
                       'mg-badge--sm',
                       getSeverityClass(threat.severity)
                     )}>
-                      {getSeverityIcon(threat.severity)}
+                      {getSeverityLabel(threat.severity)}
                     </div>
                     <div className="mg-list__content">
                       <div className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -324,7 +312,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
                         )}
                         {threat.modelUsed === 'HYBRID_AI' && (
                           <span className="mg-badge mg-badge--primary mg-badge--sm">
-                            <Brain size={12} />
+                            
                             AI 분석
                           </span>
                         )}

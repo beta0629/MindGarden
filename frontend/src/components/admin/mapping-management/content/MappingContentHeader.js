@@ -7,7 +7,6 @@
  */
 
 import React from 'react';
-import { Plus } from 'lucide-react';
 import { ActionButton } from '../../../common';
 import './MappingContentHeader.css';
 
@@ -21,7 +20,6 @@ const MappingContentHeader = ({ title, subtitle, onCreateClick }) => {
       {onCreateClick && (
         <div className="mg-v2-ad-b0kla__header-right">
           <ActionButton variant="primary" onClick={onCreateClick}>
-            <Plus size={20} />
             새 매칭 생성
           </ActionButton>
         </div>

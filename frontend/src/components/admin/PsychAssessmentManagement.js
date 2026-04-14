@@ -9,7 +9,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -295,7 +294,6 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
                 preventDoubleClick={true}
                 loadingText="새로고침 중..."
               >
-                <RefreshCw size={20} />
                 새로고침
               </MGButton>
             }

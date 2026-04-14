@@ -9,16 +9,12 @@
  */
 
 import React from 'react';
-import { 
-  CreditCard, TrendingUp, CheckCircle, Clock, 
-  DollarSign, Calendar, Package, RefreshCw 
-} from 'lucide-react';
+
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
-
 const PaymentSessionsWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -180,7 +176,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
       onRefresh={refresh}
       customActions={[
         {
-          icon: <RefreshCw size={16} />,
           label: '새로고침',
           onClick: refresh,
           disabled: loading
@@ -191,9 +186,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
         {/* 회기 현황 요약 통계 카드들 */}
         <div className="payment-sessions-stats">
           <div className="payment-stat-card payment-stat-card--primary">
-            <div className="payment-stat-icon">
-              <Package size={20} />
-            </div>
+            <div className="payment-stat-icon" />
             <div className="payment-stat-content">
               <div className="payment-stat-label">총 회기수</div>
               <div className="payment-stat-value">{currentData.totalSessions}회</div>
@@ -201,9 +194,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--success">
-            <div className="payment-stat-icon">
-              <CheckCircle size={20} />
-            </div>
+            <div className="payment-stat-icon" />
             <div className="payment-stat-content">
               <div className="payment-stat-label">사용한 회기</div>
               <div className="payment-stat-value">{currentData.usedSessions}회</div>
@@ -211,9 +202,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--warning">
-            <div className="payment-stat-icon">
-              <TrendingUp size={20} />
-            </div>
+            <div className="payment-stat-icon" />
             <div className="payment-stat-content">
               <div className="payment-stat-label">남은 회기</div>
               <div className="payment-stat-value">{currentData.remainingSessions}회</div>
@@ -221,9 +210,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--info">
-            <div className="payment-stat-icon">
-              <DollarSign size={20} />
-            </div>
+            <div className="payment-stat-icon" />
             <div className="payment-stat-content">
               <div className="payment-stat-label">총 결제금액</div>
               <div className="payment-stat-value">{formatCurrency(currentData.totalAmount)}</div>
@@ -235,19 +222,17 @@ const PaymentSessionsWidget = ({ widget, user }) => {
         {currentData.recentPayments.length > 0 ? (
           <div className="payment-sessions-list">
             <h3 className="payment-sessions-subtitle">
-              <Clock size={20} />
+              
               최근 결제 내역
             </h3>
             <div className="payment-items">
               {currentData.recentPayments.map((payment) => (
                 <div key={payment.id} className="payment-item">
-                  <div className="payment-item__icon">
-                    <CreditCard size={20} />
-                  </div>
+                  <div className="payment-item__icon" />
                   <div className="payment-item__content">
                     <div className="payment-item__header">
                       <h4 className="payment-item__package">
-                        <DollarSign size={18} />
+                        
                         {formatCurrency(payment.amount)}
                       </h4>
                       <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
@@ -256,11 +241,11 @@ const PaymentSessionsWidget = ({ widget, user }) => {
                     </div>
                     <div className="payment-item__details">
                       <span className="payment-item__sessions">
-                        <Package size={14} />
+                        
                         {payment.sessions}회
                       </span>
                       <span className="payment-item__date">
-                        <Calendar size={14} />
+                        
                         {formatDate(payment.paymentDate)}
                       </span>
                     </div>
@@ -271,9 +256,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="payment-sessions-empty">
-            <div className="payment-sessions-empty__icon">
-              <CreditCard size={48} />
-            </div>
+            <div className="payment-sessions-empty__icon" />
             <p className="payment-sessions-empty__text">아직 결제 내역이 없습니다.</p>
             <p className="payment-sessions-empty__subtitle">상담 패키지를 구매하시면 여기에 표시됩니다.</p>
           </div>

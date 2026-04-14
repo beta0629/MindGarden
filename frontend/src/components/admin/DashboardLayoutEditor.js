@@ -17,7 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import { ReactSortable } from 'react-sortablejs';
 import MGButton from '../common/MGButton';
-import { FaGripVertical, FaTrash, FaCog } from 'react-icons/fa';
+import { FaGripVertical } from 'react-icons/fa';
 import './DashboardLayoutEditor.css';
 
 // 위젯 타입 한글 이름 매핑 (DashboardWidgetEditor와 동일)
@@ -238,7 +238,7 @@ const DashboardLayoutEditor = ({
                         title="설정"
                         preventDoubleClick={false}
                       >
-                        <FaCog />
+                        설정
                       </MGButton>
                     )}
                     <MGButton
@@ -250,7 +250,7 @@ const DashboardLayoutEditor = ({
                       title="삭제"
                       preventDoubleClick={false}
                     >
-                      <FaTrash />
+                      삭제
                     </MGButton>
                   </div>
                 </div>

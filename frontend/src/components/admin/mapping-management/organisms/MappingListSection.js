@@ -7,7 +7,6 @@
  */
 
 import React from 'react';
-import { Plus } from 'lucide-react';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import MappingCard from '../../mapping/MappingCard';
 import { ActionButton } from '../../../common';
@@ -44,7 +43,6 @@ const MappingListSection = ({
                 onClick={onCreateClick}
                 className="mg-v2-mapping-empty__action"
               >
-                <Plus size={20} style={{ marginRight: 8 }} />
                 매칭 생성하기
               </ActionButton>
             )}

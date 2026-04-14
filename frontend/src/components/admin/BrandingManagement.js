@@ -17,7 +17,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { Upload, Save, RotateCcw, Eye, AlertCircle, X } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
 import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
 import notificationManager from '../../utils/notification';
@@ -347,7 +347,7 @@ const BrandingManagement = ({ onClose }) => {
                     title="로고 제거"
                     preventDoubleClick={false}
                   >
-                    <X size={16} />
+                    제거
                   </MGButton>
                 </div>
               ) : (
@@ -496,7 +496,6 @@ const BrandingManagement = ({ onClose }) => {
           disabled={isSaving || isUploading}
           preventDoubleClick={false}
         >
-          <Eye size={20} />
           미리보기
         </MGButton>
 
@@ -508,7 +507,6 @@ const BrandingManagement = ({ onClose }) => {
           disabled={!hasChanges || isSaving || isUploading}
           preventDoubleClick={false}
         >
-          <RotateCcw size={20} />
           초기화
         </MGButton>
 
@@ -522,7 +520,6 @@ const BrandingManagement = ({ onClose }) => {
           loadingText={isUploading ? '업로드 중...' : '저장 중...'}
           preventDoubleClick={false}
         >
-          <Save size={20} />
           저장
         </MGButton>
       </div>

@@ -1,5 +1,9 @@
 import React from 'react';
-import { XCircle, FileText, Umbrella } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const XCircleIcon = ICONS.X_CIRCLE;
+const FileTextIcon = ICONS.FILE_TEXT;
+const UmbrellaIcon = ICONS.UMBRELLA;
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -45,7 +49,7 @@ const DateActionModal = ({
       className="mg-v2-ad-b0kla"
       actions={
         <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-          <XCircle size={20} className="mg-v2-icon-inline" />
+          <XCircleIcon size={20} className="mg-v2-icon-inline" />
           취소
         </MGButton>
       }
@@ -62,7 +66,7 @@ const DateActionModal = ({
             preventDoubleClick={false}
             className="mg-v2-w-full"
           >
-            <FileText size={24} className="mg-v2-icon-inline--lg" />
+            <FileTextIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
@@ -77,7 +81,7 @@ const DateActionModal = ({
             preventDoubleClick={false}
             className="mg-v2-w-full mg-v2-mt-md"
           >
-            <Umbrella size={24} className="mg-v2-icon-inline--lg" />
+            <UmbrellaIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>

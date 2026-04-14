@@ -15,13 +15,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-import { Clock, CheckCircle, XCircle, AlertTriangle, Play } from 'lucide-react';
+
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
-
 const SchedulerStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -98,13 +97,13 @@ const SchedulerStatusWidget = ({ widget, user }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'SUCCESS':
-        return <CheckCircle size={16} />;
+        return null;
       case 'FAILED':
-        return <XCircle size={16} />;
+        return null;
       case 'RUNNING':
-        return <Play size={16} />;
+        return null;
       default:
-        return <Clock size={16} />;
+        return null;
     }
   };
 
@@ -129,9 +128,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon">
-              <Clock size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{totalExecutions}</div>
               <div className="mg-stats-card__label">총 실행</div>
@@ -142,9 +139,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon">
-              <CheckCircle size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{successCount}</div>
               <div className="mg-stats-card__label">성공</div>
@@ -155,9 +150,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             failureCount > 0 ? 'mg-stats-card--error' : 'mg-stats-card--secondary'
           )}>
-            <div className="mg-stats-card__icon">
-              <XCircle size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{failureCount}</div>
               <div className="mg-stats-card__label">실패</div>
@@ -212,7 +205,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
           'mg-mt-md'
         )}>
           <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-            <Clock size={16} />
+            
             <h4 className="mg-h5 mg-mb-0">최근 실행 내역</h4>
             <MGButton
               onClick={() => handleAction('view-all')}
@@ -273,7 +266,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
                         )}
                         {execution.status === 'FAILED' && execution.errorMessage && (
                           <span className="mg-badge mg-badge--error mg-badge--sm">
-                            <AlertTriangle size={12} />
+                            
                             오류
                           </span>
                         )}
@@ -297,7 +290,7 @@ const SchedulerStatusWidget = ({ widget, user }) => {
               fullWidth
               type="button"
             >
-              <AlertTriangle size={16} />
+              
               실패 내역 {failureCount}건 확인
             </MGButton>
           </div>

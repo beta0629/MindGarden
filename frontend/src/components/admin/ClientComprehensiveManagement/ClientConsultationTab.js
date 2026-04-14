@@ -1,5 +1,4 @@
 import MGButton from '../../common/MGButton';
-import { User, Calendar, Clock, Eye } from 'lucide-react';
 import StatusBadge from '../../common/StatusBadge';
 import SafeText from '../../common/SafeText';
 import './ClientConsultationTab.css';
@@ -28,7 +27,7 @@ const ClientConsultationTab = ({
                 <div className="mg-v2-consultation-info">
                     <h4 className="mg-v2-h4">상담 #{consultation.id}</h4>
                     <p className="mg-v2-consultation-date">
-                        <Calendar size={14} /> {consultation.sessionDate ? new Date(consultation.sessionDate).toLocaleDateString('ko-KR') : '날짜 없음'}
+{consultation.sessionDate ? new Date(consultation.sessionDate).toLocaleDateString('ko-KR') : '날짜 없음'}
                     </p>
                 </div>
                 <div className="mg-v2-consultation-status">
@@ -40,7 +39,7 @@ const ClientConsultationTab = ({
             <div className="mg-v2-card-content">
                 <div className="mg-v2-consultation-details">
                     <p><span className="mg-v2-form-label">세션 번호</span> <SafeText fallback="N/A">{consultation.sessionNumber}</SafeText></p>
-                    <p><span className="mg-v2-form-label">상담 시간</span> <Clock size={12} /> {consultation.sessionDurationMinutes ?? 0}분</p>
+                    <p><span className="mg-v2-form-label">상담 시간</span>{consultation.sessionDurationMinutes ?? 0}분</p>
                     {consultation.progressScore != null && (
                         <p><span className="mg-v2-form-label">진행 점수</span> <SafeText>{consultation.progressScore}</SafeText></p>
                     )}
@@ -66,16 +65,13 @@ const ClientConsultationTab = ({
                     </div>
                     <div className="mg-v2-consultation-client-block__actions">
                         <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
-                            <Eye size={14} /> 상세보기
+                            상세보기
                         </MGButton>
                     </div>
                 </div>
                 <p className="mg-v2-consultation-client-block__count">총 {clientConsultations.length}건의 상담 이력</p>
                 {clientConsultations.length === 0 ? (
                     <div className="mg-v2-mapping-list-block__empty">
-                        <div className="mg-v2-mapping-list-block__empty-icon">
-                            <Calendar size={32} />
-                        </div>
                         <p className="mg-v2-mapping-list-block__empty-desc">상담 이력이 없습니다.</p>
                     </div>
                 ) : (
@@ -95,9 +91,6 @@ const ClientConsultationTab = ({
             </header>
             {clients.length === 0 ? (
                 <div className="mg-v2-mapping-list-block__empty">
-                    <div className="mg-v2-mapping-list-block__empty-icon">
-                        <User size={48} />
-                    </div>
                     <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
                     <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 상담 이력을 확인할 수 있습니다.</p>
                 </div>

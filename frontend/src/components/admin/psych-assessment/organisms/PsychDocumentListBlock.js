@@ -8,7 +8,6 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FileText, LayoutGrid, List, PlayCircle, FileSearch } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import { ViewModeToggle } from '../../../common';
@@ -18,8 +17,8 @@ import './PsychDocumentListBlock.css';
 
 /** 심리 문서 목록 보기 전환 옵션 */
 const PSYCH_DOCUMENT_VIEW_MODE_OPTIONS = [
-  { value: 'table', icon: List, label: '테이블' },
-  { value: 'card', icon: LayoutGrid, label: '카드' }
+  { value: 'table', label: '테이블' },
+  { value: 'card', label: '카드' }
 ];
 
 const getStatusVariant = (status) => {
@@ -44,9 +43,6 @@ const PsychDocumentListBlock = ({
 
   const renderEmpty = () => (
     <div className="mg-v2-psych-document-list-block__empty">
-      <div className="mg-v2-psych-document-list-block__empty-icon">
-        <FileText size={48} />
-      </div>
       <h3 className="mg-v2-psych-document-list-block__empty-title">
         {listLoadError ? '목록을 불러오지 못했습니다' : '최근 업로드된 문서가 없습니다'}
       </h3>
@@ -92,7 +88,7 @@ const PsychDocumentListBlock = ({
                     preventDoubleClick={true}
                     loadingText="불러오는 중..."
                   >
-                    <FileSearch size={16} /> 리포트 보기
+                    리포트 보기
                   </MGButton>
                 )}
                 <MGButton
@@ -106,7 +102,7 @@ const PsychDocumentListBlock = ({
                   className="mg-v2-psych-document-list-block__action"
                   onClick={() => onGenerateReport?.(d.documentId)}
                 >
-                  <PlayCircle size={16} /> 리포트 생성
+                  리포트 생성
                 </MGButton>
               </td>
             </tr>
@@ -140,7 +136,7 @@ const PsychDocumentListBlock = ({
                 preventDoubleClick={true}
                 loadingText="불러오는 중..."
               >
-                <FileSearch size={16} /> 리포트 보기
+                리포트 보기
               </MGButton>
             )}
             <MGButton
@@ -153,7 +149,7 @@ const PsychDocumentListBlock = ({
               title="리포트 생성"
               onClick={() => onGenerateReport?.(d.documentId)}
             >
-              <PlayCircle size={16} /> 리포트 생성
+              리포트 생성
             </MGButton>
           </div>
         </div>

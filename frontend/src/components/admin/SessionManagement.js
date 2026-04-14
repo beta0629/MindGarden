@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
+import { Calendar, Users, CheckCircle, TrendingUp, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -334,7 +334,6 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('quick')}
                                 preventDoubleClick={false}
                             >
-                                <Zap size={18} />
                                 빠른 추가
                             </MGButton>
                             <MGButton 
@@ -344,7 +343,6 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('search')}
                                 preventDoubleClick={false}
                             >
-                                <Users size={18} />
                                 내담자 검색
                             </MGButton>
                             <MGButton 
@@ -354,7 +352,6 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('mapping')}
                                 preventDoubleClick={false}
                             >
-                                <Calendar size={18} />
                                 전체 매핑
                             </MGButton>
                         </div>
@@ -406,7 +403,6 @@ const SessionManagement = () => {
                                                     handleQuickAdd(mapping);
                                                 }}
                                             >
-                                                <Plus size={16} />
                                                 회기 추가
                                             </MGButton>
                                         </div>
@@ -445,7 +441,6 @@ const SessionManagement = () => {
                                         preventDoubleClick={true}
                                         clickDelay={500}
                                     >
-                                        <Users size={16} />
                                         검색
                                     </MGButton>
                                 </div>
@@ -486,7 +481,6 @@ const SessionManagement = () => {
                                                         }
                                                     }}
                                                 >
-                                                    <Plus size={14} />
                                                     회기 추가
                                                 </MGButton>
                                             </div>
@@ -552,7 +546,6 @@ const SessionManagement = () => {
                                                         title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
                                                         preventDoubleClick={false}
                                                     >
-                                                        <Plus size={14} />
                                                         회기 추가
                                                     </MGButton>
                                                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, XCircle, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
@@ -183,7 +183,6 @@ const SessionExtensionModal = ({
                         loading={isLoading}
                         loadingText="요청 중..."
                     >
-                        <Plus size={16} />
                         {additionalSessions}회기 추가 요청
                     </MGButton>
                 </>

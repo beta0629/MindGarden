@@ -149,7 +149,7 @@ const HeaderWidget = ({ widget, user }) => {
                 onClick={handleBackClick}
                 title="뒤로가기"
               >
-                <i className="bi bi-arrow-left" />
+                뒤로
               </MGButton>
             )}
             
@@ -196,7 +196,6 @@ const HeaderWidget = ({ widget, user }) => {
                     onClick={handleLogout}
                     title="로그아웃"
                   >
-                    <i className="bi bi-box-arrow-right" />
                     <span>로그아웃</span>
                   </MGButton>
                 )}

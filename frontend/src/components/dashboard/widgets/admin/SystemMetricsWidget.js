@@ -15,13 +15,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-import { Cpu, HardDrive, Activity, TrendingUp } from 'lucide-react';
+
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
-
 const SystemMetricsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -110,7 +109,7 @@ const SystemMetricsWidget = ({ widget, user }) => {
                 WIDGET_CONSTANTS.CSS_CLASSES.MG_GAP_SM,
                 'mg-align-center'
               )}>
-                <Cpu size={20} className="mg-text-primary" />
+                
                 <span className="mg-text-body mg-font-medium">CPU 사용률</span>
               </div>
               <span className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -156,7 +155,7 @@ const SystemMetricsWidget = ({ widget, user }) => {
                 WIDGET_CONSTANTS.CSS_CLASSES.MG_GAP_SM,
                 'mg-align-center'
               )}>
-                <HardDrive size={20} className="mg-text-info" />
+                
                 <span className="mg-text-body mg-font-medium">메모리 사용률</span>
               </div>
               <span className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -212,7 +211,7 @@ const SystemMetricsWidget = ({ widget, user }) => {
                 WIDGET_CONSTANTS.CSS_CLASSES.MG_GAP_SM,
                 'mg-align-center'
               )}>
-                <Activity size={20} className="mg-text-warning" />
+                
                 <span className="mg-text-body mg-font-medium">JVM 메모리</span>
               </div>
               <span className={WIDGET_CONSTANTS.UTILS.combineClasses(
@@ -266,7 +265,7 @@ const SystemMetricsWidget = ({ widget, user }) => {
                   WIDGET_CONSTANTS.CSS_CLASSES.MG_GAP_SM,
                   'mg-align-center'
                 )}>
-                  <HardDrive size={20} className="mg-text-secondary" />
+                  
                   <span className="mg-text-body mg-font-medium">디스크 사용률</span>
                 </div>
                 <span className={WIDGET_CONSTANTS.UTILS.combineClasses(

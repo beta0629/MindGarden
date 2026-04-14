@@ -21,8 +21,7 @@ import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSearch, FaSync, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt } from 'react-icons/fa';
-import { LayoutDashboard } from 'lucide-react';
+import { FaEye, FaEyeSlash, FaSearch, FaCheckCircle } from 'react-icons/fa';
 import DashboardFormModal from './DashboardFormModal';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -301,7 +300,7 @@ const DashboardManagement = () => {
                   onClick={handleCreate}
                   className="btn-create-dashboard"
                 >
-                  <FaPlus /> 새 대시보드
+                  새 대시보드
                 </MGButton>
               )}
             />
@@ -330,7 +329,7 @@ const DashboardManagement = () => {
                 preventDoubleClick={false}
                 aria-label="검색어 지우기"
               >
-                <FaTimesCircle />
+                지우기
               </MGButton>
             )}
           </div>
@@ -352,7 +351,7 @@ const DashboardManagement = () => {
               onClick={() => setFilterType('active')}
               className="filter-btn"
             >
-              <FaEye /> 활성
+              활성
             </MGButton>
             <MGButton
               type="button"
@@ -361,7 +360,7 @@ const DashboardManagement = () => {
               onClick={() => setFilterType('inactive')}
               className="filter-btn"
             >
-              <FaEyeSlash /> 비활성
+              비활성
             </MGButton>
             <MGButton
               type="button"
@@ -370,7 +369,7 @@ const DashboardManagement = () => {
               onClick={loadDashboards}
               className="refresh-btn"
             >
-              <FaSync /> 새로고침
+              새로고침
             </MGButton>
           </div>
         </div>
@@ -385,7 +384,6 @@ const DashboardManagement = () => {
         {/* 대시보드 목록 */}
         {!loading && filteredDashboards.length === 0 && (
           <div className="empty-state">
-            <LayoutDashboard className="empty-icon" />
             <p>
               {searchTerm || filterType !== 'all'
                 ? '검색 조건에 맞는 대시보드가 없습니다.'
@@ -467,7 +465,7 @@ const DashboardManagement = () => {
                     className="btn-view"
                     title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
                   >
-                    <FaExternalLinkAlt /> 보기
+                    보기
                   </MGButton>
                   <MGButton
                     type="button"
@@ -483,7 +481,7 @@ const DashboardManagement = () => {
                     disabled={loading || !dashboard || !dashboard.dashboardId}
                     title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
-                    <FaEdit /> 수정
+                    수정
                   </MGButton>
                   <MGButton
                     type="button"
@@ -491,16 +489,8 @@ const DashboardManagement = () => {
                     size="small"
                     onClick={() => handleToggleActive(dashboard)}
                     className="btn-toggle"
-                  >
-                    {dashboard.isActive ? (
-                      <>
-                        <FaEyeSlash /> 비활성화
-                      </>
-                    ) : (
-                      <>
-                        <FaEye /> 활성화
-                      </>
-                    )}
+                                   >
+                    {dashboard.isActive ? '비활성화' : '활성화'}
                   </MGButton>
                   {!dashboard.isDefault && (
                     <MGButton
@@ -510,7 +500,7 @@ const DashboardManagement = () => {
                       onClick={() => handleDelete(dashboard)}
                       className="btn-delete"
                     >
-                      <FaTrash /> 삭제
+                      삭제
                     </MGButton>
                   )}
                 </div>

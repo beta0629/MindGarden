@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Eye, MessageCircle, Calendar, UserCheck, UserPlus } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import SafeText from '../../../common/SafeText';
@@ -23,7 +23,6 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -83,9 +82,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="client-empty-state">
-          <div className="empty-icon-wrapper">
-            <UserCheck className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">배정된 내담자 없음</h3>
           <p className="empty-description">새로운 내담자 매칭을 기다리고 있습니다.</p>
         </div>
@@ -115,7 +112,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
                   </div>
                   {client.lastSessionAt && (
                     <div className="last-session">
-                      <Calendar className="detail-icon" />
+                      
                       <span>최근: {formatDate(client.lastSessionAt)}</span>
                     </div>
                   )}
@@ -134,9 +131,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
                   onClick={() => navigate(`/messages/${client.id}`)}
                   title="메시지"
                   preventDoubleClick={false}
-                >
-                  <MessageCircle className="action-icon" />
-                </MGButton>
+                 />
                 <MGButton
                   variant="outline"
                   size="small"
@@ -144,9 +139,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
                   onClick={() => navigate(`/clients/${client.id}`)}
                   title="상세보기"
                   preventDoubleClick={false}
-                >
-                  <Eye className="action-icon" />
-                </MGButton>
+                 />
               </div>
             </div>
           ))}
@@ -161,11 +154,10 @@ const ConsultantClientWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <Users className="widget-header-icon" />,
     subtitle: '담당 내담자',
     actions: [
-      { icon: 'RefreshCw', label: '새로고침', onClick: refresh },
-      { icon: 'UserPlus', label: '내담자 추가', onClick: () => navigate('/clients/new') }
+      { icon: 'REFRESH_CW', label: '새로고침', onClick: refresh },
+      { icon: 'USER_PLUS', label: '내담자 추가', onClick: () => navigate('/clients/new') }
     ]
   };
 

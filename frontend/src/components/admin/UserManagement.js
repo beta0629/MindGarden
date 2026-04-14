@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Pencil, User, UserCircle, Crown, Building2, Search, Filter, RefreshCw } from 'lucide-react';
+import { Users, User, UserCircle, Crown, Building2, Search } from 'lucide-react';
 import { USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -302,7 +302,6 @@ const UserManagement = ({ onUpdate }) => {
                                 title="역할 변경"
                                 preventDoubleClick={false}
                             >
-                                <Pencil className="mg-v2-button-icon" size={16} />
                                 변경
                             </MGButton>
                         </div>
@@ -329,7 +328,7 @@ const UserManagement = ({ onUpdate }) => {
                             title="새로고침"
                             preventDoubleClick={false}
                         >
-                            <RefreshCw size={18} />
+                            새로고침
                         </MGButton>
                     )}
                 />
@@ -382,7 +381,6 @@ const UserManagement = ({ onUpdate }) => {
                                 }}
                                 preventDoubleClick={false}
                             >
-                                <Filter className="mg-v2-button-icon" size={16} />
                                 초기화
                             </MGButton>
                         </div>

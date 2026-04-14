@@ -24,7 +24,7 @@ import {
   getAcademyWidgetTypes,
   getErpWidgetTypes
 } from '../dashboard/widgets/WidgetRegistry';
-import { FaPlus, FaTrash, FaCog, FaGripVertical } from 'react-icons/fa';
+import { FaPlus, FaGripVertical } from 'react-icons/fa';
 import './DashboardWidgetEditor.css';
 
 // 위젯 타입 한글 이름 매핑
@@ -340,7 +340,7 @@ const DashboardWidgetEditor = ({
                       color: '#666'
                     }}
                   >
-                    <FaCog /> 설정
+                    설정
                   </MGButton>
                   <MGButton
                     type="button"
@@ -363,7 +363,7 @@ const DashboardWidgetEditor = ({
                       color: 'var(--mg-error-500)'
                     }}
                   >
-                    <FaTrash /> 삭제
+                    삭제
                   </MGButton>
                 </div>
               </div>

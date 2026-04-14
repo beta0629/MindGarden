@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -8,7 +8,6 @@ import Badge from '../../common/Badge';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import './SystemNotificationWidget.css';
-
 const SystemNotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const {
@@ -86,7 +85,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="system-notification-header-title">
-        <Bell size={20} />
+        
         시스템 알림
         {totalUnreadCount > 0 && (
           <Badge variant="count" count={totalUnreadCount} size="sm" className="system-notification-header-title__count" />

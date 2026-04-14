@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Tag, ArrowLeft, Heart } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
@@ -131,8 +129,8 @@ const WellnessNotificationDetail = () => {
       <AdminCommonLayout title="알림 상세">
         <div className="wellness-notification-detail">
           <div className="wellness-notification-error">
-            <div className="error-icon">
-              <Heart size={48} />
+            <div className="error-icon" aria-hidden="true">
+              알림
             </div>
             <h2 className="error-title">알림을 찾을 수 없습니다</h2>
             <p className="error-message"><SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText></p>
@@ -143,8 +141,7 @@ const WellnessNotificationDetail = () => {
               onClick={handleBack}
               preventDoubleClick={false}
             >
-              <ArrowLeft size={16} />
-              <span>돌아가기</span>
+              <span>← 돌아가기</span>
             </MGButton>
           </div>
         </div>
@@ -165,14 +162,12 @@ const WellnessNotificationDetail = () => {
             onClick={handleBack}
             preventDoubleClick={false}
           >
-            <ArrowLeft size={20} />
-            <span>목록으로</span>
+            <span>← 목록으로</span>
           </MGButton>
           
           <div className="header-badges">
             {notification.isImportant && (
               <span className="badge badge-important">
-                <Heart size={14} />
                 <span>중요</span>
               </span>
             )}
@@ -193,17 +188,17 @@ const WellnessNotificationDetail = () => {
           
           <div className="notification-meta">
             <div className="meta-item">
-              <User size={16} />
+              <span className="meta-label">작성자</span>
               <span><SafeText fallback="관리자">{notification.authorName}</SafeText></span>
             </div>
             <div className="meta-item">
-              <Calendar size={16} />
+              <span className="meta-label">게시</span>
               <span>{toDisplayString(new Date(notification.publishedAt || notification.createdAt).toLocaleDateString('ko-KR'))}</span>
             </div>
             {notification.expiresAt && (
               <div className="meta-item">
-                <Clock size={16} />
-                <span>만료: {toDisplayString(new Date(notification.expiresAt).toLocaleDateString('ko-KR'))}</span>
+                <span className="meta-label">만료</span>
+                <span>{toDisplayString(new Date(notification.expiresAt).toLocaleDateString('ko-KR'))}</span>
               </div>
             )}
           </div>
@@ -225,8 +220,7 @@ const WellnessNotificationDetail = () => {
             onClick={handleBack}
             preventDoubleClick={false}
           >
-            <ArrowLeft size={16} />
-            <span>목록으로 돌아가기</span>
+            <span>← 목록으로 돌아가기</span>
           </MGButton>
         </div>
       </div>

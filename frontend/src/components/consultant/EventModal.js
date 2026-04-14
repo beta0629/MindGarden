@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, XCircle, Save, Trash2, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
 import { apiGet } from '../../utils/ajax';
@@ -152,24 +152,20 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
         <>
           {isReadOnly && event?.extendedProps?.clientId && (
             <MGButton type="button" variant="outline" size="medium" onClick={handleSendMessage} preventDoubleClick={false}>
-              <MessageSquare size={20} className="mg-v2-icon-inline" />
               메시지 보내기
             </MGButton>
           )}
           {!isReadOnly && mode === 'edit' && (
             <MGButton type="button" variant="danger" size="medium" onClick={handleDelete} preventDoubleClick={false}>
-              <Trash2 size={20} className="mg-v2-icon-inline" />
               삭제
             </MGButton>
           )}
           {!isReadOnly && (
             <MGButton type="submit" form="event-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
-              <Save size={20} className="mg-v2-icon-inline" />
               {mode === 'add' ? '추가' : '수정'}
             </MGButton>
           )}
           <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
-            <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </MGButton>
         </>
@@ -285,7 +281,6 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
                 onClick={handleWriteConsultationLog}
                 preventDoubleClick={false}
               >
-                <FileText size={20} className="mg-v2-icon-inline" />
                 {consultationLogStatus.hasRecord ? '상담일지 수정' : '상담일지 작성'}
               </MGButton>
             )}

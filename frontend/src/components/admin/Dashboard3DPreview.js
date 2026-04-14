@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FaRedo, FaExpand, FaCompress, FaEye } from 'react-icons/fa';
+import { FaEye } from 'react-icons/fa';
 import MGButton from '../common/MGButton';
 import './Dashboard3DPreview.css';
 
@@ -147,7 +147,7 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             title="회전 리셋"
             preventDoubleClick={false}
           >
-            <FaRedo /> 리셋
+            리셋
           </MGButton>
           <MGButton
             type="button"
@@ -158,7 +158,7 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             title="축소"
             preventDoubleClick={false}
           >
-            <FaCompress />
+            축소
           </MGButton>
           <span className="preview-scale-indicator">
             {Math.round(scale * 100)}%
@@ -172,7 +172,7 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             title="확대"
             preventDoubleClick={false}
           >
-            <FaExpand />
+            확대
           </MGButton>
           <MGButton
             type="button"
@@ -183,7 +183,7 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             title="전체화면"
             preventDoubleClick={false}
           >
-            {isFullscreen ? <FaCompress /> : <FaExpand />}
+            {isFullscreen ? '전체화면 종료' : '전체화면'}
           </MGButton>
         </div>
       </div>

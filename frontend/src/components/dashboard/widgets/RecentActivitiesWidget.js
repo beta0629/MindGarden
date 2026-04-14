@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
@@ -23,7 +23,6 @@ import { RECENT_ACTIVITIES_CSS } from '../../../constants/css';
 import './RecentActivitiesWidget.css';
 import '../RecentActivities.css';
 import MGButton from '../../common/MGButton';
-
 const RecentActivitiesWidget = ({ widget, user }) => {
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
@@ -268,7 +267,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
         {/* 헤더 */}
         <div className="recent-activities-header">
           <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
-            <Clock size={20} />
+            
             최근 활동
           </h3>
           {hasMoreActivities && (
@@ -279,8 +278,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
               type="button"
               onClick={handleViewAll}
             >
-              <i className="bi bi-arrow-right" />
-              전체보기
+              전체보기 →
             </MGButton>
           )}
         </div>

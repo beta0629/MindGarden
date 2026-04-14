@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Search, 
-  Eye,
-  RefreshCw,
-  AlertCircle,
-  Power,
-  PowerOff,
-  Key,
-  ExternalLink
-} from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CheckCircleIcon = ICONS.CHECK_CIRCLE;
+const XCircleIcon = ICONS.X_CIRCLE;
+const ClockIcon = ICONS.CLOCK;
+const SearchIcon = ICONS.SEARCH;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
+const KeyIcon = ICONS.KEY;
+const ExternalLinkIcon = ICONS.EXTERNAL_LINK;
 import { useSession } from '../../contexts/SessionContext';
 import { 
   getPendingPgConfigurations,
@@ -342,7 +338,7 @@ const PgApprovalManagement = () => {
       <AdminCommonLayout title="PG 설정 승인 관리">
         <ContentArea ariaLabel="PG 설정 승인 관리">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>로그인이 필요합니다.</p>
           </div>
         </ContentArea>
@@ -363,7 +359,7 @@ const PgApprovalManagement = () => {
         {/* 필터 및 검색 */}
         <div className="pg-approval-filters">
           <div className="search-box">
-            <Search size={18} />
+            <SearchIcon size={18} />
             <input
               type="text"
               placeholder="PG사명, 제공자, 테넌트 ID, 비고로 검색..."
@@ -402,7 +398,6 @@ const PgApprovalManagement = () => {
               size="small"
               onClick={loadPendingConfigurations}
             >
-              <RefreshCw size={16} />
               새로고침
             </MGButton>
           </div>
@@ -411,7 +406,7 @@ const PgApprovalManagement = () => {
         {/* 에러 메시지 */}
         {error && (
           <div className="error-alert">
-            <AlertCircle size={20} />
+            <AlertCircleIcon size={20} />
             <span><SafeText>{error}</SafeText></span>
           </div>
         )}
@@ -419,7 +414,7 @@ const PgApprovalManagement = () => {
         {/* 승인 대기 목록 */}
         {pendingConfigs.length === 0 ? (
           <div className="empty-state">
-            <CheckCircle size={48} />
+            <CheckCircleIcon size={48} />
             <h3>승인 대기 중인 PG 설정이 없습니다</h3>
             <p>모든 PG 설정이 처리되었습니다.</p>
           </div>
@@ -437,7 +432,7 @@ const PgApprovalManagement = () => {
                     <h3><SafeText>{config.pgName || config.pgProvider}</SafeText></h3>
                     <div className="card-badges">
                       <span className="status-badge status-badge--warning">
-                        <Clock size={14} />
+                        <ClockIcon size={14} />
                         승인 대기
                       </span>
                       {config.testMode && (
@@ -496,7 +491,6 @@ const PgApprovalManagement = () => {
                       onClick={() => loadConfigDetail(config.configId)}
                       disabled={loadingDetail}
                     >
-                      <Eye size={16} />
                       상세보기
                     </MGButton>
                     
@@ -507,7 +501,6 @@ const PgApprovalManagement = () => {
                       disabled={testingConnection === config.configId}
                       loading={testingConnection === config.configId}
                     >
-                      <RefreshCw size={16} />
                       연결 테스트
                     </MGButton>
                     
@@ -519,7 +512,6 @@ const PgApprovalManagement = () => {
                         setShowApprovalModal(true);
                       }}
                     >
-                      <CheckCircle size={16} />
                       승인
                     </MGButton>
                     
@@ -531,7 +523,6 @@ const PgApprovalManagement = () => {
                         setShowRejectModal(true);
                       }}
                     >
-                      <XCircle size={16} />
                       거부
                     </MGButton>
                   </div>
@@ -539,9 +530,9 @@ const PgApprovalManagement = () => {
                   {testResult && testResult.configId === config.configId && (
                     <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
                       {testResult.success ? (
-                        <CheckCircle size={14} />
+                        <CheckCircleIcon size={14} />
                       ) : (
-                        <XCircle size={14} />
+                        <XCircleIcon size={14} />
                       )}
                       <span><SafeText>{testResult.message}</SafeText></span>
                     </div>
@@ -577,7 +568,6 @@ const PgApprovalManagement = () => {
                   disabled={loading}
                   loading={loading}
                 >
-                  <CheckCircle size={18} />
                   승인
                 </MGButton>
               </>
@@ -619,9 +609,9 @@ const PgApprovalManagement = () => {
                 {testResult && testResult.configId === selectedConfig.configId && (
                   <div className={`test-result-preview ${testResult.success ? 'success' : 'error'}`}>
                     {testResult.success ? (
-                      <CheckCircle size={16} />
+                      <CheckCircleIcon size={16} />
                     ) : (
-                      <XCircle size={16} />
+                      <XCircleIcon size={16} />
                     )}
                     <span>
                       <SafeText>
@@ -645,7 +635,6 @@ const PgApprovalManagement = () => {
                     loading={testingConnection === selectedConfig.configId}
                     className="mg-button-test-connection"
                   >
-                    <RefreshCw size={16} />
                     지금 테스트하기
                   </MGButton>
                 )}
@@ -695,7 +684,6 @@ const PgApprovalManagement = () => {
                   disabled={loading || !rejectForm.rejectionReason.trim()}
                   loading={loading}
                 >
-                  <XCircle size={18} />
                   거부
                 </MGButton>
               </>
@@ -786,7 +774,7 @@ const PgApprovalManagement = () => {
                 <div className="key-info">
                   {!showKeys ? (
                     <div className="key-placeholder">
-                      <Key size={24} />
+                      <KeyIcon size={24} />
                       <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
                       <MGButton
                         variant="secondary"
@@ -794,7 +782,6 @@ const PgApprovalManagement = () => {
                         disabled={loadingKeys}
                         loading={loadingKeys}
                       >
-                        <Eye size={18} />
                         키 확인
                       </MGButton>
                     </div>
@@ -848,7 +835,6 @@ const PgApprovalManagement = () => {
                           setDecryptedKeys(null);
                         }}
                       >
-                        <Eye size={18} />
                         숨기기
                       </MGButton>
                     </div>
@@ -866,7 +852,7 @@ const PgApprovalManagement = () => {
                         <div className="detail-value detail-value--url">
                           <a href={toDisplayString(configDetail.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
                             <SafeText>{configDetail.webhookUrl}</SafeText>
-                            <ExternalLink size={14} />
+                            <ExternalLinkIcon size={14} />
                           </a>
                         </div>
                       </div>
@@ -877,7 +863,7 @@ const PgApprovalManagement = () => {
                         <div className="detail-value detail-value--url">
                           <a href={toDisplayString(configDetail.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
                             <SafeText>{configDetail.returnUrl}</SafeText>
-                            <ExternalLink size={14} />
+                            <ExternalLinkIcon size={14} />
                           </a>
                         </div>
                       </div>
@@ -888,7 +874,7 @@ const PgApprovalManagement = () => {
                         <div className="detail-value detail-value--url">
                           <a href={toDisplayString(configDetail.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
                             <SafeText>{configDetail.cancelUrl}</SafeText>
-                            <ExternalLink size={14} />
+                            <ExternalLinkIcon size={14} />
                           </a>
                         </div>
                       </div>

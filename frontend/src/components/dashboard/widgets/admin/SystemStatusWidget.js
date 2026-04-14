@@ -15,14 +15,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-import { Server, Database, Wifi, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
 import MGButton from '../../../common/MGButton';
 import SafeText from '../../../common/SafeText';
-
 const SystemStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -136,19 +135,18 @@ const SystemStatusWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <Server className="widget-header-icon" />,
     badge: displayData.overallStatus ? {
       text: getStatusText(displayData.overallStatus),
       variant: getStatusVariant(displayData.overallStatus)
     } : null,
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '상태 체크',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '시스템 모니터링',
         onClick: () => navigate('/admin/system-monitor')
       }
@@ -179,13 +177,13 @@ const SystemStatusWidget = ({ widget, user }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'healthy': 
-        return <CheckCircle className="status-icon healthy" />;
+        return null;
       case 'warning':
-        return <AlertTriangle className="status-icon warning" />;
+        return null;
       case 'error':
-        return <AlertTriangle className="status-icon error" />;
+        return null;
       default:
-        return <Clock className="status-icon unknown" />;
+        return null;
     }
   };
 
@@ -242,7 +240,7 @@ const SystemStatusWidget = ({ widget, user }) => {
           {/* 서버 상태 */}
           <div className={`status-card server-status status-${displayData.server.status}`}>
             <div className="status-card-header">
-              <Server className="service-icon" />
+              
               <span className="service-name">서버</span>
               {getStatusIcon(displayData.server.status)}
             </div>
@@ -263,7 +261,7 @@ const SystemStatusWidget = ({ widget, user }) => {
           {/* 데이터베이스 상태 */}
           <div className={`status-card database-status status-${displayData.database.status}`}>
             <div className="status-card-header">
-              <Database className="service-icon" />
+              
               <span className="service-name">데이터베이스</span>
               {getStatusIcon(displayData.database.status)}
             </div>
@@ -285,7 +283,7 @@ const SystemStatusWidget = ({ widget, user }) => {
           {displayData.externalServices.length > 0 && (
             <div className={`status-card services-status status-${getServiceStatus(displayData.externalServices)}`}>
               <div className="status-card-header">
-                <Wifi className="service-icon" />
+                
                 <span className="service-name">외부 서비스</span>
                 {getStatusIcon(getServiceStatus(displayData.externalServices))}
               </div>
@@ -347,7 +345,7 @@ const SystemStatusWidget = ({ widget, user }) => {
         {/* 마지막 업데이트 시간 */}
         {displayData.lastChecked && (
           <div className="last-updated">
-            <Clock className="timestamp-icon" />
+            
             마지막 업데이트: {formatDate(displayData.lastChecked, 'datetime')}
           </div>
         )}
@@ -355,7 +353,7 @@ const SystemStatusWidget = ({ widget, user }) => {
         {/* 빈 상태 */}
         {isEmpty && (
           <div className="system-status-empty">
-            <Server className="empty-icon" />
+            
             <p>시스템 상태 정보를 가져올 수 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               재시도

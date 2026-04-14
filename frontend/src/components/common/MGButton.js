@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { Loader } from 'lucide-react';
 import './MGButton.css';
 
 /**
@@ -127,8 +126,10 @@ const MGButton = ({
       <span className="mg-button__content">
         {/* 로딩 상태 표시 */}
         {isLoadingState && (
-          <span className="mg-button__loading">
-            <Loader className="mg-button__spinner" size={size === 'small' ? 14 : 16} />
+          <span className="mg-button__loading" aria-hidden>
+            <span
+              className={`mg-button__spinner-el ${size === 'small' ? 'mg-button__spinner-el--small' : 'mg-button__spinner-el--medium'}`}
+            />
           </span>
         )}
         

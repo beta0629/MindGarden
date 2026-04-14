@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserSquare, Users, Clock, FileText, Check } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CheckIcon = ICONS.CHECK;
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
@@ -262,16 +264,16 @@ const ScheduleModalNew = ({
 
     const renderStepper = () => {
         const steps = [
-            { id: 1, title: '상담사 선택', icon: UserSquare },
-            { id: 2, title: '내담자 선택', icon: Users },
-            { id: 3, title: '시간 선택', icon: Clock },
-            { id: 4, title: '세부사항', icon: FileText }
+            { id: 1, title: '상담사 선택', icon: ICONS.USER_SQUARE },
+            { id: 2, title: '내담자 선택', icon: ICONS.USERS },
+            { id: 3, title: '시간 선택', icon: ICONS.CLOCK },
+            { id: 4, title: '세부사항', icon: ICONS.FILE_TEXT }
         ];
 
         return (
             <div className="mg-v2-ad-stepper">
                 {steps.map((s, index) => {
-                    const Icon = s.icon;
+                    const StepIcon = s.icon;
                     const isCompleted = step > s.id;
                     const isCurrent = step === s.id;
                     
@@ -283,7 +285,7 @@ const ScheduleModalNew = ({
                         <React.Fragment key={s.id}>
                             <div className={`mg-v2-ad-stepper__item ${statusClass}`}>
                                 <div className="mg-v2-ad-stepper__icon">
-                                    {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
+                                    {isCompleted ? <CheckIcon size={18} strokeWidth={2.5} /> : <StepIcon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
                                 </div>
                                 <span className="mg-v2-ad-stepper__title"><SafeText>{s.title}</SafeText></span>
                             </div>

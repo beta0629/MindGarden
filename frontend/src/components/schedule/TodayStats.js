@@ -3,7 +3,12 @@ import { apiGet } from '../../utils/ajax';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { ContentKpiRow } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
-import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CalendarIcon = ICONS.CALENDAR;
+const CheckCircle2Icon = ICONS.CHECK_CIRCLE_2;
+const ClockIcon = ICONS.CLOCK;
+const XCircleIcon = ICONS.X_CIRCLE;
 import './TodayStats.css';
 
 /**
@@ -60,28 +65,28 @@ const TodayStats = () => {
     const kpiItems = [
         {
             id: 'total',
-            icon: <Calendar size={24} />,
+            icon: <CalendarIcon size={24} />,
             label: '총 예약',
             value: stats.total,
             iconVariant: 'blue'
         },
         {
             id: 'completed',
-            icon: <CheckCircle2 size={24} />,
+            icon: <CheckCircle2Icon size={24} />,
             label: '상담 완료',
             value: stats.completed,
             iconVariant: 'green'
         },
         {
             id: 'inProgress',
-            icon: <Clock size={24} />,
+            icon: <ClockIcon size={24} />,
             label: '진행/대기중',
             value: stats.inProgress,
             iconVariant: 'orange'
         },
         {
             id: 'cancelled',
-            icon: <XCircle size={24} />,
+            icon: <XCircleIcon size={24} />,
             label: '취소',
             value: stats.cancelled,
             iconVariant: 'gray'

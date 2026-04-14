@@ -10,16 +10,11 @@
 import { useState, useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-import {
-  CreditCard,
-  DollarSign,
-  AlertCircle,
-  Plus,
-  Trash2,
-  Edit2,
-  LayoutDashboard,
-  Package
-} from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
+const DollarSignIcon = ICONS.DOLLAR_SIGN;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import SubscriptionManagement from '../billing/SubscriptionManagement';
@@ -278,7 +273,7 @@ const TenantProfile = () => {
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
-              <AlertCircle size={24} />
+              <AlertCircleIcon size={24} />
               <p>테넌트 정보를 찾을 수 없습니다.</p>
             </div>
           </div>
@@ -305,7 +300,7 @@ const TenantProfile = () => {
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
-              <AlertCircle size={24} />
+              <AlertCircleIcon size={24} />
               <p>테넌트 정보를 찾을 수 없습니다.</p>
             </div>
           </div>
@@ -342,7 +337,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('overview')}
                 preventDoubleClick={false}
               >
-                <LayoutDashboard size={18} aria-hidden /> 개요
+                개요
               </MGButton>
               <MGButton
                 type="button"
@@ -353,7 +348,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('subscription')}
                 preventDoubleClick={false}
               >
-                <Package size={18} aria-hidden /> 구독 관리
+                구돉 관리
               </MGButton>
               <MGButton
                 type="button"
@@ -364,7 +359,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('payment')}
                 preventDoubleClick={false}
               >
-                <CreditCard size={18} aria-hidden /> 결제 수단
+                결제 수단
               </MGButton>
             </div>
 
@@ -424,7 +419,7 @@ const TenantProfile = () => {
                             </div>
                             {subscription.amount != null && (
                               <div className="subscription-amount">
-                                <DollarSign size={16} />
+                                <DollarSignIcon size={16} />
                                 {toSafeNumber(subscription.amount).toLocaleString()}원
                               </div>
                             )}
@@ -441,7 +436,7 @@ const TenantProfile = () => {
                       <div className="payment-method-summary">
                         {paymentMethods.map((pm) => (
                           <div key={pm.paymentMethodId} className="payment-method-summary-item">
-                            <CreditCard size={16} />
+                            <CreditCardIcon size={16} />
                             <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
                             {pm.isDefault && (
                               <span className="default-badge">기본</span>
@@ -476,7 +471,6 @@ const TenantProfile = () => {
                       onClick={() => setShowPaymentMethodRegistration(true)}
                       preventDoubleClick={false}
                     >
-                      <Plus size={16} />
                       결제 수단 추가
                     </MGButton>
                   }
@@ -500,7 +494,7 @@ const TenantProfile = () => {
                       paymentMethods.map((pm) => (
                         <div key={pm.paymentMethodId} className="payment-method-card">
                           <div className="payment-method-card-content">
-                            <CreditCard size={24} />
+                            <CreditCardIcon size={24} />
                             <div className="payment-method-info">
                               <div className="payment-method-name">
                                 <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
@@ -526,7 +520,7 @@ const TenantProfile = () => {
                                 title={toDisplayString('기본 결제 수단으로 설정')}
                                 preventDoubleClick={false}
                               >
-                                <Edit2 size={16} />
+                                기본 설정
                               </MGButton>
                             )}
                             <MGButton
@@ -538,14 +532,14 @@ const TenantProfile = () => {
                               title={toDisplayString('삭제')}
                               preventDoubleClick={false}
                             >
-                              <Trash2 size={16} />
+                              삭제
                             </MGButton>
                           </div>
                         </div>
                       ))
                     ) : (
                       <div className="no-payment-methods">
-                        <CreditCard size={48} />
+                        <CreditCardIcon size={48} />
                         <p>등록된 결제 수단이 없습니다.</p>
                         <MGButton
                           type="button"
@@ -553,7 +547,6 @@ const TenantProfile = () => {
                           onClick={() => setShowPaymentMethodRegistration(true)}
                           preventDoubleClick={false}
                         >
-                          <Plus size={16} />
                           결제 수단 추가
                         </MGButton>
                       </div>

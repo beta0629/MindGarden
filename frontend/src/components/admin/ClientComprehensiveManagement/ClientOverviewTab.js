@@ -2,8 +2,7 @@ import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import SafeText from '../../common/SafeText';
-import { User, Edit, Trash2, Eye, Key, Mail, Phone } from 'lucide-react';
-import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
+import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../ProfileCard.css';
 
@@ -39,18 +38,18 @@ const ClientOverviewTab = ({
                 aria-label="내담자 작업"
             >
                 <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
-                    <Eye size={14} /> 상세보기
+상세보기
                 </MGButton>
                 <MGButton variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
-                    <Edit size={14} /> 수정
+수정
                 </MGButton>
                 {onResetPassword && (
                     <MGButton variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
-                        <Key size={14} /> 비밀번호 초기화
+비밀번호 초기화
                     </MGButton>
                 )}
                 <MGButton variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
-                    <Trash2 size={14} /> 삭제
+삭제
                 </MGButton>
             </div>
         );
@@ -60,7 +59,6 @@ const ClientOverviewTab = ({
     const renderClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
         // 공통 유틸리티 함수 사용 (동기 버전)
-        const gradeIcon = getUserGradeIconSync(client.grade);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
         
         // 해당 내담자의 매칭 정보
@@ -82,17 +80,17 @@ const ClientOverviewTab = ({
                         </h3>
                         <div className="mg-v2-profile-card__contact">
                             <span className="mg-v2-profile-card__email">
-                                <Mail size={12} /> <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText>
+                                <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText>
                             </span>
                             <span className="mg-v2-profile-card__phone">
-                                <Phone size={12} /> <SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText>
+                                <SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText>
                             </span>
                         </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
                         <StatusBadge status={client?.status}>{statusKorean}</StatusBadge>
                         <span className="mg-v2-grade-badge">
-                            {gradeIcon} <SafeText>{gradeKorean}</SafeText>
+                            <SafeText>{gradeKorean}</SafeText>
                         </span>
                     </div>
                 </div>
@@ -140,7 +138,6 @@ const ClientOverviewTab = ({
 
     const renderCompactClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
-        const gradeIcon = getUserGradeIconSync(client.grade);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
         return (
             <div
@@ -163,13 +160,13 @@ const ClientOverviewTab = ({
                             <SafeText>{maskEncryptedDisplay(client.name, '이름')}</SafeText>
                         </h3>
                         <div className="mg-v2-profile-card__contact">
-                            <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText></span>
-                            <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText></span>
+                            <span className="mg-v2-profile-card__email"><SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText></span>
+                            <span className="mg-v2-profile-card__phone"><SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText></span>
                         </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
                         <StatusBadge status={client?.status}>{statusKorean}</StatusBadge>
-                        <span className="mg-v2-grade-badge">{gradeIcon} <SafeText>{gradeKorean}</SafeText></span>
+                        <span className="mg-v2-grade-badge"><SafeText>{gradeKorean}</SafeText></span>
                     </div>
                 </div>
                 <div className="mg-v2-profile-card__inline-actions">
@@ -183,9 +180,6 @@ const ClientOverviewTab = ({
         <div className="mg-v2-client-list-block">
             {clients.length === 0 ? (
                 <div className="mg-v2-mapping-list-block__empty">
-                    <div className="mg-v2-mapping-list-block__empty-icon">
-                        <User size={48} />
-                    </div>
                     <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
                     <p className="mg-v2-mapping-list-block__empty-desc">새로운 내담자를 등록해보세요.</p>
                 </div>

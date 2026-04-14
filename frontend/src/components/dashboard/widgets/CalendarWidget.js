@@ -55,10 +55,10 @@ const CalendarWidget = ({ widget, user }) => {
           <h4 className="calendar-month">{currentMonth}</h4>
           <div className="calendar-nav">
             <MGButton className="nav-btn prev" variant="outline" type="button" title="이전 달">
-              <i className="bi bi-chevron-left" />
+              ‹
             </MGButton>
             <MGButton className="nav-btn next" variant="outline" type="button" title="다음 달">
-              <i className="bi bi-chevron-right" />
+              ›
             </MGButton>
           </div>
         </div>

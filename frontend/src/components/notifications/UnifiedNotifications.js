@@ -3,11 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
-import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
@@ -278,7 +276,6 @@ const UnifiedNotifications = () => {
               onClick={() => handleTabChange('system')}
               preventDoubleClick={false}
             >
-              <Bell size={16} className="mg-mr-xs" />
               시스템 공지
             </MGButton>
             <MGButton
@@ -287,7 +284,6 @@ const UnifiedNotifications = () => {
               onClick={() => handleTabChange('messages')}
               preventDoubleClick={false}
             >
-              <MessageSquare size={16} className="mg-mr-xs" />
               일반 메시지
             </MGButton>
           </div>
@@ -301,9 +297,6 @@ const UnifiedNotifications = () => {
           <div>
             {systemNotifications.length === 0 ? (
               <div className="mg-empty-state">
-                <div className="mg-empty-state__icon">
-                  <Bell size={48} />
-                </div>
                 <div className="mg-empty-state__text">시스템 공지가 없습니다</div>
               </div>
             ) : (
@@ -363,9 +356,6 @@ const UnifiedNotifications = () => {
           <div>
             {messages.length === 0 ? (
               <div className="mg-empty-state">
-                <div className="mg-empty-state__icon">
-                  <MessageSquare size={48} />
-                </div>
                 <div className="mg-empty-state__text">메시지가 없습니다</div>
               </div>
             ) : (

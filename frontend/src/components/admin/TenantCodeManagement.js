@@ -25,13 +25,9 @@ import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { 
-    FaBuilding, 
-    FaGlobe, 
-    FaEdit, 
-    FaTrash, 
-    FaPlus, 
-    FaEye,
+import {
+    FaBuilding,
+    FaGlobe,
     FaShieldAlt,
     FaUsers,
     FaTag,
@@ -318,7 +314,7 @@ const TenantCodeManagement = () => {
                             disabled={!permissions.canEdit}
                             preventDoubleClick={false}
                         >
-                            <FaPlus /> {UI_TEXT.ADD_CODE}
+                            {UI_TEXT.ADD_CODE}
                         </MGButton>
                     </div>
                 </div>
@@ -387,7 +383,7 @@ const TenantCodeManagement = () => {
                                         title={UI_TEXT.TOOLTIP_VIEW}
                                         preventDoubleClick={false}
                                     >
-                                        <FaEye />
+                                        {UI_TEXT.TOOLTIP_VIEW}
                                     </MGButton>
                                     {permissions.canEdit && (
                                         <MGButton
@@ -399,7 +395,7 @@ const TenantCodeManagement = () => {
                                             title={UI_TEXT.TOOLTIP_EDIT}
                                             preventDoubleClick={false}
                                         >
-                                            <FaEdit />
+                                            {UI_TEXT.TOOLTIP_EDIT}
                                         </MGButton>
                                     )}
                                     {permissions.canDelete && (
@@ -412,7 +408,7 @@ const TenantCodeManagement = () => {
                                             title={UI_TEXT.TOOLTIP_DELETE}
                                             preventDoubleClick={false}
                                         >
-                                            <FaTrash />
+                                            {UI_TEXT.TOOLTIP_DELETE}
                                         </MGButton>
                                     )}
                                 </div>
@@ -448,7 +444,7 @@ const TenantCodeManagement = () => {
                         }}
                         preventDoubleClick={false}
                     >
-                        <FaBuilding /> {UI_TEXT.TAB_TENANT}
+                        {UI_TEXT.TAB_TENANT}
                         <span className="tab-count">{TENANT_CODE_GROUPS.length}</span>
                     </MGButton>
                     <MGButton
@@ -462,7 +458,7 @@ const TenantCodeManagement = () => {
                         }}
                         preventDoubleClick={false}
                     >
-                        <FaGlobe /> {UI_TEXT.TAB_CORE}
+                        {UI_TEXT.TAB_CORE}
                         <span className="tab-count">{CORE_CODE_GROUPS.length}</span>
                     </MGButton>
                 </div>

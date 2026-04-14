@@ -43,13 +43,15 @@
   white-space: nowrap;
 }
 
-.mg-v2-profile-trigger__icon {
+.mg-v2-profile-trigger__caret {
+  font-size: var(--mg-font-xs, 0.625rem);
+  line-height: 1;
   color: var(--mg-color-text-secondary, #5C6B61);
 }
 
 @media (max-width: 767px) {
   .mg-v2-profile-trigger__name,
-  .mg-v2-profile-trigger__icon {
+  .mg-v2-profile-trigger__caret {
     display: none;
   }
   

@@ -14,11 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Heart, UserPlus, Clock, CalendarCheck, ArrowRightCircle,
-  CreditCard, Lightbulb, Users, Activity, HeartPulse, Book,
-  MessageSquare
-} from 'lucide-react';
+
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import SafeText from '../../common/SafeText';
@@ -31,7 +27,6 @@ import ConsultationGuideModal from '../../common/ConsultationGuideModal';
 import notificationManager from '../../../utils/notification';
 import './PersonalizedMessagesWidget.css';
 import '../ClientPersonalizedMessages.css';
-
 const PersonalizedMessagesWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [clientStatus, setClientStatus] = useState(null);
@@ -100,18 +95,18 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
   }, [user?.id]);
 
   const iconMap = {
-    'heart': Heart,
-    'user-plus': UserPlus,
-    'clock': Clock,
-    'calendar-check': CalendarCheck,
-    'arrow-right-circle': ArrowRightCircle,
-    'credit-card': CreditCard,
-    'lightbulb': Lightbulb,
-    'users': Users,
-    'activity': Activity,
-    'heart-pulse': HeartPulse,
-    'book': Book,
-    'message-square': MessageSquare
+    heart: 'HEART',
+    'user-plus': 'USER_PLUS',
+    clock: 'CLOCK',
+    'calendar-check': 'CALENDAR_CHECK',
+    'arrow-right-circle': 'ARROW_RIGHT_CIRCLE',
+    'credit-card': 'CREDIT_CARD',
+    lightbulb: 'LIGHTBULB',
+    users: 'USERS',
+    activity: 'ACTIVITY',
+    'heart-pulse': 'HEART_PULSE',
+    book: 'BOOK',
+    'message-square': 'MESSAGE_SQUARE'
   };
 
   const getDailyTip = () => {
@@ -352,7 +347,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
       >
         <div className="personalized-messages-widget-content">
           {personalizedMessages.map((message, index) => {
-            const IconComponent = iconMap[message.icon] || MessageSquare;
+            const iconName = iconMap[message.icon] || 'MESSAGE_SQUARE';
             
             return (
               <div
@@ -364,9 +359,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
                   opacity: isLoading ? 0.7 : 1 
                 }}
               >
-                <div className="message-icon">
-                  <IconComponent size={24} />
-                </div>
+                <div className="message-icon" />
                 <div className="message-content">
                   <SafeText tag="h4" className="message-title">{message.title}</SafeText>
                   <SafeText tag="p" className="message-subtitle">{message.subtitle}</SafeText>

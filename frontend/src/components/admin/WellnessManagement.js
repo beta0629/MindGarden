@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
 import {
-    Send, 
-    Database, 
-    DollarSign, 
+    Database,
+    DollarSign,
     TrendingUp,
     Calendar,
     Clock,
     CheckCircle,
     XCircle,
-    RefreshCw,
     BarChart3
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
@@ -325,7 +323,6 @@ const WellnessManagement = () => {
                                         disabled={refreshing}
                                         preventDoubleClick={false}
                                     >
-                                        <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
                                         환율 새로고침
                                     </MGButton>
                                     <MGButton
@@ -335,7 +332,6 @@ const WellnessManagement = () => {
                                         disabled={refreshing}
                                         preventDoubleClick={false}
                                     >
-                                        <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
                                         새로고침
                                     </MGButton>
                                     <MGButton
@@ -347,7 +343,6 @@ const WellnessManagement = () => {
                                         loadingText="발송 중..."
                                         preventDoubleClick={true}
                                     >
-                                        <Send size={18} />
                                         테스트 발송
                                     </MGButton>
                                 </>

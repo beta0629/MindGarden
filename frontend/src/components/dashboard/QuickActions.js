@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
-import { Zap, User, Calendar, MessageCircle, UserPlus, History, FileText, Link2, Code, BarChart3, HelpCircle, Settings } from 'lucide-react';
+
 import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
 import MGButton from '../common/MGButton';
 import { RoleUtils } from '../../constants/roles';
-
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
   const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
@@ -72,7 +71,7 @@ const QuickActions = ({ user }) => {
     <div className="mg-card">
       {/* 카드 헤더 */}
       <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
-        <Zap size={20} className="finance-icon-inline" />
+        
         <h3 className="mg-h4 mg-mb-0">빠른 액션</h3>
       </div>
 
@@ -80,25 +79,16 @@ const QuickActions = ({ user }) => {
       <div className="mg-card-body">
         <div className="quick-actions-grid">
           <MGButton {...actionBtnProps} onClick={goToProfile}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <User size={24} />
-              <span>프로필</span>
-            </div>
+            프로필
           </MGButton>
           <MGButton {...actionBtnProps} onClick={goToSchedule}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <Calendar size={24} />
-              <span>스케줄</span>
-            </div>
+            스케줄
           </MGButton>
 
           {/* 메시지 버튼 (내담자/상담사) */}
           {(RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
             <MGButton {...actionBtnProps} onClick={goToMessages}>
-              <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-                <MessageCircle size={24} />
-                <span>{RoleUtils.isClient(user) ? '상담사 메시지' : '메시지 관리'}</span>
-              </div>
+              {RoleUtils.isClient(user) ? '상담사 메시지' : '메시지 관리'}
             </MGButton>
           )}
 
@@ -108,64 +98,40 @@ const QuickActions = ({ user }) => {
               {...actionBtnProps}
               onClick={() => setShowConsultantApplicationModal(true)}
             >
-              <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-                <UserPlus size={24} />
-                <span>상담사 신청</span>
-              </div>
+              상담사 신청
             </MGButton>
           )}
 
           {/* 상담 내역 버튼 (모든 사용자) */}
           <MGButton {...actionBtnProps} onClick={goToConsultationHistory}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <History size={24} />
-              <span>상담 내역</span>
-            </div>
+            상담 내역
           </MGButton>
 
           {/* 상담 리포트 버튼 (모든 사용자) */}
           <MGButton {...actionBtnProps} onClick={goToConsultationReport}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <FileText size={24} />
-              <span>상담 리포트</span>
-            </div>
+            상담 리포트
           </MGButton>
 
           {/* 관리자 전용 액션 */}
           {RoleUtils.isAdmin(user) && (
             <>
               <MGButton {...actionBtnProps} onClick={goToMappingManagement}>
-                <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-                  <Link2 size={24} />
-                  <span>매칭 시스템</span>
-                </div>
+                매칭 시스템
               </MGButton>
               <MGButton {...actionBtnProps} onClick={goToCommonCodeManagement}>
-                <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-                  <Code size={24} />
-                  <span>공통코드</span>
-                </div>
+                공통코드
               </MGButton>
               <MGButton {...actionBtnProps} onClick={() => navigate('/admin/statistics')}>
-                <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-                  <BarChart3 size={24} />
-                  <span>통계</span>
-                </div>
+                통계
               </MGButton>
             </>
           )}
 
           <MGButton {...actionBtnProps} onClick={goToHelp}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <HelpCircle size={24} />
-              <span>도움말</span>
-            </div>
+            도움말
           </MGButton>
           <MGButton {...actionBtnProps} onClick={goToSettings}>
-            <div className="mg-flex mg-flex-col mg-align-center mg-gap-sm">
-              <Settings size={24} />
-              <span>설정</span>
-            </div>
+            설정
           </MGButton>
         </div>
       </div>

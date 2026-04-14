@@ -1,5 +1,9 @@
 import MGButton from '../../common/MGButton';
-import { X, Plus, Calendar } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const CalendarIcon = ICONS.CALENDAR;
+const XIcon = ICONS.X;
+const PlusIcon = ICONS.PLUS;
 
 /**
  * 모바일 달력 확대 컴포넌트
@@ -41,7 +45,7 @@ const ScheduleCalendarMobileZoom = ({
             <div className="mg-v2-mobile-zoom-modal">
                 <div className="mg-v2-mobile-zoom-header">
                     <h3 className="mg-v2-mobile-zoom-title">
-                        <Calendar className="mg-v2-icon" />
+                        <CalendarIcon className="mg-v2-icon" />
                         {formatDate(date)}
                     </h3>
                     <MGButton
@@ -52,7 +56,7 @@ const ScheduleCalendarMobileZoom = ({
                         title="닫기"
                         preventDoubleClick={false}
                     >
-                        <X className="mg-v2-icon" />
+                        <XIcon className="mg-v2-icon" />
                     </MGButton>
                 </div>
 
@@ -95,7 +99,7 @@ const ScheduleCalendarMobileZoom = ({
                         onClick={onAddSchedule}
                         className="mg-v2-mobile-zoom-add-button"
                     >
-                        <Plus className="mg-v2-icon" />
+                        <PlusIcon className="mg-v2-icon" />
                         일정 추가
                     </MGButton>
                 </div>

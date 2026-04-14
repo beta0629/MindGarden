@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Calendar, ChevronRight } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 
 /**
@@ -64,14 +63,12 @@ const UrgentClientCard = ({ client, onClick, className = '' }) => {
           </div>
         </div>
         <div className="mg-v2-urgent-client-card__meta">
-          <Calendar size={14} />
-          {formatDate(client.lastConsultationDate)} · {client.sessionNumber}회기
+          <span>{formatDate(client.lastConsultationDate)} · {client.sessionNumber}회기</span>
         </div>
         <div className="mg-v2-urgent-client-card__issue">
           {client.mainIssue}
         </div>
       </div>
-      <ChevronRight size={20} className="mg-v2-urgent-client-card__icon" />
     </MGButton>
   );
 };

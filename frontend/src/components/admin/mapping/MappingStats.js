@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     getMappingStatusKoreanName,
-    getStatusColor,
-    getStatusIcon
+    getStatusColor
 } from '../../../utils/codeHelper';
-import { getLucideIcon } from '../../../utils/iconUtils';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
@@ -56,11 +54,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 ] = await Promise.all([
                     Promise.all([
                         getMappingStatusKoreanName('PENDING_PAYMENT'),
-                        getStatusColor('PENDING_PAYMENT', 'MAPPING_STATUS'),
-                        getStatusIcon('PENDING_PAYMENT', 'MAPPING_STATUS')
-                    ]).then(([label, color, icon]) => ({
+                        getStatusColor('PENDING_PAYMENT', 'MAPPING_STATUS')
+                    ]).then(([label, color]) => ({
                         id: 'PENDING_PAYMENT',
-                        icon: icon,
                         label: label,
                         value: stats.pending,
                         color: color,
@@ -73,13 +69,10 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getMappingStatusKoreanName('ACTIVE'),
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                        getStatusColor('ACTIVE', 'MAPPING_STATUS'),
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                        getStatusIcon('ACTIVE', 'MAPPING_STATUS')
-                    ]).then(([label, color, icon]) => ({
+                        getStatusColor('ACTIVE', 'MAPPING_STATUS')
+                    ]).then(([label, color]) => ({
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         id: 'ACTIVE',
-                        icon: icon,
                         label: label,
                         value: stats.active,
                         color: color,
@@ -91,11 +84,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.all([
                         getMappingStatusKoreanName('PAYMENT_CONFIRMED'),
-                        getStatusColor('PAYMENT_CONFIRMED', 'MAPPING_STATUS'),
-                        getStatusIcon('PAYMENT_CONFIRMED', 'MAPPING_STATUS')
-                    ]).then(([label, color, icon]) => ({
+                        getStatusColor('PAYMENT_CONFIRMED', 'MAPPING_STATUS')
+                    ]).then(([label, color]) => ({
                         id: 'PAYMENT_CONFIRMED',
-                        icon: icon,
                         label: label,
                         value: stats.paymentConfirmed,
                         color: color,
@@ -106,7 +97,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.resolve({
                         id: 'TOTAL',
-                        icon: 'BarChart3',
                         label: '전체 매칭',
                         value: stats.total,
                         color: 'var(--color-primary)',
@@ -117,11 +107,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.all([
                         getMappingStatusKoreanName('TERMINATED'),
-                        getStatusColor('TERMINATED', 'MAPPING_STATUS'),
-                        getStatusIcon('TERMINATED', 'MAPPING_STATUS')
-                    ]).then(([label, color, icon]) => ({
+                        getStatusColor('TERMINATED', 'MAPPING_STATUS')
+                    ]).then(([label, color]) => ({
                         id: 'TERMINATED',
-                        icon: icon,
                         label: label,
                         value: stats.terminated,
                         color: color,
@@ -132,11 +120,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.all([
                         getMappingStatusKoreanName('SESSIONS_EXHAUSTED'),
-                        getStatusColor('SESSIONS_EXHAUSTED', 'MAPPING_STATUS'),
-                        getStatusIcon('SESSIONS_EXHAUSTED', 'MAPPING_STATUS')
-                    ]).then(([label, color, icon]) => ({
+                        getStatusColor('SESSIONS_EXHAUSTED', 'MAPPING_STATUS')
+                    ]).then(([label, color]) => ({
                         id: 'SESSIONS_EXHAUSTED',
-                        icon: icon,
                         label: label,
                         value: stats.sessionsExhausted,
                         color: color,
@@ -160,12 +146,12 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             } catch (error) {
                 console.error('매칭 통계 카드 로드 실패:', error);
                 setStatCards([
-                    { id: 'PENDING_PAYMENT', icon: 'Loader2', label: '결제 대기', value: stats.pending, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'payment' },
-                    { id: 'ACTIVE', icon: 'Check', label: '활성 매칭', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
-                    { id: 'PAYMENT_CONFIRMED', icon: 'DollarSign', label: '결제 확인', value: stats.paymentConfirmed, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view' },
-                    { id: 'TOTAL', icon: 'BarChart3', label: '전체 매칭', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
-                    { id: 'TERMINATED', icon: 'X', label: '종료됨', value: stats.terminated, color: 'var(--mg-error-500)', bgColor: 'var(--mg-error-50)', action: 'view' },
-                    { id: 'SESSIONS_EXHAUSTED', icon: 'CircleDot', label: '회기 소진', value: stats.sessionsExhausted, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'view' }
+                    { id: 'PENDING_PAYMENT', label: '결제 대기', value: stats.pending, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'payment' },
+                    { id: 'ACTIVE', label: '활성 매칭', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
+                    { id: 'PAYMENT_CONFIRMED', label: '결제 확인', value: stats.paymentConfirmed, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view' },
+                    { id: 'TOTAL', label: '전체 매칭', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
+                    { id: 'TERMINATED', label: '종료됨', value: stats.terminated, color: 'var(--mg-error-500)', bgColor: 'var(--mg-error-50)', action: 'view' },
+                    { id: 'SESSIONS_EXHAUSTED', label: '회기 소진', value: stats.sessionsExhausted, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'view' }
                 ]);
             } finally {
                 setLoading(false);
@@ -174,15 +160,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         
         loadStatCards();
     }, [mappings]); // mappings가 변경될 때마다 재로드
-
-    const ICON_VARIANT_MAP = {
-        PENDING_PAYMENT: 'orange',
-        ACTIVE: 'green',
-        PAYMENT_CONFIRMED: 'blue',
-        TOTAL: 'blue',
-        TERMINATED: 'gray',
-        SESSIONS_EXHAUSTED: 'orange'
-    };
 
     if (loading) {
         return (
@@ -203,7 +180,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     return (
         <div className="mg-v2-content-kpi-row">
             {statCards.map((stat, index) => {
-                const iconVariant = ICON_VARIANT_MAP[stat.id] || (['green', 'orange', 'blue', 'gray'][index % 4]);
                 const numericValue = toSafeNumber(stat.value);
                 const percentage = stats.total > 0 ? Math.round((numericValue / stats.total) * 100) : 0;
                 const titleHint = `${toDisplayString(stat.label)} 클릭하여 ${
@@ -221,9 +197,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         title={titleHint}
                         preventDoubleClick={false}
                     >
-                        <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
-                            <span className="mg-v2-content-kpi-card__icon-emoji">{getLucideIcon(stat.icon, { size: 24 })}</span>
-                        </div>
                         <div className="mg-v2-content-kpi-card__info">
                             <div className="mg-v2-content-kpi-card__top">
                                 <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>

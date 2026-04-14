@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, XCircle, Edit2, Save, Plus, Users, Target } from 'lucide-react';
+import { Briefcase, Plus, Users } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -392,7 +392,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             preventDoubleClick={false}
                                             title="편집"
                                         >
-                                            <Edit2 size={20} />
+                                                편집
                                         </MGButton>
                                     </div>
                                 ))}
@@ -442,7 +442,6 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 loading={loading}
                                                 loadingText="저장 중..."
                                             >
-                                                <Save size={20} className="mg-v2-icon-inline" />
                                                 저장
                                             </MGButton>
                                         </div>
@@ -478,7 +477,6 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             loading={loading}
                                             loadingText="추가 중..."
                                         >
-                                            <Plus size={20} className="mg-v2-icon-inline" />
                                             추가
                                         </MGButton>
                                     </div>

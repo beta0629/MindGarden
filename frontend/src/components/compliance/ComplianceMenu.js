@@ -1,18 +1,4 @@
 import { Link } from 'react-router-dom';
-import {
-  BarChart2,
-  Users,
-  ClipboardList,
-  Siren,
-  GraduationCap,
-  FileText,
-  Trash2,
-  Search,
-  ChevronRight,
-  BookOpen,
-  Target,
-  Phone
-} from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -20,13 +6,6 @@ import SafeText from '../common/SafeText';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceMenu.css';
-
-const ICON_COMMON = {
-  className: 'mg-v2-compliance-menu__tile-icon-svg',
-  size: 28,
-  strokeWidth: 2,
-  'aria-hidden': true
-};
 
 function ComplianceMenuNav({ items }) {
   return (
@@ -36,15 +15,14 @@ function ComplianceMenuNav({ items }) {
     >
       <ul className="mg-v2-compliance-menu__grid">
         {items.map((item) => {
-          const TileIcon = item.Icon;
           return (
             <li key={item.id} className="mg-v2-compliance-menu__grid-item">
               <Link
                 to={item.path}
                 className={`mg-v2-compliance-menu__tile mg-v2-compliance-menu__tile--${item.color}`}
               >
-                <span className="mg-v2-compliance-menu__tile-icon-wrap">
-                  <TileIcon {...ICON_COMMON} />
+                <span className="mg-v2-compliance-menu__tile-icon-wrap" aria-hidden="true">
+                  <span className="mg-v2-compliance-menu__tile-icon-text">{item.title.slice(0, 1)}</span>
                 </span>
                 <span className="mg-v2-compliance-menu__tile-body">
                   <span className="mg-v2-compliance-menu__tile-title">
@@ -54,12 +32,8 @@ function ComplianceMenuNav({ items }) {
                     <SafeText>{item.description}</SafeText>
                   </span>
                 </span>
-                <span className="mg-v2-compliance-menu__tile-chevron" aria-hidden>
-                  <ChevronRight
-                    className="mg-v2-compliance-menu__chevron-svg"
-                    size={22}
-                    strokeWidth={2}
-                  />
+                <span className="mg-v2-compliance-menu__tile-chevron" aria-hidden="true">
+                  ›
                 </span>
               </Link>
             </li>
@@ -82,12 +56,6 @@ function ComplianceMenuInfoSection() {
       <div className="mg-v2-compliance-menu__info-grid">
         <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <BookOpen
-              className="mg-v2-compliance-menu__info-card-icon"
-              size={20}
-              strokeWidth={2}
-              aria-hidden
-            />
             <span>법적 근거</span>
           </h3>
           <ul className="mg-v2-compliance-menu__info-list">
@@ -101,12 +69,6 @@ function ComplianceMenuInfoSection() {
 
         <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <Target
-              className="mg-v2-compliance-menu__info-card-icon"
-              size={20}
-              strokeWidth={2}
-              aria-hidden
-            />
             <span>주요 기능</span>
           </h3>
           <ul className="mg-v2-compliance-menu__info-list">
@@ -122,12 +84,6 @@ function ComplianceMenuInfoSection() {
           className="mg-v2-compliance-menu__info-card mg-v2-compliance-menu__info-card--full mg-v2-ad-b0kla__card"
         >
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <Phone
-              className="mg-v2-compliance-menu__info-card-icon"
-              size={20}
-              strokeWidth={2}
-              aria-hidden
-            />
             <span>문의 및 지원</span>
           </h3>
           <div className="mg-v2-compliance-menu__contact">
@@ -161,7 +117,6 @@ const ComplianceMenu = () => {
       id: 'dashboard',
       title: '컴플라이언스 대시보드',
       description: '종합 모니터링 현황',
-      Icon: BarChart2,
       path: '/admin/compliance/dashboard',
       color: 'primary'
     },
@@ -169,7 +124,6 @@ const ComplianceMenu = () => {
       id: 'personal-data-processing',
       title: '개인정보 처리 현황',
       description: '처리 현황 및 통계',
-      Icon: Users,
       path: '/admin/compliance/personal-data-processing',
       color: 'secondary'
     },
@@ -177,7 +131,6 @@ const ComplianceMenu = () => {
       id: 'impact-assessment',
       title: '개인정보 영향평가',
       description: '위험도 분석 및 평가',
-      Icon: ClipboardList,
       path: '/admin/compliance/impact-assessment',
       color: 'tertiary'
     },
@@ -185,7 +138,6 @@ const ComplianceMenu = () => {
       id: 'breach-response',
       title: '침해사고 대응',
       description: '대응 절차 및 팀 구성',
-      Icon: Siren,
       path: '/admin/compliance/breach-response',
       color: 'danger'
     },
@@ -193,7 +145,6 @@ const ComplianceMenu = () => {
       id: 'education',
       title: '개인정보보호 교육',
       description: '교육 프로그램 및 이수 현황',
-      Icon: GraduationCap,
       path: '/admin/compliance/education',
       color: 'info'
     },
@@ -201,7 +152,6 @@ const ComplianceMenu = () => {
       id: 'policy',
       title: '개인정보 처리방침',
       description: '처리방침 관리 및 업데이트',
-      Icon: FileText,
       path: '/admin/compliance/policy',
       color: 'success'
     },
@@ -209,7 +159,6 @@ const ComplianceMenu = () => {
       id: 'destruction',
       title: '개인정보 파기 관리',
       description: '파기 현황 및 자동화',
-      Icon: Trash2,
       path: '/admin/compliance/destruction',
       color: 'warning'
     },
@@ -217,7 +166,6 @@ const ComplianceMenu = () => {
       id: 'audit',
       title: '컴플라이언스 감사',
       description: '감사 로그 및 보고서',
-      Icon: Search,
       path: '/admin/compliance/audit',
       color: 'dark'
     }

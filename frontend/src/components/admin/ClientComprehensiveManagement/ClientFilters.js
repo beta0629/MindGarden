@@ -1,6 +1,6 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
-import { FaSearch, FaFilter, FaPlus } from 'react-icons/fa';
+import { FaSearch, FaFilter } from 'react-icons/fa';
 
 /**
  * 내담자 필터 컴포넌트
@@ -21,7 +21,7 @@ const ClientFilters = ({
                     variant="primary"
                     onClick={onCreateClient}
                 >
-                    <FaPlus /> 새 내담자 등록
+                    새 내담자 등록
                 </MGButton>
             </div>
             

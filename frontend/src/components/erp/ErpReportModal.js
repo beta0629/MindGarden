@@ -11,6 +11,7 @@ import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import './ErpCommon.css';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -166,6 +167,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             backdropClick
             showCloseButton
             loading={loading}
+            className="erp-report-modal"
         >
                 {/* 본문 영역 busy — UnifiedModal loading과 중복되어도 본문 a11y 명시 */}
                 <div className="mg-v2-modal-body" aria-busy={loading || loadingBranches}>

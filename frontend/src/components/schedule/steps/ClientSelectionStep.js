@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link2 } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const Link2Icon = ICONS.LINK_2;
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import MGButton from '../../common/MGButton';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -246,7 +248,7 @@ const ClientSelectionStep = ({
             {clients.length === 0 ? (
                 <div className="mg-v2-ad-client-step__empty">
                     <div className="mg-v2-ad-client-step__empty-icon">
-                        <Link2 size={48} strokeWidth={1.5} />
+                        <Link2Icon size={48} strokeWidth={1.5} />
                     </div>
                     <h4 className="mg-v2-ad-client-step__empty-title">매핑된 내담자가 없습니다</h4>
                     <p className="mg-v2-ad-client-step__empty-desc">
@@ -260,7 +262,7 @@ const ClientSelectionStep = ({
                             className="mg-v2-btn--primary mg-v2-ad-client-step__cta"
                             onClick={() => setShowMappingModal(true)}
                         >
-                            <Link2 size={16} aria-hidden />
+                            <Link2Icon size={16} aria-hidden />
                             <span>매핑 생성하기</span>
                         </MGButton>
                     </div>

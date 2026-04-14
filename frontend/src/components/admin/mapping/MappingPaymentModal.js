@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -145,7 +144,6 @@ const MappingPaymentModal = ({
                         loading={loading}
                         loadingText="처리 중..."
                     >
-                        <CheckCircle size={18} />
                         입금 확인
                     </MGButton>
                 </>

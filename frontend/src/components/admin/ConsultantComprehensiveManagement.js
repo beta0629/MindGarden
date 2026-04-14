@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone } from 'lucide-react';
+import { Users, Link2, Calendar, ClipboardList, Mail, Phone } from 'lucide-react';
 import MGButton from '../common/MGButton';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -1014,8 +1014,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                             onClick={() => handleOpenModal('create')}
                         >
-                            <Plus size={20} />
-                            새 상담사 등록
+                                                       새 상담사 등록
                         </MGButton>
                     }
                 />
@@ -1106,7 +1105,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                                     새 상담사 등록
                                                 </MGButton>
                                             )}
@@ -1152,8 +1150,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    <Plus size={20} />
-                                                    새 상담사 등록
+                                                                                                       새 상담사 등록
                                                 </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
@@ -1225,7 +1222,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    <Edit size={14} /> 수정
+                                                                    수정
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1238,7 +1235,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                     title="비밀번호 초기화"
                                                                 >
-                                                                    <Key size={14} /> 비밀번호 초기화
+                                                                    비밀번호 초기화
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="danger"
@@ -1250,7 +1247,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    <Trash2 size={14} /> 삭제
+                                                                    삭제
                                                                 </MGButton>
                                                             </div>
                                                         </div>
@@ -1338,7 +1335,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                                     새 상담사 등록
                                                 </MGButton>
                                             )}
@@ -1384,8 +1380,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    <Plus size={20} />
-                                                    새 상담사 등록
+                                                                                                       새 상담사 등록
                                                 </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
@@ -1457,7 +1452,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    <Edit size={14} /> 수정
+                                                                    수정
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1470,7 +1465,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     preventDoubleClick={true}
                                                                     title="비밀번호 초기화"
                                                                 >
-                                                                    <Key size={14} /> 비밀번호 초기화
+                                                                    비밀번호 초기화
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="danger"
@@ -1482,7 +1477,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    <Trash2 size={14} /> 삭제
+                                                                    삭제
                                                                 </MGButton>
                                                             </div>
                                                         </div>
@@ -1962,7 +1957,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className="mg-v2-button mg-v2-button-primary"
                         onClick={() => handleOpenModal('edit', selectedConsultant)}
                     >
-                        <Edit size={16} /> 수정
+                        수정
                     </MGButton>
                 </>
             );

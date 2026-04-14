@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaServer, FaDatabase, FaSync } from 'react-icons/fa';
+import { FaServer, FaDatabase } from 'react-icons/fa';
 import MGButton from '../../common/MGButton';
 
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
@@ -29,8 +29,6 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                     onClick={onStatusCheck}
                     disabled={loading}
                 >
-                    <FaSync className={loading ? 'spinning' : ''} />
-                    {' '}
                     상태 체크
                 </MGButton>
             </div>

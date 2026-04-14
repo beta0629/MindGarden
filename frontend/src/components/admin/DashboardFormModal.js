@@ -18,8 +18,6 @@ import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
 import { sessionManager } from '../../utils/sessionManager';
-import { FaPlus, FaTrash } from 'react-icons/fa';
-import { LayoutDashboard } from 'lucide-react';
 import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
 import Dashboard3DPreview from './Dashboard3DPreview';
@@ -1183,7 +1181,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                       className="mg-btn-add-role"
                       disabled={loading || loadingRoles}
                     >
-                      <FaPlus /> 역할 추가
+                      역할 추가
                     </MGButton>
                   )}
                 </div>
@@ -1252,7 +1250,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                               disabled={loading}
                               title="역할 삭제"
                             >
-                              <FaTrash /> 삭제
+                              삭제
                             </MGButton>
                           </div>
                         ))}
@@ -1413,7 +1411,6 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 {/* 편집 헤더 (탭 제거) */}
                 <div className="mg-v2-edit-header">
                   <h3 className="mg-v2-section-title">
-                    <LayoutDashboard className="mg-v2-icon" />
                     ⚡ 위젯 편집
                   </h3>
                   <p className="mg-v2-section-subtitle">

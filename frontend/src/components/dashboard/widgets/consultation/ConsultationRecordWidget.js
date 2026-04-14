@@ -14,14 +14,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Eye, Calendar, User, Plus, BookOpen } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationRecordWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
-
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -67,9 +66,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="record-empty-state">
-          <div className="empty-icon-wrapper">
-            <BookOpen className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">상담 기록 없음</h3>
           <p className="empty-description">상담 완료 후 기록이 표시됩니다.</p>
         </div>
@@ -83,18 +80,16 @@ const ConsultationRecordWidget = ({ widget, user }) => {
         <div className="record-list">
           {records.map((record) => (
             <div key={record.id} className="record-item">
-              <div className="record-icon">
-                <FileText />
-              </div>
+              <div className="record-icon" />
               <div className="record-info">
                 <SafeText tag="div" className="record-title" fallback="상담 기록">{record.title}</SafeText>
                 <div className="record-details">
                   <div className="detail-item">
-                    <User className="detail-icon" />
+                    
                     <span><SafeText>{record.clientName}</SafeText></span>
                   </div>
                   <div className="detail-item">
-                    <Calendar className="detail-icon" />
+                    
                     <span><SafeText>{formatDate(record.createdAt)}</SafeText></span>
                   </div>
                 </div>
@@ -109,9 +104,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                 onClick={() => navigate(`/records/${record.id}`)}
                 title="상세 보기"
                 preventDoubleClick={false}
-              >
-                <Eye className="view-icon" />
-              </MGButton>
+               />
             </div>
           ))}
         </div>
@@ -125,11 +118,10 @@ const ConsultationRecordWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <FileText className="widget-header-icon" />,
     subtitle: '최근 상담 기록',
     actions: [
-      { icon: 'RefreshCw', label: '새로고침', onClick: refresh },
-      { icon: 'Plus', label: '기록 작성', onClick: () => navigate('/records/new') }
+      { icon: 'REFRESH_CW', label: '새로고침', onClick: refresh },
+      { icon: 'PLUS', label: '기록 작성', onClick: () => navigate('/records/new') }
     ]
   };
 

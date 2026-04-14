@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, RotateCcw, X } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
 import MGButton from '../../../components/common/MGButton';
 import './MappingFilters.css';
@@ -40,7 +40,7 @@ const MappingFilters = ({
                     size="small"
                     onClick={onReset}
                 >
-                    <RotateCcw size={16} /> 초기화
+                    초기화
                 </MGButton>
             </div>
             
@@ -86,7 +86,7 @@ const MappingFilters = ({
                                 preventDoubleClick={false}
                                 aria-label="검색어 지우기"
                             >
-                                <X size={16} />
+                                지우기
                             </MGButton>
                         )}
                     </div>

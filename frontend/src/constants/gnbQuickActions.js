@@ -7,16 +7,6 @@
  * @since 2026-03-09
  */
 
-import {
-  FileEdit,
-  Calendar,
-  Users,
-  FileText,
-  MessageSquare,
-  Clock,
-  CalendarPlus,
-  Star
-} from 'lucide-react';
 import { buildAdminLnbFallbackQuickNavigateSpecs } from '../components/dashboard-v2/constants/menuItems';
 
 const adminStaffNavigateQuickActions = buildAdminLnbFallbackQuickNavigateSpecs().map(
@@ -34,35 +24,35 @@ export const QUICK_ACTIONS = {
   CONSULTANT: [
     {
       id: 'record',
-      icon: FileEdit,
+      icon: 'FILE_EDIT',
       label: '상담일지 작성',
       action: 'openRecordModal',
       type: 'modal'
     },
     {
       id: 'schedule',
-      icon: Calendar,
+      icon: 'CALENDAR',
       label: '일정 관리',
       action: '/consultant/schedule',
       type: 'navigate'
     },
     {
       id: 'clients',
-      icon: Users,
+      icon: 'USERS',
       label: '내담자 조회',
       action: '/consultant/clients',
       type: 'navigate'
     },
     {
       id: 'message',
-      icon: MessageSquare,
+      icon: 'MESSAGE_SQUARE',
       label: '메시지 발송',
       action: 'openMessageModal',
       type: 'modal'
     },
     {
       id: 'vacation',
-      icon: Clock,
+      icon: 'CLOCK',
       label: '휴가 신청',
       action: 'openVacationModal',
       type: 'modal'
@@ -71,28 +61,28 @@ export const QUICK_ACTIONS = {
   CLIENT: [
     {
       id: 'booking',
-      icon: CalendarPlus,
+      icon: 'CALENDAR_PLUS',
       label: '상담 예약',
       action: '/client/booking',
       type: 'navigate'
     },
     {
       id: 'schedule',
-      icon: Calendar,
+      icon: 'CALENDAR',
       label: '스케줄',
       action: '/client/schedule',
       type: 'navigate'
     },
     {
       id: 'session-management',
-      icon: FileText,
+      icon: 'FILE_TEXT',
       label: '회기 관리',
       action: '/client/session-management',
       type: 'navigate'
     },
     {
       id: 'rating',
-      icon: Star,
+      icon: 'STAR',
       label: '상담사 평가',
       action: 'openRatingModal',
       type: 'modal'

@@ -21,12 +21,7 @@ import {
   DollarSign,
   Link2,
   BarChart3,
-  Calendar,
-  Building2,
   ClipboardList,
-  LayoutDashboard,
-  LayoutGrid,
-  List,
   Inbox,
   TrendingUp,
   TrendingDown,
@@ -47,8 +42,8 @@ import './FinancialManagement.css';
 
 /** 거래 내역 보기 전환 옵션: 카드 / 테이블 (테이블 뷰는 추후 구현, 현재 동일 카드 뷰) */
 const TRANSACTION_VIEW_MODE_OPTIONS = [
-  { value: 'card', icon: LayoutGrid, label: '카드' },
-  { value: 'table', icon: List, label: '테이블' }
+  { value: 'card', label: '카드' },
+  { value: 'table', label: '테이블' }
 ];
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';

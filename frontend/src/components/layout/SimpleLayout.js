@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
 import UnifiedHeader from '../common/UnifiedHeader';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -52,7 +51,7 @@ const SimpleLayout = ({
     }
   };
 
-  // 알림 아이콘 컴포넌트
+  // Header notification — MGButton: text + badge only (no lucide/svg)
   const notificationAction = user && (
     <div className="notification-wrapper">
       <MGButton
@@ -62,7 +61,7 @@ const SimpleLayout = ({
         variant="outline"
         preventDoubleClick={false}
       >
-        <Bell size={20} />
+        <span className="notification-button__label">{'\uC54C\uB9BC'}</span>
         {unreadCount > 0 && (
           <span className="notification-badge">
             <NotificationBadge count={unreadCount} />

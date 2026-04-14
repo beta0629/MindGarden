@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Brain, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import MGButton from '../../../common/MGButton';
-
 const AIUsageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -101,9 +100,7 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon">
-              <Brain size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{todayCalls}</div>
               <div className="mg-stats-card__label">오늘 호출</div>
@@ -114,9 +111,7 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon">
-              <Calendar size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{monthCalls}</div>
               <div className="mg-stats-card__label">이번 달 호출</div>
@@ -127,9 +122,7 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             budgetUsage >= 75 ? 'mg-stats-card--warning' : 'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon">
-              <DollarSign size={20} />
-            </div>
+            <div className="mg-stats-card__icon" />
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">${monthCost.toFixed(2)}</div>
               <div className="mg-stats-card__label">이번 달 비용</div>
@@ -236,7 +229,7 @@ const AIUsageWidget = ({ widget, user }) => {
             'mg-mt-md'
           )}>
             <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-              <TrendingUp size={16} />
+              
               <h4 className="mg-h5 mg-mb-0">타입별 사용 내역</h4>
             </div>
             <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>

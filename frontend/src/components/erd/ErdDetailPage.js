@@ -5,7 +5,6 @@ import { getErdDetail, getErdHistory } from '../../utils/erdApi';
 import { exportSvgToPng, exportSvgToSvg, exportMermaidToPng, exportMermaidToSvg } from '../../utils/erdExport';
 // eslint-disable-next-line import/no-unresolved -- 런타임 번들 의존성(mermaid)
 import mermaid from 'mermaid';
-import { Download } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import StatusBadge from '../common/StatusBadge';
 import SafeText from '../common/SafeText';
@@ -615,7 +614,6 @@ const ErdDetailPage = () => {
               title={toDisplayString('ERD 내보내기')}
               preventDoubleClick={false}
             >
-              <Download size={18} />
               내보내기
             </MGButton>
             <div className="export-menu">

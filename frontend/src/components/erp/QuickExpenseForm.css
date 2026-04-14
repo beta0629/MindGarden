@@ -151,8 +151,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
-  min-height: 120px;
+  min-height: 88px;
 }
 
 .quick-expense-category-btn:hover:not(:disabled) {
@@ -164,10 +165,6 @@
 .quick-expense-category-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.quick-expense-category-icon {
-  font-size: 2rem;
 }
 
 .quick-expense-category-name {

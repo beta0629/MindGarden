@@ -1,19 +1,11 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { 
-  Heart, 
-  Calendar, 
-  Clock, 
-  User,
-  CheckCircle,
-  Wrench
-} from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import './RatableConsultationsWidget.css';
-
 const RatableConsultationsWidget = ({ widget, user }) => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -98,7 +90,7 @@ const RatableConsultationsWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="ratable-consultations-header-title">
-        <Heart size={24} />
+        
         상담사님께 감사 인사를
         {hasData && Array.isArray(ratableSchedules) && ratableSchedules.length > 0 && (
           <span className="ratable-consultations-badge">
@@ -116,9 +108,7 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     if (error) {
       return (
         <div className="ratable-consultations-empty">
-          <div className="ratable-consultations-empty-icon warning">
-            <Wrench size={48} />
-          </div>
+          <div className="ratable-consultations-empty-icon warning" />
           <p className="ratable-consultations-empty-text">평가 시스템 준비 중입니다</p>
           <p className="ratable-consultations-empty-hint">
             데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
@@ -131,9 +121,7 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     if (isEmpty || !Array.isArray(ratableSchedules) || ratableSchedules.length === 0) {
       return (
         <div className="ratable-consultations-empty">
-          <div className="ratable-consultations-empty-icon">
-            <Heart size={48} />
-          </div>
+          <div className="ratable-consultations-empty-icon" />
           <p className="ratable-consultations-empty-text">평가 가능한 상담이 없습니다</p>
           <p className="ratable-consultations-empty-hint">
             상담을 완료하시면 평가할 수 있어요
@@ -147,26 +135,24 @@ const RatableConsultationsWidget = ({ widget, user }) => {
       <div className="ratable-consultations-list">
         {ratableSchedules.map(schedule => (
           <div key={schedule.scheduleId} className="ratable-consultation-item">
-            <div className="ratable-consultation-icon">
-              <User size={20} />
-            </div>
+            <div className="ratable-consultation-icon" />
             <div className="ratable-consultation-content">
               <div className="ratable-consultation-header">
                 <h4 className="ratable-consultation-title">
                   {schedule.consultantName}님과의 상담
                 </h4>
                 <span className="ratable-consultation-status-badge">
-                  <CheckCircle size={12} />
+                  
                   상담 완료
                 </span>
               </div>
               <div className="ratable-consultation-details">
                 <span className="ratable-consultation-date">
-                  <Calendar size={14} />
+                  
                   {formatDate(schedule.consultationDate)}
                 </span>
                 <span className="ratable-consultation-time">
-                  <Clock size={14} />
+                  
                   {formatTime(schedule.consultationTime)}
                 </span>
               </div>
@@ -177,7 +163,7 @@ const RatableConsultationsWidget = ({ widget, user }) => {
               type="button"
               onClick={() => handleRateConsultant(schedule)}
             >
-              <Heart size={16} />
+              
               평가하기
             </MGButton>
           </div>

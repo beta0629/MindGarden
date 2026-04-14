@@ -13,13 +13,12 @@
  */
 
 import React from 'react';
-import { Calendar, ArrowRight, Clock, Plus } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import { RoleUtils } from '../../../constants/roles';
 import './ScheduleWidget.css';
-
 const ScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -47,7 +46,6 @@ const ScheduleWidget = ({ widget, user }) => {
       isEmpty={false}
       customActions={[
         {
-          icon: <ArrowRight size={16} />,
           label: '전체보기',
           onClick: handleScheduleClick
         }
@@ -59,9 +57,7 @@ const ScheduleWidget = ({ widget, user }) => {
           className="schedule-main-card"
           onClick={handleScheduleClick}
         >
-          <div className="schedule-card-icon">
-            <Calendar size={32} />
-          </div>
+          <div className="schedule-card-icon" />
           <div className="schedule-card-content">
             <h3 className="schedule-card-title">
               스케줄 관리
@@ -70,9 +66,7 @@ const ScheduleWidget = ({ widget, user }) => {
               오늘의 스케줄, 다가오는 상담, 새 일정 등록
             </p>
           </div>
-          <div className="schedule-card-arrow">
-            <ArrowRight size={20} />
-          </div>
+          <div className="schedule-card-arrow" />
         </div>
 
         {/* 빠른 액션 버튼들 */}
@@ -83,7 +77,7 @@ const ScheduleWidget = ({ widget, user }) => {
             type="button"
             onClick={handleScheduleClick}
           >
-            <Clock size={18} />
+            
             오늘의 스케줄
           </MGButton>
 
@@ -93,7 +87,7 @@ const ScheduleWidget = ({ widget, user }) => {
             type="button"
             onClick={handleNewScheduleClick}
           >
-            <Plus size={18} />
+            
             새 일정 등록
           </MGButton>
         </div>

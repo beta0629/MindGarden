@@ -15,7 +15,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+
 import BaseWidget from '../BaseWidget';
 import SafeText from '../../../common/SafeText';
 import { RoleUtils } from '../../../../constants/roles';
@@ -23,7 +23,6 @@ import { formatCurrency } from '../../../../utils/formatUtils';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const StatisticsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -121,11 +120,10 @@ const StatisticsGridWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <TrendingUp className="widget-header-icon" />,
     subtitle: '실시간 시스템 통계',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       }
@@ -138,7 +136,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'consultants',
       title: '총 상담사',
       value: displayStats.totalConsultants.toLocaleString(),
-      icon: <User className="stat-card-icon" />,
       category: 'user',
       onClick: () => navigate('/admin/consultants'),
       description: '등록된 상담사 수'
@@ -147,7 +144,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'clients',
       title: '총 내담자',
       value: displayStats.totalClients.toLocaleString(),
-      icon: <Users className="stat-card-icon" />,
       category: 'user',
       onClick: () => navigate('/admin/clients'),
       description: '등록된 내담자 수'
@@ -156,7 +152,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'mappings',
       title: '총 매칭',
       value: displayStats.totalMappings.toLocaleString(),
-      icon: <Link2 className="stat-card-icon" />,
       category: 'mapping',
       onClick: () => navigate('/admin/mappings'),
       description: '전체 매칭 건수'
@@ -165,7 +160,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'active-mappings',
       title: '활성 매칭',
       value: displayStats.activeMappings.toLocaleString(),
-      icon: <CheckCircle className="stat-card-icon" />,
       category: 'mapping',
       onClick: () => navigate('/admin/mappings?status=active'),
       description: '현재 활성 매칭'
@@ -174,7 +168,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'today-schedules',
       title: '오늘 일정',
       value: displayStats.todaySchedules.toLocaleString(),
-      icon: <Calendar className="stat-card-icon" />,
       category: 'schedule',
       onClick: () => navigate('/admin/schedules'),
       description: '오늘 예정된 상담'
@@ -183,7 +176,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'completed-sessions',
       title: '완료된 세션',
       value: displayStats.completedSessions.toLocaleString(),
-      icon: <CheckCircle className="stat-card-icon" />,
       category: 'session',
       onClick: () => navigate('/admin/sessions'),
       description: '완료된 상담 세션'
@@ -192,7 +184,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'total-revenue',
       title: '총 매출',
       value: formatCurrency(displayStats.totalRevenue),
-      icon: <DollarSign className="stat-card-icon" />,
       category: 'finance',
       onClick: () => navigate('/admin/finance'),
       description: '누적 매출액'
@@ -201,7 +192,6 @@ const StatisticsGridWidget = ({ widget, user }) => {
       id: 'pending-payments',
       title: '미수금',
       value: formatCurrency(displayStats.pendingPayments),
-      icon: <AlertTriangle className="stat-card-icon" />,
       category: 'finance',
       status: 'warning',
       onClick: () => navigate('/admin/payments'),
@@ -244,7 +234,7 @@ const StatisticsGridWidget = ({ widget, user }) => {
         {/* 빈 상태 처리 */}
         {isEmpty && (
           <div className="statistics-grid-empty">
-            <TrendingUp className="empty-icon" />
+            
             <p>통계 데이터가 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도

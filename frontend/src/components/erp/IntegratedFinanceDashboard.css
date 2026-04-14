@@ -908,6 +908,16 @@
   gap: var(--mg-space-2, var(--spacing-sm));
 }
 
+/* Text labels: release fixed 40x40 from global .mg-dashboard-icon-btn */
+.mg-dashboard-header-right--content-header .mg-dashboard-icon-btn {
+  width: auto;
+  min-width: 40px;
+  min-height: 40px;
+  height: auto;
+  padding: var(--spacing-xs, 0.5rem) var(--spacing-md, 0.75rem);
+  white-space: nowrap;
+}
+
 /* 재무제표 패널·캡션·리포트 제목 (인라인 스타일 제거용) */
 .finance-statement-panel {
   background: var(--mg-color-surface-main);

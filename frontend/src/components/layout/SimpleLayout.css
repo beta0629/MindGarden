@@ -145,14 +145,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--header-avatar-size, 36px);
-    height: var(--header-avatar-size, 36px);
+    gap: var(--mg-space-2xs);
+    min-width: var(--header-avatar-size, 36px);
+    min-height: var(--header-avatar-size, 36px);
+    width: auto;
+    height: auto;
+    padding: 0 var(--mg-space-sm);
     border: var(--border-width) solid var(--light-beige);
     border-radius: var(--radius-full);
     background: var(--light-cream);
     color: var(--cocoa);
     cursor: pointer;
     transition: all var(--transition-normal);
+}
+
+.notification-button__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
 }
 
 .notification-button:hover {
@@ -201,8 +211,8 @@
 /* 반응형: 모바일에서 알림 버튼 크기 조정 */
 @media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
     .notification-button {
-        width: var(--header-avatar-size-mobile, 32px);
-        height: var(--header-avatar-size-mobile, 32px);
+        min-width: var(--header-avatar-size-mobile, 32px);
+        min-height: var(--header-avatar-size-mobile, 32px);
     }
     
     .notification-badge .mg-v2-notification-badge {

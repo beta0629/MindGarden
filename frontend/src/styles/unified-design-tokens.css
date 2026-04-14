@@ -44,7 +44,8 @@
   --cs-success-200: #a7f3d0;
   --cs-success-300: #6ee7b7;
   --cs-success-400: #34d399;
-  --cs-success-500: var(--mg-success-500);
+  /* Break circular ref: mg-success-500 <-> cs-success-500 (invalid computed color) */
+  --cs-success-500: #10b981;
   --cs-success-600: #059669;
   --cs-success-700: #047857;
   --cs-success-800: #065f46;

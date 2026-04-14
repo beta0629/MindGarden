@@ -8,7 +8,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FileText } from 'lucide-react';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
@@ -32,9 +31,6 @@ const ConsultationLogListBlock = ({ records, clientNameMap, consultantNameMap, o
     if (isEmpty) {
       return (
         <div className="mg-v2-consultation-log-list-block__empty">
-          <div className="mg-v2-consultation-log-list-block__empty-icon">
-            <FileText size={48} />
-          </div>
           <h3 className="mg-v2-consultation-log-list-block__empty-title">{EMPTY_TITLE}</h3>
           <p className="mg-v2-consultation-log-list-block__empty-desc">{EMPTY_DESC}</p>
         </div>

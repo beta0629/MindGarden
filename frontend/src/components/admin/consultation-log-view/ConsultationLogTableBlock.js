@@ -8,7 +8,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FileText } from 'lucide-react';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import ListTableView from '../../common/ListTableView';
@@ -60,7 +59,6 @@ const ConsultationLogTableBlock = ({
         <ContentCard className="mg-v2-consultation-log-table-block__card">
           <EmptyState
             className="mg-v2-consultation-log-table-block__empty"
-            icon={<FileText size={48} />}
             title={EMPTY_TITLE}
             description={EMPTY_DESC}
           />

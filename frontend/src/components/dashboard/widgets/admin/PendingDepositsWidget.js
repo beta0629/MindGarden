@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
 import MGButton from '../../../common/MGButton';
-
 /**
  * 입금 확인 대기 목록 위젯 - 표준화된 위젯
 /**
@@ -100,19 +99,18 @@ const PendingDepositsWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <CreditCard className="widget-header-icon" />,
     badge: displayData.totalCount > 0 ? {
       text: displayData.totalCount.toString(),
       variant: displayData.totalCount > 5 ? 'warning' : 'info'
     } : null,
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '전체 보기',
         onClick: () => navigate('/admin/deposits')
       }
@@ -180,7 +178,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
                     </div>
                     <div className="deposit-meta">
                       <span className="deposit-date">
-                        <Clock className="meta-icon" />
+                        
                         {formatDate(deposit.depositDate)}
                       </span>
                       <span className="deposit-bank">
@@ -199,7 +197,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
                     onClick={() => handleConfirmDeposit(deposit.id)}
                     title="입금 확인"
                   >
-                    <CheckCircle className="btn-icon" />
+                    
                     확인
                   </MGButton>
                   <MGButton
@@ -208,7 +206,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
                     onClick={() => handleRejectDeposit(deposit.id)}
                     title="입금 거부"
                   >
-                    <AlertCircle className="btn-icon" />
+                    
                     거부
                   </MGButton>
                 </div>
@@ -217,7 +215,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="pending-deposits-empty">
-            <CreditCard className="empty-icon" />
+            
             <p>확인 대기 중인 입금이 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               새로고침

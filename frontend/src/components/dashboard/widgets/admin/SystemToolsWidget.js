@@ -127,9 +127,6 @@ const SystemToolsWidget = ({ widget, user }) => {
               onClick={() => handleToolClick(tool)}
               title={toDisplayString(tool.description, '')}
             >
-              <div className="system-tool-icon">
-                <i className={`bi ${tool.icon}`} />
-              </div>
               <div className="system-tool-content">
                 <span className="system-tool-label"><SafeText>{tool.label}</SafeText></span>
                   {tool.description && (

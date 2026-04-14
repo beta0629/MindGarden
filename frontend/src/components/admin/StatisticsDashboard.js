@@ -131,7 +131,6 @@ const StatisticsDashboard = () => {
       onClick={loadStatistics}
       disabled={loading}
     >
-      <FaChartBar />
       새로고침
     </MGButton>
   );

@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
-import { 
-  CreditCard, 
-  TrendingUp, 
-  CheckCircle, 
-  Clock, 
-  DollarSign,
-  Calendar,
-  Package
-} from 'lucide-react';
+
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
-
 /**
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
 /**
@@ -170,9 +161,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
     return (
       <div className="payment-sessions-section">
         <div className="payment-sessions-error">
-          <div className="payment-sessions-error__icon">
-            <Clock size={48} />
-          </div>
+          <div className="payment-sessions-error__icon" />
           <p className="payment-sessions-error__text">{error}</p>
         </div>
       </div>
@@ -184,7 +173,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
       {/* 섹션 헤더 */}
       <div className="payment-sessions-header">
         <h2 className="payment-sessions-title">
-          <CreditCard size={24} />
+          
           결제 내역 및 회기 현황
         </h2>
       </div>
@@ -192,9 +181,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
       {/* 회기 현황 요약 */}
       <div className="payment-sessions-stats">
         <div className="payment-stat-card payment-stat-card--primary">
-          <div className="payment-stat-icon">
-            <Package size={20} />
-          </div>
+          <div className="payment-stat-icon" />
           <div className="payment-stat-content">
             <div className="payment-stat-label">총 회기수</div>
             <div className="payment-stat-value">{paymentData.totalSessions}회</div>
@@ -202,9 +189,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--success">
-          <div className="payment-stat-icon">
-            <CheckCircle size={20} />
-          </div>
+          <div className="payment-stat-icon" />
           <div className="payment-stat-content">
             <div className="payment-stat-label">사용한 회기</div>
             <div className="payment-stat-value">{paymentData.usedSessions}회</div>
@@ -212,9 +197,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--warning">
-          <div className="payment-stat-icon">
-            <TrendingUp size={20} />
-          </div>
+          <div className="payment-stat-icon" />
           <div className="payment-stat-content">
             <div className="payment-stat-label">남은 회기</div>
             <div className="payment-stat-value">{paymentData.remainingSessions}회</div>
@@ -222,9 +205,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--info">
-          <div className="payment-stat-icon">
-            <DollarSign size={20} />
-          </div>
+          <div className="payment-stat-icon" />
           <div className="payment-stat-content">
             <div className="payment-stat-label">총 결제금액</div>
             <div className="payment-stat-value">{formatCurrency(paymentData.totalAmount)}</div>
@@ -236,19 +217,17 @@ const ClientPaymentSessionsSection = ({ userId }) => {
       {paymentData.recentPayments.length > 0 ? (
         <div className="payment-sessions-list">
           <h3 className="payment-sessions-subtitle">
-            <Clock size={20} />
+            
             최근 결제 내역
           </h3>
           <div className="payment-items">
             {paymentData.recentPayments.map((payment) => (
               <div key={payment.id} className="payment-item">
-                <div className="payment-item__icon">
-                  <CreditCard size={20} />
-                </div>
+                <div className="payment-item__icon" />
                 <div className="payment-item__content">
                   <div className="payment-item__header">
                     <h4 className="payment-item__package">
-                      <DollarSign size={18} />
+                      
                       {formatCurrency(payment.amount)}
                     </h4>
                     <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
@@ -257,11 +236,11 @@ const ClientPaymentSessionsSection = ({ userId }) => {
                   </div>
                   <div className="payment-item__details">
                     <span className="payment-item__sessions">
-                      <Package size={14} />
+                      
                       {payment.sessions}회
                     </span>
                     <span className="payment-item__date">
-                      <Calendar size={14} />
+                      
                       {formatDate(payment.paymentDate)}
                     </span>
                   </div>
@@ -272,9 +251,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
       ) : (
         <div className="payment-sessions-empty">
-          <div className="payment-sessions-empty__icon">
-            <CreditCard size={48} />
-          </div>
+          <div className="payment-sessions-empty__icon" />
           <p className="payment-sessions-empty__text">아직 결제 내역이 없습니다.</p>
         </div>
       )}

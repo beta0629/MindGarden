@@ -201,6 +201,41 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   color: #4a5568;
 }
 
+/* Clickable KPI: icon outside MGButton; button wraps info text only */
+.mg-v2-content-kpi-card--clickable-split {
+  cursor: default;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  width: auto;
+  min-height: unset;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.92;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__content,
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__text {
+  display: contents;
+}
+
 @media (max-width: 768px) {
   .mg-v2-content-kpi-card__value {
     font-size: 1.5rem;

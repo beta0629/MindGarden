@@ -206,7 +206,7 @@ const SummaryPanels = ({ user, consultationData }) => {
         </div>
       )}
 
-      {/* 매핑 관리 (관리자 전용) */}
+                매핑 관리
       {RoleUtils.isAdmin(user) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} mapping-management`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
@@ -240,7 +240,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                 size="small"
                 onClick={() => { window.location.href = '/admin/mapping-management'; }}
               >
-                <i className="bi bi-gear" /> 매핑 관리
+                               매핑 관리
               </MGButton>
             </div>
           </div>

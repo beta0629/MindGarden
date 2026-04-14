@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit3, Ban, CheckCircle } from 'lucide-react';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
@@ -113,7 +112,6 @@ function PackagePricingListPage() {
                 className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                 onClick={() => navigate('/admin/package-pricing/new')}
               >
-                <Plus size={20} />
                 {LABELS.ADD_BUTTON}
               </MGButton>
             }
@@ -162,7 +160,6 @@ function PackagePricingListPage() {
                           className="mg-v2-button mg-v2-button-secondary"
                           onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
                         >
-                          <Edit3 size={14} />
                           {LABELS.EDIT}
                         </MGButton>
                         <MGButton
@@ -176,11 +173,9 @@ function PackagePricingListPage() {
                           preventDoubleClick={true}
                           loadingText="처리 중..."
                         >
-                          {(row.isActive === true || row.isActive === undefined) ? (
-                            <><Ban size={14} /> {LABELS.DEACTIVATE}</>
-                          ) : (
-                            <><CheckCircle size={14} /> {LABELS.ACTIVATE}</>
-                          )}
+                          {(row.isActive === true || row.isActive === undefined)
+                            ? LABELS.DEACTIVATE
+                            : LABELS.ACTIVATE}
                         </MGButton>
                       </div>
                     </article>

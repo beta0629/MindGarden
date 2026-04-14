@@ -1,82 +1,8 @@
-import {
-  BarChart2,
-  Users,
-  ClipboardList,
-  Siren,
-  GraduationCap,
-  FileText,
-  Trash2,
-  CheckCircle2,
-  Circle,
-  AlertCircle
-} from 'lucide-react';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 
-const SECTION_HEAD_ICON = {
-  className: 'mg-v2-compliance-dashboard__section-head-icon',
-  size: 22,
-  strokeWidth: 2,
-  'aria-hidden': true
-};
-
-/** 준수 수준에 따른 Lucide 아이콘 */
-export function ComplianceLevelGlyph({ level }) {
-  const base = 'mg-v2-compliance-dashboard__level-icon';
-  const size = 20;
-  const strokeWidth = 2;
-  switch (level) {
-    case '우수':
-      return (
-        <CheckCircle2
-          className={`${base} ${base}--success`}
-          size={size}
-          strokeWidth={strokeWidth}
-          aria-hidden
-        />
-      );
-    case '양호':
-      return (
-        <Circle
-          className={`${base} ${base}--success-soft`}
-          size={size}
-          strokeWidth={strokeWidth}
-          aria-hidden
-        />
-      );
-    case '보통':
-      return (
-        <Circle
-          className={`${base} ${base}--warning-fill`}
-          size={size}
-          strokeWidth={strokeWidth}
-          fill="currentColor"
-          aria-hidden
-        />
-      );
-    case '미흡':
-    case '부족':
-      return (
-        <AlertCircle
-          className={`${base} ${base}--error`}
-          size={size}
-          strokeWidth={strokeWidth}
-          aria-hidden
-        />
-      );
-    default:
-      return (
-        <Circle
-          className={`${base} ${base}--muted`}
-          size={size}
-          strokeWidth={strokeWidth}
-          aria-hidden
-        />
-      );
-  }
-}
 
 /**
  * @param {string} level
@@ -110,7 +36,6 @@ export function OverallSection({ overallStatus, levelMod }) {
     >
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h2 id="compliance-overall-heading" className="mg-v2-compliance-dashboard__card-title">
-          <BarChart2 {...SECTION_HEAD_ICON} />
           <span>종합 컴플라이언스 현황</span>
         </h2>
         <div className="mg-v2-compliance-dashboard__metrics">
@@ -127,7 +52,6 @@ export function OverallSection({ overallStatus, levelMod }) {
             <div
               className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--inline mg-v2-compliance-dashboard__metric-value--${levelMod}`}
             >
-              <ComplianceLevelGlyph level={overallStatus.complianceLevel} />
               <SafeText fallback="미평가">{overallStatus.complianceLevel}</SafeText>
             </div>
           </div>
@@ -155,7 +79,6 @@ export function ProcessingCard({ processingStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <Users {...SECTION_HEAD_ICON} />
           <span>개인정보 처리 현황</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
@@ -193,7 +116,6 @@ export function ImpactCard({ impactAssessment }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <ClipboardList {...SECTION_HEAD_ICON} />
           <span>개인정보 영향평가</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
@@ -237,7 +159,6 @@ export function BreachCard({ breachResponse }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <Siren {...SECTION_HEAD_ICON} />
           <span>개인정보 침해사고 대응</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
@@ -283,7 +204,6 @@ export function EducationCard({ educationStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <GraduationCap {...SECTION_HEAD_ICON} />
           <span>개인정보보호 교육 현황</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
@@ -329,7 +249,6 @@ export function PolicyCard({ policyStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <FileText {...SECTION_HEAD_ICON} />
           <span>개인정보 처리방침 현황</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
@@ -381,7 +300,6 @@ export function DestructionCard({ destructionStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <Trash2 {...SECTION_HEAD_ICON} />
           <span>개인정보 파기 현황</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">

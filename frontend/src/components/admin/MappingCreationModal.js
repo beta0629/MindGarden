@@ -397,7 +397,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           onClick={handleClose}
           preventDoubleClick={false}
         >
-          <CheckCircle size={18} />
           완료
         </MGButton>
       )}
@@ -516,7 +515,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     }))}
                     preventDoubleClick={false}
                   >
-                    <Package size={24} />
                     <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
                     <span>{pkg.sessions}회기 · {pkg.price.toLocaleString()}원</span>
                   </MGButton>

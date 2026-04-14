@@ -182,15 +182,15 @@ const FinancialCalendarView = () => {
             <div className="mg-financial-calendar-legend">
               <div className="mg-financial-calendar-legend-item">
                 <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--income" aria-hidden />
-                <span><TrendingUp size={14} aria-hidden /> 수입</span>
+                <span>수입</span>
               </div>
               <div className="mg-financial-calendar-legend-item">
                 <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--expense" aria-hidden />
-                <span><TrendingDown size={14} aria-hidden /> 지출</span>
+                <span>지출</span>
               </div>
               <div className="mg-financial-calendar-legend-item">
                 <span className="mg-financial-calendar-legend-dot mg-financial-calendar-legend-dot--mapping" aria-hidden />
-                <span><Link2 size={14} aria-hidden /> 매핑연동</span>
+                <span>매핑연동</span>
               </div>
             </div>
           )}
@@ -245,7 +245,8 @@ const FinancialCalendarView = () => {
                   <div className="mg-calendar-day-summary">
                     {dayData.income > 0 && (
                       <span className="mg-calendar-day-income">
-                        <TrendingUp size={10} aria-hidden /> +
+                        <span className="mg-financial-calendar-day-amount-prefix" aria-hidden>수입 </span>
+                        +
                         <ErpSafeNumber
                           value={dayData.income}
                           formatType={ERP_NUMBER_FORMAT.CURRENCY}
@@ -256,7 +257,8 @@ const FinancialCalendarView = () => {
                     )}
                     {dayData.expense > 0 && (
                       <span className="mg-calendar-day-expense">
-                        <TrendingDown size={10} aria-hidden /> −
+                        <span className="mg-financial-calendar-day-amount-prefix" aria-hidden>지출 </span>
+                        −
                         <ErpSafeNumber
                           value={dayData.expense}
                           formatType={ERP_NUMBER_FORMAT.CURRENCY}

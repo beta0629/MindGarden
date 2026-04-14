@@ -116,7 +116,7 @@ const BaseWidget = ({
               type="button"
               onClick={onRefresh}
             >
-              {WIDGET_CONSTANTS.ICONS.REFRESH} 다시 시도
+              다시 시도
             </MGButton>
           )}
         </div>
@@ -146,7 +146,7 @@ const BaseWidget = ({
           onClick={onRefresh}
           style={{ marginTop: '1rem' }}
         >
-          {WIDGET_CONSTANTS.ICONS.REFRESH} 새로고침
+          새로고침
         </MGButton>
       )}
     </div>
@@ -199,7 +199,7 @@ const BaseWidget = ({
                   title="새로고침"
                   disabled={loading}
                 >
-                  {WIDGET_CONSTANTS.ICONS.REFRESH}
+                  새로고침
                 </MGButton>
               )}
             </div>

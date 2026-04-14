@@ -32,8 +32,7 @@ const ScheduleQuickAccess = ({ user }) => {
           className="schedule-quick-access-view-all mg-button--with-icon"
           onClick={handleScheduleClick}
         >
-          <i className="bi bi-arrow-right" />
-          전체보기
+          전체보기 →
         </MGButton>
       </div>
 

@@ -23,7 +23,7 @@ const ErpPageShell = ({
   className = '',
   mainAriaLabel = 'ERP 목록 및 본문'
 }) => {
-  const rootClass = [styles.root, 'mg-v2-section', className].filter(Boolean).join(' ');
+  const rootClass = [styles.root, 'mg-v2-section', 'mg-v2-erp-shell', className].filter(Boolean).join(' ');
 
   const showDetail = Boolean(showDetailPanel && detailSlot);
 

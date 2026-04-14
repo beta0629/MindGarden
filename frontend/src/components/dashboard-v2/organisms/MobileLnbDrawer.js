@@ -9,8 +9,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LogOut, ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
+import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
@@ -97,9 +97,9 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
                     >
                       {expandedGroupKey === item.to ? (
-                        <ChevronDown size={18} aria-hidden />
+                        <Icon name="CHEVRON_DOWN" size="MD" color="TRANSPARENT" aria-hidden />
                       ) : (
-                        <ChevronRight size={18} aria-hidden />
+                        <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
                       )}
                     </MGButton>
                     <NavLinkWithRouter
@@ -156,7 +156,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
               preventDoubleClick={false}
               aria-label="로그아웃"
             >
-              <LogOut size={20} aria-hidden />
+              <Icon name="LOG_OUT" size="MD" color="TRANSPARENT" aria-hidden />
               <span>로그아웃</span>
             </MGButton>
           </div>

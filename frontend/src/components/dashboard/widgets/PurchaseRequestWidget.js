@@ -16,12 +16,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, ChevronDown, ChevronUp, ShoppingBag, Plus, ChevronRight } from 'lucide-react';
+
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
-
 const PurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [purchaseData, setPurchaseData] = useState({
@@ -131,7 +130,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="widget-title mg-flex mg-align-center mg-gap-sm">
-          <ShoppingCart size={18} aria-hidden />
+          
           {config.title || '구매 요청'}
           {purchaseData.pendingRequests > 0 && (
             <span className="widget-badge widget-badge-warning mg-badge mg-badge-warning">
@@ -139,7 +138,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
             </span>
           )}
         </div>
-        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        {isExpanded ? '접기' : '펼치기'}
       </div>
       
       {isExpanded && (
@@ -187,7 +186,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
             </div>
           ) : (
             <div className="widget-empty">
-              <ShoppingBag size={32} className="widget-empty-icon" aria-hidden />
+              
               <p>{config.emptyMessage || '구매 요청이 없습니다'}</p>
             </div>
           )}
@@ -199,7 +198,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
               type="button"
               onClick={handleCreateRequest}
             >
-              <Plus size={16} aria-hidden />
+              
               새 요청
             </MGButton>
             {config.viewAllUrl && (
@@ -210,7 +209,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
                 onClick={handleViewAll}
               >
                 전체보기
-                <ChevronRight size={16} aria-hidden />
+                
               </MGButton>
             )}
           </div>

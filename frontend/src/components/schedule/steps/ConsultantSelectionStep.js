@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserCheck, Users } from 'lucide-react';
+import { ICONS } from '../../../constants/icons';
+
+const UserCheckIcon = ICONS.USER_CHECK;
+const UsersIcon = ICONS.USERS;
 import ConsultantCard from '../../ui/Card/ConsultantCard';
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ConsultantFilter from '../components/ConsultantFilter';
@@ -334,7 +337,7 @@ const ConsultantSelectionStepNew = ({
             {/* 단계 헤더 */}
             <div className="consultant-selection-header">
                 <h4 className="consultant-selection-title">
-                    <UserCheck className="mg-v2-icon" size={24} />
+                    <UserCheckIcon className="mg-v2-icon" size={24} />
                     상담사를 선택하세요
                 </h4>
                 <p className="consultant-selection-subtitle">
@@ -361,7 +364,7 @@ const ConsultantSelectionStepNew = ({
                 {filteredConsultants.length === 0 ? (
                     <div className="mg-empty-state">
                         <div className="mg-empty-state__icon">
-                            <Users size={40} className="mg-v2-text-muted" strokeWidth={1.5} />
+                            <UsersIcon size={40} className="mg-v2-text-muted" strokeWidth={1.5} />
                         </div>
                         <p className="mg-empty-state__text">조건에 맞는 상담사가 없습니다.</p>
                         <small className="mg-empty-state__hint">필터를 조정해보세요.</small>

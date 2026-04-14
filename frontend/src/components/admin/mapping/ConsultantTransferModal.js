@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle, Users, Package, Calendar } from 'lucide-react';
+import { Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { toErrorMessage, toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
@@ -209,7 +209,6 @@ const ConsultantTransferModal = ({
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                <XCircle size={18} />
                 취소
               </MGButton>
               <MGButton

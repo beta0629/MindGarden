@@ -1,22 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FileText, 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  BarChart3,
-  Plus,
-  ExternalLink,
-  TrendingUp
-} from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import './ConsultationRecordWidget.css';
-
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -139,7 +128,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           onClick={handleCreateRecord}
           preventDoubleClick={false}
         >
-          <Plus size={16} />
+          
           새 일지 작성
         </MGButton>
       </div>
@@ -152,7 +141,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     if (error) {
       return (
         <div className="consultation-record-error">
-          <AlertCircle size={48} />
+          
           <p>상담일지 정보를 불러올 수 없습니다.</p>
         </div>
       );
@@ -176,7 +165,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
             onClick={handleCreateRecord}
             preventDoubleClick={false}
           >
-            <Plus size={16} />
+            
             상담일지 작성하기
           </MGButton>
         </div>
@@ -188,9 +177,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
         {/* 통계 카드 */}
         <div className="consultation-record-stats">
           <div className="consultation-record-stat-card primary">
-            <div className="consultation-record-stat-icon">
-              <FileText size={24} />
-            </div>
+            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.totalRecords}
@@ -200,9 +187,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           </div>
 
           <div className="consultation-record-stat-card secondary">
-            <div className="consultation-record-stat-icon">
-              <Calendar size={24} />
-            </div>
+            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.todayRecords}
@@ -212,9 +197,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           </div>
 
           <div className="consultation-record-stat-card warning">
-            <div className="consultation-record-stat-icon">
-              <Clock size={24} />
-            </div>
+            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.pendingRecords}
@@ -245,12 +228,12 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                         <span className={`consultation-record-status ${record.isCompleted ? 'completed' : 'pending'}`}>
                           {record.isCompleted ? (
                             <>
-                              <CheckCircle size={12} />
+                              
                               완료
                             </>
                           ) : (
                             <>
-                              <Clock size={12} />
+                              
                               미완료
                             </>
                           )}
@@ -269,7 +252,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                     onClick={() => handleViewRecord(record.id)}
                     preventDoubleClick={false}
                   >
-                    <ExternalLink size={16} />
+                    
                     보기
                   </MGButton>
                 </div>
@@ -287,7 +270,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
             onClick={handleCreateRecord}
             preventDoubleClick={false}
           >
-            <Plus size={16} />
+            
             새 일지 작성
           </MGButton>
           <MGButton
@@ -297,7 +280,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
             onClick={handleViewAllRecords}
             preventDoubleClick={false}
           >
-            <FileText size={16} />
+            
             전체 목록
           </MGButton>
           <MGButton
@@ -307,7 +290,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
             onClick={handleViewStatistics}
             preventDoubleClick={false}
           >
-            <TrendingUp size={16} />
+            
             통계 보기
           </MGButton>
         </div>

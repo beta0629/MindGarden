@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Star, BarChart3, TrendingUp } from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import './ConsultantRatingWidget.css';
-
 const ConsultantRatingWidget = ({ widget, user }) => {
   // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => {
@@ -107,9 +106,7 @@ const ConsultantRatingWidget = ({ widget, user }) => {
         <div className="consultant-rating-stats">
           {/* 평균 점수 */}
           <div className="consultant-rating-stat-card primary">
-            <div className="consultant-rating-stat-icon">
-              <Star size={24} />
-            </div>
+            <div className="consultant-rating-stat-icon" />
             <div className="consultant-rating-stat-content">
               <div className="consultant-rating-stat-value">
                 {ratingStats.averageHeartScore || '0.0'}
@@ -120,9 +117,7 @@ const ConsultantRatingWidget = ({ widget, user }) => {
 
           {/* 총 평가 수 */}
           <div className="consultant-rating-stat-card secondary">
-            <div className="consultant-rating-stat-icon">
-              <BarChart3 size={24} />
-            </div>
+            <div className="consultant-rating-stat-icon" />
             <div className="consultant-rating-stat-content">
               <div className="consultant-rating-stat-value">
                 {ratingStats.totalRatingCount || 0}
@@ -135,7 +130,7 @@ const ConsultantRatingWidget = ({ widget, user }) => {
         {/* 점수별 분포 */}
         <div className="consultant-rating-distribution">
           <h4 className="consultant-rating-section-title">
-            <TrendingUp size={18} />
+            
             하트 점수 분포
           </h4>
           <div className="consultant-rating-distribution-grid">

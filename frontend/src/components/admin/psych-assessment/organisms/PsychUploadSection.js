@@ -9,7 +9,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Search, X } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import MGButton from '../../../common/MGButton';
@@ -117,7 +116,6 @@ const PsychUploadSection = ({
     <ContentSection noCard className="mg-v2-psych-upload-section">
       <ContentCard className="mg-v2-psych-upload-section__card">
         <div className="mg-v2-psych-upload-section__header">
-          <Upload size={16} />
           <h2 className="mg-v2-content-section__title">파일 업로드</h2>
         </div>
         <div className="mg-v2-psych-upload-section__body">
@@ -175,7 +173,7 @@ const PsychUploadSection = ({
                         aria-label="내담자 선택 해제"
                         preventDoubleClick={false}
                       >
-                        <X size={14} />
+                        ×
                       </MGButton>
                     </div>
                   ) : (
@@ -186,7 +184,6 @@ const PsychUploadSection = ({
                   )}
                 </div>
                 <div className="mg-v2-psych-upload-section__client-search">
-                  <Search className="mg-v2-psych-upload-section__client-search-icon" size={16} aria-hidden />
                   <input
                     type="text"
                     className="mg-v2-psych-upload-section__client-search-input"

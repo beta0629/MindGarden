@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSync, FaDownload, FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -127,7 +127,6 @@ const SecurityMonitoringDashboard = () => {
                     onClick={() => navigate('/admin')}
                     className="back-button"
                   >
-                    <FaArrowLeft />
                     관리자 대시보드
                   </MGButton>
                   <MGButton
@@ -137,7 +136,6 @@ const SecurityMonitoringDashboard = () => {
                     onClick={handleDownloadReport}
                     disabled={refreshing}
                   >
-                    <FaDownload />
                     보안 보고서
                   </MGButton>
                   <MGButton
@@ -147,7 +145,6 @@ const SecurityMonitoringDashboard = () => {
                     onClick={handleRefresh}
                     disabled={refreshing}
                   >
-                    <FaSync className={refreshing ? 'spinning' : ''} />
                     새로고침
                   </MGButton>
                 </div>

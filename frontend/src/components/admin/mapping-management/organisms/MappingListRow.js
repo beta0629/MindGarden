@@ -1,6 +1,6 @@
 /**
  * MappingListRow - 매칭 목록 행 (테이블 스타일)
- * lucide-react 아이콘, 기존 MappingCard와 동일 액션 지원
+ * 기존 MappingCard와 동일 액션(버튼·텍스트만)
  *
  * @author Core Solution
  * @since 2025-02-22
@@ -8,19 +8,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  User,
-  Package,
-  CreditCard,
-  Calendar,
-  CalendarClock,
-  Eye,
-  Edit,
-  XCircle,
-  CheckCircle,
-  DollarSign,
-  Database
-} from 'lucide-react';
 import MGButton from '../../../common/MGButton';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
@@ -99,24 +86,20 @@ const MappingListRow = ({
           </StatusBadge>
           {isErpIntegrated && (
             <span className="mg-v2-mapping-list-row__erp">
-              <Database size={12} />
               ERP
             </span>
           )}
         </div>
         <div className="mg-v2-mapping-list-row__participants">
           <div className="mg-v2-mapping-list-row__party">
-            <User size={16} />
             <span>{mapping.consultantName || 'N/A'}</span>
           </div>
           <span className="mg-v2-mapping-list-row__arrow">→</span>
           <div className="mg-v2-mapping-list-row__party">
-            <User size={16} />
             <span>{mapping.clientName || 'N/A'}</span>
           </div>
         </div>
         <div className="mg-v2-mapping-list-row__package">
-          <Package size={14} />
           <span>{mapping.packageName || 'N/A'}</span>
         </div>
         <div className="mg-v2-mapping-list-row__amount">
@@ -134,12 +117,11 @@ const MappingListRow = ({
               title="스케줄 보기"
               preventDoubleClick={false}
             >
-              <CalendarClock size={14} />
+              스케줄
             </MGButton>
           )}
         </div>
         <div className="mg-v2-mapping-list-row__date">
-          <Calendar size={14} />
           {formatDate(mapping.startDate || mapping.createdAt)}
         </div>
       </div>
@@ -150,7 +132,6 @@ const MappingListRow = ({
             size="small"
             onClick={() => onView(mapping)}
           >
-            <Eye size={14} />
             상세
           </ActionButton>
         )}
@@ -160,7 +141,6 @@ const MappingListRow = ({
             size="small"
             onClick={() => setShowPaymentModal(true)}
           >
-            <CreditCard size={14} />
             결제 확인
           </ActionButton>
         )}
@@ -170,7 +150,6 @@ const MappingListRow = ({
             size="small"
             onClick={() => setShowDepositModal(true)}
           >
-            <DollarSign size={14} />
             입금 확인
           </ActionButton>
         )}
@@ -181,7 +160,6 @@ const MappingListRow = ({
             onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
             disabled={processing}
           >
-            <CheckCircle size={14} />
             승인
           </ActionButton>
         )}
@@ -191,7 +169,6 @@ const MappingListRow = ({
             size="small"
             onClick={() => onEdit(mapping)}
           >
-            <Edit size={14} />
             수정
           </ActionButton>
         )}
@@ -202,7 +179,6 @@ const MappingListRow = ({
             onClick={() => handleCriticalAction(() => onRefund(mapping))}
             disabled={processing}
           >
-            <XCircle size={14} />
             환불
           </ActionButton>
         )}

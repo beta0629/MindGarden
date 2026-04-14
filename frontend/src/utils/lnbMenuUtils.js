@@ -5,7 +5,6 @@
  * @since 2026-02-25
  */
 
-import { LayoutDashboard } from 'lucide-react';
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
 import { getDashboardPathByRole } from '../constants/session';
 
@@ -63,7 +62,7 @@ function buildGnbQuickNavigateId(label, path) {
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
  * @param {Array<{ menuPath?: string, menuName?: string, icon?: string, children?: Array }>} apiMenus
  * @param {{ userRole?: string }} options userRole이 있으면 '대시보드' 링크를 해당 역할 대시보드로 설정
- * @returns {Array<{ to: string, label: string, icon: import('react').ComponentType, end: boolean, children?: Array }>}
+ * @returns {Array<{ to: string, label: string, icon: string, end: boolean, children?: Array }>}
  */
 export function normalizeLnbTree(apiMenus, options = {}) {
   const dashboardPath = options.userRole ? getDashboardPathByRole(options.userRole) : '/admin/dashboard';
@@ -106,7 +105,7 @@ export function getLnbTreeFromResponse(response) {
  *
  * @param {Array<{ to?: string, label?: string, icon?: import('react').ComponentType, children?: Array }>} menuItems
  * @param {{ maxCount?: number }} [options]
- * @returns {Array<{ id: string, label: string, action: string, type: 'navigate', icon: import('react').ComponentType }>}
+ * @returns {Array<{ id: string, label: string, action: string, type: 'navigate', icon: string }>}
  */
 export function deriveGnbQuickNavigateActionsFromLnb(menuItems, options = {}) {
   const maxCount =
@@ -124,14 +123,16 @@ export function deriveGnbQuickNavigateActionsFromLnb(menuItems, options = {}) {
       continue;
     }
     const label = item?.label || path;
-    const Icon =
-      typeof item?.icon === 'function' ? item.icon : LayoutDashboard;
+    const iconKey =
+      typeof item?.icon === 'string' && item.icon.trim() !== ''
+        ? item.icon
+        : 'LAYOUT_DASHBOARD';
     out.push({
       id: buildGnbQuickNavigateId(label, path),
       label,
       action: path,
       type: 'navigate',
-      icon: Icon
+      icon: iconKey
     });
   }
   return out;

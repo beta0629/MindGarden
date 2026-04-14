@@ -15,7 +15,6 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
-import { FileText } from 'lucide-react';
 import { toDateStr } from '../../../utils/dateUtils';
 import { getConsultantColor } from '../../schedule/ScheduleCalendar/ScheduleCalendarUtils';
 import './ConsultationLogCalendarBlock.css';
@@ -116,9 +115,6 @@ const ConsultationLogCalendarBlock = ({
       <ContentSection noCard className="mg-v2-consultation-log-calendar-block">
         <ContentCard className="mg-v2-consultation-log-calendar-block__card">
           <div className="mg-v2-consultation-log-calendar-block__empty">
-            <div className="mg-v2-consultation-log-calendar-block__empty-icon">
-              <FileText size={48} />
-            </div>
             <h3 className="mg-v2-consultation-log-calendar-block__empty-title">{EMPTY_TITLE}</h3>
             <p className="mg-v2-consultation-log-calendar-block__empty-desc">{EMPTY_DESC}</p>
           </div>

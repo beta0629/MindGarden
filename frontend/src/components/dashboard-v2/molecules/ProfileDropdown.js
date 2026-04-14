@@ -8,7 +8,6 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
 import { useSession } from '../../../contexts/SessionContext';
@@ -117,7 +116,7 @@ const ProfileDropdown = ({ onLogout }) => {
         >
           <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="small" />
           <span className="mg-v2-profile-trigger__name">{userName}</span>
-          <ChevronDown size={16} className="mg-v2-profile-trigger__icon" />
+          <span className="mg-v2-profile-trigger__caret" aria-hidden="true">▼</span>
         </MGButton>
       </div>
 
@@ -153,7 +152,6 @@ const ProfileDropdown = ({ onLogout }) => {
             className="mg-v2-profile-menu-item"
             onClick={() => handleMenuClick('mypage')}
           >
-            <User size={18} />
             <span>내 정보</span>
           </MGButton>
           <MGButton
@@ -163,7 +161,6 @@ const ProfileDropdown = ({ onLogout }) => {
             className="mg-v2-profile-menu-item"
             onClick={() => handleMenuClick('settings')}
           >
-            <Settings size={18} />
             <span>설정</span>
           </MGButton>
           <MGButton
@@ -173,7 +170,6 @@ const ProfileDropdown = ({ onLogout }) => {
             className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
             onClick={() => handleMenuClick('logout')}
           >
-            <LogOut size={18} />
             <span>로그아웃</span>
           </MGButton>
         </div>

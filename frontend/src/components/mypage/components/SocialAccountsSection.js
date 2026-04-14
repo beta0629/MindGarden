@@ -1,5 +1,4 @@
 import React from 'react';
-import { User, MessageCircle, Hash } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 
 const maskIdentifier = (text) => {
@@ -32,14 +31,9 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
       <li key={provider} className="mg-mypage__list-item">
         <div className="mg-mypage__list-item-main">
           <div className="mg-mypage__readonly-row">
-            <span className="mg-mypage__provider-name" aria-hidden="true" />
-            {provider === 'KAKAO' ? (
-              <MessageCircle size={20} aria-hidden />
-            ) : provider === 'NAVER' ? (
-              <Hash size={20} aria-hidden />
-            ) : (
-              <User size={20} aria-hidden />
-            )}
+            <span className="mg-mypage__provider-glyph" aria-hidden="true">
+              {provider === 'KAKAO' ? 'K' : provider === 'NAVER' ? 'N' : '·'}
+            </span>
             <div>
               <p className="mg-mypage__device-name">{providerLabel(provider)}</p>
               {isLinked ? (

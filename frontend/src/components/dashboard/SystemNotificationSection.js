@@ -2,9 +2,8 @@
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Mail } from 'lucide-react';
-import { useNotification } from '../../contexts/NotificationContext';
 
+import { useNotification } from '../../contexts/NotificationContext';
 /**
  * 시스템 알림 섹션
 /**
@@ -64,7 +63,7 @@ const SystemNotificationSection = () => {
       <div className="mg-v2-card-header">
         <div className="mg-flex mg-justify-between mg-align-center">
           <div className="mg-v2-card-title">
-            <Bell size={20} />
+            
             시스템 알림
             {totalUnreadCount > 0 && (
               <span className="mg-v2-badge mg-v2-badge-danger">{totalUnreadCount}</span>

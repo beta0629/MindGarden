@@ -1,11 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckCircle, Users, Clock } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
 import '../Widget.css';
-
 /**
  * 오늘의 통계 위젯 - 표준화된 위젯
 /**
@@ -68,7 +67,6 @@ const TodayStatsWidget = ({ widget, user }) => {
     >
       <div className="mg-stats-grid">
         <StatCard
-          icon={<Users />}
           value={totalUsers}
           label="총 사용자"
           change="+12.5%"
@@ -77,7 +75,6 @@ const TodayStatsWidget = ({ widget, user }) => {
           onClick={() => handleStatClick('users')}
         />
         <StatCard
-          icon={<Calendar />}
           value={stats.totalToday}
           label="예약된 상담"
           change="+8.2%"
@@ -86,7 +83,6 @@ const TodayStatsWidget = ({ widget, user }) => {
           onClick={() => handleStatClick('schedules')}
         />
         <StatCard
-          icon={<CheckCircle />}
           value={stats.completedToday}
           label="완료된 상담"
           change="+15.3%"
@@ -100,14 +96,12 @@ const TodayStatsWidget = ({ widget, user }) => {
       {(stats.inProgressToday > 0 || stats.cancelledToday > 0) && (
         <div className="mg-stats-grid mg-mt-md">
           <StatCard
-            icon={<Clock />}
             value={stats.inProgressToday}
             label="진행중 상담"
             loading={loading}
             onClick={() => handleStatClick('schedules')}
           />
           <StatCard
-            icon={<Calendar />}
             value={stats.cancelledToday}
             label="취소된 상담"
             loading={loading}

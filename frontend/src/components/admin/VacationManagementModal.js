@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
-import { X, Calendar, User } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -514,7 +513,6 @@ const VacationManagementModal = ({
                     {userRole === 'CONSULTANT' && (
                         <div className="mg-v2-form-group">
                             <div className="mg-v2-flex mg-gap-sm mg-align-center mg-p-sm mg-bg-info-light mg-radius-md">
-                                <User size={16} />
                                 <span className="mg-v2-text-sm">본인의 휴가를 등록합니다</span>
                             </div>
                         </div>

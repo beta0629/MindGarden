@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
+import { Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
@@ -219,7 +219,6 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             onClick={handleClose}
             disabled={loading}
           >
-            <XCircle size={18} />
             취소
           </ActionButton>
           <ActionButton
@@ -227,7 +226,6 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             onClick={handleSubmit}
             disabled={loading}
           >
-            <Edit3 size={18} />
             수정 완료
           </ActionButton>
         </>

@@ -4,12 +4,11 @@
  * 서버 상태, DB 연결, 활성 사용자, 시스템 부하 등을 표시
  */
 import React from 'react';
-import { Activity, Server, Database, Users } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import '../Widget.css';
 import './SystemOverviewWidget.css';
-
 const SystemOverviewWidget = ({ widget, user }) => {
   // 표준화된 위젯 훅 사용
   const {
@@ -65,9 +64,7 @@ const SystemOverviewWidget = ({ widget, user }) => {
     >
       <div className="system-overview-grid">
         <div className="system-metric">
-          <div className="metric-icon">
-            <Server size={24} className={`metric-icon ${getStatusClassName(data.serverStatus)}`} />
-          </div>
+          <div className="metric-icon" />
           <div className="metric-content">
             <div className="metric-label">서버 상태</div>
             <div className={`metric-value ${getStatusClassName(data.serverStatus)}`}>
@@ -77,9 +74,7 @@ const SystemOverviewWidget = ({ widget, user }) => {
         </div>
 
         <div className="system-metric">
-          <div className="metric-icon">
-            <Database size={24} className="mg-text-info" />
-          </div>
+          <div className="metric-icon" />
           <div className="metric-content">
             <div className="metric-label">DB 연결</div>
             <div className="metric-value">{data.dbConnections}</div>
@@ -87,9 +82,7 @@ const SystemOverviewWidget = ({ widget, user }) => {
         </div>
 
         <div className="system-metric">
-          <div className="metric-icon">
-            <Users size={24} className="mg-text-success" />
-          </div>
+          <div className="metric-icon" />
           <div className="metric-content">
             <div className="metric-label">활성 사용자</div>
             <div className="metric-value">{data.activeUsers}</div>
@@ -97,9 +90,7 @@ const SystemOverviewWidget = ({ widget, user }) => {
         </div>
 
         <div className="system-metric">
-          <div className="metric-icon">
-            <Activity size={24} className="mg-text-warning" />
-          </div>
+          <div className="metric-icon" />
           <div className="metric-content">
             <div className="metric-label">시스템 부하</div>
             <div className="metric-value">{data.systemLoad}</div>

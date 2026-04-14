@@ -1,6 +1,8 @@
 /**
- * ViewModeToggle - 목록 보기 전환용 공통 톱글 (큰 카드 / 작은 카드 / 리스트)
- * B0KlA pill 토글 스타일 사용. 사용자 관리·매칭 리스트 등 목록 블록 헤더에 배치.
+ * ViewModeToggle — list view switcher (large card / small card / list, or custom options).
+ * B0KlA pill styles; pills render **label text only** (no icons).
+ *
+ * Option `icon` / `iconName` and prop `iconOnly`: PropTypes only; not used for rendering (text-only pills).
  *
  * @author Core Solution
  * @since 2025-03-17
@@ -9,32 +11,27 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { LayoutGrid, Grid2X2, List } from 'lucide-react';
 import { toDisplayString } from '../../utils/safeDisplay';
 import MGButton from './MGButton';
+import './ViewModeToggle.css';
 
-/** 기본 옵션: 큰 카드 / 작은 카드 / 리스트 (문서 §3.3) */
 const DEFAULT_OPTIONS = [
-  { value: 'largeCard', icon: LayoutGrid, label: '큰 카드' },
-  { value: 'smallCard', icon: Grid2X2, label: '작은 카드' },
-  { value: 'list', icon: List, label: '리스트' }
+  { value: 'largeCard', label: '\u{D070} \uCE74\uB4DC' },
+  { value: 'smallCard', label: '\uC791\uC740 \uCE74\uB4DC' },
+  { value: 'list', label: '\uB9AC\uC2A4\uD2B8' }
 ];
 
-/**
- * @param {Object} props
- * @param {'largeCard'|'smallCard'|'list'} props.viewMode - 현재 보기 모드
- * @param {(mode: 'largeCard'|'smallCard'|'list') => void} props.onViewModeChange - 모드 변경 콜백
- * @param {Array<{ value: string, icon: React.ComponentType, label: string, title?: string }>} [props.options] - 옵션 목록(기본값: 큰카드/작은카드/리스트)
- * @param {string} [props.className] - 컨테이너 추가 클래스
- * @param {string} [props.ariaLabel] - 톱글 그룹 aria-label
- */
 function ViewModeToggle({
   viewMode,
   onViewModeChange,
   options = DEFAULT_OPTIONS,
   className = '',
-  ariaLabel = '목록 보기 전환'
+  ariaLabel = '\uBAA9\uB85D \uBCF4\uAE30 \uC804\uD658',
+  // @deprecated Ignored; pills always show labels.
+  iconOnly = false
 }) {
+  void iconOnly;
+
   const baseClass = 'mg-v2-ad-b0kla__pill-toggle';
   const containerClass = [baseClass, className].filter(Boolean).join(' ');
 
@@ -45,9 +42,9 @@ function ViewModeToggle({
       aria-label={ariaLabel}
     >
       {options.map((opt) => {
-        const Icon = opt.icon;
         const isActive = viewMode === opt.value;
         const title = toDisplayString(opt.title ?? opt.label);
+
         return (
           <MGButton
             key={opt.value}
@@ -61,7 +58,7 @@ function ViewModeToggle({
             title={title}
             preventDoubleClick={false}
           >
-            <Icon size={16} />
+            <span className="mg-v2-ad-b0kla__pill-label">{toDisplayString(opt.label)}</span>
           </MGButton>
         );
       })}
@@ -75,19 +72,25 @@ ViewModeToggle.propTypes = {
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.string.isRequired,
-      icon: PropTypes.elementType.isRequired,
       label: PropTypes.string.isRequired,
-      title: PropTypes.string
+      title: PropTypes.string,
+      /** @deprecated Ignored; kept for call-site compatibility. */
+      icon: PropTypes.elementType,
+      /** @deprecated Ignored; kept for call-site compatibility. */
+      iconName: PropTypes.string
     })
   ),
   className: PropTypes.string,
-  ariaLabel: PropTypes.string
+  ariaLabel: PropTypes.string,
+  /** @deprecated Ignored; labels are always shown. */
+  iconOnly: PropTypes.bool
 };
 
 ViewModeToggle.defaultProps = {
   options: DEFAULT_OPTIONS,
   className: '',
-  ariaLabel: '목록 보기 전환'
+  ariaLabel: '\uBAA9\uB85D \uBCF4\uAE30 \uC804\uD658',
+  iconOnly: false
 };
 
 export default ViewModeToggle;

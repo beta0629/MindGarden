@@ -1,5 +1,19 @@
 /* ERP 공통 스타일 - 격리된 네임스페이스 */
 
+/*
+ * lucide-react: root svg uses class "lucide" (see lucide-react Icon.js mergeClasses).
+ * Scope to ERP layout roots so flex children keep icon size and stroke follows parent color.
+ */
+.mg-v2-erp-shell svg.lucide,
+.erp-system svg.lucide,
+.mg-v2-erp-dashboard-block svg.lucide,
+.erp-dashboard__content svg.lucide,
+.integrated-finance-content svg.lucide,
+.erp-report-modal svg.lucide {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
 /* 재무 관리 페이지 - 매핑 시스템과 동일한 공통 레이아웃 (mg-v2-ad-b0kla__container) */
 .mg-v2-erp-financial.mg-v2-ad-b0kla {
   min-height: 100%;

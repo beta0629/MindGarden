@@ -1,29 +1,22 @@
 /**
- * Quick Actions Widget
-/**
- * 빠른 액션 버튼들을 표시하는 범용 위젯
-/**
- * QuickActions를 기반으로 범용화
-/**
- * 
-/**
+ * Quick Actions Widget — quick action buttons for the dashboard.
+ * Based on QuickActions pattern.
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-11-22
  */
 
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap } from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
-
 const QuickActionsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
@@ -108,7 +101,7 @@ const QuickActionsWidget = ({ widget, user }) => {
       <div className="widget widget-quick-actions">
         <div className="widget-header">
           <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
-            <Zap size={20} className="finance-icon-inline" />
+            
             <SafeText tag="h3" className="mg-h4 mg-mb-0" fallback="빠른 액션">{config.title}</SafeText>
           </div>
         </div>
@@ -124,13 +117,6 @@ const QuickActionsWidget = ({ widget, user }) => {
                   onClick={() => handleActionClick(action)}
                   title={toDisplayString(action.tooltip || action.label)}
                 >
-                  {action.icon && (
-                    typeof action.icon === 'string' ? (
-                      <i className={`bi ${action.icon}`} />
-                    ) : (
-                      action.icon
-                    )
-                  )}
                   <span><SafeText>{action.label}</SafeText></span>
                 </MGButton>
               ))}

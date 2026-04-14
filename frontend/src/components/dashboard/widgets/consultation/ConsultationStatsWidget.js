@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PieChart, BarChart2, TrendingUp, Calendar, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationStatsWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const ConsultationStatsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -62,9 +61,7 @@ const ConsultationStatsWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="stats-empty-state">
-          <div className="empty-icon-wrapper">
-            <PieChart className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">통계 데이터 없음</h3>
           <p className="empty-description">상담 완료 후 통계가 표시됩니다.</p>
         </div>
@@ -77,28 +74,28 @@ const ConsultationStatsWidget = ({ widget, user }) => {
       <div className="stats-content">
         <div className="stats-grid">
           <div className="stat-item">
-            <div className="stat-icon completed"><CheckCircle /></div>
+            <div className="stat-icon completed" />
             <div className="stat-info">
               <div className="stat-number">{stats.completed || 0}</div>
               <div className="stat-label">완료된 상담</div>
             </div>
           </div>
           <div className="stat-item">
-            <div className="stat-icon pending"><Clock /></div>
+            <div className="stat-icon pending" />
             <div className="stat-info">
               <div className="stat-number">{stats.pending || 0}</div>
               <div className="stat-label">진행 중</div>
             </div>
           </div>
           <div className="stat-item">
-            <div className="stat-icon cancelled"><XCircle /></div>
+            <div className="stat-icon cancelled" />
             <div className="stat-info">
               <div className="stat-number">{stats.cancelled || 0}</div>
               <div className="stat-label">취소됨</div>
             </div>
           </div>
           <div className="stat-item">
-            <div className="stat-icon total"><BarChart2 /></div>
+            <div className="stat-icon total" />
             <div className="stat-info">
               <div className="stat-number">{stats.total || 0}</div>
               <div className="stat-label">총 상담</div>
@@ -107,7 +104,7 @@ const ConsultationStatsWidget = ({ widget, user }) => {
         </div>
         <div className="stats-actions">
           <MGButton variant="primary" size="small" onClick={() => navigate('/reports/stats')}>
-            <TrendingUp className="btn-icon" />
+            
             상세 통계 보기
           </MGButton>
         </div>
@@ -116,9 +113,8 @@ const ConsultationStatsWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    icon: <PieChart className="widget-header-icon" />,
     subtitle: '상담 현황 통계',
-    actions: [{ icon: 'RefreshCw', label: '새로고침', onClick: refresh }]
+    actions: [{ icon: 'REFRESH_CW', label: '새로고침', onClick: refresh }]
   };
 
   return (

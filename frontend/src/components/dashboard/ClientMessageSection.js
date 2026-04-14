@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Mail, 
-  MessageSquare, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock,
-  FileText,
-  Bell,
-  Megaphone,
-  Star
-} from 'lucide-react';
+
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -18,7 +8,6 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
-
 /**
  * 내담자 메시지 확인 섹션
 /**
@@ -39,37 +28,37 @@ const ClientMessageSection = ({ userId }) => {
   const getMessageTypeInfo = (type) => {
     const types = {
       GENERAL: { 
-        icon: MessageSquare, 
+        iconName: 'MESSAGE_SQUARE',
         label: '일반', 
         colorClass: 'secondary',
         bgClass: 'message-type-general'
       },
       FOLLOW_UP: { 
-        icon: FileText, 
+        iconName: 'FILE_TEXT',
         label: '후속 조치', 
         colorClass: 'primary',
         bgClass: 'message-type-followup'
       },
       HOMEWORK: { 
-        icon: CheckCircle, 
+        iconName: 'CHECK_CIRCLE',
         label: '과제 안내', 
         colorClass: 'success',
         bgClass: 'message-type-homework'
       },
       REMINDER: { 
-        icon: Bell, 
+        iconName: 'BELL',
         label: '알림', 
         colorClass: 'warning',
         bgClass: 'message-type-reminder'
       },
       URGENT: { 
-        icon: AlertCircle, 
+        iconName: 'ALERT_CIRCLE',
         label: '긴급', 
         colorClass: 'danger',
         bgClass: 'message-type-urgent'
       },
       SYSTEM_NOTICE: {
-        icon: Megaphone,
+        iconName: 'MEGAPHONE',
         label: '시스템 공지',
         colorClass: 'info',
         bgClass: 'message-type-system'
@@ -230,7 +219,6 @@ const ClientMessageSection = ({ userId }) => {
   }
 
   const typeInfo = selectedMessage ? getMessageTypeInfo(selectedMessage.messageType) : null;
-  const TypeIcon = typeInfo?.icon;
 
   return (
     <div className="client-message-section">
@@ -238,7 +226,7 @@ const ClientMessageSection = ({ userId }) => {
       <div className="client-message-header">
         <div className="client-message-header-left">
           <h2 className="client-message-title">
-            <Mail size={24} />
+            
             알림 및 메시지
           </h2>
           {unreadCount > 0 && (
@@ -262,16 +250,13 @@ const ClientMessageSection = ({ userId }) => {
       <div className="client-message-list">
         {allMessages.length === 0 ? (
           <div className="client-message-empty">
-            <div className="client-message-empty__icon">
-              <Mail size={48} />
-            </div>
+            <div className="client-message-empty__icon" />
             <p className="client-message-empty__text">받은 메시지가 없습니다.</p>
             <p className="client-message-empty__hint">공지사항과 상담사 메시지가 여기에 표시됩니다.</p>
           </div>
         ) : (
           allMessages.map((message) => {
             const messageTypeInfo = getMessageTypeInfo(message.messageType);
-            const MessageIcon = messageTypeInfo.icon;
             
             return (
               <div
@@ -279,13 +264,11 @@ const ClientMessageSection = ({ userId }) => {
                 className={`client-message-item ${!message.isRead ? 'client-message-item--unread' : ''} ${message.messageSource === 'SYSTEM' ? 'client-message-item--system' : ''}`}
                 onClick={() => handleMessageClick(message)}
               >
-                <div className={`client-message-item__icon ${messageTypeInfo.bgClass}`}>
-                  <MessageIcon size={20} />
-                </div>
+                <div className={`client-message-item__icon ${messageTypeInfo.bgClass}`} />
                 <div className="client-message-item__content">
                   <div className="client-message-item__header">
                     <h4 className="client-message-item__title">
-                      {message.isImportant && <Star size={14} className="important-star" />}
+                      {message.isImportant && <span className="mg-text-warning mg-text-sm">[중요] </span>}
                       {message.title}
                     </h4>
                     {!message.isRead && (
@@ -310,7 +293,7 @@ const ClientMessageSection = ({ userId }) => {
                       <span className="mg-badge mg-badge-danger mg-badge-sm">긴급</span>
                     )}
                     <span className="client-message-item__date">
-                      <Clock size={12} />
+                      
                       {new Date(message.displayDate).toLocaleDateString('ko-KR', {
                         month: 'short',
                         day: 'numeric',
@@ -340,10 +323,8 @@ const ClientMessageSection = ({ userId }) => {
           <div className="client-message-detail">
             <div className="client-message-detail__header">
               <div className="client-message-detail__type">
-                {TypeIcon && (
-                  <div className={`client-message-detail__type-icon ${typeInfo.bgClass}`}>
-                    <TypeIcon size={20} />
-                  </div>
+                {typeInfo.iconName && (
+                  <div className={`client-message-detail__type-icon ${typeInfo.bgClass}`} />
                 )}
                 <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>
                   {typeInfo.label}
@@ -356,7 +337,7 @@ const ClientMessageSection = ({ userId }) => {
                 )}
               </div>
               <span className="client-message-detail__date">
-                <Clock size={14} />
+                
                 {new Date(selectedMessage.displayDate || selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
               </span>
             </div>

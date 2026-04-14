@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Zap, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavIcon } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
@@ -94,7 +93,7 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
     <div className="mg-v2-quick-actions-dropdown" ref={dropdownRef}>
       <div ref={triggerRef}>
         <NavIcon
-          icon={Zap}
+          icon="ZAP"
           label="빠른 액션"
           onClick={() => setIsOpen(!isOpen)}
           className="mg-v2-quick-actions-trigger"
@@ -118,9 +117,7 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
         </div>
 
         <div className="mg-v2-quick-actions-list">
-          {actions.map((action) => {
-            const Icon = action.icon;
-            return (
+          {actions.map((action) => (
               <MGButton
                 key={action.id}
                 type="button"
@@ -129,12 +126,9 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
                 className="mg-v2-quick-action-item"
                 onClick={() => handleActionClick(action)}
               >
-                <Icon size={20} className="mg-v2-quick-action-item__icon" />
                 <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
-                <ChevronRight size={16} className="mg-v2-quick-action-item__arrow" />
               </MGButton>
-            );
-          })}
+          ))}
         </div>
       </GnbDropdownPortal>
     </div>

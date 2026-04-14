@@ -1,6 +1,6 @@
 /**
- * NavLink - 아이콘+텍스트 메뉴 링크 (Active/Hover/Default)
- * LNB 메뉴 항목용
+ * NavLink - icon + text menu link (Active/Hover/Default)
+ * LNB menu rows
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -9,19 +9,24 @@
 import React from 'react';
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
+import Icon from '../../ui/Icon/Icon';
 import './NavLink.css';
 
-const NavLink = ({ to, icon: Icon, children, active, className = '', asButton = false, onClick }) => {
+/**
+ * @param {Object} props
+ * @param {string} [props.icon] - ICONS registry key
+ */
+const NavLink = ({ to, icon, children, active, className = '', asButton = false, onClick }) => {
   const baseClass = 'mg-v2-nav-link';
   const stateClass = active ? `${baseClass}--active` : '';
 
   const content = (
     <>
-      {Icon && (
+      {icon ? (
         <span className="mg-v2-nav-link__icon" aria-hidden="true">
-          <Icon size={20} strokeWidth={1.8} />
+          <Icon name={icon} size="MD" userRole="ADMIN" color="SECONDARY" />
         </span>
-      )}
+      ) : null}
       <span className="mg-v2-nav-link__text">{children}</span>
     </>
   );
@@ -52,9 +57,11 @@ const NavLink = ({ to, icon: Icon, children, active, className = '', asButton = 
 };
 
 /**
- * RouterNavLink와 연동하여 isActive 사용 시
+ * RouterNavLink with isActive
+ * @param {Object} props
+ * @param {string} [props.icon] - ICONS registry key
  */
-export const NavLinkWithRouter = ({ to, icon: Icon, children, end = false, onClick }) => {
+export const NavLinkWithRouter = ({ to, icon, children, end = false, onClick }) => {
   return (
     <RouterNavLink
       to={to}
@@ -64,11 +71,11 @@ export const NavLinkWithRouter = ({ to, icon: Icon, children, end = false, onCli
         `mg-v2-nav-link ${isActive ? 'mg-v2-nav-link--active' : ''}`
       }
     >
-      {Icon && (
+      {icon ? (
         <span className="mg-v2-nav-link__icon" aria-hidden="true">
-          <Icon size={20} strokeWidth={1.8} />
+          <Icon name={icon} size="MD" userRole="ADMIN" color="SECONDARY" />
         </span>
-      )}
+      ) : null}
       <span className="mg-v2-nav-link__text">{children}</span>
     </RouterNavLink>
   );

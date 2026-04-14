@@ -8,7 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Mail, Phone, Calendar, Package, Clock, Eye, CheckCircle, XCircle, Clock as ClockIcon, CheckCircle2, PauseCircle } from 'lucide-react';
+import { Mail, Phone, Calendar, Package, Clock, CheckCircle, XCircle, Clock as ClockIcon, CheckCircle2, PauseCircle } from 'lucide-react';
 import Avatar from '../../common/Avatar';
 import StatusBadge from '../../common/StatusBadge';
 import MGButton from '../../common/MGButton';
@@ -102,7 +102,6 @@ const ClientCard = ({ client, onViewDetails }) => {
           variant="primary"
           className="mg-v2-client-view-btn"
         >
-          <Eye size={16} />
           상세보기
         </MGButton>
       </div>

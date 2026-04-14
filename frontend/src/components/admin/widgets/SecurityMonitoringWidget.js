@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaShieldAlt, FaExclamationTriangle, FaBan, FaEye, FaChartPie } from 'react-icons/fa';
+import { FaShieldAlt, FaExclamationTriangle, FaBan, FaEye } from 'react-icons/fa';
 import { SecurityDataProcessor, SecurityAnalyzer, SecurityDataManager } from '../../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import MGButton from '../../common/MGButton';

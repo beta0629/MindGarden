@@ -25,12 +25,11 @@
  */
 
 import React from 'react';
-import { Plus, Trash2, Settings, Lock, Move } from 'lucide-react';
+
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
 import MGButton from '../../common/MGButton';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import './DashboardWidgetManager.css';
-
 const DashboardWidgetManagerPresentation = ({
   // 데이터
   groupedWidgets,
@@ -66,7 +65,7 @@ const DashboardWidgetManagerPresentation = ({
           className="mg-widget-manager-header-add mg-button--with-icon"
           onClick={onShowAddModal}
         >
-          <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
+          
           위젯 추가
         </MGButton>
       </div>
@@ -116,7 +115,7 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
           {/* 시스템 관리 위젯 표시 */}
           {widget.isSystemManaged && (
             <span className="mg-badge mg-badge--system">
-              <Lock size={14} /> 시스템 위젯
+               시스템 위젯
             </span>
           )}
           
@@ -137,9 +136,7 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             className="mg-widget-item-action-btn"
             title="위젯 이동"
             preventDoubleClick={false}
-          >
-            <Move size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </MGButton>
+           />
         )}
         
         {/* 설정 버튼 */}
@@ -151,9 +148,7 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             className="mg-widget-item-action-btn"
             title="위젯 설정"
             onClick={() => onConfigure(widget.widgetId)}
-          >
-            <Settings size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </MGButton>
+           />
         )}
         
         {/* 삭제 버튼 */}
@@ -165,13 +160,9 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             className="mg-widget-item-action-btn"
             title="위젯 삭제"
             onClick={() => onDelete(widget.widgetId)}
-          >
-            <Trash2 size={MG_DESIGN_TOKENS.ICON_SIZE_SM} />
-          </MGButton>
+           />
         ) : (
-          <span className="mg-widget-item-locked" title="삭제 불가">
-            <Lock size={14} />
-          </span>
+          <span className="mg-widget-item-locked" title="삭제 불가" />
         )}
       </div>
     </div>
@@ -210,7 +201,7 @@ const AddWidgetModal = ({ isOpen, availableWidgets, onAdd, onClose }) => {
                   {widget.description || widget.widgetType}
                 </p>
               </div>
-              <Plus size={MG_DESIGN_TOKENS.ICON_SIZE_MD} />
+              
             </MGButton>
           ))
         ) : (

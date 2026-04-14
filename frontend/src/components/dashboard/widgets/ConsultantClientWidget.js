@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar } from 'lucide-react';
+
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import './ConsultantClientWidget.css';
-
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -162,7 +161,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="consultant-client-header">
-        <Users size={20} />
+        
         내 내담자 ({clients.length}명)
       </div>
     ),
@@ -233,7 +232,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
             </div>
 
             <div className="consultant-client-footer">
-              <Calendar size={14} />
+              
               마지막 상담: {client.lastConsultationDate ? 
                 new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
                 '없음'

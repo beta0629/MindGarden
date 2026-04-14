@@ -1,6 +1,6 @@
 /**
- * NavIcon - GNB/LNB 아이콘 버튼 (44×44px, Lucide)
- * RESPONSIVE_LAYOUT_SPEC: 터치 영역 44px 최소
+ * NavIcon - GNB/LNB icon button (44x44 touch target)
+ * RESPONSIVE_LAYOUT_SPEC: minimum 44px touch area
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -8,9 +8,14 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import Icon from '../../ui/Icon/Icon';
 import './NavIcon.css';
 
-const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false, ...rest }) => {
+/**
+ * @param {Object} props
+ * @param {string} props.icon - {@link import('../../../constants/icons').ICONS} registry key
+ */
+const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...rest }) => {
   return (
     <MGButton
       type="button"
@@ -20,10 +25,10 @@ const NavIcon = ({ icon: Icon, label, onClick, className = '', disabled = false,
       className={`mg-v2-nav-icon ${className}`}
       onClick={onClick}
       disabled={disabled}
-      aria-label={label || '아이콘 버튼'}
+      aria-label={label || 'Icon button'}
       {...rest}
     >
-      {Icon && <Icon size={22} strokeWidth={1.8} aria-hidden="true" />}
+      {icon ? <Icon name={icon} size="LG" color="TRANSPARENT" aria-hidden /> : null}
     </MGButton>
   );
 };

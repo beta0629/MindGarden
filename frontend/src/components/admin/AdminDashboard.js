@@ -3,7 +3,7 @@ import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
 import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -658,16 +658,16 @@ const AdminDashboard = ({ user: propUser }) => {
                             preventDoubleClick={false}
                             aria-label="통계"
                         >
-                            <BarChart size={20} />
+                            통계
                         </MGButton>
                         <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더" preventDoubleClick={false}>
-                            <Calendar size={20} />
+                            캘린더
                         </MGButton>
                         <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="알림" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)} preventDoubleClick={false}>
-                            <Bell size={20} />
+                            알림
                         </MGButton>
                         <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="테마" preventDoubleClick={false}>
-                            <Moon size={20} />
+                            테마
                         </MGButton>
                     </div>
                 </div>
@@ -1213,9 +1213,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
                         preventDoubleClick={false}
                     >
-                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
-                            <FaUserCog size={28} />
-                        </div>
                         <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
                     </MGButton>
@@ -1226,9 +1223,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
                         preventDoubleClick={false}
                     >
-                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
-                            <FaCalendarCheck size={28} />
-                        </div>
                         <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
                     </MGButton>
@@ -1239,9 +1233,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
                         preventDoubleClick={false}
                     >
-                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
-                            <FaFileAlt size={28} />
-                        </div>
                         <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
                     </MGButton>
@@ -1271,9 +1262,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                         loadingText="처리 중..."
                     >
-                        <div className="mg-management-icon">
-                            <FaSyncAlt />
-                        </div>
                         <h3>스케줄 자동 완료</h3>
                         <p className="mg-management-description">지난 스케줄을 자동으로 완료 처리합니다</p>
                     </MGButton>
@@ -1286,9 +1274,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                         loadingText="처리 중..."
                     >
-                        <div className="mg-management-icon">
-                            <FaExclamationTriangle />
-                        </div>
                         <h3>스케줄 완료 + 알림</h3>
                         <p className="mg-management-description">지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
                     </MGButton>

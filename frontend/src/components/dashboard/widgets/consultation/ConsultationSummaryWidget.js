@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, TrendingUp, Calendar, Users, Clock, Target, FileText } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationSummaryWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const ConsultationSummaryWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -115,9 +114,9 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
 
   // 성장률 아이콘
   const getTrendIcon = (value) => {
-    if (value > 0) return <TrendingUp className="trend-icon" />;
-    if (value < 0) return <TrendingUp className="trend-icon rotate-180" />;
-    return <TrendingUp className="trend-icon" />;
+    if (value > 0) return null;
+    if (value < 0) return null;
+    return null;
   };
 
   // 상세보기
@@ -141,9 +140,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="summary-empty-state">
-          <div className="empty-icon-wrapper">
-            <BarChart3 className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">상담 데이터가 없습니다</h3>
           <p className="empty-description">
             {widget.config?.emptyMessage || '상담 완료 후 통계가 표시됩니다.'}
@@ -159,9 +156,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
         {/* 주요 지표 */}
         <div className="summary-metrics">
           <div className="metric-card">
-            <div className="metric-icon sessions">
-              <Calendar />
-            </div>
+            <div className="metric-icon sessions" />
             <div className="metric-info">
               <div className="metric-number">{summary.totalSessions}</div>
               <div className="metric-label">총 세션</div>
@@ -175,9 +170,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
           </div>
 
           <div className="metric-card">
-            <div className="metric-icon clients">
-              <Users />
-            </div>
+            <div className="metric-icon clients" />
             <div className="metric-info">
               <div className="metric-number">{summary.activateClients}</div>
               <div className="metric-label">활성 내담자</div>
@@ -191,9 +184,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
           </div>
 
           <div className="metric-card">
-            <div className="metric-icon duration">
-              <Clock />
-            </div>
+            <div className="metric-icon duration" />
             <div className="metric-info">
               <div className="metric-number">{formatDuration(summary.totalDuration)}</div>
               <div className="metric-label">총 상담시간</div>
@@ -201,9 +192,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
           </div>
 
           <div className="metric-card">
-            <div className="metric-icon rating">
-              <Target />
-            </div>
+            <div className="metric-icon rating" />
             <div className="metric-info">
               <div className="metric-number">{summary.averageRating?.toFixed(1) || '0.0'}</div>
               <div className="metric-label">평균 평점</div>
@@ -247,7 +236,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         <div className="summary-actions">
           <MGButton variant="primary" size="small" onClick={handleViewReports}>
-            <FileText className="btn-icon" />
+            
             상세 보고서 보기
           </MGButton>
         </div>
@@ -257,16 +246,15 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <BarChart3 className="widget-header-icon" />,
     subtitle: '상담 성과 요약',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       {
-        icon: 'FileText',
+        icon: 'FILE_TEXT',
         label: '상세 보고서',
         onClick: handleViewReports
       }

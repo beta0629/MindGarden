@@ -1,5 +1,4 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -28,11 +27,6 @@ const ConsultationLogPrecautionsPanel = ({ expanded, onExpandedChange, important
       preventDoubleClick={false}
     >
       <span className="mg-accordion-title mg-flex mg-v2-items-center mg-v2-gap-sm">
-        <AlertTriangle
-          size={20}
-          className="mg-v2-consultation-log-modal__precautions-icon"
-          aria-hidden="true"
-        />
         상담 시 주의사항
       </span>
       <span className={`mg-accordion-icon${expanded ? ' open' : ''}`} aria-hidden="true">

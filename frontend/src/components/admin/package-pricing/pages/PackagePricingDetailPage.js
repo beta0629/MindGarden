@@ -9,7 +9,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
@@ -204,7 +203,6 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 className="mg-v2-package-header-btn--secondary"
                 onClick={goToList}
               >
-                <ArrowLeft size={20} />
                 {LABELS.LIST_BACK}
               </MGButton>
             }

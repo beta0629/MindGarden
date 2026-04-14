@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import {
-  Calendar,
-  Users,
-  MessageSquare,
-  Star,
-  Clock,
-  Bell,
-  BarChart3,
-  ChevronRight,
-  UserPlus
-} from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
+import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -502,7 +492,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 <div className="schedule-details">
                   <div className="schedule-client">{schedule.clientName || '내담자'}</div>
                   <div className="schedule-type">
-                    <Users size={12} />
+                    <Icon name="USERS" size="XS" color="TRANSPARENT" />
                     {schedule.consultationType || '개인상담'}
                   </div>
                 </div>
@@ -518,7 +508,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     
     return (
       <div className="empty-state">
-        <Calendar size={32} className="empty-state-icon" />
+        <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
         <span className="empty-state-text">오늘·어제 예정된 일정이 없습니다.</span>
       </div>
     );
@@ -563,9 +553,10 @@ const ConsultantDashboardV2 = ({ user }) => {
                     {schedule.clientName || '내담자'}
                   </div>
                   <div className="upcoming-schedule-details__meta">
-                    <Users size={12} />
-                    {schedule.consultationType || '개인상담'}
-                    {schedule.sessionNumber && ` · ${schedule.sessionNumber}회기`}
+                    <span>
+                      {schedule.consultationType || '개인상담'}
+                      {schedule.sessionNumber ? ` · ${schedule.sessionNumber}회기` : ''}
+                    </span>
                   </div>
                 </div>
                 
@@ -581,7 +572,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     
     return (
       <div className="empty-state">
-        <Calendar size={32} className="empty-state-icon" />
+        <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
         <span className="empty-state-text">다가오는 상담이 없습니다.</span>
       </div>
     );
@@ -645,28 +636,28 @@ const ConsultantDashboardV2 = ({ user }) => {
         <ContentKpiRow items={[
           {
             id: 'todaySchedules',
-            icon: <Calendar size={28} />,
+            icon: <Icon name="CALENDAR" size="XXL" color="TRANSPARENT" />,
             label: '오늘의 상담',
             value: `${dashboardData.stats.todaySchedules}건`,
             iconVariant: 'blue'
           },
           {
             id: 'newClients',
-            icon: <UserPlus size={28} />,
+            icon: <Icon name="USER_PLUS" size="XXL" color="TRANSPARENT" />,
             label: '신규 내담자',
             value: `${dashboardData.stats.newClients}명`,
             iconVariant: 'green'
           },
           {
             id: 'unreadMessages',
-            icon: <MessageSquare size={28} />,
+            icon: <Icon name="MESSAGE_SQUARE" size="XXL" color="TRANSPARENT" />,
             label: '안읽은 메시지',
             value: `${dashboardData.stats.unreadMessages}건`,
             iconVariant: 'orange'
           },
           {
             id: 'averageRating',
-            icon: <Star size={28} />,
+            icon: <Icon name="STAR" size="XXL" color="TRANSPARENT" />,
             label: '평균 평점',
             value: dashboardData.stats.averageRating > 0 ? dashboardData.stats.averageRating.toFixed(1) : '-',
             subtitle: dashboardData.stats.totalRatingCount > 0 ? `(${dashboardData.stats.totalRatingCount}개 평가)` : undefined,
@@ -680,17 +671,17 @@ const ConsultantDashboardV2 = ({ user }) => {
           {/* Section A: 최근 일정 (오늘·어제) - 테넌트별 조회는 백엔드 TenantContextHolder 적용 */}
           <ContentSection
             title="최근 일정 (오늘·어제)"
-            titleIcon={<Clock size={18} />}
+            titleIcon={<Icon name="CLOCK" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
-                전체보기 <ChevronRight size={16} />
+                <span>전체보기</span>
               </MGButton>
             }
           >
@@ -702,17 +693,17 @@ const ConsultantDashboardV2 = ({ user }) => {
           {/* Section B: 다가오는 상담 (신규) */}
           <ContentSection
             title="다가오는 상담"
-            titleIcon={<Calendar size={18} />}
+            titleIcon={<Icon name="CALENDAR" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
-                전체보기 <ChevronRight size={16} />
+                <span>전체보기</span>
               </MGButton>
             }
           >
@@ -724,17 +715,17 @@ const ConsultantDashboardV2 = ({ user }) => {
           {/* Section C: 최근 알림 */}
           <ContentSection
             title="최근 알림"
-            titleIcon={<Bell size={18} />}
+            titleIcon={<Icon name="BELL" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
                 onClick={() => navigate('/notifications')}
                 preventDoubleClick={false}
               >
-                전체보기 <ChevronRight size={16} />
+                <span>전체보기</span>
               </MGButton>
             }
           >
@@ -744,7 +735,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                   {dashboardData.recentNotifications.map((noti) => (
                     <div key={noti.id} className="notification-item">
                       <div className="notification-icon">
-                        <Bell size={16} />
+                        <Icon name="BELL" size="SM" color="TRANSPARENT" />
                       </div>
                       <div className="notification-content">
                         <SafeText className="notification-text" tag="div">{noti.text}</SafeText>
@@ -755,7 +746,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 </div>
               ) : (
                 <div className="empty-state">
-                  <Bell size={32} className="empty-state-icon" />
+                  <Icon name="BELL" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
                   <span className="empty-state-text">새로운 알림이 없습니다.</span>
                 </div>
               )}
@@ -765,13 +756,13 @@ const ConsultantDashboardV2 = ({ user }) => {
           {/* Section D: 주간 상담 현황 (전체 너비) */}
           <ContentSection
             title="주간 상담 현황"
-            titleIcon={<BarChart3 size={18} />}
+            titleIcon={<Icon name="BAR_CHART_3" size="LG" color="TRANSPARENT" />}
             className="mg-v2-content-section--full"
           >
             <div className="card-body">
               {dashboardData.weeklyStats.length === 0 ? (
                 <div className="empty-state">
-                  <BarChart3 size={32} className="empty-state-icon" />
+                  <Icon name="BAR_CHART_3" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
                   <span className="empty-state-text">최근 주간 상담 추이 데이터가 없습니다.</span>
                 </div>
               ) : (

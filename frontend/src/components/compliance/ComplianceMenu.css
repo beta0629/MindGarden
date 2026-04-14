@@ -162,8 +162,11 @@
   color: var(--ad-b0kla-title-color);
 }
 
-.mg-v2-compliance-menu__tile-icon-svg {
-  flex-shrink: 0;
+.mg-v2-compliance-menu__tile-icon-text {
+  font-size: var(--mg-font-size-lg, 1.125rem);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  line-height: 1;
+  color: inherit;
 }
 
 .mg-v2-compliance-menu__tile-body {

@@ -145,6 +145,11 @@
   font-size: var(--font-size-sm);
 }
 
+.meta-label {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
+}
+
 .meta-item svg {
   color: #87CEEB;
 }

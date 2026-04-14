@@ -48,8 +48,7 @@ const RecentActivities = ({ consultationData }) => {
             className="recent-activities-view-all mg-button--with-icon"
             onClick={handleViewAll}
           >
-            <i className="bi bi-arrow-right" />
-            전체보기
+            전체보기 →
           </MGButton>
         )}
       </div>

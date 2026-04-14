@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, XCircle, Send, User, Bell, AlertTriangle } from 'lucide-react';
+import { MessageSquare, User, Bell, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -174,7 +174,6 @@ const MessageSendModal = ({
             disabled={sending}
             preventDoubleClick={false}
           >
-            <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </MGButton>
           <MGButton
@@ -187,7 +186,6 @@ const MessageSendModal = ({
             loadingText="로딩중..."
             preventDoubleClick={false}
           >
-            <Send size={20} className="mg-v2-icon-inline" />
             메시지 전송
           </MGButton>
         </>

@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Users, Link2, CheckCircle, Activity } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
 import { RoleUtils } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
 import MGButton from '../../../common/MGButton';
-
 /**
  * 관리자 시스템 개요 위젯 - 표준화된 위젯
 /**
@@ -99,10 +98,9 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <Activity className="widget-header-icon" />,
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       }
@@ -145,9 +143,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             className="system-stat-card clickable"
             onClick={() => handleStatClick('consultants')}
           >
-            <div className="stat-icon consultant-icon">
-              <User className="stat-icon-svg" />
-            </div>
+            <div className="stat-icon consultant-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalConsultants?.toLocaleString() || 0}</div>
               <div className="stat-label">상담사</div>
@@ -158,9 +154,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             className="system-stat-card clickable"
             onClick={() => handleStatClick('clients')}
           >
-            <div className="stat-icon client-icon">
-              <Users className="stat-icon-svg" />
-            </div>
+            <div className="stat-icon client-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalClients?.toLocaleString() || 0}</div>
               <div className="stat-label">내담자</div>
@@ -171,9 +165,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             className="system-stat-card clickable"
             onClick={() => handleStatClick('mappings')}
           >
-            <div className="stat-icon mapping-icon">
-              <Link2 className="stat-icon-svg" />
-            </div>
+            <div className="stat-icon mapping-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalMappings?.toLocaleString() || 0}</div>
               <div className="stat-label">총 매칭</div>
@@ -184,9 +176,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             className="system-stat-card clickable"
             onClick={() => handleStatClick('activeMappings')}
           >
-            <div className="stat-icon active-icon">
-              <CheckCircle className="stat-icon-svg" />
-            </div>
+            <div className="stat-icon active-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.activeMappings?.toLocaleString() || 0}</div>
               <div className="stat-label">활성 매칭</div>
@@ -197,7 +187,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
         {/* 빈 상태 처리 */}
         {isEmpty && (
           <div className="admin-system-overview-empty">
-            <Activity className="empty-icon" />
+            
             <p>시스템 통계 데이터가 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도

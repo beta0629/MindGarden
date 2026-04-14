@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Link2, UserCircle, CheckCircle } from 'lucide-react';
+import { User, Link2, UserCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
@@ -125,7 +125,6 @@ const MappingDepositModal = ({
                         loading={isLoading}
                         loadingText="처리 중..."
                     >
-                        <CheckCircle size={18} />
                         입금 확인
                     </MGButton>
                 </>

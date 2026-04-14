@@ -9,35 +9,32 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Upload, FileSearch, FileCheck2 } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import MGButton from '../../../common/MGButton';
 import './PsychKpiSection.css';
 import SafeText from '../../../common/SafeText';
-
-const ICON_SIZE = 24;
 
 const KPI_ITEMS = [
   {
     id: 'upload',
     label: '업로드',
     key: 'documentsTotal',
-    icon: Upload,
-    iconVariant: 'green'
+    iconVariant: 'green',
+    iconText: '업'
   },
   {
     id: 'extraction',
     label: '추출',
     key: 'extractionsTotal',
-    icon: FileSearch,
-    iconVariant: 'orange'
+    iconVariant: 'orange',
+    iconText: '\uCD94'
   },
   {
     id: 'report',
     label: '리포트',
     key: 'reportsTotal',
-    icon: FileCheck2,
-    iconVariant: 'blue'
+    iconVariant: 'blue',
+    iconText: '리'
   }
 ];
 
@@ -46,7 +43,6 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
     <ContentSection noCard className="mg-v2-psych-kpi-section">
       <div className="mg-v2-psych-kpi-section__grid">
         {KPI_ITEMS.map((item) => {
-          const Icon = item.icon;
           const value = stats[item.key] ?? 0;
           return (
             <MGButton
@@ -58,7 +54,7 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
               preventDoubleClick={false}
             >
               <div className={`mg-v2-psych-kpi-section__icon mg-v2-psych-kpi-section__icon--${item.iconVariant}`}>
-                <Icon size={ICON_SIZE} />
+                <span className="mg-v2-psych-kpi-section__icon-text" aria-hidden="true">{item.iconText}</span>
               </div>
               <div className="mg-v2-psych-kpi-section__info">
                 <span className="mg-v2-psych-kpi-section__label"><SafeText>{item.label}</SafeText></span>

@@ -7,22 +7,21 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Link2, LayoutGrid, List, Calendar } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import { ActionButton, ViewModeToggle } from '../../../common';
-
-/** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
-const MAPPING_VIEW_MODE_OPTIONS = [
-  { value: 'card', icon: LayoutGrid, label: '카드 뷰' },
-  { value: 'table', icon: List, label: '테이블 뷰' },
-  { value: 'calendar', icon: Calendar, label: '캘린더 뷰' }
-];
 import MappingListRow from './MappingListRow';
 import MappingTableView from './MappingTableView';
 import MappingCalendarView from './MappingCalendarView';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import './MappingListBlock.css';
+
+/** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
+const MAPPING_VIEW_MODE_OPTIONS = [
+  { value: 'card', label: '카드 뷰' },
+  { value: 'table', label: '테이블 뷰' },
+  { value: 'calendar', label: '캘린더 뷰' }
+];
 
 const MappingListBlock = ({
   mappings = [],
@@ -47,8 +46,8 @@ const MappingListBlock = ({
     if (isEmpty) {
       return (
         <div className="mg-v2-mapping-list-block__empty">
-          <div className="mg-v2-mapping-list-block__empty-icon">
-            <Link2 size={48} />
+          <div className="mg-v2-mapping-list-block__empty-icon" aria-hidden="true">
+            🔗
           </div>
           <h3 className="mg-v2-mapping-list-block__empty-title">{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
           <p className="mg-v2-mapping-list-block__empty-desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
@@ -58,7 +57,6 @@ const MappingListBlock = ({
               onClick={onCreateClick}
               className="mg-v2-mapping-list-block__empty-btn"
             >
-              <Plus size={20} />
               매칭 생성
             </ActionButton>
           )}

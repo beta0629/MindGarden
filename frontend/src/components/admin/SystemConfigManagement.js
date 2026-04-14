@@ -10,14 +10,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Key,
-  Save,
-  Eye,
-  EyeOff,
   Shield,
   Database,
   CheckCircle,
-  AlertCircle,
-  RefreshCw
+  AlertCircle
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
@@ -362,7 +358,6 @@ const SystemConfigManagement = () => {
                   loading={saving}
                   loadingText="저장 중..."
                 >
-                  <Save size={20} />
                   설정 저장
                 </MGButton>
               }
@@ -420,7 +415,7 @@ const SystemConfigManagement = () => {
                           className="mg-v2-input"
                         />
                         <MGButton type="button" variant="secondary" size="medium" onClick={() => toggleShowApiKey(id)} preventDoubleClick={false}>
-                          {showApiKey[id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showApiKey[id] ? '숨기기' : '보기'}
                         </MGButton>
                       </div>
                       <small className="help-text"><Shield size={14} /> API 키는 암호화되어 저장됩니다.</small>
@@ -451,7 +446,6 @@ const SystemConfigManagement = () => {
                               loadingText="불러오는 중..."
                               preventDoubleClick={false}
                             >
-                              {loadingGeminiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
                               {geminiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
                             </MGButton>
                           </div>
@@ -513,7 +507,6 @@ const SystemConfigManagement = () => {
                               loadingText="불러오는 중..."
                               preventDoubleClick={false}
                             >
-                              {loadingOpenaiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
                               {openaiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
                             </MGButton>
                           </div>
@@ -598,7 +591,6 @@ const SystemConfigManagement = () => {
                           loadingText="테스트 중..."
                           preventDoubleClick={false}
                         >
-                          {testing ? <RefreshCw size={16} className="mg-spinning" /> : <CheckCircle size={16} />}
                           API 테스트
                         </MGButton>
                       </div>
@@ -626,7 +618,6 @@ const SystemConfigManagement = () => {
                           loadingText="테스트 중..."
                           preventDoubleClick={false}
                         >
-                          {testingGemini ? <RefreshCw size={16} className="mg-spinning" /> : <CheckCircle size={16} />}
                           키 테스트
                         </MGButton>
                       </div>

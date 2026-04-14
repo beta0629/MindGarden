@@ -186,7 +186,6 @@ const RatableConsultationsSection = () => {
                   className="mg-v2-button mg-v2-button-primary ratable-consultation-item__button"
                   onClick={() => handleRateConsultant(schedule)}
                 >
-                  <Heart size={16} />
                   평가하기
                 </MGButton>
               </div>

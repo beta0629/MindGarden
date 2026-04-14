@@ -17,7 +17,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, AlertCircle } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { useSession } from '../../contexts/SessionContext';
 import { requestBillingAuth, PG_PROVIDER } from '../../utils/paymentGateway';
 import { generateUUID, generateCallbackUrl, getPgProviderCodes, getCodeLabel } from '../../utils/billingService';
@@ -132,7 +135,7 @@ const PaymentMethodRegistration = ({
     return (
       <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CONTAINER}>
         <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.ERROR}>
-          <AlertCircle size={ICON_SIZES.MEDIUM} />
+          <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
           <span>{BILLING_MESSAGES.REGISTRATION.ERROR_TENANT_NOT_FOUND}</span>
         </div>
       </div>
@@ -142,7 +145,7 @@ const PaymentMethodRegistration = ({
   return (
     <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CONTAINER}>
       <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.HEADER}>
-        <CreditCard size={ICON_SIZES.LARGE} />
+        <CreditCardIcon size={ICON_SIZES.LARGE} />
         <h3>{BILLING_MESSAGES.REGISTRATION.TITLE}</h3>
       </div>
 
@@ -155,7 +158,7 @@ const PaymentMethodRegistration = ({
 
         {error && (
           <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.ERROR}>
-            <AlertCircle size={ICON_SIZES.MEDIUM} />
+            <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
             <span>{error}</span>
           </div>
         )}

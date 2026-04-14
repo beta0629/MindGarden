@@ -4,7 +4,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
-import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
+import { FaDatabase, FaChartLine, FaClock, FaMemory } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
@@ -141,7 +141,6 @@ const CacheMonitoringDashboard = () => {
                     preventDoubleClick
                     className="refresh-button"
                   >
-                    <FaSync size={14} />
                     새로고침
                   </MGButton>
                   <MGButton

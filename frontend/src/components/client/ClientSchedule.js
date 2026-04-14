@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';

@@ -29,6 +29,24 @@
     position: relative;
 }
 
+.risk-probability-text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.25rem);
+}
+
+.risk-prob-value {
+    font-size: var(--font-size-2xl, 1.5rem);
+    font-weight: var(--font-weight-bold, 700);
+    line-height: 1.2;
+}
+
+.risk-prob-caption {
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--mg-gray-600, var(--cs-secondary-600, #4b5563));
+}
+
 .engagement-metrics h4 {
     margin: 0 0 var(--spacing-md, 1rem) 0;
     font-size: var(--font-size-base, 1rem);

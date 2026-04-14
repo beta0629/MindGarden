@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  CreditCard,
-  Plus,
-  Search,
-  Eye,
-  Edit,
-  Trash2,
-  XCircle,
-  Clock,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
+const SearchIcon = ICONS.SEARCH;
+const XCircleIcon = ICONS.X_CIRCLE;
+const ClockIcon = ICONS.CLOCK;
+const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
@@ -171,7 +166,7 @@ const PgConfigurationList = () => {
       <AdminCommonLayout title="PG 설정 목록">
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>로그인이 필요합니다.</p>
           </div>
         </ContentArea>
@@ -184,7 +179,7 @@ const PgConfigurationList = () => {
       <AdminCommonLayout title="PG 설정 목록">
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
-            <AlertCircle size={24} />
+            <AlertCircleIcon size={24} />
             <p>테넌트 정보를 찾을 수 없습니다.</p>
           </div>
         </ContentArea>
@@ -208,7 +203,6 @@ const PgConfigurationList = () => {
                   onClick={() => navigate('/tenant/pg-configurations/new')}
                   preventDoubleClick={false}
                 >
-                  <Plus size={18} />
                   PG 설정 등록
                 </MGButton>
               }
@@ -217,7 +211,7 @@ const PgConfigurationList = () => {
         {/* 필터 및 검색 */}
         <div className="pg-config-list-filters mg-v2-pg-config-list__filters">
           <div className="search-box">
-            <Search size={18} />
+            <SearchIcon size={18} />
             <input
               type="text"
               placeholder="PG사명, 제공자, 비고로 검색..."
@@ -264,7 +258,6 @@ const PgConfigurationList = () => {
               onClick={loadConfigurations}
               preventDoubleClick={false}
             >
-              <RefreshCw size={16} />
               새로고침
             </MGButton>
           </div>
@@ -273,7 +266,7 @@ const PgConfigurationList = () => {
         {/* 에러 메시지 */}
         {error && (
           <div className="error-alert">
-            <AlertCircle size={20} />
+            <AlertCircleIcon size={20} />
             <span>{error}</span>
           </div>
         )}
@@ -281,7 +274,7 @@ const PgConfigurationList = () => {
         {/* PG 설정 목록 */}
         {configurations.length === 0 ? (
           <div className="empty-state">
-            <CreditCard size={48} />
+            <CreditCardIcon size={48} />
             <h3>PG 설정이 없습니다</h3>
             <p>새로운 PG 설정을 등록해주세요.</p>
             <MGButton
@@ -290,7 +283,6 @@ const PgConfigurationList = () => {
               onClick={() => navigate('/tenant/pg-configurations/new')}
               preventDoubleClick={false}
             >
-              <Plus size={18} />
               PG 설정 등록
             </MGButton>
           </div>
@@ -360,7 +352,6 @@ const PgConfigurationList = () => {
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
                       preventDoubleClick={false}
                     >
-                      <Eye size={16} />
                       상세보기
                     </MGButton>
 
@@ -375,7 +366,6 @@ const PgConfigurationList = () => {
                         loadingText="테스트 중..."
                         preventDoubleClick={false}
                       >
-                        <RefreshCw size={16} />
                         연결 테스트
                       </MGButton>
                     )}
@@ -389,7 +379,6 @@ const PgConfigurationList = () => {
                           onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
                           preventDoubleClick={false}
                         >
-                          <Edit size={16} />
                           수정
                         </MGButton>
                         <MGButton
@@ -402,7 +391,6 @@ const PgConfigurationList = () => {
                           }}
                           preventDoubleClick={false}
                         >
-                          <Trash2 size={16} />
                           삭제
                         </MGButton>
                       </>
@@ -411,14 +399,14 @@ const PgConfigurationList = () => {
 
                   {config.approvalStatus === 'PENDING' && (
                     <div className="pending-notice">
-                      <Clock size={14} />
+                      <ClockIcon size={14} />
                       <span>승인 대기 중입니다. 승인 후 사용 가능합니다.</span>
                     </div>
                   )}
 
                   {config.approvalStatus === 'REJECTED' && config.rejectionReason && (
                     <div className="rejected-notice">
-                      <XCircle size={14} />
+                      <XCircleIcon size={14} />
                       <span>거부됨: {config.rejectionReason}</span>
                     </div>
                   )}

@@ -14,10 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, Clock, BarChart3, Users, Settings, 
-  Link, Star, TrendingUp, CheckCircle 
-} from 'lucide-react';
+
 import BaseWidget from './BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { getStatusLabel } from '../../../utils/colorUtils';
@@ -27,7 +24,6 @@ import { useWidget } from '../../../hooks/useWidget';
 import './SummaryPanelsWidget.css';
 import MGButton from '../../common/MGButton';
 import '../SummaryPanels.css';
-
 const SummaryPanelsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -156,9 +152,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
           <div className="summary-panel consultation-summary">
             <div className="summary-items">
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Clock size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.UPCOMING_CONSULTATIONS}</div>
                   <div className="summary-value">
@@ -201,9 +195,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
               </div>
               
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Calendar size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.THIS_WEEK_CONSULTATIONS}</div>
                   <div className="summary-value">
@@ -238,9 +230,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
           <div className="summary-panel consultation-stats">
             <div className="summary-items">
               <div className="summary-item">
-                <div className="summary-icon">
-                  <BarChart3 size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.THIS_MONTH_CONSULTATIONS}</div>
                   <div className="summary-value">
@@ -251,9 +241,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
               </div>
               
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Star size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.RATING}</div>
                   <div className="summary-value">
@@ -285,9 +273,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
           <div className="summary-panel system-status">
             <div className="summary-items">
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Users size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.TOTAL_USERS}</div>
                   <div className="summary-value">
@@ -298,9 +284,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
               </div>
               
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Calendar size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.TODAY_CONSULTATIONS}</div>
                   <div className="summary-value">
@@ -331,9 +315,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
           <div className="summary-panel mapping-management">
             <div className="summary-items">
               <div className="summary-item">
-                <div className="summary-icon">
-                  <Clock size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.PENDING_APPROVALS}</div>
                   <div className="summary-value">
@@ -344,9 +326,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
               </div>
               
               <div className="summary-item">
-                <div className="summary-icon">
-                  <CheckCircle size={20} />
-                </div>
+                <div className="summary-icon" />
                 <div className="summary-info">
                   <div className="summary-label">{DASHBOARD_LABELS.ACTIVE_MAPPINGS}</div>
                   <div className="summary-value">
@@ -364,7 +344,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
                 type="button"
                 onClick={handleMappingManagement}
               >
-                <Settings size={16} />
+                
                 매핑 관리
               </MGButton>
             </div>

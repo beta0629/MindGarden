@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Edit, Trash2, Send, Archive } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -310,7 +309,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         aria-label="게시"
                         onClick={() => handlePublish(notification.id)}
                       >
-                        <Send size={16} />
+                        게시
                       </MGButton>
                     )}
                     {notification.status === 'PUBLISHED' && (
@@ -322,7 +321,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         aria-label="보관"
                         onClick={() => handleArchive(notification.id)}
                       >
-                        <Archive size={16} />
+                        보관
                       </MGButton>
                     )}
                     <MGButton
@@ -333,7 +332,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       aria-label="수정"
                       onClick={() => handleEdit(notification)}
                     >
-                      <Edit size={16} />
+                      수정
                     </MGButton>
                     <MGButton
                       type="button"
@@ -343,7 +342,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       aria-label="삭제"
                       onClick={() => handleDelete(notification.id)}
                     >
-                      <Trash2 size={16} />
+                      삭제
                     </MGButton>
                   </div>
                 </li>

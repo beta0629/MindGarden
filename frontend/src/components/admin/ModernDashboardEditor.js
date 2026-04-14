@@ -22,10 +22,8 @@ import {
   getErpWidgetTypes
 } from '../dashboard/widgets/WidgetRegistry';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { 
-  FaGripVertical, 
-  FaTrash, 
-  FaCog, 
+import {
+  FaGripVertical,
   FaPlus,
   FaChartBar,
   FaUsers,
@@ -311,7 +309,7 @@ const ModernDashboardEditor = ({
                         title="설정"
                         preventDoubleClick={false}
                       >
-                        <FaCog />
+                        설정
                       </MGButton>
                       <MGButton
                         type="button"
@@ -322,7 +320,7 @@ const ModernDashboardEditor = ({
                         title="삭제"
                         preventDoubleClick={false}
                       >
-                        <FaTrash />
+                        삭제
                       </MGButton>
                     </div>
                   </div>

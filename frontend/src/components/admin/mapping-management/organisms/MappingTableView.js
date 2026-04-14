@@ -8,7 +8,6 @@
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, XCircle, CheckCircle, CreditCard, DollarSign, Database, Calendar } from 'lucide-react';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { StatusBadge } from '../../../common';
@@ -133,7 +132,6 @@ const MappingTableView = ({
                     </StatusBadge>
                     {isErpIntegrated && (
                       <span className="mg-v2-mapping-table__erp" title="ERP 연동됨">
-                        <Database size={12} />
                         ERP
                       </span>
                     )}
@@ -155,7 +153,7 @@ const MappingTableView = ({
                       onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
                       title="스케줄 보기"
                     >
-                      <Calendar size={14} />
+                      스케줄
                     </MGButton>
                   )}
                 </td>
@@ -173,7 +171,7 @@ const MappingTableView = ({
                         title="상세"
                         loadingText=""
                       >
-                        <Eye size={14} />
+                        상세
                       </MGButton>
                     )}
                     {mapping.status === 'PENDING_PAYMENT' && (
@@ -187,7 +185,7 @@ const MappingTableView = ({
                         title="결제 확인"
                         loadingText=""
                       >
-                        <CreditCard size={14} />
+                        결제 확인
                       </MGButton>
                     )}
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
@@ -201,7 +199,7 @@ const MappingTableView = ({
                         title="입금 확인"
                         loadingText=""
                       >
-                        <DollarSign size={14} />
+                        입금 확인
                       </MGButton>
                     )}
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
@@ -216,7 +214,7 @@ const MappingTableView = ({
                         title="승인"
                         loadingText=""
                       >
-                        <CheckCircle size={14} />
+                        승인
                       </MGButton>
                     )}
                     {onEdit && (
@@ -230,7 +228,7 @@ const MappingTableView = ({
                         title="수정"
                         loadingText=""
                       >
-                        <Edit size={14} />
+                        수정
                       </MGButton>
                     )}
                     {onRefund && (
@@ -245,7 +243,7 @@ const MappingTableView = ({
                         title="환불"
                         loadingText=""
                       >
-                        <XCircle size={14} />
+                        환불
                       </MGButton>
                     )}
                   </div>

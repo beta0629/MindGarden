@@ -410,7 +410,6 @@ const ClientDashboard = () => {
               onClick={() => navigate('/client/schedule')}
               preventDoubleClick={false}
             >
-              <Calendar size={24} />
               <span>상담 일정</span>
             </MGButton>
             <MGButton
@@ -419,7 +418,6 @@ const ClientDashboard = () => {
               onClick={() => navigate('/client/messages')}
               preventDoubleClick={false}
             >
-              <MessageCircle size={24} />
               <span>메시지</span>
             </MGButton>
             <MGButton
@@ -428,7 +426,6 @@ const ClientDashboard = () => {
               onClick={() => navigate('/client/payment-history')}
               preventDoubleClick={false}
             >
-              <CreditCard size={24} />
               <span>결제 내역</span>
             </MGButton>
             <MGButton
@@ -437,7 +434,6 @@ const ClientDashboard = () => {
               onClick={() => navigate('/client/settings')}
               preventDoubleClick={false}
             >
-              <Heart size={24} />
               <span>내 정보</span>
             </MGButton>
           </div>

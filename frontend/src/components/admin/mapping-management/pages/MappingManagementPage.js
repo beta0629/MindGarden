@@ -8,17 +8,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  CheckCircle,
-  Pause,
-  Clock,
-  DollarSign,
-  XCircle,
-  CircleDot,
-  Ban,
-  FileText
-} from 'lucide-react';
 import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -141,23 +130,10 @@ const MappingManagementPage = () => {
     return variantMap[status] || 'secondary';
   };
 
-  /** 상태 아이콘: 이모지 미사용. 행/테이블에서 Lucide 아이콘 컴포넌트로 표시 */
+  /** Display boundary: no Lucide in status row; badge label only. */
   const getStatusIcon = () => null;
 
-  /** 매칭 상태별 Lucide 아이콘 컴포넌트 (아토믹 디자인·텍스트 보조용) */
-  const getStatusIconComponent = (status) => {
-    const iconMap = {
-      ACTIVE: CheckCircle,
-      INACTIVE: Pause,
-      PENDING_PAYMENT: Clock,
-      PAYMENT_CONFIRMED: DollarSign,
-      TERMINATED: XCircle,
-      SESSIONS_EXHAUSTED: CircleDot,
-      SUSPENDED: Pause,
-      CANCELLED: Ban
-    };
-    return iconMap[status] || FileText;
-  };
+  const getStatusIconComponent = () => null;
 
   const loadMappingStatusInfo = async() => {
     try {
@@ -425,7 +401,6 @@ const MappingManagementPage = () => {
               className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
               onClick={() => setShowCreateModal(true)}
             >
-              <Plus size={20} />
               새 매칭 생성
             </MGButton>
           }

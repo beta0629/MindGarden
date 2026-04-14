@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
-import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
-import { Bell, AlertCircle, Info, AlertTriangle, Settings, Calendar } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './SystemNotifications.css';
 import SafeText from '../common/SafeText';
 
@@ -16,7 +13,6 @@ import SafeText from '../common/SafeText';
  */
 const SystemNotifications = () => {
   const { user, isLoggedIn } = useSession();
-  // const { loadUnreadSystemCount } = useNotification(); // 이벤트 기반으로 카운트 갱신
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -26,11 +22,11 @@ const SystemNotifications = () => {
   // 공지 타입별 정보
   const getNotificationTypeInfo = (type) => {
     const types = {
-      GENERAL: { icon: Info, label: '일반', colorClass: 'mg-v2-color-primary' },
-      IMPORTANT: { icon: AlertCircle, label: '중요', colorClass: 'mg-v2-color-warning' },
-      URGENT: { icon: AlertTriangle, label: '긴급', colorClass: 'mg-v2-color-danger' },
-      MAINTENANCE: { icon: Settings, label: '점검', colorClass: 'mg-v2-color-info' },
-      UPDATE: { icon: Calendar, label: '업데이트', colorClass: 'mg-v2-color-success' }
+      GENERAL: { label: '일반', colorClass: 'mg-v2-color-primary' },
+      IMPORTANT: { label: '중요', colorClass: 'mg-v2-color-warning' },
+      URGENT: { label: '긴급', colorClass: 'mg-v2-color-danger' },
+      MAINTENANCE: { label: '점검', colorClass: 'mg-v2-color-info' },
+      UPDATE: { label: '업데이트', colorClass: 'mg-v2-color-success' }
     };
     return types[type] || types.GENERAL;
   };
@@ -122,7 +118,6 @@ const SystemNotifications = () => {
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
           <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-            <Bell className="mg-v2-color-primary" size={24} />
             <h2 className="mg-h3 mg-mb-0">시스템 공지</h2>
           </div>
           <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
@@ -140,9 +135,6 @@ const SystemNotifications = () => {
           <div>
             {notifications.length === 0 ? (
               <div className="mg-empty-state">
-                <div className="mg-empty-state__icon">
-                  <Bell size={48} />
-                </div>
                 <div className="mg-empty-state__text">공지사항이 없습니다</div>
                 <div className="mg-empty-state__hint">새로운 공지가 등록되면 알려드립니다.</div>
               </div>
@@ -150,8 +142,6 @@ const SystemNotifications = () => {
               <div className="mg-space-y-sm">
                 {notifications.map((notification) => {
                   const typeInfo = getNotificationTypeInfo(notification.notificationType);
-                  const IconComponent = typeInfo.icon;
-
                   return (
                     <div
                       key={notification.id}
@@ -161,7 +151,7 @@ const SystemNotifications = () => {
                       <div className="mg-flex mg-gap-md">
                         {/* 아이콘 */}
                         <div className={`notification-icon ${typeInfo.colorClass}`}>
-                          <IconComponent size={24} />
+                          <span className="mg-v2-text-sm mg-font-weight-semibold">{typeInfo.label}</span>
                         </div>
 
                         {/* 내용 */}

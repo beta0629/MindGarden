@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import './PasswordResetModal.css';
@@ -89,7 +88,6 @@ const PasswordResetModal = ({
             }
         >
             <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
-                <AlertTriangle size={20} aria-hidden />
                 <p className="mg-v2-info-text">
                     <strong>{userName}</strong> {userTypeLabel}의 비밀번호를 초기화합니다.
                 </p>
@@ -131,16 +129,11 @@ const PasswordResetModal = ({
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? (
-                                <EyeOff size={18} aria-hidden />
-                            ) : (
-                                <Eye size={18} aria-hidden />
-                            )}
+                            {showPassword ? '비��번호 ��기기'.replace('비��번호 ', '') : '비��번호 보기'.replace('비��번호 ', '')}
                         </MGButton>
                     </div>
                     {errors.newPassword && (
                         <span className="mg-v2-form-error" role="alert">
-                            <AlertTriangle size={16} aria-hidden />
                             {errors.newPassword}
                         </span>
                     )}
@@ -174,16 +167,11 @@ const PasswordResetModal = ({
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? (
-                                <EyeOff size={18} aria-hidden />
-                            ) : (
-                                <Eye size={18} aria-hidden />
-                            )}
+                            {showPassword ? '비��번호 ��기기'.replace('비��번호 ', '') : '비��번호 보기'.replace('비��번호 ', '')}
                         </MGButton>
                     </div>
                     {errors.confirmPassword && (
                         <span className="mg-v2-form-error" role="alert">
-                            <AlertTriangle size={16} aria-hidden />
                             {errors.confirmPassword}
                         </span>
                     )}

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
+import { ICONS } from '../../constants/icons';
+
+const BarChartIcon = ICONS.BAR_CHART;
+const CalendarIcon = ICONS.CALENDAR;
+const BuildingIcon = ICONS.BUILDING;
+const TargetIcon = ICONS.TARGET;
+const DollarSignIcon = ICONS.DOLLAR_SIGN;
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -158,13 +164,13 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     {/* 필터 설정 */}
                     <div className="mg-v2-form-section">
                         <h3 className="mg-v2-section-title">
-                            <BarChart size={20} className="mg-v2-section-title-icon" />
+                            <BarChartIcon size={20} className="mg-v2-section-title-icon" />
                             필터 설정
                         </h3>
                         <div className="mg-v2-form-grid">
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
-                                    <Calendar size={16} className="mg-v2-form-label-icon" />
+                                    <CalendarIcon size={16} className="mg-v2-form-label-icon" />
                                     시작일
                                 </label>
                                 <input
@@ -177,7 +183,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             </div>
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
-                                    <Calendar size={16} className="mg-v2-form-label-icon" />
+                                    <CalendarIcon size={16} className="mg-v2-form-label-icon" />
                                     종료일
                                 </label>
                                 <input
@@ -190,7 +196,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             </div>
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
-                                    <Building size={16} className="mg-v2-form-label-icon" />
+                                    <BuildingIcon size={16} className="mg-v2-form-label-icon" />
                                     지점
                                 </label>
                                 <CustomSelect
@@ -216,7 +222,6 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 disabled={loading || recalculating}
                                 variant="primary"
                             >
-                                <BarChart size={20} className="mg-v2-icon-inline" />
                                 조회
                             </MGButton>
                             <MGButton
@@ -227,7 +232,6 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 loadingText="재계산 중..."
                                 variant="secondary"
                             >
-                                <RefreshCw size={20} className="mg-v2-icon-inline" />
                                 재계산
                             </MGButton>
                         </div>
@@ -241,7 +245,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     ) : metrics ? (
                         <div className="mg-v2-form-section mg-v2-mt-lg">
                             <h4 className="mg-v2-section-title mg-v2-mb-md">
-                                <Target size={20} className="mg-v2-section-title-icon" />
+                                <TargetIcon size={20} className="mg-v2-section-title-icon" />
                                 주요 성과 지표
                             </h4>
                             <div className="mg-v2-info-grid">
@@ -254,7 +258,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                     <span className="mg-v2-info-value">{metrics.totalConsultations || 0}건</span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <DollarSign size={16} className="mg-v2-icon-inline" />
+                                    <DollarSignIcon size={16} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">총 매출</span>
                                     <span className="mg-v2-info-value">
                                         {(metrics.totalRevenue || 0).toLocaleString()}원
@@ -310,7 +314,6 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 disabled={loading}
                                 variant="primary"
                             >
-                                <RefreshCw size={20} className="mg-v2-icon-inline" />
                                 데이터 로드
                             </MGButton>
                         </div>

@@ -14,13 +14,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, AlertTriangle, Eye, DollarSign, Calendar, User, CheckCircle } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
 import MGButton from '../../../common/MGButton';
-
 const PendingDepositWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -138,9 +137,7 @@ const PendingDepositWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="deposit-empty-state">
-          <div className="empty-icon-wrapper">
-            <CheckCircle className="empty-icon" />
-          </div>
+          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">미결제 보증금이 없습니다</h3>
           <p className="empty-description">
             {widget.config?.emptyMessage || '모든 보증금이 처리되었습니다.'}
@@ -157,18 +154,14 @@ const PendingDepositWidget = ({ widget, user }) => {
         {widget.config?.showStats !== false && stats && (
           <div className="deposit-stats">
             <div className="stat-card total">
-              <div className="stat-icon">
-                <CreditCard />
-              </div>
+              <div className="stat-icon" />
               <div className="stat-info">
                 <div className="stat-number">{stats.count}</div>
                 <div className="stat-label">미결제 건수</div>
               </div>
             </div>
             <div className="stat-card amount">
-              <div className="stat-icon">
-                <DollarSign />
-              </div>
+              <div className="stat-icon" />
               <div className="stat-info">
                 <div className="stat-number">{formatAmount(stats.totalAmount)}</div>
                 <div className="stat-label">총 금액</div>
@@ -176,9 +169,7 @@ const PendingDepositWidget = ({ widget, user }) => {
             </div>
             {stats.urgent > 0 && (
               <div className="stat-card urgent">
-                <div className="stat-icon">
-                  <AlertTriangle />
-                </div>
+                <div className="stat-icon" />
                 <div className="stat-info">
                   <div className="stat-number">{stats.urgent}</div>
                   <div className="stat-label">긴급 처리</div>
@@ -202,14 +193,14 @@ const PendingDepositWidget = ({ widget, user }) => {
                 <div className="deposit-info">
                   <div className="deposit-header">
                     <div className="client-info">
-                      <User className="client-icon" />
+                      
                       <span className="client-name">{deposit.clientName}</span>
                     </div>
                     <div className="deposit-amount">{formatAmount(deposit.amount)}</div>
                   </div>
                   <div className="deposit-details">
                     <div className="detail-item">
-                      <Calendar className="detail-icon" />
+                      
                       <span className="detail-label">마감일:</span>
                       <span className="detail-value">{formatDate(deposit.dueDate)}</span>
                     </div>
@@ -235,9 +226,7 @@ const PendingDepositWidget = ({ widget, user }) => {
                     onClick={() => handleViewDeposit(deposit.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                  >
-                    <Eye className="action-icon" />
-                  </MGButton>
+                   />
                 </div>
               </div>
             ))}
@@ -249,16 +238,15 @@ const PendingDepositWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <CreditCard className="widget-header-icon" />,
     subtitle: '미결제 보증금 관리',
     actions: [
       {
-        icon: 'RefreshCw',
+        icon: 'REFRESH_CW',
         label: '새로고침',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
+        icon: 'EXTERNAL_LINK',
         label: '전체 보기',
         onClick: handleViewAll
       }

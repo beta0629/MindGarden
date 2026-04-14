@@ -5,11 +5,7 @@ import {
   Package,
   CreditCard,
   Clock,
-  CheckCircle,
-  Eye,
-  Edit,
-  XCircle,
-  DollarSign
+  CheckCircle
 } from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
@@ -99,7 +95,6 @@ const MappingCard = ({
             size="small"
             onClick={() => onView(mapping)}
           >
-            <Eye size={16} />
             상세보기
           </ActionButton>
         )}
@@ -194,7 +189,6 @@ const MappingCard = ({
                             size="small"
                             onClick={() => setShowPaymentModal(true)}
                         >
-                            <CreditCard size={16} />
                             결제 확인
                         </ActionButton>
                     )}
@@ -205,7 +199,6 @@ const MappingCard = ({
                             size="small"
                             onClick={() => setShowDepositModal(true)}
                         >
-                            <DollarSign size={16} />
                             입금 확인
                         </ActionButton>
                     )}
@@ -216,7 +209,6 @@ const MappingCard = ({
                             size="small"
                             onClick={() => onApprove(mapping)}
                         >
-                            <CheckCircle size={18} />
                             최종 승인
                         </ActionButton>
                     )}
@@ -227,7 +219,6 @@ const MappingCard = ({
                             size="small"
                             onClick={() => onEdit(mapping)}
                         >
-                            <Edit size={16} />
                             수정
                         </ActionButton>
                     )}
@@ -238,7 +229,6 @@ const MappingCard = ({
                             size="small"
                             onClick={() => onRefund(mapping)}
                         >
-                            <XCircle size={16} />
                             환불
                         </ActionButton>
                     )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { AlertCircle, ChevronRight } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import Icon from '../../ui/Icon/Icon';
 import UrgentClientCard from './UrgentClientCard';
 import { ContentSection } from '../content';
 
@@ -26,7 +26,7 @@ const UrgentClientsSection = ({
     <ContentSection
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <AlertCircle size={18} />
+          <Icon name="ALERT_CIRCLE" size="MD" color="TRANSPARENT" />
           긴급 확인 필요 내담자
         </div>
       }
@@ -35,12 +35,12 @@ const UrgentClientsSection = ({
           type="button"
           variant="outline"
           size="small"
-          className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm mg-button--with-icon"
+          className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
           onClick={onViewAllClients}
           preventDoubleClick={false}
           aria-label="긴급 내담자 전체보기"
         >
-          전체보기 <ChevronRight size={16} />
+          <span>전체보기</span>
         </MGButton>
       }
       className={`mg-v2-urgent-clients-section ${className}`}

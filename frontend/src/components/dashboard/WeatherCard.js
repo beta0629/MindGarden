@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../common/MGButton';
-import { CloudSun, Droplet, Wind, RefreshCw, AlertTriangle } from 'lucide-react';
-import '../../styles/unified-design-tokens.css';
 
+import '../../styles/unified-design-tokens.css';
 /**
  * 날씨 정보 카드 컴포넌트
 /**
@@ -192,7 +191,7 @@ const WeatherCard = () => {
       <div className="mg-v2-card">
         <div className="mg-v2-card-body">
           <div className="mg-v2-empty-state">
-            <AlertTriangle className="mg-v2-empty-state-icon" />
+            
             <div className="mg-v2-empty-state-text">
               <h3>날씨 정보 오류</h3>
               <MGButton
@@ -216,9 +215,7 @@ const WeatherCard = () => {
           <div 
             className="mg-v2-weather-icon"
             style={{ background: getTemperatureColor(weatherData.temperature) }}
-          >
-            <CloudSun size={24} color="white" />
-          </div>
+           />
           
           <div className="mg-v2-weather-content">
             <h3 className="mg-v2-h3 mg-mb-sm">오늘의 날씨</h3>
@@ -235,18 +232,18 @@ const WeatherCard = () => {
             
             <div className="mg-v2-weather-details">
               <span className="mg-v2-weather-detail">
-                <Droplet size={14} />
+                
                 습도 {weatherData.humidity}%
               </span>
               <span className="mg-v2-weather-detail">
-                <Wind size={14} />
+                
                 바람 {weatherData.windSpeed}m/s
               </span>
             </div>
             
             <div className="mg-v2-weather-location">
               <span className="mg-v2-text-xs mg-v2-color-text-secondary">{weatherData.location}</span>
-              <RefreshCw size={12} className="mg-v2-color-text-secondary" />
+              
             </div>
           </div>
         </div>

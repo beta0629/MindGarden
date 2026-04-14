@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
@@ -492,7 +491,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                             className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                             onClick={handleCreateClient}
                         >
-                            <Plus size={20} />
                             새 내담자 등록
                         </MGButton>
                     }
@@ -544,7 +542,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                             <div className="mg-v2-mapping-kpi-section__grid">
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
-                                        <Users size={24} />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">총 내담자</span>
@@ -553,7 +550,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
-                                        <UserCheck size={24} />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">활성</span>
@@ -562,7 +558,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
-                                        <Clock size={24} />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">대기</span>
@@ -571,7 +566,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
-                                        <Link2 size={24} />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">총 매칭</span>
@@ -600,7 +594,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
                                             onClick={handleCreateClient}
                                         >
-                                            <Plus size={16} className="mg-v2-mapping-search-section__embedded-create-icon" />
                                             새 내담자 등록
                                         </MGButton>
                                     )}

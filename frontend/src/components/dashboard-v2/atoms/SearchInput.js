@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { Search } from 'lucide-react';
+import Icon from '../../ui/Icon/Icon';
 import './SearchInput.css';
 
 const PLACEHOLDER = '통합 검색...';
@@ -16,10 +16,11 @@ const SEARCH_INPUT_WIDTH = 300;
 const SearchInput = ({ value = '', onChange, placeholder = PLACEHOLDER, className = '' }) => {
   return (
     <div className={`mg-v2-search-input ${className}`}>
-      <Search
+      <Icon
+        name="SEARCH"
+        size="LG"
+        color="TRANSPARENT"
         className="mg-v2-search-input__icon"
-        size={18}
-        strokeWidth={1.8}
         aria-hidden="true"
       />
       <input

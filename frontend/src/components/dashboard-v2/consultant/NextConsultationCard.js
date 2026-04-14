@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Calendar, FileText, ChevronRight } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import Icon from '../../ui/Icon/Icon';
 
 /**
  * 다음 상담 준비 카드 컴포넌트
@@ -32,7 +32,7 @@ const NextConsultationCard = ({
     <div className={`mg-v2-next-consultation-card ${className}`}>
       <div className="mg-v2-next-consultation-card__header">
         <div className="mg-v2-next-consultation-card__title">
-          <Calendar size={18} />
+          <Icon name="CALENDAR" size="MD" color="TRANSPARENT" />
           다음 상담 준비
         </div>
         <div className="mg-v2-badge mg-v2-badge--primary">
@@ -64,25 +64,23 @@ const NextConsultationCard = ({
           type="button"
           variant="outline"
           size="small"
-          className="mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm mg-button--with-icon"
+          className="mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm"
           onClick={() => onViewPreviousRecords(consultation.clientId)}
           preventDoubleClick={false}
           aria-label={`${consultation.clientName} 이전 일지 보기`}
         >
-          <FileText size={16} />
-          이전 일지 보기
+          <span>이전 일지 보기</span>
         </MGButton>
         <MGButton
           type="button"
           variant="primary"
           size="small"
-          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-sm mg-button--with-icon mg-button--icon-right"
+          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-sm"
           onClick={() => onViewDetails(consultation.scheduleId)}
           preventDoubleClick={false}
           aria-label={`${consultation.clientName} 상담 상세보기`}
         >
-          상세보기
-          <ChevronRight size={16} />
+          <span>상세보기</span>
         </MGButton>
       </div>
     </div>

@@ -16,14 +16,13 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, ChevronDown, ChevronRight, CheckCircle, XCircle, Users, Settings } from 'lucide-react';
+
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import './PermissionWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
-
 const PermissionWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
@@ -108,19 +107,16 @@ const PermissionWidget = ({ widget, user }) => {
 
   // 헤더 설정
   const headerConfig = {
-    icon: <Shield className="widget-header-icon" />,
     badge: displayData.totalCount > 0 ? {
       text: `${displayData.activeCount}/${displayData.totalCount}`,
       variant: displayData.activeCount === displayData.totalCount ? 'success' : 'info'
     } : null,
     actions: [
       {
-        icon: 'RefreshCw',
         label: '새로고침',
         onClick: refresh
       },
       {
-        icon: 'ExternalLink',
         label: '사용자 관리',
         onClick: () => navigate('/admin/user-management')
       }
@@ -152,28 +148,13 @@ const PermissionWidget = ({ widget, user }) => {
     navigate('/admin/user-management');
   };
 
-  // 권한 상태별 아이콘 결정
-  const getPermissionIcon = (permission) => {
+  const getPermissionStatusLabel = (permission) => {
     if (!permission.isActive) {
-      return <XCircle className="permission-icon disabled" />;
+      return '비활성';
     }
-    return permission.hasPermission 
-      ? <CheckCircle className="permission-icon active" />
-      : <XCircle className="permission-icon inactive" />;
+    return permission.hasPermission ? '허용' : '미허용';
   };
 
-  // 카테고리별 아이콘
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case '관리 권한':
-        return <Settings className="category-icon" />;
-      case '사용자 권한':
-        return <Users className="category-icon" />;
-      default:
-        return <Shield className="category-icon" />;
-    }
-  };
-  
   const groupedPermissions = hasData ? groupByCategory(displayData.permissions) : {};
   const maxItems = widget.config?.maxItems || 10;
   
@@ -216,16 +197,13 @@ const PermissionWidget = ({ widget, user }) => {
                   onClick={() => toggleCategory(category)}
                 >
                   <div className="category-left">
-                    {getCategoryIcon(category)}
                     <span className="category-title"><SafeText>{category}</SafeText></span>
                     <span className="category-count">({permissions.length})</span>
                   </div>
                   <div className="category-right">
-                    {expandedCategories[category] ? (
-                      <ChevronDown className="chevron-icon" />
-                    ) : (
-                      <ChevronRight className="chevron-icon" />
-                    )}
+                    <span className="mg-text-sm mg-text-muted">
+                      {expandedCategories[category] ? '접기' : '펼치기'}
+                    </span>
                   </div>
                 </div>
                 
@@ -244,7 +222,7 @@ const PermissionWidget = ({ widget, user }) => {
                           !permission.isActive ? 'disabled' : 
                           permission.hasPermission ? 'active' : 'inactive'
                         }`}>
-                          {getPermissionIcon(permission)}
+                          {getPermissionStatusLabel(permission)}
                         </div>
                       </div>
                     ))}
@@ -274,14 +252,13 @@ const PermissionWidget = ({ widget, user }) => {
                 size="small"
                 onClick={goUserManagement}
               >
-                <Settings className="btn-icon" />
+                
                 사용자 관리로 이동
               </MGButton>
             </div>
           </div>
         ) : (
           <div className="permission-empty">
-            <Shield className="empty-icon" />
             <p>권한 정보가 없습니다</p>
             <MGButton variant="primary" size="small" onClick={refresh}>
               다시 시도

@@ -19,8 +19,6 @@ import { ViewModeToggle } from '../common';
 import Badge from '../common/Badge';
 import {
   DollarSign,
-  RefreshCw,
-  Search,
   Link2,
   BarChart3,
   Calendar,
@@ -29,10 +27,6 @@ import {
   LayoutDashboard,
   LayoutGrid,
   List,
-  Download,
-  Eye,
-  Pencil,
-  Trash2,
   Inbox,
   TrendingUp,
   TrendingDown,
@@ -475,7 +469,7 @@ const FinancialManagement = () => {
         aria-label="거래 목록 내보내기"
         preventDoubleClick={false}
       >
-        <Download size={16} aria-hidden /> 내보내기
+        내보내기
       </MGButton>
     ) : null;
 
@@ -502,7 +496,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
                     >
-                      <ClipboardList size={18} aria-hidden /> 거래 내역
+                      거래 내역
                     </MGButton>
                     <MGButton
                       type="button"
@@ -513,7 +507,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
                     >
-                      <Calendar size={18} aria-hidden /> 달력 뷰
+                      달력 뷰
                     </MGButton>
                     <MGButton
                       type="button"
@@ -524,7 +518,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('dashboard')}
                       preventDoubleClick={false}
                     >
-                      <LayoutDashboard size={18} aria-hidden /> 대시보드
+                      대시보드
                     </MGButton>
                   </div>
                 </div>
@@ -705,7 +699,7 @@ const FinancialManagement = () => {
                             aria-busy={silentListRefreshing}
                             preventDoubleClick={false}
                           >
-                            <RefreshCw size={16} aria-hidden /> 필터 초기화
+                            필터 초기화
                           </MGButton>
                           <MGButton
                             variant="primary"
@@ -719,7 +713,7 @@ const FinancialManagement = () => {
                             loading={silentListRefreshing}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            <Search size={16} aria-hidden /> 검색
+                            검색
                           </MGButton>
                         </div>
                       </div>
@@ -909,7 +903,7 @@ const FinancialManagement = () => {
                                 onClick={() => handleViewTransaction(transaction)}
                                 preventDoubleClick={false}
                               >
-                                <Eye size={14} aria-hidden /> 보기
+                                보기
                               </MGButton>
                               <MGButton
                                 type="button"
@@ -925,7 +919,7 @@ const FinancialManagement = () => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                               >
-                                <Pencil size={14} aria-hidden /> 수정
+                                수정
                               </MGButton>
                               {isAdmin() && (
                                 <MGButton
@@ -941,7 +935,7 @@ const FinancialManagement = () => {
                                   onClick={() => handleDeleteTransaction(transaction)}
                                   preventDoubleClick={false}
                                 >
-                                  <Trash2 size={14} aria-hidden /> 삭제
+                                  삭제
                                 </MGButton>
                               )}
                             </div>
@@ -1134,7 +1128,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
                     >
-                      <ClipboardList size={16} aria-hidden /> 거래 내역 보기
+                      거래 내역 보기
                     </MGButton>
                     <MGButton
                       type="button"
@@ -1145,7 +1139,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
                     >
-                      <Calendar size={16} aria-hidden /> 달력 뷰 보기
+                      달력 뷰 보기
                     </MGButton>
                     <MGButton
                       type="button"
@@ -1156,7 +1150,7 @@ const FinancialManagement = () => {
                       onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                       preventDoubleClick={false}
                     >
-                      <Link2 size={16} aria-hidden /> 매핑 시스템 확인
+                      매핑 시스템 확인
                     </MGButton>
                     <MGButton
                       type="button"
@@ -1167,7 +1161,7 @@ const FinancialManagement = () => {
                       onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}
                       preventDoubleClick={false}
                     >
-                      <Building2 size={16} aria-hidden /> 통합 재무 대시보드
+                      통합 재무 대시보드
                     </MGButton>
                   </div>
                 </section>

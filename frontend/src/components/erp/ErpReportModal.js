@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
+import { FileBarChart, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
 import { ERP_API, getApiBaseUrl } from '../../constants/api';
 import { getDefaultApiHeadersAsync } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -296,7 +296,6 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 onClick={handleClose}
                                 disabled={loading}
                             >
-                                <XCircle size={20} className="mg-v2-icon-inline" aria-hidden />
                                 취소
                             </MGButton>
                             <MGButton
@@ -309,7 +308,6 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 loading={loading}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                <TrendingUp size={20} className="mg-v2-icon-inline" aria-hidden />
                                 보고서 생성
                             </MGButton>
                         </div>
@@ -330,7 +328,6 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     className="mg-v2-button mg-v2-button--success"
                                     onClick={handleDownloadReport}
                                 >
-                                    <Download size={20} className="mg-v2-icon-inline" aria-hidden />
                                     다운로드
                                 </MGButton>
                             </div>

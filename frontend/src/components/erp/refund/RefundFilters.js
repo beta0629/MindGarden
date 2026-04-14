@@ -1,5 +1,4 @@
 // 현재 앱 라우트에서 미사용일 수 있으나 ErpFilterToolbar 패턴 SSOT 유지용으로 보관합니다.
-import { Download } from 'lucide-react';
 import CardContainer from '../../common/CardContainer';
 import MGButton from '../../common/MGButton';
 import { ErpFilterToolbar } from '../common';
@@ -123,7 +122,6 @@ const RefundFilters = ({
                   aria-label="엑셀 내보내기"
                   preventDoubleClick={false}
                 >
-                  <Download size={16} aria-hidden />
                   엑셀 내보내기
                 </MGButton>
               </div>

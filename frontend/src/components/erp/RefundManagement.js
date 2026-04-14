@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, List } from 'lucide-react';
+import { List } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -207,7 +207,6 @@ const RefundManagement = () => {
             aria-label="운영 현황으로 돌아가기"
             preventDoubleClick={false}
           >
-            <ArrowLeft size={16} aria-hidden />
             <span>운영 현황으로 돌아가기</span>
           </MGButton>
         }

@@ -6,7 +6,6 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { Package, FileText, ShoppingCart, Eye } from 'lucide-react';
 import './ErpCommon.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
@@ -158,7 +157,6 @@ const PurchaseManagement = () => {
                 onClick={() => setActiveTab('items')}
                 preventDoubleClick={false}
               >
-                <Package size={18} aria-hidden />
                 비품 목록
               </MGButton>
               <MGButton
@@ -169,7 +167,6 @@ const PurchaseManagement = () => {
                 onClick={() => setActiveTab('requests')}
                 preventDoubleClick={false}
               >
-                <FileText size={18} aria-hidden />
                 구매 요청
               </MGButton>
               <MGButton
@@ -180,7 +177,6 @@ const PurchaseManagement = () => {
                 onClick={() => setActiveTab('orders')}
                 preventDoubleClick={false}
               >
-                <ShoppingCart size={18} aria-hidden />
                 구매 주문
               </MGButton>
             </div>
@@ -278,7 +274,6 @@ const PurchaseManagement = () => {
                             type="button"
                             className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                           >
-                            <ShoppingCart size={16} aria-hidden />
                             구매 요청
                           </MGButton>
                         </div>
@@ -328,7 +323,7 @@ const PurchaseManagement = () => {
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
-                            <Eye size={16} aria-hidden /> 상세
+                            상세
                           </MGButton>
                         </div>
                       </MGCard>
@@ -379,7 +374,7 @@ const PurchaseManagement = () => {
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
-                            <Eye size={16} aria-hidden /> 상세
+                            상세
                           </MGButton>
                         </div>
                       </MGCard>

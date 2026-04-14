@@ -12,11 +12,8 @@ import {
   TrendingDown,
   Link2,
   BarChart3,
-  X,
   CircleDollarSign,
   ClipboardList,
-  ChevronLeft,
-  ChevronRight,
   TrendingUp
 } from 'lucide-react';
 
@@ -143,7 +140,7 @@ const FinancialCalendarView = () => {
                 disabled={silentListRefreshing || loading}
                 preventDoubleClick={false}
               >
-                <ChevronLeft size={20} aria-hidden />
+                이전
               </MGButton>
               <div className="mg-financial-calendar-header-title-row">
                 <h3 className="mg-calendar-title">
@@ -177,7 +174,7 @@ const FinancialCalendarView = () => {
                 disabled={silentListRefreshing || loading}
                 preventDoubleClick={false}
               >
-                <ChevronRight size={20} aria-hidden />
+                다음
               </MGButton>
             </div>
           )}
@@ -302,7 +299,7 @@ const FinancialCalendarView = () => {
               aria-label="닫기"
               preventDoubleClick={false}
             >
-              <X size={20} aria-hidden />
+              닫기
             </MGButton>
           </div>
           <div className="mg-financial-calendar-detail-summary-grid">

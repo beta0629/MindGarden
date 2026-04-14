@@ -6,7 +6,6 @@
  * @since 2025-03-16
  */
 
-import { Download } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { ErpFilterToolbar } from '../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
@@ -130,7 +129,6 @@ const RefundFilterBlock = ({
               aria-label="엑셀 내보내기"
               preventDoubleClick={false}
             >
-              <Download size={16} aria-hidden />
               엑셀 내보내기
             </MGButton>
             <MGButton

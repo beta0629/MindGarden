@@ -20,7 +20,6 @@ import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
@@ -289,7 +288,7 @@ const ItemManagement = () => {
                         preventDoubleClick={false}
                         onClick={() => setShowCreateModal(true)}
                       >
-                        <Plus size={16} /> 새 아이템 추가
+                        새 아이템 추가
                       </MGButton>
                     </div>
                   }
@@ -386,7 +385,7 @@ const ItemManagement = () => {
                                 preventDoubleClick={false}
                                 onClick={() => handleEditItem(item)}
                               >
-                                <Pencil size={14} /> 수정
+                                수정
                               </MGButton>
                               {isAdmin() && (
                                 <MGButton
@@ -401,7 +400,7 @@ const ItemManagement = () => {
                                   preventDoubleClick={false}
                                   onClick={() => handleDeleteItem(item)}
                                 >
-                                  <Trash2 size={14} /> 삭제
+                                  삭제
                                 </MGButton>
                               )}
                             </div>

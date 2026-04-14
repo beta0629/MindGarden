@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Package, FileEdit } from 'lucide-react';
 import '../../../styles/unified-design-tokens.css';
 import '../ErpCommon.css';
 
@@ -11,9 +10,9 @@ export const PURCHASE_HUB_PATHS = {
 };
 
 const HUB_TABS = [
-  { path: PURCHASE_HUB_PATHS.PROCUREMENT, label: '조달', icon: LayoutGrid },
-  { path: PURCHASE_HUB_PATHS.ITEMS, label: '품목', icon: Package },
-  { path: PURCHASE_HUB_PATHS.REQUEST, label: '구매 요청', icon: FileEdit }
+  { path: PURCHASE_HUB_PATHS.PROCUREMENT, label: '조달' },
+  { path: PURCHASE_HUB_PATHS.ITEMS, label: '품목' },
+  { path: PURCHASE_HUB_PATHS.REQUEST, label: '구매 요청' }
 ];
 
 function hubTabClassName({ isActive }) {
@@ -46,14 +45,13 @@ export function PurchaseHubSubNav() {
       aria-label="조달 허브"
     >
       <div className="erp-tabs mg-v2-purchase-hub-tabs">
-        {HUB_TABS.map(({ path, label, icon: Icon }) => (
+        {HUB_TABS.map(({ path, label }) => (
           <NavLink
             key={path}
             to={path}
             end={path === PURCHASE_HUB_PATHS.PROCUREMENT}
             className={hubTabClassName}
           >
-            <Icon size={18} aria-hidden />
             {label}
           </NavLink>
         ))}

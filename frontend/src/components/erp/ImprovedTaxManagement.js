@@ -17,15 +17,7 @@ import {
 } from '../../constants/salaryConstants';
 import { COMMON_CODE_API } from '../../constants/api';
 import { formatCurrency } from '../../utils/formatUtils';
-import {
-  Calculator,
-  LayoutDashboard,
-  FileText,
-  Settings,
-  Plus,
-  FilePlus,
-  FileCheck
-} from 'lucide-react';
+import { FileText } from 'lucide-react';
 import './ErpCommon.css';
 import './ImprovedTaxManagement.css';
 import notificationManager from '../../utils/notification';
@@ -337,7 +329,6 @@ const ImprovedTaxManagement = () => {
                         })}
                         onClick={() => setShowCreateModal(true)}
                       >
-                        <Plus size={16} aria-hidden />
                         추가 세금 계산
                       </MGButton>
                     )}
@@ -376,7 +367,6 @@ const ImprovedTaxManagement = () => {
                 onClick={() => setActiveTab('overview')}
                 preventDoubleClick={false}
               >
-                <LayoutDashboard size={18} aria-hidden />
                 개요
               </MGButton>
               <MGButton
@@ -387,7 +377,6 @@ const ImprovedTaxManagement = () => {
                 onClick={() => setActiveTab('calculations')}
                 preventDoubleClick={false}
               >
-                <Calculator size={18} aria-hidden />
                 세금 계산
               </MGButton>
               <MGButton
@@ -398,7 +387,6 @@ const ImprovedTaxManagement = () => {
                 onClick={() => setActiveTab('reports')}
                 preventDoubleClick={false}
               >
-                <FileText size={18} aria-hidden />
                 신고서
               </MGButton>
               <MGButton
@@ -409,7 +397,6 @@ const ImprovedTaxManagement = () => {
                 onClick={() => setActiveTab('settings')}
                 preventDoubleClick={false}
               >
-                <Settings size={18} aria-hidden />
                 설정
               </MGButton>
             </div>
@@ -553,7 +540,6 @@ const ImprovedTaxManagement = () => {
                               className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
                             })}
                           >
-                            <FilePlus size={16} aria-hidden />
                             신고서 작성
                           </MGButton>
                         </div>
@@ -586,7 +572,6 @@ const ImprovedTaxManagement = () => {
                               className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
                             })}
                           >
-                            <FileCheck size={16} aria-hidden />
                             신고서 확인
                           </MGButton>
                         </div>

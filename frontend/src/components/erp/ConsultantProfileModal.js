@@ -67,6 +67,23 @@ const ConsultantProfileModal = ({
         }
     }, [isOpen, consultant]);
 
+    /**
+     * GET 급여 프로필: ajax는 ApiResponse에서 data만 주지만, data가 null이면 전체 래퍼를 반환한다.
+     * 래퍼를 프로필 객체로 오인하면 salaryType 등이 없어 항상 "없음" UI가 된다.
+     */
+    const unwrapSalaryProfilePayload = (response) => {
+        if (response == null) {
+            return null;
+        }
+        if (typeof response === 'object' && !Array.isArray(response) && 'success' in response && 'data' in response) {
+            return response.data;
+        }
+        return response;
+    };
+
+    const isPresentSalaryProfileDto = (p) => p != null && typeof p === 'object' && !Array.isArray(p)
+        && (p.id != null || p.consultantId != null || p.salaryType != null || p.baseSalary != null);
+
     // 급여 프로필 조회
     const loadSalaryProfile = async() => {
         try {
@@ -74,18 +91,20 @@ const ConsultantProfileModal = ({
             const response = await StandardizedApi.get(
               `${SALARY_API_ENDPOINTS.PROFILES}/${consultant.id}`
             );
-            const profile = response && typeof response === 'object' && (response.data ?? response) && !Array.isArray(response)
-                ? (response.data ?? response)
-                : null;
-            const grade = (response && response.consultant?.grade) || profile?.grade || '';
-            if (profile && (profile.salaryType != null || profile.baseSalary != null || profile.consultantId != null)) {
+            const payload = unwrapSalaryProfilePayload(response);
+            const profile = isPresentSalaryProfileDto(payload) ? payload : null;
+            const grade = profile?.grade
+                || (response && response.consultant && response.consultant.grade)
+                || consultant?.grade
+                || '';
+            if (profile) {
                 const profileWithGrade = { ...profile, grade };
                 setSalaryProfile(profileWithGrade);
                 setSalaryFormData({
                     salaryType: profile.salaryType || 'FREELANCE',
                     contractTerms: profile.contractTerms || '',
                     grade,
-                    baseSalary: profile.baseSalary || '',
+                    baseSalary: profile.baseSalary != null && profile.baseSalary !== '' ? profile.baseSalary : '',
                     optionTypes: profile.optionTypes || [],
                     isBusinessRegistered: profile.isBusinessRegistered || false,
                     businessRegistrationNumber: profile.businessRegistrationNumber || '',
@@ -96,10 +115,12 @@ const ConsultantProfileModal = ({
                 setSalaryFormData({
                     salaryType: 'FREELANCE',
                     contractTerms: '',
-                    grade: '',
+                    grade: consultant?.grade || '',
                     baseSalary: '',
                     optionTypes: [],
-                    isBusinessRegistered: false
+                    isBusinessRegistered: false,
+                    businessRegistrationNumber: '',
+                    businessName: ''
                 });
             }
         } catch (error) {
@@ -108,7 +129,7 @@ const ConsultantProfileModal = ({
             setSalaryFormData({
                 salaryType: 'FREELANCE',
                 contractTerms: '',
-                grade: '',
+                grade: consultant?.grade || '',
                 baseSalary: '',
                 optionTypes: [],
                 isBusinessRegistered: false,

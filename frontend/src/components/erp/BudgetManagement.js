@@ -11,7 +11,7 @@ import UnifiedModal from '../common/modals/UnifiedModal.js';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpFilterToolbar, useErpSilentRefresh } from './common';
-import { PiggyBank, List, Tag, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
+import { PiggyBank, List, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
@@ -332,7 +332,6 @@ const BudgetManagement = () => {
                       type="button"
                       className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
                     >
-                      <i className="bi bi-arrow-clockwise" aria-hidden />
                       세션 새로고침
                     </MGButton>
                     <MGButton
@@ -341,7 +340,6 @@ const BudgetManagement = () => {
                       type="button"
                       className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                     >
-                      <i className="bi bi-box-arrow-in-right" aria-hidden />
                       로그인
                     </MGButton>
                   </div>
@@ -381,7 +379,6 @@ const BudgetManagement = () => {
                 onClick={() => setActiveTab('budgets')}
                 preventDoubleClick={false}
               >
-                <List size={18} aria-hidden />
                 예산 목록
               </MGButton>
               <MGButton
@@ -392,7 +389,6 @@ const BudgetManagement = () => {
                 onClick={() => setActiveTab('categories')}
                 preventDoubleClick={false}
               >
-                <Tag size={18} aria-hidden />
                 카테고리
               </MGButton>
               <MGButton
@@ -403,7 +399,6 @@ const BudgetManagement = () => {
                 onClick={() => setActiveTab('reports')}
                 preventDoubleClick={false}
               >
-                <TrendingUp size={18} aria-hidden />
                 보고서
               </MGButton>
             </div>
@@ -532,7 +527,6 @@ const BudgetManagement = () => {
                           className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} erp-btn-primary`}
                           onClick={() => setShowCreateModal(true)}
                         >
-                          <i className="bi bi-plus-circle" aria-hidden />
                           새 예산 추가
                         </MGButton>
                       )}
@@ -568,7 +562,7 @@ const BudgetManagement = () => {
                                         title="수정"
                                         aria-label="예산 수정"
                                       >
-                                        <i className="bi bi-pencil" aria-hidden />
+                                        수정
                                       </MGButton>
                                       <MGButton
                                         variant="danger"
@@ -579,7 +573,7 @@ const BudgetManagement = () => {
                                         title="삭제"
                                         aria-label="예산 삭제"
                                       >
-                                        <i className="bi bi-trash" aria-hidden />
+                                        삭제
                                       </MGButton>
                                     </div>
                                   )}
@@ -653,7 +647,6 @@ const BudgetManagement = () => {
                               className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                               onClick={() => setShowCreateModal(true)}
                             >
-                              <i className="bi bi-plus-circle" aria-hidden />
                               첫 번째 예산 추가
                             </MGButton>
                           )}
@@ -721,7 +714,6 @@ const BudgetManagement = () => {
                             type="button"
                             className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                           >
-                            <i className="bi bi-box-arrow-in-right" aria-hidden />
                             로그인하기
                           </MGButton>
                         )}

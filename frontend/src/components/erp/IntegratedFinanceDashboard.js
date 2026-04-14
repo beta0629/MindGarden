@@ -34,22 +34,17 @@ import MGButton from '../../components/common/MGButton';
 import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
-import { 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  TrendingUp,
+  TrendingDown,
   DollarSign,
   BarChart3,
   PieChart,
   Calendar,
-  FileText,
   BookOpen,
   Receipt,
   Calculator,
-  Info,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight
+  Info
 } from 'lucide-react';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -417,7 +412,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             className="mg-dashboard-icon-btn"
             disabled={actionsDisabled}
           >
-            <TrendingDown size={18} />
+            빠른 지출
           </MGButton>
           <MGButton
             variant="success"
@@ -427,7 +422,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             className="mg-dashboard-icon-btn"
             disabled={actionsDisabled}
           >
-            <DollarSign size={18} />
+            거래 등록
           </MGButton>
           <MGButton
             variant="primary"
@@ -439,7 +434,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             className="mg-dashboard-icon-btn"
             disabled={actionsDisabled}
           >
-            <FileText size={18} />
+            상세 내역
           </MGButton>
         </div>
       )}
@@ -1565,7 +1560,7 @@ const MonthlyReportTab = ({ period }) => {
               onClick={handlePreviousMonth}
               title="이전 달"
             >
-              <ChevronLeft size={18} />
+              이전
             </MGButton>
             <span>월간 재무 리포트 - {formatMonthYear(currentMonth.year, currentMonth.month)}</span>
             <MGButton
@@ -1574,7 +1569,7 @@ const MonthlyReportTab = ({ period }) => {
               onClick={handleNextMonth}
               title="다음 달"
             >
-              <ChevronRight size={18} />
+              다음
             </MGButton>
           </div>
         }
@@ -1725,7 +1720,7 @@ const YearlyReportTab = ({ period }) => {
               onClick={handlePreviousYear}
               title="전년도"
             >
-              <ChevronLeft size={18} />
+              이전
             </MGButton>
             <span>년간 재무 리포트 - {currentYear}년</span>
             <MGButton
@@ -1734,7 +1729,7 @@ const YearlyReportTab = ({ period }) => {
               onClick={handleNextYear}
               title="다음 년도"
             >
-              <ChevronRight size={18} />
+              다음
             </MGButton>
           </div>
         }
@@ -1867,9 +1862,7 @@ const JournalEntriesTab = () => {
             onClick={() => setShowHelp(!showHelp)}
             preventDoubleClick={false}
           >
-            <Info size={18} />
-            <span>거래 정리란?</span>
-            {showHelp ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <span>{showHelp ? '거래 정리란? (접기)' : '거래 정리란? (펼치기)'}</span>
           </MGButton>
           {showHelp && (
             <div className="integrated-finance-journal-help-body">

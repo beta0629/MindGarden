@@ -13,7 +13,7 @@ import {
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
-import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
+import { Calculator, Receipt, Settings } from 'lucide-react';
 import './TaxManagement.css';
 import './ErpCommon.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpFilterToolbar } from './common';
@@ -193,7 +193,6 @@ const TaxManagement = () => {
                                 onClick={() => setActiveTab('statistics')}
                                 preventDoubleClick={false}
                             >
-                                <TrendingUp size={18} aria-hidden />
                                 세금 통계
                             </MGButton>
                             <MGButton
@@ -204,7 +203,6 @@ const TaxManagement = () => {
                                 onClick={() => setActiveTab('calculations')}
                                 preventDoubleClick={false}
                             >
-                                <Receipt size={18} aria-hidden />
                                 세금 내역
                             </MGButton>
                             <MGButton
@@ -215,7 +213,6 @@ const TaxManagement = () => {
                                 onClick={() => setActiveTab('additional')}
                                 preventDoubleClick={false}
                             >
-                                <Plus size={18} aria-hidden />
                                 추가 세금
                             </MGButton>
                         </div>
@@ -236,7 +233,6 @@ const TaxManagement = () => {
                                             onClick={() => loadTaxStatistics(selectedPeriod)}
                                             disabled={!selectedPeriod}
                                         >
-                                            <FileText size={16} aria-hidden />
                                             통계 조회
                                         </MGButton>
                                     </div>
@@ -422,7 +418,6 @@ const TaxManagement = () => {
                                                         fullWidth
                                                         className="mg-v2-button mg-v2-button-primary mg-v2-button-full"
                                                     >
-                                                        <Calculator size={16} aria-hidden />
                                                         세금 계산
                                                     </MGButton>
                                                 </div>

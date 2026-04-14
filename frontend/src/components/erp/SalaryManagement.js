@@ -10,7 +10,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { Settings, Users, Calculator, Receipt, HelpCircle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -448,7 +447,6 @@ const SalaryManagement = () => {
                           className: 'salary-management__header-btn'
                         })}
                       >
-                        <Settings size={18} aria-hidden />
                         <span className="salary-management__header-btn-text">기산일 설정</span>
                       </MGButton>
                       <MGButton
@@ -462,7 +460,6 @@ const SalaryManagement = () => {
                         })}
                         aria-label="한 번에 계산"
                       >
-                        <Calculator size={18} aria-hidden />
                         <span className="salary-management__header-btn-text">한 번에 계산</span>
                       </MGButton>
                     </>
@@ -484,7 +481,6 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
                       preventDoubleClick={false}
                     >
-                      <Users size={18} aria-hidden />
                       급여 프로필
                     </MGButton>
                     <MGButton
@@ -498,7 +494,6 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_CALC)}
                       preventDoubleClick={false}
                     >
-                      <Calculator size={18} aria-hidden />
                       급여 계산
                     </MGButton>
                     <MGButton
@@ -512,7 +507,6 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_TAX)}
                       preventDoubleClick={false}
                     >
-                      <Receipt size={18} aria-hidden />
                       세금 관리
                     </MGButton>
                   </div>
@@ -584,8 +578,7 @@ const SalaryManagement = () => {
                           aria-label="기산일 설정"
                           preventDoubleClick={false}
                         >
-                          <HelpCircle size={14} aria-hidden />
-                          <span className="sr-only">기산일 설정</span>
+                          설정
                         </MGButton>
                       </div>
                     )}

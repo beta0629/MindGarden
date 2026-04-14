@@ -11,6 +11,27 @@ import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
+/**
+ * 급여 유형·등급·옵션 API 항목을 폼에서 쓰는 codeValue/codeLabel 형태로 맞춘다.
+ * (StandardizedApi unwrap 후 value/label 만 오는 응답도 지원)
+ *
+ * @param {*} item - API 원본 항목
+ * @returns {{ codeValue: string, codeLabel: string }}
+ * @author CoreSolution
+ * @since 2026-04-14
+ */
+const normalizeSalaryDropdownItem = (item) => {
+    if (item == null || typeof item !== 'object') {
+        return { codeValue: '', codeLabel: '' };
+    }
+    const rawValue = item.codeValue ?? item.value;
+    const rawLabel = item.codeLabel ?? item.label;
+    return {
+        codeValue: rawValue == null ? '' : String(rawValue),
+        codeLabel: toDisplayString(rawLabel, '')
+    };
+};
+
 const ConsultantProfileModal = ({ 
     isOpen, 
     onClose, 
@@ -103,15 +124,16 @@ const ConsultantProfileModal = ({
     const loadOptionTypes = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.OPTION_TYPES);
-            // apiGet이 unwrap하여 배열 또는 객체 반환
+            let list = [];
             if (Array.isArray(response)) {
-                setOptionTypes(response);
-            } else if (response && response.data) {
-                setOptionTypes(response.data);
+                list = response;
+            } else if (response && Array.isArray(response.data)) {
+                list = response.data;
             } else {
                 console.warn('옵션 유형 데이터 형식이 예상과 다릅니다:', response);
-                setOptionTypes([]);
+                list = [];
             }
+            setOptionTypes(list.map(normalizeSalaryDropdownItem));
         } catch (error) {
             console.error('옵션 유형 조회 실패:', error);
             setOptionTypes([]);
@@ -122,13 +144,13 @@ const ConsultantProfileModal = ({
     const loadGrades = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.GRADES);
+            let list = [];
             if (Array.isArray(response)) {
-                setGrades(response);
-            } else if (response?.data) {
-                setGrades(Array.isArray(response.data) ? response.data : []);
-            } else {
-                setGrades([]);
+                list = response;
+            } else if (response?.data && Array.isArray(response.data)) {
+                list = response.data;
             }
+            setGrades(list.map(normalizeSalaryDropdownItem));
         } catch (error) {
             console.error('등급 조회 실패:', error);
             setGrades([]);
@@ -152,12 +174,16 @@ const ConsultantProfileModal = ({
     const loadSalaryTypes = async() => {
         try {
             const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.CODES);
-            const salaryTypesList = response?.salaryTypes ?? response?.data?.salaryTypes;
-            if (Array.isArray(salaryTypesList)) {
-                setSalaryTypes(salaryTypesList);
-            } else {
-                setSalaryTypes([]);
+            let list = [];
+            if (Array.isArray(response)) {
+                list = response;
+            } else if (response && typeof response === 'object') {
+                const wrapped = response.salaryTypes ?? response.data?.salaryTypes;
+                if (Array.isArray(wrapped)) {
+                    list = wrapped;
+                }
             }
+            setSalaryTypes(list.map(normalizeSalaryDropdownItem));
         } catch (error) {
             console.error('급여 유형 조회 실패:', error);
             setSalaryTypes([]);

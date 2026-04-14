@@ -79,6 +79,7 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import { useResponsive } from '../../hooks/useResponsive';
 import { useBranding } from '../../hooks/useBranding';
 import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
+import { getGnbLogoUrl } from '../../utils/brandingUtils';
 import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -204,6 +205,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const logoLabel = useMemo(
     () => getTenantGnbLabel(dashboardUser, brandingInfo),
     [dashboardUser, brandingInfo]
+  );
+  const logoUrl = useMemo(
+    () => getGnbLogoUrl(brandingInfo),
+    [brandingInfo]
   );
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
@@ -934,6 +939,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     menuItems: dashboardMenuItems,
     headerTitle: '시스템 관리',
     logoLabel,
+    logoUrl,
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),

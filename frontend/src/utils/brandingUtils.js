@@ -142,6 +142,41 @@ export const fetchBrandingInfo = getBrandingInfo;
 /**
  * @returns {Object} 기본 브랜딩 정보
  */
+/**
+ * 기본/플레이스홀더 로고 URL 여부 (GNB·getLogoType 등에서 공통 사용)
+ * 경로 표기 불일치(core-solution vs coresolution)를 한곳에서 처리한다.
+ *
+ * @param {string} [url]
+ * @returns {boolean}
+ */
+export const isDefaultBrandingLogoUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return true;
+  }
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('core-solution-logo.png') ||
+    lower.includes('coresolution-logo.png')
+  );
+};
+
+/**
+ * GNB 등에서 커스텀 업로드 로고만 이미지로 쓸 URL 반환. 기본 로고면 undefined(텍스트 폴백).
+ *
+ * @param {Object} brandingInfo
+ * @returns {string|undefined}
+ */
+export const getGnbLogoUrl = (brandingInfo) => {
+  if (!brandingInfo?.logo?.url) {
+    return undefined;
+  }
+  const url = brandingInfo.logo.url;
+  if (isDefaultBrandingLogoUrl(url)) {
+    return undefined;
+  }
+  return url;
+};
+
 export const createDefaultBranding = (tenantName = null) => {
   return {
     logo: {
@@ -170,14 +205,15 @@ export const createDefaultBranding = (tenantName = null) => {
  */
 export const getLogoType = (brandingInfo) => {
   if (!brandingInfo) return 'text';
-  
-  // 로고 URL이 있고 기본 로고가 아닌 경우 image 타입
-  if (brandingInfo.logo && 
-      brandingInfo.logo.url && 
-      !brandingInfo.logo.url.includes('core-solution-logo.png')) {
+
+  if (
+    brandingInfo.logo &&
+    brandingInfo.logo.url &&
+    !isDefaultBrandingLogoUrl(brandingInfo.logo.url)
+  ) {
     return 'image';
   }
-  
+
   return 'text';
 };
 

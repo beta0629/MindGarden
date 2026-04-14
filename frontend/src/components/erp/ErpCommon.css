@@ -813,10 +813,24 @@
 .mg-financial-transaction-card--compact .mg-financial-transaction-card__header-row .mg-financial-transaction-card__actions {
   width: 100%;
   justify-content: flex-end;
-  /* 폭이 극히 좁을 때만 다음 줄로 (대부분은 한 줄 유지) */
-  flex-wrap: wrap;
-  row-gap: var(--mg-spacing-xs);
+  align-items: center;
+  /* 좁은 카드 폭에서 44px×3은 줄바꿈되어 겹침 → 한 줄 + 컴팩트 버튼 */
+  flex-wrap: nowrap;
+  gap: 4px;
   box-sizing: border-box;
+}
+
+/* 컴팩트 카드: 아이콘 버튼 축소(표/일반 카드는 44px 유지) */
+.erp-system .mg-financial-transaction-card--compact .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+}
+
+.erp-system .mg-financial-transaction-card--compact .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button svg {
+  width: var(--icon-size-xs);
+  height: var(--icon-size-xs);
 }
 
 .mg-financial-transaction-card--compact .mg-financial-transaction-card__header {

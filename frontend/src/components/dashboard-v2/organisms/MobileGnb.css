@@ -24,8 +24,11 @@
 }
 
 .mg-v2-mobile-gnb__logo-img {
-  height: 28px;
+  display: block;
+  height: auto;
+  max-height: var(--mg-layout-header-height-mobile, 56px);
   width: auto;
+  max-width: 100%;
   object-fit: contain;
 }
 

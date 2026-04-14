@@ -38,6 +38,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -57,6 +58,7 @@ import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.RrnValidationUtil;
@@ -74,6 +76,7 @@ import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import org.hibernate.Hibernate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,6 +119,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
     private final UserService userService;
+    private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -776,6 +780,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return null;
     }
 
+    /**
+     * 프리랜서 급여 프로필인 경우에만 상담료 총 입금액 기준 사업소득 원천징수(3.3%) 예정액을 반환합니다.
+     * 부가세(VAT)와 별개이며, 매출(입금) 총액은 {@code amount}와 동일하게 유지합니다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping  매핑
+     * @param grossAmountKrw 총 입금 금액(원)
+     * @return 원천징수 예정액(원 단위 절사), 해당 없으면 0
+     */
+    private BigDecimal resolveFreelanceWithholdingTaxAmount(String tenantId, ConsultantClientMapping mapping,
+            long grossAmountKrw) {
+        if (grossAmountKrw <= 0 || tenantId == null || tenantId.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        if (mapping.getConsultant() == null || mapping.getConsultant().getId() == null) {
+            return BigDecimal.ZERO;
+        }
+        return consultantSalaryProfileRepository
+                .findByTenantIdAndConsultantIdAndActive(tenantId, mapping.getConsultant().getId())
+                .filter(p -> FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(p.getSalaryType()))
+                .map(p -> FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(grossAmountKrw))
+                .orElse(BigDecimal.ZERO);
+    }
+
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
         
@@ -809,21 +837,33 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
+        BigDecimal withholdingTax = resolveFreelanceWithholdingTaxAmount(tenantId, mapping, accurateAmount);
+        BigDecimal grossAmountBd = BigDecimal.valueOf(accurateAmount);
+        String incomeDescription = String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
+                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                accurateAmount);
+        if (withholdingTax.compareTo(BigDecimal.ZERO) > 0) {
+            incomeDescription = incomeDescription + String.format(" [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
+                    withholdingTax.longValue());
+        }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
-                .amount(java.math.BigDecimal.valueOf(accurateAmount))
-                .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
-                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
-                    accurateAmount))
+                .amount(grossAmountBd) // 매출(입금) 총액 — 기존과 동일
+                .taxAmount(withholdingTax) // 원천징수 예정액(VAT 아님)
+                .amountBeforeTax(grossAmountBd) // 세무상 별도 과세표준이 아닌, 총 입금액과 동일(부가세 제외 금액 필드 재사용)
+                .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 상담료는 부가세 면세
+                .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
+                        ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
+                        : null)
                 .build();
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
@@ -882,21 +922,41 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
-        
+
+        String tenantIdForAdditional = getTenantIdFromMapping(mapping);
+        if (tenantIdForAdditional == null || tenantIdForAdditional.isEmpty()) {
+            tenantIdForAdditional = TenantContextHolder.getTenantId();
+        }
+        BigDecimal withholdingAdditional = resolveFreelanceWithholdingTaxAmount(tenantIdForAdditional, mapping,
+                transactionAmount);
+        BigDecimal grossAdditionalBd = BigDecimal.valueOf(transactionAmount);
+        String additionalDescription = String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]",
+                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                additionalSessions,
+                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                transactionAmount);
+        if (withholdingAdditional.compareTo(BigDecimal.ZERO) > 0) {
+            additionalDescription = additionalDescription + String.format(
+                    " [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
+                    withholdingAdditional.longValue());
+        }
+
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
-                .amount(java.math.BigDecimal.valueOf(transactionAmount))
-                .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
-                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                    additionalSessions,
-                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
-                    transactionAmount))
+                .amount(grossAdditionalBd) // 매출(입금) 총액
+                .taxAmount(withholdingAdditional) // 원천징수 예정액(VAT 아님)
+                .amountBeforeTax(grossAdditionalBd) // 총 입금액과 동일(부가세 제외 금액 필드 재사용)
+                .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_ADDITIONAL")
+                .tenantId(tenantIdForAdditional)
                 .taxIncluded(false) // 상담료는 부가세 면세
+                .remarks(withholdingAdditional.compareTo(BigDecimal.ZERO) > 0
+                        ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
+                        : null)
                 .build();
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 

@@ -723,19 +723,50 @@
   justify-content: flex-end;
 }
 
-/* B0KlA 원형 아이콘 버튼 — 재무 행에서는 가로 폭을 줄여 테이블·카드 밀도에 맞춤 */
+/* B0KlA 원형 아이콘 버튼 — 최소 터치 타깃(44px)·아이콘 20px(--icon-size-sm) */
 .erp-system .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button,
 .erp-system .mg-financial-transaction-table__actions .mg-financial-transaction__icon-action.mg-button {
   width: var(--touch-target-min);
   height: var(--touch-target-min);
   min-width: var(--touch-target-min);
   min-height: var(--touch-target-min);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .erp-system .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button svg,
 .erp-system .mg-financial-transaction-table__actions .mg-financial-transaction__icon-action.mg-button svg {
   width: var(--icon-size-sm);
   height: var(--icon-size-sm);
+  flex-shrink: 0;
+}
+
+/* 원천징수(프리랜서 상담료) — 카드 */
+.mg-financial-transaction-card__withholding-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-spacing-xs);
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-secondary);
+}
+
+.mg-financial-transaction-card__field--withholding {
+  align-items: baseline;
+}
+
+.mg-financial-transaction-card__withholding-label {
+  color: var(--mg-text-secondary);
+  font-size: var(--mg-font-sm);
+}
+
+.mg-financial-transaction-card__withholding-amount {
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-sm);
 }
 
 /* 삭제: danger 계열 유지(B0KlA icon-btn 기본색 덮어씀) */
@@ -1660,6 +1691,21 @@
 
 .mg-v2-transaction-detail-amount--expense {
   color: var(--mg-error-500);
+}
+
+.mg-v2-transaction-detail-withholding {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-transaction-detail-withholding__amount {
+  font-weight: var(--mg-font-semibold, 600);
+  color: var(--mg-text-secondary);
+}
+
+.mg-v2-transaction-detail-withholding__hint {
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-tertiary);
 }
 
 .mg-v2-transaction-detail-mapping-box {

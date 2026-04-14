@@ -9,6 +9,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -131,6 +132,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private UserIdGenerator userIdGenerator;
     @Mock
     private UserService userService;
+    @Mock
+    private ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
 
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -187,7 +190,8 @@ class AdminServiceImplConfirmDepositApproveTest {
                 passwordResetService,
                 noopTransactionManager,
                 userIdGenerator,
-                userService);
+                userService,
+                consultantSalaryProfileRepository);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

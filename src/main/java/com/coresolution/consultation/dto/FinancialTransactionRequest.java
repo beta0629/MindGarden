@@ -68,9 +68,15 @@ public class FinancialTransactionRequest {
     
     private Boolean taxIncluded;
     
+    /**
+     * 세액. 부가세(VAT) 또는 사업소득 원천징수(3.3%) 예정액 등 맥락에 따라 의미가 다름({@code taxIncluded}·카테고리·비고 참조).
+     */
     @DecimalMin(value = "0.0", message = "세금 금액은 0 이상이어야 합니다.")
     private BigDecimal taxAmount;
-    
+
+    /**
+     * 과세 전 금액 또는 총 입금액(업무 규칙에 따라 동일 기재). 프리랜서 상담료 원천징수 표기 시 총 입금과 같을 수 있음.
+     */
     @DecimalMin(value = "0.0", message = "세전 금액은 0 이상이어야 합니다.")
     private BigDecimal amountBeforeTax;
     

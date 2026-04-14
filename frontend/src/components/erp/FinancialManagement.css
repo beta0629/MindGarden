@@ -39,3 +39,26 @@
   justify-content: center;
   margin-top: var(--spacing-md);
 }
+
+/* 월간 조회: type="month" + 이전·다음 */
+.mg-financial-month-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-month-picker__nav {
+  flex-shrink: 0;
+}
+
+.mg-financial-month-picker__input {
+  min-width: calc(var(--spacing-md) * 7);
+}
+
+.mg-financial-filter-all-hint {
+  margin: var(--mg-spacing-xs, var(--spacing-xs)) 0 0;
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.4);
+}

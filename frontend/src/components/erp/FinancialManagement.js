@@ -28,7 +28,9 @@ import {
   Undo2,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -64,8 +66,25 @@ const TRANSACTION_TABLE_COLUMNS = [
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
 
-/** 재무 거래 행 액션 — Lucide 아이콘 크기(접근성·밀도 균형) */
-const FINANCIAL_TX_ICON_SIZE = 18;
+/** 재무 거래 행 액션 — Lucide 아이콘 크기(디자인 토큰 --icon-size-sm 20px에 맞춤) */
+const FINANCIAL_TX_ICON_SIZE = 20;
+
+const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수(3.3%)';
+
+/**
+ * 사업소득 원천징수 예정액 표시(부가세와 구분: taxIncluded가 아닌 경우).
+ * @param {Object} transaction
+ * @returns {boolean}
+ */
+function shouldShowIncomeWithholdingTax(transaction) {
+  if (!transaction || transaction.transactionType !== 'INCOME') {
+    return false;
+  }
+  if (toSafeNumber(transaction.taxAmount) <= 0) {
+    return false;
+  }
+  return transaction.taxIncluded !== true;
+}
 
 /**
  * ERP MGButton + B0KlA 아이콘 버튼 패턴(재무 거래 행 전용)
@@ -78,13 +97,58 @@ const FINANCIAL_TX_ICON_SIZE = 18;
 function buildFinancialTxIconButtonClassName({ variant = 'outline', loading = false, extraClass = '' }) {
   return buildErpMgButtonClassName({
     variant,
-    size: 'small',
+    size: 'md',
     loading,
     className: ['mg-v2-ad-b0kla__icon-btn', 'mg-financial-transaction__icon-action', extraClass].filter(Boolean).join(' ')
   });
 }
 
 const ERP_FINANCIAL_ALLOWED_DATE_RANGES = ['MONTH', 'WEEK', 'TODAY', 'ALL', 'CUSTOM'];
+
+/** YYYY-MM (01–12) */
+const FINANCIAL_MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+/**
+ * @returns {string} YYYY-MM (로컬 현재 달)
+ */
+const getCurrentMonthYm = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+};
+
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
+const isValidMonthYm = (value) =>
+  typeof value === 'string' && FINANCIAL_MONTH_YM_REGEX.test(value);
+
+/**
+ * @param {string} search
+ * @returns {string|null}
+ */
+const parseMonthFromSearch = (search) => {
+  const raw = new URLSearchParams(search).get('month');
+  if (!raw || !isValidMonthYm(raw)) {
+    return null;
+  }
+  return raw;
+};
+
+/**
+ * @param {string} ym YYYY-MM
+ * @param {number} delta -1 이전 달, +1 다음 달
+ * @returns {string}
+ */
+const addMonthsYm = (ym, delta) => {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${yy}-${mm}`;
+};
 
 const parseDateRangeFromSearch = (search) => {
   const params = new URLSearchParams(search);
@@ -117,6 +181,8 @@ const FinancialManagement = () => {
     category: 'ALL', // ALL, CONSULTATION, SALARY, etc.
     relatedEntityType: 'ALL', // ALL, CONSULTANT_CLIENT_MAPPING, PAYMENT, etc.
     dateRange: parseDateRangeFromSearch(location.search), // ALL, TODAY, WEEK, MONTH, CUSTOM
+    /** 월간(MONTH) 조회 월 — YYYY-MM */
+    monthYm: parseMonthFromSearch(location.search) || getCurrentMonthYm(),
     startDate: '',
     endDate: '',
     searchText: '' // 상담사명, 내담자명, 설명 검색
@@ -138,6 +204,27 @@ const FinancialManagement = () => {
     const qs = params.toString();
     navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
   }, [location.pathname, location.search, navigate]);
+
+  /** MONTH일 때 `?month=YYYY-MM` 동기화(공유·새로고침). `dateRange`는 기존처럼 URL에서 제거됨. */
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (filters.dateRange === 'MONTH') {
+      const ym = filters.monthYm && isValidMonthYm(filters.monthYm) ? filters.monthYm : getCurrentMonthYm();
+      if (params.get('month') === ym) {
+        return;
+      }
+      params.set('month', ym);
+      const qs = params.toString();
+      navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
+      return;
+    }
+    if (!params.has('month')) {
+      return;
+    }
+    params.delete('month');
+    const qs = params.toString();
+    navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
+  }, [filters.dateRange, filters.monthYm, location.pathname, location.search, navigate]);
   
   const [transactionViewMode, setTransactionViewMode] = useState('card');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -225,8 +312,11 @@ const FinancialManagement = () => {
         return { startDate: toStr(start), endDate: toStr(now) };
       }
       case 'MONTH': {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { startDate: toStr(start), endDate: toStr(now) };
+        const ym = filters.monthYm && isValidMonthYm(filters.monthYm) ? filters.monthYm : getCurrentMonthYm();
+        const [y, m] = ym.split('-').map(Number);
+        const start = new Date(y, m - 1, 1);
+        const end = new Date(y, m, 0);
+        return { startDate: toStr(start), endDate: toStr(end) };
       }
       case 'CUSTOM':
         return {
@@ -335,14 +425,23 @@ const FinancialManagement = () => {
   };
 
   const calculateDashboardStats = async(transactionData) => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    
+    let statYear;
+    let statMonth;
+    if (filters.dateRange === 'MONTH') {
+      const ym = filters.monthYm && isValidMonthYm(filters.monthYm) ? filters.monthYm : getCurrentMonthYm();
+      const [y, m] = ym.split('-').map(Number);
+      statYear = y;
+      statMonth = m;
+    } else {
+      const now = new Date();
+      statYear = now.getFullYear();
+      statMonth = now.getMonth() + 1;
+    }
+
     const thisMonthTransactions = transactionData.filter(transaction => {
       const transactionDate = new Date(transaction.transactionDate);
-      return transactionDate.getFullYear() === currentYear && 
-             transactionDate.getMonth() + 1 === currentMonth &&
+      return transactionDate.getFullYear() === statYear &&
+             transactionDate.getMonth() + 1 === statMonth &&
              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
              transaction.status !== 'REJECTED' && 
              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -469,7 +568,7 @@ const FinancialManagement = () => {
       <MGButton
         type="button"
         variant="outline"
-        size="small"
+        size="medium"
         className={buildFinancialTxIconButtonClassName({ variant: 'outline' })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => handleViewTransaction(transaction)}
@@ -482,7 +581,7 @@ const FinancialManagement = () => {
       <MGButton
         type="button"
         variant="outline"
-        size="small"
+        size="medium"
         className={buildFinancialTxIconButtonClassName({ variant: 'outline' })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => handleEditTransaction(transaction)}
@@ -497,7 +596,7 @@ const FinancialManagement = () => {
         <MGButton
           type="button"
           variant="danger"
-          size="small"
+          size="medium"
           className={buildFinancialTxIconButtonClassName({
             variant: 'danger',
             extraClass: 'mg-financial-transaction__icon-action--danger'
@@ -703,9 +802,16 @@ const FinancialManagement = () => {
                           <select
                             id="financial-filter-date-range"
                             value={String(filters.dateRange || 'MONTH')}
-                            onChange={(e) =>
-                              setFilters((prev) => ({ ...prev, dateRange: String(e.target.value) }))
-                            }
+                            onChange={(e) => {
+                              const nextRange = String(e.target.value);
+                              setFilters((prev) => ({
+                                ...prev,
+                                dateRange: nextRange,
+                                ...(nextRange === 'MONTH' && (!prev.monthYm || !isValidMonthYm(prev.monthYm))
+                                  ? { monthYm: getCurrentMonthYm() }
+                                  : {})
+                              }));
+                            }}
                             className="mg-v2-form-select mg-v2-erp-filter-toolbar__period-select"
                           >
                             <option value="ALL">전체</option>
@@ -714,6 +820,93 @@ const FinancialManagement = () => {
                             <option value="MONTH">월간</option>
                             <option value="CUSTOM">직접 입력</option>
                           </select>
+                          {filters.dateRange === 'MONTH' && (
+                            <div
+                              className="mg-financial-month-picker mg-v2-erp-filter-toolbar__custom-range"
+                              role="group"
+                              aria-label="조회 월"
+                            >
+                              <MGButton
+                                type="button"
+                                variant="outline"
+                                size="small"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'small',
+                                  loading: false,
+                                  className: 'mg-financial-month-picker__nav'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                onClick={() =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    monthYm: addMonthsYm(
+                                      prev.monthYm && isValidMonthYm(prev.monthYm)
+                                        ? prev.monthYm
+                                        : getCurrentMonthYm(),
+                                      -1
+                                    )
+                                  }))
+                                }
+                                aria-label="이전 달"
+                                title="이전 달"
+                                preventDoubleClick={false}
+                              >
+                                <ChevronLeft size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
+                              </MGButton>
+                              <input
+                                id="financial-filter-month-ym"
+                                type="month"
+                                value={
+                                  filters.monthYm && isValidMonthYm(filters.monthYm)
+                                    ? filters.monthYm
+                                    : getCurrentMonthYm()
+                                }
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (!v || !isValidMonthYm(v)) {
+                                    return;
+                                  }
+                                  setFilters((prev) => ({ ...prev, monthYm: v }));
+                                }}
+                                className="mg-v2-form-select mg-financial-month-picker__input"
+                                aria-label="조회 월"
+                              />
+                              <MGButton
+                                type="button"
+                                variant="outline"
+                                size="small"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'small',
+                                  loading: false,
+                                  className: 'mg-financial-month-picker__nav'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                onClick={() =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    monthYm: addMonthsYm(
+                                      prev.monthYm && isValidMonthYm(prev.monthYm)
+                                        ? prev.monthYm
+                                        : getCurrentMonthYm(),
+                                      1
+                                    )
+                                  }))
+                                }
+                                aria-label="다음 달"
+                                title="다음 달"
+                                preventDoubleClick={false}
+                              >
+                                <ChevronRight size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
+                              </MGButton>
+                            </div>
+                          )}
+                          {filters.dateRange === 'ALL' && (
+                            <p className="mg-financial-filter-all-hint" role="status">
+                              전체 기간은 데이터가 많을 수 있습니다. 필요할 때만 선택해 주세요.
+                            </p>
+                          )}
                           {filters.dateRange === 'CUSTOM' && (
                             <div className="mg-v2-form-group mg-v2-form-group--inline mg-v2-erp-filter-toolbar__custom-range">
                               <input
@@ -857,6 +1050,7 @@ const FinancialManagement = () => {
                                 category: 'ALL',
                                 relatedEntityType: 'ALL',
                                 dateRange: 'MONTH',
+                                monthYm: getCurrentMonthYm(),
                                 startDate: '',
                                 endDate: '',
                                 searchText: ''
@@ -1075,6 +1269,16 @@ const FinancialManagement = () => {
                                   {formatCurrency(transaction.amount)}
                                 </span>
                               </div>
+                              {shouldShowIncomeWithholdingTax(transaction) && (
+                                <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__withholding-line">
+                                  <span className="mg-financial-transaction-card__withholding-label">
+                                    {FINANCIAL_WITHHOLDING_TAX_LABEL}
+                                  </span>
+                                  <span className="mg-financial-transaction-card__withholding-amount">
+                                    {formatCurrency(transaction.taxAmount)}
+                                  </span>
+                                </div>
+                              )}
                               <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--secondary">
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
                                   <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
@@ -1113,6 +1317,16 @@ const FinancialManagement = () => {
                                   {formatCurrency(transaction.amount)}
                                 </span>
                               </div>
+                              {shouldShowIncomeWithholdingTax(transaction) && (
+                                <div className="mg-financial-transaction-card__field mg-financial-transaction-card__field--withholding">
+                                  <span className="mg-financial-transaction-card__label">
+                                    {FINANCIAL_WITHHOLDING_TAX_LABEL}
+                                  </span>
+                                  <span className="mg-financial-transaction-card__withholding-amount">
+                                    {formatCurrency(transaction.taxAmount)}
+                                  </span>
+                                </div>
+                              )}
                               <div className="mg-financial-transaction-card__field">
                                 <span className="mg-financial-transaction-card__label">상태</span>
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
@@ -1556,6 +1770,18 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               {formatCurrency(transaction.amount)}
             </span>
           </div>
+          {shouldShowIncomeWithholdingTax(transaction) && (
+            <div className="mg-v2-transaction-detail-form-grid__item--span2 mg-v2-transaction-detail-withholding">
+              <strong>{FINANCIAL_WITHHOLDING_TAX_LABEL}:</strong>{' '}
+              <span className="mg-v2-transaction-detail-withholding__amount">
+                {formatCurrency(transaction.taxAmount)}
+              </span>
+              <span className="mg-v2-transaction-detail-withholding__hint">
+                {' '}
+                (입금 총액 대비 사업소득 원천징수 예정, 부가세와 별개)
+              </span>
+            </div>
+          )}
           <div>
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
           </div>

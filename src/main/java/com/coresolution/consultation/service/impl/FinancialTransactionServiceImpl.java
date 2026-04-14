@@ -69,8 +69,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
-        log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}", 
-                request.getTransactionType(), request.getAmount(), request.getCategory());
+        log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}, taxAmount={}, taxIncluded={}",
+                request.getTransactionType(), request.getAmount(), request.getCategory(),
+                request.getTaxAmount(), request.getTaxIncluded());
         
         if (currentUser != null) {
             if (!currentUser.getRole().isAdmin()) {

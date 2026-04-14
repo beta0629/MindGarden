@@ -18,7 +18,32 @@ import { useNavigate } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
 import { FaCalendarAlt, FaCheckCircle, FaUsers } from 'react-icons/fa';
-import { Bell, Calendar, Palette } from 'lucide-react';
+import {
+  Activity,
+  Bell,
+  BellRing,
+  Brain,
+  Calendar,
+  CalendarDays,
+  CheckCircle,
+  ClipboardList,
+  Database,
+  LayoutDashboard,
+  Link2,
+  Megaphone,
+  Merge,
+  MessageCircle,
+  Package,
+  Palette,
+  Settings,
+  Shield,
+  Sparkles,
+  Tags,
+  Target,
+  UserCog,
+  UserRound,
+  Users
+} from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
 import {
@@ -128,6 +153,18 @@ function chartPeriodObjectToLabel(p) {
   } catch {
     return '';
   }
+}
+
+/** 관리 기능 카드 상단 아이콘 (B0KlA 톤 배지 + Lucide) */
+function AdminMgmtCardIcon({ icon: LucideIcon, tone = 'blue' }) {
+  return (
+    <span
+      className={`mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--${tone}`}
+      aria-hidden
+    >
+      <LucideIcon size={28} strokeWidth={2} />
+    </span>
+  );
 }
 
 /**
@@ -1630,6 +1667,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Users} tone="blue" />
             <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
           </MGButton>
@@ -1639,6 +1677,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={CalendarDays} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
           </MGButton>
@@ -1648,6 +1687,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={ClipboardList} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
           </MGButton>
@@ -1660,6 +1700,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Target} tone="gray" />
             <span className="mg-v2-ad-b0kla__admin-label">회기 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 회기를 등록하고 관리합니다</span>
           </MGButton>
@@ -1673,6 +1714,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             preventDoubleClick={false}
             loadingText="처리 중..."
           >
+            <AdminMgmtCardIcon icon={CheckCircle} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄을 자동으로 완료 처리합니다</span>
           </MGButton>
@@ -1686,6 +1728,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             preventDoubleClick={false}
             loadingText="처리 중..."
           >
+            <AdminMgmtCardIcon icon={BellRing} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄 완료 처리 및 상담일지 미작성 알림</span>
           </MGButton>
@@ -1697,6 +1740,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={UserCog} tone="blue" />
             <span className="mg-v2-ad-b0kla__admin-label">상담사 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
           </MGButton>
@@ -1708,6 +1752,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={UserRound} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">내담자 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
           </MGButton>
@@ -1718,6 +1763,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Link2} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">매칭 시스템</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사와 내담자 매칭을 관리합니다</span>
           </MGButton>
@@ -1727,6 +1773,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Calendar} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
           </MGButton>
@@ -1737,6 +1784,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
               preventDoubleClick={false}
             >
+              <AdminMgmtCardIcon icon={Users} tone="blue" />
               <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
               <span className="mg-v2-ad-b0kla__admin-desc">사용자 역할 변경 및 권한 관리</span>
             </MGButton>
@@ -1747,6 +1795,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Tags} tone="gray" />
             <span className="mg-v2-ad-b0kla__admin-label">공통코드</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 공통코드를 관리합니다</span>
           </MGButton>
@@ -1756,6 +1805,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.PACKAGE_PRICING)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Package} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">패키지 요금 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 패키지별 가격·회기 수 관리</span>
           </MGButton>
@@ -1765,6 +1815,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Megaphone} tone="blue" />
             <span className="mg-v2-ad-b0kla__admin-label">알림·메시지 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 공지와 메시지를 한 화면에서 관리합니다</span>
           </MGButton>
@@ -1775,6 +1826,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={LayoutDashboard} tone="gray" />
             <span className="mg-v2-ad-b0kla__admin-label">대시보드 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">역할별 대시보드를 관리합니다</span>
           </MGButton>
@@ -1785,6 +1837,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Settings} tone="gray" />
             <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
             <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
           </MGButton>
@@ -1795,6 +1848,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.CACHE_MONITORING)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Database} tone="gray" />
             <span className="mg-v2-ad-b0kla__admin-label">캐시 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 캐시 성능을 실시간으로 모니터링합니다</span>
           </MGButton>
@@ -1806,6 +1860,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.SECURITY_MONITORING)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Shield} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">보안 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">실시간 보안 위협 탐지 및 시스템 보안 관리</span>
           </MGButton>
@@ -1816,6 +1871,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Activity} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">API 성능 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">API 응답 시간과 성능 지표를 실시간으로 추적합니다</span>
           </MGButton>
@@ -1825,6 +1881,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={MessageCircle} tone="blue" />
             <span className="mg-v2-ad-b0kla__admin-label">메시지 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사-내담자 메시지를 관리합니다</span>
           </MGButton>
@@ -1834,6 +1891,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Brain} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">심리검사 리포트(AI)</span>
             <span className="mg-v2-ad-b0kla__admin-desc">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</span>
           </MGButton>
@@ -1844,6 +1902,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             onClick={() => navigate('/admin/wellness')}
             preventDoubleClick={false}
           >
+            <AdminMgmtCardIcon icon={Sparkles} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">웰니스 알림 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</span>
           </MGButton>
@@ -1857,6 +1916,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             preventDoubleClick={false}
             loadingText="처리 중..."
           >
+            <AdminMgmtCardIcon icon={Merge} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
             <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
           </MGButton>

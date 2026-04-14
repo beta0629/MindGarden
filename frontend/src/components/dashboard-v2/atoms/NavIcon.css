@@ -59,3 +59,15 @@
   justify-content: center;
   line-height: 0;
 }
+
+/* Lucide 직접 렌더 — Icon(TRANSPARENT/mg-v2 토큰) 미의존, B0KlA 아이콘색 고정 */
+.mg-v2-nav-icon__lucide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ad-b0kla-icon-color, #4a5568);
+}
+
+.mg-v2-nav-icon__lucide svg {
+  display: block;
+}

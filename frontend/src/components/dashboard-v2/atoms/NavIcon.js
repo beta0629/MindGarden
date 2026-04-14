@@ -8,7 +8,7 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
-import Icon from '../../ui/Icon/Icon';
+import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import './NavIcon.css';
 
 /**
@@ -16,6 +16,7 @@ import './NavIcon.css';
  * @param {string} props.icon - {@link import('../../../constants/icons').ICONS} registry key
  */
 const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...rest }) => {
+  const LucideIcon = icon ? ICONS[icon] : null;
   return (
     <MGButton
       type="button"
@@ -28,7 +29,11 @@ const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...re
       aria-label={label || 'Icon button'}
       {...rest}
     >
-      {icon ? <Icon name={icon} size="LG" color="TRANSPARENT" aria-hidden /> : null}
+      {LucideIcon ? (
+        <span className="mg-v2-nav-icon__lucide" aria-hidden>
+          <LucideIcon size={ICON_SIZES.LG} strokeWidth={2} />
+        </span>
+      ) : null}
     </MGButton>
   );
 };

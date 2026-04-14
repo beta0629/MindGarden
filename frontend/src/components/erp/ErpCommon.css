@@ -788,6 +788,37 @@
   gap: var(--mg-spacing-sm);
 }
 
+/* 그리드 셀 폭이 좁을 때 카드가 넘치지 않도록 */
+.mg-financial-transaction-cards-grid--compact > .mg-financial-transaction-card--compact {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/*
+ * compact: 헤더 한 줄에 ID+액션(44px×3)을 두면 폭 부족으로 겹침·이탈 발생 →
+ * ID/매핑 행과 액션 행을 세로로 분리
+ */
+.mg-financial-transaction-card--compact .mg-financial-transaction-card__header-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--mg-spacing-xs);
+}
+
+.mg-financial-transaction-card--compact .mg-financial-transaction-card__header-row .mg-financial-transaction-card__id-section {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-financial-transaction-card--compact .mg-financial-transaction-card__header-row .mg-financial-transaction-card__actions {
+  width: 100%;
+  justify-content: flex-end;
+  /* 폭이 극히 좁을 때만 다음 줄로 (대부분은 한 줄 유지) */
+  flex-wrap: wrap;
+  row-gap: var(--mg-spacing-xs);
+  box-sizing: border-box;
+}
+
 .mg-financial-transaction-card--compact .mg-financial-transaction-card__header {
   margin-bottom: var(--mg-spacing-sm);
   padding-bottom: var(--mg-spacing-sm);

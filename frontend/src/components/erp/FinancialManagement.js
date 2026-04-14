@@ -25,7 +25,10 @@ import {
   Inbox,
   TrendingUp,
   TrendingDown,
-  Undo2
+  Undo2,
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -60,6 +63,26 @@ const TRANSACTION_TABLE_COLUMNS = [
 ];
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
+
+/** 재무 거래 행 액션 — Lucide 아이콘 크기(접근성·밀도 균형) */
+const FINANCIAL_TX_ICON_SIZE = 18;
+
+/**
+ * ERP MGButton + B0KlA 아이콘 버튼 패턴(재무 거래 행 전용)
+ * @param {Object} opts
+ * @param {string} [opts.variant]
+ * @param {boolean} [opts.loading]
+ * @param {string} [opts.extraClass]
+ * @returns {string}
+ */
+function buildFinancialTxIconButtonClassName({ variant = 'outline', loading = false, extraClass = '' }) {
+  return buildErpMgButtonClassName({
+    variant,
+    size: 'small',
+    loading,
+    className: ['mg-v2-ad-b0kla__icon-btn', 'mg-financial-transaction__icon-action', extraClass].filter(Boolean).join(' ')
+  });
+}
 
 const ERP_FINANCIAL_ALLOWED_DATE_RANGES = ['MONTH', 'WEEK', 'TODAY', 'ALL', 'CUSTOM'];
 
@@ -432,6 +455,65 @@ const FinancialManagement = () => {
     }
   };
 
+  /**
+   * 보기·수정·삭제 — 아이콘 전용 MGButton (aria-label·title 한글 유지)
+   * @param {Object} transaction
+   * @param {{ forTable?: boolean }} [opts]
+   */
+  const renderTransactionIconActions = (transaction, { forTable = false } = {}) => (
+    <div
+      className={forTable ? 'mg-financial-transaction-table__actions' : 'mg-financial-transaction-card__actions'}
+      role="group"
+      aria-label="거래 작업"
+    >
+      <MGButton
+        type="button"
+        variant="outline"
+        size="small"
+        className={buildFinancialTxIconButtonClassName({ variant: 'outline' })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => handleViewTransaction(transaction)}
+        aria-label="보기"
+        title="보기"
+        preventDoubleClick={false}
+      >
+        <Eye size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
+      </MGButton>
+      <MGButton
+        type="button"
+        variant="outline"
+        size="small"
+        className={buildFinancialTxIconButtonClassName({ variant: 'outline' })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => handleEditTransaction(transaction)}
+        loading={pendingEditId === transaction.id}
+        aria-label="수정"
+        title="수정"
+        preventDoubleClick={false}
+      >
+        <Edit size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
+      </MGButton>
+      {isAdmin() && (
+        <MGButton
+          type="button"
+          variant="danger"
+          size="small"
+          className={buildFinancialTxIconButtonClassName({
+            variant: 'danger',
+            extraClass: 'mg-financial-transaction__icon-action--danger'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => handleDeleteTransaction(transaction)}
+          aria-label="삭제"
+          title="삭제"
+          preventDoubleClick={false}
+        >
+          <Trash2 size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
+        </MGButton>
+      )}
+    </div>
+  );
+
   const renderTransactionTableCell = (columnKey, transaction) => {
     const amountNum = toSafeNumber(transaction.amount);
     switch (columnKey) {
@@ -497,62 +579,7 @@ const FinancialManagement = () => {
           <span className="mg-financial-transaction-table__cell-muted">—</span>
         );
       case 'actions':
-        return (
-          <div
-            className="mg-financial-transaction-table__actions"
-            role="group"
-            aria-label="거래 작업"
-          >
-            <MGButton
-              type="button"
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'sm',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => handleViewTransaction(transaction)}
-              preventDoubleClick={false}
-            >
-              보기
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'sm',
-                loading: pendingEditId === transaction.id
-              })}
-              onClick={() => handleEditTransaction(transaction)}
-              loading={pendingEditId === transaction.id}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              preventDoubleClick={false}
-            >
-              수정
-            </MGButton>
-            {isAdmin() && (
-              <MGButton
-                type="button"
-                variant="secondary"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  size: 'sm',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleDeleteTransaction(transaction)}
-                preventDoubleClick={false}
-              >
-                삭제
-              </MGButton>
-            )}
-          </div>
-        );
+        return renderTransactionIconActions(transaction, { forTable: true });
       default:
         return null;
     }
@@ -984,120 +1011,116 @@ const FinancialManagement = () => {
                           ].filter(Boolean).join(' ')}
                         >
                           <div className="mg-financial-transaction-card__header">
-                            <div className="mg-financial-transaction-card__id-section">
-                              <MGButton
-                                type="button"
-                                variant="outline"
-                                size="small"
-                                onClick={() => {
-                                  setSelectedTransaction(transaction);
-                                  setShowDetailModal(true);
-                                }}
-                                className={buildErpMgButtonClassName({
-                                  variant: 'outline',
-                                  size: 'small',
-                                  loading: false,
-                                  className: 'mg-financial-transaction-card__id-button'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                              >
-                                #{toDisplayString(transaction.id)}
-                              </MGButton>
-                              {isMappingTransaction(transaction) && (
-                                <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
-                              )}
-                            </div>
-                            <div className="mg-financial-transaction-card__date">
-                              {formatDate(transaction.transactionDate)}
-                            </div>
-                          </div>
-                          <div className="mg-financial-transaction-card__body">
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">유형</span>
-                              <Badge
-                                variant="status"
-                                statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
-                                label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
-                                size="sm"
-                              />
-                            </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <span><ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</ErpSafeText></span>
-                            </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">금액</span>
-                              <span
-                                className={
-                                  toSafeNumber(transaction.amount) >= 0
-                                    ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                                    : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-                                }
-                              >
-                                {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
-                                {formatCurrency(transaction.amount)}
-                              </span>
-                            </div>
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">상태</span>
-                              <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
-                                <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mg-financial-transaction-card__footer">
-                            <div className="mg-financial-transaction-card__actions">
-                              <MGButton
-                                type="button"
-                                variant="secondary"
-                                size="small"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'secondary',
-                                  size: 'sm',
-                                  loading: false
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                onClick={() => handleViewTransaction(transaction)}
-                                preventDoubleClick={false}
-                              >
-                                보기
-                              </MGButton>
-                              <MGButton
-                                type="button"
-                                variant="secondary"
-                                size="small"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'secondary',
-                                  size: 'sm',
-                                  loading: pendingEditId === transaction.id
-                                })}
-                                onClick={() => handleEditTransaction(transaction)}
-                                loading={pendingEditId === transaction.id}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                              >
-                                수정
-                              </MGButton>
-                              {isAdmin() && (
+                            <div className="mg-financial-transaction-card__header-row">
+                              <div className="mg-financial-transaction-card__id-section">
                                 <MGButton
                                   type="button"
-                                  variant="secondary"
+                                  variant="outline"
                                   size="small"
+                                  onClick={() => {
+                                    setSelectedTransaction(transaction);
+                                    setShowDetailModal(true);
+                                  }}
                                   className={buildErpMgButtonClassName({
-                                    variant: 'secondary',
-                                    size: 'sm',
-                                    loading: false
+                                    variant: 'outline',
+                                    size: 'small',
+                                    loading: false,
+                                    className: 'mg-financial-transaction-card__id-button'
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                  onClick={() => handleDeleteTransaction(transaction)}
                                   preventDoubleClick={false}
                                 >
-                                  삭제
+                                  #{toDisplayString(transaction.id)}
                                 </MGButton>
-                              )}
+                                {isMappingTransaction(transaction) && (
+                                  <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
+                                )}
+                              </div>
+                              {renderTransactionIconActions(transaction)}
+                            </div>
+                            <div className="mg-financial-transaction-card__date-row">
+                              <span className="mg-financial-transaction-card__date">
+                                {formatDate(transaction.transactionDate)}
+                              </span>
                             </div>
                           </div>
+                          {transactionViewMode === 'compact' ? (
+                            <div className="mg-financial-transaction-card__body mg-financial-transaction-card__body--compact">
+                              <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--primary">
+                                <Badge
+                                  variant="status"
+                                  statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
+                                  label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+                                  size="sm"
+                                />
+                                <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
+                                  ·
+                                </span>
+                                <span className="mg-financial-transaction-card__compact-category">
+                                  <ErpSafeText fallback="-">
+                                    {transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}
+                                  </ErpSafeText>
+                                </span>
+                                <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
+                                  ·
+                                </span>
+                                <span
+                                  className={
+                                    toSafeNumber(transaction.amount) >= 0
+                                      ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                                      : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                                  }
+                                >
+                                  {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                  {formatCurrency(transaction.amount)}
+                                </span>
+                              </div>
+                              <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--secondary">
+                                <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
+                                  <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mg-financial-transaction-card__body">
+                              <div className="mg-financial-transaction-card__field">
+                                <span className="mg-financial-transaction-card__label">유형</span>
+                                <Badge
+                                  variant="status"
+                                  statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
+                                  label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+                                  size="sm"
+                                />
+                              </div>
+                              <div className="mg-financial-transaction-card__field">
+                                <span className="mg-financial-transaction-card__label">카테고리</span>
+                                <span>
+                                  <ErpSafeText fallback="-">
+                                    {transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}
+                                  </ErpSafeText>
+                                </span>
+                              </div>
+                              <div className="mg-financial-transaction-card__field">
+                                <span className="mg-financial-transaction-card__label">금액</span>
+                                <span
+                                  className={
+                                    toSafeNumber(transaction.amount) >= 0
+                                      ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                                      : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                                  }
+                                >
+                                  {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                  {formatCurrency(transaction.amount)}
+                                </span>
+                              </div>
+                              <div className="mg-financial-transaction-card__field">
+                                <span className="mg-financial-transaction-card__label">상태</span>
+                                <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
+                                  <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                   </div>

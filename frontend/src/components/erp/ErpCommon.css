@@ -573,11 +573,33 @@
 
 .mg-financial-transaction-card__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
   margin-bottom: var(--mg-spacing-md);
   padding-bottom: var(--mg-spacing-md);
   border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+/* 큰/작은 카드 공통: 우측 상단 한 줄 액션 + 그 아래 일자 */
+.mg-financial-transaction-card__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card__header-row .mg-financial-transaction-card__id-section {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mg-financial-transaction-card__date-row {
+  width: 100%;
+}
+
+.mg-financial-transaction-card__header-row .mg-financial-transaction-card__actions {
+  flex-shrink: 0;
 }
 
 .mg-financial-transaction-card__id-section {
@@ -693,16 +715,40 @@
   color: var(--mg-error-700);
 }
 
-.mg-financial-transaction-card__footer {
-  padding-top: var(--mg-spacing-md);
-  border-top: var(--border-width-normal) solid var(--mg-border-light);
+.mg-financial-transaction-card__actions {
+  display: inline-flex;
+  gap: var(--mg-spacing-xs);
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
-.mg-financial-transaction-card__actions {
-  display: flex;
-  gap: var(--mg-spacing-sm);
-  align-items: center;
-  flex-wrap: wrap;
+/* B0KlA 원형 아이콘 버튼 — 재무 행에서는 가로 폭을 줄여 테이블·카드 밀도에 맞춤 */
+.erp-system .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button,
+.erp-system .mg-financial-transaction-table__actions .mg-financial-transaction__icon-action.mg-button {
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+.erp-system .mg-financial-transaction-card__actions .mg-financial-transaction__icon-action.mg-button svg,
+.erp-system .mg-financial-transaction-table__actions .mg-financial-transaction__icon-action.mg-button svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+/* 삭제: danger 계열 유지(B0KlA icon-btn 기본색 덮어씀) */
+.erp-system button.mg-financial-transaction__icon-action.mg-financial-transaction__icon-action--danger.mg-button:not(.mg-button--disabled) {
+  border-color: var(--mg-error-400, var(--mg-error-500));
+  color: var(--mg-error-600);
+  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
+}
+
+.erp-system button.mg-financial-transaction__icon-action.mg-financial-transaction__icon-action--danger.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-error-100);
+  border-color: var(--mg-error-500);
+  color: var(--mg-error-700);
 }
 
 /* 작은 카드: 더 많은 카드가 한 화면에 보이도록 그리드·카드 밀도 상향 */
@@ -737,29 +783,61 @@
   font-size: var(--mg-font-sm);
 }
 
-.mg-financial-transaction-card--compact .mg-financial-transaction-card__footer {
-  padding-top: var(--mg-spacing-sm);
-}
-
-.mg-financial-transaction-card--compact .mg-financial-transaction-card__actions {
-  flex-wrap: nowrap;
+/* 작은 카드: 본문 2줄 압축 */
+.mg-financial-transaction-card__body--compact {
+  display: flex;
+  flex-direction: column;
   gap: var(--mg-spacing-xs);
-  justify-content: flex-end;
+  margin-bottom: 0;
 }
 
-.mg-financial-transaction-card--compact .mg-financial-transaction-card__actions .mg-button {
-  font-size: var(--mg-font-xs);
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  min-height: 0;
-}
-
-/* 테이블 뷰: 작업 열 버튼 정렬 */
-.mg-financial-transaction-table__actions {
+.mg-financial-transaction-card__compact-line {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card__compact-line--primary {
+  font-size: var(--mg-font-sm);
+}
+
+.mg-financial-transaction-card__compact-line--secondary .erp-status {
+  font-size: var(--mg-font-xs);
+  padding: var(--border-width-thin) var(--mg-spacing-sm);
+}
+
+.mg-financial-transaction-card__compact-sep {
+  color: var(--mg-text-tertiary);
+  user-select: none;
+}
+
+.mg-financial-transaction-card__compact-category {
+  color: var(--mg-color-text-main);
+  font-weight: var(--mg-font-medium);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card--compact .mg-financial-transaction-card__body--compact .mg-financial-transaction-card__amount {
+  font-size: var(--mg-font-sm);
+}
+
+/* 테이블 뷰: 작업 열 — 아이콘 버튼 한 줄 */
+.mg-financial-transaction-table__actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
   gap: var(--mg-spacing-xs);
   align-items: center;
   justify-content: flex-end;
+}
+
+.mg-financial-transaction-list-table th:last-child,
+.mg-financial-transaction-list-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  vertical-align: middle;
 }
 
 .mg-financial-transaction-table__cell-muted {

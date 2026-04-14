@@ -19,9 +19,13 @@ function isSubmenuHrefActive(subHref: string, pathname: string): boolean {
 
 export default function Navigation() {
   const pathname = usePathname();
-  const [logoSrc, setLogoSrc] = useState('/assets/images/logo/logo_new.png');
+  const [logoSrc, setLogoSrc] = useState('/assets/images/logo/mindgarden-mark.svg');
   const onLogoError = useCallback(() => {
-    setLogoSrc('/assets/images/logo/logo-mark.svg');
+    setLogoSrc((prev) =>
+      prev.endsWith('mindgarden-mark.svg')
+        ? '/assets/images/logo/logo_new.png'
+        : '/assets/images/logo/logo-mark.svg',
+    );
   }, []);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isWhite, setIsWhite] = useState(false); // 초기값을 false로 변경하여 어두운 색상으로 시작
@@ -233,13 +237,15 @@ export default function Navigation() {
             <Image
               src={logoSrc}
               alt="마인드가든 심리상담센터"
-              width={120}
-              height={120}
+              width={252}
+              height={273}
+              unoptimized={logoSrc.endsWith('.svg')}
+              className="logo-mark-img"
               style={{
                 objectFit: 'contain',
                 flexShrink: 0,
                 height: 'auto',
-                maxHeight: '50px',
+                maxHeight: '46px',
                 width: 'auto',
               }}
               priority

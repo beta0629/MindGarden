@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 const NAVER_MAP_URL = `https://map.naver.com/v5/search/${encodeURIComponent('송도 마인드가든 심리상담센터')}`;
@@ -47,7 +48,17 @@ export default function Footer() {
       <div className="footer-simple__inner">
         <div className="footer-simple__grid">
           <div className="footer-simple__col footer-simple__col--brand">
-            <h2 className="footer-simple__brand-title">마인드가든</h2>
+            <div className="footer-simple__brand-head">
+              <Image
+                src="/assets/images/logo/mindgarden-mark.svg"
+                alt=""
+                width={252}
+                height={273}
+                unoptimized
+                className="footer-simple__brand-logo"
+              />
+              <h2 className="footer-simple__brand-title">마인드가든</h2>
+            </div>
             <p className="footer-simple__brand-tagline">
               나를 소중히 돌보고 가꾸는 시간,
               <br />

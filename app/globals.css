@@ -938,6 +938,10 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
+.gnb.white-text .logo-mark-img {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+}
+
 .logo:hover {
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
@@ -2363,13 +2367,28 @@ a.program-card:hover {
     }
 }
 
+.footer-simple__brand-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.footer-simple__brand-logo {
+    flex-shrink: 0;
+    width: 42px;
+    height: auto;
+    max-height: 46px;
+    object-fit: contain;
+}
+
 .footer-simple__brand-title {
     font-family: var(--font-main);
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: #ffffff;
-    margin: 0 0 0.75rem;
+    margin: 0;
 }
 
 .footer-simple__brand-tagline {

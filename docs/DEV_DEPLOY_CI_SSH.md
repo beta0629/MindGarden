@@ -1,6 +1,15 @@
-# GitHub Actions SSH 자동 배포 + 시크릿 작성 가이드
+# GitHub Actions SSH 자동 배포 (참고·과거 안내)
 
-`homepage/develop`에 **푸시** → Actions에서 **빌드 성공 후** SSH로 개발 서버에 접속해 `deploy-from-webhook.sh` 실행 → **`pm2 restart homepage-dev`**.
+> **현재 정책**: 개발·운영 서버 배포는 **SSH 수동**만 사용한다. `.github/workflows/deploy.yml`에는 **SSH 자동 배포 step이 없다** (린트·빌드만).  
+> 수동 절차: `.cursor/skills/deploy-and-servers/SKILL.md` §6(개발), §8(운영).
+
+아래 내용은 **과거에 CI에서 SSH 배포를 켤 때** 저장소 Secrets·Variables를 맞추는 참고용이다. 워크플로에 해당 step을 다시 넣을 때만 의미가 있다.
+
+---
+
+## (참고) 원래 의도했던 동작
+
+`homepage/develop` 푸시 → Actions에서 **빌드 성공 후** SSH로 개발 서버에 접속해 `deploy-from-webhook.sh` 실행 → **`pm2 restart homepage-dev`** (과거 설계).
 
 ## 1. 로컬 SSH와의 관계
 

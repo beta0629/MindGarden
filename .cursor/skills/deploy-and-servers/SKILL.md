@@ -12,7 +12,9 @@
 | **개발** | `beta0629.cafe24.com` | `ssh beta0629.cafe24.com` (로컬 SSH 키) |
 | **운영** | `beta74.cafe24.com` | `ssh root@beta74.cafe24.com` |
 
-- **개발** 서버의 배포 경로·웹훅·PM2는 §2~§6. 선택 시 Actions **CI 후 SSH 자동 배포** (`HOMEPAGE_DEV_SSH_DEPLOY` + `DEV_SSH_*` Secrets, `docs/DEV_DEPLOY_CI_SSH.md`). **로컬 PC의 `~/.ssh`는 변경하지 않음** (러너 전용 키는 Secrets에만).
+- **개발·운영 배포는 수동만** (정책). 코드 푸시 후 사람이 SSH로 접속해 스크립트 실행 — §6(개발), §8(운영). GitHub Actions `deploy.yml`은 **린트·빌드 검증만** 하며 **서버 SSH 자동 배포는 하지 않는다.**
+- 푸시만으로 서버가 갱신되게 하려면 **별도로** GitHub Webhook을 켜 둔 경우에 한함(§4). 자동을 쓰지 않으면 저장소 **Settings → Webhooks**에서 비활성화·삭제 권장.
+- 과거 문서의 **Actions SSH 자동 배포**(`docs/DEV_DEPLOY_CI_SSH.md`)는 워크플로에서 제거됨. 필요 시 문서만 참고.
 - **운영** 서버 요약은 §8.
 
 ---
@@ -31,16 +33,14 @@
 
 ## 3. 개발 배포 워크플로 (권장 정리)
 
-1. **GitHub Actions → SSH 자동 배포 (선택)**  
-   - Variable `HOMEPAGE_DEV_SSH_DEPLOY=true` + Secrets `DEV_SSH_HOST`, `DEV_SSH_USER`, `DEV_SSH_KEY`.  
-   - `homepage/develop` 푸시 → **빌드 성공 후** 서버에서 `deploy-from-webhook.sh` → `pm2 restart homepage-dev`.  
-   - 시크릿 이름·절차: **`docs/DEV_DEPLOY_CI_SSH.md`**
+1. **SSH 수동 배포 (기본·정책)**  
+   - `git push` 후 **반드시** 개발 서버에 SSH → `deploy-from-webhook.sh` (§6). Actions가 서버를 대신 배포하지 않음.
 
-2. **SSH 수동**  
-   - 로컬 `ssh`로 접속 후 `deploy-from-webhook.sh` 또는 스킬 §6. **기존 로컬 키·config 유지.**
+2. **GitHub Actions**  
+   - `homepage/develop` 푸시 시 **린트·빌드만** 실행 (`Deploy Homepage` 워크플로). 배포 성공 여부는 **수동 스크립트**로 확인.
 
-3. **GitHub Webhook (푸시 즉시)**  
-   - 아래 Payload URL. CI와 무관할 수 있음.
+3. **GitHub Webhook (선택·자동)**  
+   - 켜 두면 푸시만으로 개발 서버가 갱신될 수 있음. **수동 배포만 쓰려면** Webhook을 끄거나 등록하지 않는다 (§4).
 
 레포의 배포 로직 단일 소스: `scripts/deploy-from-webhook.sh`, 루트 `deploy-from-webhook.sh`는 위임.
 
@@ -114,8 +114,8 @@ pm2 restart homepage-dev
 
 - **저장소**: `beta0629/MindGarden`
 - **개발 브랜치**: `homepage/develop`
-- **Actions**: `Deploy Homepage` — `deploy-dev`에서 **린트 + 빌드** 후, Variable 켜져 있으면 **SSH로 개발 서버 배포** (`docs/DEV_DEPLOY_CI_SSH.md`).
-- **Secrets**: 빌드용 DB 등 + (자동 배포 시) **`DEV_SSH_HOST`**, **`DEV_SSH_USER`**, **`DEV_SSH_KEY`**. 로컬 `~/.ssh`와 별개.
+- **Actions**: `Deploy Homepage` — `deploy-dev`에서 **린트 + 빌드만** (서버 SSH 배포 step 없음).
+- **Secrets**: 빌드용 DB 등. **개발 서버 자동 배포용 SSH 시크릿은 워크플로에서 사용하지 않음** (문서 `DEV_DEPLOY_CI_SSH.md`는 과거/참고용).
 
 ---
 

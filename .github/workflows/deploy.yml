@@ -51,33 +51,10 @@ jobs:
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD || secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DEV_DB_NAME || secrets.DB_NAME }}
 
-      # 개발 자동 배포: CI 성공 후 SSH (secrets는 if:에 쓰면 워크플로 오류 날 수 있어 run step에서 판별)
-      # 켜기(택1): Variable HOMEPAGE_DEV_SSH_DEPLOY=true | Secret DEV_SSH_AUTO_DEPLOY_ENABLE=1
-      # 상세: docs/DEV_DEPLOY_CI_SSH.md
-      - name: Decide if SSH deploy
-        id: ssh_deploy
-        if: github.event_name == 'push'
-        env:
-          HOMEPAGE_VAR: ${{ vars.HOMEPAGE_DEV_SSH_DEPLOY }}
-          AUTO_ENABLE: ${{ secrets.DEV_SSH_AUTO_DEPLOY_ENABLE }}
-        run: |
-          enabled=false
-          if [ "$HOMEPAGE_VAR" = "true" ] || [ "$HOMEPAGE_VAR" = "True" ]; then enabled=true; fi
-          if [ "$AUTO_ENABLE" = "1" ]; then enabled=true; fi
-          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy to dev server (SSH, after CI)
-        if: github.event_name == 'push' && steps.ssh_deploy.outputs.enabled == 'true'
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            cd /var/www/homepage
-            bash deploy-from-webhook.sh
+      # 개발·운영 배포 정책: SSH 자동 배포 없음. 푸시 후 서버에서 수동 실행.
+      # 개발: ssh beta0629 → cd /var/www/homepage && bash deploy-from-webhook.sh
+      # 운영: ssh root@beta74 → cd /var/www/homepage && bash scripts/deploy-production.sh
+      # (과거 CI SSH 안내는 docs/DEV_DEPLOY_CI_SSH.md 참고)
 
   # 프로덕션 브랜치 빌드 및 테스트
   build-and-test:

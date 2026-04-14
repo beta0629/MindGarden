@@ -15,7 +15,7 @@ import { ERP_API } from '../../constants/api';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
-import { ViewModeToggle } from '../common';
+import { ViewModeToggle, ListTableView } from '../common';
 import Badge from '../common/Badge';
 import {
   DollarSign,
@@ -40,10 +40,23 @@ import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
 
-/** 거래 내역 보기 전환 옵션: 카드 / 테이블 (테이블 뷰는 추후 구현, 현재 동일 카드 뷰) */
+/** 거래 내역 보기: 일반 카드 / 콤팩트 카드 / 테이블 */
 const TRANSACTION_VIEW_MODE_OPTIONS = [
   { value: 'card', label: '카드' },
+  { value: 'compact', label: '작은 카드' },
   { value: 'table', label: '테이블' }
+];
+
+/** 재무 거래 목록 테이블 컬럼 (ListTableView) */
+const TRANSACTION_TABLE_COLUMNS = [
+  { key: 'id', label: 'ID' },
+  { key: 'transactionDate', label: '일자' },
+  { key: 'transactionType', label: '유형' },
+  { key: 'category', label: '카테고리' },
+  { key: 'amount', label: '금액' },
+  { key: 'status', label: '상태' },
+  { key: 'mapping', label: '매핑' },
+  { key: 'actions', label: '작업' }
 ];
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
@@ -402,6 +415,12 @@ const FinancialManagement = () => {
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
+  const isMappingTransaction = (transaction) =>
+    transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
+    transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
+    (typeof transaction.description === 'string' && transaction.description.includes('상담료 입금 확인')) ||
+    (typeof transaction.description === 'string' && transaction.description.includes('상담료 환불'));
+
   const getBranchName = async(branchCode) => {
     if (!branchCode) return '';
     try {
@@ -410,6 +429,132 @@ const FinancialManagement = () => {
     } catch (error) {
       console.error('지점명 조회 실패:', error);
       return branchCode;
+    }
+  };
+
+  const renderTransactionTableCell = (columnKey, transaction) => {
+    const amountNum = toSafeNumber(transaction.amount);
+    switch (columnKey) {
+      case 'id':
+        return (
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            onClick={() => handleViewTransaction(transaction)}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'small',
+              loading: false,
+              className: 'mg-financial-transaction-card__id-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={false}
+          >
+            #{toDisplayString(transaction.id)}
+          </MGButton>
+        );
+      case 'transactionDate':
+        return formatDate(transaction.transactionDate);
+      case 'transactionType':
+        return (
+          <Badge
+            variant="status"
+            statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
+            label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+            size="sm"
+          />
+        );
+      case 'category':
+        return (
+          <ErpSafeText fallback="-">
+            {transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}
+          </ErpSafeText>
+        );
+      case 'amount':
+        return (
+          <span
+            className={
+              amountNum >= 0
+                ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+            }
+          >
+            {amountNum >= 0 ? '+' : ''}
+            {formatCurrency(transaction.amount)}
+          </span>
+        );
+      case 'status':
+        return (
+          <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
+            <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
+          </span>
+        );
+      case 'mapping':
+        return isMappingTransaction(transaction) ? (
+          <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
+        ) : (
+          <span className="mg-financial-transaction-table__cell-muted">—</span>
+        );
+      case 'actions':
+        return (
+          <div
+            className="mg-financial-transaction-table__actions"
+            role="group"
+            aria-label="거래 작업"
+          >
+            <MGButton
+              type="button"
+              variant="secondary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleViewTransaction(transaction)}
+              preventDoubleClick={false}
+            >
+              보기
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="secondary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: pendingEditId === transaction.id
+              })}
+              onClick={() => handleEditTransaction(transaction)}
+              loading={pendingEditId === transaction.id}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick={false}
+            >
+              수정
+            </MGButton>
+            {isAdmin() && (
+              <MGButton
+                type="button"
+                variant="secondary"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => handleDeleteTransaction(transaction)}
+                preventDoubleClick={false}
+              >
+                삭제
+              </MGButton>
+            )}
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -809,13 +954,34 @@ const FinancialManagement = () => {
                       </div>
                     </div>
 
-                  {/* 거래 목록 카드: 필수만 노출(일자, 유형, 카테고리, 금액, 상태, 매핑). 상세는 모달 — 필터는 ErpPageShell.filterSlot */}
-                  <div className="mg-financial-transaction-cards-grid">
-                    {transactions.length > 0 ? (
-                      transactions.map((transaction) => (
+                  {/* 거래 목록: 카드 / 작은 카드 / 테이블 — 필터는 ErpPageShell.filterSlot */}
+                  {transactions.length === 0 ? (
+                    <div className="mg-financial-transaction-empty">
+                      <Inbox size={48} className="mg-financial-transaction-empty__icon" aria-hidden />
+                      <p className="mg-financial-transaction-empty__text">거래 내역이 없습니다.</p>
+                    </div>
+                  ) : transactionViewMode === 'table' ? (
+                    <ListTableView
+                      columns={TRANSACTION_TABLE_COLUMNS}
+                      data={transactions}
+                      renderCell={renderTransactionTableCell}
+                      className="mg-financial-transaction-list-table"
+                    />
+                  ) : (
+                  <div
+                    className={[
+                      'mg-financial-transaction-cards-grid',
+                      transactionViewMode === 'compact' ? 'mg-financial-transaction-cards-grid--compact' : ''
+                    ].filter(Boolean).join(' ')}
+                  >
+                      {transactions.map((transaction) => (
                         <div
                           key={transaction.id}
-                          className="mg-v2-ad-b0kla__card mg-financial-transaction-card"
+                          className={[
+                            'mg-v2-ad-b0kla__card',
+                            'mg-financial-transaction-card',
+                            transactionViewMode === 'compact' ? 'mg-financial-transaction-card--compact' : ''
+                          ].filter(Boolean).join(' ')}
                         >
                           <div className="mg-financial-transaction-card__header">
                             <div className="mg-financial-transaction-card__id-section">
@@ -838,10 +1004,7 @@ const FinancialManagement = () => {
                               >
                                 #{toDisplayString(transaction.id)}
                               </MGButton>
-                              {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
-                                transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-                                transaction.description?.includes('상담료 입금 확인') ||
-                                transaction.description?.includes('상담료 환불')) && (
+                              {isMappingTransaction(transaction) && (
                                 <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
                               )}
                             </div>
@@ -867,12 +1030,12 @@ const FinancialManagement = () => {
                               <span className="mg-financial-transaction-card__label">금액</span>
                               <span
                                 className={
-                                  transaction.amount >= 0
+                                  toSafeNumber(transaction.amount) >= 0
                                     ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
                                     : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
                                 }
                               >
-                                {transaction.amount >= 0 ? '+' : ''}
+                                {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
                                 {formatCurrency(transaction.amount)}
                               </span>
                             </div>
@@ -936,14 +1099,9 @@ const FinancialManagement = () => {
                             </div>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="mg-financial-transaction-empty">
-                        <Inbox size={48} className="mg-financial-transaction-empty__icon" aria-hidden />
-                        <p className="mg-financial-transaction-empty__text">거래 내역이 없습니다.</p>
-                      </div>
-                    )}
+                      ))}
                   </div>
+                  )}
 
                   {/* 페이지네이션 */}
                   {pagination.totalPages > 1 && (

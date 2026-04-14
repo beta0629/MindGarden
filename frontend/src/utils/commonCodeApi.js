@@ -13,64 +13,18 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './ajax';
+import {
+    TENANT_WRITE_ISOLATED_GROUPS,
+    CORE_CODE_GROUPS,
+    HYBRID_READ_WITH_CORE_FALLBACK_GROUPS
+} from '../constants/tenantCodeConstants';
 
 const API_BASE = '/api/v1/common-codes';
 /** 테넌트 컨텍스트로 생성·수정·삭제 (TenantCommonCodeController) */
 const TENANT_CODES_WRITE_BASE = '/api/v1/tenant/common-codes';
 
-/**
- * 생성·수정·삭제·토글 시 TenantCommonCodeController 경로 사용
- * (GET /api/v1/tenant/common-codes/...).
- */
-const TENANT_WRITE_ISOLATED_GROUPS = [
-    'CONSULTATION_PACKAGE',
-    'PACKAGE_TYPE',
-    'PAYMENT_METHOD',
-    'SPECIALTY',
-    'CONSULTATION_TYPE',
-    'MAPPING_STATUS',
-    'RESPONSIBILITY',
-    'VACATION_TYPE',
-    'MESSAGE_TYPE',
-    'PRIORITY',
-    'COMPLETION_STATUS',
-    'FINANCIAL_CATEGORY',
-    'TAX_CATEGORY',
-    'BUDGET_CATEGORY',
-    'ITEM_CATEGORY',
-    'SALARY_TYPE',
-    'SALARY_OPTION_TYPE',
-    'SALARY_PAY_DAY',
-    // 재무·ERP (FinancialCommonCodeInitializer·통합재무 UI) — 코어 생성 권한 대신 테넌트 API 사용
-    'TRANSACTION_TYPE',
-    'INCOME_CATEGORY',
-    'INCOME_SUBCATEGORY',
-    'EXPENSE_CATEGORY',
-    'EXPENSE_SUBCATEGORY',
-    'FINANCIAL_SUBCATEGORY',
-    'VAT_APPLICABLE',
-    'TAX_TYPE',
-    'SALARY_GRADE'
-];
-
 const isTenantWriteIsolatedGroup = (codeGroup) =>
     Boolean(codeGroup) && TENANT_WRITE_ISOLATED_GROUPS.includes(codeGroup);
-
-/**
- * 조회만 GET /api/v1/common-codes?codeGroup= (테넌트 우선 + 코어 폴백).
- * CRUD는 위 TENANT_WRITE_ISOLATED_GROUPS 와 동일하게 테넌트 API 유지.
- */
-const HYBRID_READ_WITH_CORE_FALLBACK_GROUPS = [
-    'TRANSACTION_TYPE',
-    'INCOME_CATEGORY',
-    'INCOME_SUBCATEGORY',
-    'EXPENSE_CATEGORY',
-    'EXPENSE_SUBCATEGORY',
-    'FINANCIAL_SUBCATEGORY',
-    'VAT_APPLICABLE',
-    'TAX_TYPE',
-    'SALARY_GRADE'
-];
 
 const shouldUseTenantOnlyReadPath = (codeGroup, forceTenant) => {
     if (forceTenant === true) {
@@ -119,24 +73,6 @@ const normalizeDeleteResponse = (response, failMessage) => {
     }
     return true;
 };
-
-/**
- * 코어 코드 그룹 목록 (시스템 전역)
- */
-const CORE_CODE_GROUPS = [
-    'USER_STATUS',
-    'USER_ROLE',
-    'ROLE',
-    'CODE_GROUP_TYPE',
-    'SYSTEM_STATUS',
-    'NOTIFICATION_TYPE',
-    'GENDER',
-    'BANK',
-    'ADDRESS_TYPE',
-    'ADMIN_GRADE',
-    'CONSULTANT_GRADE',
-    'CLIENT_GRADE'
-];
 
 /**
  * 공통코드 목록 조회

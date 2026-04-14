@@ -16,26 +16,88 @@
  * @since 2025-11-26
  */
 
-// 테넌트 독립 코드 그룹 정의
-export const TENANT_CODE_GROUPS = [
+/**
+ * 테넌트 격리 API 대상 (POST/PUT/DELETE/PATCH → /api/v1/tenant/common-codes, 단일 테넌트 GET).
+ * commonCodeApi.js 와 동기화 — 이 배열이 SSOT.
+ * 아래 TENANT_CODE_GROUPS 에 없는 항목은 ERP·재무 등 다른 화면 전용으로 탭에만 안 보일 수 있음.
+ */
+export const TENANT_WRITE_ISOLATED_GROUPS = [
     'CONSULTATION_PACKAGE',
-    'PACKAGE_TYPE', 
+    'PACKAGE_TYPE',
     'PAYMENT_METHOD',
     'SPECIALTY',
     'CONSULTATION_TYPE',
     'MAPPING_STATUS',
     'RESPONSIBILITY',
-    'CONSULTANT_GRADE'
+    'VACATION_TYPE',
+    'MESSAGE_TYPE',
+    'PRIORITY',
+    'COMPLETION_STATUS',
+    'FINANCIAL_CATEGORY',
+    'TAX_CATEGORY',
+    'BUDGET_CATEGORY',
+    'ITEM_CATEGORY',
+    'SALARY_TYPE',
+    'SALARY_OPTION_TYPE',
+    'SALARY_PAY_DAY',
+    'TRANSACTION_TYPE',
+    'INCOME_CATEGORY',
+    'INCOME_SUBCATEGORY',
+    'EXPENSE_CATEGORY',
+    'EXPENSE_SUBCATEGORY',
+    'FINANCIAL_SUBCATEGORY',
+    'VAT_APPLICABLE',
+    'TAX_TYPE',
+    'SALARY_GRADE',
+    'CONSULTANT_GRADE',
+    'CLIENT_GRADE',
+    'ADMIN_GRADE'
 ];
 
-// 코어 코드 그룹 정의
+// 테넌트 코드 관리 UI(탭)에 노출 — TENANT_WRITE_ISOLATED_GROUPS 부분집합
+export const TENANT_CODE_GROUPS = [
+    'CONSULTATION_PACKAGE',
+    'PACKAGE_TYPE',
+    'PAYMENT_METHOD',
+    'SPECIALTY',
+    'CONSULTATION_TYPE',
+    'MAPPING_STATUS',
+    'RESPONSIBILITY',
+    'CONSULTANT_GRADE',
+    'CLIENT_GRADE',
+    'ADMIN_GRADE'
+];
+
+/**
+ * 코어 전용 조회(/api/v1/common-codes/core/groups/{group}) — 시스템 전역 코드만.
+ * 등급(ADMIN/CONSULTANT/CLIENT_GRADE)은 테넌트 스코프이므로 포함하지 않음.
+ */
 export const CORE_CODE_GROUPS = [
     'USER_STATUS',
     'USER_ROLE',
     'ROLE',
     'CODE_GROUP_TYPE',
     'SYSTEM_STATUS',
-    'NOTIFICATION_TYPE'
+    'NOTIFICATION_TYPE',
+    'GENDER',
+    'BANK',
+    'ADDRESS_TYPE'
+];
+
+/**
+ * 테넌트 격리 쓰기이나, 조회는 통합 API(테넌트 우선 + 코어 폴백)를 써야 하는 그룹.
+ * shouldUseTenantOnlyReadPath 에서 제외 — getCommonCodes 가 /common-codes?codeGroup= 경로 사용.
+ */
+export const HYBRID_READ_WITH_CORE_FALLBACK_GROUPS = [
+    'TRANSACTION_TYPE',
+    'INCOME_CATEGORY',
+    'INCOME_SUBCATEGORY',
+    'EXPENSE_CATEGORY',
+    'EXPENSE_SUBCATEGORY',
+    'FINANCIAL_SUBCATEGORY',
+    'VAT_APPLICABLE',
+    'TAX_TYPE',
+    'SALARY_GRADE'
 ];
 
 // 탭 타입 상수

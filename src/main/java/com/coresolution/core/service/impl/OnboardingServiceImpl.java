@@ -1843,6 +1843,31 @@ public class OnboardingServiceImpl implements OnboardingService {
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
                     "ADMINISTRATION", "행정", "행정", "행정 업무", null, 2, createdByValue);
 
+            // 패키지 유형 (copy_default_tenant_codes / TENANT_CODE_GROUPS PACKAGE_TYPE)
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PACKAGE_TYPE",
+                    "INDIVIDUAL", "개인 상담", "개인 상담", "1:1 개인 상담", null, 1, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PACKAGE_TYPE", "GROUP",
+                    "그룹 상담", "그룹 상담", "그룹 상담", null, 2, createdByValue);
+
+            // 매핑 상태 (frontend/src/constants/mapping.js MAPPING_STATUS 와 코드값 정합)
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
+                    "PENDING_PAYMENT", "결제 대기", "결제 대기", "결제 대기 중인 매칭", null, 1,
+                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
+                    "PAYMENT_CONFIRMED", "결제 확인", "결제 확인", "결제가 확인된 매칭", null, 2,
+                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "ACTIVE",
+                    "활성", "활성", "활성 상태의 매칭", null, 3, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "INACTIVE",
+                    "비활성", "비활성", "비활성 상태의 매칭", null, 4, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "SUSPENDED",
+                    "일시정지", "일시정지", "일시정지된 매칭", null, 5, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "TERMINATED",
+                    "종료", "종료", "종료된 매칭", null, 6, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
+                    "SESSIONS_EXHAUSTED", "회기 소진", "회기 소진", "회기가 모두 소진된 매칭", null, 7,
+                    createdByValue);
+
             // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
             // TenantOnboardingSalaryAndFinancialSeedDefinitions
             for (TenantOnboardingSalaryAndFinancialSeedDefinitions.SeedRow row : TenantOnboardingSalaryAndFinancialSeedDefinitions

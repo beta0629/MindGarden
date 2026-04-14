@@ -240,6 +240,39 @@
   font-style: italic;
 }
 
+/* 급여 폼 하단 액션: 취소·저장 가로 배치 (UnifiedModal .mg-modal__actions 와 동일 계약) */
+.salary-profile-form__actions.consultant-profile-form-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--light-beige);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.salary-profile-form__actions.consultant-profile-form-actions .mg-button {
+  width: auto;
+  flex: 0 0 auto;
+  min-width: 112px;
+}
+
+@media (max-width: 767px) {
+  .salary-profile-form__actions.consultant-profile-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .salary-profile-form__actions.consultant-profile-form-actions .mg-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 /* ==================== 안내사항 디자인 ==================== */
 .consultant-profile-form-notice {
   background: linear-gradient(135deg, var(--light-beige), var(--cream));

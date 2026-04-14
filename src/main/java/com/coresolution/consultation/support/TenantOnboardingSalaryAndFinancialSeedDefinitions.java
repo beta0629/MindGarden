@@ -7,6 +7,10 @@ import java.util.List;
 /**
  * 온보딩 시 신규 테넌트에 삽입할 급여·ERP 공통코드 시드 정의.
  * <p>
+ * 프론트엔드 {@code TENANT_CODE_GROUPS} / {@code TENANT_WRITE_ISOLATED_GROUPS}와 동일 정책으로 동기화 —
+ * {@code frontend/src/constants/tenantCodeConstants.js}.
+ * </p>
+ * <p>
  * <strong>동기화 단일 출처</strong>: 문자열·JSON은 아래와 동일하게 유지할 것. 변경 시 함께 갱신.
  * </p>
  * <ul>
@@ -14,6 +18,11 @@ import java.util.List;
  * (initializeSalaryPayDayOptions ~ initializeFreelanceBaseRates)</li>
  * <li>재무: {@link com.coresolution.consultation.service.impl.FinancialCommonCodeInitializer}</li>
  * </ul>
+ * <p>
+ * TENANT_WRITE_ISOLATED_GROUPS 중 탭({@code TENANT_CODE_GROUPS})에 없는 ERP 전용 그룹(예: {@code FINANCIAL_CATEGORY})은
+ * 본 파일 또는 {@link com.coresolution.core.service.impl.OnboardingServiceImpl} 온보딩 공통코드 삽입 로직에서
+ * 선택적으로 시드한다.
+ * </p>
  *
  * @author CoreSolution
  * @since 2026-04-13
@@ -81,6 +90,42 @@ public final class TenantOnboardingSalaryAndFinancialSeedDefinitions {
         rows.add(new SeedRow("CONSULTANT_GRADE", "CONSULTANT_MASTER", "마스터 상담사", "마스터 상담사",
                 "최고급 상담사 (10년 이상 경력)",
                 "{\"level\": 4, \"experience\": \"10년 이상\", \"description\": \"최고급 상담사\", \"multiplier\": 1.6}",
+                4, null, null));
+
+        // --- CLIENT_GRADE (CONSULTANT_GRADE와 동일 extraData 패턴) ---
+        rows.add(new SeedRow("CLIENT_GRADE", "CLIENT_STANDARD", "일반", "일반",
+                "기본 내담자 등급",
+                "{\"level\": 1, \"tier\": \"STANDARD\", \"description\": \"일반 내담자\", \"multiplier\": 1.0}",
+                1, null, null));
+        rows.add(new SeedRow("CLIENT_GRADE", "CLIENT_PREMIUM", "우수", "우수",
+                "우수 내담자 등급",
+                "{\"level\": 2, \"tier\": \"PREMIUM\", \"description\": \"우수 내담자\", \"multiplier\": 1.1}",
+                2, null, null));
+        rows.add(new SeedRow("CLIENT_GRADE", "CLIENT_VIP", "프리미엄", "프리미엄",
+                "프리미엄 내담자 등급",
+                "{\"level\": 3, \"tier\": \"VIP\", \"description\": \"프리미엄 내담자\", \"multiplier\": 1.2}",
+                3, null, null));
+        rows.add(new SeedRow("CLIENT_GRADE", "CLIENT_ELITE", "엘리트", "엘리트",
+                "최상위 내담자 등급",
+                "{\"level\": 4, \"tier\": \"ELITE\", \"description\": \"엘리트 내담자\", \"multiplier\": 1.3}",
+                4, null, null));
+
+        // --- ADMIN_GRADE ---
+        rows.add(new SeedRow("ADMIN_GRADE", "ADMIN_JUNIOR", "주니어 관리", "주니어 관리",
+                "초급 관리 업무",
+                "{\"level\": 1, \"scope\": \"JUNIOR\", \"description\": \"주니어 관리\", \"multiplier\": 1.0}",
+                1, null, null));
+        rows.add(new SeedRow("ADMIN_GRADE", "ADMIN_SENIOR", "시니어 관리", "시니어 관리",
+                "중급 관리 업무",
+                "{\"level\": 2, \"scope\": \"SENIOR\", \"description\": \"시니어 관리\", \"multiplier\": 1.15}",
+                2, null, null));
+        rows.add(new SeedRow("ADMIN_GRADE", "ADMIN_EXPERT", "전문 관리", "전문 관리",
+                "고급 관리 업무",
+                "{\"level\": 3, \"scope\": \"EXPERT\", \"description\": \"전문 관리\", \"multiplier\": 1.3}",
+                3, null, null));
+        rows.add(new SeedRow("ADMIN_GRADE", "ADMIN_MASTER", "마스터 관리", "마스터 관리",
+                "최고급 관리 업무",
+                "{\"level\": 4, \"scope\": \"MASTER\", \"description\": \"마스터 관리\", \"multiplier\": 1.45}",
                 4, null, null));
 
         // --- SALARY_TYPE ---

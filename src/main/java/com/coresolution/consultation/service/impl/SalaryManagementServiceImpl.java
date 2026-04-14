@@ -7,11 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.dto.ConsultantSalaryOptionItemRequest;
+import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
+import com.coresolution.consultation.entity.ConsultantSalaryOption;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ConsultantSalaryOptionRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
@@ -40,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
+    private final ConsultantSalaryOptionRepository consultantSalaryOptionRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     private final UserRepository userRepository;
@@ -62,14 +67,17 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public ConsultantSalaryProfile createSalaryProfile(ConsultantSalaryProfile salaryProfile) {
+    public ConsultantSalaryProfile createSalaryProfile(ConsultantSalaryProfile salaryProfile,
+            List<ConsultantSalaryOptionItemRequest> optionRequests) {
         String ctxTenantId = TenantContextHolder.getTenantId();
         String profileTenantId = salaryProfile.getTenantId();
         log.info("➕ 급여 프로필 생성: ConsultantID={}, SalaryType={}, tenantId(context)={}, tenantId(entity)={}",
                 salaryProfile.getConsultantId(), salaryProfile.getSalaryType(), ctxTenantId,
                 profileTenantId);
         try {
-            return consultantSalaryProfileRepository.save(salaryProfile);
+            ConsultantSalaryProfile saved = consultantSalaryProfileRepository.save(salaryProfile);
+            syncConsultantSalaryOptions(profileTenantId, saved.getId(), optionRequests);
+            return saved;
         } catch (DataIntegrityViolationException e) {
             log.error(
                     "급여 프로필 저장 실패(DataIntegrity): consultantId={}, tenantId(context)={}, tenantId(entity)={}, 원인={}",
@@ -80,11 +88,69 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public ConsultantSalaryProfile updateSalaryProfile(ConsultantSalaryProfile salaryProfile) {
+    public ConsultantSalaryProfile updateSalaryProfile(ConsultantSalaryProfile salaryProfile,
+            List<ConsultantSalaryOptionItemRequest> optionRequests) {
         log.info("✏️ 급여 프로필 수정: ID={}, ConsultantID={}", 
                 salaryProfile.getId(), salaryProfile.getConsultantId());
         
-        return consultantSalaryProfileRepository.save(salaryProfile);
+        ConsultantSalaryProfile saved = consultantSalaryProfileRepository.save(salaryProfile);
+        syncConsultantSalaryOptions(saved.getTenantId(), saved.getId(), optionRequests);
+        return saved;
+    }
+
+    /**
+     * 요청에 options 필드가 있으면 consultant_salary_options를 삭제 후 재삽입한다.
+     * null이면 기존 옵션을 유지한다(레거시 API 호환).
+     *
+     * @param tenantId 테넌트 ID
+     * @param salaryProfileId 급여 프로필 ID
+     * @param optionRequests 옵션 행 목록 (null = 미동기화)
+     */
+    private void syncConsultantSalaryOptions(String tenantId, Long salaryProfileId,
+            List<ConsultantSalaryOptionItemRequest> optionRequests) {
+        if (optionRequests == null) {
+            return;
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException("tenantId는 필수입니다.");
+        }
+        if (salaryProfileId == null) {
+            throw new IllegalStateException("salaryProfileId는 필수입니다.");
+        }
+        consultantSalaryOptionRepository.deleteByTenantIdAndSalaryProfileId(tenantId, salaryProfileId);
+        for (ConsultantSalaryOptionItemRequest row : optionRequests) {
+            if (row == null) {
+                continue;
+            }
+            String optionType = row.resolveOptionType();
+            if (optionType == null) {
+                continue;
+            }
+            BigDecimal amount = row.getAmount() != null ? row.getAmount() : BigDecimal.ZERO;
+            ConsultantSalaryOption entity = new ConsultantSalaryOption();
+            entity.setTenantId(tenantId);
+            entity.setSalaryProfileId(salaryProfileId);
+            entity.setOptionType(optionType);
+            entity.setOptionAmount(amount);
+            entity.setOptionDescription(row.getName());
+            entity.setIsActive(true);
+            consultantSalaryOptionRepository.save(entity);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ConsultantSalaryProfileResponse getSalaryProfileDetailForConsultant(Long consultantId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultantSalaryProfile> profileOpt = consultantSalaryProfileRepository
+                .findByTenantIdAndConsultantIdAndActive(tenantId, consultantId);
+        if (profileOpt.isEmpty()) {
+            return null;
+        }
+        ConsultantSalaryProfile profile = profileOpt.get();
+        List<ConsultantSalaryOption> options = consultantSalaryOptionRepository
+                .findByTenantIdAndSalaryProfileIdAndActive(tenantId, profile.getId());
+        return ConsultantSalaryProfileResponse.fromEntity(profile, options);
     }
     
     @Override

@@ -2,6 +2,7 @@ package com.coresolution.consultation;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -11,6 +12,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import com.coresolution.consultation.config.MindgardenSecurityProperties;
 
 /**
  * 코어솔루션 통합 상담관리 시스템 메인 애플리케이션
@@ -44,6 +47,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
+@EnableConfigurationProperties(MindgardenSecurityProperties.class)
 public class ConsultationManagementApplication {
 
     public static void main(String[] args) {

@@ -1,10 +1,12 @@
 package com.coresolution.consultation.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -52,4 +54,10 @@ public class ConsultantSalaryProfileRequest {
     private String businessName;
 
     private Boolean isActive;
+
+    /**
+     * 급여 옵션 동기화용 (null이면 기존 옵션 유지, 빈 배열이면 전부 삭제, 값이 있으면 전체 치환)
+     */
+    @Valid
+    private List<ConsultantSalaryOptionItemRequest> options;
 }

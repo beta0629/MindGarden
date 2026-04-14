@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
+import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
@@ -79,11 +80,8 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
-        List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles();
-        ConsultantSalaryProfile consultantProfile = profiles.stream()
-            .filter(profile -> profile.getConsultantId().equals(consultantId))
-            .findFirst()
-            .orElse(null);
+        ConsultantSalaryProfileResponse consultantProfile =
+                salaryManagementService.getSalaryProfileDetailForConsultant(consultantId);
         String message = consultantProfile != null ? "급여 프로필을 조회했습니다." : "해당 상담사의 급여 프로필이 없습니다.";
         return success(message, consultantProfile);
     }
@@ -108,7 +106,7 @@ public class SalaryManagementController extends BaseApiController {
         }
         log.info("급여 프로필 생성: 상담사 ID {}", request.getConsultantId());
         ConsultantSalaryProfile entity = toEntity(request, null, currentUser.getTenantId());
-        ConsultantSalaryProfile created = salaryManagementService.createSalaryProfile(entity);
+        ConsultantSalaryProfile created = salaryManagementService.createSalaryProfile(entity, request.getOptions());
         return created("급여 프로필이 생성되었습니다.", created);
     }
 
@@ -137,7 +135,7 @@ public class SalaryManagementController extends BaseApiController {
         }
         log.info("급여 프로필 수정: ID={}, 상담사 ID {}", id, request.getConsultantId());
         ConsultantSalaryProfile entity = toEntity(request, id, existing.getTenantId());
-        ConsultantSalaryProfile updated = salaryManagementService.updateSalaryProfile(entity);
+        ConsultantSalaryProfile updated = salaryManagementService.updateSalaryProfile(entity, request.getOptions());
         return success("급여 프로필이 수정되었습니다.", updated);
     }
 

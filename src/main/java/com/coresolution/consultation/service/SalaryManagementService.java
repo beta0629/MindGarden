@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.ConsultantSalaryOptionItemRequest;
+import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
@@ -14,9 +16,21 @@ public interface SalaryManagementService {
     // Salary Profile 관리
     List<ConsultantSalaryProfile> getAllSalaryProfiles();
     ConsultantSalaryProfile getSalaryProfileById(Long id);
-    ConsultantSalaryProfile createSalaryProfile(ConsultantSalaryProfile salaryProfile);
-    ConsultantSalaryProfile updateSalaryProfile(ConsultantSalaryProfile salaryProfile);
+    ConsultantSalaryProfile createSalaryProfile(ConsultantSalaryProfile salaryProfile,
+            List<ConsultantSalaryOptionItemRequest> optionRequests);
+
+    ConsultantSalaryProfile updateSalaryProfile(ConsultantSalaryProfile salaryProfile,
+            List<ConsultantSalaryOptionItemRequest> optionRequests);
+
     void deleteSalaryProfile(Long id);
+
+    /**
+     * 상담사별 활성 급여 프로필과 옵션(optionTypes) 포함 상세 조회
+     *
+     * @param consultantId 상담사 ID
+     * @return 프로필 없으면 null
+     */
+    ConsultantSalaryProfileResponse getSalaryProfileDetailForConsultant(Long consultantId);
     
     // Consultant 관리 (상담사 목록은 공통 API GET /api/v1/admin/consultants/with-stats 사용)
     List<Map<String, Object>> getConsultantSalarySummary(Long consultantId, String period);

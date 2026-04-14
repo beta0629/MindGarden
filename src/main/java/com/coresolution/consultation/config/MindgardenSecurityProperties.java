@@ -1,7 +1,6 @@
 package com.coresolution.consultation.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import lombok.Data;
 
 /**
@@ -11,7 +10,6 @@ import lombok.Data;
  * @since 2026-04-11
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "mindgarden.security")
 public class MindgardenSecurityProperties {
 

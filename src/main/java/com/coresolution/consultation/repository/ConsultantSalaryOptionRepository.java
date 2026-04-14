@@ -3,6 +3,7 @@ package com.coresolution.consultation.repository;
 import java.util.List;
 import com.coresolution.consultation.entity.ConsultantSalaryOption;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +31,16 @@ public interface ConsultantSalaryOptionRepository extends JpaRepository<Consulta
      */
     @Query("SELECT cso FROM ConsultantSalaryOption cso WHERE cso.tenantId = :tenantId AND cso.salaryProfileId = :salaryProfileId")
     List<ConsultantSalaryOption> findByTenantIdAndSalaryProfileId(@Param("tenantId") String tenantId, @Param("salaryProfileId") Long salaryProfileId);
+
+    /**
+     * 급여 프로필에 매달린 옵션 행 전부 삭제 (동기화용)
+     *
+     * @param tenantId 테넌트 ID
+     * @param salaryProfileId 급여 프로필 ID
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ConsultantSalaryOption cso WHERE cso.tenantId = :tenantId AND cso.salaryProfileId = :salaryProfileId")
+    int deleteByTenantIdAndSalaryProfileId(@Param("tenantId") String tenantId, @Param("salaryProfileId") Long salaryProfileId);
     
     /**
      * 옵션 타입으로 활성화된 옵션 조회 (tenantId 필터링)

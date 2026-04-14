@@ -16,7 +16,9 @@ spring:
   datasource:
     # 빈 문자열로 설정된 SPRING_DATASOURCE_URL 이 기본값을 덮어써 풀 미생성·JPA 비활성화되는 것을 피함.
     # MySQL 등으로 덮어쓸 때는 IDE/CLI에서 --spring.datasource.url=... 만 사용 (빈 env 금지).
-    url: jdbc:h2:mem:mindgarden_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    # NON_KEYWORDS: H2 2.x 에서 MONTH/YEAR 등이 예약어(예: erp_budgets.month)로 DDL 실패 방지
+    # implicit-strategy: H2는 인덱스 이름이 스키마 전역 유일(MySQL은 테이블별 동일 이름 허용) → 테스트 전용 네이밍
+    url: jdbc:h2:mem:mindgarden_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=MONTH,YEAR
     username: sa
     password: ""
     driver-class-name: org.h2.Driver
@@ -28,6 +30,8 @@ spring:
     hibernate:
       # Flyway 비활성 시 엔티티 메타데이터로 스키마 보강 (운영은 ddl-auto none + Flyway)
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      naming:
+        implicit-strategy: com.coresolution.consultation.testsupport.H2GlobalUniqueIndexImplicitNamingStrategy
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
     properties:

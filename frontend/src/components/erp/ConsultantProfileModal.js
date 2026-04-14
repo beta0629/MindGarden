@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
-import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
@@ -171,6 +171,49 @@ const ConsultantProfileModal = ({
         return pattern.test(number);
     };
 
+    const normalizeGradeValue = (g) => {
+        if (g == null || g === '') {
+            return '';
+        }
+        return String(g).trim();
+    };
+
+    /**
+     * 급여 폼의 등급이 User(상담사) 엔티티와 다를 때만 등급 API를 호출한다.
+     * 프로필이 있으면 조회된 프로필 등급을, 없으면 부모에서 넘어온 consultant.grade를 기준으로 한다.
+     */
+    const syncConsultantGradeIfChanged = async() => {
+        const baselineGrade = salaryProfile != null
+            ? normalizeGradeValue(salaryProfile.grade)
+            : normalizeGradeValue(consultant?.grade);
+        const targetGrade = normalizeGradeValue(salaryFormData.grade);
+        if (!targetGrade || targetGrade === baselineGrade) {
+            return { ok: true, skipped: true };
+        }
+        try {
+            const gradeResponse = await StandardizedApi.put(
+                getConsultantGradeUpdateUrl(consultant.id),
+                { grade: targetGrade }
+            );
+            const gradeOk = gradeResponse && (gradeResponse.success === true
+                || (gradeResponse.data != null && gradeResponse.success !== false));
+            if (!gradeOk) {
+                const msg = (gradeResponse && gradeResponse.message)
+                    ? gradeResponse.message
+                    : '상담사 등급 업데이트에 실패했습니다.';
+                return { ok: false, message: msg };
+            }
+            if (consultant && typeof consultant === 'object') {
+                consultant.grade = targetGrade;
+            }
+            return { ok: true, skipped: false };
+        } catch (err) {
+            console.error('상담사 등급 업데이트 실패:', err);
+            const msg = err?.response?.data?.message || err?.message || '상담사 등급 업데이트에 실패했습니다.';
+            return { ok: false, message: msg };
+        }
+    };
+
     // 급여 프로필 생성/수정
     const handleSalaryProfileSubmit = async(e) => {
         e.preventDefault();
@@ -205,19 +248,44 @@ const ConsultantProfileModal = ({
                 calculatedBaseSalary = await calculateBaseSalaryByGrade(salaryFormData.grade);
             }
             
+            const optionsPayload = Array.isArray(salaryFormData.optionTypes)
+                ? salaryFormData.optionTypes
+                    .map((o) => (typeof o === 'string'
+                        ? { type: o, amount: 0, name: '' }
+                        : {
+                            type: o.type || o.optionType,
+                            amount: Number(o.amount || o.optionAmount) || 0,
+                            name: o.name || o.optionName || ''
+                        }))
+                    .filter((opt) => opt.type && opt.amount > 0)
+                : [];
+
+            const gradeSync = await syncConsultantGradeIfChanged();
+            if (!gradeSync.ok) {
+                notificationManager.show(gradeSync.message, 'error');
+                return;
+            }
+
             const profileData = {
                 consultantId: consultant.id,
                 salaryType: salaryFormData.salaryType,
                 baseSalary: calculatedBaseSalary,
                 contractTerms: salaryFormData.contractTerms,
-                grade: salaryFormData.grade,
-                optionTypes: salaryFormData.optionTypes,
                 isBusinessRegistered: salaryFormData.isBusinessRegistered,
                 businessRegistrationNumber: salaryFormData.businessRegistrationNumber,
-                businessName: salaryFormData.businessName
+                businessName: salaryFormData.businessName,
+                isActive: salaryProfile?.isActive !== false,
+                options: optionsPayload
             };
 
-            const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
+            const existingProfileId =
+                salaryProfile && salaryProfile.id != null ? salaryProfile.id : null;
+            const response = existingProfileId != null
+                ? await StandardizedApi.put(
+                    SALARY_API_ENDPOINTS.getProfileUpdateUrl(existingProfileId),
+                    profileData
+                  )
+                : await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
             if (response != null && typeof response === 'object' && response.success === false) {
                 notificationManager.show(`급여 프로필 저장에 실패했습니다: ${response.message || ''}`, 'error');
             } else {

@@ -37,6 +37,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // 로컬에서만 프론트·API 지연에 대비해 소폭 상향 (CI 기본값 유지)
+    ...(isLocalhost && !(process as any).env.CI
+      ? {
+          actionTimeout: 20_000,
+          navigationTimeout: 45_000,
+        }
+      : {}),
   },
 
   projects: [

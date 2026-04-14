@@ -28,6 +28,7 @@ npm test
 
 ## 참고
 
+- 로그인이 필요한 ERP 등 E2E는 **백엔드(API) 기동**과 `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`(또는 `TEST_USERNAME` / `TEST_PASSWORD`)가 필요합니다. 자세한 우선순위는 `.cursor/skills/core-solution-testing/SKILL.md`를 참고하세요.
 - 타입 오류는 `@ts-ignore` 주석으로 임시로 무시됩니다
 - 패키지 설치 후에는 타입 오류가 자동으로 해결됩니다
 - 실제 테스트 실행 시에는 Playwright가 설치되어 있어야 합니다

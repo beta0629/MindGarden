@@ -53,7 +53,7 @@ export default function Footer() {
                 src="/assets/images/logo/mindgarden-mark.svg"
                 alt=""
                 width={252}
-                height={268}
+                height={255}
                 unoptimized
                 className="footer-simple__brand-logo"
               />

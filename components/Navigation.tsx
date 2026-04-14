@@ -235,7 +235,7 @@ export default function Navigation() {
               src={logoSrc}
               alt="마인드가든 심리상담센터"
               width={252}
-              height={268}
+              height={255}
               unoptimized={logoSrc.endsWith('.svg')}
               className="logo-mark-img"
               style={{

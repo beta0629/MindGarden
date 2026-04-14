@@ -32,7 +32,7 @@ import MGButton from '../common/MGButton';
 import ConsultantCard from '../ui/Card/ConsultantCard';
 import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
-import { toDisplayString } from '../../utils/safeDisplay';
+import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import './ErpCommon.css';
 import './SalaryManagement.css';
@@ -367,7 +367,11 @@ const SalaryManagement = () => {
         if (!silent) setLoading(false);
         return;
       }
-      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, { period });
+      const params = { period };
+      if (selectedConsultant?.id != null) {
+        params.consultantId = selectedConsultant.id;
+      }
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, params);
       if (response != null && typeof response === 'object') {
         setTaxStatistics(response.data ?? response);
       } else {
@@ -588,9 +592,15 @@ const SalaryManagement = () => {
                         id="salary-consultant"
                         value={selectedConsultant?.id || ''}
                         onChange={(e) => {
-                          const consultant = consultants.find(c => c.id === parseInt(e.target.value, 10));
-                          setSelectedConsultant(consultant);
+                          const raw = e.target.value;
+                          const consultant = raw
+                            ? consultants.find(c => c.id === parseInt(raw, 10))
+                            : null;
+                          setSelectedConsultant(consultant || null);
                           if (consultant) loadSalaryCalculations(consultant.id);
+                          if (activeTab === TAB_TAX && selectedPeriod) {
+                            loadTaxStatistics(selectedPeriod, { silent: true });
+                          }
                         }}
                         className="mg-v2-select"
                         aria-label="상담사 선택"
@@ -901,9 +911,17 @@ const SalaryManagement = () => {
                                   showNotification('급여 계산이 확정되었습니다.', 'success');
                                   setPreviewResult(null);
                                   if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
+                                  /* 확정 후에만 salary_calculations·salary_tax_calculations에 반영되므로 세금 통계 갱신 */
+                                  if (previewResult.period) {
+                                    loadTaxStatistics(previewResult.period, { silent: true });
+                                  }
                                 }
                               } catch (err) {
-                                showNotification('확정 처리 중 오류가 발생했습니다.', 'error');
+                                console.error('급여 확정 API 오류:', err);
+                                showNotification(
+                                  toErrorMessage(err, '확정 처리 중 오류가 발생했습니다.'),
+                                  'error'
+                                );
                               } finally {
                                 setConfirmSalaryLoading(false);
                                 setLoading(false);
@@ -929,7 +947,9 @@ const SalaryManagement = () => {
                           </MGButton>
                         </div>
                         <p className="salary-calc-block__preview-notice">
-                          미리보기 후 확정하면 해당 기간 급여가 저장됩니다.
+                          미리보기만으로는 DB에 저장되지 않습니다. <strong>확정</strong>해야 급여·세금 내역이 저장되며,
+                          세금 관리 탭 통계에도 반영됩니다.
+                          동일 상담사·동일 월에 이미 확정된 급여가 있으면 확정할 수 없습니다. 아래「급여 계산 내역」을 확인해 주세요.
                         </p>
                       </div>
                     )}

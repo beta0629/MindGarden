@@ -318,6 +318,7 @@ public class SalaryManagementController extends BaseApiController {
     @GetMapping("/tax/statistics")
     public ResponseEntity<?> getTaxStatistics(
             @RequestParam String period,
+            @RequestParam(required = false) Long consultantId,
             HttpSession session) {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -329,8 +330,8 @@ public class SalaryManagementController extends BaseApiController {
         if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
         }
-        log.info("세금 통계 조회: 사용자 {}, 기간 {}", currentUser.getName(), period);
-        Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period);
+        log.info("세금 통계 조회: 사용자 {}, 기간 {}, consultantId={}", currentUser.getName(), period, consultantId);
+        Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period, consultantId);
         return success("세금 통계를 조회했습니다.", statistics);
     }
     

@@ -2,6 +2,7 @@ package com.coresolution.consultation.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -309,7 +310,7 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-API-11: GET /tax/statistics?period=2025-06 정상 → 200")
         void getTaxStatistics_valid_returns200() throws Exception {
-            when(salaryManagementService.getTaxStatistics("2025-06"))
+            when(salaryManagementService.getTaxStatistics(eq("2025-06"), isNull()))
                     .thenReturn(Map.of("totalGrossSalary", BigDecimal.ZERO, "totalNetSalary", BigDecimal.ZERO));
 
             mockMvc.perform(get("/api/v1/admin/salary/tax/statistics")

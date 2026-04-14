@@ -1,5 +1,7 @@
 -- =====================================================
 -- 통합 급여 계산 프로시저 (표준화 버전)
+-- 운영 반영: 앱은 본 시그니처(5 IN + 7 OUT)를 기대합니다. 구버전(4 IN + 7 OUT)만 있으면 JDBC OUT 등록 오류가 납니다.
+-- 배포: 저장소 `.github/workflows/deploy-procedures-production-mysql.yml` 또는 `database/schema/procedures_standardized/deploy_standardized_procedures.sh` 로 동일 본문을 적용하세요.
 -- =====================================================
 DELIMITER //
 

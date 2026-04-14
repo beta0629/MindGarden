@@ -23,6 +23,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
+import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -384,9 +385,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      * 세금 통계 조회 (프론트엔드 호환성). 2차: 세목별 breakdown 포함.
      */
     @Override
-    public Map<String, Object> getTaxStatistics(String period) {
+    public Map<String, Object> getTaxStatistics(String period, Long consultantId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        log.info("💰 세금 통계 조회: Period={}, tenantId={}", period, tenantId);
+        log.info("💰 세금 통계 조회: Period={}, consultantId={}, tenantId={}", period, consultantId, tenantId);
         
         if (period == null || period.isBlank()) {
             throw new ValidationException("기간(period)은 필수이며 YYYY-MM 형식이어야 합니다.");
@@ -413,7 +414,14 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
+        List<SalaryCalculation> calculations = salaryCalculationRepository
+                .findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
+                        tenantId, SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
+        if (consultantId != null) {
+            calculations = calculations.stream()
+                    .filter(c -> c.getConsultant() != null && consultantId.equals(c.getConsultant().getId()))
+                    .collect(Collectors.toList());
+        }
         List<Long> calculationIds = calculations.stream()
             .map(SalaryCalculation::getId)
             .collect(Collectors.toList());
@@ -462,13 +470,43 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                     case "FOUR_INSURANCE":
                         breakdown.put("fourInsurance", sum);
                         break;
+                    case "NATIONAL_PENSION":
+                        breakdown.put("nationalPension", sum);
+                        break;
                     default:
                         breakdown.put(taxType, sum);
                         break;
                 }
             }
         }
-        
+
+        /*
+         * salary_tax_calculations에 WITHHOLDING_TAX 행이 없는 경우(구버전 계산·프로시저 미배포 등):
+         * 활성 ConsultantSalaryProfile이 FREEL인 급여 건에 대해 총급여 기준 3.3%를 표시용으로 보강한다.
+         */
+        BigDecimal dbWithholding = Optional.ofNullable(breakdown.get("withholdingTax")).orElse(BigDecimal.ZERO);
+        if (dbWithholding.compareTo(BigDecimal.ZERO) == 0 && !calculations.isEmpty()) {
+            BigDecimal fallbackWh = BigDecimal.ZERO;
+            for (SalaryCalculation sc : calculations) {
+                if (sc.getConsultant() == null || sc.getGrossSalary() == null
+                        || sc.getGrossSalary().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                Long cid = sc.getConsultant().getId();
+                Optional<ConsultantSalaryProfile> profileOpt =
+                        consultantSalaryProfileRepository.findByTenantIdAndConsultantIdAndActive(tenantId, cid);
+                if (profileOpt.isPresent()
+                        && FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(
+                                profileOpt.get().getSalaryType())) {
+                    fallbackWh = fallbackWh.add(
+                            FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(sc.getGrossSalary()));
+                }
+            }
+            if (fallbackWh.compareTo(BigDecimal.ZERO) > 0) {
+                breakdown.put("withholdingTax", fallbackWh);
+            }
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("period", period);
         result.put("totalCalculations", calculations.size());

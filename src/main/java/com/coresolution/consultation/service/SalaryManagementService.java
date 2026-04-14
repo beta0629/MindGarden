@@ -44,7 +44,13 @@ public interface SalaryManagementService {
     // 프론트엔드 호환성을 위한 메서드들
     List<SalaryCalculation> getSalaryCalculations(Long consultantId);
     Map<String, Object> getTaxDetails(Long calculationId);
-    Map<String, Object> getTaxStatistics(String period);
+    /**
+     * 세금 통계 (기간별). {@code consultantId}가 있으면 해당 상담사 급여 계산만 집계.
+     *
+     * @param period       YYYY-MM
+     * @param consultantId 선택 상담사 (null이면 테넌트 전체)
+     */
+    Map<String, Object> getTaxStatistics(String period, Long consultantId);
     
     /**
      * 추가 세금 계산 (POST tax/calculate). SalaryTaxCalculation 생성·저장 및 salary_calculations.deductions 반영.

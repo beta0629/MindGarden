@@ -529,6 +529,7 @@ public class AuthController extends BaseApiController {
             emptySessionInfo.put("role", null);
             emptySessionInfo.put("sessionId", session.getId());
             emptySessionInfo.put("isAuthenticated", false);
+            putHttpSessionTimingFields(emptySessionInfo, session);
             return success(emptySessionInfo);
         }
         
@@ -540,8 +541,21 @@ public class AuthController extends BaseApiController {
         sessionInfo.put("role", user.getRole());
         sessionInfo.put("sessionId", session.getId());
         sessionInfo.put("isAuthenticated", true);
+        putHttpSessionTimingFields(sessionInfo, session);
         
         return success(sessionInfo);
+    }
+
+    /**
+     * HTTP 세션 비활성 타임아웃 계산용(클라이언트 idle 경고 등). 서버 시각 기준.
+     *
+     * @param map 응답 맵
+     * @param session HTTP 세션
+     */
+    private void putHttpSessionTimingFields(Map<String, Object> map, HttpSession session) {
+        map.put("serverNow", System.currentTimeMillis());
+        map.put("maxInactiveInterval", session.getMaxInactiveInterval());
+        map.put("lastAccessedTime", session.getLastAccessedTime());
     }
     
     /**

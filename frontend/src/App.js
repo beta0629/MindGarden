@@ -104,6 +104,7 @@ import notificationManager from './utils/notification';
 // DuplicateLoginAlert는 UnifiedNotification으로 통합됨
 // BranchMappingModal 제거됨 - 브랜치 코드 제거 정책
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
+import SessionIdleWarningModal from './components/common/SessionIdleWarningModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
@@ -660,6 +661,7 @@ function AppContent() {
           
           {/* 중복 로그인 모달 */}
           <DuplicateLoginModal />
+          <SessionIdleWarningModal />
         </div>
         </SessionGuard>
     </QueryParamHandler>

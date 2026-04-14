@@ -15,6 +15,9 @@
 // 세션 확인 간격 (밀리초)
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
 
+/** HTTP 세션 만료 전 idle 경고를 띄울 때, 만료 시각까지 남은 시간(밀리초) 임계값 */
+export const SESSION_IDLE_WARNING_MS = 60 * 1000;
+
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 

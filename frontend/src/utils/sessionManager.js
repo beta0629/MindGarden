@@ -219,30 +219,26 @@ class SessionManager {
         this.user = newUser;
         console.log('✅ 사용자 정보 로드 완료:', this.user);
 
-        // 세션 정보는 선택적으로 가져오기 (페이지 이동 시에는 스킵)
-        if (!this.isPageNavigation()) {
-          try {
-            console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/v1/auth/session-info`);
-            const sessionHeaders = getDefaultApiHeaders();
-            const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/session-info`, {
-              credentials: 'include',
-              method: 'GET',
-              mode: 'cors',
-              headers: sessionHeaders
-            });
-            if (sessionResponse.ok) {
-              const sessionResponseData = await sessionResponse.json();
-              // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-              this.sessionInfo = (sessionResponseData && typeof sessionResponseData === 'object' && 'success' in sessionResponseData && 'data' in sessionResponseData)
-                ? sessionResponseData.data
-                : sessionResponseData;
-              console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
-            }
-          } catch (sessionError) {
-            console.warn('⚠️ 세션 정보 로드 실패 (무시):', sessionError);
+        // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
+        try {
+          console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/v1/auth/session-info`);
+          const sessionHeaders = getDefaultApiHeaders();
+          const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/session-info`, {
+            credentials: 'include',
+            method: 'GET',
+            mode: 'cors',
+            headers: sessionHeaders
+          });
+          if (sessionResponse.ok) {
+            const sessionResponseData = await sessionResponse.json();
+            // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+            this.sessionInfo = (sessionResponseData && typeof sessionResponseData === 'object' && 'success' in sessionResponseData && 'data' in sessionResponseData)
+              ? sessionResponseData.data
+              : sessionResponseData;
+            console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
           }
-        } else {
-          console.log('🔄 세션 정보 요청 스킵 (페이지 이동 중)');
+        } catch (sessionError) {
+          console.warn('⚠️ 세션 정보 로드 실패 (무시):', sessionError);
         }
       } else {
         // 401이 아닌 다른 오류만 로그에 표시

@@ -1,0 +1,135 @@
+/**
+ * HTTP 세션 만료 임박(비활성 타임아웃 기준) 시 UnifiedModal로 안내.
+ * 매핑 화면 SessionExtensionModal(상담 회기 연장)과 역할·이름이 다름.
+ *
+ * Smoke (core-tester): 로그인 후 GET /api/v1/auth/session-info 응답에
+ * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
+ * 만료 약 1분 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
+ * 로그아웃 시 SessionContext.logout 재사용.
+ *
+ * 표시 경계: COMMON_DISPLAY_BOUNDARY_MEETING_20260322 — 본문은 정적 문구·SafeText, API 숫자 필드는 toSafeNumber.
+ *
+ * @author CoreSolution
+ * @since 2026-04-14
+ */
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Clock, LogOut } from 'lucide-react';
+import UnifiedModal from './modals/UnifiedModal';
+import MGButton from './MGButton';
+import SafeText from './SafeText';
+import { useSession } from '../../contexts/SessionContext';
+import { SESSION_IDLE_WARNING_MS } from '../../constants/session';
+import { toSafeNumber } from '../../utils/safeDisplay';
+
+const SessionIdleWarningModal = () => {
+  const { pathname } = useLocation();
+  const { user, sessionInfo, checkSession, logout } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
+  const timerRef = useRef(null);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current != null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setIsOpen(false);
+      clearTimer();
+    }
+  }, [user, clearTimer]);
+
+  const isLoginPath =
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname === '/landing' ||
+    pathname === '/' ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/tablet/register') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/oauth2/callback');
+
+  useEffect(() => {
+    clearTimer();
+
+    if (isOpen) {
+      return undefined;
+    }
+
+    if (!user || isLoginPath || !sessionInfo || sessionInfo.isAuthenticated !== true) {
+      return undefined;
+    }
+
+    const maxSec = toSafeNumber(sessionInfo.maxInactiveInterval, -1);
+    const lastAcc = toSafeNumber(sessionInfo.lastAccessedTime, -1);
+    if (maxSec <= 0 || lastAcc <= 0) {
+      return undefined;
+    }
+
+    const serverNow = sessionInfo.serverNow != null
+      ? toSafeNumber(sessionInfo.serverNow, Date.now())
+      : Date.now();
+    const offsetMs = serverNow - Date.now();
+    const expiryMs = lastAcc + maxSec * 1000;
+    const warnAtMs = expiryMs - SESSION_IDLE_WARNING_MS;
+    const delayMs = Math.max(0, warnAtMs - (Date.now() + offsetMs));
+
+    timerRef.current = setTimeout(() => {
+      setIsOpen(true);
+    }, delayMs);
+
+    return () => {
+      clearTimer();
+    };
+  }, [user, sessionInfo, isLoginPath, isOpen, clearTimer]);
+
+  const handleExtend = async() => {
+    await checkSession(true);
+    setIsOpen(false);
+  };
+
+  const handleLogout = async() => {
+    setIsOpen(false);
+    await logout();
+  };
+
+  const bodyLine =
+    '일정 시간 동안 사용이 없어 서버 세션이 곧 만료됩니다. 계속 사용하시려면 연장을 눌러 주세요.';
+
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={handleExtend}
+      title="세션 만료 임박"
+      size="small"
+      variant="alert"
+      backdropClick={false}
+      showCloseButton={false}
+      zIndex={9990}
+      actions={
+        <>
+          <MGButton variant="outline" size="medium" onClick={handleLogout} preventDoubleClick={false}>
+            <LogOut size={20} className="mg-v2-icon-inline" />
+            로그아웃
+          </MGButton>
+          <MGButton variant="primary" size="medium" onClick={handleExtend} preventDoubleClick={false}>
+            <Clock size={20} className="mg-v2-icon-inline" />
+            연장
+          </MGButton>
+        </>
+      }
+    >
+      <div className="mg-v2-empty-state">
+        <Clock size={48} className="mg-v2-color-warning" />
+        <SafeText className="mg-v2-text-base mg-v2-mt-md" tag="p">{bodyLine}</SafeText>
+      </div>
+    </UnifiedModal>
+  );
+};
+
+export default SessionIdleWarningModal;

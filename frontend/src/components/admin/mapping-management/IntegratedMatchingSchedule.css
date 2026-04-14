@@ -192,25 +192,30 @@
   box-shadow: 0 0 0 2px var(--mg-color-primary-main);
 }
 
-/* MGButton.mg-button--outline 특이도(2클래스)가 단일 --selected보다 높아 덮어쓰임 → 선택 시 명시적으로 재정의 */
+/*
+ * 선택된 상태 필터: MG outline + primary 배경 + text-on-primary(흰색) 조합은
+ * 테넌트 primary가 매우 밝을 때 대비가 깨짐 → B0KlA 필터 칩과 동일하게
+ * 연한 배경 + 진한 본문색 + 테두리 강조.
+ */
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline {
-  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  color: var(--mg-color-text-on-primary, var(--mg-white));
-  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  background-color: var(--ad-b0kla-green-bg, color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 14%, var(--mg-white)));
+  color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-700)));
+  border-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
+  border-width: 2px;
 }
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
-  color: var(--mg-color-text-on-primary, var(--mg-white));
-  border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  background-color: var(--ad-b0kla-green-bg, color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 20%, var(--mg-white)));
+  color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-700)));
+  border-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
   transform: none;
   box-shadow: none;
 }
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected.mg-button--outline:focus-visible {
   outline: none;
-  border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
-  box-shadow: 0 0 0 2px var(--mg-color-primary-main, var(--mg-primary-500));
+  border-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
+  box-shadow: 0 0 0 2px var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
 }
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .mg-button__text,
@@ -236,8 +241,8 @@
 }
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  background-color: var(--mg-badge-on-primary-bg, rgba(255, 255, 255, 0.25));
-  color: var(--mg-color-text-on-primary, var(--mg-white));
+  background-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
+  color: var(--mg-white, #ffffff);
 }
 
 .integrated-schedule__status-btn.mg-button.mg-button--outline {

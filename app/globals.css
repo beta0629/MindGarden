@@ -945,10 +945,11 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
 }
 
-/* 마크와 「마인드가든」 수직 중앙 정렬 (flex align-items + 동일 베이스라인 느낌) */
+/* 마크 SVG viewBox 상단 여백 보정: 살짝 위로 올려 글자와 시각적 중앙 맞춤 */
 .logo .logo-mark-img {
     display: block;
     flex-shrink: 0;
+    transform: translateY(-3px);
 }
 
 .logo .logo-text {

@@ -258,16 +258,31 @@ button.erp-finance-tx__period-chip.mg-erp-filter-badge:focus-visible {
   vertical-align: middle;
 }
 
+/* ========== 빠른 액션 그리드 (관리 대시보드와 동일: MGButton min-width 대응) ========== */
+.mg-v2-erp-dashboard-block .erp-quick-actions .erp-quick-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.erp-quick-actions .mg-v2-ad-b0kla__admin-icon svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
 /* ========== 반응형: 빠른 액션 그리드 ========== */
 @media (max-width: 1024px) {
-  .mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__admin-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  .mg-v2-erp-dashboard-block .erp-quick-actions .erp-quick-actions__grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__admin-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  .mg-v2-erp-dashboard-block .erp-quick-actions .erp-quick-actions__grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
     gap: var(--mg-spacing-md, 0.75rem);
   }
 }

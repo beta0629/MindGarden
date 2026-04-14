@@ -17,7 +17,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
-import { FaCalendarAlt, FaUsers } from 'react-icons/fa';
+import { FaCalendarAlt, FaCheckCircle, FaUsers } from 'react-icons/fa';
+import { Bell, Calendar, Palette } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
 import {
@@ -932,7 +933,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     },
     {
       id: 'completion',
-      icon: <Icon name="CHECK" size="XXL" color="TRANSPARENT" />,
+      icon: <FaCheckCircle size={28} aria-hidden />,
       label: '완료율',
       value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : 'N/A',
       subtitle: stats.consultationStats?.completionRate == null && todayStats.completedToday != null
@@ -947,35 +948,46 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   ];
 
+  const HEADER_ICON_SIZE = 20;
+
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
         <div className="mg-v2-ad-b0kla__icon-group">
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__icon-btn mg-v2-ad-b0kla__icon-btn--text-label"
+            variant="outline"
+            size="small"
+            className="mg-v2-ad-b0kla__icon-btn"
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
-            aria-label="캘린더"
+            aria-label="일정"
+            title="일정"
             preventDoubleClick={false}
           >
-            <span>일정</span>
+            <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__icon-btn mg-v2-ad-b0kla__icon-btn--text-label"
+            variant="outline"
+            size="small"
+            className="mg-v2-ad-b0kla__icon-btn"
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
             aria-label="알림"
+            title="알림"
             preventDoubleClick={false}
           >
-            <span>알림</span>
+            <Bell size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__icon-btn mg-v2-ad-b0kla__icon-btn--text-label"
+            variant="outline"
+            size="small"
+            className="mg-v2-ad-b0kla__icon-btn"
             aria-label="테마"
+            title="테마"
             onClick={() => {}}
             preventDoubleClick={false}
           >
-            <span>테마</span>
+            <Palette size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
           </MGButton>
         </div>
       </div>

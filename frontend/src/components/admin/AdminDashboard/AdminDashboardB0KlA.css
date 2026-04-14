@@ -278,6 +278,12 @@
   background: var(--ad-b0kla-bg);
 }
 
+/* 헤더 원형 아이콘 버튼: Lucide SVG 대비 (stroke currentColor) */
+.mg-v2-ad-b0kla__icon-btn svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
 .mg-v2-ad-b0kla__icon-btn--text-label {
   width: auto;
   min-width: var(--mg-touch-target-min, 44px);
@@ -871,10 +877,14 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 }
 
 /* ===== 관리자 기능 그리드 (B0KlA 4카드 스타일) ===== */
+/* min(…,100%) + auto-fill: 좁은 영역에서 트랙 넘침·겹침 방지 (MGButton min-width:fit-content 대응) */
 .mg-v2-ad-b0kla__admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
 }
 
 .mg-v2-ad-b0kla__admin-grid--primary {
@@ -918,11 +928,17 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   font-size: 14px;
   font-weight: 600;
   color: var(--ad-b0kla-title-color);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .mg-v2-ad-b0kla__admin-desc {
   font-size: 12px;
   color: var(--ad-b0kla-text-secondary);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  line-height: 1.45;
 }
 
 .mg-v2-ad-b0kla__admin-icon--green {
@@ -1051,9 +1067,12 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 /* mg-management-grid: B0KlA admin-grid 스타일 적용 (mg-v2-ad-b0kla__admin-card 사용 시) */
 .mg-v2-ad-b0kla .mg-management-grid.mg-v2-ad-b0kla__admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: 1rem;
   margin: 1.5rem 0 0 0;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
 }
 
 /* ===== Admin Dashboard V2 레이아웃 ===== */
@@ -1584,6 +1603,13 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 /* MGButton + B0KlA (G8-B7a): 래퍼 언랩 및 카드·필·아이콘·토스트 닫기 외형 유지 */
 button.mg-v2-ad-b0kla__admin-card.mg-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: unset;
   font-weight: inherit;
   line-height: inherit;
@@ -1594,6 +1620,7 @@ button.mg-v2-ad-b0kla__admin-card.mg-button {
   border-radius: 16px;
   box-shadow: none;
   padding: 1.5rem;
+  text-align: center;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {

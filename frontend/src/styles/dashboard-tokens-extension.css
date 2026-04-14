@@ -168,6 +168,22 @@
   --ad-b0kla-danger: var(--mg-error-500);
   --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
 
+  /* ===== mg-v2-* (Icon.css / constants/icons.js ICON_COLORS) — unified 스케일 별칭 ===== */
+  --mg-v2-primary: var(--mg-primary-500);
+  --mg-v2-primary-light: var(--mg-primary-400);
+  --mg-v2-primary-dark: var(--mg-primary-600);
+  --mg-v2-secondary: var(--mg-secondary-500);
+  --mg-v2-secondary-light: var(--mg-secondary-400);
+  --mg-v2-secondary-dark: var(--mg-secondary-600);
+  --mg-v2-status-success: var(--mg-success-500);
+  --mg-v2-status-success-dark: var(--mg-success-600);
+  --mg-v2-status-warning: var(--mg-warning-500);
+  --mg-v2-status-warning-dark: var(--mg-warning-600);
+  --mg-v2-status-error: var(--mg-error-500);
+  --mg-v2-status-error-dark: var(--mg-error-600);
+  --mg-v2-status-info: var(--mg-info-500);
+  --mg-v2-status-info-dark: var(--mg-info-600);
+
   /* ===== 배지 밝은 배경 대비 (BADGE_LIGHT_BG_CONTRAST_SPEC) ===== */
   /* StatusBadge, RemainingSessionsBadge — success/warning 시인성 강화: *-300 bg + *-900 text */
 

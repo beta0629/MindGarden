@@ -227,9 +227,6 @@ export default function Navigation() {
               }
             }}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
               textDecoration: 'none',
               ...(textColor ? { color: textColor } : {}),
             }}

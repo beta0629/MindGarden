@@ -929,7 +929,10 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     text-shadow: none; /* 초기에는 텍스트 그림자 없음 */
     transition: all 0.3s ease;
     text-decoration: none;
-    line-height: 1.2;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 /* 히어로 섹션 위에 있을 때 흰색으로 변경 */
@@ -942,18 +945,22 @@ main:not(:has(.hero-section, .mg-hero-section)) .gnb .gnb-cta {
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
 }
 
-/* Logo mark: nudge up for optical alignment with wordmark */
+/* 마크와 「마인드가든」 수직 중앙 정렬 (flex align-items + 동일 베이스라인 느낌) */
 .logo .logo-mark-img {
-    transform: translateY(-3px);
+    display: block;
+    flex-shrink: 0;
+}
+
+.logo .logo-text {
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent-sky);
 }
 
 .logo:hover {
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
-}
-
-.logo .logo-text {
-    color: var(--accent-sky);
 }
 
 .gnb.scrolled .logo .logo-text {
@@ -2385,7 +2392,8 @@ a.program-card:hover {
     height: auto;
     max-height: 46px;
     object-fit: contain;
-    transform: translateY(-3px);
+    display: block;
+    align-self: center;
 }
 
 .footer-simple__brand-title {
@@ -2395,6 +2403,10 @@ a.program-card:hover {
     letter-spacing: -0.02em;
     color: #ffffff;
     margin: 0;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
 }
 
 .footer-simple__brand-tagline {

@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, LogIn, AlertTriangle } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
 
 import BaseWidget from '../BaseWidget';
@@ -21,6 +22,9 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+
+const MG_STATS_LUCIDE_SIZE = 22;
+
 const SecurityAuditWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -140,7 +144,9 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <ClipboardList size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{totalEvents}</div>
               <div className="mg-stats-card__label">총 이벤트</div>
@@ -151,7 +157,9 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <LogIn size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{loginAttempts}</div>
               <div className="mg-stats-card__label">로그인 시도</div>
@@ -162,7 +170,9 @@ const SecurityAuditWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             suspiciousCount > 0 ? 'mg-stats-card--error' : 'mg-stats-card--secondary'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <AlertTriangle size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{suspiciousCount}</div>
               <div className="mg-stats-card__label">의심 활동</div>

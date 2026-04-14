@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Users, Calendar } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
@@ -26,6 +27,8 @@ const CLIENT_MODAL_KPI_LABELS = {
 
 const CLIENT_MODAL_SUMMARY_SECTION_TITLE = '누적 지표';
 const CLIENT_MODAL_GRADE_LABEL = '현재 등급(저장값)';
+
+const CLIENT_MODAL_KPI_ICON_SIZE = 24;
 
 /**
  * 내담자 모달 컴포넌트
@@ -131,14 +134,14 @@ const ClientModal = ({
       return [
         {
           id: 'currentConsultants',
-          icon: <span className="mg-v2-content-kpi-card__icon-text" aria-hidden="true">연결</span>,
+          icon: <Users size={CLIENT_MODAL_KPI_ICON_SIZE} aria-hidden />,
           label: CLIENT_MODAL_KPI_LABELS.CURRENT_CONSULTANTS,
           value: clientSummary.currentConsultants,
           iconVariant: 'blue'
         },
         {
           id: 'totalSessions',
-          icon: <span className="mg-v2-content-kpi-card__icon-text" aria-hidden="true">일정</span>,
+          icon: <Calendar size={CLIENT_MODAL_KPI_ICON_SIZE} aria-hidden />,
           label: CLIENT_MODAL_KPI_LABELS.TOTAL_SESSIONS,
           value: sessionsVal == null ? '—' : sessionsVal,
           iconVariant: 'green'

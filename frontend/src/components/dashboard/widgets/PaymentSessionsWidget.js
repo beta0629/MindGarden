@@ -9,12 +9,24 @@
  */
 
 import React from 'react';
+import {
+  LayoutGrid,
+  CheckCircle,
+  Clock,
+  CircleDollarSign,
+  Receipt,
+  Inbox
+} from 'lucide-react';
 
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
+const PAYMENT_KPI_ICON_SIZE = 22;
+const PAYMENT_ITEM_ICON_SIZE = 20;
+const PAYMENT_STATE_ICON_SIZE = 40;
+
 const PaymentSessionsWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -186,7 +198,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
         {/* 회기 현황 요약 통계 카드들 */}
         <div className="payment-sessions-stats">
           <div className="payment-stat-card payment-stat-card--primary">
-            <div className="payment-stat-icon" />
+            <div className="payment-stat-icon" aria-hidden>
+              <LayoutGrid size={PAYMENT_KPI_ICON_SIZE} />
+            </div>
             <div className="payment-stat-content">
               <div className="payment-stat-label">총 회기수</div>
               <div className="payment-stat-value">{currentData.totalSessions}회</div>
@@ -194,7 +208,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--success">
-            <div className="payment-stat-icon" />
+            <div className="payment-stat-icon" aria-hidden>
+              <CheckCircle size={PAYMENT_KPI_ICON_SIZE} />
+            </div>
             <div className="payment-stat-content">
               <div className="payment-stat-label">사용한 회기</div>
               <div className="payment-stat-value">{currentData.usedSessions}회</div>
@@ -202,7 +218,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--warning">
-            <div className="payment-stat-icon" />
+            <div className="payment-stat-icon" aria-hidden>
+              <Clock size={PAYMENT_KPI_ICON_SIZE} />
+            </div>
             <div className="payment-stat-content">
               <div className="payment-stat-label">남은 회기</div>
               <div className="payment-stat-value">{currentData.remainingSessions}회</div>
@@ -210,7 +228,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
 
           <div className="payment-stat-card payment-stat-card--info">
-            <div className="payment-stat-icon" />
+            <div className="payment-stat-icon" aria-hidden>
+              <CircleDollarSign size={PAYMENT_KPI_ICON_SIZE} />
+            </div>
             <div className="payment-stat-content">
               <div className="payment-stat-label">총 결제금액</div>
               <div className="payment-stat-value">{formatCurrency(currentData.totalAmount)}</div>
@@ -228,7 +248,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
             <div className="payment-items">
               {currentData.recentPayments.map((payment) => (
                 <div key={payment.id} className="payment-item">
-                  <div className="payment-item__icon" />
+                  <div className="payment-item__icon" aria-hidden>
+                    <Receipt size={PAYMENT_ITEM_ICON_SIZE} />
+                  </div>
                   <div className="payment-item__content">
                     <div className="payment-item__header">
                       <h4 className="payment-item__package">
@@ -256,7 +278,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="payment-sessions-empty">
-            <div className="payment-sessions-empty__icon" />
+            <div className="payment-sessions-empty__icon" aria-hidden>
+              <Inbox size={PAYMENT_STATE_ICON_SIZE} />
+            </div>
             <p className="payment-sessions-empty__text">아직 결제 내역이 없습니다.</p>
             <p className="payment-sessions-empty__subtitle">상담 패키지를 구매하시면 여기에 표시됩니다.</p>
           </div>

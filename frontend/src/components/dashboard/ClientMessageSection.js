@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  MessageSquare,
+  FileText,
+  CheckCircle,
+  Bell,
+  AlertCircle,
+  Megaphone
+} from 'lucide-react';
 
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -17,6 +25,18 @@ import './ClientMessageSection.css';
 /**
  * 디자인 시스템 적용 버전
  */
+const MESSAGE_TYPE_LUCIDE = {
+  GENERAL: MessageSquare,
+  FOLLOW_UP: FileText,
+  HOMEWORK: CheckCircle,
+  REMINDER: Bell,
+  URGENT: AlertCircle,
+  SYSTEM_NOTICE: Megaphone
+};
+
+const EMPTY_MESSAGE_ICON_SIZE = 40;
+const LIST_MESSAGE_ICON_SIZE = 22;
+
 const ClientMessageSection = ({ userId }) => {
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
@@ -250,21 +270,27 @@ const ClientMessageSection = ({ userId }) => {
       <div className="client-message-list">
         {allMessages.length === 0 ? (
           <div className="client-message-empty">
-            <div className="client-message-empty__icon" />
+            <div className="client-message-empty__icon" aria-hidden>
+              <MessageSquare size={EMPTY_MESSAGE_ICON_SIZE} />
+            </div>
             <p className="client-message-empty__text">받은 메시지가 없습니다.</p>
             <p className="client-message-empty__hint">공지사항과 상담사 메시지가 여기에 표시됩니다.</p>
           </div>
         ) : (
           allMessages.map((message) => {
             const messageTypeInfo = getMessageTypeInfo(message.messageType);
-            
+            const MessageTypeIcon =
+              MESSAGE_TYPE_LUCIDE[message.messageType] || MESSAGE_TYPE_LUCIDE.GENERAL;
+
             return (
               <div
                 key={message.id}
                 className={`client-message-item ${!message.isRead ? 'client-message-item--unread' : ''} ${message.messageSource === 'SYSTEM' ? 'client-message-item--system' : ''}`}
                 onClick={() => handleMessageClick(message)}
               >
-                <div className={`client-message-item__icon ${messageTypeInfo.bgClass}`} />
+                <div className={`client-message-item__icon ${messageTypeInfo.bgClass}`} aria-hidden>
+                  <MessageTypeIcon size={LIST_MESSAGE_ICON_SIZE} />
+                </div>
                 <div className="client-message-item__content">
                   <div className="client-message-item__header">
                     <h4 className="client-message-item__title">

@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import {
+  LayoutGrid,
+  CheckCircle,
+  Clock,
+  CircleDollarSign,
+  Receipt,
+  Inbox,
+  AlertCircle
+} from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -9,6 +18,10 @@ import './ClientPaymentSessionsSection.css';
 /**
  * 디자인 시스템 적용 버전
  */
+const PAYMENT_KPI_ICON_SIZE = 22;
+const PAYMENT_ITEM_ICON_SIZE = 20;
+const PAYMENT_STATE_ICON_SIZE = 40;
+
 const ClientPaymentSessionsSection = ({ userId }) => {
   const [paymentData, setPaymentData] = useState({
     totalSessions: 0,
@@ -161,7 +174,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
     return (
       <div className="payment-sessions-section">
         <div className="payment-sessions-error">
-          <div className="payment-sessions-error__icon" />
+          <div className="payment-sessions-error__icon" aria-hidden>
+            <AlertCircle size={PAYMENT_STATE_ICON_SIZE} />
+          </div>
           <p className="payment-sessions-error__text">{error}</p>
         </div>
       </div>
@@ -181,7 +196,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
       {/* 회기 현황 요약 */}
       <div className="payment-sessions-stats">
         <div className="payment-stat-card payment-stat-card--primary">
-          <div className="payment-stat-icon" />
+          <div className="payment-stat-icon" aria-hidden>
+            <LayoutGrid size={PAYMENT_KPI_ICON_SIZE} />
+          </div>
           <div className="payment-stat-content">
             <div className="payment-stat-label">총 회기수</div>
             <div className="payment-stat-value">{paymentData.totalSessions}회</div>
@@ -189,7 +206,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--success">
-          <div className="payment-stat-icon" />
+          <div className="payment-stat-icon" aria-hidden>
+            <CheckCircle size={PAYMENT_KPI_ICON_SIZE} />
+          </div>
           <div className="payment-stat-content">
             <div className="payment-stat-label">사용한 회기</div>
             <div className="payment-stat-value">{paymentData.usedSessions}회</div>
@@ -197,7 +216,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--warning">
-          <div className="payment-stat-icon" />
+          <div className="payment-stat-icon" aria-hidden>
+            <Clock size={PAYMENT_KPI_ICON_SIZE} />
+          </div>
           <div className="payment-stat-content">
             <div className="payment-stat-label">남은 회기</div>
             <div className="payment-stat-value">{paymentData.remainingSessions}회</div>
@@ -205,7 +226,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
 
         <div className="payment-stat-card payment-stat-card--info">
-          <div className="payment-stat-icon" />
+          <div className="payment-stat-icon" aria-hidden>
+            <CircleDollarSign size={PAYMENT_KPI_ICON_SIZE} />
+          </div>
           <div className="payment-stat-content">
             <div className="payment-stat-label">총 결제금액</div>
             <div className="payment-stat-value">{formatCurrency(paymentData.totalAmount)}</div>
@@ -223,7 +246,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
           <div className="payment-items">
             {paymentData.recentPayments.map((payment) => (
               <div key={payment.id} className="payment-item">
-                <div className="payment-item__icon" />
+                <div className="payment-item__icon" aria-hidden>
+                  <Receipt size={PAYMENT_ITEM_ICON_SIZE} />
+                </div>
                 <div className="payment-item__content">
                   <div className="payment-item__header">
                     <h4 className="payment-item__package">
@@ -251,7 +276,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         </div>
       ) : (
         <div className="payment-sessions-empty">
-          <div className="payment-sessions-empty__icon" />
+          <div className="payment-sessions-empty__icon" aria-hidden>
+            <Inbox size={PAYMENT_STATE_ICON_SIZE} />
+          </div>
           <p className="payment-sessions-empty__text">아직 결제 내역이 없습니다.</p>
         </div>
       )}

@@ -90,22 +90,23 @@ const MappingKpiSection = ({ mappings = [], onStatCardClick }) => {
     <ContentSection noCard className="mg-v2-mapping-kpi-section">
       <div className="mg-v2-mapping-kpi-section__grid">
         {items.map((item) => (
-          <MGButton
-            key={item.id}
-            type="button"
-            variant="outline"
-            className="mg-v2-mapping-kpi-section__card"
-            onClick={() => onStatCardClick && onStatCardClick(item)}
-            preventDoubleClick={false}
-          >
+          <div key={item.id} className="mg-v2-mapping-kpi-section__card">
             <div className={`mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--${item.iconVariant}`}>
               {item.icon}
             </div>
-            <div className="mg-v2-mapping-kpi-section__info">
-              <span className="mg-v2-mapping-kpi-section__label"><SafeText>{item.label}</SafeText></span>
-              <span className="mg-v2-mapping-kpi-section__value"><SafeText>{item.value}</SafeText></span>
-            </div>
-          </MGButton>
+            <MGButton
+              type="button"
+              variant="outline"
+              className="mg-v2-mapping-kpi-section__body-btn"
+              onClick={() => onStatCardClick && onStatCardClick(item)}
+              preventDoubleClick={false}
+            >
+              <div className="mg-v2-mapping-kpi-section__info">
+                <span className="mg-v2-mapping-kpi-section__label"><SafeText>{item.label}</SafeText></span>
+                <span className="mg-v2-mapping-kpi-section__value"><SafeText>{item.value}</SafeText></span>
+              </div>
+            </MGButton>
+          </div>
         ))}
       </div>
     </ContentSection>

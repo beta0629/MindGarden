@@ -14,12 +14,16 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Zap, BarChart3, DollarSign } from 'lucide-react';
 
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import MGButton from '../../../common/MGButton';
+
+const MG_STATS_LUCIDE_SIZE = 22;
+
 const AIUsageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -100,7 +104,9 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <Zap size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{todayCalls}</div>
               <div className="mg-stats-card__label">오늘 호출</div>
@@ -111,7 +117,9 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <BarChart3 size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{monthCalls}</div>
               <div className="mg-stats-card__label">이번 달 호출</div>
@@ -122,7 +130,9 @@ const AIUsageWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             budgetUsage >= 75 ? 'mg-stats-card--warning' : 'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <DollarSign size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">${monthCost.toFixed(2)}</div>
               <div className="mg-stats-card__label">이번 달 비용</div>

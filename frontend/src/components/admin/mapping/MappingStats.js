@@ -1,29 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import {
+    Clock,
+    CheckCircle,
+    CreditCard,
+    LayoutGrid,
+    XCircle,
+    RotateCcw
+} from 'lucide-react';
+import {
     getMappingStatusKoreanName,
     getStatusColor
 } from '../../../utils/codeHelper';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
+import '../../dashboard-v2/content/ContentKpiRow.css';
+
+const KPI_ICON_SIZE = 24;
+
+/** MappingKpiSection·B0KlA와 동일한 상태별 아이콘·variant */
+const KPI_ICON_BY_STAT_ID = {
+    PENDING_PAYMENT: { Icon: Clock, iconVariant: 'orange' },
+    ACTIVE: { Icon: CheckCircle, iconVariant: 'green' },
+    PAYMENT_CONFIRMED: { Icon: CreditCard, iconVariant: 'blue' },
+    TOTAL: { Icon: LayoutGrid, iconVariant: 'blue' },
+    TERMINATED: { Icon: XCircle, iconVariant: 'gray' },
+    SESSIONS_EXHAUSTED: { Icon: RotateCcw, iconVariant: 'orange' }
+};
 
 /**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
-/**
  * - 매칭 상태별 통계 표시
-/**
  * - 시각적 통계 카드
-/**
  * - 동적 색상/아이콘 조회
-/**
- * 
-/**
+ *
  * @author Core Solution
-/**
  * @version 2.0.0
-/**
  * @since 2024-12-19
-/**
  * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingStats = ({ mappings = [], onStatCardClick }) => {
@@ -164,9 +177,11 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     if (loading) {
         return (
             <div className="mg-v2-content-kpi-row mg-v2-mapping-stats-loading">
-                {[1, 2, 3, 4].map((i) => (
+                {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="mg-v2-content-kpi-card mg-v2-content-kpi-card--skeleton">
-                        <div className="mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--gray" />
+                        <div className="mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--gray">
+                            <LayoutGrid size={KPI_ICON_SIZE} aria-hidden />
+                        </div>
                         <div className="mg-v2-content-kpi-card__info">
                             <span className="mg-v2-content-kpi-card__label">로딩 중...</span>
                             <span className="mg-v2-content-kpi-card__value">-</span>
@@ -187,28 +202,37 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 }`;
                 const valueLine =
                     `${numericValue}건${percentage > 0 ? ` (${percentage}%)` : ''}`;
+                const { Icon: KpiIcon, iconVariant } =
+                    KPI_ICON_BY_STAT_ID[stat.id] || KPI_ICON_BY_STAT_ID.TOTAL;
                 return (
-                    <MGButton
+                    <div
                         key={stat.id || index}
-                        type="button"
-                        variant="outline"
-                        className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
-                        onClick={() => onStatCardClick && onStatCardClick(stat)}
-                        title={titleHint}
-                        preventDoubleClick={false}
+                        className={`mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable-split mg-v2-content-kpi-card--accent-${iconVariant}`}
                     >
-                        <div className="mg-v2-content-kpi-card__info">
-                            <div className="mg-v2-content-kpi-card__top">
-                                <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
-                                {stat.action === 'payment' && numericValue > 0 && (
-                                    <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
-                                        결제 확인
-                                    </span>
-                                )}
-                            </div>
-                            <SafeText className="mg-v2-content-kpi-card__value">{valueLine}</SafeText>
+                        <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
+                            <KpiIcon size={KPI_ICON_SIZE} aria-hidden />
                         </div>
-                    </MGButton>
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            className="mg-v2-content-kpi-card__click-target"
+                            onClick={() => onStatCardClick && onStatCardClick(stat)}
+                            title={titleHint}
+                            preventDoubleClick={false}
+                        >
+                            <div className="mg-v2-content-kpi-card__info">
+                                <div className="mg-v2-content-kpi-card__top">
+                                    <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
+                                    {stat.action === 'payment' && numericValue > 0 && (
+                                        <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
+                                            결제 확인
+                                        </span>
+                                    )}
+                                </div>
+                                <SafeText className="mg-v2-content-kpi-card__value">{valueLine}</SafeText>
+                            </div>
+                        </MGButton>
+                    </div>
                 );
             })}
         </div>

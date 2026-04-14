@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Activity, CheckCircle, XCircle } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
 
 import BaseWidget from '../BaseWidget';
@@ -21,6 +22,9 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+
+const MG_STATS_LUCIDE_SIZE = 22;
+
 const SchedulerStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -128,7 +132,9 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <Activity size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{totalExecutions}</div>
               <div className="mg-stats-card__label">총 실행</div>
@@ -139,7 +145,9 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--success'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <CheckCircle size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{successCount}</div>
               <div className="mg-stats-card__label">성공</div>
@@ -150,7 +158,9 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             failureCount > 0 ? 'mg-stats-card--error' : 'mg-stats-card--secondary'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <XCircle size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{failureCount}</div>
               <div className="mg-stats-card__label">실패</div>

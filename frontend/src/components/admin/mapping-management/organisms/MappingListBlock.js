@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Link2 } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import { ActionButton, ViewModeToggle } from '../../../common';
@@ -47,7 +48,7 @@ const MappingListBlock = ({
       return (
         <div className="mg-v2-mapping-list-block__empty">
           <div className="mg-v2-mapping-list-block__empty-icon" aria-hidden="true">
-            🔗
+            <Link2 size={48} />
           </div>
           <h3 className="mg-v2-mapping-list-block__empty-title">{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
           <p className="mg-v2-mapping-list-block__empty-desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>

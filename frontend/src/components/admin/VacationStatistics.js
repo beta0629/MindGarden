@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AlertCircle } from 'lucide-react';
 // // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
@@ -215,7 +216,8 @@ const VacationStatistics = ({ className = "" }) => {
         return (
             <div className={`vacation-statistics mg-dashboard-layout ${className}`}>
                 <div className="mg-empty-state">
-                    <div className="mg-empty-state__icon">
+                    <div className="mg-empty-state__icon" aria-hidden>
+                        <AlertCircle size={40} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
                     <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>

@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, AlertCircle, Cpu } from 'lucide-react';
 
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
@@ -23,6 +24,9 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+
+const MG_STATS_LUCIDE_SIZE = 22;
+
 const AIMonitoringWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -145,7 +149,9 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--error'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <AlertTriangle size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{criticalCount}</div>
               <div className="mg-stats-card__label">긴급</div>
@@ -156,7 +162,9 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--warning'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <AlertCircle size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{highCount}</div>
               <div className="mg-stats-card__label">높음</div>
@@ -167,7 +175,9 @@ const AIMonitoringWidget = ({ widget, user }) => {
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
             'mg-stats-card--info'
           )}>
-            <div className="mg-stats-card__icon" />
+            <div className="mg-stats-card__icon" aria-hidden>
+              <Cpu size={MG_STATS_LUCIDE_SIZE} />
+            </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{aiUsage.todayCalls || 0}</div>
               <div className="mg-stats-card__label">오늘 AI 호출</div>

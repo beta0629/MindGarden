@@ -31,6 +31,10 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
+
+/** KPI 카드 장식 아이콘 — 액션 버튼(MGButton)의 라벨 전용 아이콘 제거와 별개로 유지 */
+const CLIENT_KPI_ICON_SIZE = 24;
 
 /**
  * 내담자 종합관리 메인 컴포넌트
@@ -542,6 +546,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                             <div className="mg-v2-mapping-kpi-section__grid">
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
+                                        <Users size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">총 내담자</span>
@@ -550,6 +555,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
+                                        <UserCheck size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">활성</span>
@@ -558,6 +564,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
+                                        <Clock size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">대기</span>
@@ -566,6 +573,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
                                     <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
+                                        <Link2 size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
                                         <span className="mg-v2-mapping-kpi-section__label">총 매칭</span>

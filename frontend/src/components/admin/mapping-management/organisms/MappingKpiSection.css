@@ -23,29 +23,10 @@
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
   box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));
-  cursor: pointer;
   transition: all 0.2s;
   text-align: left;
-}
-
-.mg-v2-mapping-kpi-section__card.mg-button.mg-button--outline {
   width: 100%;
-  justify-content: flex-start;
-  min-height: auto;
-  font-weight: inherit;
-  box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));
-}
-
-.mg-v2-mapping-kpi-section__card.mg-button .mg-button__content {
-  display: contents;
-}
-
-.mg-v2-mapping-kpi-section__card.mg-button .mg-button__text {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  text-align: left;
+  min-width: 0;
 }
 
 .mg-v2-mapping-kpi-section__card:hover {
@@ -53,11 +34,31 @@
   box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
 }
 
-.mg-v2-mapping-kpi-section__card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  border-color: var(--ad-b0kla-green, #4b745c);
-  box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
+/* KPI 좌측 아이콘 웰은 비버튼, 우측 라벨·값만 MGButton(텍스트) */
+.mg-v2-mapping-kpi-section__body-btn.mg-button.mg-button--outline {
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  min-height: auto;
+  font-weight: inherit;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mg-v2-mapping-kpi-section__body-btn.mg-button .mg-button__content,
+.mg-v2-mapping-kpi-section__body-btn.mg-button .mg-button__text {
+  display: contents;
+}
+
+.mg-v2-mapping-kpi-section__body-btn.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: transparent;
+  box-shadow: none;
   transform: none;
   color: inherit;
+  opacity: 0.92;
 }
 
 .mg-v2-mapping-kpi-section__icon {
@@ -67,6 +68,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+/* KPI 장식용 SVG — 액션 버튼(MGButton) 라벨 내 아이콘 제거 정책과 별개로 카드 좌측 웰에만 적용 */
+.mg-v2-mapping-kpi-section__icon svg {
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 

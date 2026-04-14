@@ -45,6 +45,7 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     children: [
       { to: '/tenant/profile', icon: 'SETTINGS', label: '테넌트 프로필', end: true },
+      { to: ADMIN_ROUTES.BRANDING, icon: 'IMAGE', label: '브랜딩', end: true },
       { to: '/admin/system-config', icon: 'SETTINGS', label: '시스템 설정', end: true },
       { to: '/admin/common-codes', icon: 'FILE_TEXT', label: '공통코드', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'PACKAGE', label: '패키지 요금 관리', end: true },

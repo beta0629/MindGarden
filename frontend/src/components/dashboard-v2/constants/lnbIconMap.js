@@ -12,6 +12,7 @@ const DEFAULT_ICON_KEY = 'FILE_TEXT';
 
 const LNB_ICON_MAP = {
   LayoutDashboard: 'LAYOUT_DASHBOARD',
+  Image: 'IMAGE',
   Link: 'LINK',
   Settings: 'SETTINGS',
   Users: 'USERS',

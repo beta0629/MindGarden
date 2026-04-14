@@ -35,6 +35,8 @@ export const ADMIN_ROUTES = {
     /** @deprecated redirect to NOTIFICATIONS */
     SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
     SYSTEM_CONFIG: '/admin/system-config',
+    /** 테넌트 브랜딩(로고·파비콘 등) */
+    BRANDING: '/admin/branding',
     /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */

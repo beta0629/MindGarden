@@ -28,7 +28,7 @@ export function mergeSupplementalAdminLnbItems(items) {
     const pathSet = new Set(
       item.children.map((c) => (typeof c.to === 'string' ? c.to.split('?')[0] : ''))
     );
-    let children = [...item.children];
+    const children = [...item.children];
     for (const sup of supplemental) {
       if (pathSet.has(sup.to)) {
         continue;

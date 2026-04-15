@@ -5,6 +5,7 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.TenantNameUpdateRequest;
 import com.coresolution.core.dto.TenantNameUpdateResponse;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.service.BrandingService;
 import com.coresolution.core.service.TenantService;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantServiceImpl implements TenantService {
     
     private final TenantRepository tenantRepository;
+    private final BrandingService brandingService;
     
     /**
      * 테넌트의 업종 타입 조회
@@ -117,6 +119,7 @@ public class TenantServiceImpl implements TenantService {
 
         tenant.setName(trimmed);
         Tenant saved = tenantRepository.save(tenant);
+        brandingService.syncBrandingJsonCompanyNameWithTenant(saved);
         log.info("테넌트 표시명 변경 완료: tenantId={}", tenantId);
 
         return TenantNameUpdateResponse.fromEntity(saved);

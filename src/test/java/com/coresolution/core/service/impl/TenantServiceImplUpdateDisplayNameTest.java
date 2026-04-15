@@ -12,6 +12,7 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.TenantNameUpdateRequest;
 import com.coresolution.core.dto.TenantNameUpdateResponse;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.service.BrandingService;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class TenantServiceImplUpdateDisplayNameTest {
 
     @Mock
     private TenantRepository tenantRepository;
+
+    @Mock
+    private BrandingService brandingService;
 
     @InjectMocks
     private TenantServiceImpl tenantService;
@@ -64,6 +68,7 @@ class TenantServiceImplUpdateDisplayNameTest {
         assertThat(result.getBusinessType()).isEqualTo("CONSULTATION");
         assertThat(result.getStatus()).isEqualTo("ACTIVE");
         verify(tenantRepository).save(any(Tenant.class));
+        verify(brandingService).syncBrandingJsonCompanyNameWithTenant(any(Tenant.class));
     }
 
     @Test
@@ -137,5 +142,6 @@ class TenantServiceImplUpdateDisplayNameTest {
 
         assertThat(result.getName()).isEqualTo(same);
         verify(tenantRepository).save(any(Tenant.class));
+        verify(brandingService).syncBrandingJsonCompanyNameWithTenant(any(Tenant.class));
     }
 }

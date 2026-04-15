@@ -1,5 +1,6 @@
 package com.coresolution.core.service;
 
+import com.coresolution.core.constants.TenantDisplayNameMessages;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.BrandingInfo;
 import com.coresolution.core.dto.BrandingUpdateRequest;
@@ -71,13 +72,15 @@ public class BrandingService {
                     .alt("CoreSolution")
                     .build());
             }
-            
-            if (!brandingInfo.hasCompanyName()) {
-                log.debug("회사명 없어 테넌트명 적용: tenantId={}, tenantName={}", tenantId, tenant.getName());
-                brandingInfo.setCompanyName(tenant.getName() != null ? tenant.getName() : "CoreSolution");
-            }
         }
-        
+
+        // 회사명(한글)은 항상 tenants.name 과 동일 (단일 소스)
+        String tenantDisplayName = tenant.getName();
+        brandingInfo.setCompanyName(
+            tenantDisplayName != null && !tenantDisplayName.isBlank()
+                ? tenantDisplayName.trim()
+                : "CoreSolution");
+
         log.debug("브랜딩 정보 조회 완료: tenantId={}, hasLogo={}, companyName={}", 
             tenantId, brandingInfo.hasLogo(), brandingInfo.getDisplayName());
         
@@ -100,9 +103,19 @@ public class BrandingService {
             currentBranding = BrandingInfo.createDefault(tenant.getName());
         }
         
-        // 요청된 정보로 업데이트
+        // 회사명(한글) 변경 시 tenants.name 과 동기화 (중복 규칙 동일)
         if (request.getCompanyName() != null) {
-            currentBranding.setCompanyName(request.getCompanyName());
+            String trimmed = request.getCompanyName().trim();
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException(TenantDisplayNameMessages.NAME_EMPTY_AFTER_TRIM);
+            }
+            tenantRepository.findByNameAndIsDeletedFalse(trimmed).ifPresent(other -> {
+                if (!other.getTenantId().equals(tenantId)) {
+                    throw new IllegalArgumentException(TenantDisplayNameMessages.DUPLICATE_NAME_IN_USE);
+                }
+            });
+            tenant.setName(trimmed);
+            currentBranding.setCompanyName(trimmed);
         }
         if (request.getCompanyNameEn() != null) {
             currentBranding.setCompanyNameEn(request.getCompanyNameEn());
@@ -131,7 +144,32 @@ public class BrandingService {
             throw new RuntimeException("브랜딩 정보 저장 중 오류가 발생했습니다", e);
         }
     }
-    
+
+    /**
+     * {@code tenants.name} 변경 후 {@code branding_json} 의 회사명(한글)을 동일하게 맞춥니다.
+     *
+     * @param tenant 방금 저장된 테넌트 엔티티
+     */
+    @Transactional
+    public void syncBrandingJsonCompanyNameWithTenant(Tenant tenant) {
+        String tenantId = tenant.getTenantId();
+        log.debug("브랜딩 JSON 회사명을 테넌트 표시명과 동기화: tenantId={}", tenantId);
+        try {
+            BrandingInfo info = parseBrandingJson(tenant.getBrandingJson());
+            if (info == null) {
+                info = BrandingInfo.createDefault(tenant.getName());
+            } else {
+                String tn = tenant.getName();
+                info.setCompanyName(tn != null && !tn.isBlank() ? tn.trim() : "CoreSolution");
+            }
+            tenant.setBrandingJson(objectMapper.writeValueAsString(info));
+            tenantRepository.save(tenant);
+        } catch (JsonProcessingException e) {
+            log.error("브랜딩 JSON 동기화 실패: tenantId={}", tenantId, e);
+            throw new RuntimeException("브랜딩 정보 동기화 중 오류가 발생했습니다", e);
+        }
+    }
+
     /**
      * 로고 업로드
      */

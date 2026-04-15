@@ -60,7 +60,7 @@ public class TenantDisplayNameController extends BaseApiController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     @Operation(
             summary = "테넌트명 변경",
-            description = "tenants.name만 갱신합니다. branding_json.companyName과의 동기화는 포함하지 않습니다."
+            description = "tenants.name을 갱신하고, branding_json.companyName(한글 회사명)과 동기화합니다."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

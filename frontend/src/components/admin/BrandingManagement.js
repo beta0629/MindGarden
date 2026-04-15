@@ -23,6 +23,10 @@ import {
 } from '../../utils/brandingUtils';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import {
+  getDefaultBrandingPrimaryHex,
+  getDefaultBrandingSecondaryHex
+} from '../../utils/resolveCssColorVarToHex';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
@@ -31,9 +35,9 @@ import MGButton from '../common/MGButton';
 const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
 const BRANDING_FORM_ID = 'branding-management-form';
 
-/** 백엔드 BrandingInfo.createDefault 및 API @Size(max=7) 정합 */
-const DEFAULT_PRIMARY_HEX = '#007bff';
-const DEFAULT_SECONDARY_HEX = '#6c757d';
+/** 백엔드 BrandingInfo.createDefault 및 API @Size(max=7) 정합 — 디자인 토큰에서 해석 */
+const RESOLVED_DEFAULT_PRIMARY_HEX = getDefaultBrandingPrimaryHex();
+const RESOLVED_DEFAULT_SECONDARY_HEX = getDefaultBrandingSecondaryHex();
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 
@@ -69,8 +73,8 @@ const BrandingManagement = () => {
   const [formData, setFormData] = useState({
     companyName: '',
     companyNameEn: '',
-    primaryColor: DEFAULT_PRIMARY_HEX,
-    secondaryColor: DEFAULT_SECONDARY_HEX,
+    primaryColor: RESOLVED_DEFAULT_PRIMARY_HEX,
+    secondaryColor: RESOLVED_DEFAULT_SECONDARY_HEX,
     favicon: ''
   });
 
@@ -93,8 +97,8 @@ const BrandingManagement = () => {
           setFormData({
             companyName: branding.companyName || '',
             companyNameEn: branding.companyNameEn || '',
-            primaryColor: normalizeIncomingColor(branding.primaryColor, DEFAULT_PRIMARY_HEX),
-            secondaryColor: normalizeIncomingColor(branding.secondaryColor, DEFAULT_SECONDARY_HEX),
+            primaryColor: normalizeIncomingColor(branding.primaryColor, RESOLVED_DEFAULT_PRIMARY_HEX),
+            secondaryColor: normalizeIncomingColor(branding.secondaryColor, RESOLVED_DEFAULT_SECONDARY_HEX),
             favicon: branding.favicon || ''
           });
 
@@ -351,8 +355,8 @@ const BrandingManagement = () => {
         setFormData({
           companyName: branding.companyName || '',
           companyNameEn: branding.companyNameEn || '',
-          primaryColor: normalizeIncomingColor(branding.primaryColor, DEFAULT_PRIMARY_HEX),
-          secondaryColor: normalizeIncomingColor(branding.secondaryColor, DEFAULT_SECONDARY_HEX),
+        primaryColor: normalizeIncomingColor(branding.primaryColor, RESOLVED_DEFAULT_PRIMARY_HEX),
+        secondaryColor: normalizeIncomingColor(branding.secondaryColor, RESOLVED_DEFAULT_SECONDARY_HEX),
           favicon: branding.favicon || ''
         });
 
@@ -611,7 +615,7 @@ const BrandingManagement = () => {
                               id="branding-color-primary"
                               className="mg-branding-settings__color-swatch"
                               name="colorPrimary"
-                              value={HEX_COLOR_RE.test(formData.primaryColor) ? formData.primaryColor : DEFAULT_PRIMARY_HEX}
+                              value={HEX_COLOR_RE.test(formData.primaryColor) ? formData.primaryColor : RESOLVED_DEFAULT_PRIMARY_HEX}
                               onChange={(e) => handleInputChange('primaryColor', e.target.value)}
                               aria-describedby="branding-colors-desc"
                             />
@@ -644,7 +648,7 @@ const BrandingManagement = () => {
                               id="branding-color-secondary"
                               className="mg-branding-settings__color-swatch"
                               name="colorSecondary"
-                              value={HEX_COLOR_RE.test(formData.secondaryColor) ? formData.secondaryColor : DEFAULT_SECONDARY_HEX}
+                              value={HEX_COLOR_RE.test(formData.secondaryColor) ? formData.secondaryColor : RESOLVED_DEFAULT_SECONDARY_HEX}
                               onChange={(e) => handleInputChange('secondaryColor', e.target.value)}
                               aria-describedby="branding-colors-desc"
                             />
@@ -825,7 +829,7 @@ const BrandingManagement = () => {
                   style={{
                     backgroundColor: HEX_COLOR_RE.test(previewData.primaryColor)
                       ? previewData.primaryColor
-                      : DEFAULT_PRIMARY_HEX
+                      : RESOLVED_DEFAULT_PRIMARY_HEX
                   }}
                 />
                 <span>
@@ -840,7 +844,7 @@ const BrandingManagement = () => {
                   style={{
                     backgroundColor: HEX_COLOR_RE.test(previewData.secondaryColor)
                       ? previewData.secondaryColor
-                      : DEFAULT_SECONDARY_HEX
+                      : RESOLVED_DEFAULT_SECONDARY_HEX
                   }}
                 />
                 <span>

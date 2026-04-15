@@ -53,11 +53,11 @@
 
 .mg-branding-settings__accent-bar {
   display: block;
-  width: var(--mg-spacing-xs, 4px);
+  width: var(--mg-spacing-xs);
   align-self: stretch;
   min-height: 1.25rem;
   background: var(--mg-color-primary-main, var(--mg-primary-500));
-  border-radius: var(--mg-radius-sm, 2px);
+  border-radius: var(--mg-radius-sm);
 }
 
 .mg-branding-settings__section-title {

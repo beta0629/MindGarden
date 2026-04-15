@@ -338,7 +338,7 @@ export const uploadLogo = async(logoFile) => {
     console.debug('로고 업로드 요청:', logoFile.name, logoFile.size);
     
     const formData = new FormData();
-    formData.append('file', logoFile); // 'file'로 변경 (컨트롤러와 일치)
+    formData.append('logo', logoFile);
 
     const response = await fetch(`${API_BASE_URL}/api/admin/branding/logo`, {
       method: 'POST',

@@ -6,7 +6,41 @@
  */
 
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
+import { ADMIN_ROUTES } from '../constants/adminRoutes';
 import { getDashboardPathByRole } from '../constants/session';
+
+/**
+ * DB LNB에 아직 없는 관리자 설정 하위 항목을 보강 (Flyway 선행 배포 전에도 노출)
+ * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function mergeSupplementalAdminLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  const supplemental = [
+    { to: ADMIN_ROUTES.BRANDING, icon: 'IMAGE', label: '브랜딩', end: true }
+  ];
+  return items.map((item) => {
+    if (item.label !== '설정' || !Array.isArray(item.children)) {
+      return item;
+    }
+    const pathSet = new Set(
+      item.children.map((c) => (typeof c.to === 'string' ? c.to.split('?')[0] : ''))
+    );
+    let children = [...item.children];
+    for (const sup of supplemental) {
+      if (pathSet.has(sup.to)) {
+        continue;
+      }
+      const tenantIdx = children.findIndex((c) => c.to === '/tenant/profile');
+      const insertAt = tenantIdx >= 0 ? tenantIdx + 1 : 0;
+      children.splice(insertAt, 0, { ...sup });
+      pathSet.add(sup.to);
+    }
+    return { ...item, children };
+  });
+}
 
 /**
  * LNB 항목 또는 자손 중 첫 `/`로 시작하는 유효 경로 (쿼리 제거)

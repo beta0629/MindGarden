@@ -12,6 +12,7 @@ import { getLnbMenus } from '../../utils/menuApi';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   getLnbTreeFromResponse,
+  mergeSupplementalAdminLnbItems,
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
 import { useNavigate } from 'react-router-dom';
@@ -252,7 +253,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
-          setLnbMenuItems(normalizeLnbMenuItemsForDashboard(normalizeLnbTree(tree)));
+          setLnbMenuItems(
+            normalizeLnbMenuItemsForDashboard(
+              mergeSupplementalAdminLnbItems(normalizeLnbTree(tree))
+            )
+          );
         }
       })
       .catch(() => {

@@ -22,6 +22,7 @@ import { getLnbMenus } from '../../utils/menuApi';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   getLnbTreeFromResponse,
+  mergeSupplementalAdminLnbItems,
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
 
@@ -63,7 +64,9 @@ const AdminCommonLayout = ({
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
-          setLnbMenuItems(normalizeLnbTree(tree, { userRole }));
+          setLnbMenuItems(
+            mergeSupplementalAdminLnbItems(normalizeLnbTree(tree, { userRole }))
+          );
         } else {
           setLnbMenuItems(fallback);
         }

@@ -783,6 +783,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * 프리랜서 급여 프로필인 경우에만 상담료 총 입금액 기준 사업소득 원천징수(3.3%) 예정액을 반환합니다.
      * 부가세(VAT)와 별개이며, 매출(입금) 총액은 {@code amount}와 동일하게 유지합니다.
+     * 활성 급여 프로필이 복수인 경우 {@code updatedAt} 최신 1건을 사용합니다.
      *
      * @param tenantId 테넌트 ID
      * @param mapping  매핑
@@ -798,7 +799,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return BigDecimal.ZERO;
         }
         return consultantSalaryProfileRepository
-                .findByTenantIdAndConsultantIdAndActive(tenantId, mapping.getConsultant().getId())
+                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(tenantId,
+                        mapping.getConsultant().getId())
                 .filter(p -> FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(p.getSalaryType()))
                 .map(p -> FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(grossAmountKrw))
                 .orElse(BigDecimal.ZERO);

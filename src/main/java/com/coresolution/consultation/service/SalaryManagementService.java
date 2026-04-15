@@ -25,7 +25,8 @@ public interface SalaryManagementService {
     void deleteSalaryProfile(Long id);
 
     /**
-     * 상담사별 활성 급여 프로필과 옵션(optionTypes) 포함 상세 조회
+     * 상담사별 활성 급여 프로필과 옵션(optionTypes) 포함 상세 조회.
+     * 동일 테넌트·상담사에 활성 프로필이 복수인 경우 {@code updatedAt} 최신 1건을 사용합니다.
      *
      * @param consultantId 상담사 ID
      * @return 프로필 없으면 null

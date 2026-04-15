@@ -139,12 +139,15 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public ConsultantSalaryProfileResponse getSalaryProfileDetailForConsultant(Long consultantId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<ConsultantSalaryProfile> profileOpt = consultantSalaryProfileRepository
-                .findByTenantIdAndConsultantIdAndActive(tenantId, consultantId);
+                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(tenantId, consultantId);
         if (profileOpt.isEmpty()) {
             return null;
         }
@@ -493,8 +496,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                     continue;
                 }
                 Long cid = sc.getConsultant().getId();
-                Optional<ConsultantSalaryProfile> profileOpt =
-                        consultantSalaryProfileRepository.findByTenantIdAndConsultantIdAndActive(tenantId, cid);
+                Optional<ConsultantSalaryProfile> profileOpt = consultantSalaryProfileRepository
+                        .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(tenantId, cid);
                 if (profileOpt.isPresent()
                         && FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(
                                 profileOpt.get().getSalaryType())) {

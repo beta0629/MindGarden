@@ -21,10 +21,17 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
     // ==================== tenantId 필터링 메서드 ====================
     
     /**
-     * 상담사 ID로 활성화된 급여 프로필 조회 (tenantId 필터링)
+     * 상담사 ID로 활성화된 급여 프로필을 조회합니다.
+     * 동일 {@code tenantId}·{@code consultantId}·{@code isActive=true} 행이 복수인 경우
+     * {@code updatedAt} 내림차순, 동률이면 {@code id} 내림차순으로 최신 1건만 반환합니다
+     * ({@code NonUniqueResultException} 방지).
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @return 최신 활성 프로필(없으면 empty)
      */
-    @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.tenantId = :tenantId AND csp.consultantId = :consultantId AND csp.isActive = true")
-    Optional<ConsultantSalaryProfile> findByTenantIdAndConsultantIdAndActive(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    Optional<ConsultantSalaryProfile> findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
+            String tenantId, Long consultantId);
     
     /**
      * 상담사 ID로 모든 급여 프로필 조회 (tenantId 필터링)
@@ -71,7 +78,8 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
     // ==================== @Deprecated 메서드 (하위 호환성) ====================
     
     /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndConsultantIdAndActive 사용하세요.
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음!
+     * {@link #findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc} 사용하세요.
      */
     @Deprecated
     @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.consultantId = :consultantId AND csp.isActive = true")

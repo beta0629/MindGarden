@@ -283,6 +283,101 @@
   }
 }
 
+/* 포트원 결제모듈 V2 전용 (디자인 토큰만 사용) */
+.pg-config-portone-v2-banner {
+  margin-bottom: var(--mg-spacing-md, 1rem);
+}
+
+.pg-config-portone-v2-notice-line {
+  margin: 0;
+}
+
+.pg-config-portone-v2-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.75rem);
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--mg-radius-md, 8px);
+  border: 1px solid var(--mg-border-color, var(--mg-gray-300));
+  background: var(--mg-bg-secondary, var(--mg-gray-50));
+}
+
+.pg-config-portone-v2-section-title {
+  margin: 0;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--mg-text-primary, var(--mg-gray-900));
+}
+
+.pg-config-portone-v2-readonly-hint {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-text-secondary, var(--mg-gray-600));
+}
+
+.pg-config-portone-v2-copy-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-spacing-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.pg-config-portone-v2-copy-row .form-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.pg-config-portone-v2-readonly-input {
+  font-family: var(--mg-font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.pg-config-portone-v2-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.5rem);
+}
+
+.pg-config-portone-v2-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs, 0.5rem) var(--mg-spacing-md, 1rem);
+  align-items: baseline;
+}
+
+.pg-config-portone-v2-meta-row dt {
+  margin: 0;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--mg-text-secondary, var(--mg-gray-600));
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.pg-config-portone-v2-meta-row dd {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-text-primary, var(--mg-gray-900));
+}
+
+.pg-config-portone-v2-code {
+  font-family: var(--mg-font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.pg-config-portone-v2-test {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, 0.75rem);
+  padding-top: var(--mg-spacing-xs, 0.5rem);
+}
+
+.pg-config-portone-v2-test-hint {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-text-tertiary, var(--mg-gray-500));
+}
+
 @media (max-width: 480px) {
   .pg-config-form {
     padding: 16px 12px;

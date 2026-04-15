@@ -113,6 +113,12 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   color: #4a5568;
 }
 
+/* Lucide 직접 사용 시: 부모 색상 상속으로 stroke 표시 (Icon 래퍼·CSS 변수 stroke 미적용 대비) */
+.mg-v2-content-kpi-card__lucide {
+  flex-shrink: 0;
+  color: inherit;
+}
+
 .mg-v2-content-kpi-card__info {
   flex: 1;
   min-width: 0; /* flex 맥락에서 그리드가 찌그러지지 않도록 */

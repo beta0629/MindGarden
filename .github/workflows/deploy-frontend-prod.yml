@@ -60,7 +60,10 @@ jobs:
           cd frontend
           npm ci
 
+      # REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: Secret 미설정 시 빈 문자열 — 미설정 시 프론트는 origin 기본값 사용
       - name: 🏗️ 프론트엔드 빌드 (운영)
+        env:
+          REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: ${{ secrets.REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN }}
         run: |
           cd frontend
           npm run build:ci

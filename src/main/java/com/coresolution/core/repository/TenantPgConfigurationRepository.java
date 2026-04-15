@@ -118,5 +118,14 @@ public interface TenantPgConfigurationRepository extends JpaRepository<TenantPgC
         PgProvider pgProvider,
         PgConfigurationStatus status
     );
+
+    /**
+     * 스토어 ID + PG사 + 상태로 조회 (웹훅에서 스토어로 테넌트 PG 설정 역추적)
+     */
+    List<TenantPgConfiguration> findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+        String storeId,
+        PgProvider pgProvider,
+        PgConfigurationStatus status
+    );
 }
 

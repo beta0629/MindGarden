@@ -127,6 +127,8 @@ const PgConfigurationEdit = () => {
                 onCancel={handleCancel}
                 mode="edit"
                 hidePageTitle
+                tenantId={tenantId}
+                configId={configId}
               />
             </div>
           </ContentArea>

@@ -69,7 +69,7 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
   - `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3** (설정 UI 오케스트레이션과 동일 게이트)
   - `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`
   - `docs/project-management/2025-12-03/CHECKLIST.md` (CSS·하드코딩 항목)
-- **검사 예시**: `config/shell-scripts/check-hardcode.sh`(경로는 저장소 기준 확인), 커밋 시 MindGarden CI/BI 프론트 스캔, `node scripts/design-system/color-management/convert-hardcoded-colors.js`(존재 시).
+- **검사 예시**: 저장소 루트에서 `config/shell-scripts/check-hardcode.sh`(내부: `node scripts/design-system/css-tools/check-hardcoding-enhanced.js`, `.github/workflows/code-quality-check.yml`과 동일), 커밋 시 MindGarden CI/BI 프론트 스캔, `node scripts/design-system/color-management/convert-hardcoded-colors.js`(존재 시).
 
 ### 참조 문서
 - `docs/standards/BACKEND_CODING_STANDARD.md`

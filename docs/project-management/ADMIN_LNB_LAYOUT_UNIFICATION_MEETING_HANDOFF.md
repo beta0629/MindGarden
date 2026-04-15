@@ -309,7 +309,7 @@
 
 ### 17.2 반드시 돌릴 검사 (예시)
 
-- 저장소 스크립트: `config/shell-scripts/check-hardcode.sh` (경로는 프로젝트 최신 기준으로 확인).
+- 저장소 표준 스크립트: `config/shell-scripts/check-hardcode.sh`(저장소 루트에서 실행; 내부적으로 `node scripts/design-system/css-tools/check-hardcoding-enhanced.js` — `.github/workflows/code-quality-check.yml`과 동일). `config-old/shell-scripts/check-hardcode.sh`는 Ops(frontend-ops 등) 전용 레거시로 목적이 다를 수 있음.
 - 커밋 시 동작하는 **MindGarden CI/BI 하드코딩 검사**(프론트 변경 파일 스캔) — **출력에 나온 파일·라인은 전부 수정 후 재실행**한다.
 - 색상 일괄 보조: `node scripts/design-system/color-management/convert-hardcoded-colors.js` (문서/스크립트 존재 시).
 

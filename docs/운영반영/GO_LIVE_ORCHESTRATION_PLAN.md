@@ -40,7 +40,7 @@
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | ADMIN_LNB §17 / SETTINGS §1.3 | 기준 명시됨 | 검사 0건 또는 합의 예외만 문서화 |
-| check-hardcode 스크립트 | ⚠️ 경로 확인 필요 | `config-old/shell-scripts/check-hardcode.sh` 존재, `config/` 이동 여부 |
+| check-hardcode 스크립트 | ✅ 표준 경로 확정 | 저장소 루트에서 `config/shell-scripts/check-hardcode.sh` 실행 → `node scripts/design-system/css-tools/check-hardcoding-enhanced.js`(`.github/workflows/code-quality-check.yml`과 동일). `config-old/shell-scripts/check-hardcode.sh`는 Ops(frontend-ops 등) 전용 레거시로 MindGarden 본편과 목적이 다를 수 있음 |
 | hardcoding-report (2026-03-21) | ❌ warnings 다수 | 운영 게이트 미충족 — 수정 필요 |
 
 ### 2.4 E2E·스모크 현황
@@ -112,8 +112,9 @@
 **목적**: check-hardcode 스크립트 경로·실행 방법, Flyway 테스트 마이그레이션 파일 현황, 하드코딩 스캔 결과 요약 파악.
 
 **전달 프롬프트 요약**:
+> **표준 경로(기본 답)**: 저장소 루트에서 `config/shell-scripts/check-hardcode.sh`(내부 동작: `node scripts/design-system/css-tools/check-hardcoding-enhanced.js`, `code-quality-check.yml`과 동일). 아래 탐색은 재확인·환경·리포트 위치 점검용.
 > "Mind Garden 저장소에서 다음을 탐색해 주세요.
-> 1. `check-hardcode` 또는 `check-hardcode.sh` 스크립트의 **실제 경로**와 실행 방법(예: `./check-hardcode.sh` 또는 `npm run check:hardcode`). `config/`, `config-old/`, `scripts/` 등 검색.
+> 1. `check-hardcode` 실행 경로·방법을 위 표준과 대조해 확인하고, 필요 시 `config/`, `config-old/`, `scripts/` 등에서 보조 스크립트·레거시(`config-old`는 Ops 전용일 수 있음)를 정리해 주세요.
 > 2. Flyway 마이그레이션 중 **테스트 데이터 삽입**이 포함된 파일(`*test*`, `*onboarding_test*`, `insert_onboarding_test` 등)의 목록과 파일명 패턴.
 > 3. `test-reports/hardcoding/` 또는 동일 목적 디렉터리에 있는 최신 하드코딩 리포트의 **errors/warnings 건수 요약**과, 운영 게이트 기준(0건 또는 합의 예외만) 충족 여부.
 > 산출: (1) 스크립트 경로·실행 예시 (2) 테스트 마이그레이션 파일 목록 (3) 하드코딩 현황 요약 1~2문단."
@@ -210,7 +211,7 @@
 
 | 구분 | 항목 | 조치 |
 |------|------|------|
-| **문서** | check-hardcode 스크립트 경로 | Phase 0 탐색 후 `config/` vs `config-old/` 확정, README·체크리스트에 반영 |
+| **문서** | check-hardcode 스크립트 경로 | 표준은 `config/shell-scripts/check-hardcode.sh`; README·체크리스트 미반영 시 Phase 0·문서정리에서 동기화 |
 | **문서** | PRODUCTION_ESSENTIAL_DATA 테스트 마이그레이션 | Phase 1b에서 §2 보강 |
 | **하드코딩** | 2026-03-21 리포트 warnings 다수 | Phase 1a에서 core-coder가 수정·재검사 |
 | **E2E** | admin-pg-configuration 등 실패 | Phase 4에서 core-tester가 원인 분석·수정 |

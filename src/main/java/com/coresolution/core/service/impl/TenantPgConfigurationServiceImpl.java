@@ -8,6 +8,7 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.repository.TenantPgConfigurationHistoryRepository;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository;
@@ -18,6 +19,9 @@ import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,6 +55,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     private final TenantPgConfigurationHistoryService historyService;
     private final TenantRepository tenantRepository;
     private final PersonalDataEncryptionService encryptionService;
+    private final ObjectMapper objectMapper;
     private final List<PgConnectionTestService> connectionTestServices;
     private final EmailService emailService;
     private final TenantAccessControlService accessControlService;
@@ -183,7 +188,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .approvalStatus(ApprovalStatus.PENDING)
                 .requestedBy(requestedBy)
                 .requestedAt(LocalDateTime.now())
-                .settingsJson(request.getSettingsJson())
+                .settingsJson(normalizeSettingsJson(request.getSettingsJson()))
                 .notes(request.getNotes())
                 .build();
         
@@ -245,7 +250,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         configuration.setStatus(PgConfigurationStatus.PENDING);
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.PENDING);
-        configuration.setSettingsJson(request.getSettingsJson());
+        configuration.setSettingsJson(normalizeSettingsJson(request.getSettingsJson()));
         configuration.setNotes(request.getNotes());
         
         configuration = configurationRepository.save(configuration);
@@ -477,7 +482,44 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
     
     
-     /**
+    /**
+     * MySQL JSON 컬럼은 빈 문자열을 허용하지 않으므로 공백·빈 값은 null로 저장한다.
+     * 포트원 웹훅 시크릿 등 민감 값은 평문이면 {@code secret_key_encrypted} 와 동일 방식으로 암호화한다.
+     *
+     * @param settingsJson 원본 설정 JSON 문자열
+     * @return 정규화된 JSON 문자열 또는 null
+     */
+    private String normalizeSettingsJson(String settingsJson) {
+        if (settingsJson == null) {
+            return null;
+        }
+        String trimmed = settingsJson.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(trimmed);
+            if (!root.isObject()) {
+                return trimmed;
+            }
+            ObjectNode obj = (ObjectNode) root;
+            JsonNode webhookSecretNode = obj.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+            if (webhookSecretNode != null && webhookSecretNode.isTextual()) {
+                String raw = webhookSecretNode.asText();
+                if (!raw.isEmpty() && !encryptionService.isEncrypted(raw)) {
+                    String encrypted = encryptionService.encrypt(raw);
+                    encrypted = encryptionService.ensureActiveKey(encrypted);
+                    obj.put(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, encrypted);
+                }
+            }
+            return objectMapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.warn("settings_json 정규화 실패, trim 값만 저장: {}", e.getMessage());
+            return trimmed;
+        }
+    }
+
+    /**
      * PG 설정 요청 검증
      */
     private void validateConfigurationRequest(TenantPgConfigurationRequest request) {

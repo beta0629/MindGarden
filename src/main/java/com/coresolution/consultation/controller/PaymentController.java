@@ -290,6 +290,7 @@ public class PaymentController extends BaseApiController {
      * 결제 Webhook 엔드포인트
      */
     @PostMapping("/webhook")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<Map<String, Object>>> handleWebhook(@RequestBody PaymentWebhookRequest webhookRequest) {
         log.info("Webhook 수신: {}", webhookRequest.getPaymentId());
         

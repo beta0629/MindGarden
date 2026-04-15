@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, MessageSquare, Star, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
@@ -20,6 +21,14 @@ import './ConsultantDashboard.css';
 
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
 const CONSULTANT_DASHBOARD_TITLE_ID = 'consultant-dashboard-v2-page-title';
+
+/** KPI 좌측 아이콘: 부모 `.mg-v2-content-kpi-card__icon--*` 의 color → Lucide currentColor */
+const kpiLucideProps = {
+  className: 'mg-v2-content-kpi-card__lucide',
+  size: 28,
+  strokeWidth: 2,
+  'aria-hidden': true
+};
 
 const ConsultantDashboardV2 = ({ user }) => {
   const navigate = useNavigate();
@@ -636,28 +645,28 @@ const ConsultantDashboardV2 = ({ user }) => {
         <ContentKpiRow items={[
           {
             id: 'todaySchedules',
-            icon: <Icon name="CALENDAR" size="XXL" color="TRANSPARENT" />,
+            icon: <Calendar {...kpiLucideProps} />,
             label: '오늘의 상담',
             value: `${dashboardData.stats.todaySchedules}건`,
             iconVariant: 'blue'
           },
           {
             id: 'newClients',
-            icon: <Icon name="USER_PLUS" size="XXL" color="TRANSPARENT" />,
+            icon: <UserPlus {...kpiLucideProps} />,
             label: '신규 내담자',
             value: `${dashboardData.stats.newClients}명`,
             iconVariant: 'green'
           },
           {
             id: 'unreadMessages',
-            icon: <Icon name="MESSAGE_SQUARE" size="XXL" color="TRANSPARENT" />,
+            icon: <MessageSquare {...kpiLucideProps} />,
             label: '안읽은 메시지',
             value: `${dashboardData.stats.unreadMessages}건`,
             iconVariant: 'orange'
           },
           {
             id: 'averageRating',
-            icon: <Icon name="STAR" size="XXL" color="TRANSPARENT" />,
+            icon: <Star {...kpiLucideProps} />,
             label: '평균 평점',
             value: dashboardData.stats.averageRating > 0 ? dashboardData.stats.averageRating.toFixed(1) : '-',
             subtitle: dashboardData.stats.totalRatingCount > 0 ? `(${dashboardData.stats.totalRatingCount}개 평가)` : undefined,

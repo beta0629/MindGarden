@@ -80,7 +80,8 @@ export const useTenantBranding = (options = {}) => {
       '--tenant-secondary': activeBranding.secondaryColor || 'var(--mg-secondary-500)',
       
       // 테넌트별 로고
-      '--tenant-logo-url': activeBranding.logo?.url || activeBranding.logoUrl || '/images/core-solution-logo.png',
+      '--tenant-logo-url': activeBranding.logo?.dataUri || activeBranding.logo?.url
+        || activeBranding.logoUrl || '/images/core-solution-logo.png',
       '--tenant-logo-width': activeBranding.logo?.width ? `${activeBranding.logo.width}px` : '200px',
       '--tenant-logo-height': activeBranding.logo?.height ? `${activeBranding.logo.height}px` : '60px',
       
@@ -223,12 +224,13 @@ export const useTenantBranding = (options = {}) => {
     companyName: brandingInfo?.companyName || 'CoreSolution',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-primary-500) -> var(--mg-custom-3b82f6)
     primaryColor: brandingInfo?.primaryColor || 'var(--mg-primary-500)',
-    logoUrl: brandingInfo?.logo?.url || '/images/core-solution-logo.png',
+    logoUrl: brandingInfo?.logo?.dataUri || brandingInfo?.logo?.url || '/images/core-solution-logo.png',
     
     // 상태 확인
     hasCustomBranding: Boolean(brandingInfo && (
-      brandingInfo.primaryColor || 
-      brandingInfo.logo?.url || 
+      brandingInfo.primaryColor ||
+      brandingInfo.logo?.dataUri ||
+      brandingInfo.logo?.url ||
       (brandingInfo.companyName && brandingInfo.companyName !== 'CoreSolution')
     ))
   };

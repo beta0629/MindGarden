@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -40,7 +41,14 @@ public class BrandingService {
     // 로고 저장 경로 (실제 환경에서는 S3 등 클라우드 스토리지 사용 권장)
     private static final String LOGO_UPLOAD_DIR = "uploads/logos/";
     private static final String LOGO_URL_PREFIX = "/api/files/logos/";
-    
+    /** {@link com.coresolution.core.controller.FileController} 와 동일한 로고 URL 프리픽스 */
+    private static final String LOGO_URL_PREFIX_V1 = "/api/v1/files/logos/";
+
+    /**
+     * API 응답에 포함할 로고 인라인 data URI 최대 크기(바이트). 초과 시 URL만 유지합니다.
+     */
+    private static final int MAX_INLINE_LOGO_BYTES = 512 * 1024;
+
     // 지원하는 이미지 형식
     private static final String[] SUPPORTED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/svg+xml"};
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -83,7 +91,8 @@ public class BrandingService {
 
         log.debug("브랜딩 정보 조회 완료: tenantId={}, hasLogo={}, companyName={}", 
             tenantId, brandingInfo.hasLogo(), brandingInfo.getDisplayName());
-        
+
+        enrichLogoDataUri(brandingInfo);
         return brandingInfo;
     }
     
@@ -132,11 +141,13 @@ public class BrandingService {
         
         // JSON으로 변환하여 저장
         try {
+            stripLogoDataUriForPersistence(currentBranding);
             String brandingJson = objectMapper.writeValueAsString(currentBranding);
             tenant.setBrandingJson(brandingJson);
             tenantRepository.save(tenant);
             
             log.info("브랜딩 정보 업데이트 완료: tenantId={}", tenantId);
+            enrichLogoDataUri(currentBranding);
             return currentBranding;
             
         } catch (JsonProcessingException e) {
@@ -162,6 +173,7 @@ public class BrandingService {
                 String tn = tenant.getName();
                 info.setCompanyName(tn != null && !tn.isBlank() ? tn.trim() : "CoreSolution");
             }
+            stripLogoDataUriForPersistence(info);
             tenant.setBrandingJson(objectMapper.writeValueAsString(info));
             tenantRepository.save(tenant);
         } catch (JsonProcessingException e) {
@@ -205,11 +217,13 @@ public class BrandingService {
             brandingInfo.setLogo(logoInfo);
             
             // JSON으로 변환하여 저장
+            stripLogoDataUriForPersistence(brandingInfo);
             String brandingJson = objectMapper.writeValueAsString(brandingInfo);
             tenant.setBrandingJson(brandingJson);
             tenantRepository.save(tenant);
             
             log.info("로고 업로드 완료: tenantId={}, logoUrl={}", tenantId, logoUrl);
+            enrichLogoDataUri(brandingInfo);
             return brandingInfo;
             
         } catch (JsonProcessingException e) {
@@ -230,10 +244,112 @@ public class BrandingService {
         }
         
         try {
-            return objectMapper.readValue(brandingJson, BrandingInfo.class);
+            BrandingInfo parsed = objectMapper.readValue(brandingJson, BrandingInfo.class);
+            stripLogoDataUriForPersistence(parsed);
+            return parsed;
         } catch (JsonProcessingException e) {
             log.warn("브랜딩 JSON 파싱 실패, 기본값 사용: json={}", brandingJson, e);
             return null;
+        }
+    }
+
+    /**
+     * persistence 직전에 로고의 data URI를 제거합니다. {@code branding_json} 컬럼에는 저장하지 않습니다.
+     *
+     * @param info 브랜딩 정보
+     */
+    public void stripLogoDataUriForPersistence(BrandingInfo info) {
+        if (info == null || info.getLogo() == null) {
+            return;
+        }
+        info.getLogo().setDataUri(null);
+    }
+
+    /**
+     * 업로드 경로 로고 URL에 대해 로컬 파일이 있으면 {@link BrandingInfo.LogoInfo#setDataUri(String)} 를 채웁니다.
+     *
+     * @param info 브랜딩 정보
+     */
+    private void enrichLogoDataUri(BrandingInfo info) {
+        if (info == null || !info.hasLogo()) {
+            return;
+        }
+        BrandingInfo.LogoInfo logo = info.getLogo();
+        String url = logo.getUrl();
+        String fileName = extractFileNameFromLogoUrl(url);
+        if (fileName == null || fileName.isBlank()) {
+            return;
+        }
+
+        Path uploadBase = Paths.get(LOGO_UPLOAD_DIR).toAbsolutePath().normalize();
+        Path filePath = uploadBase.resolve(fileName).normalize();
+        if (!filePath.startsWith(uploadBase)) {
+            log.warn("로고 파일 경로가 허용 범위를 벗어남: fileName={}", fileName);
+            return;
+        }
+
+        if (!Files.isRegularFile(filePath) || !Files.isReadable(filePath)) {
+            return;
+        }
+
+        try {
+            long size = Files.size(filePath);
+            if (size > MAX_INLINE_LOGO_BYTES) {
+                log.debug("로고 파일이 인라인 최대 크기를 초과하여 dataUri 생략: size={}, fileName={}", size,
+                    fileName);
+                return;
+            }
+            byte[] bytes = Files.readAllBytes(filePath);
+            String mime = mimeTypeForLogoFileName(fileName);
+            String b64 = Base64.getEncoder().encodeToString(bytes);
+            logo.setDataUri("data:" + mime + ";base64," + b64);
+        } catch (IOException e) {
+            log.debug("로고 파일 읽기 실패로 dataUri 생략: fileName={}, error={}", fileName, e.getMessage());
+        }
+    }
+
+    /**
+     * 로고 서빙 URL에서 파일명만 추출합니다. 레거시·v1 경로 모두 허용합니다.
+     *
+     * @param url 로고 URL
+     * @return 파일명 또는 해당 없으면 null
+     */
+    public String extractFileNameFromLogoUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        String u = url.trim();
+        if (u.startsWith(LOGO_URL_PREFIX_V1)) {
+            return u.substring(LOGO_URL_PREFIX_V1.length());
+        }
+        if (u.startsWith(LOGO_URL_PREFIX)) {
+            return u.substring(LOGO_URL_PREFIX.length());
+        }
+        return null;
+    }
+
+    /**
+     * {@link com.coresolution.core.controller.FileController#getContentType(String)} 와 동일한 MIME 매핑입니다.
+     */
+    private static String mimeTypeForLogoFileName(String fileName) {
+        if (fileName == null || fileName.lastIndexOf('.') == -1) {
+            return "application/octet-stream";
+        }
+        String ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        switch (ext) {
+            case "png":
+                return "image/png";
+            case "jpg":
+            case "jpeg":
+                return "image/jpeg";
+            case "svg":
+                return "image/svg+xml";
+            case "gif":
+                return "image/gif";
+            case "webp":
+                return "image/webp";
+            default:
+                return "application/octet-stream";
         }
     }
     

@@ -19,7 +19,7 @@ import {
   uploadLogo,
   uploadFavicon,
   getBrandingInfo,
-  isDefaultBrandingLogoUrl
+  getCustomLogoSrc
 } from '../../utils/brandingUtils';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
@@ -102,12 +102,9 @@ const BrandingManagement = () => {
             favicon: branding.favicon || ''
           });
 
-          if (
-            branding.logo &&
-            branding.logo.url &&
-            !isDefaultBrandingLogoUrl(branding.logo.url)
-          ) {
-            setLogoPreview(branding.logo.url);
+          const logoSrc = getCustomLogoSrc(branding.logo);
+          if (logoSrc) {
+            setLogoPreview(logoSrc);
           }
         }
       } catch (error) {
@@ -360,12 +357,9 @@ const BrandingManagement = () => {
           favicon: branding.favicon || ''
         });
 
-        if (
-          branding.logo &&
-          branding.logo.url &&
-          !isDefaultBrandingLogoUrl(branding.logo.url)
-        ) {
-          setLogoPreview(branding.logo.url);
+        const logoSrc = getCustomLogoSrc(branding.logo);
+        if (logoSrc) {
+          setLogoPreview(logoSrc);
         } else {
           setLogoPreview(null);
         }
@@ -424,6 +418,7 @@ const BrandingManagement = () => {
   };
 
   const previewData = getPreviewData();
+  const previewLogoSrc = getCustomLogoSrc(previewData.logo);
   const faviconSecondaryText = faviconFile
     ? faviconFile.name
     : (formData.favicon ? '현재 파비콘이 등록되어 있습니다.' : 'PNG 또는 ICO · 드래그하여 놓기');
@@ -804,9 +799,9 @@ const BrandingManagement = () => {
           <div className="mg-branding-settings__preview-demo">
             <div className="mg-branding-settings__preview-header-demo">
               <div className="mg-branding-settings__preview-logo">
-                {previewData.logo && previewData.logo.url && !isDefaultBrandingLogoUrl(previewData.logo.url) ? (
+                {previewLogoSrc ? (
                   <img
-                    src={previewData.logo.url}
+                    src={previewLogoSrc}
                     alt={toDisplayString(previewData.companyName || 'Logo')}
                     className="mg-branding-settings__preview-logo-image"
                   />

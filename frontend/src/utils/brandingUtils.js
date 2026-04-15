@@ -161,20 +161,37 @@ export const isDefaultBrandingLogoUrl = (url) => {
 };
 
 /**
+ * 커스텀 로고 표시용 src (API가 내린 dataUri 우선, 로컬 개발 시 깨짐 방지).
+ * 기본/플레이스홀더 URL이면 undefined.
+ *
+ * @param {Object} [logo]
+ * @returns {string|undefined}
+ */
+export const getCustomLogoSrc = (logo) => {
+  if (!logo) {
+    return undefined;
+  }
+  if (logo.dataUri && typeof logo.dataUri === 'string') {
+    return logo.dataUri;
+  }
+  const url = logo.url;
+  if (!url) {
+    return undefined;
+  }
+  if (isDefaultBrandingLogoUrl(url)) {
+    return undefined;
+  }
+  return url;
+};
+
+/**
  * GNB 등에서 커스텀 업로드 로고만 이미지로 쓸 URL 반환. 기본 로고면 undefined(텍스트 폴백).
  *
  * @param {Object} brandingInfo
  * @returns {string|undefined}
  */
 export const getGnbLogoUrl = (brandingInfo) => {
-  if (!brandingInfo?.logo?.url) {
-    return undefined;
-  }
-  const url = brandingInfo.logo.url;
-  if (isDefaultBrandingLogoUrl(url)) {
-    return undefined;
-  }
-  return url;
+  return getCustomLogoSrc(brandingInfo?.logo);
 };
 
 export const createDefaultBranding = (tenantName = null) => {
@@ -205,6 +222,10 @@ export const createDefaultBranding = (tenantName = null) => {
  */
 export const getLogoType = (brandingInfo) => {
   if (!brandingInfo) return 'text';
+
+  if (brandingInfo.logo && brandingInfo.logo.dataUri) {
+    return 'image';
+  }
 
   if (
     brandingInfo.logo &&
@@ -251,11 +272,17 @@ export const getDisplayName = (brandingInfo) => {
  * @returns {string} 로고 이미지 URL
  */
 export const getLogoImageUrl = (brandingInfo) => {
-  if (!brandingInfo || !brandingInfo.logo || !brandingInfo.logo.url) {
+  if (!brandingInfo?.logo) {
     return '/images/core-solution-logo.png';
   }
-  
-  return brandingInfo.logo.url;
+  const { dataUri, url } = brandingInfo.logo;
+  if (dataUri) {
+    return dataUri;
+  }
+  if (url) {
+    return url;
+  }
+  return '/images/core-solution-logo.png';
 };
 
 /**

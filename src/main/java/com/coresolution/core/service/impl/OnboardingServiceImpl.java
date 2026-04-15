@@ -27,6 +27,7 @@ import com.coresolution.core.service.OnboardingApprovalService;
 import com.coresolution.core.service.OnboardingErrorHandlingService;
 import com.coresolution.core.service.OnboardingPreValidationService;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.service.BrandingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -67,6 +68,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final TenantIdGenerator tenantIdGenerator;
     private final TenantDashboardService tenantDashboardService;
     private final TenantRepository tenantRepository;
+    private final BrandingService brandingService;
     private final PasswordService passwordService;
     private final ObjectMapper objectMapper;
     private final CommonCodeService commonCodeService;
@@ -1720,6 +1722,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             // JSON으로 변환하여 저장
             try {
+                brandingService.stripLogoDataUriForPersistence(brandingInfo);
                 String brandingJson = objectMapper.writeValueAsString(brandingInfo);
                 tenant.setBrandingJson(brandingJson);
                 tenantRepository.save(tenant);

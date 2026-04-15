@@ -65,6 +65,11 @@ public class BrandingInfo {
          * 로고 이미지 URL
          */
         private String url;
+
+        /**
+         * API 응답용 인라인 data URI (로컬 업로드 파일이 있을 때만 설정). DB에는 저장하지 않습니다.
+         */
+        private String dataUri;
         
         /**
          * 로고 너비 (픽셀)

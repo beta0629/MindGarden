@@ -6,7 +6,7 @@
  * @since 2025-02-22
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { NavIcon } from '../atoms';
@@ -21,12 +21,25 @@ const MobileGnb = ({
   onMenuClick,
   onLogout
 }) => {
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [logoUrl]);
+
+  const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
+
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
       <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
       <NavLink to={ADMIN_ROUTES.DASHBOARD} className="mg-v2-mobile-gnb__logo">
-        {logoUrl ? (
-          <img src={logoUrl} alt={logoLabel} className="mg-v2-mobile-gnb__logo-img" />
+        {showLogoImage ? (
+          <img
+            src={logoUrl}
+            alt={logoLabel}
+            className="mg-v2-mobile-gnb__logo-img"
+            onError={() => setLogoLoadFailed(true)}
+          />
         ) : (
           <span className="mg-v2-mobile-gnb__logo-text">{logoLabel}</span>
         )}

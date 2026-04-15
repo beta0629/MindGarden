@@ -1,21 +1,19 @@
 /**
  * CSRF 토큰 관리 유틸리티
-/**
  * - CSRF 토큰 캐싱 및 자동 갱신
-/**
  * - fetch 요청에 자동으로 CSRF 토큰 포함
-/**
- * 
-/**
+ *
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-23
  */
 
 import { API_BASE_URL } from '../constants/api';
 import { getTenantId } from './apiHeaders';
+
+/** CSRF 토큰을 얻지 못해 multipart 요청을 보낼 수 없을 때 */
+const CSRF_TOKEN_UNAVAILABLE_MESSAGE =
+  '보안 토큰을 확인할 수 없습니다. 페이지를 새로 고침한 뒤 다시 시도해 주세요.';
 
 class CsrfTokenManager {
     constructor() {
@@ -82,7 +80,7 @@ class CsrfTokenManager {
                 this.token = data.token || data;
                 // 토큰을 30분간 유효하다고 가정 (실제로는 서버에서 만료 시간을 알려줘야 함)
                 this.tokenExpiry = Date.now() + (30 * 60 * 1000);
-                console.log('✅ CSRF 토큰 갱신 완료');
+                console.debug('CSRF 토큰 갱신 완료');
                 return this.token;
             } else {
                 console.warn('⚠️ CSRF 토큰 요청 실패:', response.status);
@@ -124,6 +122,61 @@ class CsrfTokenManager {
             ...options,
             headers,
             credentials: 'include'
+        });
+    }
+
+/**
+     * FormData(multipart) 업로드용 fetch — 브라우저가 boundary를 넣도록 Content-Type 미설정
+     * @param {string} url
+     * @param {RequestInit & { body?: FormData }} options
+     */
+    async fetchWithCsrfMultipart(url, options = {}) {
+        const body = options.body;
+        if (!(body instanceof FormData)) {
+            throw new Error('fetchWithCsrfMultipart requires body to be FormData');
+        }
+
+        let token = await this.getToken();
+        if (!token) {
+            this.clearToken();
+            token = await this.refreshToken();
+        }
+        if (!token) {
+            throw new Error(CSRF_TOKEN_UNAVAILABLE_MESSAGE);
+        }
+
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+
+        const rawHeaders = options.headers && typeof options.headers === 'object' && !(options.headers instanceof Headers)
+            ? { ...options.headers }
+            : {};
+        if (options.headers instanceof Headers) {
+            options.headers.forEach((value, key) => {
+                rawHeaders[key] = value;
+            });
+        }
+        delete rawHeaders['Content-Type'];
+        delete rawHeaders['content-type'];
+
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            ...rawHeaders
+        };
+
+        headers['X-XSRF-TOKEN'] = token;
+
+        const tenantId = await getTenantId();
+        if (tenantId) {
+            headers['X-Tenant-Id'] = tenantId;
+        }
+
+        const { headers: _omit, ...restOptions } = options;
+
+        return fetch(fullUrl, {
+            ...restOptions,
+            body,
+            headers,
+            credentials: options.credentials ?? 'include'
         });
     }
 

@@ -1,18 +1,14 @@
 /**
  * 브랜딩 관련 유틸리티 함수들
-/**
  * 테넌트별 로고, 상호명 등 브랜딩 정보를 관리
-/**
- * 
-/**
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-11-26
  */
 
 import { API_BASE_URL } from '../constants/api';
+import csrfTokenManager from './csrfTokenManager';
 
 /**
  * 브랜딩 정보 캐시 (메모리 캐시)
@@ -317,15 +313,8 @@ export const getLogoAlt = (brandingInfo) => {
 export const updateBrandingInfo = async(updateData) => {
   try {
     console.debug('브랜딩 정보 업데이트 요청:', updateData);
-    
-    const response = await fetch(`${API_BASE_URL}/api/admin/branding`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updateData)
-    });
+
+    const response = await csrfTokenManager.put('/api/admin/branding', updateData);
 
     if (!response.ok) {
       throw new Error(`브랜딩 정보 업데이트 실패: ${response.status}`);
@@ -367,9 +356,8 @@ export const uploadLogo = async(logoFile) => {
     const formData = new FormData();
     formData.append('logo', logoFile);
 
-    const response = await fetch(`${API_BASE_URL}/api/admin/branding/logo`, {
+    const response = await csrfTokenManager.fetchWithCsrfMultipart('/api/admin/branding/logo', {
       method: 'POST',
-      credentials: 'include',
       body: formData
     });
 
@@ -413,9 +401,8 @@ export const uploadFavicon = async(faviconFile) => {
     const formData = new FormData();
     formData.append('file', faviconFile);
 
-    const response = await fetch(`${API_BASE_URL}/api/admin/branding/favicon`, {
+    const response = await csrfTokenManager.fetchWithCsrfMultipart('/api/admin/branding/favicon', {
       method: 'POST',
-      credentials: 'include',
       body: formData
     });
 
@@ -454,10 +441,7 @@ export const deleteLogo = async() => {
   try {
     console.debug('로고 삭제 요청');
     
-    const response = await fetch(`${API_BASE_URL}/api/admin/branding/logo`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    const response = await csrfTokenManager.delete('/api/admin/branding/logo');
 
     if (!response.ok) {
       throw new Error(`로고 삭제 실패: ${response.status}`);
@@ -494,10 +478,7 @@ export const deleteFavicon = async() => {
   try {
     console.debug('파비콘 삭제 요청');
     
-    const response = await fetch(`${API_BASE_URL}/api/admin/branding/favicon`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    const response = await csrfTokenManager.delete('/api/admin/branding/favicon');
 
     if (!response.ok) {
       throw new Error(`파비콘 삭제 실패: ${response.status}`);

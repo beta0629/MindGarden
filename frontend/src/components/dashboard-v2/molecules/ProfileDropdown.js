@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
 import { useSession } from '../../../contexts/SessionContext';
 import { useBranding } from '../../../hooks/useBranding';
+import { getCustomLogoSrc } from '../../../utils/brandingUtils';
 import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
@@ -47,6 +48,17 @@ const ProfileDropdown = ({ onLogout }) => {
       return user.name || user.username || '사용자';
     }
     return label;
+  }, [user, brandingInfo]);
+
+  const avatarImageUrl = useMemo(() => {
+    if (!user) {
+      return undefined;
+    }
+    const raw = user.profileImageUrl;
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      return raw.trim();
+    }
+    return getCustomLogoSrc(brandingInfo?.logo);
   }, [user, brandingInfo]);
 
   useEffect(() => {
@@ -114,7 +126,7 @@ const ProfileDropdown = ({ onLogout }) => {
           aria-haspopup="menu"
           aria-controls={PROFILE_DROPDOWN_PANEL_ID}
         >
-          <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="small" />
+          <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="small" />
           <span className="mg-v2-profile-trigger__name">{userName}</span>
           <span className="mg-v2-profile-trigger__caret" aria-hidden="true">▼</span>
         </MGButton>
@@ -130,7 +142,7 @@ const ProfileDropdown = ({ onLogout }) => {
         panelId={PROFILE_DROPDOWN_PANEL_ID}
       >
         <div className="mg-v2-profile-dropdown__header">
-          <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="medium" />
+          <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="medium" />
           <div className="mg-v2-profile-dropdown__info">
             <div className="mg-v2-profile-dropdown__name">{userName}</div>
             {userEmail && (

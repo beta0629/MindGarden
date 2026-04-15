@@ -2933,7 +2933,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         client.setIsActive(false);
         userRepository.save(client);
-        
+
+        clientStatsService.evictTenantClientsWithStatsListCache(tenantId);
+        clientStatsService.evictClientStatsCache(tenantId, id);
+
         log.info("✅ 내담자 삭제 완료: ID={}, 이름={}, 취소된 스케줄={}개", id, client.getName(), cancelledScheduleCount);
     }
 

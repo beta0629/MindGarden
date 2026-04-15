@@ -88,6 +88,25 @@ public interface ClientStatsService {
     Map<String, Object> calculateClientStats(Long clientId);
 
     /**
+     * 테넌트 단위 내담자 목록+통계 목록 캐시 무효화.
+     * {@code GET /api/v1/admin/clients/with-stats} 등에서 사용하는
+     * {@code clientsWithStats} 키 {@code 'tenant:' + tenantId} 및 레거시 {@code 'all'} 키를 제거한다.
+     *
+     * @param tenantId 테넌트 ID
+     */
+    void evictTenantClientsWithStatsListCache(String tenantId);
+
+    /**
+     * 단일 내담자 통계·연결 상담사 수 캐시 무효화.
+     * {@link #getClientWithStats} 키 {@code tenant:{tenantId}:client:{clientId}} 및
+     * {@code clientCurrentConsultants} 키 {@code client:{clientId}} 와 정합한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     */
+    void evictClientStatsCache(String tenantId, Long clientId);
+
+    /**
      * 전체 내담자 통계 캐시 무효화
      */
     void evictAllClientStatsCache();

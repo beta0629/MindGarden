@@ -18,11 +18,16 @@
 }
 
 .mg-v2-desktop-gnb__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  min-width: 0;
   flex-shrink: 0;
 }
 
 .mg-v2-desktop-gnb__logo-img {
   display: block;
+  flex-shrink: 0;
   height: auto;
   max-height: var(--mg-layout-header-height, 64px);
   width: auto;
@@ -34,6 +39,17 @@
   font-size: 18px;
   font-weight: 700;
   color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-desktop-gnb__brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+  min-width: 0;
+  max-width: min(40vw, 28ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 브랜딩 API 로딩 중: 텍스트 대신 레이아웃만 유지 (visibility로 자리 확보) */

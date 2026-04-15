@@ -30,30 +30,41 @@ const DesktopGnb = ({
     setLogoLoadFailed(false);
   }, [logoUrl]);
 
+  const trimmedLogoLabel = (logoLabel || '').trim();
+  const hasBrandName = Boolean(trimmedLogoLabel);
   const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
   const showTextFallback = !showLogoImage && !logoBrandingLoading;
+  const showBrandNameBesideGraphic = hasBrandName && (showLogoImage || logoBrandingLoading);
 
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
       <NavLink to={ADMIN_ROUTES.DASHBOARD} className="mg-v2-desktop-gnb__logo">
         {showLogoImage ? (
-          <img
-            src={logoUrl}
-            alt={logoLabel}
-            className="mg-v2-desktop-gnb__logo-img"
-            onError={() => setLogoLoadFailed(true)}
-          />
+          <>
+            <img
+              src={logoUrl}
+              alt={trimmedLogoLabel || logoLabel}
+              className="mg-v2-desktop-gnb__logo-img"
+              onError={() => setLogoLoadFailed(true)}
+            />
+            {showBrandNameBesideGraphic ? (
+              <span className="mg-v2-desktop-gnb__brand-name">{trimmedLogoLabel}</span>
+            ) : null}
+          </>
         ) : logoBrandingLoading ? (
-          <span
-            className="mg-v2-desktop-gnb__logo-placeholder"
-            aria-busy="true"
-            aria-label="로고 로딩 중"
-          />
-        ) : (
-          showTextFallback ? (
-            <span className="mg-v2-desktop-gnb__logo-text">{logoLabel}</span>
-          ) : null
-        )}
+          <>
+            <span
+              className="mg-v2-desktop-gnb__logo-placeholder"
+              aria-busy="true"
+              aria-label="로고 로딩 중"
+            />
+            {showBrandNameBesideGraphic ? (
+              <span className="mg-v2-desktop-gnb__brand-name">{trimmedLogoLabel}</span>
+            ) : null}
+          </>
+        ) : showTextFallback && hasBrandName ? (
+          <span className="mg-v2-desktop-gnb__logo-text">{trimmedLogoLabel}</span>
+        ) : null}
       </NavLink>
       <div className="mg-v2-desktop-gnb__center">
         <GnbRight

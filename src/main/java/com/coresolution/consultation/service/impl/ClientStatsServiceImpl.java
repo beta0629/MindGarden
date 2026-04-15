@@ -245,9 +245,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return buildClientStatsList(clientUsers);
     }
     
-     /**
+    /**
      * 테넌트별 내담자 통계 조회 (신규 추가)
      */
+    @Override
     @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId")
     public List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
@@ -503,7 +504,22 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return clientMap;
     }
     
-     /**
+    /**
+     * 테넌트 단위 내담자 목록+통계 목록 캐시 무효화.
+     * {@link #getAllClientsWithStatsByTenant} 및 {@link #getAllClientsWithStats} 레거시 키와 정합.
+     *
+     * @param tenantId 테넌트 ID
+     */
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "clientsWithStats", key = "'tenant:' + #tenantId"),
+        @CacheEvict(value = "clientsWithStats", key = "'all'")
+    })
+    public void evictTenantClientsWithStatsListCache(String tenantId) {
+        log.info("🗑️ 캐시 무효화(테넌트 목록·레거시 전체 키): tenantId={}", tenantId);
+    }
+
+    /**
      * 캐시 무효화 (매핑 변경 시 호출).
      * {@link #getClientWithStats} 캐시 키는 {@code tenant:{tenantId}:client:{clientId}} 와 정합.
      * {@code clientCurrentConsultants} 는 기존 {@code client:{id}} 키를 유지한다.
@@ -511,6 +527,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
      * @param tenantId 테넌트 ID
      * @param clientId 내담자 ID
      */
+    @Override
     @Caching(evict = {
         @CacheEvict(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId"),
         @CacheEvict(value = "clientCurrentConsultants", key = "'client:' + #clientId")
@@ -518,10 +535,11 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     public void evictClientStatsCache(String tenantId, Long clientId) {
         log.info("🗑️ 캐시 무효화: tenantId={}, clientId={}", tenantId, clientId);
     }
-    
-     /**
+
+    /**
      * 전체 캐시 무효화
      */
+    @Override
     @CacheEvict(value = {"clientsWithStats", "clientCurrentConsultants"}, allEntries = true)
     public void evictAllClientStatsCache() {
         log.info("🗑️ 전체 내담자 캐시 무효화");

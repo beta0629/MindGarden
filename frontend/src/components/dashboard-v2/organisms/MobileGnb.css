@@ -21,10 +21,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: var(--mg-spacing-sm);
+  min-width: 0;
 }
 
 .mg-v2-mobile-gnb__logo-img {
   display: block;
+  flex-shrink: 0;
   height: auto;
   max-height: var(--mg-layout-header-height-mobile, 56px);
   width: auto;
@@ -36,6 +39,17 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mobile-gnb__brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+  min-width: 0;
+  max-width: min(42vw, 14ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-mobile-gnb__logo-placeholder {

@@ -202,7 +202,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const dashboardUser = propUser || sessionUser;
-  const { brandingInfo } = useBranding({ autoLoad: Boolean(dashboardUser) });
+  const { brandingInfo, isLoading: isBrandingLoading } = useBranding({
+    autoLoad: Boolean(dashboardUser)
+  });
   const logoLabel = useMemo(
     () => getTenantGnbLabel(dashboardUser, brandingInfo),
     [dashboardUser, brandingInfo]
@@ -945,6 +947,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     headerTitle: '시스템 관리',
     logoLabel,
     logoUrl,
+    logoBrandingLoading: isBrandingLoading,
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),
@@ -1244,7 +1247,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                     label: '완료',
                     data: completedValues,
                     borderColor: chartBarColors.border,
-                    backgroundColor: chartBarColors.fill,
+                    // 범례·포인트 색은 backgroundColor를 쓰므로 선(완료)과 동일하게 파랑(border) 사용. fill(녹색)이면 녹색 점이 됨.
+                    backgroundColor: chartBarColors.border,
                     borderWidth: 2,
                     tension: 0.3,
                     fill: false

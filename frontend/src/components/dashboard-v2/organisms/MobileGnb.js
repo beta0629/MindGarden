@@ -18,6 +18,7 @@ import './MobileGnb.css';
 const MobileGnb = ({
   logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
+  logoBrandingLoading = false,
   onMenuClick,
   onLogout
 }) => {
@@ -28,6 +29,7 @@ const MobileGnb = ({
   }, [logoUrl]);
 
   const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
+  const showTextFallback = !showLogoImage && !logoBrandingLoading;
 
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
@@ -40,8 +42,16 @@ const MobileGnb = ({
             className="mg-v2-mobile-gnb__logo-img"
             onError={() => setLogoLoadFailed(true)}
           />
+        ) : logoBrandingLoading ? (
+          <span
+            className="mg-v2-mobile-gnb__logo-placeholder"
+            aria-busy="true"
+            aria-label="로고 로딩 중"
+          />
         ) : (
-          <span className="mg-v2-mobile-gnb__logo-text">{logoLabel}</span>
+          showTextFallback ? (
+            <span className="mg-v2-mobile-gnb__logo-text">{logoLabel}</span>
+          ) : null
         )}
       </NavLink>
       <div className="mg-v2-mobile-gnb__actions">
@@ -55,6 +65,7 @@ const MobileGnb = ({
 MobileGnb.propTypes = {
   logoLabel: PropTypes.string,
   logoUrl: PropTypes.string,
+  logoBrandingLoading: PropTypes.bool,
   onMenuClick: PropTypes.func,
   onLogout: PropTypes.func
 };

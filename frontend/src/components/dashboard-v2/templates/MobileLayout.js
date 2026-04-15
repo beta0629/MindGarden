@@ -16,6 +16,7 @@ const MobileLayout = ({
   headerTitle = '시스템 관리',
   logoLabel,
   logoUrl,
+  logoBrandingLoading = false,
   onBellClick,
   onProfileClick,
   onLogout,
@@ -37,6 +38,7 @@ const MobileLayout = ({
       <MobileGnb
         logoLabel={logoLabel}
         logoUrl={logoUrl}
+        logoBrandingLoading={logoBrandingLoading}
         onMenuClick={handleMenuClick}
         onBellClick={onBellClick}
         onProfileClick={onProfileClick}

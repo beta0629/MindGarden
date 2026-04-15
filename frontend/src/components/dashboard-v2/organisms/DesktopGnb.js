@@ -17,6 +17,7 @@ import './DesktopGnb.css';
 const DesktopGnb = ({
   logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
+  logoBrandingLoading = false,
   searchValue = '',
   onSearchChange,
   onLogout,
@@ -30,6 +31,7 @@ const DesktopGnb = ({
   }, [logoUrl]);
 
   const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
+  const showTextFallback = !showLogoImage && !logoBrandingLoading;
 
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
@@ -41,8 +43,16 @@ const DesktopGnb = ({
             className="mg-v2-desktop-gnb__logo-img"
             onError={() => setLogoLoadFailed(true)}
           />
+        ) : logoBrandingLoading ? (
+          <span
+            className="mg-v2-desktop-gnb__logo-placeholder"
+            aria-busy="true"
+            aria-label="로고 로딩 중"
+          />
         ) : (
-          <span className="mg-v2-desktop-gnb__logo-text">{logoLabel}</span>
+          showTextFallback ? (
+            <span className="mg-v2-desktop-gnb__logo-text">{logoLabel}</span>
+          ) : null
         )}
       </NavLink>
       <div className="mg-v2-desktop-gnb__center">
@@ -61,6 +71,7 @@ const DesktopGnb = ({
 DesktopGnb.propTypes = {
   logoLabel: PropTypes.string,
   logoUrl: PropTypes.string,
+  logoBrandingLoading: PropTypes.bool,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   onLogout: PropTypes.func,

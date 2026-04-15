@@ -29,11 +29,26 @@ import { sessionManager } from '../utils/sessionManager';
 /**
  * @returns {Object} 브랜딩 상태 및 함수들
  */
+/**
+ * 테넌트 세션이 있으면 첫 페인트부터 로딩으로 두어 GNB 텍스트 깜빡임을 줄인다.
+ */
+const getInitialBrandingLoading = (autoLoad) => {
+  if (!autoLoad) {
+    return false;
+  }
+  try {
+    const user = sessionManager.getUser();
+    return Boolean(user?.tenant?.tenantId);
+  } catch {
+    return false;
+  }
+};
+
 export const useBranding = (options = {}) => {
   const { autoLoad = true, useCache = true } = options;
   
   const [brandingInfo, setBrandingInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => getInitialBrandingLoading(autoLoad));
   const [error, setError] = useState(null);
   const [headerProps, setHeaderProps] = useState({
     logoType: 'text',

@@ -38,6 +38,14 @@
   color: var(--ad-b0kla-title-color, #2d3748);
 }
 
+.mg-v2-mobile-gnb__logo-placeholder {
+  display: inline-block;
+  min-height: calc(var(--mg-spacing-md) + var(--mg-spacing-sm));
+  min-width: calc(5 * var(--mg-spacing-lg));
+  visibility: hidden;
+  vertical-align: middle;
+}
+
 .mg-v2-mobile-gnb__actions {
   display: flex;
   align-items: center;

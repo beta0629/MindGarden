@@ -16,6 +16,7 @@ const DesktopLayout = ({
   headerTitle = '시스템 관리',
   logoLabel,
   logoUrl,
+  logoBrandingLoading = false,
   searchValue = '',
   onSearchChange,
   onCalendarClick,
@@ -29,6 +30,7 @@ const DesktopLayout = ({
       <DesktopGnb
         logoLabel={logoLabel}
         logoUrl={logoUrl}
+        logoBrandingLoading={logoBrandingLoading}
         searchValue={searchValue}
         onSearchChange={onSearchChange}
         onCalendarClick={onCalendarClick}

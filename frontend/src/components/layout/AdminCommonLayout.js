@@ -39,7 +39,7 @@ const AdminCommonLayout = ({
 }) => {
   const navigate = useNavigate();
   const { user, logout } = useSession();
-  const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
+  const { brandingInfo, isLoading: isBrandingLoading } = useBranding({ autoLoad: Boolean(user) });
   const logoLabel = useMemo(
     () => getTenantGnbLabel(user, brandingInfo),
     [user, brandingInfo]
@@ -111,6 +111,7 @@ const AdminCommonLayout = ({
     headerTitle: title,
     logoLabel,
     logoUrl,
+    logoBrandingLoading: isBrandingLoading,
     searchValue,
     onSearchChange,
     onBellClick: handleBellClick,

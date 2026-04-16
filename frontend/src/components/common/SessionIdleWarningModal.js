@@ -21,7 +21,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
-import { SESSION_IDLE_WARNING_MS } from '../../constants/session';
+import { SESSION_IDLE_WARNING_MS, isSessionPublicPath } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 
 /** 서버 만료 시각 기준 남은 초 → MM:SS (표시용, 음수는 0으로) */
@@ -98,16 +98,7 @@ const SessionIdleWarningModal = () => {
     }
   }, [user, clearTimer, clearCountdownInterval]);
 
-  const isLoginPath =
-    pathname === '/login' ||
-    pathname.startsWith('/login/') ||
-    pathname === '/landing' ||
-    pathname === '/' ||
-    pathname.startsWith('/register') ||
-    pathname.startsWith('/tablet/register') ||
-    pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/auth/oauth2/callback');
+  const isLoginPath = isSessionPublicPath(pathname);
 
   useEffect(() => {
     clearTimer();

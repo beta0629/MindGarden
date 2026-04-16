@@ -76,6 +76,35 @@
   text-overflow: clip;
 }
 
+/*
+ * 모달 푸터 primary: UnifiedModal은 포털로 body에 그려져 로그인 폼 스코프 밖이라
+ * .mg-button--primary + .mg-v2-button 조합이 전역 토큰과 겹치며 대비가 깨짐 → 토큰으로 고정 (UnifiedLogin.css 폼 블록과 동일 계열).
+ */
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button,
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-color, var(--mg-primary-500));
+  background: var(--mg-primary-color, var(--mg-primary-500));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-light, var(--mg-primary-400));
+  background: var(--mg-primary-light, var(--mg-primary-400));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+}
+
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button .mg-button__text {
+  color: inherit;
+}
+
+.mg-modal__actions .mg-button.mg-button--primary.mg-button--loading.mg-v2-button {
+  background-color: var(--mg-primary-color, var(--mg-primary-500)) !important;
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
+}
+
 /* 
  * Auto-sizing Modal (.mg-modal--auto)
  * 내용물 높이만큼만 커지며, 100vh 등으로 강제 늘어나는 것을 절대 방지합니다.

@@ -2,7 +2,12 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
-import { SESSION_CHECK_INTERVAL, SESSION_CHECK_COOLDOWN_MS } from '../constants/session';
+import {
+  SESSION_CHECK_INTERVAL,
+  SESSION_CHECK_COOLDOWN_MS,
+  SESSION_ACTIVITY_PING_INTERVAL_MS,
+  isSessionPublicPath
+} from '../constants/session';
 import { AUTH_MESSAGES } from '../constants/messages';
 
 // 세션 상태 타입 정의
@@ -123,6 +128,7 @@ export const SessionContext = createContext(null);
 export const SessionProvider = ({ children }) => {
   const [state, dispatch] = useReducer(sessionReducer, SessionState);
   const stateRef = useRef(state);
+  const lastActivityPingAtRef = useRef(0);
   
   // state가 변경될 때마다 ref 업데이트
   useEffect(() => {
@@ -177,9 +183,10 @@ export const SessionProvider = ({ children }) => {
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
-  const checkSession = useCallback(async(force = false) => {
+  const checkSession = useCallback(async(force = false, options = {}) => {
+    const silent = options.silent === true;
     const now = Date.now();
-    
+
     // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
     if (!force) {
       const lastCheck = sessionManager.getLastCheckTime();
@@ -187,23 +194,25 @@ export const SessionProvider = ({ children }) => {
         return sessionManager.isLoggedIn();
       }
     }
-    
+
     // stateRef를 통해 최신 state 값 참조
     const currentState = stateRef.current;
-    
+
     // 모달이 열려있으면 세션 체크 스킵 (모달 닫힘 방지)
     if (!force && currentState.isModalOpen) {
       console.log('🔄 세션 체크 스킵 (모달 열림)');
       return currentState.isLoggedIn;
     }
-    
+
     // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
     if (!force && (currentState.isLoading || (now - currentState.lastCheckTime < SESSION_CHECK_INTERVAL))) {
       console.log('🔄 세션 체크 스킵 (중복 방지)');
       return currentState.isLoggedIn;
     }
 
-    dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
+    if (!silent) {
+      dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
+    }
     dispatch({ type: SessionActionTypes.SET_LAST_CHECK_TIME, payload: now });
 
     try {
@@ -242,7 +251,9 @@ export const SessionProvider = ({ children }) => {
       dispatch({ type: SessionActionTypes.SET_ERROR, payload: error.message });
       return false;
     } finally {
-      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+      if (!silent) {
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+      }
       dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
     }
   }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
@@ -410,22 +421,22 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     // 로그인 페이지에서는 세션 체크 안 함
     const currentPath = window.location.pathname;
-    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-    
+    const isLoginPage = isSessionPublicPath(currentPath);
+
     if (isLoginPage) {
       return;
     }
 
     // 주기적 세션 체크 설정
     const interval = setInterval(() => {
-      const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-      
+      const currentPathInner = window.location.pathname;
+      const isLoginPageInner = isSessionPublicPath(currentPathInner);
+
       // stateRef로 최신 상태 참조 (클로저 문제 방지)
       const currentState = stateRef.current;
-      
+
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
-      if (!currentState.isLoading && !isLoginPage && currentState.user) {
+      if (!currentState.isLoading && !isLoginPageInner && currentState.user) {
         console.log('🔍 주기적 세션 체크 실행');
         checkSession();
       }
@@ -433,6 +444,36 @@ export const SessionProvider = ({ children }) => {
 
     return () => clearInterval(interval);
   }, [checkSession]); // state.user, state.isLoading 제거 - stateRef로 최신 상태 참조
+
+  // 서블릿 세션 lastAccessedTime은 HTTP 요청 시에만 갱신되어 입력만으로는 연장되지 않았음; 스로틀된 checkSession(true)로 갱신한다.
+  useEffect(() => {
+    const onActivity = () => {
+      const path = window.location.pathname;
+      if (isSessionPublicPath(path)) {
+        return;
+      }
+      const currentState = stateRef.current;
+      if (!currentState.user || currentState.isLoading) {
+        return;
+      }
+      const now = Date.now();
+      if (now - lastActivityPingAtRef.current < SESSION_ACTIVITY_PING_INTERVAL_MS) {
+        return;
+      }
+      lastActivityPingAtRef.current = now;
+      void checkSession(true, { silent: true });
+    };
+
+    const opts = { capture: true, passive: true };
+    document.addEventListener('input', onActivity, opts);
+    document.addEventListener('keydown', onActivity, opts);
+    document.addEventListener('pointerdown', onActivity, opts);
+    return () => {
+      document.removeEventListener('input', onActivity, opts);
+      document.removeEventListener('keydown', onActivity, opts);
+      document.removeEventListener('pointerdown', onActivity, opts);
+    };
+  }, [checkSession]);
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리

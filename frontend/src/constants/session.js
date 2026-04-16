@@ -33,6 +33,34 @@ export const SESSION_CHECK_RECENT_SKIP_MS = 1000; // 1초
 // SessionContext/sessionManager 공통: 이 시간 이내 중복 checkSession 완전 차단 (무한루프 근본 방지)
 export const SESSION_CHECK_COOLDOWN_MS = 3000; // 3초
 
+/**
+ * 타이핑·포인터 등 활동 시 서버 HttpSession lastAccessedTime 갱신용 스로틀 간격.
+ * SESSION_CHECK_COOLDOWN_MS·주기적 SESSION_CHECK_INTERVAL 보다 짧지 않게 둠.
+ */
+export const SESSION_ACTIVITY_PING_INTERVAL_MS = 90 * 1000;
+
+/**
+ * 로그인·회원가입·OAuth 콜백 등 — 세션 연장 ping·idle 경고에서 제외할 공개 경로.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+export function isSessionPublicPath(pathname) {
+  if (pathname == null || typeof pathname !== 'string') {
+    return true;
+  }
+  return (
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname === '/landing' ||
+    pathname === '/' ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/tablet/register') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/oauth2/callback')
+  );
+}
+
 // 기존 세션 확인 지연 시간 (밀리초) - 로그인 페이지에서 세션 체크
 export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠키 설정 대기
 

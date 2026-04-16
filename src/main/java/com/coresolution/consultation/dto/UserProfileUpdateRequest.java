@@ -33,6 +33,32 @@ public class UserProfileUpdateRequest {
     
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
     private String profileImageUrl;
+
+    /** 표시명 등 수정 시 (암호화 저장). 마이페이지와 동일 정책. */
+    @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
+    private String name;
+
+    @Size(max = 50, message = "닉네임은 50자 이하여야 합니다.")
+    private String nickname;
+
+    @Size(max = 50, message = "전화번호는 50자 이하여야 합니다.")
+    private String phone;
+
+    /** {@code user_addresses} upsert 시 주소 유형 (예: HOME). */
+    @Size(max = 20, message = "주소 유형은 20자 이하여야 합니다.")
+    private String addressType;
+
+    @Size(max = 20, message = "우편번호는 20자 이하여야 합니다.")
+    private String postalCode;
+
+    @Size(max = 500, message = "주소는 500자 이하여야 합니다.")
+    private String address;
+
+    @Size(max = 500, message = "상세 주소는 500자 이하여야 합니다.")
+    private String addressDetail;
+
+    /** 기본 주소로 설정 여부 ({@code user_addresses}) */
+    private Boolean isPrimary;
     
     // 내담자/상담사 공통 추가 정보
     @Size(max = 100, message = "상담 선호 분야는 100자 이하여야 합니다.")

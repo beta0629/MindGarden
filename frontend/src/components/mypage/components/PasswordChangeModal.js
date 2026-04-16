@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL } from '../../../constants/api';
+import { AUTH_API } from '../../../constants/api';
+import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -141,22 +142,20 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/password/change`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData)
+      const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword
       });
-
-      const result = await response.json();
-      if (result.success) {
+      if (result && result.success) {
         notificationManager.show('비밀번호가 변경되었습니다.', 'info');
         onSuccess?.();
         onClose();
       } else {
-        notificationManager.show(result.message || '비밀번호 변경에 실패했습니다.', 'error');
+        notificationManager.show(
+          (result && result.message) || '비밀번호 변경에 실패했습니다.',
+          'error'
+        );
       }
     } catch (error) {
       console.error('비밀번호 변경 오류:', error);

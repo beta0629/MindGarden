@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
+import { isConsultantUserProfileRole } from '../../constants/mypageProfileRoles';
+import { buildProfileUpdatePayload, mapProfileLoadResponseToForm } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -65,10 +67,21 @@ const MyPage = () => {
     postalCode: '',
     address: '',
     addressDetail: '',
+    addressType: 'HOME',
     profileImage: null,
     profileImageType: 'DEFAULT_ICON',
     socialProvider: null,
-    socialProfileImage: null
+    socialProfileImage: null,
+    memo: '',
+    specialty: '',
+    qualifications: '',
+    experience: '',
+    availableTime: '',
+    detailedIntroduction: '',
+    education: '',
+    awards: '',
+    research: '',
+    hourlyRate: null
   });
 
   const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
@@ -111,20 +124,10 @@ const MyPage = () => {
 
       if (response) {
         setUser(response);
-        setFormData({
-          userId: response.userId || response.name || '',
-          nickname: response.nickname || '',
-          email: response.email || '',
-          phone: response.phone || response.phoneNumber || '',
-          gender: response.gender || '',
-          postalCode: response.postalCode || '',
-          address: response.address || '',
-          addressDetail: response.addressDetail || '',
-          profileImage: response.profileImage || response.profileImageUrl || null,
-          profileImageType: response.profileImageType || 'DEFAULT_ICON',
-          socialProvider: response.socialProvider || null,
-          socialProfileImage: response.socialProfileImage || null
-        });
+        const mapped = mapProfileLoadResponseToForm(currentUser.role, response);
+        if (mapped) {
+          setFormData(mapped);
+        }
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
@@ -136,10 +139,24 @@ const MyPage = () => {
           email: currentUser.email || '',
           phone: currentUser.phone || currentUser.phoneNumber || '',
           gender: currentUser.gender || '',
+          postalCode: '',
+          address: '',
+          addressDetail: '',
+          addressType: 'HOME',
           profileImage: currentUser.profileImage || currentUser.profileImageUrl || null,
           profileImageType: currentUser.profileImageType || 'DEFAULT_ICON',
           socialProvider: currentUser.socialProvider || null,
-          socialProfileImage: currentUser.socialProfileImage || null
+          socialProfileImage: currentUser.socialProfileImage || null,
+          memo: '',
+          specialty: '',
+          qualifications: '',
+          experience: '',
+          availableTime: '',
+          detailedIntroduction: '',
+          education: '',
+          awards: '',
+          research: '',
+          hourlyRate: null
         };
         setUser(currentUser);
         setFormData(formDataToSet);
@@ -231,48 +248,74 @@ const MyPage = () => {
       throw new Error('세션에 사용자 정보가 없습니다');
     }
 
-    const requestData = {
-      ...dataToUpdate,
-      profileImageUrl: dataToUpdate.profileImage,
-      gender: dataToUpdate.gender,
-      memo: dataToUpdate.memo || '',
-      specialty: dataToUpdate.specialty || '',
-      qualifications: dataToUpdate.qualifications || '',
-      experience: dataToUpdate.experience || '',
-      availableTime: dataToUpdate.availableTime || '',
-      detailedIntroduction: dataToUpdate.detailedIntroduction || '',
-      education: dataToUpdate.education || '',
-      awards: dataToUpdate.awards || '',
-      research: dataToUpdate.research || '',
-      hourlyRate: dataToUpdate.hourlyRate || null
-    };
+    const requestData = buildProfileUpdatePayload(currentUser.role, dataToUpdate);
 
     const response = await mypageApi.updateProfileInfo(currentUser.role, currentUser.id, requestData);
 
-    setUser((prev) => ({
-      ...prev,
-      userId: response.userId || dataToUpdate.userId,
-      nickname: response.nickname || dataToUpdate.nickname,
-      phone: response.phone || dataToUpdate.phone,
-      gender: response.gender || dataToUpdate.gender,
-      profileImage: dataToUpdate.profileImage || response.profileImage,
-      profileImageType: dataToUpdate.profileImageType || response.profileImageType
-    }));
+    const nextProfileImage = isConsultantUserProfileRole(currentUser.role)
+      ? (response.profileImageUrl || dataToUpdate.profileImage)
+      : (response.profileImage || dataToUpdate.profileImage);
 
-    setFormData({
+    let dataAfterSave = {
       ...dataToUpdate,
-      profileImage: dataToUpdate.profileImage || response.profileImage,
-      profileImageType: dataToUpdate.profileImageType || response.profileImageType
+      profileImage: nextProfileImage,
+      profileImageType: dataToUpdate.profileImageType || response?.profileImageType
+    };
+    if (isConsultantUserProfileRole(currentUser.role) && response) {
+      dataAfterSave = {
+        ...dataAfterSave,
+        postalCode: response.postalCode ?? dataToUpdate.postalCode,
+        address: response.address ?? dataToUpdate.address,
+        addressDetail: response.addressDetail ?? dataToUpdate.addressDetail
+      };
+    }
+
+    setUser((prev) => {
+      if (!isConsultantUserProfileRole(currentUser.role)) {
+        return {
+          ...prev,
+          ...response,
+          profileImage: nextProfileImage,
+          profileImageType: dataToUpdate.profileImageType || response.profileImageType
+        };
+      }
+      if (!response) {
+        return { ...prev, profileImage: nextProfileImage };
+      }
+      return {
+        ...prev,
+        nickname: response.nickname,
+        phone: response.phone,
+        gender: response.gender,
+        email: response.email,
+        name: response.name,
+        profileImageUrl: response.profileImageUrl,
+        profileImage: nextProfileImage,
+        profileImageType: dataToUpdate.profileImageType || response.profileImageType,
+        postalCode: response.postalCode,
+        address: response.address,
+        addressDetail: response.addressDetail,
+        memo: response.memo,
+        specialty: response.specialty,
+        qualifications: response.qualifications,
+        experience: response.experience,
+        availableTime: response.availableTime,
+        detailedIntroduction: response.detailedIntroduction,
+        education: response.education,
+        awards: response.awards,
+        research: response.research,
+        hourlyRate: response.hourlyRate
+      };
     });
 
     if (sessionManager.user) {
       sessionManager.user = {
         ...sessionManager.user,
-        userId: dataToUpdate.userId,
-        nickname: dataToUpdate.nickname,
-        phone: dataToUpdate.phone,
-        gender: dataToUpdate.gender,
-        profileImage: dataToUpdate.profileImage
+        userId: dataAfterSave.userId,
+        nickname: dataAfterSave.nickname,
+        phone: dataAfterSave.phone,
+        gender: dataAfterSave.gender,
+        profileImage: nextProfileImage
       };
       sessionManager.notifyListeners();
     }
@@ -281,9 +324,9 @@ const MyPage = () => {
 
     setUser((prev) => ({
       ...prev,
-      ...dataToUpdate
+      ...dataAfterSave
     }));
-    setFormData(dataToUpdate);
+    setFormData(dataAfterSave);
 
     notificationManager.show('프로필이 저장되었습니다.', 'success');
   });

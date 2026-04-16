@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet } from '../../../utils/ajax';
+import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -22,10 +22,15 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
     const loadAddressTypeCodes = async() => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/v1/common-codes?codeGroup=ADDRESS_TYPE');
-        if (response && response.length > 0) {
+        const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'ADDRESS_TYPE' });
+        const list = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.codes)
+            ? response.codes
+            : [];
+        if (list.length > 0) {
           setAddressTypeOptions(
-            response.map((code) => ({
+            list.map((code) => ({
               value: code.codeValue,
               label: code.codeLabel,
               icon: code.icon

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../../constants/api';
+import { AUTH_API } from '../../../constants/api';
+import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -48,17 +49,8 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE_URL}/api/password/reset/request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email })
-      });
-
-      const result = await response.json();
-      if (result.success) {
+      const result = await StandardizedApi.post(AUTH_API.PASSWORD_RESET_REQUEST, { email });
+      if (result && result.success) {
         setIsEmailSent(true);
         setCooldown(900);
         onSuccess?.();

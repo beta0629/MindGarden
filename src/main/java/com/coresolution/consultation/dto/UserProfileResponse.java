@@ -25,6 +25,18 @@ public class UserProfileResponse {
     private String name;
     private String nickname;
     private String phone;
+    /**
+     * 우편번호. {@code user_addresses} 기본 주소 우선, 없으면 {@code users.postal_code}.
+     */
+    private String postalCode;
+    /**
+     * 기본 주소 한 줄. {@code user_addresses} 기본 주소 우선, 없으면 {@code users.address}.
+     */
+    private String address;
+    /**
+     * 상세 주소. {@code user_addresses} 기본 주소 우선, 없으면 {@code users.address_detail}.
+     */
+    private String addressDetail;
     private String gender;
     private LocalDate birthDate;
     private String ageGroup;

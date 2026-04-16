@@ -50,7 +50,12 @@ export const AUTH_API = {
   NAVER_AUTHORIZE: '/api/v1/auth/oauth2/naver/authorize',
   
   // 중복 로그인 확인
-  CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login'
+  CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',
+
+  /** PasswordManagementController — 세션 사용자 비밀번호 변경 */
+  PASSWORD_CHANGE: '/api/v1/auth/password/change',
+  /** PasswordManagementController — 재설정 이메일 요청 */
+  PASSWORD_RESET_REQUEST: '/api/v1/auth/password/reset/request'
 };
 
 // 권한 관련 API (표준 경로: /api/v1/permissions)
@@ -91,16 +96,16 @@ export const MYPAGE_API = {
   GET_INFO: '/api/v1/clients/profile',
   UPDATE_INFO: '/api/v1/clients/profile',
   
-  // 비밀번호 관리
-  CHANGE_PASSWORD: '/api/v1/clients/profile/change-password',
-  RESET_PASSWORD: '/api/v1/auth/password-reset/request',
+  // 비밀번호 관리 (PasswordManagementController — AUTH_API와 동일 경로)
+  CHANGE_PASSWORD: '/api/v1/auth/password/change',
+  RESET_PASSWORD: '/api/v1/auth/password/reset/request',
   
   // 프로필 이미지
   UPLOAD_IMAGE: '/api/v1/clients/profile/image',
   
-  // 소셜 계정 관리
-  GET_SOCIAL_ACCOUNTS: '/api/v1/clients/social-accounts',
-  MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts'
+  // 소셜 계정 (ClientProfileController 하위 조회 / ClientSocialAccountController 연동 해제)
+  GET_SOCIAL_ACCOUNTS: '/api/v1/clients/profile/social-accounts',
+  MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account'
 };
 
 // 역할별 프로필 API (표준화 2025-12-05: /api/v1/ 경로 적용)
@@ -109,30 +114,30 @@ export const PROFILE_API = {
   CLIENT: {
     GET_INFO: '/api/v1/clients/profile',
     UPDATE_INFO: '/api/v1/clients/profile',
-    CHANGE_PASSWORD: '/api/v1/clients/profile/password',
+    CHANGE_PASSWORD: '/api/v1/auth/password/change',
     UPLOAD_IMAGE: '/api/v1/clients/profile/image',
-    GET_SOCIAL_ACCOUNTS: '/api/v1/clients/social-accounts',
-    MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts'
+    GET_SOCIAL_ACCOUNTS: '/api/v1/clients/profile/social-accounts',
+    MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account'
   },
 
   // 상담사용 (표준화 2025-12-05: /api/v1/ 경로 적용)
   CONSULTANT: {
     GET_INFO: (userId) => `/api/v1/users/profile/${userId}`,
     UPDATE_INFO: (userId) => `/api/v1/users/profile/${userId}`,
-    CHANGE_PASSWORD: (userId) => `/api/v1/users/profile/${userId}/password`,
-    UPLOAD_IMAGE: (userId) => `/api/v1/users/profile/${userId}/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/v1/users/profile/${userId}/social-accounts`,
-    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/v1/users/profile/${userId}/social-accounts`
+    CHANGE_PASSWORD: '/api/v1/auth/password/change',
+    UPLOAD_IMAGE: (userId) => `/api/v1/clients/profile/image`,
+    GET_SOCIAL_ACCOUNTS: '/api/v1/clients/profile/social-accounts',
+    MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account'
   },
 
-  // 관리자용 (MyPageService 사용) (표준화 2025-12-05: /api/v1/ 경로 적용)
+  // 관리자·스태프·레거시 최고관리자 등: 세션 기반 ClientProfile + 동일 소셜 경로
   ADMIN: {
-    GET_INFO: (userId) => `/api/v1/clients/profile`,
-    UPDATE_INFO: (userId) => `/api/v1/clients/profile`,
-    CHANGE_PASSWORD: (userId) => `/api/v1/clients/profile/password`,
-    UPLOAD_IMAGE: (userId) => `/api/v1/clients/profile/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/v1/admin/users/${userId}/social-accounts`,
-    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/v1/clients/social-accounts`
+    GET_INFO: () => '/api/v1/clients/profile',
+    UPDATE_INFO: () => '/api/v1/clients/profile',
+    CHANGE_PASSWORD: '/api/v1/auth/password/change',
+    UPLOAD_IMAGE: () => '/api/v1/clients/profile/image',
+    GET_SOCIAL_ACCOUNTS: '/api/v1/clients/profile/social-accounts',
+    MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account'
   }
 };
 

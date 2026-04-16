@@ -4,11 +4,16 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultantApplicationRequest;
 import com.coresolution.consultation.dto.UserProfileResponse;
 import com.coresolution.consultation.dto.UserProfileUpdateRequest;
+import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.UserAddress;
+import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -31,6 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 public class UserProfileServiceImpl implements UserProfileService {
     
     private final UserRepository userRepository;
+    private final ConsultantRepository consultantRepository;
+    private final UserAddressRepository userAddressRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
 
     /**
@@ -52,6 +59,20 @@ public class UserProfileServiceImpl implements UserProfileService {
             User user = requireUserInCurrentTenant(userId);
             
             log.info("유저 프로필 업데이트 시작: userId={}", userId);
+
+            if (request.getName() != null && !request.getName().trim().isEmpty()) {
+                user.setName(encryptionUtil.encrypt(request.getName().trim()));
+            }
+            if (request.getNickname() != null && !request.getNickname().trim().isEmpty()) {
+                user.setNickname(encryptionUtil.encrypt(request.getNickname().trim()));
+            }
+            if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+                user.setPhone(encryptionUtil.encrypt(request.getPhone().trim()));
+            }
+
+            if (request.getHourlyRate() != null) {
+                log.debug("프로필 자가 수정: 상담료(hourlyRate)는 어드민/급여 정책 필드로 무시됩니다. userId={}", userId);
+            }
             
             // 개인정보 암호화하여 저장
             if (request.getGender() != null) {
@@ -97,6 +118,8 @@ public class UserProfileServiceImpl implements UserProfileService {
             
             // 역할별 추가 정보 저장
             saveRoleSpecificInfo(user, request);
+
+            upsertPrimaryAddressIfRequested(userId, request);
             
             user = userRepository.save(user);
             log.info("유저 프로필 업데이트 완료: userId={}", userId);
@@ -224,9 +247,24 @@ public class UserProfileServiceImpl implements UserProfileService {
      * 역할별 추가 정보 저장
      */
     private void saveRoleSpecificInfo(User user, UserProfileUpdateRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<Consultant> consultantOpt = consultantRepository.findByTenantIdAndId(tenantId, user.getId());
+        boolean consultantRowForProfile =
+                consultantOpt.isPresent() && UserRole.CONSULTANT.equals(user.getRole());
+
+        if (consultantRowForProfile) {
+            Consultant consultant = consultantOpt.get();
+            if (applyConsultantProfileToEntity(consultant, user, request)) {
+                consultantRepository.save(consultant);
+            }
+        }
+
+        boolean appendConsultantLikeMemo =
+                !consultantRowForProfile
+                        && (UserRole.CONSULTANT.equals(user.getRole()) || UserRole.ADMIN.equals(user.getRole()));
+
         StringBuilder roleInfo = new StringBuilder();
-        
-        // 공통 추가 정보
+
         if (request.getPreferredCounselingArea() != null) {
             roleInfo.append("상담선호분야: ").append(request.getPreferredCounselingArea()).append("\n");
         }
@@ -236,9 +274,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         if (request.getCounselingNeeds() != null) {
             roleInfo.append("상담받고싶은내용: ").append(request.getCounselingNeeds()).append("\n");
         }
-        
-        // 상담사 전용 정보
-        if (UserRole.CONSULTANT.equals(user.getRole()) || UserRole.ADMIN.equals(user.getRole())) {
+
+        if (appendConsultantLikeMemo) {
             if (request.getSpecialty() != null) {
                 roleInfo.append("전문분야: ").append(request.getSpecialty()).append("\n");
             }
@@ -263,13 +300,8 @@ public class UserProfileServiceImpl implements UserProfileService {
             if (request.getResearch() != null) {
                 roleInfo.append("연구실적: ").append(request.getResearch()).append("\n");
             }
-            if (request.getHourlyRate() != null) {
-                roleInfo.append("상담료: ").append(request.getHourlyRate()).append("원/시간\n");
-            }
         }
-        
-        // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
-        // 관리자 전용 정보
+
         if (user.getRole() != null && user.getRole().isAdmin()) {
             if (request.getAssignedTasks() != null) {
                 roleInfo.append("담당업무: ").append(request.getAssignedTasks()).append("\n");
@@ -281,12 +313,54 @@ public class UserProfileServiceImpl implements UserProfileService {
                 roleInfo.append("부서/팀: ").append(request.getDepartment()).append("\n");
             }
         }
-        
-        // 기존 memo와 합치기
-        String existingMemo = user.getMemo() != null ? user.getMemo() : "";
+
         if (roleInfo.length() > 0) {
-            user.setMemo(existingMemo + "\n" + roleInfo.toString());
+            String existingMemo = user.getMemo() != null ? user.getMemo() : "";
+            user.setMemo(existingMemo + "\n" + roleInfo);
         }
+    }
+
+    /**
+     * 상담사(consultants 행)에 프로필 필드를 반영합니다. 어드민 {@code ConsultantRegistrationRequest} 매핑과 정합합니다.
+     *
+     * @return 변경 여부
+     */
+    private boolean applyConsultantProfileToEntity(Consultant consultant, User user, UserProfileUpdateRequest request) {
+        boolean changed = false;
+        if (request.getSpecialty() != null) {
+            consultant.setSpecialty(request.getSpecialty());
+            user.setSpecialization(request.getSpecialty());
+            changed = true;
+        }
+        if (request.getQualifications() != null) {
+            consultant.setCertification(request.getQualifications());
+            changed = true;
+        }
+        if (request.getExperience() != null) {
+            consultant.setWorkHistory(request.getExperience());
+            changed = true;
+        }
+        if (request.getAvailableTime() != null) {
+            consultant.setConsultationHours(request.getAvailableTime());
+            changed = true;
+        }
+        if (request.getDetailedIntroduction() != null) {
+            consultant.setSpecialtyDetails(request.getDetailedIntroduction());
+            changed = true;
+        }
+        if (request.getEducation() != null) {
+            consultant.setEducation(request.getEducation());
+            changed = true;
+        }
+        if (request.getAwards() != null) {
+            consultant.setAwardsAchievements(request.getAwards());
+            changed = true;
+        }
+        if (request.getResearch() != null) {
+            consultant.setResearchPublications(request.getResearch());
+            changed = true;
+        }
+        return changed;
     }
     
     /**
@@ -377,25 +451,84 @@ public class UserProfileServiceImpl implements UserProfileService {
      * UserProfileResponse 빌드
      */
     private UserProfileResponse buildUserProfileResponse(User user) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<Consultant> consultantOpt = consultantRepository.findByTenantIdAndId(tenantId, user.getId());
+        Map<String, String> memoLines = parseMemoLabeledLines(user.getMemo());
+
         // 프로필 이미지 타입 결정
         String profileImageType = "DEFAULT_ICON";
         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
             if (user.getProfileImageUrl().startsWith("data:image/")) {
                 profileImageType = "USER_PROFILE";
             } else {
-                profileImageType = "USER_PROFILE"; // URL 형태의 이미지도 사용자 프로필로 간주
+                profileImageType = "USER_PROFILE";
             }
         }
-        
-        log.info("🖼️ UserProfileResponse 빌드: userId={}, profileImageType={}, hasImage={}", 
+
+        String postalCodeOut = user.getPostalCode();
+        String addressOut = user.getAddress();
+        String addressDetailOut = user.getAddressDetail();
+        Optional<UserAddress> primaryAddr = userAddressRepository
+                .findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(user.getId());
+        if (primaryAddr.isPresent()) {
+            UserAddress a = primaryAddr.get();
+            if (a.getPostalCode() != null && !a.getPostalCode().trim().isEmpty()) {
+                postalCodeOut = a.getPostalCode();
+            }
+            if (a.getFullAddress() != null && !a.getFullAddress().trim().isEmpty()) {
+                addressOut = a.getFullAddress();
+            }
+            if (a.getDetailAddress() != null && !a.getDetailAddress().trim().isEmpty()) {
+                addressDetailOut = a.getDetailAddress();
+            }
+        }
+
+        String preferredCounselingArea = memoLines.get("상담선호분야");
+        String preferredCounselingMethod = memoLines.get("상담선호방식");
+        String counselingNeeds = memoLines.get("상담받고싶은내용");
+
+        String specialtyOut = null;
+        String qualificationsOut = null;
+        String experienceOut = null;
+        String availableTimeOut = null;
+        String detailedIntroOut = null;
+        String educationOut = null;
+        String awardsOut = null;
+        String researchOut = null;
+
+        if (consultantOpt.isPresent()) {
+            Consultant c = consultantOpt.get();
+            specialtyOut = firstNonBlank(c.getSpecialty(), user.getSpecialization());
+            qualificationsOut = c.getCertification();
+            experienceOut = firstNonBlank(c.getWorkHistory(), c.getProfessionalBackground());
+            availableTimeOut = c.getConsultationHours();
+            detailedIntroOut = c.getSpecialtyDetails();
+            educationOut = c.getEducation();
+            awardsOut = c.getAwardsAchievements();
+            researchOut = c.getResearchPublications();
+        } else {
+            specialtyOut = firstNonBlank(memoLines.get("전문분야"), user.getSpecialization());
+            qualificationsOut = memoLines.get("자격증");
+            experienceOut = memoLines.get("경력");
+            availableTimeOut = memoLines.get("상담가능시간");
+            detailedIntroOut = memoLines.get("상세자기소개");
+            educationOut = memoLines.get("학력");
+            awardsOut = memoLines.get("수상경력");
+            researchOut = memoLines.get("연구실적");
+        }
+
+        log.info("🖼️ UserProfileResponse 빌드: userId={}, profileImageType={}, hasImage={}",
             user.getId(), profileImageType, user.getProfileImageUrl() != null);
-        
+
         return UserProfileResponse.builder()
             .userId(user.getId())
-            .email(user.getEmail())
+            .email(encryptionUtil.safeDecrypt(user.getEmail()))
             .name(encryptionUtil.safeDecrypt(user.getName()))
             .nickname(encryptionUtil.safeDecrypt(user.getNickname()))
             .phone(encryptionUtil.safeDecrypt(user.getPhone()))
+            .postalCode(postalCodeOut)
+            .address(addressOut)
+            .addressDetail(addressDetailOut)
             .gender(encryptionUtil.safeDecrypt(user.getGender()))
             .birthDate(user.getBirthDate())
             .ageGroup(user.getAgeGroup())
@@ -406,6 +539,21 @@ public class UserProfileServiceImpl implements UserProfileService {
             .profileImageUrl(user.getProfileImageUrl())
             .profileImageType(profileImageType)
             .memo(user.getMemo())
+            .preferredCounselingArea(preferredCounselingArea)
+            .preferredCounselingMethod(preferredCounselingMethod)
+            .counselingNeeds(counselingNeeds)
+            .specialty(specialtyOut)
+            .qualifications(qualificationsOut)
+            .experience(experienceOut)
+            .availableTime(availableTimeOut)
+            .detailedIntroduction(detailedIntroOut)
+            .education(educationOut)
+            .awards(awardsOut)
+            .research(researchOut)
+            .hourlyRate(null)
+            .assignedTasks(memoLines.get("담당업무"))
+            .managementScope(memoLines.get("관리권한범위"))
+            .department(memoLines.get("부서/팀"))
             .isEmailVerified(user.getIsEmailVerified())
             .isActive(user.getIsActive())
             .lastLoginAt(user.getLastLoginAt())
@@ -414,11 +562,117 @@ public class UserProfileServiceImpl implements UserProfileService {
             .profileCompletionRate(getProfileCompletionRate(user.getId()))
             .consultantEligible(checkConsultantEligibility(user.getId()))
             .adminEligible(checkAdminEligibility(user.getId()))
-            .canAddMoreInfo(true) // 항상 추가 정보 등록 가능
+            .canAddMoreInfo(true)
             .currentProfileStep(calculateProfileStep(user))
             .needsRoleSpecificInfo(needsRoleSpecificInfo(user))
             .nextStepMessage(getNextStepMessage(user))
             .build();
+    }
+
+    private static Map<String, String> parseMemoLabeledLines(String memo) {
+        Map<String, String> map = new HashMap<>();
+        if (memo == null || memo.isBlank()) {
+            return map;
+        }
+        for (String raw : memo.split("\n")) {
+            String line = raw.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            int sep = line.indexOf(": ");
+            if (sep <= 0) {
+                continue;
+            }
+            String key = line.substring(0, sep).trim();
+            String val = line.substring(sep + 2).trim();
+            if (!key.isEmpty()) {
+                map.put(key, val);
+            }
+        }
+        return map;
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String v : values) {
+            if (v != null && !v.trim().isEmpty()) {
+                return v;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 마이페이지와 동일 정책으로 기본 주소(user_addresses)를 upsert합니다.
+     */
+    private void upsertPrimaryAddressIfRequested(Long userId, UserProfileUpdateRequest request) {
+        final String reqAddress = request.getAddress();
+        final boolean hasAnyAddressField =
+                (reqAddress != null && !reqAddress.trim().isEmpty())
+                || (request.getAddressDetail() != null && !request.getAddressDetail().trim().isEmpty())
+                || (request.getPostalCode() != null && !request.getPostalCode().trim().isEmpty());
+
+        if (!hasAnyAddressField) {
+            return;
+        }
+
+        Optional<UserAddress> primaryOpt = userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId);
+
+        if (primaryOpt.isEmpty() && (reqAddress == null || reqAddress.trim().isEmpty())) {
+            log.warn("프로필 주소: 상세/우편번호만 전달되어 기본 주소 생성을 건너뜁니다. userId={}", userId);
+            return;
+        }
+
+        UserAddress address = primaryOpt.orElseGet(UserAddress::new);
+        address.setUserId(userId);
+        if (request.getAddressType() != null && !request.getAddressType().trim().isEmpty()) {
+            address.setAddressType(request.getAddressType());
+        } else if (address.getAddressType() == null) {
+            address.setAddressType("HOME");
+        }
+        if (primaryOpt.isEmpty() || Boolean.TRUE.equals(request.getIsPrimary())) {
+            address.setIsPrimary(true);
+        }
+        if (reqAddress != null && !reqAddress.trim().isEmpty()) {
+            String[] parsed = parseKoreanAddress(reqAddress.trim());
+            address.setProvince(parsed[0]);
+            address.setCity(parsed[1]);
+            address.setDistrict(parsed[2]);
+        }
+        if (request.getAddressDetail() != null) {
+            address.setDetailAddress(request.getAddressDetail());
+        }
+        if (request.getPostalCode() != null) {
+            address.setPostalCode(request.getPostalCode());
+        }
+        userAddressRepository.save(address);
+    }
+
+    private String[] parseKoreanAddress(String fullAddress) {
+        if (fullAddress == null) {
+            return new String[] {"기타", "기타", "기타"};
+        }
+        String normalized = fullAddress.replaceAll("\\s+", " ").trim();
+        String[] tokens = normalized.split(" ");
+        if (tokens.length >= 3) {
+            String province = tokens[0];
+            String city = tokens[1];
+            StringBuilder district = new StringBuilder();
+            for (int i = 2; i < tokens.length; i++) {
+                if (district.length() > 0) {
+                    district.append(' ');
+                }
+                district.append(tokens[i]);
+            }
+            return new String[] { province, city, district.toString() };
+        } else if (tokens.length == 2) {
+            return new String[] { tokens[0], tokens[1], "기타" };
+        } else if (tokens.length == 1) {
+            return new String[] { tokens[0], "기타", "기타" };
+        }
+        return new String[] {"기타", "기타", "기타"};
     }
     
     /**

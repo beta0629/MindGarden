@@ -612,8 +612,18 @@ const TabletLogin = () => {
         notificationManager.show('세션 설정에 실패했습니다.', 'error');
       }
     } else {
-      // 간편 회원가입 성공 응답에 userInfo가 없을 때 쿠키·세션 동기화 확정을 위해 전체 새로고침이 필요함.
-      window.location.reload();
+      // userInfo 미포함: 서버가 Set-Cookie로 세션을 붙인 뒤 응답하는 경우가 많아 SPA 내에서 먼저 동기화 시도
+      const synced = await checkSession(true);
+      const userAfterSync = sessionManager.getUser();
+      if (synced && userAfterSync) {
+        await redirectToDynamicDashboard(
+          { user: userAfterSync, currentTenantRole: null },
+          navigate
+        );
+      } else {
+        // HttpOnly·타이밍 등으로 클라이언트 동기화가 비어 있을 때만 전체 로드로 쿠키·JS 번들·세션 스토어를 일치시킴
+        window.location.reload();
+      }
     }
   };
 
@@ -797,8 +807,7 @@ const TabletLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                   onMouseEnter={(e) => {
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a67d8 -> var(--mg-custom-5a67d8)
-                    e.currentTarget.style.color = '#5a67d8';
+                    e.currentTarget.style.color = 'var(--mg-primary-600)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color = 'var(--mg-primary-500)';
@@ -982,8 +991,7 @@ const TabletLogin = () => {
               color: 'var(--mg-gray-800)',
               padding: '28px 56px',
               borderRadius: '12px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 4px 20px var(--mg-shadow-light)',
               zIndex: 10001,
               fontSize: 'var(--font-size-md)',
               fontWeight: '400',
@@ -992,8 +1000,7 @@ const TabletLogin = () => {
               maxWidth: '85vw',
               textAlign: 'center',
               cursor: 'pointer',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-              border: '1px solid #e9ecef',
+              border: '1px solid var(--mg-border)',
               animation: 'loginNotificationSlideIn 0.4s ease-out'
             }}
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
@@ -1005,8 +1012,7 @@ const TabletLogin = () => {
               fontSize: 'var(--font-size-base)',
               fontWeight: '500',
               marginBottom: '8px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
-              color: '#495057',
+              color: 'var(--mg-gray_dark)',
               lineHeight: '1.5',
               letterSpacing: '0.2px'
             }}>

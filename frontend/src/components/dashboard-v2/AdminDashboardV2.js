@@ -1739,7 +1739,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         title="관리 기능"
         subtitle="시스템 관리 및 설정 기능"
       >
-        <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
+        <div className="mg-v2-ad-b0kla__admin-grid">
           <MGButton
             type="button"
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
@@ -1773,8 +1773,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
           </MGButton>
-        </div>
-        <div className="mg-management-grid mg-v2-ad-b0kla__admin-grid">
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
           <MGButton
             type="button"

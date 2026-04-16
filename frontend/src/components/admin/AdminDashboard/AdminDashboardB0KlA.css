@@ -887,6 +887,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   align-items: stretch;
 }
 
+/* 레거시 AdminDashboard: 상단 3카드 / 하단 그리드 사이 간격 */
 .mg-v2-ad-b0kla__admin-grid--primary {
   margin-bottom: 1.5rem;
 }
@@ -1628,6 +1629,7 @@ button.mg-v2-ad-b0kla__admin-card.mg-button {
   box-shadow: none;
   padding: 1.5rem;
   text-align: center;
+  overflow: visible;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -1645,6 +1647,14 @@ button.mg-v2-ad-b0kla__admin-card.mg-button:focus-visible {
 button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__content,
 button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__text {
   display: contents;
+  white-space: normal;
+}
+
+button.mg-v2-ad-b0kla__admin-card.mg-button .mg-v2-ad-b0kla__admin-label,
+button.mg-v2-ad-b0kla__admin-card.mg-button .mg-v2-ad-b0kla__admin-desc {
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--loading {

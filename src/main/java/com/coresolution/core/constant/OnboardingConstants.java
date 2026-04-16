@@ -324,6 +324,9 @@ public class OnboardingConstants {
     public static final String LOG_MSG_TENANT_ROLE_CODES_START =
             "🔄 테넌트 역할 코드 생성 시작 (배치 처리): tenantId={}, businessType={}";
 
+    /** 공통코드 시드: sortOrder 미지정 시 기본값 */
+    public static final int TENANT_COMMON_CODE_DEFAULT_SORT_ORDER = 0;
+
     public static final String TENANT_COMMON_CODE_GROUP_ROLE = "ROLE";
     public static final String TENANT_BUSINESS_TYPE_CONSULTATION = "CONSULTATION";
     public static final String TENANT_BUSINESS_TYPE_COUNSELING = "COUNSELING";
@@ -421,6 +424,8 @@ public class OnboardingConstants {
     // --- 온보딩 checklist_json / 초기화 상태 JSON (OnboardingServiceImpl 2차 슬라이스) ---
 
     public static final String CHECKLIST_JSON_KEY_REGION = "region";
+    /** checklist_json 최상위 regionCode (우선순위 1) */
+    public static final String CHECKLIST_JSON_KEY_REGION_CODE = "regionCode";
     public static final String CHECKLIST_JSON_KEY_ADDRESS = "address";
     public static final String CHECKLIST_JSON_KEY_POSTAL_CODE = "postalCode";
     public static final String CHECKLIST_JSON_KEY_BRAND_NAME = "brandName";

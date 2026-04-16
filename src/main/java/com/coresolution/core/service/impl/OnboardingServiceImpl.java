@@ -1192,7 +1192,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     new TypeReference<Map<String, Object>>() {});
 
             // regionCode를 직접 사용 (우선순위 1)
-            String regionCode = (String) checklist.get("regionCode");
+            String regionCode = (String) checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_REGION_CODE);
             if (regionCode != null && !regionCode.trim().isEmpty()) {
                 return regionCode.trim();
             }
@@ -2122,7 +2122,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             String tenantId, String codeGroup, String codeValue, String koreanName,
             String codeLabel, String description, String extraData, Integer sortOrder,
             String createdBy, String parentCodeGroup, String parentCodeValue) {
-        String codeKey = codeGroup + ":" + codeValue;
+        String codeKey = codeGroup + OnboardingConstants.COMMON_CODE_CACHE_KEY_SEPARATOR
+                + codeValue;
         if (existingCodeKeys.contains(codeKey)) {
             log.debug(OnboardingConstants.LOG_DEBUG_COMMON_CODE_ALREADY_EXISTS, tenantId, codeGroup,
                     codeValue);
@@ -2131,7 +2132,9 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         CommonCode code = CommonCode.builder().codeGroup(codeGroup).codeValue(codeValue)
                 .koreanName(koreanName).codeLabel(codeLabel).codeDescription(description)
-                .sortOrder(sortOrder != null ? sortOrder : 0).isActive(true).extraData(extraData)
+                .sortOrder(sortOrder != null ? sortOrder
+                        : OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER)
+                .isActive(true).extraData(extraData)
                 .parentCodeGroup(parentCodeGroup).parentCodeValue(parentCodeValue).build();
 
         code.setTenantId(tenantId);
@@ -2215,7 +2218,9 @@ public class OnboardingServiceImpl implements OnboardingService {
             Set<String> existingCodeKeys = new HashSet<>();
             for (CommonCode code : existingCodes) {
                 if (OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE.equals(code.getCodeGroup())) {
-                    existingCodeKeys.add(code.getCodeGroup() + ":" + code.getCodeValue());
+                    existingCodeKeys.add(code.getCodeGroup()
+                            + OnboardingConstants.COMMON_CODE_CACHE_KEY_SEPARATOR
+                            + code.getCodeValue());
                 }
             }
 

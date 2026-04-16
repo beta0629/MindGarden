@@ -1198,13 +1198,13 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
 
             // region 필드도 지원 (하위 호환성)
-            String region = (String) checklist.get("region");
+            String region = (String) checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_REGION);
             if (region != null && !region.trim().isEmpty()) {
                 return region.trim();
             }
 
-            String address = (String) checklist.get("address");
-            String postalCode = (String) checklist.get("postalCode");
+            String address = (String) checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_ADDRESS);
+            String postalCode = (String) checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_POSTAL_CODE);
 
             if (address != null && !address.trim().isEmpty()) {
                 return extractRegionFromAddress(address);
@@ -1217,7 +1217,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             return null;
 
         } catch (Exception e) {
-            log.warn("지역 코드 추출 실패: requestId={}, error={}", request.getId(), e.getMessage());
+            log.warn(OnboardingConstants.LOG_WARN_REGION_CODE_EXTRACT_FAILED, request.getId(),
+                    e.getMessage());
             return null;
         }
     }
@@ -1235,85 +1236,120 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         String normalizedAddress = address.trim().toLowerCase();
 
-        if (normalizedAddress.contains("서울") || normalizedAddress.contains("seoul")) {
-            return "seoul";
-        } else if (normalizedAddress.contains("부산") || normalizedAddress.contains("busan")) {
-            return "busan";
-        } else if (normalizedAddress.contains("인천") || normalizedAddress.contains("incheon")) {
-            return "incheon";
-        } else if (normalizedAddress.contains("대구") || normalizedAddress.contains("daegu")) {
-            return "daegu";
-        } else if (normalizedAddress.contains("대전") || normalizedAddress.contains("daejeon")) {
-            return "daejeon";
-        } else if (normalizedAddress.contains("광주") || normalizedAddress.contains("gwangju")) {
-            return "gwangju";
-        } else if (normalizedAddress.contains("울산") || normalizedAddress.contains("ulsan")) {
-            return "ulsan";
-        } else if (normalizedAddress.contains("세종") || normalizedAddress.contains("sejong")) {
-            return "sejong";
-        } else if (normalizedAddress.contains("경기") || normalizedAddress.contains("gyeonggi")) {
-            return "gyeonggi";
-        } else if (normalizedAddress.contains("강원") || normalizedAddress.contains("gangwon")) {
-            return "gangwon";
-        } else if (normalizedAddress.contains("충북") || normalizedAddress.contains("chungbuk")) {
-            return "chungbuk";
-        } else if (normalizedAddress.contains("충남") || normalizedAddress.contains("chungnam")) {
-            return "chungnam";
-        } else if (normalizedAddress.contains("전북") || normalizedAddress.contains("jeonbuk")) {
-            return "jeonbuk";
-        } else if (normalizedAddress.contains("전남") || normalizedAddress.contains("jeonnam")) {
-            return "jeonnam";
-        } else if (normalizedAddress.contains("경북") || normalizedAddress.contains("gyeongbuk")) {
-            return "gyeongbuk";
-        } else if (normalizedAddress.contains("경남") || normalizedAddress.contains("gyeongnam")) {
-            return "gyeongnam";
-        } else if (normalizedAddress.contains("제주") || normalizedAddress.contains("jeju")) {
-            return "jeju";
+        if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SEOUL_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SEOUL_EN)) {
+            return OnboardingConstants.REGION_CODE_SEOUL;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_BUSAN_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_BUSAN_EN)) {
+            return OnboardingConstants.REGION_CODE_BUSAN;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_INCHEON_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_INCHEON_EN)) {
+            return OnboardingConstants.REGION_CODE_INCHEON;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_DAEGU_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_DAEGU_EN)) {
+            return OnboardingConstants.REGION_CODE_DAEGU;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_DAEJEON_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_DAEJEON_EN)) {
+            return OnboardingConstants.REGION_CODE_DAEJEON;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GWANGJU_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GWANGJU_EN)) {
+            return OnboardingConstants.REGION_CODE_GWANGJU;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_ULSAN_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_ULSAN_EN)) {
+            return OnboardingConstants.REGION_CODE_ULSAN;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SEJONG_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SEJONG_EN)) {
+            return OnboardingConstants.REGION_CODE_SEJONG;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGGI_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGGI_EN)) {
+            return OnboardingConstants.REGION_CODE_GYEONGGI;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GANGWON_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GANGWON_EN)) {
+            return OnboardingConstants.REGION_CODE_GANGWON;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHUNGBUK_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHUNGBUK_EN)) {
+            return OnboardingConstants.REGION_CODE_CHUNGBUK;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHUNGNAM_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHUNGNAM_EN)) {
+            return OnboardingConstants.REGION_CODE_CHUNGNAM;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEONBUK_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEONBUK_EN)) {
+            return OnboardingConstants.REGION_CODE_JEONBUK;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEONNAM_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEONNAM_EN)) {
+            return OnboardingConstants.REGION_CODE_JEONNAM;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGBUK_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGBUK_EN)) {
+            return OnboardingConstants.REGION_CODE_GYEONGBUK;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGNAM_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_GYEONGNAM_EN)) {
+            return OnboardingConstants.REGION_CODE_GYEONGNAM;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEJU_KO)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JEJU_EN)) {
+            return OnboardingConstants.REGION_CODE_JEJU;
         }
 
-        else if (normalizedAddress.contains("tokyo") || normalizedAddress.contains("도쿄")) {
-            return "tokyo";
-        } else if (normalizedAddress.contains("osaka") || normalizedAddress.contains("오사카")) {
-            return "osaka";
-        } else if (normalizedAddress.contains("new york") || normalizedAddress.contains("뉴욕")) {
-            return "newyork";
-        } else if (normalizedAddress.contains("los angeles") || normalizedAddress.contains("la")
-                || normalizedAddress.contains("로스앤젤레스")) {
-            return "losangeles";
-        } else if (normalizedAddress.contains("london") || normalizedAddress.contains("런던")) {
-            return "london";
-        } else if (normalizedAddress.contains("paris") || normalizedAddress.contains("파리")) {
-            return "paris";
-        } else if (normalizedAddress.contains("singapore") || normalizedAddress.contains("싱가포르")) {
-            return "singapore";
-        } else if (normalizedAddress.contains("hong kong") || normalizedAddress.contains("홍콩")) {
-            return "hongkong";
-        } else if (normalizedAddress.contains("beijing") || normalizedAddress.contains("베이징")
-                || normalizedAddress.contains("북경")) {
-            return "beijing";
-        } else if (normalizedAddress.contains("shanghai") || normalizedAddress.contains("상하이")) {
-            return "shanghai";
-        } else if (normalizedAddress.contains("sydney") || normalizedAddress.contains("시드니")) {
-            return "sydney";
-        } else if (normalizedAddress.contains("melbourne") || normalizedAddress.contains("멜버른")) {
-            return "melbourne";
+        else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_TOKYO_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_TOKYO_KO)) {
+            return OnboardingConstants.REGION_CODE_TOKYO;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_OSAKA_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_OSAKA_KO)) {
+            return OnboardingConstants.REGION_CODE_OSAKA;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_NEW_YORK_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_NEW_YORK_KO)) {
+            return OnboardingConstants.REGION_CODE_NEWYORK;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_LOS_ANGELES_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_LOS_ANGELES_ABBR_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_LOS_ANGELES_KO)) {
+            return OnboardingConstants.REGION_CODE_LOSANGELES;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_LONDON_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_LONDON_KO)) {
+            return OnboardingConstants.REGION_CODE_LONDON;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_PARIS_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_PARIS_KO)) {
+            return OnboardingConstants.REGION_CODE_PARIS;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SINGAPORE_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SINGAPORE_KO)) {
+            return OnboardingConstants.REGION_CODE_SINGAPORE;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_HONG_KONG_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_HONG_KONG_KO)) {
+            return OnboardingConstants.REGION_CODE_HONGKONG;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_BEIJING_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_BEIJING_KO_A)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_BEIJING_KO_B)) {
+            return OnboardingConstants.REGION_CODE_BEIJING;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SHANGHAI_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SHANGHAI_KO)) {
+            return OnboardingConstants.REGION_CODE_SHANGHAI;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SYDNEY_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_SYDNEY_KO)) {
+            return OnboardingConstants.REGION_CODE_SYDNEY;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_MELBOURNE_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_MELBOURNE_KO)) {
+            return OnboardingConstants.REGION_CODE_MELBOURNE;
         }
 
-        else if (normalizedAddress.contains("japan") || normalizedAddress.contains("일본")) {
-            return "japan";
-        } else if (normalizedAddress.contains("usa") || normalizedAddress.contains("united states")
-                || normalizedAddress.contains("미국")) {
-            return "usa";
-        } else if (normalizedAddress.contains("uk") || normalizedAddress.contains("united kingdom")
-                || normalizedAddress.contains("영국")) {
-            return "uk";
-        } else if (normalizedAddress.contains("france") || normalizedAddress.contains("프랑스")) {
-            return "france";
-        } else if (normalizedAddress.contains("china") || normalizedAddress.contains("중국")) {
-            return "china";
-        } else if (normalizedAddress.contains("australia") || normalizedAddress.contains("호주")
-                || normalizedAddress.contains("오스트레일리아")) {
-            return "australia";
+        else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JAPAN_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_JAPAN_KO)) {
+            return OnboardingConstants.REGION_CODE_JAPAN;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_USA_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_UNITED_STATES_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_USA_KO)) {
+            return OnboardingConstants.REGION_CODE_USA;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_UK_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_UNITED_KINGDOM_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_UK_KO)) {
+            return OnboardingConstants.REGION_CODE_UK;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_FRANCE_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_FRANCE_KO)) {
+            return OnboardingConstants.REGION_CODE_FRANCE;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHINA_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_CHINA_KO)) {
+            return OnboardingConstants.REGION_CODE_CHINA;
+        } else if (normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_AUSTRALIA_EN)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_AUSTRALIA_KO_A)
+                || normalizedAddress.contains(OnboardingConstants.ADDRESS_TOKEN_AUSTRALIA_KO_B)) {
+            return OnboardingConstants.REGION_CODE_AUSTRALIA;
         }
 
         return null;
@@ -1330,48 +1366,67 @@ public class OnboardingServiceImpl implements OnboardingService {
             return null;
         }
 
-        String code = postalCode.trim().replaceAll("[^0-9]", "");
-        if (code.length() < 2) {
+        String code = postalCode.trim().replaceAll(OnboardingConstants.POSTAL_CODE_NON_DIGIT_STRIP_PATTERN,
+                "");
+        if (code.length() < OnboardingConstants.POSTAL_CODE_PREFIX_MIN_LENGTH) {
             return null;
         }
 
-        String prefix = code.substring(0, 2);
+        String prefix = code.substring(0, OnboardingConstants.POSTAL_CODE_PREFIX_SUBSTRING_LENGTH);
         int prefixNum = Integer.parseInt(prefix);
 
-        if (prefixNum >= 1 && prefixNum <= 13) {
-            return "seoul";
-        } else if (prefixNum >= 48 && prefixNum <= 49) {
-            return "busan";
-        } else if (prefixNum >= 42 && prefixNum <= 43) {
-            return "daegu";
-        } else if (prefixNum >= 22 && prefixNum <= 23) {
-            return "incheon";
-        } else if (prefixNum >= 61 && prefixNum <= 62) {
-            return "gwangju";
-        } else if (prefixNum >= 30 && prefixNum <= 34) {
-            return "daejeon";
-        } else if (prefixNum >= 44 && prefixNum <= 45) {
-            return "ulsan";
-        } else if (prefixNum == 30) {
-            return "sejong";
-        } else if ((prefixNum >= 10 && prefixNum <= 20) || (prefixNum >= 40 && prefixNum <= 47)) {
-            return "gyeonggi";
-        } else if (prefixNum >= 24 && prefixNum <= 25) {
-            return "gangwon";
-        } else if (prefixNum >= 28 && prefixNum <= 29) {
-            return "chungbuk";
-        } else if (prefixNum >= 31 && prefixNum <= 32) {
-            return "chungnam";
-        } else if (prefixNum >= 54 && prefixNum <= 56) {
-            return "jeonbuk";
-        } else if (prefixNum >= 57 && prefixNum <= 59) {
-            return "jeonnam";
-        } else if (prefixNum >= 36 && prefixNum <= 39) {
-            return "gyeongbuk";
-        } else if (prefixNum >= 50 && prefixNum <= 53) {
-            return "gyeongnam";
-        } else if (prefixNum >= 63 && prefixNum <= 64) {
-            return "jeju";
+        if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_SEOUL_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_SEOUL_MAX) {
+            return OnboardingConstants.REGION_CODE_SEOUL;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_BUSAN_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_BUSAN_MAX) {
+            return OnboardingConstants.REGION_CODE_BUSAN;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_DAEGU_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_DAEGU_MAX) {
+            return OnboardingConstants.REGION_CODE_DAEGU;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_INCHEON_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_INCHEON_MAX) {
+            return OnboardingConstants.REGION_CODE_INCHEON;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GWANGJU_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GWANGJU_MAX) {
+            return OnboardingConstants.REGION_CODE_GWANGJU;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_DAEJEON_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_DAEJEON_MAX) {
+            return OnboardingConstants.REGION_CODE_DAEJEON;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_ULSAN_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_ULSAN_MAX) {
+            return OnboardingConstants.REGION_CODE_ULSAN;
+        } else if (prefixNum == OnboardingConstants.POSTAL_PREFIX_NUM_SEJONG) {
+            return OnboardingConstants.REGION_CODE_SEJONG;
+        } else if ((prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGGI_MIN_A
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGGI_MAX_A)
+                || (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGGI_MIN_B
+                        && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGGI_MAX_B)) {
+            return OnboardingConstants.REGION_CODE_GYEONGGI;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GANGWON_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GANGWON_MAX) {
+            return OnboardingConstants.REGION_CODE_GANGWON;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_CHUNGBUK_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_CHUNGBUK_MAX) {
+            return OnboardingConstants.REGION_CODE_CHUNGBUK;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_CHUNGNAM_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_CHUNGNAM_MAX) {
+            return OnboardingConstants.REGION_CODE_CHUNGNAM;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_JEONBUK_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_JEONBUK_MAX) {
+            return OnboardingConstants.REGION_CODE_JEONBUK;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_JEONNAM_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_JEONNAM_MAX) {
+            return OnboardingConstants.REGION_CODE_JEONNAM;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGBUK_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGBUK_MAX) {
+            return OnboardingConstants.REGION_CODE_GYEONGBUK;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGNAM_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_GYEONGNAM_MAX) {
+            return OnboardingConstants.REGION_CODE_GYEONGNAM;
+        } else if (prefixNum >= OnboardingConstants.POSTAL_PREFIX_NUM_JEJU_MIN
+                && prefixNum <= OnboardingConstants.POSTAL_PREFIX_NUM_JEJU_MAX) {
+            return OnboardingConstants.REGION_CODE_JEJU;
         }
 
         return null;
@@ -1395,69 +1450,88 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 초기화 작업 상태 맵 생성
         Map<String, Object> statusMap = new java.util.HashMap<>();
-        statusMap.put("commonCodes", createInitializationStatus("PENDING", null));
-        statusMap.put("roleCodes", createInitializationStatus("PENDING", null));
-        statusMap.put("permissionGroups", createInitializationStatus("PENDING", null));
-        statusMap.put("erpAccounts", createInitializationStatus("PENDING", null));
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_COMMON_CODES,
+                createInitializationStatus(OnboardingConstants.STATUS_PENDING, null));
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ROLE_CODES,
+                createInitializationStatus(OnboardingConstants.STATUS_PENDING, null));
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_PERMISSION_GROUPS,
+                createInitializationStatus(OnboardingConstants.STATUS_PENDING, null));
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ERP_ACCOUNTS,
+                createInitializationStatus(OnboardingConstants.STATUS_PENDING, null));
         String now = Instant.now().toString();
-        statusMap.put("createdAt", now);
-        statusMap.put("updatedAt", now);
-        statusMap.put("phase", "TENANT_INITIALIZATION");
-        statusMap.put("fallbackUsed", false);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_CREATED_AT, now);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_UPDATED_AT, now);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_PHASE,
+                OnboardingConstants.PHASE_TENANT_INITIALIZATION);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_FALLBACK_USED, false);
 
         // 1. 공통코드 삽입 (별도 트랜잭션)
         try {
             self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
-            statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
-            log.info("✅ 공통코드 삽입 성공: tenantId={}", tenantId);
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_COMMON_CODES,
+                    createInitializationStatus(OnboardingConstants.STATUS_SUCCESS, null));
+            log.info(OnboardingConstants.LOG_INFO_COMMON_CODES_INSERT_OK, tenantId);
         } catch (Exception e) {
-            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-            statusMap.put("commonCodes", createInitializationStatus("FAILED", errorMsg));
-            log.error("공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+            String errorMsg =
+                    e.getMessage() != null ? e.getMessage() : OnboardingConstants.ERROR_MESSAGE_UNKNOWN;
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_COMMON_CODES,
+                    createInitializationStatus(OnboardingConstants.STATUS_FAILED, errorMsg));
+            log.error(OnboardingConstants.LOG_ERROR_COMMON_CODES_INSERT_FAIL_CONTINUE, tenantId, errorMsg,
+                    e);
         }
 
         // 2. 역할 코드 생성 (별도 트랜잭션)
         try {
             self.insertTenantRoleCodesInNewTransaction(tenantId, businessType, actorId);
-            statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
-            log.info("✅ 역할 코드 생성 성공: tenantId={}", tenantId);
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ROLE_CODES,
+                    createInitializationStatus(OnboardingConstants.STATUS_SUCCESS, null));
+            log.info(OnboardingConstants.LOG_INFO_ROLE_CODES_CREATE_OK, tenantId);
         } catch (Exception e) {
-            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-            statusMap.put("roleCodes", createInitializationStatus("FAILED", errorMsg));
-            log.error("역할 코드 생성 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+            String errorMsg =
+                    e.getMessage() != null ? e.getMessage() : OnboardingConstants.ERROR_MESSAGE_UNKNOWN;
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ROLE_CODES,
+                    createInitializationStatus(OnboardingConstants.STATUS_FAILED, errorMsg));
+            log.error(OnboardingConstants.LOG_ERROR_ROLE_CODES_CREATE_FAIL_CONTINUE, tenantId, errorMsg, e);
         }
 
         // 3. 권한 그룹 할당 (별도 트랜잭션)
         try {
             self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
-            statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
-            log.info("✅ 권한 그룹 할당 성공: tenantId={}", tenantId);
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_PERMISSION_GROUPS,
+                    createInitializationStatus(OnboardingConstants.STATUS_SUCCESS, null));
+            log.info(OnboardingConstants.LOG_INFO_PERMISSION_GROUPS_ASSIGN_OK, tenantId);
         } catch (Exception e) {
-            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-            statusMap.put("permissionGroups", createInitializationStatus("FAILED", errorMsg));
-            log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+            String errorMsg =
+                    e.getMessage() != null ? e.getMessage() : OnboardingConstants.ERROR_MESSAGE_UNKNOWN;
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_PERMISSION_GROUPS,
+                    createInitializationStatus(OnboardingConstants.STATUS_FAILED, errorMsg));
+            log.error(OnboardingConstants.LOG_ERROR_PERMISSION_GROUPS_ASSIGN_FAIL_CONTINUE, tenantId,
+                    errorMsg, e);
         }
 
         // 4. ERP 계정 매핑 시딩 (별도 트랜잭션)
         try {
             accountingService.ensureErpAccountMappingForTenant(tenantId);
-            statusMap.put("erpAccounts", createInitializationStatus("SUCCESS", null));
-            log.info("✅ ERP 계정 매핑 시딩 성공: tenantId={}", tenantId);
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ERP_ACCOUNTS,
+                    createInitializationStatus(OnboardingConstants.STATUS_SUCCESS, null));
+            log.info(OnboardingConstants.LOG_INFO_ERP_ACCOUNT_SEED_OK, tenantId);
         } catch (Exception e) {
-            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-            statusMap.put("erpAccounts", createInitializationStatus("FAILED", errorMsg));
-            log.error("ERP 계정 매핑 시딩 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+            String errorMsg =
+                    e.getMessage() != null ? e.getMessage() : OnboardingConstants.ERROR_MESSAGE_UNKNOWN;
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_ERP_ACCOUNTS,
+                    createInitializationStatus(OnboardingConstants.STATUS_FAILED, errorMsg));
+            log.error(OnboardingConstants.LOG_ERROR_ERP_ACCOUNT_SEED_FAIL_CONTINUE, tenantId, errorMsg, e);
         }
 
         // 상태 JSON 생성 (메인 트랜잭션에서 저장하기 위해 반환)
         try {
-            statusMap.put("updatedAt", Instant.now().toString());
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_UPDATED_AT, Instant.now().toString());
             String statusJson = objectMapper.writeValueAsString(statusMap);
-            log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
-            log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+            log.info(OnboardingConstants.LOG_INFO_INIT_STATUS_JSON_READY, requestId);
+            log.info(OnboardingConstants.LOG_INFO_TENANT_INIT_AFTER_ONBOARDING_OK, tenantId);
             return statusJson;
         } catch (Exception e) {
-            log.warn("초기화 작업 상태 JSON 생성 실패 (무시): requestId={}, error={}", requestId,
+            log.warn(OnboardingConstants.LOG_WARN_INIT_STATUS_JSON_BUILD_FAIL_IGNORE, requestId,
                     e.getMessage());
             return null;
         }
@@ -1468,17 +1542,18 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     private Map<String, Object> createInitializationStatus(String status, String errorMessage) {
         Map<String, Object> statusObj = new java.util.HashMap<>();
-        statusObj.put("status", status); // PENDING, SUCCESS, FAILED
-        statusObj.put("updatedAt", java.time.Instant.now().toString());
+        statusObj.put(OnboardingConstants.INIT_STATUS_OBJ_KEY_STATUS, status); // PENDING, SUCCESS, FAILED
+        statusObj.put(OnboardingConstants.INIT_STATUS_JSON_KEY_UPDATED_AT,
+                java.time.Instant.now().toString());
         if (errorMessage != null) {
-            statusObj.put("errorMessage", errorMessage);
+            statusObj.put(OnboardingConstants.INIT_STATUS_OBJ_KEY_ERROR_MESSAGE, errorMessage);
         }
         return statusObj;
     }
 
     private boolean isFallbackUsed(Map<String, Object> approvalResult, String message) {
         if (approvalResult != null
-                && approvalResult.get("fallbackUsed") instanceof Boolean fallbackValue) {
+                && approvalResult.get(OnboardingConstants.INIT_STATUS_JSON_KEY_FALLBACK_USED) instanceof Boolean fallbackValue) {
             return fallbackValue;
         }
 
@@ -1487,7 +1562,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         String normalizedMessage = message.toLowerCase();
-        return normalizedMessage.contains("fallback") || normalizedMessage.contains("폴백");
+        return normalizedMessage.contains(OnboardingConstants.FALLBACK_DETECT_SUBSTRING_EN)
+                || normalizedMessage.contains(OnboardingConstants.FALLBACK_DETECT_SUBSTRING_KO);
     }
 
     private void persistInitializationStatusAfterDecision(Long requestId, String tenantId,
@@ -1511,7 +1587,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 repository.save(request);
             }
         } catch (Exception e) {
-            log.warn("결정 후 초기화 상태 저장 실패(무시): requestId={}, tenantId={}, error={}", requestId,
+            log.warn(OnboardingConstants.LOG_WARN_INIT_STATUS_AFTER_DECISION_SAVE_FAIL_IGNORE, requestId,
                     tenantId, e.getMessage());
         }
     }
@@ -1524,24 +1600,25 @@ public class OnboardingServiceImpl implements OnboardingService {
                 statusMap = objectMapper.readValue(existingStatusJson,
                         new TypeReference<Map<String, Object>>() {});
             } catch (Exception e) {
-                log.warn("기존 초기화 상태 JSON 파싱 실패, 최소 상태로 대체: requestId={}, error={}", requestId,
+                log.warn(OnboardingConstants.LOG_WARN_EXISTING_INIT_STATUS_JSON_PARSE_FAIL, requestId,
                         e.getMessage());
             }
         }
 
         String now = Instant.now().toString();
-        statusMap.putIfAbsent("createdAt", now);
-        statusMap.put("updatedAt", now);
-        statusMap.put("phase", phase);
-        statusMap.put("fallbackUsed", fallbackUsed);
+        statusMap.putIfAbsent(OnboardingConstants.INIT_STATUS_JSON_KEY_CREATED_AT, now);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_UPDATED_AT, now);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_PHASE, phase);
+        statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_FALLBACK_USED, fallbackUsed);
         if (tenantId != null && !tenantId.trim().isEmpty()) {
-            statusMap.put("tenantId", tenantId);
+            statusMap.put(OnboardingConstants.INIT_STATUS_JSON_KEY_TENANT_ID, tenantId);
         }
 
         try {
             return objectMapper.writeValueAsString(statusMap);
         } catch (Exception e) {
-            log.warn("초기화 상태 JSON 직렬화 실패: requestId={}, error={}", requestId, e.getMessage());
+            log.warn(OnboardingConstants.LOG_WARN_INIT_STATUS_JSON_SERIALIZE_FAIL, requestId,
+                    e.getMessage());
             return null;
         }
     }
@@ -1563,18 +1640,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                         try {
                             pipeline.run();
                         } catch (Exception e) {
-                            log.error("온보딩 사후 초기화 백그라운드 실행 실패: requestId={}, error={}", requestId,
+                            log.error(OnboardingConstants.LOG_ERROR_POST_APPROVAL_INIT_BG_FAIL, requestId,
                                     e.getMessage(), e);
                         }
                     });
                 }
             });
         } else {
-            log.debug("활성 트랜잭션 없음 — 사후 초기화 동기 실행: requestId={}", requestId);
+            log.debug(OnboardingConstants.LOG_DEBUG_NO_ACTIVE_TX_POST_APPROVAL_SYNC, requestId);
             try {
                 pipeline.run();
             } catch (Exception e) {
-                log.error("온보딩 사후 초기화 동기 실행 실패: requestId={}, error={}", requestId, e.getMessage(), e);
+                log.error(OnboardingConstants.LOG_ERROR_POST_APPROVAL_INIT_SYNC_FAIL, requestId,
+                        e.getMessage(), e);
             }
         }
     }
@@ -1585,35 +1663,36 @@ public class OnboardingServiceImpl implements OnboardingService {
     private void executePostApprovalInitializationWork(Long requestId, String tenantId, String businessType,
             String actorId, boolean fallbackUsed, boolean reapprovalFlow) {
         String successPhase =
-                reapprovalFlow ? "REAPPROVAL_INITIALIZATION" : "POST_APPROVAL_INITIALIZATION";
-        String errorPhase = reapprovalFlow ? "REAPPROVAL_INITIALIZATION_ERROR"
-                : "POST_APPROVAL_INITIALIZATION_ERROR";
+                reapprovalFlow ? OnboardingConstants.PHASE_REAPPROVAL_INITIALIZATION
+                        : OnboardingConstants.PHASE_POST_APPROVAL_INITIALIZATION;
+        String errorPhase = reapprovalFlow ? OnboardingConstants.PHASE_REAPPROVAL_INITIALIZATION_ERROR
+                : OnboardingConstants.PHASE_POST_APPROVAL_INITIALIZATION_ERROR;
         try {
-            log.info("🔄 테넌트 사후 초기화 시작: tenantId={}, requestId={}, reapprovalFlow={}", tenantId,
-                    requestId, reapprovalFlow);
+            log.info(OnboardingConstants.LOG_INFO_POST_APPROVAL_INIT_START, tenantId, requestId,
+                    reapprovalFlow);
             OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
             String initializationStatusJson =
                     self.initializeTenantAfterOnboardingInNewTransaction(tenantId, businessType, actorId,
                             requestId);
             persistInitializationStatusAfterDecision(requestId, tenantId, initializationStatusJson,
                     successPhase, fallbackUsed);
-            log.info("✅ 사후 초기화 상태 저장 완료: requestId={}", requestId);
+            log.info(OnboardingConstants.LOG_INFO_POST_APPROVAL_STATUS_SAVED, requestId);
             try {
                 OnboardingRequest forBranding = repository.findActiveById(requestId).orElse(null);
                 if (forBranding != null) {
                     setTenantBranding(tenantId, forBranding);
                 }
             } catch (Exception e) {
-                log.warn("브랜드명 설정 실패 (사후 초기화): tenantId={}, error={}", tenantId, e.getMessage());
+                log.warn(OnboardingConstants.LOG_WARN_BRAND_NAME_SET_FAIL_POST, tenantId, e.getMessage());
             }
             OnboardingRequest latest = repository.findActiveById(requestId).orElse(null);
             if (latest != null) {
                 sendOnboardingApprovalEmail(latest, tenantId);
             } else {
-                log.warn("온보딩 요청 재조회 실패로 승인 메일 생략: requestId={}", requestId);
+                log.warn(OnboardingConstants.LOG_WARN_ONBOARDING_APPROVAL_EMAIL_SKIPPED, requestId);
             }
         } catch (Exception e) {
-            log.error("온보딩 후 테넌트 초기화 실패 (사후): tenantId={}, requestId={}, error={}", tenantId,
+            log.error(OnboardingConstants.LOG_ERROR_TENANT_INIT_AFTER_ONBOARDING_FAIL_POST, tenantId,
                     requestId, e.getMessage(), e);
             persistInitializationStatusAfterDecision(requestId, tenantId, null, errorPhase, fallbackUsed);
         }
@@ -1627,7 +1706,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             insertDefaultTenantCommonCodes(tenantId, createdBy);
         } catch (Exception e) {
-            log.error("공통코드 삽입 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error(OnboardingConstants.LOG_ERROR_COMMON_CODES_INSERT_TX_COMMIT, tenantId, e.getMessage(),
+                    e);
             // 예외를 다시 throw하지 않음 (noRollbackFor로 설정되어 있어도 예외를 throw하면 롤백될 수 있음)
         }
     }
@@ -1641,7 +1721,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             insertTenantRoleCodes(tenantId, businessType, createdBy);
         } catch (Exception e) {
-            log.error("역할 코드 생성 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error(OnboardingConstants.LOG_ERROR_ROLE_CODES_CREATE_TX_COMMIT, tenantId, e.getMessage(),
+                    e);
         }
     }
 
@@ -1654,9 +1735,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             String actorId) {
         try {
             assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
-            log.info("✅ 권한 그룹 할당 완료: tenantId={}", tenantId);
+            log.info(OnboardingConstants.LOG_INFO_PERMISSION_GROUPS_ASSIGN_DONE, tenantId);
         } catch (Exception e) {
-            log.error("권한 그룹 할당 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error(OnboardingConstants.LOG_ERROR_PERMISSION_GROUPS_ASSIGN_TX_COMMIT, tenantId,
+                    e.getMessage(), e);
             // noRollbackFor로 설정되어 있지만 예외를 throw하면 트랜잭션이 rollback-only로 마크됨
             // 따라서 예외를 throw하지 않고 내부에서 처리하여 트랜잭션 커밋 보장
             // 상위에서 상태를 FAILED로 저장할 수 있도록 예외 정보는 로그로만 남김
@@ -1671,7 +1753,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     private void setTenantBranding(String tenantId, OnboardingRequest request) {
         if (tenantId == null || tenantId.trim().isEmpty()) {
-            log.warn("⚠️ 테넌트 ID가 없어 브랜딩 정보 설정을 건너뜁니다.");
+            log.warn(OnboardingConstants.LOG_WARN_TENANT_ID_EMPTY_SKIP_BRANDING);
             return;
         }
 
@@ -1679,7 +1761,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId).orElse(null);
 
             if (tenant == null) {
-                log.warn("⚠️ 테넌트를 찾을 수 없어 브랜딩 정보 설정을 건너뜁니다: tenantId={}", tenantId);
+                log.warn(OnboardingConstants.LOG_WARN_TENANT_NOT_FOUND_SKIP_BRANDING, tenantId);
                 return;
             }
 
@@ -1690,9 +1772,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                     Map<String, Object> checklist =
                             objectMapper.readValue(request.getChecklistJson(),
                                     new TypeReference<Map<String, Object>>() {});
-                    brandName = (String) checklist.get("brandName");
+                    brandName = (String) checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_BRAND_NAME);
                 } catch (JsonProcessingException e) {
-                    log.warn("checklistJson 파싱 실패 (브랜드명 추출 실패): tenantId={}, error={}", tenantId,
+                    log.warn(OnboardingConstants.LOG_WARN_CHECKLIST_JSON_PARSE_BRAND_FAIL, tenantId,
                             e.getMessage());
                 }
             }
@@ -1711,7 +1793,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     // 기존 정보 유지하면서 companyName만 업데이트
                     brandingInfo.setCompanyName(brandName);
                 } catch (JsonProcessingException e) {
-                    log.warn("기존 branding_json 파싱 실패, 기본값으로 재생성: tenantId={}, error={}", tenantId,
+                    log.warn(OnboardingConstants.LOG_WARN_BRANDING_JSON_PARSE_FALLBACK, tenantId,
                             e.getMessage());
                     brandingInfo = com.coresolution.core.dto.BrandingInfo.createDefault(brandName);
                 }
@@ -1727,15 +1809,15 @@ public class OnboardingServiceImpl implements OnboardingService {
                 tenant.setBrandingJson(brandingJson);
                 tenantRepository.save(tenant);
 
-                log.info("✅ 테넌트 브랜딩 정보 설정 완료: tenantId={}, brandName={}", tenantId, brandName);
+                log.info(OnboardingConstants.LOG_INFO_TENANT_BRANDING_SET_OK, tenantId, brandName);
             } catch (JsonProcessingException e) {
-                log.error("❌ 브랜딩 정보 JSON 변환 실패: tenantId={}, error={}", tenantId, e.getMessage(),
-                        e);
-                throw new RuntimeException("브랜딩 정보 저장 중 오류가 발생했습니다", e);
+                log.error(OnboardingConstants.LOG_ERROR_BRANDING_JSON_SERIALIZE_FAIL, tenantId,
+                        e.getMessage(), e);
+                throw new RuntimeException(OnboardingConstants.ERROR_MESSAGE_BRANDING_SAVE_FAILED, e);
             }
 
         } catch (Exception e) {
-            log.error("❌ 테넌트 브랜딩 정보 설정 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error(OnboardingConstants.LOG_ERROR_TENANT_BRANDING_SET_FAIL, tenantId, e.getMessage(), e);
             throw e;
         }
     }
@@ -1747,129 +1829,254 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param createdBy 생성자 ID
      */
     private void insertDefaultTenantCommonCodes(String tenantId, String createdBy) {
-        log.info("🔄 기본 테넌트 공통코드 추가 시작 (배치 처리): tenantId={}", tenantId);
+        log.info(OnboardingConstants.LOG_INFO_DEFAULT_TENANT_COMMON_CODES_BATCH_START, tenantId);
 
-        String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
+        String createdByValue =
+                createdBy != null ? createdBy : OnboardingConstants.CREATED_BY_SYSTEM_ONBOARDING;
 
         try {
             // 1. 기존 코드를 한 번에 조회하여 중복 체크용 Set 생성
             List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
             Set<String> existingCodeKeys = new HashSet<>();
             for (CommonCode code : existingCodes) {
-                existingCodeKeys.add(code.getCodeGroup() + ":" + code.getCodeValue());
+                existingCodeKeys.add(code.getCodeGroup() + OnboardingConstants.COMMON_CODE_CACHE_KEY_SEPARATOR
+                        + code.getCodeValue());
             }
-            log.debug("기존 공통코드 개수: {}, tenantId={}", existingCodes.size(), tenantId);
+            log.debug(OnboardingConstants.LOG_DEBUG_EXISTING_COMMON_CODE_COUNT, existingCodes.size(),
+                    tenantId);
 
             // 2. 삽입할 공통코드 리스트 생성
             List<CommonCode> codesToInsert = new ArrayList<>();
 
             // 상담 패키지 코드
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "INDIVIDUAL", "개인상담", "개인상담", "1:1 개인 심리상담",
-                    "{\"price\": 80000, \"sessions\": 20, \"duration\": 50, \"unit\": \"회\"}", 1,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_INDIVIDUAL_1_1,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_PACKAGE_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_SORT_CP_PACKAGE_INDIVIDUAL, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_FAMILY,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_PACKAGE_FAMILY,
+                    OnboardingConstants.TENANT_SEED_SORT_CP_PACKAGE_FAMILY, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_GROUP,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_GROUP,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_GROUP,
+                    OnboardingConstants.TENANT_SEED_DESC_CP_PACKAGE_GROUP,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_PACKAGE_GROUP,
+                    OnboardingConstants.TENANT_SEED_SORT_CP_PACKAGE_GROUP, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_75000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_75000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_75000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_75000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_75000,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "FAMILY", "가족상담", "가족상담", "가족 단위 상담",
-                    "{\"price\": 120000, \"sessions\": 20, \"duration\": 60, \"unit\": \"회\"}", 2,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_80000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_80000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_80000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_80000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_80000,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "GROUP", "집단상담", "집단상담", "그룹 심리상담",
-                    "{\"price\": 50000, \"sessions\": 20, \"duration\": 90, \"unit\": \"회\"}", 3,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_85000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_85000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_85000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_85000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_85000,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_75000", "단회기 75,000원", "단회기 75,000원", "1회기 상담 패키지",
-                    "{\"price\": 75000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 4,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_90000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_90000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_90000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_90000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_90000,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_80000", "단회기 80,000원", "단회기 80,000원", "1회기 상담 패키지",
-                    "{\"price\": 80000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 5,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_95000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_95000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_95000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_95000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_95000,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_85000", "단회기 85,000원", "단회기 85,000원", "1회기 상담 패키지",
-                    "{\"price\": 85000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 6,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_90000", "단회기 90,000원", "단회기 90,000원", "1회기 상담 패키지",
-                    "{\"price\": 90000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 7,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_95000", "단회기 95,000원", "단회기 95,000원", "1회기 상담 패키지",
-                    "{\"price\": 95000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 8,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
-                    "SINGLE_100000", "단회기 100,000원", "단회기 100,000원", "1회기 상담 패키지",
-                    "{\"price\": 100000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 9,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_CP_SINGLE_100000,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_100000_WON,
+                    OnboardingConstants.TENANT_SEED_KO_LABEL_SINGLE_100000_WON,
+                    OnboardingConstants.TENANT_SEED_DESC_ONE_SESSION_CONSULTATION_PACKAGE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CP_SINGLE_100000,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_100000,
                     createdByValue);
 
             // 결제 방법 코드
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD", "CASH",
-                    "현금", "현금", "현금 결제", null, 1, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD", "CARD",
-                    "카드", "카드", "카드 결제", null, 2, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD",
-                    "TRANSFER", "계좌이체", "계좌이체", "계좌이체 결제", null, 3, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CASH,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CASH,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CASH,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CASH, null,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CASH, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CARD,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CARD, null,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CARD, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_TRANSFER, null,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_TRANSFER, createdByValue);
 
             // 전문분야 코드
-            String[][] specialtyCodes = {{"DEPRESSION", "우울증", "우울증 상담", "1"},
-                    {"ANXIETY", "불안장애", "불안장애 상담", "2"}, {"TRAUMA", "트라우마", "트라우마 상담", "3"},
-                    {"RELATIONSHIP", "인간관계", "인간관계 상담", "4"}, {"FAMILY", "가족상담", "가족 상담", "5"},
-                    {"COUPLE", "부부상담", "부부 상담", "6"}, {"CHILD", "아동상담", "아동 상담", "7"},
-                    {"ADOLESCENT", "청소년상담", "청소년 상담", "8"}, {"ADULT", "성인상담", "성인 상담", "9"},
-                    {"STRESS", "스트레스", "스트레스 관리 상담", "10"}, {"CAREER", "진로상담", "진로 상담", "11"}};
-
-            for (String[] specialty : specialtyCodes) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "SPECIALTY",
-                        specialty[0], specialty[1], specialty[1], specialty[2], null,
+            for (String[] specialty : OnboardingConstants.TENANT_SEED_SPECIALTY_ROWS) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_SPECIALTY, specialty[0],
+                        specialty[1], specialty[1], specialty[2], null,
                         Integer.parseInt(specialty[3]), createdByValue);
             }
 
             // 상담 유형 코드 (스케줄·공통코드 API CONSULTATION_TYPE = 회기 유형; 대면/비대면/전화는 consultation_method 등 별도)
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "INDIVIDUAL", "개인상담", "개인상담", "1:1 개인 심리상담", "{\"durationMinutes\":50}", 1,
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_TYPE, "INDIVIDUAL",
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_INDIVIDUAL_1_1,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CONSULTATION_TYPE_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_TYPE_INDIVIDUAL,
                     createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "FAMILY", "가족상담", "가족상담", "가족 단위 상담", "{\"durationMinutes\":100}", 2,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "COUPLE", "부부상담", "부부상담", "부부 상담", "{\"durationMinutes\":80}", 3,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "INITIAL", "초기상담", "초기상담", "초기 상담", "{\"durationMinutes\":60}", 4,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
-                    "GROUP", "집단상담", "집단상담", "집단·그룹 상담", "{\"durationMinutes\":90}", 5,
-                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_TYPE, "FAMILY",
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_FAMILY,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CONSULTATION_TYPE_FAMILY,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_TYPE_FAMILY, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_TYPE, "COUPLE",
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_COUPLE,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_COUPLE,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_COUPLE,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CONSULTATION_TYPE_COUPLE,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_TYPE_COUPLE, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_TYPE, "INITIAL",
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INITIAL,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_INITIAL,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_INITIAL,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CONSULTATION_TYPE_INITIAL,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_TYPE_INITIAL, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_CONSULTATION_TYPE, "GROUP",
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_GROUP,
+                    OnboardingConstants.TENANT_SEED_KO_NAME_CT_GROUP,
+                    OnboardingConstants.TENANT_SEED_DESC_CT_GROUP,
+                    OnboardingConstants.TENANT_SEED_EXTRA_CONSULTATION_TYPE_GROUP,
+                    OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_TYPE_GROUP, createdByValue);
 
             // 담당 업무 코드
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
-                    "COUNSELING", "상담", "상담", "상담 업무", null, 1, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
-                    "ADMINISTRATION", "행정", "행정", "행정 업무", null, 2, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_RESPONSIBILITY,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_RESPONSIBILITY_COUNSELING,
+                    OnboardingConstants.TENANT_SEED_LABEL_RESPONSIBILITY_COUNSELING,
+                    OnboardingConstants.TENANT_SEED_LABEL_RESPONSIBILITY_COUNSELING,
+                    OnboardingConstants.TENANT_SEED_DESC_RESPONSIBILITY_COUNSELING, null,
+                    OnboardingConstants.TENANT_SEED_SORT_RESPONSIBILITY_COUNSELING, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_RESPONSIBILITY,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_RESPONSIBILITY_ADMINISTRATION,
+                    OnboardingConstants.TENANT_SEED_LABEL_RESPONSIBILITY_ADMIN,
+                    OnboardingConstants.TENANT_SEED_LABEL_RESPONSIBILITY_ADMIN,
+                    OnboardingConstants.TENANT_SEED_DESC_RESPONSIBILITY_ADMIN, null,
+                    OnboardingConstants.TENANT_SEED_SORT_RESPONSIBILITY_ADMIN, createdByValue);
 
             // 패키지 유형 (copy_default_tenant_codes / TENANT_CODE_GROUPS PACKAGE_TYPE)
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PACKAGE_TYPE",
-                    "INDIVIDUAL", "개인 상담", "개인 상담", "1:1 개인 상담", null, 1, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PACKAGE_TYPE", "GROUP",
-                    "그룹 상담", "그룹 상담", "그룹 상담", null, 2, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PACKAGE_TYPE, "INDIVIDUAL",
+                    OnboardingConstants.TENANT_SEED_LABEL_PT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_LABEL_PT_INDIVIDUAL,
+                    OnboardingConstants.TENANT_SEED_DESC_PT_INDIVIDUAL, null,
+                    OnboardingConstants.TENANT_SEED_SORT_PACKAGE_TYPE_INDIVIDUAL, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PACKAGE_TYPE, "GROUP",
+                    OnboardingConstants.TENANT_SEED_LABEL_PT_GROUP,
+                    OnboardingConstants.TENANT_SEED_LABEL_PT_GROUP,
+                    OnboardingConstants.TENANT_SEED_DESC_PT_GROUP, null,
+                    OnboardingConstants.TENANT_SEED_SORT_PACKAGE_TYPE_GROUP, createdByValue);
 
             // 매핑 상태 (frontend/src/constants/mapping.js MAPPING_STATUS 와 코드값 정합)
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
-                    "PENDING_PAYMENT", "결제 대기", "결제 대기", "결제 대기 중인 매칭", null, 1,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
-                    "PAYMENT_CONFIRMED", "결제 확인", "결제 확인", "결제가 확인된 매칭", null, 2,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "ACTIVE",
-                    "활성", "활성", "활성 상태의 매칭", null, 3, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "INACTIVE",
-                    "비활성", "비활성", "비활성 상태의 매칭", null, 4, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "SUSPENDED",
-                    "일시정지", "일시정지", "일시정지된 매칭", null, 5, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS", "TERMINATED",
-                    "종료", "종료", "종료된 매칭", null, 6, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "MAPPING_STATUS",
-                    "SESSIONS_EXHAUSTED", "회기 소진", "회기 소진", "회기가 모두 소진된 매칭", null, 7,
-                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_PENDING_PAYMENT,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_PENDING_PAYMENT,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_PENDING_PAYMENT,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_PENDING_PAYMENT, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_1, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_PAYMENT_CONFIRMED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_PAYMENT_CONFIRMED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_PAYMENT_CONFIRMED,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_PAYMENT_CONFIRMED, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_2, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_ACTIVE,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_ACTIVE,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_ACTIVE,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_ACTIVE, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_3, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_INACTIVE,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_INACTIVE,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_INACTIVE,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_INACTIVE, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_4, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_SUSPENDED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_SUSPENDED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_SUSPENDED,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_SUSPENDED, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_5, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_TERMINATED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_TERMINATED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_TERMINATED,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_TERMINATED, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_6, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_MAPPING_STATUS,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_MAPPING_SESSIONS_EXHAUSTED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_SESSIONS_EXHAUSTED,
+                    OnboardingConstants.TENANT_SEED_LABEL_MS_SESSIONS_EXHAUSTED,
+                    OnboardingConstants.TENANT_SEED_DESC_MS_SESSIONS_EXHAUSTED, null,
+                    OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_7, createdByValue);
 
             // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
             // TenantOnboardingSalaryAndFinancialSeedDefinitions
@@ -1884,14 +2091,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 3. 배치 저장 (한 번의 쿼리로 모든 코드 삽입)
             if (!codesToInsert.isEmpty()) {
                 commonCodeRepository.saveAll(codesToInsert);
-                log.info("✅ 기본 테넌트 공통코드 배치 저장 완료: tenantId={}, insertedCount={}", tenantId,
+                log.info(OnboardingConstants.LOG_MSG_TENANT_COMMON_CODES_BATCH_SAVE_OK, tenantId,
                         codesToInsert.size());
             } else {
-                log.info("✅ 모든 공통코드가 이미 존재함: tenantId={}", tenantId);
+                log.info(OnboardingConstants.LOG_MSG_TENANT_COMMON_CODES_ALL_EXIST, tenantId);
             }
 
         } catch (Exception e) {
-            log.error("❌ 기본 테넌트 공통코드 추가 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error(OnboardingConstants.LOG_MSG_TENANT_COMMON_CODES_INSERT_FAIL, tenantId,
+                    e.getMessage(), e);
             throw e;
         }
     }
@@ -1916,8 +2124,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             String createdBy, String parentCodeGroup, String parentCodeValue) {
         String codeKey = codeGroup + ":" + codeValue;
         if (existingCodeKeys.contains(codeKey)) {
-            log.debug("공통코드가 이미 존재함 (건너뜀): tenantId={}, codeGroup={}, codeValue={}", tenantId,
-                    codeGroup, codeValue);
+            log.debug(OnboardingConstants.LOG_DEBUG_COMMON_CODE_ALREADY_EXISTS, tenantId, codeGroup,
+                    codeValue);
             return;
         }
 
@@ -1939,13 +2147,13 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @return 추가된 코드 개수
      */
     public int addDefaultTenantCommonCodes(String tenantId, String createdBy) {
-        log.info("🔄 테넌트 기본 공통코드 추가 요청: tenantId={}", tenantId);
+        log.info(OnboardingConstants.LOG_MSG_ADD_DEFAULT_TENANT_CODES_REQUEST, tenantId);
         int beforeCount = 0;
         try {
             List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
             beforeCount = existingCodes != null ? existingCodes.size() : 0;
         } catch (Exception e) {
-            log.warn("기존 코드 개수 확인 실패 (계속 진행): {}", e.getMessage());
+            log.warn(OnboardingConstants.LOG_WARN_EXISTING_CODE_COUNT_FAILED, e.getMessage());
         }
 
         insertDefaultTenantCommonCodes(tenantId, createdBy);
@@ -1955,11 +2163,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             List<CommonCode> updatedCodes = commonCodeRepository.findByTenantId(tenantId);
             afterCount = updatedCodes != null ? updatedCodes.size() : 0;
         } catch (Exception e) {
-            log.warn("추가 후 코드 개수 확인 실패: {}", e.getMessage());
+            log.warn(OnboardingConstants.LOG_WARN_AFTER_CODE_COUNT_FAILED, e.getMessage());
         }
 
         int addedCount = afterCount - beforeCount;
-        log.info("✅ 테넌트 기본 공통코드 추가 완료: tenantId={}, 추가된 코드={}개", tenantId, addedCount);
+        log.info(OnboardingConstants.LOG_MSG_ADD_DEFAULT_TENANT_CODES_DONE, tenantId, addedCount);
         return addedCount;
     }
 
@@ -1974,8 +2182,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             Integer sortOrder, String createdBy) {
         // 레거시 호환성을 위해 유지하지만 사용하지 않음
         // 배치 처리를 위해 addCodeIfNotExists()와 saveAll() 사용
-        log.warn(
-                "⚠️ Deprecated 메서드 호출: insertCommonCodeIfNotExists는 더 이상 사용하지 않습니다. 배치 처리를 사용하세요.");
+        log.warn(OnboardingConstants.LOG_WARN_DEPRECATED_INSERT_COMMON_CODE_IF_NOT_EXISTS);
     }
 
     /**
@@ -1988,26 +2195,26 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     private void insertTenantRoleCodes(String tenantId, String businessType, String createdBy) {
         if (tenantId == null || tenantId.trim().isEmpty()) {
-            log.warn("⚠️ 테넌트 ID가 없어 역할 코드 생성 건너뜁니다.");
+            log.warn(OnboardingConstants.LOG_WARN_TENANT_ID_EMPTY_SKIP_ROLE_CODES);
             return;
         }
 
         if (businessType == null || businessType.trim().isEmpty()) {
-            log.warn("⚠️ 비즈니스 타입이 없어 역할 코드 생성 건너뜁니다: tenantId={}", tenantId);
+            log.warn(OnboardingConstants.LOG_WARN_BUSINESS_TYPE_EMPTY_SKIP_ROLE_CODES, tenantId);
             return;
         }
 
-        log.info("🔄 테넌트 역할 코드 생성 시작 (배치 처리): tenantId={}, businessType={}", tenantId,
-                businessType);
+        log.info(OnboardingConstants.LOG_MSG_TENANT_ROLE_CODES_START, tenantId, businessType);
 
-        String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
+        String createdByValue = createdBy != null ? createdBy
+                : OnboardingConstants.CREATED_BY_SYSTEM_ONBOARDING;
 
         try {
             // 1. 기존 코드를 한 번에 조회하여 중복 체크용 Set 생성
             List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
             Set<String> existingCodeKeys = new HashSet<>();
             for (CommonCode code : existingCodes) {
-                if ("ROLE".equals(code.getCodeGroup())) {
+                if (OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE.equals(code.getCodeGroup())) {
                     existingCodeKeys.add(code.getCodeGroup() + ":" + code.getCodeValue());
                 }
             }
@@ -2016,91 +2223,163 @@ public class OnboardingServiceImpl implements OnboardingService {
             List<CommonCode> codesToInsert = new ArrayList<>();
 
             // 상담소(CONSULTATION)
-            if ("CONSULTATION".equals(businessType)) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
-                        "원장", "상담소 원장 역할",
-                        "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
-                        1, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
-                        "상담사", "상담사", "상담사 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
-                        2, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
-                        "내담자", "내담자", "내담자 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
-                        3, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
-                        "사무원", "사무원", "사무원 역할",
-                        "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
-                        4, createdByValue);
+            if (OnboardingConstants.TENANT_BUSINESS_TYPE_CONSULTATION.equals(businessType)) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_DESC_CONSULTATION_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_JSON_CONSULTATION_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIRST, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_DESC_CONSULTATION_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_JSON_CONSULTATION_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_SORT_SECOND, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_DESC_CONSULTATION_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_JSON_CONSULTATION_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_SORT_THIRD, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_STAFF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STAFF_OFFICE,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STAFF_OFFICE,
+                        OnboardingConstants.TENANT_ROLE_DESC_CONSULTATION_STAFF,
+                        OnboardingConstants.TENANT_ROLE_JSON_CONSULTATION_STAFF,
+                        OnboardingConstants.TENANT_ROLE_SORT_FOURTH, createdByValue);
             }
             // 심리상담(COUNSELING)
-            else if ("COUNSELING".equals(businessType)) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
-                        "원장", "심리상담 원장 역할",
-                        "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
-                        1, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
-                        "상담사", "상담사", "심리상담 상담사 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
-                        2, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
-                        "내담자", "내담자", "심리상담 내담자 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
-                        3, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
-                        "사무원", "사무원", "심리상담 사무원 역할",
-                        "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
-                        4, createdByValue);
+            else if (OnboardingConstants.TENANT_BUSINESS_TYPE_COUNSELING.equals(businessType)) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_DESC_COUNSELING_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_JSON_COUNSELING_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIRST, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_DESC_COUNSELING_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_JSON_COUNSELING_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_SORT_SECOND, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_DESC_COUNSELING_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_JSON_COUNSELING_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_SORT_THIRD, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_STAFF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STAFF_OFFICE,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STAFF_OFFICE,
+                        OnboardingConstants.TENANT_ROLE_DESC_COUNSELING_STAFF,
+                        OnboardingConstants.TENANT_ROLE_JSON_COUNSELING_STAFF,
+                        OnboardingConstants.TENANT_ROLE_SORT_FOURTH, createdByValue);
             }
             // 학원(ACADEMY)
-            else if ("ACADEMY".equals(businessType)) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
-                        "원장", "학원 원장 역할",
-                        "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
-                        1, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
-                        "강사", "강사", "강사 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
-                        2, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
-                        "학생", "학생", "학생 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
-                        3, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "PARENT",
-                        "학부모", "학부모", "학부모 역할 (학원 전용)",
-                        "{\"isAdmin\": false, \"roleType\": \"PARENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
-                        4, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
-                        "행정직원", "행정직원", "행정직원 역할",
-                        "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
-                        5, createdByValue);
+            else if (OnboardingConstants.TENANT_BUSINESS_TYPE_ACADEMY.equals(businessType)) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_LABEL_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_DESC_ACADEMY_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_JSON_ACADEMY_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIRST, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_TEACHER,
+                        OnboardingConstants.TENANT_ROLE_LABEL_TEACHER,
+                        OnboardingConstants.TENANT_ROLE_DESC_ACADEMY_TEACHER,
+                        OnboardingConstants.TENANT_ROLE_JSON_ACADEMY_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_SORT_SECOND, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STUDENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_STUDENT,
+                        OnboardingConstants.TENANT_ROLE_DESC_ACADEMY_STUDENT,
+                        OnboardingConstants.TENANT_ROLE_JSON_ACADEMY_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_SORT_THIRD, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_PARENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_PARENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_PARENT,
+                        OnboardingConstants.TENANT_ROLE_DESC_ACADEMY_PARENT,
+                        OnboardingConstants.TENANT_ROLE_JSON_ACADEMY_PARENT,
+                        OnboardingConstants.TENANT_ROLE_SORT_FOURTH, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_STAFF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_ADMIN_STAFF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_ADMIN_STAFF,
+                        OnboardingConstants.TENANT_ROLE_DESC_ACADEMY_ADMIN_STAFF,
+                        OnboardingConstants.TENANT_ROLE_JSON_ACADEMY_STAFF,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIFTH, createdByValue);
             }
             // 요식업(FOOD_SERVICE)
-            else if ("FOOD_SERVICE".equals(businessType)) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "사장",
-                        "사장", "요식업 사장 역할",
-                        "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
-                        1, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
-                        "요리사", "요리사", "요리사 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
-                        2, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
-                        "고객", "고객", "고객 역할",
-                        "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
-                        3, createdByValue);
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF", "직원",
-                        "직원", "직원 역할",
-                        "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
-                        4, createdByValue);
+            else if (OnboardingConstants.TENANT_BUSINESS_TYPE_FOOD_SERVICE.equals(businessType)) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CEO,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CEO,
+                        OnboardingConstants.TENANT_ROLE_DESC_FOOD_SERVICE_CEO,
+                        OnboardingConstants.TENANT_ROLE_JSON_FOOD_SERVICE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIRST, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CHEF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CHEF,
+                        OnboardingConstants.TENANT_ROLE_DESC_FOOD_SERVICE_CHEF,
+                        OnboardingConstants.TENANT_ROLE_JSON_FOOD_SERVICE_CONSULTANT,
+                        OnboardingConstants.TENANT_ROLE_SORT_SECOND, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CUSTOMER,
+                        OnboardingConstants.TENANT_ROLE_LABEL_CUSTOMER,
+                        OnboardingConstants.TENANT_ROLE_DESC_FOOD_SERVICE_CUSTOMER,
+                        OnboardingConstants.TENANT_ROLE_JSON_FOOD_SERVICE_CLIENT,
+                        OnboardingConstants.TENANT_ROLE_SORT_THIRD, createdByValue);
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_STAFF,
+                        OnboardingConstants.TENANT_ROLE_LABEL_EMPLOYEE,
+                        OnboardingConstants.TENANT_ROLE_LABEL_EMPLOYEE,
+                        OnboardingConstants.TENANT_ROLE_DESC_FOOD_SERVICE_EMPLOYEE,
+                        OnboardingConstants.TENANT_ROLE_JSON_FOOD_SERVICE_STAFF,
+                        OnboardingConstants.TENANT_ROLE_SORT_FOURTH, createdByValue);
             }
             // 태권도(TAEKWONDO)
-            else if ("TAEKWONDO".equals(businessType)) {
-                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "관장",
-                        "관장", "태권도 관장 역할",
-                        "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",
-                        1, createdByValue);
+            else if (OnboardingConstants.TENANT_BUSINESS_TYPE_TAEKWONDO.equals(businessType)) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                        OnboardingConstants.TENANT_COMMON_CODE_GROUP_ROLE,
+                        OnboardingConstants.TENANT_ROLE_CODE_VALUE_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_LABEL_TAEKWONDO_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_LABEL_TAEKWONDO_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_DESC_TAEKWONDO_DIRECTOR,
+                        OnboardingConstants.TENANT_ROLE_JSON_TAEKWONDO_ADMIN,
+                        OnboardingConstants.TENANT_ROLE_SORT_FIRST, createdByValue);
                 addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
                         "사범", "사범", "태권도 사범 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",

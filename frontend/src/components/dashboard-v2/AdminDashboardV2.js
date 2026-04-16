@@ -961,7 +961,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     {
       id: 'booked',
       icon: <FaCalendarAlt size={28} />,
-      label: '예약된 상담',
+      label: '오늘 예약된 상담',
       value: toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0),
       badge: todayStats.bookedGrowthRate != null
         ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)

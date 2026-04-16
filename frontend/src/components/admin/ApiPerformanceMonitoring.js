@@ -5,6 +5,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import { ResponseTimeLineChart, StatusCodeDoughnutChart, CacheHitBarChart } from './widgets/ApiPerformanceChart';
 import MGButton from '../../components/common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
@@ -121,9 +122,14 @@ const ApiPerformanceMonitoring = () => {
               <MGButton
                 variant="outline"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: downloadLoading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDownloadReport}
                 loading={downloadLoading}
-                loadingText="다운로드 중..."
                 disabled={refreshing}
                 preventDoubleClick
               >
@@ -133,9 +139,14 @@ const ApiPerformanceMonitoring = () => {
               <MGButton
                 variant="danger"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'danger',
+                  size: 'sm',
+                  loading: clearLoading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleClearStats}
                 loading={clearLoading}
-                loadingText="초기화 중..."
                 disabled={refreshing}
                 preventDoubleClick
               >
@@ -145,6 +156,12 @@ const ApiPerformanceMonitoring = () => {
               <MGButton
                 variant="primary"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={fetchDashboardData}
                 disabled={refreshing}
               >

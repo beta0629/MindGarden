@@ -7,6 +7,7 @@ import StatCard from '../../../ui/Card/StatCard';
 import { RoleUtils } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 /**
  * 관리자 시스템 개요 위젯 - 표준화된 위젯
 /**
@@ -189,7 +190,21 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
           <div className="admin-system-overview-empty">
             
             <p>시스템 통계 데이터가 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading,
+                className: ''
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+              preventDoubleClick={false}
+            >
               다시 시도
             </MGButton>
           </div>

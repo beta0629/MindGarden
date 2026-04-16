@@ -14,6 +14,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -200,6 +201,8 @@ const PgConfigurationList = () => {
                   type="button"
                   variant="primary"
                   size="medium"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => navigate('/tenant/pg-configurations/new')}
                   preventDoubleClick={false}
                 >
@@ -255,6 +258,8 @@ const PgConfigurationList = () => {
               type="button"
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={loadConfigurations}
               preventDoubleClick={false}
             >
@@ -280,6 +285,8 @@ const PgConfigurationList = () => {
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/tenant/pg-configurations/new')}
               preventDoubleClick={false}
             >
@@ -349,6 +356,8 @@ const PgConfigurationList = () => {
                       type="button"
                       variant="secondary"
                       size="small"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
                       preventDoubleClick={false}
                     >
@@ -360,10 +369,15 @@ const PgConfigurationList = () => {
                         type="button"
                         variant="secondary"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: testingConnection === config.configId
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleTestConnection(config.configId)}
                         disabled={testingConnection === config.configId}
                         loading={testingConnection === config.configId}
-                        loadingText="테스트 중..."
                         preventDoubleClick={false}
                       >
                         연결 테스트
@@ -376,6 +390,8 @@ const PgConfigurationList = () => {
                           type="button"
                           variant="secondary"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
                           preventDoubleClick={false}
                         >
@@ -385,6 +401,8 @@ const PgConfigurationList = () => {
                           type="button"
                           variant="danger"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => {
                             setSelectedConfig(config);
                             setShowDeleteModal(true);
@@ -432,6 +450,8 @@ const PgConfigurationList = () => {
               <MGButton
                 type="button"
                 variant="secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
                 disabled={loading}
                 preventDoubleClick={false}
@@ -441,6 +461,8 @@ const PgConfigurationList = () => {
               <MGButton
                 type="button"
                 variant="danger"
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: loading })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
                 disabled={loading}
                 preventDoubleClick={false}

@@ -6,6 +6,7 @@ const FileTextIcon = ICONS.FILE_TEXT;
 const UmbrellaIcon = ICONS.UMBRELLA;
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
@@ -49,7 +50,15 @@ const DateActionModal = ({
       showCloseButton={true}
       className="mg-v2-ad-b0kla"
       actions={
-        <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+        <MGButton
+          type="button"
+          variant="outline"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={onClose}
+          preventDoubleClick={false}
+        >
           <XCircleIcon size={20} className="mg-v2-icon-inline" />
           취소
         </MGButton>
@@ -63,9 +72,15 @@ const DateActionModal = ({
             type="button"
             variant="primary"
             size="medium"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-w-full'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onScheduleClick}
             preventDoubleClick={false}
-            className="mg-v2-w-full"
           >
             <FileTextIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
@@ -78,9 +93,15 @@ const DateActionModal = ({
             type="button"
             variant="secondary"
             size="medium"
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-w-full mg-v2-mt-md'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onVacationClick}
             preventDoubleClick={false}
-            className="mg-v2-w-full mg-v2-mt-md"
           >
             <UmbrellaIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">

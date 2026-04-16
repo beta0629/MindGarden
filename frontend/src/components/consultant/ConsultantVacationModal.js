@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 
@@ -159,16 +160,25 @@ const ConsultantVacationModal = ({
             loading={loading}
             actions={
                 <>
-                    <MGButton variant="outline" size="medium" onClick={onClose} disabled={loading} preventDoubleClick={false}>
+                    <MGButton
+                        variant="outline"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={onClose}
+                        disabled={loading}
+                        preventDoubleClick={false}
+                    >
                         취소
                     </MGButton>
                     <MGButton
                         variant="primary"
                         size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleSubmit}
                         disabled={loading}
                         loading={loading}
-                        loadingText="등록 중..."
                         preventDoubleClick={false}
                     >
                         휴가 등록

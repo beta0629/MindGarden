@@ -4,6 +4,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import ConfirmModal from '../../common/ConfirmModal';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 
@@ -122,7 +123,8 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="mg-mypage__link"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mypage__link' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setTermsModalOpen(true)}
             preventDoubleClick={false}
           >
@@ -152,6 +154,8 @@ const PrivacyConsentSection = () => {
                 type="button"
                 variant="outline"
                 size="small"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setTermsModalOpen(true)}
                 preventDoubleClick={false}
               >
@@ -212,6 +216,8 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: updating })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowConsentModal(true)}
             disabled={updating}
             preventDoubleClick={false}
@@ -221,6 +227,8 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="outline"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: updating })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={loadConsentStatus}
             disabled={updating}
             preventDoubleClick={false}
@@ -254,6 +262,8 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="outline"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setDataRequestOpen(true)}
             preventDoubleClick={false}
           >
@@ -262,7 +272,13 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="mg-mypage__danger-withdraw"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-mypage__danger-withdraw'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setWithdrawOpen(true)}
             preventDoubleClick={false}
           >
@@ -290,6 +306,8 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setTermsModalOpen(false)}
             preventDoubleClick={false}
           >

@@ -8,6 +8,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 import SafeText from '../common/SafeText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 /**
@@ -1045,8 +1046,9 @@ const ConsultationRecordScreen = () => {
           <MGButton
             type="button"
             variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/consultant/schedule')}
-            style={{ ...styles.button, ...styles.secondaryButton }}
             disabled={saving}
           >
             취소
@@ -1054,22 +1056,22 @@ const ConsultationRecordScreen = () => {
           <MGButton
             type="button"
             variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSave}
-            style={{ ...styles.button, ...styles.primaryButton }}
             disabled={saving}
             loading={saving}
-            loadingText="처리 중..."
           >
             💾 저장
           </MGButton>
           <MGButton
             type="button"
             variant="danger"
+            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: saving })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleComplete}
-            style={{ ...styles.button, ...styles.dangerButton }}
             disabled={saving}
             loading={saving}
-            loadingText="처리 중..."
           >
             ✅ 완료
           </MGButton>

@@ -23,6 +23,7 @@ import { sessionManager } from '../../../../utils/sessionManager';
 import ConfirmModal from '../../../common/ConfirmModal';
 import Avatar from '../../../common/Avatar';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import '../Widget.css';
 import './HeaderWidget.css';
 
@@ -143,9 +144,16 @@ const HeaderWidget = ({ widget, user }) => {
           <div className="widget-header-left">
             {shouldShowBackButton() && (
               <MGButton
-                className="widget-header-back-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'widget-header-back-button'
+                })}
                 variant="outline"
                 type="button"
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleBackClick}
                 title="뒤로가기"
               >
@@ -190,9 +198,16 @@ const HeaderWidget = ({ widget, user }) => {
 
                 {showLogoutButton && (
                   <MGButton
-                    className="widget-header-logout-button"
+                    className={buildErpMgButtonClassName({
+                      variant: 'danger',
+                      size: 'md',
+                      loading: false,
+                      className: 'widget-header-logout-button'
+                    })}
                     variant="danger"
                     type="button"
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={handleLogout}
                     title="로그아웃"
                   >

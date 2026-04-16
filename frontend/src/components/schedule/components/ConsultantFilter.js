@@ -3,6 +3,7 @@ import { ICONS } from '../../../constants/icons';
 
 const RotateCcwIcon = ICONS.ROTATE_CCW;
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './ConsultantFilter.css';
 
 /**
@@ -107,7 +108,13 @@ const ConsultantFilterNew = ({
                     <MGButton
                         variant="secondary"
                         size="small"
-                        className="consultant-filter-reset-button"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: false,
+                          className: 'consultant-filter-reset-button'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onResetFilters}
                         preventDoubleClick={false}
                     >
@@ -132,7 +139,13 @@ const ConsultantFilterNew = ({
                                 key={option.value}
                                 type="button"
                                 variant="outline"
-                                className={`consultant-filter-availability-btn ${filters.availability === option.value ? 'active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'md',
+                                  loading: false,
+                                  className: `consultant-filter-availability-btn ${filters.availability === option.value ? 'active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 data-option-color={option.color}
                                 onClick={() => handleAvailabilityChange(option.value)}
                                 preventDoubleClick={false}

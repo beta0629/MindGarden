@@ -17,6 +17,7 @@ import { Calculator, Receipt, Settings } from 'lucide-react';
 import './TaxManagement.css';
 import './ErpCommon.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpFilterToolbar } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 const TaxManagement = () => {
@@ -116,6 +117,7 @@ const TaxManagement = () => {
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
             />
             <ContentArea className="erp-system mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
+                <div className="mg-w-full mg-mb-md">
                 <ErpFilterToolbar
                     ariaLabel="세금 조회 필터"
                     primaryRow={(
@@ -134,6 +136,7 @@ const TaxManagement = () => {
                         </div>
                     )}
                 />
+                </div>
                 {loading ? (
                     <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
                         <UnifiedLoading type="inline" text="세금 데이터를 불러오는 중..." />
@@ -189,9 +192,10 @@ const TaxManagement = () => {
                                 type="button"
                                 variant="outline"
                                 size="medium"
-                                className={`mg-tab ${activeTab === 'statistics' ? 'mg-tab-active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-tab ${activeTab === 'statistics' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('statistics')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 세금 통계
                             </MGButton>
@@ -199,9 +203,10 @@ const TaxManagement = () => {
                                 type="button"
                                 variant="outline"
                                 size="medium"
-                                className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('calculations')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 세금 내역
                             </MGButton>
@@ -209,9 +214,10 @@ const TaxManagement = () => {
                                 type="button"
                                 variant="outline"
                                 size="medium"
-                                className={`mg-tab ${activeTab === 'additional' ? 'mg-tab-active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-tab ${activeTab === 'additional' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('additional')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 추가 세금
                             </MGButton>
@@ -229,7 +235,9 @@ const TaxManagement = () => {
                                             variant="primary"
                                             size="medium"
                                             type="button"
-                                            className="mg-v2-button mg-v2-button-primary"
+                                            className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                                            loading={loading}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => loadTaxStatistics(selectedPeriod)}
                                             disabled={!selectedPeriod}
                                         >
@@ -416,7 +424,9 @@ const TaxManagement = () => {
                                                         size="medium"
                                                         type="button"
                                                         fullWidth
-                                                        className="mg-v2-button mg-v2-button-primary mg-v2-button-full"
+                                                        className={`${buildErpMgButtonClassName({ variant: 'primary', loading })} mg-v2-button-full`}
+                                                        loading={loading}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     >
                                                         세금 계산
                                                     </MGButton>

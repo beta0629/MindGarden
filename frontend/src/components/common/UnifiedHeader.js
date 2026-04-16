@@ -5,6 +5,7 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 // import UnifiedModal from './modals/UnifiedModal'; // 임시 비활성화
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
 import Avatar from './Avatar';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
@@ -292,11 +293,17 @@ const UnifiedHeader = ({
     return (
       <MGButton
         type="button"
-        className="mg-header__tenant-switch"
+        className={buildErpMgButtonClassName({
+          variant: 'primary',
+          size: 'md',
+          loading: false,
+          className: 'mg-header__tenant-switch'
+        })}
         onClick={() => setShowTenantSwitchModal(true)}
         title="테넌트 전환"
         aria-label="테넌트 전환"
         preventDoubleClick={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       >
         <i className="bi bi-building" />
         <span className="mg-header__tenant-name">{currentTenantName}</span>
@@ -429,10 +436,16 @@ const UnifiedHeader = ({
         </div>
         <MGButton
           type="button"
-          className="mg-header__hamburger"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'mg-header__hamburger'
+          })}
           onClick={toggleHamburger}
           aria-label="메뉴 열기"
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           <span className="mg-header__hamburger-icon" />
           <span className="mg-header__hamburger-icon" />
@@ -459,11 +472,17 @@ const UnifiedHeader = ({
             {shouldShowBackButton() && (
               <MGButton
                 type="button"
-                className="mg-header__back-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-header__back-button'
+                })}
                 onClick={handleBackClick}
                 title="뒤로가기"
                 aria-label="뒤로가기"
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 <i className="bi bi-arrow-left" />
               </MGButton>
@@ -515,10 +534,16 @@ const UnifiedHeader = ({
                     key={tenant.tenantId}
                     type="button"
                     onClick={() => handleTenantSwitch(tenant.tenantId)}
-                    className={`tenant-switch-modal__item ${
-                      user?.tenantId === tenant.tenantId ? 'tenant-switch-modal__item--current' : ''
-                    }`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'md',
+                      loading: false,
+                      className: `tenant-switch-modal__item ${
+                        user?.tenantId === tenant.tenantId ? 'tenant-switch-modal__item--current' : ''
+                      }`
+                    })}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <div className="tenant-switch-modal__item-content">
                       <div className="tenant-switch-modal__item-name">
@@ -548,8 +573,15 @@ const UnifiedHeader = ({
               <MGButton
                 type="button"
                 onClick={() => setShowTenantSwitchModal(false)}
-                className="tenant-switch-modal__cancel-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'tenant-switch-modal__cancel-button'
+                })}
+                variant="outline"
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 취소
               </MGButton>

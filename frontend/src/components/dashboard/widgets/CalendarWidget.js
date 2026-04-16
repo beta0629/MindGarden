@@ -15,6 +15,7 @@
 import React from 'react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
@@ -54,10 +55,34 @@ const CalendarWidget = ({ widget, user }) => {
         <div className="calendar-header">
           <h4 className="calendar-month">{currentMonth}</h4>
           <div className="calendar-nav">
-            <MGButton className="nav-btn prev" variant="outline" type="button" title="이전 달">
+            <MGButton
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'nav-btn prev'
+              })}
+              variant="outline"
+              size="small"
+              type="button"
+              title="이전 달"
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
               ‹
             </MGButton>
-            <MGButton className="nav-btn next" variant="outline" type="button" title="다음 달">
+            <MGButton
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'nav-btn next'
+              })}
+              variant="outline"
+              size="small"
+              type="button"
+              title="다음 달"
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
               ›
             </MGButton>
           </div>

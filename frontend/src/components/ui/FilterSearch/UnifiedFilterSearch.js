@@ -19,6 +19,7 @@ import SearchBar from './SearchBar';
 import QuickFilters from './QuickFilters';
 import FilterChips from './FilterChips';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { SEARCH_PLACEHOLDER, DEBOUNCE_DELAY, SEARCH_MIN_LENGTH } from '../../../constants/filterSearch';
 
 const UnifiedFilterSearch = ({
@@ -131,8 +132,14 @@ const UnifiedFilterSearch = ({
           <MGButton
             variant={hasActiveFilters ? 'primary' : 'outline'}
             size="small"
+            className={buildErpMgButtonClassName({
+              variant: hasActiveFilters ? 'primary' : 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-filter-search__toggle'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowFilters(!showFilters)}
-            className="mg-v2-filter-search__toggle"
           >
             <Filter size={16} />
             {hasActiveFilters && (

@@ -12,6 +12,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -174,7 +175,14 @@ const ConsultationHistory = () => {
             subtitle="나의 상담 기록을 확인할 수 있습니다"
             titleId={CONSULTATION_HISTORY_TITLE_ID}
             actions={
-              <MGButton variant="outline" size="small" onClick={() => navigate(-1)} preventDoubleClick={false}>
+              <MGButton
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => navigate(-1)}
+                preventDoubleClick={false}
+              >
                 <i className="bi bi-arrow-left" />
                 뒤로
               </MGButton>
@@ -247,7 +255,13 @@ const ConsultationHistory = () => {
             <MGButton
               variant="outline"
               size="small"
-              className="clear-filters-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'clear-filters-btn'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => {
                 setFilterStatus('ALL');
                 setFilterDate('');
@@ -264,7 +278,18 @@ const ConsultationHistory = () => {
               <div className="error-message">
                 <i className="bi bi-exclamation-triangle" />
                 <p>{error}</p>
-                <MGButton variant="primary" onClick={loadConsultationHistory} className="retry-btn" preventDoubleClick={false}>
+                <MGButton
+                  variant="primary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: 'retry-btn'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={loadConsultationHistory}
+                  preventDoubleClick={false}
+                >
                   다시 시도
                 </MGButton>
               </div>

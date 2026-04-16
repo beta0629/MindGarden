@@ -7,6 +7,7 @@
 
 import { Settings2, RefreshCw, HelpCircle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import { ErpSafeText } from '../common';
 
 /**
@@ -55,12 +56,15 @@ const ErpFinanceAdminSyncCard = ({
       <div className="erp-finance-sync__url-item">
         <code>POST /api/v1/erp/accounting/init-tenant-erp</code>
         <MGButton
-          variant="primary"
-          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: initLoading
+          })}
           onClick={onInitTenantErp}
           disabled={initLoading}
           loading={initLoading}
-          loadingText="실행 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={true}
         >
           실행
@@ -69,12 +73,15 @@ const ErpFinanceAdminSyncCard = ({
       <div className="erp-finance-sync__url-item">
         <code>POST /api/v1/erp/accounting/backfill-journal-entries</code>
         <MGButton
-          variant="primary"
-          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: backfillLoading
+          })}
           onClick={onBackfillJournalEntries}
           disabled={backfillLoading}
           loading={backfillLoading}
-          loadingText="실행 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={true}
         >
           실행

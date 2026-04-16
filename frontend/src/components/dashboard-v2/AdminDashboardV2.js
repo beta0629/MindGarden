@@ -87,6 +87,7 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Icon from '../ui/Icon/Icon';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -1008,7 +1009,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             type="button"
             variant="outline"
             size="small"
-            className="mg-v2-ad-b0kla__icon-btn"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
             aria-label="일정"
             title="일정"
@@ -1020,7 +1022,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             type="button"
             variant="outline"
             size="small"
-            className="mg-v2-ad-b0kla__icon-btn"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
             aria-label="알림"
             title="알림"
@@ -1032,7 +1035,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             type="button"
             variant="outline"
             size="small"
-            className="mg-v2-ad-b0kla__icon-btn"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             aria-label="테마"
             title="테마"
             onClick={() => {}}
@@ -1097,7 +1101,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <div className="mg-v2-ad-b0kla__pill-toggle">
                 <MGButton
                   type="button"
-                  className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setChartPeriod('monthly')}
                   preventDoubleClick={false}
                 >
@@ -1105,7 +1115,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 </MGButton>
                 <MGButton
                   type="button"
-                  className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setChartPeriod('weekly')}
                   preventDoubleClick={false}
                 >
@@ -1193,7 +1209,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <div className="mg-v2-ad-b0kla__pill-toggle">
                 <MGButton
                   type="button"
-                  className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__pill ${lineChartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setLineChartPeriod('monthly')}
                   preventDoubleClick={false}
                 >
@@ -1201,7 +1223,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 </MGButton>
                 <MGButton
                   type="button"
-                  className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__pill ${lineChartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setLineChartPeriod('weekly')}
                   preventDoubleClick={false}
                 >
@@ -1374,7 +1402,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'all'}
-                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'all' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'all' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataPeriodType('all')}
                 preventDoubleClick={false}
               >
@@ -1383,7 +1417,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'month'}
-                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'month' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'month' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataPeriodType('month')}
                 preventDoubleClick={false}
               >
@@ -1392,7 +1432,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <MGButton
                 type="button"
                 aria-pressed={integratedDataPeriodType === 'year'}
-                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'year' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'year' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataPeriodType('year')}
                 preventDoubleClick={false}
               >
@@ -1431,7 +1477,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 role="tab"
                 aria-selected={integratedDataView === 'table'}
                 aria-label="테이블 뷰"
-                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataView('table')}
                 preventDoubleClick={false}
               >
@@ -1442,7 +1494,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 role="tab"
                 aria-selected={integratedDataView === 'graph'}
                 aria-label="그래프 뷰"
-                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'graph' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'graph' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataView('graph')}
                 preventDoubleClick={false}
               >
@@ -1453,7 +1511,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 role="tab"
                 aria-selected={integratedDataView === 'progress'}
                 aria-label="프로그레스 뷰"
-                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'progress' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'progress' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIntegratedDataView('progress')}
                 preventDoubleClick={false}
               >
@@ -1678,7 +1742,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
             preventDoubleClick={false}
           >
@@ -1688,7 +1753,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
             preventDoubleClick={false}
           >
@@ -1698,7 +1764,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
             preventDoubleClick={false}
           >
@@ -1711,7 +1778,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
             preventDoubleClick={false}
           >
@@ -1723,11 +1791,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('schedule-auto-complete') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: autoCompleteLoading,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleAutoCompleteSchedules}
             loading={autoCompleteLoading}
             preventDoubleClick={false}
-            loadingText="처리 중..."
           >
             <AdminMgmtCardIcon icon={CheckCircle} tone="green" />
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
@@ -1737,11 +1810,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('schedule-complete-reminder') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: autoCompleteWithReminderLoading,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleAutoCompleteWithReminder}
             loading={autoCompleteWithReminderLoading}
             preventDoubleClick={false}
-            loadingText="처리 중..."
           >
             <AdminMgmtCardIcon icon={BellRing} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
@@ -1751,7 +1829,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('consultant-comprehensive') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
             preventDoubleClick={false}
           >
@@ -1763,7 +1842,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && canManageClients && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
             preventDoubleClick={false}
           >
@@ -1774,7 +1854,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           )}
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
             preventDoubleClick={false}
           >
@@ -1784,7 +1865,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
             preventDoubleClick={false}
           >
@@ -1795,7 +1877,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
             <MGButton
               type="button"
-              className="mg-v2-ad-b0kla__admin-card"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
               preventDoubleClick={false}
             >
@@ -1806,7 +1889,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           )}
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}
             preventDoubleClick={false}
           >
@@ -1816,7 +1900,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.PACKAGE_PRICING)}
             preventDoubleClick={false}
           >
@@ -1826,7 +1911,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
             preventDoubleClick={false}
           >
@@ -1837,7 +1923,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}
             preventDoubleClick={false}
           >
@@ -1848,7 +1935,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           )}
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
             preventDoubleClick={false}
           >
@@ -1859,7 +1947,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('cache-monitoring') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.CACHE_MONITORING)}
             preventDoubleClick={false}
           >
@@ -1871,7 +1960,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('security-monitoring') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.SECURITY_MONITORING)}
             preventDoubleClick={false}
           >
@@ -1882,7 +1972,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           )}
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}
             preventDoubleClick={false}
           >
@@ -1892,7 +1983,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
             preventDoubleClick={false}
           >
@@ -1902,7 +1994,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}
             preventDoubleClick={false}
           >
@@ -1913,7 +2006,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('wellness') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-ad-b0kla__admin-card' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/admin/wellness')}
             preventDoubleClick={false}
           >
@@ -1925,11 +2019,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
           <MGButton
             type="button"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: mergeDuplicateLoading,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleMergeDuplicateMappings}
             loading={mergeDuplicateLoading}
             preventDoubleClick={false}
-            loadingText="처리 중..."
           >
             <AdminMgmtCardIcon icon={Merge} tone="orange" />
             <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
@@ -1945,7 +2044,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <strong className="me-auto">알림</strong>
             <MGButton
               type="button"
-              className="mg-toast-close"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-toast-close' })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowToastState(false)}
               preventDoubleClick={false}
               aria-label="알림 닫기"

@@ -15,6 +15,7 @@ import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './QuickActionsDropdown.css';
 
@@ -123,7 +124,8 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
                 type="button"
                 variant="outline"
                 preventDoubleClick={false}
-                className="mg-v2-quick-action-item"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-quick-action-item' })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleActionClick(action)}
               >
                 <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>

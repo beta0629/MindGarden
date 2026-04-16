@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -301,7 +302,7 @@ const PaymentConfirmationModal = ({
           <MGButton
             type="button"
             variant="secondary"
-            className="mg-v2-button mg-v2-button-secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
             onClick={(e) => {
               e?.preventDefault();
               e?.stopPropagation();
@@ -314,9 +315,10 @@ const PaymentConfirmationModal = ({
           <MGButton
             type="button"
             variant="danger"
+            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
             onClick={handleCancelPayment}
             loading={loading}
-            loadingText="취소 처리 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >
@@ -325,9 +327,10 @@ const PaymentConfirmationModal = ({
           <MGButton
             type="button"
             variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
             onClick={handleConfirmPayment}
             loading={loading}
-            loadingText="확인 처리 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >

@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import '../Widget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import './SystemToolsWidget.css';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 
@@ -123,7 +124,14 @@ const SystemToolsWidget = ({ widget, user }) => {
               key={tool.id}
               type="button"
               variant="outline"
-              className={`system-tool-card ${getVariantClass(tool.variant)}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: `system-tool-card ${getVariantClass(tool.variant)}`
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleToolClick(tool)}
               title={toDisplayString(tool.description, '')}
             >

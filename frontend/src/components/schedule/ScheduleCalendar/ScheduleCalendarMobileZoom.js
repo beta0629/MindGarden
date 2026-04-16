@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ICONS } from '../../../constants/icons';
 
 const CalendarIcon = ICONS.CALENDAR;
@@ -51,8 +52,14 @@ const ScheduleCalendarMobileZoom = ({
                     <MGButton
                         variant="outline"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: 'mg-v2-mobile-zoom-close'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
-                        className="mg-v2-mobile-zoom-close"
                         title="닫기"
                         preventDoubleClick={false}
                     >
@@ -96,8 +103,14 @@ const ScheduleCalendarMobileZoom = ({
                 <div className="mg-v2-mobile-zoom-footer">
                     <MGButton
                         variant="primary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'md',
+                          loading: false,
+                          className: 'mg-v2-mobile-zoom-add-button'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onAddSchedule}
-                        className="mg-v2-mobile-zoom-add-button"
                     >
                         <PlusIcon className="mg-v2-icon" />
                         일정 추가

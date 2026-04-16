@@ -23,6 +23,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { getModelPricingLabel, getModelOptionSuffix, PRICING_URLS } from './modelPricing';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -351,12 +352,17 @@ const SystemConfigManagement = () => {
                 <MGButton
                   type="button"
                   variant="primary"
-                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: saving,
+                    className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                  })}
                   onClick={handleSave}
                   disabled={saving}
                   title="설정 저장"
                   loading={saving}
-                  loadingText="저장 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   설정 저장
                 </MGButton>
@@ -414,7 +420,14 @@ const SystemConfigManagement = () => {
                           placeholder={id === 'openai' ? 'sk-...' : 'API 키 입력'}
                           className="mg-v2-input"
                         />
-                        <MGButton type="button" variant="secondary" size="medium" onClick={() => toggleShowApiKey(id)} preventDoubleClick={false}>
+                        <MGButton
+                          type="button"
+                          variant="secondary"
+                          size="medium"
+                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                          onClick={() => toggleShowApiKey(id)}
+                          preventDoubleClick={false}
+                        >
                           {showApiKey[id] ? '숨기기' : '보기'}
                         </MGButton>
                       </div>
@@ -440,10 +453,15 @@ const SystemConfigManagement = () => {
                               type="button"
                               variant="secondary"
                               size="medium"
+                              className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: loadingGeminiModels
+                              })}
                               onClick={loadGeminiModels}
                               disabled={loadingGeminiModels || !(providers.gemini?.apiKey || '').trim()}
                               loading={loadingGeminiModels}
-                              loadingText="불러오는 중..."
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               preventDoubleClick={false}
                             >
                               {geminiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
@@ -501,10 +519,15 @@ const SystemConfigManagement = () => {
                             <MGButton
                               variant="secondary"
                               size="medium"
+                              className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: loadingOpenaiModels
+                              })}
                               onClick={handleLoadOpenAIModels}
                               disabled={loadingOpenaiModels || !(providers.openai?.apiKey || '').trim()}
                               loading={loadingOpenaiModels}
-                              loadingText="불러오는 중..."
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               preventDoubleClick={false}
                             >
                               {openaiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
@@ -585,10 +608,15 @@ const SystemConfigManagement = () => {
                         <MGButton
                           variant="secondary"
                           size="medium"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'md',
+                            loading: testing
+                          })}
                           onClick={handleTestOpenAI}
                           disabled={testing || !(providers.openai?.apiKey)}
                           loading={testing}
-                          loadingText="테스트 중..."
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           preventDoubleClick={false}
                         >
                           API 테스트
@@ -612,10 +640,15 @@ const SystemConfigManagement = () => {
                         <MGButton
                           variant="secondary"
                           size="medium"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'md',
+                            loading: testingGemini
+                          })}
                           onClick={handleTestGemini}
                           disabled={testingGemini || !(providers.gemini?.apiKey || '').trim()}
                           loading={testingGemini}
-                          loadingText="테스트 중..."
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           preventDoubleClick={false}
                         >
                           키 테스트

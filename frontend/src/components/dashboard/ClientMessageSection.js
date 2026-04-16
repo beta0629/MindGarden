@@ -13,6 +13,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
@@ -259,6 +260,12 @@ const ClientMessageSection = ({ userId }) => {
           <MGButton
             variant="outline"
             size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleViewAllMessages}
           >
             전체보기

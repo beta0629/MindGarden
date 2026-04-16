@@ -6,6 +6,7 @@ import { sessionManager } from '../../../utils/sessionManager';
 import notificationManager from '../../../utils/notification';
 import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const maskEmail = (email) => {
   if (!email || !email.includes('@')) return email || '—';
@@ -201,7 +202,8 @@ const ProfileSection = ({
           <div className="mg-mypage__section-action">
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => applyEditingState(!isEditing)}
               variant="outline"
               preventDoubleClick={false}
@@ -305,7 +307,8 @@ const ProfileSection = ({
                 </p>
                 <MGButton
                   type="button"
-                  className="mg-v2-button mg-v2-button--outline"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() =>
                     notificationManager.show('이메일 변경은 보안 절차 준비 중입니다.', 'info')
                   }
@@ -327,7 +330,8 @@ const ProfileSection = ({
                 </p>
                 <MGButton
                   type="button"
-                  className="mg-v2-button mg-v2-button--outline"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() =>
                     notificationManager.show('휴대전화 변경은 보안 절차 준비 중입니다.', 'info')
                   }
@@ -377,12 +381,18 @@ const ProfileSection = ({
 
           {isEditing ? (
             <div className="mg-v2-card-actions">
-              <MGButton type="submit" className="mg-v2-button mg-v2-button--primary" variant="primary">
+              <MGButton
+                type="submit"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                variant="primary"
+              >
                 저장
               </MGButton>
               <MGButton
                 type="button"
-                className="mg-v2-button mg-v2-button--outline"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCancelEdit}
                 variant="outline"
                 preventDoubleClick={false}

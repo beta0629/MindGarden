@@ -4,6 +4,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import axios from 'axios';
@@ -249,10 +250,15 @@ const WidgetBasedAdminDashboard = () => {
                             <MGButton
                                 variant="danger"
                                 size="small"
-                                className="btn-delete"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'danger',
+                                    size: 'sm',
+                                    loading: deletingWidgetId === widget.widgetId,
+                                    className: 'btn-delete'
+                                })}
                                 onClick={() => handleDeleteWidget(widget.widgetId, groupId)}
                                 loading={deletingWidgetId === widget.widgetId}
-                                loadingText="삭제 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick
                             >
                                 삭제
@@ -267,7 +273,13 @@ const WidgetBasedAdminDashboard = () => {
                                 type="button"
                                 variant="primary"
                                 size="small"
-                                className="btn-config"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'btn-config'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => console.log('설정:', widget.widgetId)}
                             >
@@ -301,7 +313,13 @@ const WidgetBasedAdminDashboard = () => {
                             <MGButton
                                 type="button"
                                 variant="outline"
-                                className="btn-add-widget"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'btn-add-widget'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => {
                                     setShowAddWidgetModal(true);
@@ -323,7 +341,13 @@ const WidgetBasedAdminDashboard = () => {
                                 <MGButton
                                     type="button"
                                     variant="outline"
-                                    className="btn-add-widget-empty"
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'md',
+                                        loading: false,
+                                        className: 'btn-add-widget-empty'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                     onClick={() => setShowAddWidgetModal(true)}
                                 >
@@ -354,6 +378,13 @@ const WidgetBasedAdminDashboard = () => {
                         <MGButton
                             type="button"
                             variant="primary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => navigate('/admin/dashboard-old')}
                         >
                             이전 대시보드로
@@ -361,6 +392,13 @@ const WidgetBasedAdminDashboard = () => {
                         <MGButton
                             type="button"
                             variant="primary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => window.location.reload()}
                         >
                             다시 시도
@@ -402,7 +440,14 @@ const WidgetBasedAdminDashboard = () => {
                         <MGButton
                             type="button"
                             variant={isManageMode ? 'primary' : 'outline'}
-                            className={`btn-manage-mode ${isManageMode ? 'active' : ''}`}
+                            size="medium"
+                            className={buildErpMgButtonClassName({
+                                variant: isManageMode ? 'primary' : 'outline',
+                                size: 'md',
+                                loading: false,
+                                className: `btn-manage-mode ${isManageMode ? 'active' : ''}`
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => setIsManageMode(!isManageMode)}
                         >

@@ -4,6 +4,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import BadgeSelect from '../common/BadgeSelect';
 import SafeText from '../common/SafeText';
 
@@ -229,7 +230,8 @@ const DiscountPaymentConfirmationModal = ({
           <MGButton
             type="button"
             variant="secondary"
-            className="mg-v2-button mg-v2-button-secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
             취소
@@ -237,11 +239,11 @@ const DiscountPaymentConfirmationModal = ({
           <MGButton
             type="button"
             variant="success"
-            className="mg-v2-button mg-v2-button-success"
+            className={buildErpMgButtonClassName({ variant: 'success', loading })}
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
             loading={loading}
-            loadingText="처리 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             결제 확인
           </MGButton>
@@ -291,9 +293,14 @@ const DiscountPaymentConfirmationModal = ({
               <MGButton
                 type="button"
                 variant={discountInfo.applied ? 'success' : 'primary'}
-                className={`mg-v2-button ${discountInfo.applied ? 'mg-v2-button-success' : 'mg-v2-button-primary'}`}
+                className={buildErpMgButtonClassName({
+                  variant: discountInfo.applied ? 'success' : 'primary',
+                  loading
+                })}
                 onClick={applyDiscount}
                 disabled={loading || discountInfo.applied}
+                loading={loading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 {discountInfo.applied ? '적용됨' : '할인 적용'}
               </MGButton>
@@ -301,8 +308,10 @@ const DiscountPaymentConfirmationModal = ({
                 <MGButton
                   type="button"
                   variant="danger"
-                  className="mg-v2-button mg-v2-button-danger"
+                  className={buildErpMgButtonClassName({ variant: 'danger', loading: false })}
                   onClick={removeDiscount}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   제거
                 </MGButton>

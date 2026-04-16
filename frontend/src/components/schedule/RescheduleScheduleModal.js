@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -25,7 +26,6 @@ const ERR_PAST_DATE = '과거 날짜로는 예약을 변경할 수 없습니다.
 const ERR_CONFLICT = '해당 시간대에 이미 예약 또는 휴가가 있어 변경할 수 없습니다.';
 const ERR_INCOMPLETE = '일정 정보가 불완전합니다. 캘린더에서 다시 열어주세요.';
 const ERR_SLOT_REQUIRED = '시간대를 선택해주세요.';
-const SAVING = '저장 중…';
 const HM_LEN = 5;
 const DEFAULT_DURATION_CODE = '50_MIN';
 
@@ -230,9 +230,15 @@ const RescheduleScheduleModal = ({
           <MGButton
             type="button"
             variant="outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-btn--outline'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             disabled={saving}
-            className="mg-v2-btn--outline"
             preventDoubleClick={false}
           >
             {BTN_CANCEL}
@@ -240,11 +246,16 @@ const RescheduleScheduleModal = ({
           <MGButton
             type="button"
             variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: saving,
+              className: 'mg-v2-btn--primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSave}
             disabled={saving}
             loading={saving}
-            loadingText={SAVING}
-            className="mg-v2-btn--primary"
           >
             {BTN_SAVE}
           </MGButton>

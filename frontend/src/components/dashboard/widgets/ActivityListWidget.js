@@ -18,6 +18,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 
 const ActivityListWidget = ({ widget, user }) => {
@@ -139,9 +140,15 @@ const ActivityListWidget = ({ widget, user }) => {
         <div className="activity-footer">
           <span className="activity-count">최근 {data.length}개 활동</span>
           <MGButton
-            className="show-more-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'show-more-btn'
+            })}
             variant="outline"
             type="button"
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(detailPageUrl)}
             title="전체 활동 보기"
           >

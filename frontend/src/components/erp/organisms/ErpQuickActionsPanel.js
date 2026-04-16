@@ -16,6 +16,7 @@ import {
   Wallet
 } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 
 const ERP_QUICK_ICON_SIZE = 28;
 
@@ -49,8 +50,13 @@ const ErpQuickActionsPanel = ({
         {hasPurchaseRequestView && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/purchase-requests')}
             preventDoubleClick={false}
           >
@@ -64,8 +70,13 @@ const ErpQuickActionsPanel = ({
         {hasApprovalManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/approvals')}
             preventDoubleClick={false}
           >
@@ -79,8 +90,13 @@ const ErpQuickActionsPanel = ({
         {hasItemManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/items')}
             preventDoubleClick={false}
           >
@@ -94,8 +110,13 @@ const ErpQuickActionsPanel = ({
         {hasBudgetManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/budget')}
             preventDoubleClick={false}
           >
@@ -109,8 +130,13 @@ const ErpQuickActionsPanel = ({
         {hasSalaryManage && hasTaxManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/salary')}
             preventDoubleClick={false}
           >
@@ -124,8 +150,13 @@ const ErpQuickActionsPanel = ({
         {hasSalaryManage && !hasTaxManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/salary')}
             preventDoubleClick={false}
           >
@@ -139,8 +170,13 @@ const ErpQuickActionsPanel = ({
         {!hasSalaryManage && hasTaxManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/tax')}
             preventDoubleClick={false}
           >
@@ -154,8 +190,13 @@ const ErpQuickActionsPanel = ({
         {hasIntegratedFinanceView && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/admin/erp/financial')}
             preventDoubleClick={false}
           >
@@ -169,8 +210,13 @@ const ErpQuickActionsPanel = ({
         {hasRefundManage && (
           <MGButton
             type="button"
-            variant="outline"
-            className="mg-v2-ad-b0kla__admin-card"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-v2-ad-b0kla__admin-card'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/erp/refund-management')}
             preventDoubleClick={false}
           >

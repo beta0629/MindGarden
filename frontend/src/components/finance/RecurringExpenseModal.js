@@ -5,6 +5,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
@@ -289,7 +290,13 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     {/* 액션 버튼 */}
                     <div className="mg-v2-mb-md">
                         <MGButton
-                            className="mg-v2-button mg-v2-button--primary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false,
+                                className: 'mg-v2-button--primary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={handleAddExpense}
                             disabled={loading}
                             variant="primary"
@@ -330,7 +337,13 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </div>
                                         <div className="mg-v2-list-item-actions">
                                             <MGButton
-                                                className="mg-v2-button mg-v2-button--icon"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'outline',
+                                                    size: 'sm',
+                                                    loading: false,
+                                                    className: 'mg-v2-button--icon'
+                                                })}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handleEditExpense(expense)}
                                                 disabled={loading}
                                                 variant="outline"
@@ -341,7 +354,13 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 수정
                                             </MGButton>
                                             <MGButton
-                                                className="mg-v2-button mg-v2-button--icon mg-v2-button--danger"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'danger',
+                                                    size: 'sm',
+                                                    loading: false,
+                                                    className: 'mg-v2-button--icon mg-v2-button--danger'
+                                                })}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handleDeleteExpense(expense.id)}
                                                 disabled={loading}
                                                 variant="danger"
@@ -375,7 +394,13 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                 <>
                                     <MGButton
                                         type="button"
-                                        className="mg-v2-button mg-v2-button--secondary"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'secondary',
+                                            size: 'md',
+                                            loading: false,
+                                            className: 'mg-v2-button--secondary'
+                                        })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={() => setShowForm(false)}
                                         disabled={loading}
                                         variant="secondary"
@@ -385,11 +410,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                     </MGButton>
                                     <MGButton
                                         type="button"
-                                        className="mg-v2-button mg-v2-button--primary"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'md',
+                                            loading
+                                        })}
                                         onClick={handleSaveExpense}
                                         disabled={loading}
                                         loading={loading}
-                                        loadingText="저장 중..."
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         variant="primary"
                                     >
                                         저장

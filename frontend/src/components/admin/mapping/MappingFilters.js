@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Filter } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
 import MGButton from '../../../components/common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingFilters.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -38,6 +39,8 @@ const MappingFilters = ({
                 <MGButton
                     variant="secondary"
                     size="small"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onReset}
                 >
                     초기화
@@ -81,7 +84,13 @@ const MappingFilters = ({
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className="mapping-filters-clear-btn"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'mapping-filters-clear-btn'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => onSearchChange('')}
                                 preventDoubleClick={false}
                                 aria-label="검색어 지우기"

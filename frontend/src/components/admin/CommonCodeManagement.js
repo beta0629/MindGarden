@@ -27,6 +27,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 /**
  * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
@@ -662,7 +663,13 @@ const CommonCodeManagement = () => {
                                     type="button"
                                     variant="outline"
                                     fullWidth
-                                    className={`mg-v2-ad-b0kla__group-card ${selectedGroup === group ? 'mg-v2-ad-b0kla__group-card--selected' : ''}`}
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'md',
+                                        loading: false,
+                                        className: `mg-v2-ad-b0kla__group-card ${selectedGroup === group ? 'mg-v2-ad-b0kla__group-card--selected' : ''}`
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => handleGroupSelect(group)}
                                     preventDoubleClick={false}
                                 >
@@ -697,7 +704,13 @@ const CommonCodeManagement = () => {
                                             <MGButton
                                                 type="button"
                                                 variant="primary"
-                                                className="mg-v2-btn mg-v2-btn--primary"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'primary',
+                                                    size: 'md',
+                                                    loading: loading
+                                                })}
+                                                loading={loading}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => {
                                                     setEditingCode(null);
                                                     const pg = getParentCodeGroupForSubcategory(selectedGroup) || '';
@@ -733,7 +746,13 @@ const CommonCodeManagement = () => {
                                             <MGButton
                                                 type="button"
                                                 variant="secondary"
-                                                className="mg-v2-btn mg-v2-btn--secondary mg-v2-ad-b0kla__form-header-close"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'secondary',
+                                                    size: 'md',
+                                                    loading: false,
+                                                    className: 'mg-v2-ad-b0kla__form-header-close'
+                                                })}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={handleCancelForm}
                                                 preventDoubleClick={false}
                                             >
@@ -827,7 +846,12 @@ const CommonCodeManagement = () => {
                                                 <MGButton
                                                     type="button"
                                                     variant="secondary"
-                                                    className="mg-v2-btn mg-v2-btn--secondary"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'secondary',
+                                                        size: 'md',
+                                                        loading: false
+                                                    })}
+                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     onClick={handleCancelForm}
                                                     preventDoubleClick={false}
                                                 >
@@ -836,10 +860,14 @@ const CommonCodeManagement = () => {
                                                 <MGButton
                                                     type="submit"
                                                     variant="primary"
-                                                    className="mg-v2-btn mg-v2-btn--primary"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        size: 'md',
+                                                        loading: loading
+                                                    })}
                                                     disabled={loading}
                                                     loading={loading}
-                                                    loadingText="처리 중..."
+                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     preventDoubleClick={false}
                                                 >
                                                     {editingCode ? '수정' : '추가'}
@@ -892,13 +920,58 @@ const CommonCodeManagement = () => {
                                                         </td>
                                                         <td style={{ textAlign: 'center' }}>
                                                             <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
-                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleEditCode(code)} title="수정" style={{ color: 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
+                                                                <MGButton
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="small"
+                                                                    className={buildErpMgButtonClassName({
+                                                                        variant: 'outline',
+                                                                        size: 'sm',
+                                                                        loading: loading
+                                                                    })}
+                                                                    loading={loading}
+                                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                                                    onClick={() => handleEditCode(code)}
+                                                                    title="수정"
+                                                                    style={{ color: 'var(--ad-b0kla-green)' }}
+                                                                    preventDoubleClick={false}
+                                                                >
                                                                     수정
                                                                 </MGButton>
-                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }} preventDoubleClick={false}>
+                                                                <MGButton
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="small"
+                                                                    className={buildErpMgButtonClassName({
+                                                                        variant: 'outline',
+                                                                        size: 'sm',
+                                                                        loading: loading
+                                                                    })}
+                                                                    loading={loading}
+                                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                                                    onClick={() => handleToggleStatus(code.id, code.isActive)}
+                                                                    title={code.isActive ? '비활성화' : '활성화'}
+                                                                    style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}
+                                                                    preventDoubleClick={false}
+                                                                >
                                                                     {code.isActive ? '비활성화' : '활성화'}
                                                                 </MGButton>
-                                                                <MGButton type="button" variant="outline" size="small" onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500)' }} preventDoubleClick={false}>
+                                                                <MGButton
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="small"
+                                                                    className={buildErpMgButtonClassName({
+                                                                        variant: 'outline',
+                                                                        size: 'sm',
+                                                                        loading: loading
+                                                                    })}
+                                                                    loading={loading}
+                                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                                                    onClick={() => handleDeleteCode(code.id)}
+                                                                    title="삭제"
+                                                                    style={{ color: 'var(--mg-error-500)' }}
+                                                                    preventDoubleClick={false}
+                                                                >
                                                                     삭제
                                                                 </MGButton>
                                                             </div>

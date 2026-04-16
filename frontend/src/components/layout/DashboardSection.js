@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './DashboardSection.css';
 
 const DashboardSection = ({
@@ -40,7 +41,13 @@ const DashboardSection = ({
           {collapsible && (
             <MGButton
               type="button"
-              className="mg-dashboard-section-collapse-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-dashboard-section-collapse-btn'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={toggleCollapse}
               aria-label={isCollapsed ? '펼치기' : '접기'}
               variant="outline"

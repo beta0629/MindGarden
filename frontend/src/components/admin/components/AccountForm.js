@@ -6,6 +6,7 @@ import {
   ACCOUNT_BUTTON_TEXT
 } from '../../../constants/account';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const BANK_FALLBACK_OPTIONS = [
@@ -177,13 +178,29 @@ const AccountForm = ({
             <MGButton
               type="submit"
               variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading
+              })}
               loading={loading}
-              loadingText={ACCOUNT_BUTTON_TEXT.PROCESSING}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               {editingAccount ? ACCOUNT_BUTTON_TEXT.EDIT : ACCOUNT_BUTTON_TEXT.SUBMIT}
             </MGButton>
-            <MGButton type="button" variant="secondary" onClick={onClose} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={onClose}
+              preventDoubleClick={false}
+            >
               {ACCOUNT_BUTTON_TEXT.CANCEL}
             </MGButton>
           </div>

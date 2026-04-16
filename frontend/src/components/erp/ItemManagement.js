@@ -324,10 +324,14 @@ const ItemManagement = () => {
                       <MGButton
                         variant="secondary"
                         size="small"
-                        className="mg-v2-button mg-v2-button--secondary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: silentListRefreshing
+                        })}
                         onClick={() => loadItems({ silent: true })}
                         loading={silentListRefreshing}
-                        loadingText="새로고침 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         disabled={loading}
                         aria-label="목록 새로고침"
                       >
@@ -378,7 +382,7 @@ const ItemManagement = () => {
                                 size={mapErpSizeToMg('small')}
                                 className={buildErpMgButtonClassName({
                                   variant: 'outline-primary',
-                                  size: 'small',
+                                  size: 'sm',
                                   loading: false
                                 })}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -393,7 +397,7 @@ const ItemManagement = () => {
                                   size={mapErpSizeToMg('small')}
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline-danger',
-                                    size: 'small',
+                                    size: 'sm',
                                     loading: false
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}

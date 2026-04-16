@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
 // // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import Avatar from '../common/Avatar';
@@ -220,7 +221,18 @@ const VacationStatistics = ({ className = "" }) => {
                         <AlertCircle size={40} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
-                    <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
+                    <MGButton
+                        variant="primary"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={loadVacationStats}
+                    >
+                        다시 시도
+                    </MGButton>
                 </div>
             </div>
         );
@@ -244,6 +256,12 @@ const VacationStatistics = ({ className = "" }) => {
                                     key={period}
                                     variant={selectedPeriod === period ? 'primary' : 'outline'}
                                     size="small"
+                                    className={buildErpMgButtonClassName({
+                                        variant: selectedPeriod === period ? 'primary' : 'outline',
+                                        size: 'sm',
+                                        loading: false
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => handlePeriodChange(period)}
                                 >
                                     {period === 'week' && '1주일'}

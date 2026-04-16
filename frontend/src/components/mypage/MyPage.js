@@ -24,6 +24,7 @@ import {
   getSocialProviderLabel
 } from '../../constants/mypageUi';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPageRenewal.css';
@@ -367,10 +368,22 @@ const MyPage = () => {
               titleId={MYPAGE_TITLE_ID}
               actions={
                 <div className="mg-mypage__header-actions">
-                  <MGButton type="button" variant="outline" onClick={handleSupportClick}>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={handleSupportClick}
+                  >
                     고객센터
                   </MGButton>
-                  <MGButton type="button" variant="outline" onClick={handleLogoutClick}>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={handleLogoutClick}
+                  >
                     로그아웃
                   </MGButton>
                 </div>
@@ -388,7 +401,13 @@ const MyPage = () => {
                   aria-selected={activeTab === tabKey}
                   aria-controls={PANEL_IDS[tabKey]}
                   variant="outline"
-                  className={`mg-v2-ad-b0kla__pill${activeTab === tabKey ? ' mg-v2-ad-b0kla__pill--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__pill${activeTab === tabKey ? ' mg-v2-ad-b0kla__pill--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setTabInUrl(tabKey)}
                   preventDoubleClick={false}
                 >

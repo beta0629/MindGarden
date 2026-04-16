@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
 
 const ProfileImageUpload = ({
@@ -156,7 +157,14 @@ const ProfileImageUpload = ({
               />
             </label>
             {profileImage && profileImageType === 'USER_PROFILE' && profileImage.startsWith('data:image/') ? (
-              <MGButton type="button" variant="danger" size="small" onClick={handleDeleteImage}>
+              <MGButton
+                type="button"
+                variant="danger"
+                size="small"
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleDeleteImage}
+              >
                 삭제
               </MGButton>
             ) : null}
@@ -179,6 +187,8 @@ const ProfileImageUpload = ({
             <MGButton
               type="button"
               variant="outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => {
                 setIsCropping(false);
                 setCropImage(null);
@@ -187,7 +197,14 @@ const ProfileImageUpload = ({
             >
               취소
             </MGButton>
-            <MGButton type="button" variant="primary" onClick={handleCropImage} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCropImage}
+              preventDoubleClick={false}
+            >
               적용
             </MGButton>
           </>

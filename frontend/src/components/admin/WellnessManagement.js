@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import {
     Database,
     DollarSign,
@@ -319,28 +320,45 @@ const WellnessManagement = () => {
                                     <MGButton
                                         variant="outline"
                                         size="small"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'outline',
+                                            size: 'sm',
+                                            loading: false
+                                        })}
                                         onClick={handleExchangeRateRefresh}
                                         disabled={refreshing}
                                         preventDoubleClick={false}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
                                         환율 새로고침
                                     </MGButton>
                                     <MGButton
                                         variant="outline"
                                         size="small"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'outline',
+                                            size: 'sm',
+                                            loading: false
+                                        })}
                                         onClick={handleRefresh}
                                         disabled={refreshing}
                                         preventDoubleClick={false}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
                                         새로고침
                                     </MGButton>
                                     <MGButton
                                         variant="primary"
                                         size="small"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'sm',
+                                            loading: sending
+                                        })}
                                         onClick={handleTestSend}
                                         disabled={sending}
                                         loading={sending}
-                                        loadingText="발송 중..."
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         preventDoubleClick={true}
                                     >
                                         테스트 발송
@@ -412,8 +430,14 @@ const WellnessManagement = () => {
                         <MGButton
                             variant="primary"
                             size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'sm',
+                                loading: false
+                            })}
                             onClick={() => handleMonthChange(-1)}
                             preventDoubleClick={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                             ◀
                         </MGButton>
@@ -423,12 +447,18 @@ const WellnessManagement = () => {
                         <MGButton
                             variant="primary"
                             size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'sm',
+                                loading: false
+                            })}
                             onClick={() => handleMonthChange(1)}
                             disabled={
                                 selectedMonth.year === new Date().getFullYear() &&
                                 selectedMonth.month === new Date().getMonth() + 1
                             }
                             preventDoubleClick={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                             ▶
                         </MGButton>

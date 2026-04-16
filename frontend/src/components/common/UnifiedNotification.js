@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
 
@@ -199,13 +200,19 @@ const UnifiedNotification = ({
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-notification-close"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-notification-close'
+                })}
                 preventDoubleClick={false}
                 onClick={(e) => {
                   e.stopPropagation();
                   removeNotification(notification.id);
                 }}
                 aria-label="닫기"
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 ×
               </MGButton>
@@ -265,6 +272,12 @@ const UnifiedNotification = ({
                       type="button"
                       variant={getNotificationActionVariant(action.variant)}
                       onClick={() => handleAction(action, notification.id)}
+                      className={buildErpMgButtonClassName({
+                        variant: getNotificationActionVariant(action.variant),
+                        size: 'md',
+                        loading: false
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       {countdowns[notification.id] && action.showCountdown
                         ? `${toDisplayString(action.label)} (${countdowns[notification.id]}초)`
@@ -312,10 +325,16 @@ const UnifiedNotification = ({
               type="button"
               variant="outline"
               size="small"
-              className="mg-notification-banner-close"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-notification-banner-close'
+              })}
               preventDoubleClick={false}
               onClick={() => removeNotification(notification.id)}
               aria-label="닫기"
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               ×
             </MGButton>

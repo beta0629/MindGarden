@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 
 import UnifiedLoading from '../common/UnifiedLoading';
 import Avatar from '../common/Avatar';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -163,6 +164,12 @@ const ConsultantClientSection = ({ userId }) => {
               <p>{error}</p>
               <MGButton
                 variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadClients}
               >
                 다시 시도
@@ -184,6 +191,12 @@ const ConsultantClientSection = ({ userId }) => {
         <MGButton
           variant="outline"
           size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => navigate('/consultant/clients')}
         >
           전체보기 →

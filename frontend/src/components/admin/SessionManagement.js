@@ -5,6 +5,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import StatCard from '../ui/Card/StatCard';
@@ -330,7 +331,13 @@ const SessionManagement = () => {
                             <MGButton 
                                 type="button"
                                 variant="outline"
-                                className={`mg-tab ${activeTab === 'quick' ? 'mg-tab-active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-tab ${activeTab === 'quick' ? 'mg-tab-active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setActiveTab('quick')}
                                 preventDoubleClick={false}
                             >
@@ -339,7 +346,13 @@ const SessionManagement = () => {
                             <MGButton 
                                 type="button"
                                 variant="outline"
-                                className={`mg-tab ${activeTab === 'search' ? 'mg-tab-active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-tab ${activeTab === 'search' ? 'mg-tab-active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setActiveTab('search')}
                                 preventDoubleClick={false}
                             >
@@ -348,7 +361,13 @@ const SessionManagement = () => {
                             <MGButton 
                                 type="button"
                                 variant="outline"
-                                className={`mg-tab ${activeTab === 'mapping' ? 'mg-tab-active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-tab ${activeTab === 'mapping' ? 'mg-tab-active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setActiveTab('mapping')}
                                 preventDoubleClick={false}
                             >
@@ -396,7 +415,13 @@ const SessionManagement = () => {
                                             <MGButton
                                                 variant="primary"
                                                 size="small"
-                                                className="mg-v2-quick-add-button"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'primary',
+                                                    size: 'sm',
+                                                    loading: false,
+                                                    className: 'mg-v2-quick-add-button'
+                                                })}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 preventDoubleClick={false}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -435,6 +460,12 @@ const SessionManagement = () => {
                                     <MGButton
                                         variant="primary"
                                         size="medium"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'md',
+                                            loading: false
+                                        })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={() => {
                                             console.log('검색 실행');
                                         }}
@@ -472,6 +503,12 @@ const SessionManagement = () => {
                                                 <MGButton
                                                     variant="success"
                                                     size="small"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'success',
+                                                        size: 'sm',
+                                                        loading: false
+                                                    })}
+                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     disabled={clientMappings.length === 0}
                                                     title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
                                                     preventDoubleClick={false}
@@ -541,6 +578,12 @@ const SessionManagement = () => {
                                                     <MGButton
                                                         variant="primary"
                                                         size="small"
+                                                        className={buildErpMgButtonClassName({
+                                                            variant: 'primary',
+                                                            size: 'sm',
+                                                            loading: false
+                                                        })}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         onClick={() => handleQuickAdd(mapping)}
                                                         disabled={mapping.status !== 'ACTIVE'}
                                                         title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
@@ -611,8 +654,13 @@ const SessionManagement = () => {
                                             <MGButton
                                                 variant="success"
                                                 size="small"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'success',
+                                                    size: 'sm',
+                                                    loading: confirmingPayment
+                                                })}
                                                 loading={confirmingPayment}
-                                                loadingText="확인 중..."
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handlePaymentConfirm(request.id)}
                                                 preventDoubleClick={true}
                                                 clickDelay={2000}
@@ -622,8 +670,13 @@ const SessionManagement = () => {
                                             <MGButton
                                                 variant="danger"
                                                 size="small"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'danger',
+                                                    size: 'sm',
+                                                    loading: rejectingRequest
+                                                })}
                                                 loading={rejectingRequest}
-                                                loadingText="거부 중..."
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handleRejectRequest(request.id)}
                                                 preventDoubleClick={true}
                                                 clickDelay={1000}
@@ -638,8 +691,13 @@ const SessionManagement = () => {
                                             <MGButton
                                                 variant="primary"
                                                 size="small"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'primary',
+                                                    size: 'sm',
+                                                    loading: confirmingPayment
+                                                })}
                                                 loading={confirmingPayment}
-                                                loadingText="승인 중..."
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handleAdminApprove(request.id)}
                                                 preventDoubleClick={true}
                                                 clickDelay={2000}
@@ -649,8 +707,13 @@ const SessionManagement = () => {
                                             <MGButton
                                                 variant="danger"
                                                 size="small"
+                                                className={buildErpMgButtonClassName({
+                                                    variant: 'danger',
+                                                    size: 'sm',
+                                                    loading: rejectingRequest
+                                                })}
                                                 loading={rejectingRequest}
-                                                loadingText="거부 중..."
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => handleRejectRequest(request.id)}
                                                 preventDoubleClick={true}
                                                 clickDelay={1000}

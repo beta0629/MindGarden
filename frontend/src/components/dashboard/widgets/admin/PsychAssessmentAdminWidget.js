@@ -19,6 +19,7 @@ import PsychDocumentListBlock from '../../../admin/psych-assessment/organisms/Ps
 import PsychAiReportModalContent from '../../../admin/psych-assessment/organisms/PsychAiReportModalContent';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
@@ -262,6 +263,12 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
           type="button"
           variant="outline"
           size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: retryLoading,
+            className: ''
+          })}
           onClick={async() => {
             setRetryLoading(true);
             try {
@@ -271,8 +278,8 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
             }
           }}
           loading={retryLoading}
-          loadingText="다시 시도 중..."
-          preventDoubleClick
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick={false}
         >
           다시 시도
         </MGButton>

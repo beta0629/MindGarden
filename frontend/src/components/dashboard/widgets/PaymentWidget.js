@@ -16,6 +16,7 @@ import React from 'react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
@@ -106,11 +107,37 @@ const PaymentWidget = ({ widget, user }) => {
             <div className="payment-actions">
               {config.showActions && (
                 <>
-                  <MGButton className="payment-action-btn view" variant="outline" size="small" type="button" title="상세보기">
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'payment-action-btn view'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    title="상세보기"
+                    preventDoubleClick={false}
+                  >
                     상세
                   </MGButton>
                   {payment.status === 'completed' && (
-                    <MGButton className="payment-action-btn receipt" variant="outline" size="small" type="button" title="영수증">
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'payment-action-btn receipt'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      title="영수증"
+                      preventDoubleClick={false}
+                    >
                       영수증
                     </MGButton>
                   )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import CustomSelect from '../../../common/CustomSelect';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './MatchQueueRow.css';
 
@@ -63,6 +64,12 @@ const MatchQueueRow = ({
           onClick={onConfirm}
           loading={loading}
           disabled={isConfirmDisabled}
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: loading
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           배정
         </MGButton>

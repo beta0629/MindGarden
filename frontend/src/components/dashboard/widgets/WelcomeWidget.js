@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../../contexts/SessionContext';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Avatar from '../../common/Avatar';
 import './WelcomeWidget.css';
 
@@ -99,24 +100,45 @@ const WelcomeWidget = ({ config }) => {
             <div className="quick-actions">
                 <h3 className="actions-title">빠른 작업</h3>
                 <div className="action-buttons">
-                    <MGButton 
+                    <MGButton
+                        type="button"
                         variant="primary"
-                        className="action-btn primary"
-                        preventDoubleClick={true}
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'md',
+                          loading: false,
+                          className: 'action-btn primary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                     >
                         새 상담 등록
                     </MGButton>
-                    <MGButton 
+                    <MGButton
+                        type="button"
                         variant="secondary"
-                        className="action-btn secondary"
-                        preventDoubleClick={true}
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'md',
+                          loading: false,
+                          className: 'action-btn secondary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                     >
                         통계 보기
                     </MGButton>
-                    <MGButton 
+                    <MGButton
+                        type="button"
                         variant="secondary"
-                        className="action-btn secondary"
-                        preventDoubleClick={true}
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'md',
+                          loading: false,
+                          className: 'action-btn secondary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        preventDoubleClick={false}
                     >
                         설정
                     </MGButton>

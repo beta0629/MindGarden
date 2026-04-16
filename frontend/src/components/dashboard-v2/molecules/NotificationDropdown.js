@@ -17,6 +17,7 @@ import { getConsultationMessagesListPath } from '../../../utils/consultationMess
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
@@ -310,7 +311,8 @@ const NotificationDropdown = () => {
               type="button"
               variant="outline"
               preventDoubleClick={false}
-              className="mg-v2-btn-text mg-v2-btn-sm"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-btn-text mg-v2-btn-sm' })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               aria-label="모두 읽음으로 표시"
               onClick={handleMarkAllRead}
             >
@@ -332,9 +334,13 @@ const NotificationDropdown = () => {
             id="tab-system"
             aria-selected={activeTab === TAB_SYSTEM}
             aria-controls="panel-system"
-            className={`mg-v2-notification-dropdown__tab ${
-              activeTab === TAB_SYSTEM ? 'mg-v2-notification-dropdown__tab--active' : ''
-            }`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: `mg-v2-notification-dropdown__tab ${activeTab === TAB_SYSTEM ? 'mg-v2-notification-dropdown__tab--active' : ''}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveTab(TAB_SYSTEM)}
           >
             시스템 공지
@@ -347,9 +353,13 @@ const NotificationDropdown = () => {
             id="tab-messages"
             aria-selected={activeTab === TAB_MESSAGES}
             aria-controls="panel-messages"
-            className={`mg-v2-notification-dropdown__tab ${
-              activeTab === TAB_MESSAGES ? 'mg-v2-notification-dropdown__tab--active' : ''
-            }`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: `mg-v2-notification-dropdown__tab ${activeTab === TAB_MESSAGES ? 'mg-v2-notification-dropdown__tab--active' : ''}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveTab(TAB_MESSAGES)}
           >
             메시지
@@ -383,9 +393,13 @@ const NotificationDropdown = () => {
                       type="button"
                       variant="outline"
                       preventDoubleClick={false}
-                      className={`mg-v2-notification-item ${
-                        isUnread ? 'mg-v2-notification-item--unread' : ''
-                      }`}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={(event) => handleSystemItemClick(event, item)}
                       onKeyDown={(event) =>
                         handleNotificationItemKeyDown(event, item, TAB_SYSTEM)
@@ -446,9 +460,13 @@ const NotificationDropdown = () => {
                       type="button"
                       variant="outline"
                       preventDoubleClick={false}
-                      className={`mg-v2-notification-item ${
-                        isUnread ? 'mg-v2-notification-item--unread' : ''
-                      }`}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={(event) => handleMessageItemClick(event, item)}
                       onKeyDown={(event) =>
                         handleNotificationItemKeyDown(event, item, TAB_MESSAGES)
@@ -505,7 +523,14 @@ const NotificationDropdown = () => {
           )} · ${formatDateTime(selectedItem.data?.publishedAt || selectedItem.data?.createdAt)}`}
           size="large"
           actions={
-            <MGButton type="button" variant="primary" preventDoubleClick={false} onClick={closeDetailModal}>
+            <MGButton
+              type="button"
+              variant="primary"
+              preventDoubleClick={false}
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={closeDetailModal}
+            >
               확인
             </MGButton>
           }

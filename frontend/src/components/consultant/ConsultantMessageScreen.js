@@ -9,6 +9,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 /**
@@ -583,8 +584,9 @@ const ConsultantMessageScreen = () => {
           <MGButton
             type="button"
             variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSkipMessage}
-            style={{ ...styles.button, ...styles.secondaryButton }}
             disabled={sending}
           >
             건너뛰기
@@ -592,11 +594,11 @@ const ConsultantMessageScreen = () => {
           <MGButton
             type="button"
             variant="success"
+            className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: sending })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSendMessage}
-            style={{ ...styles.button, ...styles.successButton }}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
             loading={sending}
-            loadingText="전송 중..."
           >
             📤 메시지 전송
           </MGButton>

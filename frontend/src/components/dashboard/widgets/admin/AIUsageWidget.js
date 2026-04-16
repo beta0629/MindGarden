@@ -21,6 +21,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 
 const MG_STATS_LUCIDE_SIZE = 22;
 
@@ -301,10 +302,17 @@ const AIUsageWidget = ({ widget, user }) => {
       variant="default"
       headerActions={
         <MGButton
-          onClick={() => handleAction('refresh')}
+          type="button"
           variant="outline"
           size="small"
-          type="button"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: ''
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => handleAction('refresh')}
           aria-label="새로고침"
           title="새로고침"
           preventDoubleClick={false}

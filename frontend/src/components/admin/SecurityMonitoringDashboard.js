@@ -7,6 +7,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import SecurityMonitoringWidget from './widgets/SecurityMonitoringWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { SecurityDataManager } from '../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
@@ -122,28 +123,41 @@ const SecurityMonitoringDashboard = () => {
                 <div className="security-monitoring-dashboard__header-actions">
                   <MGButton
                     type="button"
-                    variant="outline"
-                    size="small"
                     onClick={() => navigate('/admin')}
-                    className="back-button"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'back-button'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     관리자 대시보드
                   </MGButton>
                   <MGButton
                     type="button"
-                    variant="outline"
-                    size="small"
                     onClick={handleDownloadReport}
                     disabled={refreshing}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     보안 보고서
                   </MGButton>
                   <MGButton
                     type="button"
-                    variant="primary"
-                    size="small"
                     onClick={handleRefresh}
                     disabled={refreshing}
+                    loading={refreshing}
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'sm',
+                      loading: refreshing
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     새로고침
                   </MGButton>

@@ -7,6 +7,7 @@ import ClientSelectionStep from './steps/ClientSelectionStep';
 import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -219,7 +220,13 @@ const ScheduleModalNew = ({
           <MGButton
             type="button"
             variant="outline"
-            className="mg-v2-btn--outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-btn--outline'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
             onClick={handlePrevStep}
             disabled={loading}
@@ -231,7 +238,13 @@ const ScheduleModalNew = ({
           <MGButton
             type="button"
             variant="primary"
-            className="mg-v2-btn--primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-btn--primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
             onClick={() => {
               if (step === 1 && selectedConsultant) setStep(2);
@@ -250,11 +263,16 @@ const ScheduleModalNew = ({
           <MGButton
             type="button"
             variant="primary"
-            className="mg-v2-btn--primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading,
+              className: 'mg-v2-btn--primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleCreateSchedule}
             loading={loading}
             preventDoubleClick={false}
-            loadingText="생성 중..."
           >
             스케줄 생성
           </MGButton>

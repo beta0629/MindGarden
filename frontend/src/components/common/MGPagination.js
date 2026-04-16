@@ -1,4 +1,5 @@
 import React from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './MGPagination.css';
 
@@ -108,9 +109,15 @@ const MGPagination = ({
           variant="outline"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1 || loading}
-          className="mg-pagination__button mg-pagination__button--prev"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: 'mg-pagination__button mg-pagination__button--prev'
+          })}
           title="이전 페이지"
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           ←
         </MGButton>
@@ -129,10 +136,16 @@ const MGPagination = ({
                 variant="outline"
                 onClick={() => handlePageChange(page)}
                 disabled={loading}
-                className={`mg-pagination__button mg-pagination__button--page ${
-                  page === currentPage ? 'mg-pagination__button--active' : ''
-                }`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-pagination__button mg-pagination__button--page ${
+                    page === currentPage ? 'mg-pagination__button--active' : ''
+                  }`
+                })}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 {page}
               </MGButton>
@@ -146,9 +159,15 @@ const MGPagination = ({
           variant="outline"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || loading}
-          className="mg-pagination__button mg-pagination__button--next"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: 'mg-pagination__button mg-pagination__button--next'
+          })}
           title="다음 페이지"
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           →
         </MGButton>

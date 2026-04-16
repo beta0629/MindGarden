@@ -6,6 +6,7 @@ import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils
 import { fetchUserPermissions } from '../../utils/permissionUtils';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -196,7 +197,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             </div>
             <MGButton
               type="button"
-              className="simple-hamburger-close"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'simple-hamburger-close'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onClose}
               preventDoubleClick={false}
             >
@@ -227,7 +234,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             </div>
             <MGButton
               type="button"
-              className="simple-hamburger-close"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'simple-hamburger-close'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onClose}
               preventDoubleClick={false}
             >
@@ -241,7 +254,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               <span>{error}</span>
               <MGButton
                 type="button"
-                className="retry-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'retry-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => window.location.reload()}
                 preventDoubleClick={false}
               >
@@ -285,7 +304,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           </div>
           <MGButton
             type="button"
-            className="simple-hamburger-close"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'simple-hamburger-close'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             preventDoubleClick={false}
           >
@@ -354,7 +379,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         <div className="simple-hamburger-footer">
           <MGButton
             type="button"
-            className="simple-logout-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'simple-logout-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleLogout}
             preventDoubleClick={false}
             fullWidth

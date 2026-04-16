@@ -8,6 +8,7 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './ContentKpiRow.css';
 
@@ -74,7 +75,13 @@ const ContentKpiRow = ({ items = [] }) => {
                 type="button"
                 variant="primary"
                 size="medium"
-                className="mg-v2-content-kpi-card__click-target"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-content-kpi-card__click-target'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={item.onClick}
                 preventDoubleClick={false}
               >

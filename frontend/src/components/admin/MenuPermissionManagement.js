@@ -27,6 +27,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -220,7 +221,9 @@ const MenuPermissionManagement = () => {
                                 selectedRole ? (
                                     <MGButton
                                         variant="primary"
+                                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
                                         onClick={handleBatchSave}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         preventDoubleClick={true}
                                     >
                                         변경사항 저장

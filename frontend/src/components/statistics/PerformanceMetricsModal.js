@@ -12,6 +12,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -217,7 +218,13 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         </div>
                         <div className="mg-v2-modal-footer">
                             <MGButton
-                                className="mg-v2-button mg-v2-button--primary"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'mg-v2-button--primary'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={handleFilterChange}
                                 disabled={loading || recalculating}
                                 variant="primary"
@@ -225,11 +232,16 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 조회
                             </MGButton>
                             <MGButton
-                                className="mg-v2-button mg-v2-button--secondary"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'secondary',
+                                    size: 'md',
+                                    loading: recalculating,
+                                    className: 'mg-v2-button--secondary'
+                                })}
                                 onClick={handleRecalculate}
                                 disabled={loading || recalculating}
                                 loading={recalculating}
-                                loadingText="재계산 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="secondary"
                             >
                                 재계산
@@ -309,7 +321,13 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         <div className="mg-v2-empty-state">
                             <p>성과 지표 데이터가 없습니다.</p>
                             <MGButton
-                                className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'mg-v2-button--primary mg-v2-mt-md'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={loadMetrics}
                                 disabled={loading}
                                 variant="primary"

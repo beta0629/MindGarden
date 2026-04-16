@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { FileText } from 'lucide-react';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
@@ -36,10 +37,11 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
           </div>
           <h3 className="mg-v2-consultation-log-list-block__empty-title">{EMPTY_TITLE}</h3>
           <p className="mg-v2-consultation-log-list-block__empty-desc">{EMPTY_DESC}</p>
-          <MGButton 
+          <MGButton
             variant="outline"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mt-md' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onNavigateSchedule}
-            style={{ marginTop: '1rem' }}
           >
             <i className="bi bi-calendar" /> 일정 관리로 이동
           </MGButton>
@@ -90,6 +92,8 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
                   <MGButton
                     variant="outline"
                     size="small"
+                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => onViewRecord(record.id)}
                   >
                     <i className="bi bi-eye" /> 상담일지 조회
@@ -98,6 +102,8 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
                   <MGButton
                     variant="primary"
                     size="small"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => onWriteRecord(record.id)}
                   >
                     <i className="bi bi-pencil-square" /> 상담일지 작성

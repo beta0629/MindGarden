@@ -7,6 +7,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 /**
  * 입금 확인 대기 목록 위젯 - 표준화된 위젯
 /**
@@ -192,21 +193,35 @@ const PendingDepositsWidget = ({ widget, user }) => {
                 </div>
                 <div className="deposit-actions">
                   <MGButton
+                    type="button"
                     variant="success"
-                    className="deposit-btn deposit-btn-confirm"
+                    className={buildErpMgButtonClassName({
+                      variant: 'success',
+                      size: 'md',
+                      loading: false,
+                      className: 'deposit-btn deposit-btn-confirm'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleConfirmDeposit(deposit.id)}
                     title="입금 확인"
+                    preventDoubleClick={false}
                   >
-                    
                     확인
                   </MGButton>
                   <MGButton
+                    type="button"
                     variant="danger"
-                    className="deposit-btn deposit-btn-reject"
+                    className={buildErpMgButtonClassName({
+                      variant: 'danger',
+                      size: 'md',
+                      loading: false,
+                      className: 'deposit-btn deposit-btn-reject'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleRejectDeposit(deposit.id)}
                     title="입금 거부"
+                    preventDoubleClick={false}
                   >
-                    
                     거부
                   </MGButton>
                 </div>
@@ -217,7 +232,21 @@ const PendingDepositsWidget = ({ widget, user }) => {
           <div className="pending-deposits-empty">
             
             <p>확인 대기 중인 입금이 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading,
+                className: ''
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+              preventDoubleClick={false}
+            >
               새로고침
             </MGButton>
           </div>

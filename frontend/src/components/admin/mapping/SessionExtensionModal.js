@@ -6,6 +6,7 @@ import PackageSelector from '../../common/PackageSelector';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -168,7 +169,9 @@ const SessionExtensionModal = ({
                     <MGButton
                         type="button"
                         variant="secondary"
-                        className="mg-v2-button mg-v2-button-secondary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -177,11 +180,12 @@ const SessionExtensionModal = ({
                     <MGButton
                         type="button"
                         variant="primary"
-                        className="mg-v2-button mg-v2-button-primary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
                         onClick={handleSubmit}
                         disabled={isLoading || additionalSessions <= 0}
                         loading={isLoading}
-                        loadingText="요청 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                         {additionalSessions}회기 추가 요청
                     </MGButton>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
 
@@ -213,7 +214,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               type="button"
               variant="outline"
               size="small"
-              className="mg-mypage-password-form__toggle"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-mypage-password-form__toggle'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => togglePasswordVisibility('current')}
               disabled={isLoading || !!tempPassword}
               aria-label="비밀번호 표시 전환"
@@ -249,7 +256,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               type="button"
               variant="outline"
               size="small"
-              className="mg-mypage-password-form__toggle"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-mypage-password-form__toggle'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => togglePasswordVisibility('new')}
               disabled={isLoading}
               aria-label="비밀번호 표시 전환"
@@ -288,7 +301,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               type="button"
               variant="outline"
               size="small"
-              className="mg-mypage-password-form__toggle"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-mypage-password-form__toggle'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => togglePasswordVisibility('confirm')}
               disabled={isLoading}
               aria-label="비밀번호 표시 전환"
@@ -305,14 +324,22 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         </div>
 
         <div className="mg-mypage-password-form__actions">
-          <MGButton type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          <MGButton
+            type="button"
+            variant="outline"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isLoading })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+            disabled={isLoading}
+          >
             취소
           </MGButton>
           <MGButton
             type="submit"
             variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
             loading={isLoading}
-            loadingText="변경 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={isLoading || !validateForm()}
           >
             비밀번호 변경

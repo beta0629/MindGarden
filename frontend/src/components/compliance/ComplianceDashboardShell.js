@@ -2,6 +2,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 /**
  * 컴플라이언스 대시보드 공통 레이아웃 래퍼
@@ -34,6 +35,12 @@ export function ComplianceDashboardShell({
                   type="button"
                   variant="outline"
                   size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={onRefresh}
                   disabled={refreshDisabled}
                 >

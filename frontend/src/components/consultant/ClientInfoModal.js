@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus, MapPin } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
@@ -94,23 +95,55 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
       actions={
         <>
           {mode === 'view' && !isEditing && (
-            <MGButton type="button" variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleEdit}
+              preventDoubleClick={false}
+            >
               수정
             </MGButton>
           )}
           {(mode === 'add' || isEditing) && (
             <>
-              <MGButton type="submit" form="client-info-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
+              <MGButton
+                type="submit"
+                form="client-info-modal-form"
+                variant="primary"
+                size="medium"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+              >
                 {mode === 'add' ? '등록' : '저장'}
               </MGButton>
               {isEditing && (
-                <MGButton type="button" variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="medium"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={handleCancel}
+                  preventDoubleClick={false}
+                >
                   취소
                 </MGButton>
               )}
             </>
           )}
-          <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+            preventDoubleClick={false}
+          >
             닫기
           </MGButton>
         </>

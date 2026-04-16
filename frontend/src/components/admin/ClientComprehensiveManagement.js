@@ -23,6 +23,7 @@ import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import PasswordResetModal from './PasswordResetModal';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -474,9 +475,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         }
         return (
             <AdminCommonLayout title="내담자 종합관리">
-                <ContentArea>
-                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-                </ContentArea>
+                <div className="mg-v2-ad-b0kla mg-v2-client-management">
+                    <div className="mg-v2-ad-b0kla__container">
+                        <ContentArea ariaLabel="내담자 종합관리 본문">
+                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                        </ContentArea>
+                    </div>
+                </div>
             </AdminCommonLayout>
         );
     }
@@ -492,7 +497,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                             type="button"
                             variant="primary"
                             preventDoubleClick={false}
-                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false,
+                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                            })}
                             onClick={handleCreateClient}
                         >
                             새 내담자 등록
@@ -507,7 +518,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${mainTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
                                 onClick={() => handleMainTabChange('overview')}
                             >
                                 개요
@@ -516,7 +533,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'consultation' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${mainTab === 'consultation' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
                                 onClick={() => handleMainTabChange('consultation')}
                             >
                                 상담이력
@@ -525,7 +548,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'mapping' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${mainTab === 'mapping' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
                                 onClick={() => handleMainTabChange('mapping')}
                             >
                                 매칭
@@ -534,7 +563,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'statistics' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${mainTab === 'statistics' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
                                 onClick={() => handleMainTabChange('statistics')}
                             >
                                 통계
@@ -599,7 +634,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             variant="primary"
                                             size="small"
                                             preventDoubleClick={false}
-                                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'primary',
+                                                size: 'sm',
+                                                loading: false,
+                                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create'
+                                            })}
                                             onClick={handleCreateClient}
                                         >
                                             새 내담자 등록
@@ -612,7 +653,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             variant="outline"
                                             size="small"
                                             preventDoubleClick={false}
-                                            className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'outline',
+                                                size: 'sm',
+                                                loading: false,
+                                                className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`
+                                            })}
                                             onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                         >
                                             <SafeText>{opt.label}</SafeText>
@@ -814,9 +861,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     return (
         <AdminCommonLayout title="내담자 종합관리">
-            <ContentArea>
-                {contentBlock}
-            </ContentArea>
+            <div className="mg-v2-ad-b0kla mg-v2-client-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="내담자 종합관리 본문">
+                        {contentBlock}
+                    </ContentArea>
+                </div>
+            </div>
             {modalsBlock}
         </AdminCommonLayout>
     );

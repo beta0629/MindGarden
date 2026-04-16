@@ -6,6 +6,7 @@
 
 import React from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './CounselingHero.css';
 
 const CounselingHero = () => {
@@ -26,11 +27,26 @@ const CounselingHero = () => {
               여러분의 모든 걸음을 함께 걸어가겠습니다.
             </p>
             <div className="counseling-hero__actions">
-              <MGButton variant="primary" size="large" className="counseling-hero__cta">
+              <MGButton
+                variant="primary"
+                size="large"
+                className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'lg',
+                    loading: false,
+                    className: 'counseling-hero__cta'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
                 상담 예약하기
                 <span className="counseling-hero__arrow">→</span>
               </MGButton>
-              <MGButton variant="secondary" size="large">
+              <MGButton
+                variant="secondary"
+                size="large"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'lg', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
                 더 알아보기
               </MGButton>
             </div>

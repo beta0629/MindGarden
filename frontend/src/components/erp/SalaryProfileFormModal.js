@@ -667,6 +667,8 @@ const SalaryProfileFormModal = ({
                                 variant="secondary"
                                 size="small"
                                 className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })} option-add-btn`}
+                                loading={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={addOption}
                             >
                                 + 옵션 추가
@@ -716,6 +718,8 @@ const SalaryProfileFormModal = ({
                                     variant="danger"
                                     size="small"
                                     className={`${buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })} option-remove-btn`}
+                                    loading={false}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => removeOption(index)}
                                 >
                                     삭제
@@ -729,6 +733,8 @@ const SalaryProfileFormModal = ({
                         type="button"
                         variant="outline"
                         className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+                        loading={false}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
                         disabled={saving || initialLoading}
                     >

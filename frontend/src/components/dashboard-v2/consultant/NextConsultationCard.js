@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 
 /**
@@ -64,7 +65,13 @@ const NextConsultationCard = ({
           type="button"
           variant="outline"
           size="small"
-          className="mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onViewPreviousRecords(consultation.clientId)}
           preventDoubleClick={false}
           aria-label={`${consultation.clientName} 이전 일지 보기`}
@@ -75,7 +82,13 @@ const NextConsultationCard = ({
           type="button"
           variant="primary"
           size="small"
-          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-sm"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-btn mg-v2-btn-primary mg-v2-btn-sm'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onViewDetails(consultation.scheduleId)}
           preventDoubleClick={false}
           aria-label={`${consultation.clientName} 상담 상세보기`}

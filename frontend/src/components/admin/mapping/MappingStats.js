@@ -13,6 +13,7 @@ import {
 } from '../../../utils/codeHelper';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import '../../dashboard-v2/content/ContentKpiRow.css';
 
@@ -215,10 +216,16 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         <MGButton
                             type="button"
                             variant="primary"
-                            className="mg-v2-content-kpi-card__click-target"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false,
+                                className: 'mg-v2-content-kpi-card__click-target'
+                            })}
                             onClick={() => onStatCardClick && onStatCardClick(stat)}
                             title={titleHint}
                             preventDoubleClick={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                             <div className="mg-v2-content-kpi-card__info">
                                 <div className="mg-v2-content-kpi-card__top">

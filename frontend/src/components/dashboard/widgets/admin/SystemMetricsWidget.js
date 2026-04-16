@@ -21,6 +21,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const SystemMetricsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -327,6 +328,13 @@ const SystemMetricsWidget = ({ widget, user }) => {
           aria-label="새로고침"
           title="새로고침"
           preventDoubleClick={false}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading
+          })}
+          loading={loading}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}
         </MGButton>

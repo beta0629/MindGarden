@@ -4,6 +4,7 @@ import { useSession } from '../../hooks/useSession';
 import { getTenantErds } from '../../utils/erdApi';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ErdListPage.css';
 
 /**
@@ -104,7 +105,18 @@ const ErdListPage = () => {
       <div className="erd-list-page">
         <div className="erd-error">
           <p className="error-message">{error}</p>
-          <MGButton variant="primary" onClick={loadErds} className="retry-button" preventDoubleClick={false}>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'retry-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={loadErds}
+            preventDoubleClick={false}
+          >
             다시 시도
           </MGButton>
         </div>
@@ -125,7 +137,13 @@ const ErdListPage = () => {
         <MGButton
           type="button"
           variant="outline"
-          className={`filter-button ${filter === 'all' ? 'active' : ''}`}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: `filter-button ${filter === 'all' ? 'active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => setFilter('all')}
           preventDoubleClick={false}
         >
@@ -134,7 +152,13 @@ const ErdListPage = () => {
         <MGButton
           type="button"
           variant="outline"
-          className={`filter-button ${filter === 'tenant' ? 'active' : ''}`}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: `filter-button ${filter === 'tenant' ? 'active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => setFilter('tenant')}
           preventDoubleClick={false}
         >
@@ -143,7 +167,13 @@ const ErdListPage = () => {
         <MGButton
           type="button"
           variant="outline"
-          className={`filter-button ${filter === 'public' ? 'active' : ''}`}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: `filter-button ${filter === 'public' ? 'active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => setFilter('public')}
           preventDoubleClick={false}
         >
@@ -208,7 +238,13 @@ const ErdListPage = () => {
                 <MGButton
                   type="button"
                   variant="primary"
-                  className="erd-view-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: 'erd-view-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleErdClick(erd.diagramId);

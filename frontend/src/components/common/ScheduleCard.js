@@ -22,6 +22,7 @@ import {
   TIME_FORMATS
 } from '../../constants/schedule';
 import './ScheduleCard.css';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 
@@ -64,7 +65,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn view"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn view'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onView(schedule)}
           title={SCHEDULE_ACTION_LABELS.view}
         >
@@ -82,7 +89,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn confirm"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn confirm'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onConfirm(schedule)}
           title={SCHEDULE_ACTION_LABELS.confirm}
         >
@@ -100,7 +113,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn complete"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn complete'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onComplete(schedule)}
           title={SCHEDULE_ACTION_LABELS.complete}
         >
@@ -118,7 +137,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn cancel"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn cancel'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onCancel(schedule)}
           title={SCHEDULE_ACTION_LABELS.cancel}
         >
@@ -135,7 +160,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn edit"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn edit'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onEdit(schedule)}
           title={SCHEDULE_ACTION_LABELS.edit}
         >
@@ -152,7 +183,13 @@ const ScheduleCard = ({
           variant="outline"
           size="small"
           preventDoubleClick={false}
-          className="schedule-action-btn delete"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'schedule-action-btn delete'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onDelete(schedule)}
           title={SCHEDULE_ACTION_LABELS.delete}
         >

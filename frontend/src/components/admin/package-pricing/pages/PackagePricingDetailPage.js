@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -200,7 +201,12 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
               <MGButton
                 type="button"
                 variant="outline"
-                className="mg-v2-package-header-btn--secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  loading: false,
+                  className: 'mg-v2-package-header-btn--secondary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={goToList}
               >
                 {LABELS.LIST_BACK}
@@ -301,7 +307,12 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="mg-v2-package-header-btn--secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    loading: false,
+                    className: 'mg-v2-package-header-btn--secondary'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={goToList}
                   disabled={submitLoading}
                 >
@@ -310,11 +321,15 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 <MGButton
                   type="button"
                   variant="primary"
-                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    loading: submitLoading,
+                    className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                  })}
                   onClick={handleSubmit}
                   loading={submitLoading}
                   preventDoubleClick={true}
-                  loadingText="저장 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   {LABELS.SAVE}
                 </MGButton>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './iPhone17Button.css';
 
@@ -81,7 +82,7 @@ const IPhone17Button = ({
       disabled={disabled}
       onClick={onClick}
       loading={loading}
-      loadingText="처리 중..."
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       className={classes}
       style={style}
       preventDoubleClick={false}

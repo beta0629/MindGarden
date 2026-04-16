@@ -32,6 +32,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SocialSignupModal from './SocialSignupModal';
 import TenantSelection from './TenantSelection';
 import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
@@ -763,7 +764,8 @@ const UnifiedLogin = () => {
                     variant="outline"
                     size="small"
                     onClick={togglePassword}
-                    className="mg-v2-password-toggle"
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
@@ -783,8 +785,8 @@ const UnifiedLogin = () => {
                 variant="primary"
                 disabled={isLoading}
                 loading={isLoading}
-                loadingText="로딩중..."
-                className="mg-v2-button-primary"
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
                 preventDoubleClick={false}
               >
                 로그인
@@ -802,7 +804,8 @@ const UnifiedLogin = () => {
                   type="button"
                   variant="outline"
                   onClick={handleKakaoLogin}
-                  className="mg-v2-button-social mg-v2-button-kakao"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-kakao`}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   <svg 
@@ -826,7 +829,8 @@ const UnifiedLogin = () => {
                   type="button"
                   variant="outline"
                   onClick={handleNaverLogin}
-                  className="mg-v2-button-social mg-v2-button-naver"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-naver`}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   <svg 
@@ -849,7 +853,8 @@ const UnifiedLogin = () => {
                     type="button"
                     variant="outline"
                     onClick={handleGoogleLogin}
-                    className="mg-v2-button-social mg-v2-button-google"
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-google`}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     <svg 

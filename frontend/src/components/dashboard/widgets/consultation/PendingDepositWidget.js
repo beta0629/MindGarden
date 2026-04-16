@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const PendingDepositWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -183,7 +184,19 @@ const PendingDepositWidget = ({ widget, user }) => {
         <div className="deposit-list">
           <div className="list-header">
             <h4 className="list-title">미결제 보증금</h4>
-            <MGButton variant="outline" size="small" onClick={handleViewAll}>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleViewAll}
+            >
               전체 보기
             </MGButton>
           </div>
@@ -220,13 +233,23 @@ const PendingDepositWidget = ({ widget, user }) => {
                 </div>
                 <div className="deposit-actions">
                   <MGButton
+                    type="button"
                     variant="outline"
                     size="small"
-                    className="action-btn view-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn view-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewDeposit(deposit.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                   />
+                  >
+                    보기
+                  </MGButton>
                 </div>
               </div>
             ))}

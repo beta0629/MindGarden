@@ -4,6 +4,7 @@ import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './DiagnosticReportEditor.css';
 
 /**
@@ -158,11 +159,16 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                 <div className="header-actions">
                     {!report && (
                         <MGButton
-                            className="btn btn-primary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: isGenerating,
+                                className: 'btn btn-primary'
+                            })}
                             onClick={generateReport}
                             disabled={isGenerating}
                             loading={isGenerating}
-                            loadingText="생성 중..."
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             variant="primary"
                         >
                             🤖 AI 보고서 생성
@@ -171,7 +177,13 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
                     {report && !report.humanReviewed && (
                         <MGButton
-                            className="btn btn-secondary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-secondary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={exportToPDF}
                             variant="secondary"
                         >
@@ -195,7 +207,13 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                     <h4>진단 보고서가 없습니다</h4>
                     <p>상담 기록을 기반으로 AI가 진단 보고서 초안을 생성합니다.</p>
                     <MGButton
-                        className="btn btn-primary btn-large"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'lg',
+                            loading: false,
+                            className: 'btn btn-primary btn-large'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={generateReport}
                         variant="primary"
                         size="large"
@@ -284,18 +302,29 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                     {!report.humanReviewed && (
                         <div className="editor-actions">
                             <MGButton
-                                className="btn btn-secondary"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'secondary',
+                                    size: 'md',
+                                    loading: isSaving,
+                                    className: 'btn btn-secondary'
+                                })}
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 loading={isSaving}
-                                loadingText="저장 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="secondary"
                             >
                                 💾 저장
                             </MGButton>
 
                             <MGButton
-                                className="btn btn-success"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'success',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'btn btn-success'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={handleApprove}
                                 variant="success"
                             >

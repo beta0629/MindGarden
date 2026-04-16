@@ -17,6 +17,7 @@
 import React, { useState } from 'react';
 import { ReactSortable } from 'react-sortablejs';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { 
   getSupportedWidgetTypes,
   getCommonWidgetTypes,
@@ -323,8 +324,14 @@ const DashboardWidgetEditor = ({
                     type="button"
                     variant="outline"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'widget-action-btn widget-config-btn'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleConfigWidget(widget)}
-                    className="widget-action-btn widget-config-btn"
                     title="위젯 설정"
                     preventDoubleClick={false}
                     style={{
@@ -346,8 +353,14 @@ const DashboardWidgetEditor = ({
                     type="button"
                     variant="danger"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'danger',
+                      size: 'sm',
+                      loading: false,
+                      className: 'widget-action-btn widget-delete-btn'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleDeleteWidget(widget.id)}
-                    className="widget-action-btn widget-delete-btn"
                     title="위젯 삭제"
                     preventDoubleClick={false}
                     style={{

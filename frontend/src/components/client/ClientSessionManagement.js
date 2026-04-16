@@ -8,6 +8,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../styles/unified-design-tokens.css';
@@ -23,15 +24,21 @@ const ClientSessionManagement = () => {
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryLoading, setRetryLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     loadSessionData();
   }, []);
 
-  const loadSessionData = async() => {
+  const loadSessionData = async(opts = {}) => {
+    const fromErrorRetry = opts.fromErrorRetry === true;
     try {
-      setIsLoading(true);
+      if (fromErrorRetry) {
+        setRetryLoading(true);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
 
       const userResponse = await apiGet('/api/v1/auth/current-user');
@@ -63,7 +70,11 @@ const ClientSessionManagement = () => {
       console.error('회기 데이터 로드 실패:', err);
       setError(err.message || '회기 데이터를 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      if (fromErrorRetry) {
+        setRetryLoading(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -153,7 +164,14 @@ const ClientSessionManagement = () => {
               </div>
               <h3>오류가 발생했습니다</h3>
               <p>{error}</p>
-              <MGButton variant="primary" onClick={loadSessionData} preventDoubleClick={false}>
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
+                onClick={() => loadSessionData({ fromErrorRetry: true })}
+                loading={retryLoading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+              >
                 다시 시도
               </MGButton>
             </div>
@@ -176,6 +194,7 @@ const ClientSessionManagement = () => {
               <p>아직 상담사와 연결된 패키지가 없습니다.</p>
               <MGButton
                 variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                 onClick={() => navigate('/client/wellness')}
                 preventDoubleClick={false}
               >
@@ -198,7 +217,7 @@ const ClientSessionManagement = () => {
             <div className="client-session-menu-content">
               <MGButton
                 variant="outline"
-                className="client-session-menu-item"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-session-menu-item`}
                 onClick={() => handleMenuAction('dashboard')}
                 preventDoubleClick={false}
               >
@@ -207,7 +226,7 @@ const ClientSessionManagement = () => {
               </MGButton>
               <MGButton
                 variant="outline"
-                className="client-session-menu-item"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-session-menu-item`}
                 onClick={() => handleMenuAction('session-management')}
                 preventDoubleClick={false}
               >
@@ -216,7 +235,7 @@ const ClientSessionManagement = () => {
               </MGButton>
               <MGButton
                 variant="outline"
-                className="client-session-menu-item"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-session-menu-item`}
                 onClick={() => handleMenuAction('payment-history')}
                 preventDoubleClick={false}
               >
@@ -225,7 +244,7 @@ const ClientSessionManagement = () => {
               </MGButton>
               <MGButton
                 variant="outline"
-                className="client-session-menu-item"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-session-menu-item`}
                 onClick={() => handleMenuAction('consultation-guide')}
                 preventDoubleClick={false}
               >

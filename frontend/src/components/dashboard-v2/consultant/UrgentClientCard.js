@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * 긴급 내담자 카드 컴포넌트 (Molecule)
@@ -50,7 +51,13 @@ const UrgentClientCard = ({ client, onClick, className = '' }) => {
       type="button"
       variant="outline"
       size="medium"
-      className={`mg-v2-urgent-client-card ${className}`}
+      className={buildErpMgButtonClassName({
+        variant: 'outline',
+        size: 'md',
+        loading: false,
+        className: `mg-v2-urgent-client-card ${className}`
+      })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={onClick}
       preventDoubleClick={false}
       aria-label={`${client.clientName} 상세보기`}

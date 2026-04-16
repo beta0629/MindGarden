@@ -8,6 +8,7 @@
 
 import React from 'react';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { SearchInput } from '../../../dashboard-v2/atoms';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import { MAPPING_FILTER_OPTIONS } from '../../../../constants/mapping';
@@ -38,10 +39,16 @@ const MappingSearchSection = ({
               type="button"
               variant="outline"
               size="small"
-              className={`mg-v2-mapping-search-section__chip ${
-                filterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''
-              }`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: `mg-v2-mapping-search-section__chip ${
+                  filterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''
+                }`
+              })}
               onClick={() => onFilterChange && onFilterChange(opt.value)}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               {toDisplayString(opt.label)}

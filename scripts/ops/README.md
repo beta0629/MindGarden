@@ -9,8 +9,11 @@
 
 | 파일 | 설명 |
 |------|------|
-| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du` |
+| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한) |
 | `prod-log-cleanup.sh` | `MG_LOG_ROOT` 하위만, `*.log.*` / `*.gz` / `*.hprof`, `-mtime +N`. 기본 DRY_RUN |
+| `prune-old-logs.sh` | **nginx 전용** (`/var/log/nginx`), 회전·압축본만(`*.gz`, `*.log.*`), `-mtime +7`. **`prod-log-cleanup.sh`**(MindGarden `/var/log/mindgarden`)와 **책임 분리** — 앱·JVM 로그 트리는 후자가 담당 |
+
+**이중 운영(경로)**: MindGarden 애플리케이션 로그는 주로 `/var/log/mindgarden` 트리에서 `prod-log-cleanup.sh`로 다루고, nginx 액세스·에러의 **회전·gzip 아카이브**는 `/var/log/nginx`에서 `prune-old-logs.sh`만 대상으로 한다. 동일 서버에서 두 스크립트를 쓸 때 **어느 경로가 어떤 스크립트 책임인지**를 혼동하지 않도록 운영 런북·cron 항목에 구분해 둔다. `prune-old-logs.sh`는 활성 단일 `*.log`는 삭제하지 않으며, 회전·압축 파일만 오래된 것부터 제거한다.
 
 ## 환경변수
 
@@ -26,6 +29,12 @@
 | `OPS_BACKEND_SERVICE` | (미설정) | 예: `ops-backend.service`. 설정 시에만 `systemctl is-active` 추가 |
 | `MG_LOG_DIRS` | `/var/log/mindgarden:/var/log/nginx` | 콜론(`:`)으로 복수 경로(OPS nginx access 등) |
 | `MG_HEALTH_CONNECT_TIMEOUT` | `10` | `curl` 연결 타임아웃(초) |
+| `MG_SKIP_JOURNAL` | `0` | `1`이면 `journalctl` 블록 생략 |
+| `MG_JOURNAL_LINES` | `50` | `journalctl -n`에 전달할 최근 줄 수 |
+| `MG_JOURNAL_OUT_MAX_LINES` | `80` | 마스킹 후 출력 상한(`head`) |
+| `MG_MEMORY_ALERT_CANDIDATES` | `/var/log/mindgarden/memory-alert.log:/var/www/mindgarden/logs/memory-alert.log` | 콜론 분리 후 **존재하는 첫 파일**만 `tail` |
+| `MG_MEMORY_ALERT_TAIL_LINES` | `30` | `tail -n` 줄 수 |
+| `MG_MEMORY_ALERT_OUT_MAX_LINES` | `80` | 마스킹 후 출력 상한(`head`) |
 
 ### `prod-log-cleanup.sh`
 

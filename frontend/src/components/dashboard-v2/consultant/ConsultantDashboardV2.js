@@ -14,6 +14,7 @@ import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -546,7 +547,13 @@ const ConsultantDashboardV2 = ({ user }) => {
                 type="button"
                 variant="outline"
                 size="small"
-                className={`upcoming-schedule-item ${isHighlighted ? 'upcoming-schedule-item--highlighted' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: `upcoming-schedule-item ${isHighlighted ? 'upcoming-schedule-item--highlighted' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleScheduleClick(schedule.id)}
                 preventDoubleClick={false}
                 aria-label={`${dateStr} ${timeStr} ${schedule.clientName} ${schedule.consultationType} ${schedule.status === 'CONFIRMED' ? '확정' : '대기'}`}
@@ -686,7 +693,13 @@ const ConsultantDashboardV2 = ({ user }) => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
@@ -708,7 +721,13 @@ const ConsultantDashboardV2 = ({ user }) => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
@@ -730,7 +749,13 @@ const ConsultantDashboardV2 = ({ user }) => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate('/notifications')}
                 preventDoubleClick={false}
               >

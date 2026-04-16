@@ -9,6 +9,12 @@
 import React from 'react';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
+import {
+  buildErpMgButtonClassName,
+  ERP_MG_BUTTON_LOADING_TEXT,
+  mapErpSizeToMg,
+  mapErpVariantToMg
+} from '../common/erpMgButtonProps';
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 
@@ -144,13 +150,17 @@ const RefundHistoryTableBlock = ({
                     <td className="refund-management__td refund-management__td--action">
                       <MGButton
                         type="button"
-                        variant="secondary"
-                        size="small"
-                        className="mg-v2-button mg-v2-button--secondary mg-v2-button--small"
+                        variant={mapErpVariantToMg('secondary')}
+                        size={mapErpSizeToMg('sm')}
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: isLoadingReflect
+                        })}
                         onClick={() => onReflectErp(refund)}
                         disabled={isLoadingReflect}
                         loading={isLoadingReflect}
-                        loadingText="반영 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         aria-label="해당 건 ERP 환불 반영"
                       >
                         ERP 반영
@@ -172,9 +182,10 @@ const RefundHistoryTableBlock = ({
         >
           <MGButton
             type="button"
-            variant="secondary"
-            size="small"
-            className="mg-v2-button mg-v2-button--secondary"
+            variant={mapErpVariantToMg('secondary')}
+            size={mapErpSizeToMg('md')}
+            className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={!hasPrevious}
             onClick={() => onPageChange(currentPage - 1)}
             preventDoubleClick={false}
@@ -186,9 +197,10 @@ const RefundHistoryTableBlock = ({
           </span>
           <MGButton
             type="button"
-            variant="secondary"
-            size="small"
-            className="mg-v2-button mg-v2-button--secondary"
+            variant={mapErpVariantToMg('secondary')}
+            size={mapErpSizeToMg('md')}
+            className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={!hasNext}
             onClick={() => onPageChange(currentPage + 1)}
             preventDoubleClick={false}

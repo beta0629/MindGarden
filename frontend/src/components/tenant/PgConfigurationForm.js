@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ICONS } from '../../constants/icons';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import { showNotification } from '../../utils/notification';
 import { testPgConnection } from '../../utils/pgApi';
@@ -461,7 +462,13 @@ const PgConfigurationForm = ({
                 <MGButton
                   type="button"
                   onClick={() => setShowSecretKey(!showSecretKey)}
-                  className="icon-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label={showSecretKey ? 'API 시크릿 숨기기' : 'API 시크릿 보기'}
                   variant="outline"
                   size="small"
@@ -505,6 +512,8 @@ const PgConfigurationForm = ({
                   type="button"
                   variant="outline"
                   size="small"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCopyWebhookUrl}
                   preventDoubleClick={false}
                   aria-label="웹훅 URL 복사"
@@ -545,7 +554,13 @@ const PgConfigurationForm = ({
                 <MGButton
                   type="button"
                   onClick={() => setShowPortoneWebhookSecret(!showPortoneWebhookSecret)}
-                  className="icon-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label={showPortoneWebhookSecret ? '웹훅 시크릿 숨기기' : '웹훅 시크릿 보기'}
                   variant="outline"
                   size="small"
@@ -664,7 +679,13 @@ const PgConfigurationForm = ({
                 <MGButton
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
-                  className="icon-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
                   variant="outline"
                   size="small"
@@ -705,7 +726,13 @@ const PgConfigurationForm = ({
                 <MGButton
                   type="button"
                   onClick={() => setShowSecretKey(!showSecretKey)}
-                  className="icon-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   aria-label={showSecretKey ? '시크릿 키 숨기기' : '시크릿 키 보기'}
                   variant="outline"
                   size="small"
@@ -872,10 +899,15 @@ const PgConfigurationForm = ({
             <MGButton
               type="button"
               variant="secondary"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'md',
+                loading: testConnectionLoading
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleTestConnection}
               disabled={!canRunConnectionTest || testConnectionLoading}
               loading={testConnectionLoading}
-              loadingText="테스트 중..."
               preventDoubleClick={false}
               aria-label="PG 연결 테스트"
             >
@@ -899,6 +931,8 @@ const PgConfigurationForm = ({
         <MGButton
           type="button"
           variant="secondary"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onCancel}
           disabled={loading}
           preventDoubleClick={false}
@@ -908,9 +942,10 @@ const PgConfigurationForm = ({
         <MGButton
           type="submit"
           variant="primary"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: loading })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           disabled={loading}
           loading={loading}
-          loadingText="저장 중..."
           preventDoubleClick={false}
           aria-label={mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
         >

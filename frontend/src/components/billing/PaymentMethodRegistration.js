@@ -25,6 +25,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { requestBillingAuth, PG_PROVIDER } from '../../utils/paymentGateway';
 import { generateUUID, generateCallbackUrl, getPgProviderCodes, getCodeLabel } from '../../utils/billingService';
 import { BILLING_CSS, ICON_SIZES, BILLING_MESSAGES, CALLBACK_STATUS, COMMON_CODE_GROUPS } from '../../constants/billing';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './PaymentMethodRegistration.css';
 
@@ -181,14 +182,25 @@ const PaymentMethodRegistration = ({
         {onCancel && (
           <MGButton
             variant="secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: false
+            })}
             onClick={onCancel}
             disabled={loading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             {BILLING_MESSAGES.REGISTRATION.CANCEL_BUTTON}
           </MGButton>
         )}
         <MGButton
           variant="primary"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading
+          })}
           onClick={handleRegister}
           disabled={loading || !customerKey}
           loading={loading}

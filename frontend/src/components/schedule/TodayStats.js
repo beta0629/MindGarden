@@ -3,6 +3,7 @@ import { apiGet } from '../../utils/ajax';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { ContentKpiRow } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ICONS } from '../../constants/icons';
 
 const CalendarIcon = ICONS.CALENDAR;
@@ -99,7 +100,13 @@ const TodayStats = () => {
                 <MGButton
                     variant="outline"
                     size="small"
-                    className="today-stats-refresh mg-v2-btn-icon mg-v2-text-secondary"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'today-stats-refresh mg-v2-btn-icon mg-v2-text-secondary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={loadTodayStats}
                     title="새로고침"
                     preventDoubleClick={false}

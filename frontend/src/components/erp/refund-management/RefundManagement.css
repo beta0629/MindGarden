@@ -28,6 +28,15 @@
   min-height: var(--mg-spacing-3xl, 4rem);
 }
 
+.refund-management__inline-loading--section {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.refund-management__kpi-block .refund-management__inline-loading--section {
+  min-height: var(--mg-spacing-4xl, 5rem);
+}
+
 .refund-management__section {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));

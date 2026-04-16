@@ -12,6 +12,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -87,9 +88,15 @@ const SystemNotificationManagement = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="mg-v2-button mg-v2-button--primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
               aria-label="공지 작성"
               onClick={() => globalThis.dispatchEvent(new CustomEvent('admin-notifications-create-notice'))}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               공지 작성
             </MGButton>

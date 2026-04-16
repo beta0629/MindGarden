@@ -3,6 +3,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import '../../styles/main.css';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './HelpPage.css';
 
@@ -166,7 +167,13 @@ const HelpPage = () => {
                 <MGButton
                   key={section.id}
                   type="button"
-                  className={`help-page__nav-item ${activeSection === section.id ? 'help-page__nav-item--active' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: `help-page__nav-item ${activeSection === section.id ? 'help-page__nav-item--active' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setActiveSection(section.id)}
                   variant="outline"
                   preventDoubleClick={false}
@@ -193,14 +200,26 @@ const HelpPage = () => {
           </p>
           <div className="help-page__footer-actions">
             <MGButton
-              className="btn btn-primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'btn btn-primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => window.open('mailto:support@mindgarden.com')}
               variant="primary"
             >
               <i className="bi bi-envelope" /> 이메일 문의
             </MGButton>
             <MGButton
-              className="btn btn-outline-primary"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'btn btn-outline-primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => window.open('tel:1588-0000')}
               variant="outline"
             >

@@ -5,6 +5,7 @@ import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './RatableConsultationsWidget.css';
 const RatableConsultationsWidget = ({ widget, user }) => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -158,12 +159,18 @@ const RatableConsultationsWidget = ({ widget, user }) => {
               </div>
             </div>
             <MGButton
-              className="ratable-consultation-rate-btn"
-              variant="primary"
               type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'ratable-consultation-rate-btn'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleRateConsultant(schedule)}
+              preventDoubleClick={false}
             >
-              
               평가하기
             </MGButton>
           </div>

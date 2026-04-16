@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -107,7 +108,14 @@ const ComplianceDashboard = () => {
           <p className="mg-v2-compliance-dashboard__state-text">
             <SafeText>{error}</SafeText>
           </p>
-          <MGButton type="button" variant="primary" size="small" onClick={loadComplianceData}>
+          <MGButton
+            type="button"
+            variant="primary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={loadComplianceData}
+          >
             다시 시도
           </MGButton>
         </section>

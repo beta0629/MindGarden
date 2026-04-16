@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isEditing }) => {
   const [addressType, setAddressType] = useState('HOME');
@@ -151,7 +152,8 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
           {isEditing ? (
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleAddressSearch}
               variant="outline"
               preventDoubleClick={false}

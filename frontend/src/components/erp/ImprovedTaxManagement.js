@@ -325,9 +325,12 @@ const ImprovedTaxManagement = () => {
                         type="button"
                         className={buildErpMgButtonClassName({
                           variant: 'primary',
+                          size: 'md',
+                          loading: false,
                           className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
                         })}
                         onClick={() => setShowCreateModal(true)}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       >
                         추가 세금 계산
                       </MGButton>
@@ -362,40 +365,44 @@ const ImprovedTaxManagement = () => {
               <MGButton
                 type="button"
                 variant="outline"
-                size="medium"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                size="small"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('overview')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 개요
               </MGButton>
               <MGButton
                 type="button"
                 variant="outline"
-                size="medium"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                size="small"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('calculations')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 세금 계산
               </MGButton>
               <MGButton
                 type="button"
                 variant="outline"
-                size="medium"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                size="small"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('reports')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 신고서
               </MGButton>
               <MGButton
                 type="button"
                 variant="outline"
-                size="medium"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                size="small"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 onClick={() => setActiveTab('settings')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 설정
               </MGButton>
@@ -537,8 +544,11 @@ const ImprovedTaxManagement = () => {
                             type="button"
                             className={buildErpMgButtonClassName({
                               variant: 'primary',
+                              size: 'md',
+                              loading: false,
                               className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
                             })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             신고서 작성
                           </MGButton>
@@ -569,8 +579,11 @@ const ImprovedTaxManagement = () => {
                             type="button"
                             className={buildErpMgButtonClassName({
                               variant: 'primary',
+                              size: 'md',
+                              loading: false,
                               className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
                             })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             신고서 확인
                           </MGButton>
@@ -644,9 +657,10 @@ const ImprovedTaxManagement = () => {
               variant="secondary"
               size="medium"
               type="button"
-              className={buildErpMgButtonClassName({ variant: 'secondary' })}
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
               onClick={() => setShowCreateModal(false)}
               disabled={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               취소
             </MGButton>
@@ -656,6 +670,7 @@ const ImprovedTaxManagement = () => {
               type="button"
               className={buildErpMgButtonClassName({
                 variant: 'primary',
+                size: 'md',
                 loading
               })}
               onClick={handleCreateTaxItem}

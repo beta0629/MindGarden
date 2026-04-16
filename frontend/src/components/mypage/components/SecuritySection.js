@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const parseUaSummary = () => {
   if (typeof navigator === 'undefined') return '이 브라우저';
@@ -39,7 +40,8 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
           <div className="mg-mypage__readonly-row">
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onPasswordChange}
               variant="primary"
             >
@@ -47,7 +49,8 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
             </MGButton>
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onPasswordReset}
               variant="outline"
               preventDoubleClick={false}
@@ -74,7 +77,8 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
             </span>
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => notificationManager.show('2단계 인증은 준비 중입니다.', 'info')}
               variant="outline"
               preventDoubleClick={false}
@@ -110,7 +114,8 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
         <div className="mg-v2-card-actions">
           <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button--danger mg-v2-button--outline"
+            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onRequestLogoutOtherDevices}
             variant="danger"
           >

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
@@ -121,7 +122,8 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="mg-mypage-password-form__actions">
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isLoading })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onClose}
               disabled={isLoading}
               variant="outline"
@@ -131,10 +133,10 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             </MGButton>
             <MGButton
               type="submit"
-              className="mg-v2-button mg-v2-button--primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
               disabled={isLoading || cooldown > 0 || !email.trim()}
               loading={isLoading}
-              loadingText="발송 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               variant="primary"
             >
               재설정 이메일 발송
@@ -157,7 +159,8 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="mg-mypage-password-form__actions mg-mypage-password-form__actions--center">
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleRetry}
               disabled={cooldown > 0}
               variant="outline"
@@ -167,7 +170,8 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             </MGButton>
             <MGButton
               type="button"
-              className="mg-v2-button mg-v2-button--primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onClose}
               variant="primary"
             >

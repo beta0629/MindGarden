@@ -9,6 +9,7 @@ import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 const ClientMessageWidget = ({ widget, user }) => {
@@ -256,9 +257,15 @@ const ClientMessageWidget = ({ widget, user }) => {
     ),
     actions: allMessages.length > 0 && (
       <MGButton
-        className="client-message-view-all-btn"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: false,
+          className: 'client-message-view-all-btn'
+        })}
         variant="outline"
         type="button"
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleViewAllMessages}
       >
         전체보기

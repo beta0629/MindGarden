@@ -10,6 +10,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
 import ConsultantRecordListBlock from './records/ConsultantRecordListBlock';
 import ConsultationLogModal from './ConsultationLogModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './ConsultantRecords.css';
 
@@ -184,10 +185,16 @@ const ConsultantRecords = () => {
                   <i className="bi bi-exclamation-triangle-fill me-2" />
                   {error}
                 </div>
-                <MGButton 
+                <MGButton
                   variant="outline"
                   size="small"
-                  className="btn btn-outline-danger btn-sm" 
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'btn btn-outline-danger btn-sm'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={loadRecords}
                   disabled={loading}
                 >

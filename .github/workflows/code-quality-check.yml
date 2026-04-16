@@ -38,6 +38,7 @@ jobs:
         
     - name: 🔍 Checkstyle 검사
       run: |
+        # 레거시 대량 위반으로 전체 게이트로 쓰면 job이 항상 실패함. 별도 에픽에서 정리 후 || true 제거 예정.
         mvn checkstyle:check || true
         echo "Checkstyle 검사 완료"
         
@@ -61,14 +62,17 @@ jobs:
 
     - name: 🧪 테스트 실행
       run: |
-        mvn test -Dspring.profiles.active=test || true
-        
+        # 로컬/PR에서도 동일하게 mvn test 통과를 권장합니다.
+        mvn test -Dspring.profiles.active=test
+
     - name: 📊 코드 품질 메트릭 수집
       run: |
+        # 부가 메트릭: 실패해도 본 검사(job)는 계속합니다.
         node scripts/development/code-quality/collect-code-quality-metrics.js || true
-        
+
     - name: 📄 코드 품질 리포트 생성
       run: |
+        # 부가 리포트: 실패해도 본 검사(job)는 계속합니다.
         node scripts/development/code-quality/generate-code-quality-report.js || true
         
     - name: 📤 리포트 업로드

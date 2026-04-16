@@ -21,6 +21,7 @@ import ContentCard from '../dashboard-v2/content/ContentCard';
 import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
@@ -100,10 +101,15 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                     type="button"
                     variant="primary"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'sm',
+                      loading: assigning
+                    })}
                     onClick={() => onAssign(u)}
                     disabled={assigning}
                     loading={assigning}
-                    loadingText="지정 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     스태프로 지정
@@ -480,13 +486,34 @@ const StaffManagement = ({ embedded = false }) => {
           role="group"
           aria-label="스태프 작업"
         >
-          <MGButton type="button" variant="secondary" size="small" onClick={() => openStaffDetail(staff)} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+            onClick={() => openStaffDetail(staff)}
+            preventDoubleClick={false}
+          >
             상세
           </MGButton>
-          <MGButton type="button" variant="primary" size="small" onClick={() => openStaffEdit(staff)} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="primary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+            onClick={() => openStaffEdit(staff)}
+            preventDoubleClick={false}
+          >
             수정
           </MGButton>
-          <MGButton type="button" variant="secondary" size="small" onClick={() => handleOpenRoleChange(staff)} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+            onClick={() => handleOpenRoleChange(staff)}
+            preventDoubleClick={false}
+          >
             역할 변경
           </MGButton>
         </div>
@@ -553,6 +580,7 @@ const StaffManagement = ({ embedded = false }) => {
               type="button"
               variant="primary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
               onClick={openCreateStaffModal}
               disabled={loading}
               preventDoubleClick={false}
@@ -563,6 +591,7 @@ const StaffManagement = ({ embedded = false }) => {
               type="button"
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
               onClick={openAddStaffModal}
               disabled={loading}
               preventDoubleClick={false}
@@ -573,11 +602,16 @@ const StaffManagement = ({ embedded = false }) => {
               type="button"
               variant="secondary"
               size="small"
-              className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--secondary"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading,
+                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--secondary'
+              })}
               onClick={loadUsers}
               disabled={loading}
               loading={loading}
-              loadingText="불러오는 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
 새로고침
@@ -723,7 +757,13 @@ const StaffManagement = ({ embedded = false }) => {
         size="medium"
         variant="default"
         actions={
-          <MGButton type="button" variant="secondary" onClick={closeStaffDetail} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            onClick={closeStaffDetail}
+            preventDoubleClick={false}
+          >
             닫기
           </MGButton>
         }
@@ -784,16 +824,24 @@ const StaffManagement = ({ embedded = false }) => {
         loading={staffEditSubmitting}
         actions={
           <>
-            <MGButton type="button" variant="secondary" onClick={closeStaffEdit} disabled={staffEditSubmitting} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              onClick={closeStaffEdit}
+              disabled={staffEditSubmitting}
+              preventDoubleClick={false}
+            >
               취소
             </MGButton>
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: staffEditSubmitting })}
               onClick={handleStaffEditSubmit}
               disabled={staffEditSubmitting}
               loading={staffEditSubmitting}
-              loadingText="저장 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               저장
@@ -853,16 +901,24 @@ const StaffManagement = ({ embedded = false }) => {
         loading={roleChangeSubmitting}
         actions={
           <>
-            <MGButton type="button" variant="secondary" onClick={handleCloseRoleChange} disabled={roleChangeSubmitting} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              onClick={handleCloseRoleChange}
+              disabled={roleChangeSubmitting}
+              preventDoubleClick={false}
+            >
               취소
             </MGButton>
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: roleChangeSubmitting })}
               onClick={handleConfirmRoleChange}
               disabled={roleChangeSubmitting || !selectedNewRole || selectedNewRole === roleOf(roleChangeModal.user)}
               loading={roleChangeSubmitting}
-              loadingText="변경 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               확인
@@ -904,7 +960,13 @@ const StaffManagement = ({ embedded = false }) => {
         variant="form"
         loading={addStaffModal.loading}
         actions={
-          <MGButton type="button" variant="secondary" onClick={closeAddStaffModal} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            onClick={closeAddStaffModal}
+            preventDoubleClick={false}
+          >
             닫기
           </MGButton>
         }
@@ -934,16 +996,24 @@ const StaffManagement = ({ embedded = false }) => {
         loading={createStaffModal.submitting}
         actions={
           <>
-            <MGButton type="button" variant="secondary" onClick={closeCreateStaffModal} disabled={createStaffModal.submitting} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              onClick={closeCreateStaffModal}
+              disabled={createStaffModal.submitting}
+              preventDoubleClick={false}
+            >
               취소
             </MGButton>
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: createStaffModal.submitting })}
               onClick={handleCreateStaffSubmit}
               disabled={createStaffModal.submitting || !(createForm.email || '').trim()}
               loading={createStaffModal.submitting}
-              loadingText="등록 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               등록
@@ -1033,7 +1103,7 @@ const StaffManagement = ({ embedded = false }) => {
                   type="button"
                   variant="secondary"
                   size="small"
-                  className="mg-v2-button mg-v2-button-secondary"
+                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                   onClick={() => {
                     if (globalThis.window?.daum?.Postcode) {
                       new globalThis.window.daum.Postcode({
@@ -1111,12 +1181,17 @@ const StaffManagement = ({ embedded = false }) => {
                   type="button"
                   variant="secondary"
                   size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'sm',
+                    loading: isCheckingStaffEmail,
+                    className: 'mg-v2-button--compact'
+                  })}
                   onClick={handleStaffEmailDuplicateCheck}
                   disabled={isCheckingStaffEmail || !(createForm.email || '').trim() || createStaffModal.submitting}
-                  className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                   data-action="email-duplicate-check"
                   loading={isCheckingStaffEmail}
-                  loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}

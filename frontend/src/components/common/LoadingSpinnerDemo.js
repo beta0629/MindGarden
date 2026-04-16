@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 // TODO: LoadingSpinner.js 모듈 추가 시 이 줄 제거
 // eslint-disable-next-line import/no-unresolved -- 데모 전용; 동일 디렉터리 컴포넌트가 아직 없음
 import LoadingSpinner from './LoadingSpinner';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './LoadingSpinnerDemo.css';
 
@@ -87,7 +88,13 @@ const LoadingSpinnerDemo = () => {
       <div className="demo-section">
         <h3>전체 화면 로딩</h3>
         <MGButton
-          className="demo-button"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'demo-button'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           variant="primary"
           preventDoubleClick={false}
           onClick={handleToggleLoading}

@@ -25,6 +25,7 @@ import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
@@ -333,7 +334,13 @@ const TenantProfile = () => {
                 role="tab"
                 aria-selected={activeTab === 'overview'}
                 variant="outline"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setActiveTab('overview')}
                 preventDoubleClick={false}
               >
@@ -344,7 +351,13 @@ const TenantProfile = () => {
                 role="tab"
                 aria-selected={activeTab === 'subscription'}
                 variant="outline"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'subscription' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'subscription' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setActiveTab('subscription')}
                 preventDoubleClick={false}
               >
@@ -355,7 +368,13 @@ const TenantProfile = () => {
                 role="tab"
                 aria-selected={activeTab === 'payment'}
                 variant="outline"
-                className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setActiveTab('payment')}
                 preventDoubleClick={false}
               >
@@ -377,6 +396,8 @@ const TenantProfile = () => {
                           type="button"
                           variant="outline"
                           size="medium"
+                          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={openTenantNameModal}
                           data-testid="tenant-profile-rename-open"
                           preventDoubleClick={false}
@@ -468,6 +489,8 @@ const TenantProfile = () => {
                       type="button"
                       variant="primary"
                       size="small"
+                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setShowPaymentMethodRegistration(true)}
                       preventDoubleClick={false}
                     >
@@ -515,7 +538,13 @@ const TenantProfile = () => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className="payment-method-action-btn"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'sm',
+                                  loading: false,
+                                  className: 'payment-method-action-btn'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
                                 title={toDisplayString('기본 결제 수단으로 설정')}
                                 preventDoubleClick={false}
@@ -527,7 +556,13 @@ const TenantProfile = () => {
                               type="button"
                               variant="outline"
                               size="small"
-                              className="payment-method-action-btn payment-method-action-btn--danger"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'payment-method-action-btn payment-method-action-btn--danger'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
                               title={toDisplayString('삭제')}
                               preventDoubleClick={false}
@@ -544,6 +579,8 @@ const TenantProfile = () => {
                         <MGButton
                           type="button"
                           variant="primary"
+                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => setShowPaymentMethodRegistration(true)}
                           preventDoubleClick={false}
                         >
@@ -575,6 +612,12 @@ const TenantProfile = () => {
                   type="button"
                   variant="outline"
                   size="medium"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={closeTenantNameModal}
                   disabled={tenantNameSaving}
                   preventDoubleClick={false}
@@ -586,7 +629,14 @@ const TenantProfile = () => {
                   form="tenant-profile-rename-form"
                   variant="primary"
                   size="medium"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: tenantNameSaving
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={tenantNameSaving}
+                  loading={tenantNameSaving}
                   data-testid="tenant-profile-rename-save"
                   preventDoubleClick={false}
                 >

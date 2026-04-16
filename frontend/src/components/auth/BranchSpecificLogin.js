@@ -12,6 +12,7 @@ import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './BranchLogin.css';
 
 /**
@@ -196,8 +197,10 @@ const BranchSpecificLogin = () => {
                 <MGButton
                   type="button"
                   variant="primary"
-                  className="retry-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoadingBranch })} retry-button`}
                   onClick={loadBranchInfo}
+                  loading={isLoadingBranch}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   다시 시도
@@ -205,8 +208,9 @@ const BranchSpecificLogin = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="link-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} link-button`}
                   onClick={() => navigate('/login')}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   메인 로그인으로 이동
@@ -284,8 +288,9 @@ const BranchSpecificLogin = () => {
                   type="button"
                   variant="outline"
                   size="small"
-                  className="password-toggle"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} password-toggle`}
                   onClick={togglePassword}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                 >
@@ -298,10 +303,10 @@ const BranchSpecificLogin = () => {
             <MGButton
               type="submit"
               variant="primary"
-              className="login-button"
+              className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} login-button`}
               disabled={isLoading}
               loading={isLoading}
-              loadingText="로그인 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               로그인
@@ -325,8 +330,9 @@ const BranchSpecificLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className="link-button"
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} link-button`}
               onClick={() => navigate('/login/branch')}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               다른 지점으로 로그인
@@ -334,8 +340,9 @@ const BranchSpecificLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className="link-button"
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} link-button`}
               onClick={() => navigate('/login/headquarters')}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               본사 로그인
@@ -343,8 +350,9 @@ const BranchSpecificLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className="link-button"
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} link-button`}
               onClick={() => navigate('/login')}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               메인 로그인으로 이동

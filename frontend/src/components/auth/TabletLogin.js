@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import DuplicateLoginModal from '../common/DuplicateLoginModal';
@@ -52,6 +53,8 @@ const TabletLogin = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isSmsSending, setIsSmsSending] = useState(false);
+  const [isSmsVerifying, setIsSmsVerifying] = useState(false);
 
   // 간단한 툴팁 상태 (CSS 충돌 방지용)
   const [tooltip, setTooltip] = useState({
@@ -289,6 +292,7 @@ const TabletLogin = () => {
       return;
     }
 
+    setIsSmsSending(true);
     try {
       const response = await csrfTokenManager.post(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_SEND, { phoneNumber });
 
@@ -306,6 +310,8 @@ const TabletLogin = () => {
     } catch (error) {
       console.error('SMS 전송 오류:', error);
       showTooltip(MESSAGES.SMS_SEND_FAILED, 'error');
+    } finally {
+      setIsSmsSending(false);
     }
   };
 
@@ -322,6 +328,7 @@ const TabletLogin = () => {
       return;
     }
 
+    setIsSmsVerifying(true);
     try {
       const response = await csrfTokenManager.post(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, { 
         phoneNumber, 
@@ -342,6 +349,8 @@ const TabletLogin = () => {
     } catch (error) {
       console.error('SMS 검증 오류:', error);
       showTooltip(MESSAGES.SMS_VERIFY_FAILED, 'error');
+    } finally {
+      setIsSmsVerifying(false);
     }
   };
 
@@ -696,8 +705,9 @@ const TabletLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${!smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.MODE_BUTTON} ${!smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
               onClick={() => setSmsMode(false)}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               <i className="bi bi-envelope" />
@@ -706,8 +716,9 @@ const TabletLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.MODE_BUTTON} ${smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''} mg-button--with-icon`}
               onClick={() => setSmsMode(true)}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               <i className="bi bi-phone" />
@@ -753,8 +764,9 @@ const TabletLogin = () => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className={TABLET_LOGIN_CSS.PASSWORD_TOGGLE}
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} ${TABLET_LOGIN_CSS.PASSWORD_TOGGLE}`}
                     onClick={togglePassword}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
@@ -766,10 +778,10 @@ const TabletLogin = () => {
               <MGButton
                 type="submit"
                 variant="primary"
-                className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_PRIMARY}`}
+                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} ${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_PRIMARY}`}
                 disabled={isLoading}
                 loading={isLoading}
-                loadingText="로그인 중..."
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 로그인
@@ -781,7 +793,8 @@ const TabletLogin = () => {
                   type="button"
                   variant="outline"
                   onClick={() => navigate('/forgot-password')}
-                  className="tablet-login-forgot-password-btn"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} tablet-login-forgot-password-btn`}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                   onMouseEnter={(e) => {
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a67d8 -> var(--mg-custom-5a67d8)
@@ -815,9 +828,11 @@ const TabletLogin = () => {
                   <MGButton
                     type="button"
                     variant="outline"
-                    className={TABLET_LOGIN_CSS.SMS_BUTTON}
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isSmsSending })} ${TABLET_LOGIN_CSS.SMS_BUTTON}`}
                     onClick={sendVerificationCode}
-                    disabled={isCodeSent && countdown > 0}
+                    disabled={(isCodeSent && countdown > 0) || isSmsSending}
+                    loading={isSmsSending}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     {isCodeSent && countdown > 0
@@ -846,8 +861,11 @@ const TabletLogin = () => {
                     <MGButton
                       type="button"
                       variant="outline"
-                      className={TABLET_LOGIN_CSS.VERIFICATION_BUTTON}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isSmsVerifying })} ${TABLET_LOGIN_CSS.VERIFICATION_BUTTON}`}
                       onClick={verifyCode}
+                      disabled={isSmsVerifying}
+                      loading={isSmsVerifying}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       인증
@@ -859,8 +877,9 @@ const TabletLogin = () => {
               <MGButton
                 type="button"
                 variant="secondary"
-                className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_SECONDARY}`}
+                className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_SECONDARY}`}
                 disabled={!isCodeSent || !verificationCode}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 SMS 로그인
@@ -876,9 +895,10 @@ const TabletLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} kakao mg-button--with-icon`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.SOCIAL_BUTTON} kakao mg-button--with-icon`}
               onClick={handleKakaoLogin}
               disabled={!oauth2Config?.kakao}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               <i className="bi bi-chat-dots" />
@@ -887,9 +907,10 @@ const TabletLogin = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} naver mg-button--with-icon`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.SOCIAL_BUTTON} naver mg-button--with-icon`}
               onClick={handleNaverLogin}
               disabled={!oauth2Config?.naver}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               <i className="bi bi-n" />
@@ -903,8 +924,9 @@ const TabletLogin = () => {
               <MGButton
                 type="button"
                 variant="outline"
-                className={TABLET_LOGIN_CSS.FOOTER_LINK}
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} ${TABLET_LOGIN_CSS.FOOTER_LINK}`}
                 onClick={() => navigate('/register')}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 회원가입

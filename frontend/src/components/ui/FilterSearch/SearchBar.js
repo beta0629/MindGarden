@@ -15,6 +15,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Hash } from 'lucide-react';
 import { SEARCH_PLACEHOLDER } from '../../../constants/filterSearch';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const SearchBar = ({
   searchTerm = '',
@@ -66,7 +67,13 @@ const SearchBar = ({
         />
         {searchTerm && (
           <MGButton
-            className="mg-v2-search-bar__clear"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-search-bar__clear'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClear}
             type="button"
             aria-label="검색어 지우기"
@@ -84,7 +91,13 @@ const SearchBar = ({
           {hashtags.map((tag, index) => (
             <MGButton
               key={index}
-              className="mg-v2-search-bar__hashtag"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-search-bar__hashtag'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleHashtagClick(tag)}
               type="button"
               variant="outline"

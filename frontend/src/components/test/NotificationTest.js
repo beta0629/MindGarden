@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 import './NotificationTest.css';
 
@@ -137,16 +138,36 @@ const NotificationTest = () => {
             <div className="notification-test-section">
                 <h2>기본 알림 타입</h2>
                 <div className="test-buttons">
-                    <MGButton variant="success" className="test-btn" onClick={testSuccess}>
+                    <MGButton
+                        variant="success"
+                        className={`${buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testSuccess}
+                    >
                         성공 알림
                     </MGButton>
-                    <MGButton variant="danger" className="test-btn" onClick={testError}>
+                    <MGButton
+                        variant="danger"
+                        className={`${buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testError}
+                    >
                         오류 알림
                     </MGButton>
-                    <MGButton variant="warning" className="test-btn" onClick={testWarning}>
+                    <MGButton
+                        variant="warning"
+                        className={`${buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testWarning}
+                    >
                         경고 알림
                     </MGButton>
-                    <MGButton variant="info" className="test-btn" onClick={testInfo}>
+                    <MGButton
+                        variant="info"
+                        className={`${buildErpMgButtonClassName({ variant: 'info', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testInfo}
+                    >
                         정보 알림
                     </MGButton>
                 </div>
@@ -191,7 +212,12 @@ const NotificationTest = () => {
                             step="500"
                         />
                     </div>
-                    <MGButton variant="primary" className="test-btn" onClick={testCustom}>
+                    <MGButton
+                        variant="primary"
+                        className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testCustom}
+                    >
                         커스텀 알림 보내기
                     </MGButton>
                 </div>
@@ -200,10 +226,20 @@ const NotificationTest = () => {
             <div className="notification-test-section">
                 <h2>API 시뮬레이션</h2>
                 <div className="test-buttons">
-                    <MGButton variant="secondary" className="test-btn" onClick={testApiSuccess}>
+                    <MGButton
+                        variant="secondary"
+                        className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testApiSuccess}
+                    >
                         API 성공 시뮬레이션
                     </MGButton>
-                    <MGButton variant="secondary" className="test-btn" onClick={testApiError}>
+                    <MGButton
+                        variant="secondary"
+                        className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testApiError}
+                    >
                         API 오류 시뮬레이션
                     </MGButton>
                 </div>
@@ -212,13 +248,28 @@ const NotificationTest = () => {
             <div className="notification-test-section">
                 <h2>특수 테스트</h2>
                 <div className="test-buttons">
-                    <MGButton variant="outline" className="test-btn" onClick={testMultiple}>
+                    <MGButton
+                        variant="outline"
+                        className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testMultiple}
+                    >
                         연속 알림 (4개)
                     </MGButton>
-                    <MGButton variant="outline" className="test-btn" onClick={testLongMessage}>
+                    <MGButton
+                        variant="outline"
+                        className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testLongMessage}
+                    >
                         긴 메시지 테스트
                     </MGButton>
-                    <MGButton variant="outline" className="test-btn" onClick={testRapid}>
+                    <MGButton
+                        variant="outline"
+                        className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} test-btn`}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={testRapid}
+                    >
                         빠른 연속 알림 (5개)
                     </MGButton>
                 </div>

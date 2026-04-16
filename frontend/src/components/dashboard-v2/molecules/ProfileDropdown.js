@@ -17,6 +17,7 @@ import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenant
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
 
@@ -120,7 +121,8 @@ const ProfileDropdown = ({ onLogout }) => {
           type="button"
           variant="outline"
           preventDoubleClick={false}
-          className="mg-v2-profile-trigger"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-trigger' })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-haspopup="menu"
@@ -161,7 +163,8 @@ const ProfileDropdown = ({ onLogout }) => {
             type="button"
             variant="outline"
             preventDoubleClick={false}
-            className="mg-v2-profile-menu-item"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleMenuClick('mypage')}
           >
             <span>내 정보</span>
@@ -170,7 +173,8 @@ const ProfileDropdown = ({ onLogout }) => {
             type="button"
             variant="outline"
             preventDoubleClick={false}
-            className="mg-v2-profile-menu-item"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleMenuClick('settings')}
           >
             <span>설정</span>
@@ -179,7 +183,13 @@ const ProfileDropdown = ({ onLogout }) => {
             type="button"
             variant="outline"
             preventDoubleClick={false}
-            className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-profile-menu-item mg-v2-profile-menu-item--danger'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleMenuClick('logout')}
           >
             <span>로그아웃</span>

@@ -3,6 +3,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -201,7 +202,7 @@ const ClientSettings = () => {
             <div className="client-settings-footer">
               <MGButton
                 variant="primary"
-                className="client-settings-save-btn"
+                className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-settings-save-btn`}
                 onClick={() => setMessage('설정이 저장되었습니다.')}
                 preventDoubleClick={false}
               >

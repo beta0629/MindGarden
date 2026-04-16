@@ -9,6 +9,7 @@ import notificationManager from '../../utils/notification';
 import StatusBadge from '../common/StatusBadge';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ErdDetailPage.css';
 
@@ -550,7 +551,13 @@ const ErdDetailPage = () => {
             <MGButton
               type="button"
               variant="outline"
-              className="back-button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'back-button'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
               onClick={() => navigate('/tenant/erd')}
             >
@@ -559,7 +566,13 @@ const ErdDetailPage = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="retry-button"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'retry-button'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
               onClick={loadErdDetail}
             >
@@ -579,7 +592,13 @@ const ErdDetailPage = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="back-button"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'back-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
             onClick={() => navigate('/tenant/erd')}
           >
@@ -610,7 +629,13 @@ const ErdDetailPage = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="export-button"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'export-button'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               title={toDisplayString('ERD 내보내기')}
               preventDoubleClick={false}
             >
@@ -620,7 +645,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="outline"
-                className="erd-export-menu-item"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'erd-export-menu-item'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
                 onClick={async() => {
                   try {
@@ -641,7 +672,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="outline"
-                className="erd-export-menu-item"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'erd-export-menu-item'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
                 onClick={() => {
                   try {
@@ -669,7 +706,13 @@ const ErdDetailPage = () => {
         <MGButton
           type="button"
           variant="outline"
-          className={`tab-button ${activeTab === 'diagram' ? 'active' : ''}`}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: `tab-button ${activeTab === 'diagram' ? 'active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
           onClick={() => setActiveTab('diagram')}
         >
@@ -678,7 +721,13 @@ const ErdDetailPage = () => {
         <MGButton
           type="button"
           variant="outline"
-          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: `tab-button ${activeTab === 'history' ? 'active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
           onClick={() => setActiveTab('history')}
         >
@@ -688,7 +737,13 @@ const ErdDetailPage = () => {
           <MGButton
             type="button"
             variant="outline"
-            className={`tab-button ${activeTab === 'text' ? 'active' : ''}`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: `tab-button ${activeTab === 'text' ? 'active' : ''}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
             onClick={() => setActiveTab('text')}
           >
@@ -706,7 +761,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="primary"
-                className="zoom-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'zoom-button'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 title={toDisplayString('확대')}
                 preventDoubleClick={false}
                 onClick={handleZoomIn}
@@ -717,7 +778,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="primary"
-                className="zoom-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'zoom-button'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 title={toDisplayString('축소')}
                 preventDoubleClick={false}
                 onClick={handleZoomOut}
@@ -727,7 +794,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="secondary"
-                className="zoom-reset-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false,
+                  className: 'zoom-reset-button'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 title={toDisplayString('리셋')}
                 preventDoubleClick={false}
                 onClick={handleZoomReset}
@@ -741,7 +814,13 @@ const ErdDetailPage = () => {
               <MGButton
                 type="button"
                 variant="outline"
-                className="filter-toggle-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'filter-toggle-button'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 title={toDisplayString('필터 토글')}
                 preventDoubleClick={false}
                 onClick={() => setFilterVisible(!filterVisible)}
@@ -780,7 +859,13 @@ const ErdDetailPage = () => {
                       type="button"
                       variant="danger"
                       size="small"
-                      className="clear-selection-button"
+                      className={buildErpMgButtonClassName({
+                        variant: 'danger',
+                        size: 'sm',
+                        loading: false,
+                        className: 'clear-selection-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
@@ -799,7 +884,13 @@ const ErdDetailPage = () => {
                       type="button"
                       variant="danger"
                       size="small"
-                      className="clear-selection-button"
+                      className={buildErpMgButtonClassName({
+                        variant: 'danger',
+                        size: 'sm',
+                        loading: false,
+                        className: 'clear-selection-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
@@ -825,7 +916,13 @@ const ErdDetailPage = () => {
                 <MGButton
                   type="button"
                   variant="primary"
-                  className="retry-button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: 'retry-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                   onClick={renderMermaid}
                 >

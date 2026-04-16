@@ -50,6 +50,7 @@ import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
@@ -652,7 +653,13 @@ const AdminDashboard = ({ user: propUser }) => {
                         <MGButton
                             variant="outline"
                             size="small"
-                            className="mg-v2-ad-b0kla__icon-btn"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-ad-b0kla__icon-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowStatisticsModal(true)}
                             type="button"
                             preventDoubleClick={false}
@@ -660,13 +667,53 @@ const AdminDashboard = ({ user: propUser }) => {
                         >
                             통계
                         </MGButton>
-                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더" preventDoubleClick={false}>
+                        <MGButton
+                            type="button"
+                            variant="outline"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-ad-b0kla__icon-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            aria-label="캘린더"
+                            preventDoubleClick={false}
+                        >
                             캘린더
                         </MGButton>
-                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="알림" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)} preventDoubleClick={false}>
+                        <MGButton
+                            type="button"
+                            variant="outline"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-ad-b0kla__icon-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            aria-label="알림"
+                            onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
+                            preventDoubleClick={false}
+                        >
                             알림
                         </MGButton>
-                        <MGButton type="button" variant="outline" size="small" className="mg-v2-ad-b0kla__icon-btn" aria-label="테마" preventDoubleClick={false}>
+                        <MGButton
+                            type="button"
+                            variant="outline"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-ad-b0kla__icon-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            aria-label="테마"
+                            preventDoubleClick={false}
+                        >
                             테마
                         </MGButton>
                     </div>
@@ -762,7 +809,12 @@ const AdminDashboard = ({ user: propUser }) => {
                             <MGButton
                                 type="button"
                                 variant="outline"
-                                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setChartPeriod('monthly')}
                                 preventDoubleClick={false}
                             >
@@ -771,7 +823,12 @@ const AdminDashboard = ({ user: propUser }) => {
                             <MGButton
                                 type="button"
                                 variant="outline"
-                                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    loading: false,
+                                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setChartPeriod('weekly')}
                                 preventDoubleClick={false}
                             >
@@ -1209,7 +1266,12 @@ const AdminDashboard = ({ user: propUser }) => {
                     <MGButton
                         type="button"
                         variant="outline"
-                        className="mg-v2-ad-b0kla__admin-card"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
                         preventDoubleClick={false}
                     >
@@ -1219,7 +1281,12 @@ const AdminDashboard = ({ user: propUser }) => {
                     <MGButton
                         type="button"
                         variant="outline"
-                        className="mg-v2-ad-b0kla__admin-card"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
                         preventDoubleClick={false}
                     >
@@ -1229,7 +1296,12 @@ const AdminDashboard = ({ user: propUser }) => {
                     <MGButton
                         type="button"
                         variant="outline"
-                        className="mg-v2-ad-b0kla__admin-card"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
                         preventDoubleClick={false}
                     >
@@ -1256,11 +1328,15 @@ const AdminDashboard = ({ user: propUser }) => {
                     
                     <MGButton
                         type="button"
-                        className="mg-management-card"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            loading: autoCompleteLoading,
+                            className: 'mg-management-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleAutoCompleteSchedules}
                         loading={autoCompleteLoading}
                         preventDoubleClick={false}
-                        loadingText="처리 중..."
                     >
                         <h3>스케줄 자동 완료</h3>
                         <p className="mg-management-description">지난 스케줄을 자동으로 완료 처리합니다</p>
@@ -1268,11 +1344,15 @@ const AdminDashboard = ({ user: propUser }) => {
                     
                     <MGButton
                         type="button"
-                        className="mg-management-card"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            loading: autoCompleteWithReminderLoading,
+                            className: 'mg-management-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleAutoCompleteWithReminder}
                         loading={autoCompleteWithReminderLoading}
                         preventDoubleClick={false}
-                        loadingText="처리 중..."
                     >
                         <h3>스케줄 완료 + 알림</h3>
                         <p className="mg-management-description">지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
@@ -1643,7 +1723,19 @@ const AdminDashboard = ({ user: propUser }) => {
                 <div className={`mg-toast mg-toast-${toastType}`}>
                     <div className="mg-toast-header">
                         <strong className="me-auto">알림</strong>
-                        <MGButton type="button" variant="outline" className="mg-toast-close" onClick={() => setShowToastState(false)} preventDoubleClick={false} aria-label="알림 닫기">
+                        <MGButton
+                            type="button"
+                            variant="outline"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                loading: false,
+                                className: 'mg-toast-close'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => setShowToastState(false)}
+                            preventDoubleClick={false}
+                            aria-label="알림 닫기"
+                        >
                             ×
                         </MGButton>
                     </div>

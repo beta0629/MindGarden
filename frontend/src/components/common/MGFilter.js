@@ -1,5 +1,6 @@
 import React from 'react';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './MGFilter.css';
 
@@ -144,7 +145,14 @@ const MGFilter = ({
             type="button"
             variant="outline"
             onClick={handleReset}
-            className="mg-filter__reset"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading,
+              className: 'mg-filter__reset'
+            })}
+            loading={loading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={loading}
             preventDoubleClick={false}
           >

@@ -51,7 +51,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
-import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
@@ -409,7 +409,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             size="small"
             onClick={() => setShowQuickExpenseForm(true)}
             title="빠른 지출"
-            className="mg-dashboard-icon-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'danger',
+              size: 'sm',
+              loading: false,
+              className: 'mg-dashboard-icon-btn'
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
             빠른 지출
@@ -419,7 +426,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             size="small"
             onClick={() => setShowTransactionForm(true)}
             title="거래 등록"
-            className="mg-dashboard-icon-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'success',
+              size: 'sm',
+              loading: false,
+              className: 'mg-dashboard-icon-btn'
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
             거래 등록
@@ -431,7 +445,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               navigate('/erp/financial');
             }}
             title="상세 내역 보기"
-            className="mg-dashboard-icon-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'sm',
+              loading: false,
+              className: 'mg-dashboard-icon-btn'
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
             상세 내역
@@ -464,7 +485,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                   setSearchParams(newSearchParams);
                 }
           }
-          className={`mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
           {tab.label}
@@ -526,7 +549,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                         })}
                         onClick={handleSilentDashboardRefresh}
                         loading={silentListRefreshing}
-                        loadingText="새로고침 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         aria-label="데이터 새로고침"
                       >
                         데이터 새로고침
@@ -686,7 +709,14 @@ const OverviewTab = ({ data }) => {
             <MGButton
               variant="outline"
               size="small"
-              className="mg-v2-mt-sm"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-v2-mt-sm'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/admin/mapping-management')}
             >
               매핑시스템 확인
@@ -792,7 +822,18 @@ const BalanceSheetTab = () => {
             title="데이터를 불러오지 못했습니다"
             description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
             actionSlot={
-              <MGButton variant="primary" onClick={fetchBalanceSheet} className="mg-v2-button-primary mg-v2-mt-md">
+              <MGButton
+                variant="primary"
+                onClick={fetchBalanceSheet}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-mt-md'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
                 다시 불러오기
               </MGButton>
             }
@@ -1022,7 +1063,18 @@ const IncomeStatementTab = () => {
             title="데이터를 불러오지 못했습니다"
             description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
             actionSlot={
-              <MGButton variant="primary" onClick={fetchIncomeStatement} className="mg-v2-button-primary mg-v2-mt-md">
+              <MGButton
+                variant="primary"
+                onClick={fetchIncomeStatement}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-mt-md'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
                 다시 불러오기
               </MGButton>
             }
@@ -1557,6 +1609,9 @@ const MonthlyReportTab = ({ period }) => {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousMonth}
               title="이전 달"
             >
@@ -1566,6 +1621,9 @@ const MonthlyReportTab = ({ period }) => {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextMonth}
               title="다음 달"
             >
@@ -1717,6 +1775,9 @@ const YearlyReportTab = ({ period }) => {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousYear}
               title="전년도"
             >
@@ -1726,6 +1787,9 @@ const YearlyReportTab = ({ period }) => {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextYear}
               title="다음 년도"
             >
@@ -1858,7 +1922,14 @@ const JournalEntriesTab = () => {
             type="button"
             variant="outline"
             size="small"
-            className="integrated-finance-journal-help-toggle"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'integrated-finance-journal-help-toggle'
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowHelp(!showHelp)}
             preventDoubleClick={false}
           >
@@ -1895,6 +1966,9 @@ const JournalEntriesTab = () => {
           <MGButton
             variant="primary"
             size="medium"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowCreateModal(true)}
           >
             거래 등록
@@ -1938,6 +2012,9 @@ const JournalEntriesTab = () => {
                         <MGButton
                           variant="outline"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                          loading={false}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => { setSelectedEntry(entry); setShowDetailModal(true); }}
                         >
                           상세
@@ -1946,6 +2023,9 @@ const JournalEntriesTab = () => {
                           <MGButton
                             variant="success"
                             size="small"
+                            className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                            loading={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => handleApprove(entry.id)}
                           >
                             승인
@@ -1955,6 +2035,9 @@ const JournalEntriesTab = () => {
                           <MGButton
                             variant="primary"
                             size="small"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                            loading={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => handlePost(entry.id)}
                           >
                             반영
@@ -2082,8 +2165,11 @@ const LedgersTab = () => {
             <MGButton
               variant="primary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
               onClick={fetchLedger}
               disabled={!selectedAccountId}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               조회
             </MGButton>
@@ -2218,7 +2304,9 @@ const SettlementTab = () => {
             type="button"
             variant="outline"
             size="small"
-            className={`mg-v2-tab ${activeSubTab === 'rules' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
+            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-tab ${activeSubTab === 'rules' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveSubTab('rules')}
             preventDoubleClick={false}
           >
@@ -2228,7 +2316,9 @@ const SettlementTab = () => {
             type="button"
             variant="outline"
             size="small"
-            className={`mg-v2-tab ${activeSubTab === 'results' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
+            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-tab ${activeSubTab === 'results' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveSubTab('results')}
             preventDoubleClick={false}
           >
@@ -2242,6 +2332,9 @@ const SettlementTab = () => {
               <MGButton
                 variant="primary"
                 size="medium"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { setEditingRule(null); setShowCreateRuleModal(true); }}
               >
                 규칙 생성
@@ -2281,6 +2374,9 @@ const SettlementTab = () => {
                         <MGButton
                           variant="outline"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                          loading={false}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => { setEditingRule(rule); setShowCreateRuleModal(true); }}
                         >
                           수정
@@ -2309,6 +2405,9 @@ const SettlementTab = () => {
                 <MGButton
                   variant="primary"
                   size="medium"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => {
                     if (settlementPeriod) handleCalculate(settlementPeriod);
                   }}
@@ -2361,6 +2460,9 @@ const SettlementTab = () => {
                             <MGButton
                               variant="success"
                               size="small"
+                              className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                              loading={false}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={async() => {
                                 try {
                                   const result = await StandardizedApi.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {});
@@ -2489,10 +2591,21 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
         )}
         </div>
         <div className="mg-v2-modal-footer">
-          <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
+          <MGButton
+            variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+          >
+            닫기
+          </MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
-            <MGButton 
-              variant="primary" 
+            <MGButton
+              variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => { setShowEditModal(true); }}
             >
               수정
@@ -2712,7 +2825,14 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
             <label className="mg-v2-label">거래 라인</label>
-            <MGButton variant="outline" size="small" onClick={handleAddLine}>
+            <MGButton
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleAddLine}
+            >
               라인 추가
             </MGButton>
           </div>
@@ -2793,6 +2913,9 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         <MGButton
                           variant="danger"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                          loading={false}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
                           삭제
@@ -2826,14 +2949,23 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         </div>
       </div>
       <div className="mg-v2-modal-footer">
-        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+        <MGButton
+          variant="secondary"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={onClose}
+          disabled={loading}
+        >
           취소
         </MGButton>
-        <MGButton 
-          variant="primary" 
-          onClick={handleSubmit} 
+        <MGButton
+          variant="primary"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
+          onClick={handleSubmit}
           disabled={loading || !isBalanced}
           loading={loading}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           저장
         </MGButton>
@@ -3029,14 +3161,23 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
         </div>
       </div>
       <div className="mg-v2-modal-footer">
-        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+        <MGButton
+          variant="secondary"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={onClose}
+          disabled={loading}
+        >
           취소
         </MGButton>
         <MGButton
           variant="primary"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
           onClick={handleSubmit}
           disabled={loading}
           loading={loading}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           저장
         </MGButton>
@@ -3154,7 +3295,15 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
         </div>
       </div>
       <div className="mg-v2-modal-footer">
-        <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
+        <MGButton
+          variant="secondary"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={onClose}
+        >
+          닫기
+        </MGButton>
       </div>
     </UnifiedModal>
   );
@@ -3358,7 +3507,14 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
             <label className="mg-v2-label">거래 라인</label>
-            <MGButton variant="outline" size="small" onClick={handleAddLine}>
+            <MGButton
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleAddLine}
+            >
               라인 추가
             </MGButton>
           </div>
@@ -3439,6 +3595,9 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         <MGButton
                           variant="danger"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                          loading={false}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
                           삭제
@@ -3472,14 +3631,23 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         </div>
       </div>
       <div className="mg-v2-modal-footer">
-        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+        <MGButton
+          variant="secondary"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={onClose}
+          disabled={loading}
+        >
           취소
         </MGButton>
-        <MGButton 
-          variant="primary" 
-          onClick={handleSubmit} 
+        <MGButton
+          variant="primary"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
+          onClick={handleSubmit}
           disabled={loading || !isBalanced}
           loading={loading}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           저장
         </MGButton>

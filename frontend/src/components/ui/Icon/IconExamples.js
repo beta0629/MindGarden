@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { FORM_CONSTANTS } from '../../../constants/magicNumbers';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 import Icon from './Icon';
 
@@ -188,7 +189,13 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-center">
               <MGButton
                 variant="primary"
-                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-v2-v2-button mg-v2-v2-v2-button-primary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 <Icon name="PLUS" size="SM" />
@@ -196,7 +203,13 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
               </MGButton>
               <MGButton
                 variant="secondary"
-                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-v2-v2-button mg-v2-v2-v2-button-secondary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 <Icon name="EDIT" size="SM" />
@@ -204,7 +217,13 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
               </MGButton>
               <MGButton
                 variant="danger"
-                className="mg-v2-v2-v2-button mg-v2-v2-v2-button-error"
+                className={buildErpMgButtonClassName({
+                  variant: 'danger',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-v2-v2-button mg-v2-v2-v2-button-error'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 <Icon name="TRASH" size="SM" />

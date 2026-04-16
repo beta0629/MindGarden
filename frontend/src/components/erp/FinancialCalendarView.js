@@ -3,7 +3,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT, ErpFilterToolbar, useErpSilentRefresh } from './common';
-import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './FinancialCalendarView.css';
 import './ErpCommon.css';
@@ -126,6 +126,7 @@ const FinancialCalendarView = () => {
   return (
     <div className="financial-calendar-view-container">
       <div className="mg-calendar">
+        <div className="mg-w-full">
         <ErpFilterToolbar
           ariaLabel="재무 달력 기간·범례"
           primaryRow={(
@@ -134,7 +135,13 @@ const FinancialCalendarView = () => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-calendar-nav-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-calendar-nav-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigateMonth(-1)}
                 aria-label="이전 달"
                 disabled={silentListRefreshing || loading}
@@ -157,7 +164,7 @@ const FinancialCalendarView = () => {
                   })}
                   onClick={handleSilentCalendarRefresh}
                   loading={silentListRefreshing}
-                  loadingText="새로고침 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
                   aria-label="달력 데이터 새로고침"
                 >
@@ -168,7 +175,13 @@ const FinancialCalendarView = () => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="mg-calendar-nav-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-calendar-nav-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigateMonth(1)}
                 aria-label="다음 달"
                 disabled={silentListRefreshing || loading}
@@ -195,6 +208,7 @@ const FinancialCalendarView = () => {
             </div>
           )}
         />
+        </div>
 
         {loading ? (
           <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
@@ -296,7 +310,13 @@ const FinancialCalendarView = () => {
               type="button"
               variant="outline"
               size="small"
-              className="mg-financial-calendar-detail-close"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-financial-calendar-detail-close'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setSelectedDate(null)}
               aria-label="닫기"
               preventDoubleClick={false}

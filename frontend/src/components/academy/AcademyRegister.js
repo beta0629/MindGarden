@@ -18,6 +18,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ACADEMY_API } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
@@ -255,7 +256,13 @@ const AcademyRegister = () => {
                       variant="outline"
                       onClick={() => handleSocialLogin('kakao')}
                       disabled={loading}
-                      className="academy-social-button academy-social-button-kakao"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: 'academy-social-button academy-social-button-kakao'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">카카오</span>
@@ -266,7 +273,13 @@ const AcademyRegister = () => {
                       variant="outline"
                       onClick={() => handleSocialLogin('naver')}
                       disabled={loading}
-                      className="academy-social-button academy-social-button-naver"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: 'academy-social-button academy-social-button-naver'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">네이버</span>
@@ -277,7 +290,13 @@ const AcademyRegister = () => {
                       variant="outline"
                       onClick={() => handleSocialLogin('google')}
                       disabled={loading}
-                      className="academy-social-button academy-social-button-google"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: 'academy-social-button academy-social-button-google'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">구글</span>
@@ -359,7 +378,13 @@ const AcademyRegister = () => {
                       <MGButton
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="academy-form-password-toggle"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'md',
+                          loading: false,
+                          className: 'academy-form-password-toggle'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         variant="outline"
                         preventDoubleClick={false}
                       >
@@ -382,7 +407,13 @@ const AcademyRegister = () => {
                       <MGButton
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="academy-form-password-toggle"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'md',
+                          loading: false,
+                          className: 'academy-form-password-toggle'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         variant="outline"
                         preventDoubleClick={false}
                       >
@@ -447,6 +478,12 @@ const AcademyRegister = () => {
                     variant="outline"
                     onClick={() => navigate('/login')}
                     disabled={loading}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     취소
@@ -456,6 +493,12 @@ const AcademyRegister = () => {
                     variant="primary"
                     loading={loading}
                     disabled={loading}
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'md',
+                      loading
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     회원가입

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedHeader from '../common/UnifiedHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import NotificationBadge from '../dashboard-v2/atoms/NotificationBadge';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -55,7 +56,13 @@ const SimpleLayout = ({
   const notificationAction = user && (
     <div className="notification-wrapper">
       <MGButton
-        className="notification-button"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: false,
+          className: 'notification-button'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleNotificationClick}
         aria-label="알림"
         variant="outline"

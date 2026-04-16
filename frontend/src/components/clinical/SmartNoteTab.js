@@ -6,6 +6,7 @@ import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './SmartNoteTab.css';
 
 /**
@@ -188,7 +189,13 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
 
                             {/* 위험 징후 분석 버튼 */}
                             <MGButton
-                                className="btn btn-warning btn-analyze-risk"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'warning',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'btn btn-warning btn-analyze-risk'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={analyzeRisks}
                                 variant="warning"
                             >
@@ -234,11 +241,16 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                     <div className="generation-controls">
                         {selectedFormat === 'SOAP' && (
                             <MGButton
-                                className="btn btn-primary btn-generate"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: isGenerating,
+                                    className: 'btn btn-primary btn-generate'
+                                })}
                                 onClick={generateSOAPNote}
                                 disabled={isGenerating}
                                 loading={isGenerating}
-                                loadingText="SOAP 노트 생성 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="primary"
                             >
                                 🤖 SOAP 노트 자동 생성
@@ -247,11 +259,16 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
 
                         {selectedFormat === 'DAP' && (
                             <MGButton
-                                className="btn btn-primary btn-generate"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: isGenerating,
+                                    className: 'btn btn-primary btn-generate'
+                                })}
                                 onClick={generateDAPNote}
                                 disabled={isGenerating}
                                 loading={isGenerating}
-                                loadingText="DAP 노트 생성 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="primary"
                             >
                                 🤖 DAP 노트 자동 생성

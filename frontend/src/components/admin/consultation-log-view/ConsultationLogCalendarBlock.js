@@ -15,6 +15,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDateStr } from '../../../utils/dateUtils';
 import { getConsultantColor } from '../../schedule/ScheduleCalendar/ScheduleCalendarUtils';
 import './ConsultationLogCalendarBlock.css';
@@ -170,7 +171,13 @@ const ConsultationLogCalendarBlock = ({
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-consultation-log-calendar-popover__item"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'mg-v2-consultation-log-calendar-popover__item'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => handleSelectRecord(r.id)}
                       preventDoubleClick={false}
                     >

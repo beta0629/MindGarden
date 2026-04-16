@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
 import './ConsultantClientWidget.css';
@@ -167,9 +168,15 @@ const ConsultantClientWidget = ({ widget, user }) => {
     ),
     actions: (
       <MGButton
-        className="consultant-client-view-all-btn"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: false,
+          className: 'consultant-client-view-all-btn'
+        })}
         variant="outline"
         type="button"
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleViewAllClients}
       >
         전체보기 →

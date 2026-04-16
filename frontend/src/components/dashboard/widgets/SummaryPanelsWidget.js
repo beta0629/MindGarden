@@ -23,6 +23,7 @@ import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../../
 import { useWidget } from '../../../hooks/useWidget';
 import './SummaryPanelsWidget.css';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../SummaryPanels.css';
 const SummaryPanelsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -177,10 +178,17 @@ const SummaryPanelsWidget = ({ widget, user }) => {
                         {upcomingCount > 3 && (
                           <div className="summary-more-indicator">
                             <MGButton
-                              className="summary-more-btn"
-                              variant="outline"
                               type="button"
+                              variant="outline"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'md',
+                                loading: false,
+                                className: 'summary-more-btn'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={() => navigate('/consultant/schedule')}
+                              preventDoubleClick={false}
                             >
                               +{upcomingCount - 3}건 더 보기 →
                             </MGButton>
@@ -339,12 +347,18 @@ const SummaryPanelsWidget = ({ widget, user }) => {
             
             <div className="mapping-actions">
               <MGButton
-                className="mapping-manage-btn"
-                variant="primary"
                 type="button"
+                variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mapping-manage-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleMappingManagement}
+                preventDoubleClick={false}
               >
-                
                 매핑 관리
               </MGButton>
             </div>

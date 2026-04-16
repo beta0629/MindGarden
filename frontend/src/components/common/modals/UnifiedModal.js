@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { SessionContext } from '../../../contexts/SessionContext';
 import UnifiedLoading from '../UnifiedLoading';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../MGButton';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
@@ -144,12 +145,18 @@ const UnifiedModal = ({
             {showCloseButton && (
               <MGButton
                 type="button"
-                className="mg-modal__close"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading,
+                  className: 'mg-modal__close'
+                })}
                 onClick={onClose}
                 aria-label="닫기"
                 disabled={loading}
                 variant="outline"
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 ×
               </MGButton>

@@ -3,6 +3,7 @@ import { Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
 import './MappingEditModal.css';
@@ -291,10 +292,16 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     key={pkg.value}
                     type="button"
                     variant="outline"
-                    className={`mg-v2-mapping-edit-modal__package-card ${formData.packageName === pkg.value ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading,
+                      className: `mg-v2-mapping-edit-modal__package-card ${formData.packageName === pkg.value ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`
+                    })}
                     onClick={() => handlePackageSelect(pkg)}
                     disabled={loading}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
                     <span className="mg-v2-mapping-edit-modal__package-card-meta">

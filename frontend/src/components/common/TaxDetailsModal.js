@@ -4,6 +4,7 @@ import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS, SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 
 /**
@@ -104,10 +105,16 @@ const TaxDetailsModal = ({
       showCloseButton={true}
       actions={
         <MGButton
-          className="mg-v2-button mg-v2-button--primary"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'mg-v2-button mg-v2-button--primary'
+          })}
           onClick={onClose}
           variant="primary"
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           닫기
         </MGButton>
@@ -137,9 +144,15 @@ const TaxDetailsModal = ({
               <AlertCircle size={20} className="mg-v2-icon-inline" />
               <p>{error}</p>
               <MGButton
-                className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-v2-button mg-v2-button--primary mg-v2-mt-md'
+                })}
                 onClick={loadTaxDetails}
                 variant="primary"
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 <RefreshCw size={20} className="mg-v2-icon-inline" />
                 다시 시도

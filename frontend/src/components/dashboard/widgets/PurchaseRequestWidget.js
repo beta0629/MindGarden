@@ -21,6 +21,7 @@ import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 const PurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [purchaseData, setPurchaseData] = useState({
@@ -193,23 +194,35 @@ const PurchaseRequestWidget = ({ widget, user }) => {
           
           <div className="purchase-request-actions">
             <MGButton
-              className="widget-btn widget-btn-primary mg-btn mg-btn-primary"
-              variant="primary"
               type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'widget-btn widget-btn-primary mg-btn mg-btn-primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCreateRequest}
+              preventDoubleClick={false}
             >
-              
               새 요청
             </MGButton>
             {config.viewAllUrl && (
               <MGButton
-                className="widget-btn mg-btn mg-btn-ghost"
-                variant="outline"
                 type="button"
+                variant="outline"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'widget-btn mg-btn mg-btn-ghost'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleViewAll}
+                preventDoubleClick={false}
               >
                 전체보기
-                
               </MGButton>
             )}
           </div>

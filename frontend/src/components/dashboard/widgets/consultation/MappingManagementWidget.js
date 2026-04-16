@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const MappingManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -160,8 +161,18 @@ const MappingManagementWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '상담사와 내담자 간의 매칭을 생성해보세요.'}
           </p>
           {RoleUtils.isAdmin(user) && (
-            <MGButton variant="primary" onClick={handleCreateMapping}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateMapping}
+            >
               새 매칭 만들기
             </MGButton>
           )}
@@ -211,7 +222,19 @@ const MappingManagementWidget = ({ widget, user }) => {
         <div className="mapping-list">
           <div className="list-header">
             <h4 className="list-title">최근 매칭 현황</h4>
-            <MGButton variant="outline" size="small" onClick={handleViewAll}>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleViewAll}
+            >
               전체 보기
             </MGButton>
           </div>
@@ -259,13 +282,23 @@ const MappingManagementWidget = ({ widget, user }) => {
                 </div>
                 <div className="mapping-actions">
                   <MGButton
+                    type="button"
                     variant="outline"
                     size="small"
-                    className="action-btn view-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn view-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewMapping(mapping.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                   />
+                  >
+                    보기
+                  </MGButton>
                 </div>
               </div>
             ))}
@@ -275,8 +308,19 @@ const MappingManagementWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {RoleUtils.isAdmin(user) && (
           <div className="mapping-quick-actions">
-            <MGButton variant="primary" size="small" onClick={handleCreateMapping}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateMapping}
+            >
               새 매칭 생성
             </MGButton>
           </div>

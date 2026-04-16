@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Heart, 
   Calendar, 
@@ -11,6 +11,7 @@ import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
 
@@ -35,24 +36,19 @@ const RatableConsultationsSection = () => {
   const { user } = useSession();
   const [ratableSchedules, setRatableSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showTestData, setShowTestData] = useState(false);
 
-  useEffect(() => {
-    console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', user);
-    if (user?.id) {
-      console.log('💖 평가 가능한 상담 로드 시작, 사용자 ID:', user.id);
-      loadRatableSchedules();
-    } else {
-      console.log('💖 사용자 정보 없음, 평가 섹션 대기 중');
-    }
-  }, [user]);
-
-  const loadRatableSchedules = async() => {
+  const loadRatableSchedules = useCallback(async(silent = false) => {
     if (!user?.id) return;
 
-    setLoading(true);
+    if (silent) {
+      setSilentRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       console.log('💖 API 호출 시작:', `${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`);
       
@@ -86,9 +82,23 @@ const RatableConsultationsSection = () => {
       setShowTestData(true);
       setRatableSchedules([]); // 오류 시 빈 배열로 초기화
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSilentRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', user);
+    if (user?.id) {
+      console.log('💖 평가 가능한 상담 로드 시작, 사용자 ID:', user.id);
+      loadRatableSchedules(false);
+    } else {
+      console.log('💖 사용자 정보 없음, 평가 섹션 대기 중');
+    }
+  }, [user, loadRatableSchedules]);
 
   const handleRateConsultant = (schedule) => {
     console.log('💖 평가하기 버튼 클릭:', schedule);
@@ -98,7 +108,7 @@ const RatableConsultationsSection = () => {
   };
 
   const handleRatingComplete = () => {
-    loadRatableSchedules();
+    loadRatableSchedules(true);
     setShowRatingModal(false);
     setSelectedSchedule(null);
   };
@@ -126,6 +136,23 @@ const RatableConsultationsSection = () => {
                 {ratableSchedules.length}개
               </span>
             )}
+            <MGButton
+              type="button"
+              variant="secondary"
+              size="small"
+              className={`ratable-consultations-header-refresh ${buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: silentRefreshing
+              })}`}
+              onClick={() => loadRatableSchedules(true)}
+              loading={silentRefreshing}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              aria-label="목록 새로고침"
+              preventDoubleClick={false}
+            >
+              새로고침
+            </MGButton>
           </div>
           <p className="ratable-consultations-subtitle">
             완료된 상담에 대해 하트 점수로 평가해주세요
@@ -183,8 +210,9 @@ const RatableConsultationsSection = () => {
                 </div>
                 <MGButton
                   variant="primary"
-                  className="mg-v2-button mg-v2-button-primary ratable-consultation-item__button"
+                  className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} ratable-consultation-item__button`}
                   onClick={() => handleRateConsultant(schedule)}
+                  preventDoubleClick={false}
                 >
                   평가하기
                 </MGButton>

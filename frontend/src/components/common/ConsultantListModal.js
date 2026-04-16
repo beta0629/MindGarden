@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, UserX, User, Check } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from './SafeText';
 import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -21,7 +22,13 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
       showCloseButton={true}
       actions={
         <MGButton
-          className="mg-v2-button mg-v2-button--ghost"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: 'mg-v2-button--ghost'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
           variant="outline"
           preventDoubleClick={false}
@@ -69,7 +76,13 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             상담사와 연결하여 상담을 시작해보세요.
           </p>
           <MGButton
-            className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-mt-md'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             variant="primary"
           >

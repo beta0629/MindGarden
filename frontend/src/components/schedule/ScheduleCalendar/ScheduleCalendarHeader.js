@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import CustomSelect from '../../common/CustomSelect';
 import { ICONS } from '../../../constants/icons';
 
@@ -71,8 +72,14 @@ const ScheduleCalendarHeader = ({
                 <MGButton
                     variant="outline"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'mg-v2-mobile-toggle'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setForceMobileMode(!forceMobileMode)}
-                    className="mg-v2-mobile-toggle"
                     preventDoubleClick={false}
                 >
                     {forceMobileMode ? (
@@ -92,10 +99,15 @@ const ScheduleCalendarHeader = ({
                 <MGButton
                     variant="secondary"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'sm',
+                      loading,
+                      className: 'mg-v2-refresh-button'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onRefresh}
                     loading={loading}
-                    loadingText="불러오는 중..."
-                    className="mg-v2-refresh-button"
                     preventDoubleClick={false}
                 >
                     <RefreshCwIcon className="mg-v2-icon" />

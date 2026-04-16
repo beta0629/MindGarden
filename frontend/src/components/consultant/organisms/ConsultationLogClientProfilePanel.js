@@ -1,5 +1,6 @@
 import React from 'react';
 import SafeText from '../../common/SafeText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
@@ -167,7 +168,8 @@ const ConsultationLogClientProfilePanel = ({
       <MGButton
         type="button"
         variant="outline"
-        className="mg-accordion-header"
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-accordion-header' })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         id={TRIGGER_ID}
         aria-expanded={expanded}
         aria-controls={PANEL_ID}

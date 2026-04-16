@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 const CounselingContact = () => {
   const [formData, setFormData] = useState({
@@ -85,7 +86,13 @@ const CounselingContact = () => {
                 />
               </div>
               
-              <MGButton type="submit" variant="primary" size="large">
+              <MGButton
+                type="submit"
+                variant="primary"
+                size="large"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'lg', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
                 문의하기
               </MGButton>
             </form>

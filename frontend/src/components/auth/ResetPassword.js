@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './AuthPageCommon.css';
 
 const ResetPassword = () => {
@@ -174,8 +175,9 @@ const ResetPassword = () => {
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-password-toggle"
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
                       onClick={() => setShowPassword(!showPassword)}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       {showPassword ? '👁️' : '👁️‍🗨️'}
@@ -200,8 +202,9 @@ const ResetPassword = () => {
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-password-toggle"
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
                       {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
@@ -221,10 +224,10 @@ const ResetPassword = () => {
                 <MGButton
                   type="submit"
                   variant="primary"
-                  className="mg-v2-button-primary"
+                  className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
                   disabled={isLoading || !formData.newPassword || !formData.confirmPassword}
                   loading={isLoading}
-                  loadingText="변경 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   비밀번호 변경

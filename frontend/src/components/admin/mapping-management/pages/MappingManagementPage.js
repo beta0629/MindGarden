@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
@@ -398,7 +399,11 @@ const MappingManagementPage = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowCreateModal(true)}
             >
               새 매칭 생성
@@ -493,6 +498,8 @@ const MappingManagementPage = () => {
           <>
             <MGButton
               variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCloseRefundModal}
               disabled={loading}
               preventDoubleClick
@@ -501,6 +508,9 @@ const MappingManagementPage = () => {
             </MGButton>
             <MGButton
               variant="danger"
+              className={buildErpMgButtonClassName({ variant: 'danger', loading })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleRefundProcess}
               disabled={!refundReason.trim() || loading}
               preventDoubleClick={true}

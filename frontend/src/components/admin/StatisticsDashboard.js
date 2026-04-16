@@ -9,6 +9,7 @@ import { showNotification } from '../../utils/notification';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import Chart from '../common/Chart';
@@ -127,9 +128,14 @@ const StatisticsDashboard = () => {
   const headerActions = (
     <MGButton
       type="button"
-      variant="secondary"
       onClick={loadStatistics}
       disabled={loading}
+      loading={loading}
+      className={buildErpMgButtonClassName({
+        variant: 'secondary',
+        loading
+      })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
     >
       새로고침
     </MGButton>
@@ -169,8 +175,13 @@ const StatisticsDashboard = () => {
             <p className="statistics-error-message">{error}</p>
             <MGButton
               type="button"
-              variant="primary"
-              className="statistics-retry-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                loading,
+                className: 'statistics-retry-btn'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              loading={loading}
               onClick={loadStatistics}
             >
               다시 시도

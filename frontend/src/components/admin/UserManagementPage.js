@@ -11,6 +11,7 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -68,7 +69,13 @@ const UserManagementPage = () => {
               type="button"
               variant="outline"
               size="medium"
-              className={`mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleTypeChange(TYPE_CONSULTANT)}
               preventDoubleClick={false}
             >
@@ -79,7 +86,13 @@ const UserManagementPage = () => {
                 type="button"
                 variant="outline"
                 size="medium"
-                className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleTypeChange(TYPE_CLIENT)}
                 preventDoubleClick={false}
               >
@@ -90,7 +103,13 @@ const UserManagementPage = () => {
               type="button"
               variant="outline"
               size="medium"
-              className={`mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleTypeChange(TYPE_STAFF)}
               preventDoubleClick={false}
             >

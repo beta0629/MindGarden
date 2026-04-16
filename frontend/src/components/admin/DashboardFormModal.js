@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -1109,6 +1110,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       <MGButton
         type="button"
         variant="secondary"
+        size="medium"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'md',
+          loading: false
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onClose}
         disabled={loading}
         preventDoubleClick={true}
@@ -1118,6 +1126,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       <MGButton
         type="button"
         variant="primary"
+        size="medium"
+        className={buildErpMgButtonClassName({
+          variant: 'primary',
+          size: 'md',
+          loading: loading
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         disabled={loading}
         onClick={async(e) => {
           e.preventDefault();
@@ -1138,7 +1153,6 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         }}
         preventDoubleClick={true}
         loading={loading}
-        loadingText="저장 중..."
       >
         {isEditMode ? '수정' : '생성'}
       </MGButton>
@@ -1178,7 +1192,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                       variant="outline"
                       size="small"
                       onClick={() => setShowAddRoleModal(true)}
-                      className="mg-btn-add-role"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'mg-btn-add-role'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading || loadingRoles}
                     >
                       역할 추가
@@ -1246,7 +1266,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                               variant="danger"
                               size="small"
                               onClick={() => handleDeleteRole(role.tenantRoleId, role.nameKo || role.name)}
-                              className="mg-btn-delete-role"
+                              className={buildErpMgButtonClassName({
+                                variant: 'danger',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-btn-delete-role'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               disabled={loading}
                               title="역할 삭제"
                             >
@@ -1480,6 +1506,12 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 type="button"
                 variant="outline"
                 size="medium"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseAddRoleModal}
                 disabled={loading}
                 preventDoubleClick={false}
@@ -1490,10 +1522,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 type="button"
                 variant="primary"
                 size="medium"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: loading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleAddRole}
                 disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
                 loading={loading}
-                loadingText="추가 중..."
                 preventDoubleClick={false}
               >
                 {loading ? '추가 중...' : '역할 추가'}

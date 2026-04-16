@@ -100,4 +100,14 @@ location / {
 - Nginx 설정 변경은 저장소 `config/nginx/**` 및 GitHub Actions [`deploy-nginx-dev.yml`](../../.github/workflows/deploy-nginx-dev.yml) 등과의 정합을 따른다.
 - 운영 반영 전 체크리스트: [`docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md), [`docs/standards/DEPLOYMENT_STANDARD.md`](../standards/DEPLOYMENT_STANDARD.md).
 
-**최종 업데이트**: 2026-04-11
+---
+
+## 저장소 파일
+
+| 항목 | 설명 |
+|------|------|
+| 예시 스니펫 | [`config/nginx/snippets/rate-limit-public-api.conf.example`](../../config/nginx/snippets/rate-limit-public-api.conf.example) — `limit_req_zone` 은 **주석**으로만 두었으며, 실제 서버의 **`http` 블록**(또는 그에 포함되는 상위 설정)에 존을 정의해야 한다. `server`/`location` 은 API 호스트에 병합할 때 참고한다. |
+| 운영 병합 | [`config/nginx/core-solution-prod.conf`](../../config/nginx/core-solution-prod.conf) 의 `api.core-solution.co.kr` `server` 블록에 스니펫의 `location` 을 넣을 경우, **상위 `http` 컨텍스트에 `limit_req_zone` 이 선행**되어야 하며, 각 `location` 에는 기존 `location /` 과 동일한 프록시·헤더를 반복한다(스니펫은 업스트림 URL·IP 를 넣지 않음). |
+| 배포 시 주의 | 엣지 레이트리밋 수치·존 이름·적용 경로는 **인프라 합의 후** 적용한다. 저장소의 전체 `nginx.conf` / `http {}` 는 운영 서버에만 있을 수 있으므로, **zone 정의 위치**는 실제 배포본 기준으로 맞춘 뒤 `nginx -t` 및 절차에 따른 `reload` 를 수행한다. |
+
+**최종 업데이트**: 2026-04-16

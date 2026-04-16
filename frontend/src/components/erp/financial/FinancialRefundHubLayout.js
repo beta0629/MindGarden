@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
 
@@ -34,7 +35,8 @@ export const FinancialRefundHubTabs = () => {
           variant="outline"
           role="tab"
           aria-selected={isFinancial}
-          className={`mg-v2-ad-b0kla__pill ${isFinancial ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isFinancial ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={goFinancial}
           preventDoubleClick={false}
         >
@@ -45,7 +47,8 @@ export const FinancialRefundHubTabs = () => {
           variant="outline"
           role="tab"
           aria-selected={isRefund}
-          className={`mg-v2-ad-b0kla__pill ${isRefund ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isRefund ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={goRefund}
           preventDoubleClick={false}
         >

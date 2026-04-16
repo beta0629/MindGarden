@@ -3,6 +3,7 @@ import { User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, Trendin
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SpecialtyDisplay from './SpecialtyDisplay';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 import { 
     getFormattedExperience, 
@@ -57,12 +58,21 @@ const ConsultantDetailModal = ({
             showCloseButton
             actions={(
                 <>
-                    <MGButton variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+                    <MGButton
+                        variant="outline"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={onClose}
+                        preventDoubleClick={false}
+                    >
                         닫기
                     </MGButton>
                     <MGButton
                         variant="primary"
                         size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {
                             onClose();
                         }}

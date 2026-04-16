@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -109,7 +110,12 @@ function PackagePricingListPage() {
               <MGButton
                 type="button"
                 variant="primary"
-                className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  loading: false,
+                  className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate('/admin/package-pricing/new')}
               >
                 {LABELS.ADD_BUTTON}
@@ -157,7 +163,8 @@ function PackagePricingListPage() {
                         <MGButton
                           type="button"
                           variant="secondary"
-                          className="mg-v2-button mg-v2-button-secondary"
+                          className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
                         >
                           {LABELS.EDIT}
@@ -166,12 +173,16 @@ function PackagePricingListPage() {
                           type="button"
                           variant={row.isActive === true || row.isActive === undefined ? 'danger' : 'success'}
                           size="small"
-                          className={(row.isActive === true || row.isActive === undefined) ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-success'}
+                          className={buildErpMgButtonClassName({
+                            variant: row.isActive === true || row.isActive === undefined ? 'danger' : 'success',
+                            size: 'sm',
+                            loading: togglingRowId === row.id
+                          })}
                           onClick={() => handleToggleActive(row)}
                           loading={togglingRowId === row.id}
                           disabled={!!togglingRowId}
                           preventDoubleClick={true}
-                          loadingText="처리 중..."
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                           {(row.isActive === true || row.isActive === undefined)
                             ? LABELS.DEACTIVATE

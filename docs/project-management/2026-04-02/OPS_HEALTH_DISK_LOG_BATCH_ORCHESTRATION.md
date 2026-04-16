@@ -40,6 +40,8 @@
 | P2 | JVM/메모리·`memory-alert.log` (선택) |
 | P2 | `journalctl` / `application.log` 마지막 N줄 — **PII·토큰 마스킹** 후 요약만 알림 |
 
+**구현 갱신 (2026-04-17)** — §3 P2 항목은 `scripts/ops/prod-health-snapshot.sh`에 **선택적으로** 반영됨: `journalctl`(환경변수 `MG_SKIP_JOURNAL`·`MG_JOURNAL_LINES` 등)·`memory-alert` 후보 경로 tail(`MG_MEMORY_ALERT_*`), GNU `sed -E` 마스킹. 상세는 `scripts/ops/README.md` 참조. JVM·앱 `application.log` 전체 tail은 여전히 **합의·마스킹 규칙 선행** 후 확장 권장.
+
 ---
 
 ## 4. 로그 정리 정책 초안
@@ -145,6 +147,8 @@
 
 - `scripts/ops/prod-health-snapshot.sh` — 읽기 전용 스냅샷(환경변수만)
 - `scripts/ops/prod-log-cleanup.sh` — 기본 DRY_RUN, 실삭제는 `EXECUTE=1` / `--execute`
+- `scripts/ops/prune-old-logs.sh` — `/var/log/nginx`에서 회전·gzip만 `mtime +7` 정리(MindGarden 앱 로그와 역할 분리)
 - `scripts/ops/README.md` — 사용법·환경변수·`deploy-production`과 분리 안내
 - `.github/workflows/ops-health-snapshot.yml` — **스케줄·dispatch job은 스냅샷만** 실행; 로그 cleanup 미호출
 - (갱신) 스냅샷: **코어 솔루션**(로컬 actuator + 공개 엣지) + **OPS 포털**(공개 URL) + 선택 `ops-backend` systemd — `scripts/ops/README.md` 참조
+- **(2026-04-17)** `prod-health-snapshot.sh`: `journalctl` 최근 N줄 + `memory-alert.log` 후보 경로 tail, 마스킹 파이프 — §3 P2와 정합

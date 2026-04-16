@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 
@@ -77,9 +78,10 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
-          <MGButton 
+          <MGButton
             variant="secondary"
-            className="mg-mt-md"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false, className: 'mg-mt-md' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left" />
@@ -96,9 +98,10 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
-          <MGButton 
+          <MGButton
             variant="secondary"
-            className="mg-mt-md"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false, className: 'mg-mt-md' })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left" />
@@ -167,8 +170,10 @@ const ConsultationRecordView = () => {
 
         {/* 액션 버튼 */}
         <div className="mg-v2-record-actions mg-mt-lg">
-          <MGButton 
+          <MGButton
             variant="secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left" />

@@ -19,6 +19,7 @@
 import React from 'react';
 import MGCard from '../common/MGCard';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import {
@@ -148,6 +149,12 @@ const TenantCommonCodeManagerUI = ({
                                     {selectedGroup.groupName === 'CONSULTATION_PACKAGE' && (
                                         <MGButton
                                             variant="secondary"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'secondary',
+                                                size: 'md',
+                                                loading: false
+                                            })}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={onQuickCreatePackage}
                                             preventDoubleClick={true}
                                         >
@@ -156,6 +163,12 @@ const TenantCommonCodeManagerUI = ({
                                     )}
                                     <MGButton
                                         variant="primary"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'md',
+                                            loading: false
+                                        })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
@@ -169,8 +182,14 @@ const TenantCommonCodeManagerUI = ({
                             ) : codes.length === 0 ? (
                                 <div className="mg-empty-state">
                                     <p>등록된 코드가 없습니다.</p>
-                                    <MGButton 
-                                        variant="primary" 
+                                    <MGButton
+                                        variant="primary"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'md',
+                                            loading: false
+                                        })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
@@ -191,7 +210,13 @@ const TenantCommonCodeManagerUI = ({
                                                     </div>
                                                     <MGButton
                                                         type="button"
-                                                        className={`mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`}
+                                                        className={buildErpMgButtonClassName({
+                                                            variant: 'outline',
+                                                            size: 'sm',
+                                                            loading: false,
+                                                            className: `mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`
+                                                        })}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         onClick={() => onToggleActive(code.id, code.isActive)}
                                                         variant="outline"
                                                         size="small"
@@ -240,6 +265,12 @@ const TenantCommonCodeManagerUI = ({
                                                     <MGButton
                                                         variant="secondary"
                                                         size="small"
+                                                        className={buildErpMgButtonClassName({
+                                                            variant: 'secondary',
+                                                            size: 'sm',
+                                                            loading: false
+                                                        })}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         onClick={() => onEditCode(code)}
                                                         preventDoubleClick={true}
                                                     >
@@ -248,6 +279,12 @@ const TenantCommonCodeManagerUI = ({
                                                     <MGButton
                                                         variant="danger"
                                                         size="small"
+                                                        className={buildErpMgButtonClassName({
+                                                            variant: 'danger',
+                                                            size: 'sm',
+                                                            loading: false
+                                                        })}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         onClick={() => onDeleteCode(code.id)}
                                                         preventDoubleClick={true}
                                                     >
@@ -282,6 +319,12 @@ const TenantCommonCodeManagerUI = ({
                         <MGButton
                             type="button"
                             variant="secondary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: false
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={onModalClose}
                             preventDoubleClick={true}
                         >
@@ -291,9 +334,14 @@ const TenantCommonCodeManagerUI = ({
                             type="submit"
                             form={TENANT_COMMON_CODE_FORM_ID}
                             variant="primary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading
+                            })}
                             disabled={loading}
                             loading={loading}
-                            loadingText="처리 중..."
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={true}
                         >
                             {modalMode === 'create' ? '생성' : '수정'}

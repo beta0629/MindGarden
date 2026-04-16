@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { DataTable, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -107,6 +108,12 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
           <MGButton
             variant="danger"
             size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'danger',
+              size: 'sm',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleCancel(enrollment.enrollmentId)}
           >
             취소
@@ -124,6 +131,12 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
           {onCreateEnrollment && (
             <MGButton
               variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onCreateEnrollment}
             >
               수강 등록

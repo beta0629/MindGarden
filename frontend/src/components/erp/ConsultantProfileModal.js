@@ -372,6 +372,7 @@ const ConsultantProfileModal = ({
                                     loading: false,
                                     className: 'consultant-profile-edit-btn'
                                 })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 disabled={profileLoading}
                                 onClick={() => setShowSalaryForm(true)}
                             >
@@ -589,6 +590,7 @@ const ConsultantProfileModal = ({
                                         variant="outline"
                                         size="medium"
                                         className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={() => setShowSalaryForm(false)}
                                         disabled={saving}
                                     >
@@ -617,6 +619,7 @@ const ConsultantProfileModal = ({
                     variant="outline"
                     size="medium"
                     className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onClose}
                     disabled={saving}
                 >

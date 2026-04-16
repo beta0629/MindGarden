@@ -8,6 +8,7 @@
 import React from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
 import '../../../styles/unified-design-tokens.css';
@@ -90,7 +91,8 @@ const SystemNotificationFormModal = ({
           <MGButton
             type="button"
             variant="outline"
-            className="mg-v2-button mg-v2-button--outline"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             aria-label="취소"
             onClick={onClose}
             disabled={loading}
@@ -100,7 +102,8 @@ const SystemNotificationFormModal = ({
           <MGButton
             type="button"
             variant="primary"
-            className="mg-v2-button mg-v2-button--primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             aria-label="저장"
             onClick={() => onSave?.(formData)}
             disabled={loading}

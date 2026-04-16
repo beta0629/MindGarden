@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './Toast.css';
 
@@ -70,13 +71,19 @@ const Toast = () => {
                         </div>
                         <MGButton
                             type="button"
-                            className="toast-close"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'toast-close'
+                            })}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                             }}
                             variant="outline"
                             preventDoubleClick={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                             ×
                         </MGButton>

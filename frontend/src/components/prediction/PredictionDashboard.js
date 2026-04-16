@@ -6,6 +6,7 @@ import TreatmentOutcomeChart from './TreatmentOutcomeChart';
 import DropoutRiskIndicator from './DropoutRiskIndicator';
 import SimilarCasesPanel from './SimilarCasesPanel';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PredictionDashboard.css';
 
 /**
@@ -80,7 +81,17 @@ const PredictionDashboard = ({ clientId }) => {
         return (
             <div className={PREDICTION_CSS.DASHBOARD}>
                 <div className={PREDICTION_CSS.ERROR_MESSAGE}>{error}</div>
-                <MGButton className="btn btn-primary" onClick={loadPredictionData} variant="primary">
+                <MGButton
+                    className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'md',
+                        loading: false,
+                        className: 'btn btn-primary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={loadPredictionData}
+                    variant="primary"
+                >
                     다시 시도
                 </MGButton>
             </div>
@@ -91,7 +102,17 @@ const PredictionDashboard = ({ clientId }) => {
         <div className={PREDICTION_CSS.DASHBOARD}>
             <div className={PREDICTION_CSS.DASHBOARD_HEADER}>
                 <h2>📊 예측 기반 경과 모니터링</h2>
-                <MGButton className="btn btn-secondary" onClick={loadPredictionData} variant="secondary">
+                <MGButton
+                    className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'md',
+                        loading: false,
+                        className: 'btn btn-secondary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={loadPredictionData}
+                    variant="secondary"
+                >
                     🔄 새로고침
                 </MGButton>
             </div>

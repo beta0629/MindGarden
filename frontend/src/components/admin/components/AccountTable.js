@@ -1,6 +1,7 @@
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGCard from '../../common/MGCard';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ACCOUNT_CSS_CLASSES } from '../../../constants/css';
 import {
   ACCOUNT_STATUS_LABELS,
@@ -109,6 +110,12 @@ const AccountTable = ({
               <MGButton
                 variant="secondary"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => onEdit(account)}
                 preventDoubleClick
               >
@@ -117,6 +124,12 @@ const AccountTable = ({
               <MGButton
                 variant="warning"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'warning',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => onToggleStatus(account.id)}
                 preventDoubleClick
               >
@@ -126,6 +139,12 @@ const AccountTable = ({
                 <MGButton
                   variant="info"
                   size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'info',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => onSetPrimary(account.id)}
                   preventDoubleClick
                 >
@@ -135,6 +154,12 @@ const AccountTable = ({
               <MGButton
                 variant="danger"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'danger',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => onDelete(account.id)}
                 preventDoubleClick
               >

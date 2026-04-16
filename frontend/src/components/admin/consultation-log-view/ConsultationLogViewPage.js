@@ -13,6 +13,7 @@ import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ConsultationLogFilterSection from './ConsultationLogFilterSection';
@@ -231,7 +232,13 @@ const ConsultationLogViewPage = () => {
               type="button"
               variant="outline"
               size="small"
-              className={`mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: `mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setViewMode(mode)}
               aria-pressed={viewMode === mode}
               aria-current={viewMode === mode ? 'true' : undefined}

@@ -1,5 +1,6 @@
 // import React from 'react';
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 
 /**
@@ -19,6 +20,9 @@ const ClientFilters = ({
                 <h3>필터 및 검색</h3>
                 <MGButton
                     variant="primary"
+                    size="medium"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onCreateClient}
                 >
                     새 내담자 등록
@@ -55,6 +59,9 @@ const ClientFilters = ({
                 
                 <MGButton
                     variant="outline"
+                    size="medium"
+                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => {
                         setSearchTerm('');
                         setFilterStatus('all');

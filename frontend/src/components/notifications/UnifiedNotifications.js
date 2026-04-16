@@ -8,6 +8,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -273,6 +274,12 @@ const UnifiedNotifications = () => {
             <MGButton
               type="button"
               variant={activeTab === 'system' ? 'primary' : 'outline'}
+              className={buildErpMgButtonClassName({
+                variant: activeTab === 'system' ? 'primary' : 'outline',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleTabChange('system')}
               preventDoubleClick={false}
             >
@@ -281,6 +288,12 @@ const UnifiedNotifications = () => {
             <MGButton
               type="button"
               variant={activeTab === 'messages' ? 'primary' : 'outline'}
+              className={buildErpMgButtonClassName({
+                variant: activeTab === 'messages' ? 'primary' : 'outline',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleTabChange('messages')}
               preventDoubleClick={false}
             >
@@ -417,7 +430,13 @@ const UnifiedNotifications = () => {
             subtitle={`${selectedItem.data.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedItem.data.authorName || selectedItem.data.senderName || '관리자')} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
             size="large"
             actions={
-              <MGButton type="button" variant="primary" onClick={closeModal}>
+              <MGButton
+                type="button"
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={closeModal}
+              >
                 확인
               </MGButton>
             }

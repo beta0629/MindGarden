@@ -24,6 +24,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -396,6 +397,8 @@ const PgApprovalManagement = () => {
             <MGButton
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={loadPendingConfigurations}
             >
               새로고침
@@ -488,6 +491,12 @@ const PgApprovalManagement = () => {
                     <MGButton
                       variant="secondary"
                       size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: false
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => loadConfigDetail(config.configId)}
                       disabled={loadingDetail}
                     >
@@ -497,6 +506,12 @@ const PgApprovalManagement = () => {
                     <MGButton
                       variant="secondary"
                       size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: testingConnection === config.configId
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => handleTestConnection(config.configId)}
                       disabled={testingConnection === config.configId}
                       loading={testingConnection === config.configId}
@@ -507,6 +522,8 @@ const PgApprovalManagement = () => {
                     <MGButton
                       variant="success"
                       size="small"
+                      className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
                         setShowApprovalModal(true);
@@ -518,6 +535,8 @@ const PgApprovalManagement = () => {
                     <MGButton
                       variant="danger"
                       size="small"
+                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
                         setShowRejectModal(true);
@@ -557,6 +576,12 @@ const PgApprovalManagement = () => {
               <>
                 <MGButton
                   variant="secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseApprovalModal}
                   disabled={loading}
                 >
@@ -564,6 +589,12 @@ const PgApprovalManagement = () => {
                 </MGButton>
                 <MGButton
                   variant="success"
+                  className={buildErpMgButtonClassName({
+                    variant: 'success',
+                    size: 'md',
+                    loading
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleApprove}
                   disabled={loading}
                   loading={loading}
@@ -630,10 +661,16 @@ const PgApprovalManagement = () => {
                   <MGButton
                     variant="secondary"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'sm',
+                      loading: testingConnection === selectedConfig.configId,
+                      className: 'mg-button-test-connection'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleTestConnection(selectedConfig.configId)}
                     disabled={testingConnection === selectedConfig.configId}
                     loading={testingConnection === selectedConfig.configId}
-                    className="mg-button-test-connection"
                   >
                     지금 테스트하기
                   </MGButton>
@@ -673,6 +710,12 @@ const PgApprovalManagement = () => {
               <>
                 <MGButton
                   variant="secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseRejectModal}
                   disabled={loading}
                 >
@@ -680,6 +723,12 @@ const PgApprovalManagement = () => {
                 </MGButton>
                 <MGButton
                   variant="danger"
+                  className={buildErpMgButtonClassName({
+                    variant: 'danger',
+                    size: 'md',
+                    loading
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReject}
                   disabled={loading || !rejectForm.rejectionReason.trim()}
                   loading={loading}
@@ -732,7 +781,16 @@ const PgApprovalManagement = () => {
           className="mg-v2-ad-b0kla"
           backdropClick
           actions={
-            <MGButton variant="secondary" onClick={handleCloseDetailModal}>
+            <MGButton
+              variant="secondary"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCloseDetailModal}
+            >
               닫기
             </MGButton>
           }
@@ -778,6 +836,12 @@ const PgApprovalManagement = () => {
                       <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
                       <MGButton
                         variant="secondary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'md',
+                          loading: loadingKeys
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleDecryptKeys(configDetail.configId)}
                         disabled={loadingKeys}
                         loading={loadingKeys}
@@ -795,7 +859,13 @@ const PgApprovalManagement = () => {
                             type="button"
                             variant="secondary"
                             size="small"
-                            className="key-copy-button"
+                            className={buildErpMgButtonClassName({
+                              variant: 'secondary',
+                              size: 'sm',
+                              loading: false,
+                              className: 'key-copy-button'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => {
                               navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
@@ -815,7 +885,13 @@ const PgApprovalManagement = () => {
                             type="button"
                             variant="secondary"
                             size="small"
-                            className="key-copy-button"
+                            className={buildErpMgButtonClassName({
+                              variant: 'secondary',
+                              size: 'sm',
+                              loading: false,
+                              className: 'key-copy-button'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => {
                               navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
@@ -830,6 +906,12 @@ const PgApprovalManagement = () => {
                       <MGButton
                         variant="secondary"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {
                           setShowKeys(false);
                           setDecryptedKeys(null);

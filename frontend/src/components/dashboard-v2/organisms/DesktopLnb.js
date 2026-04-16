@@ -15,6 +15,7 @@ import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './DesktopLnb.css';
 
@@ -68,7 +69,13 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className="mg-v2-desktop-lnb__group-chevron"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'mg-v2-desktop-lnb__group-chevron'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={(e) => handleGroupToggle(e, item.to)}
                     preventDoubleClick={false}
                     aria-expanded={expandedGroupKey === item.to}

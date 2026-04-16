@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
@@ -52,7 +53,13 @@ const ConsultationLogListBlock = ({ records, clientNameMap, consultantNameMap, o
               key={record.id}
               type="button"
               variant="outline"
-              className="mg-v2-consultation-log-list-block__card"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-consultation-log-list-block__card'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onCardClick(record.id)}
               tabIndex={0}
               aria-label={`상담일지 ${sessionDate} ${clientName} 수정`}

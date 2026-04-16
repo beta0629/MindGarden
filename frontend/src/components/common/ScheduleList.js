@@ -26,6 +26,7 @@ import {
   SCHEDULE_ERROR_MESSAGES
 } from '../../constants/schedule';
 import ScheduleCard from './ScheduleCard';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
@@ -316,7 +317,12 @@ const ScheduleList = ({
             variant="primary"
             preventDoubleClick={false}
             loading={loading}
-            loadingText="불러오는 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading
+            })}
             onClick={handleRefresh}
           >
             <i className="bi bi-arrow-clockwise" />
@@ -336,7 +342,12 @@ const ScheduleList = ({
           variant="outline"
           preventDoubleClick={false}
           loading={loading}
-          loadingText="새로고침 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading
+          })}
           disabled={loading}
           onClick={handleRefresh}
         >
@@ -460,8 +471,14 @@ const ScheduleList = ({
               type="button"
               variant="outline"
               size="small"
-              className="pagination-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'pagination-btn'
+              })}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
             >
@@ -471,8 +488,14 @@ const ScheduleList = ({
               type="button"
               variant="outline"
               size="small"
-              className="pagination-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'pagination-btn'
+              })}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
             >
@@ -487,8 +510,14 @@ const ScheduleList = ({
               type="button"
               variant="outline"
               size="small"
-              className="pagination-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'pagination-btn'
+              })}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
@@ -498,8 +527,14 @@ const ScheduleList = ({
               type="button"
               variant="outline"
               size="small"
-              className="pagination-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'pagination-btn'
+              })}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
             >

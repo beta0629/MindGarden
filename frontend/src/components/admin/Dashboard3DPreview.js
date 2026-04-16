@@ -17,6 +17,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaEye } from 'react-icons/fa';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './Dashboard3DPreview.css';
 
 const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미리보기' }) => {
@@ -142,10 +143,17 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             type="button"
             variant="outline"
             size="small"
-            className="preview-control-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'preview-control-btn'
+            })}
             onClick={handleResetRotation}
             title="회전 리셋"
             preventDoubleClick={false}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             리셋
           </MGButton>
@@ -153,10 +161,17 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             type="button"
             variant="outline"
             size="small"
-            className="preview-control-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'preview-control-btn'
+            })}
             onClick={handleZoomOut}
             title="축소"
             preventDoubleClick={false}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             축소
           </MGButton>
@@ -167,10 +182,17 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             type="button"
             variant="outline"
             size="small"
-            className="preview-control-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'preview-control-btn'
+            })}
             onClick={handleZoomIn}
             title="확대"
             preventDoubleClick={false}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             확대
           </MGButton>
@@ -178,10 +200,17 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             type="button"
             variant="outline"
             size="small"
-            className="preview-control-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'preview-control-btn'
+            })}
             onClick={handleToggleFullscreen}
             title="전체화면"
             preventDoubleClick={false}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             {isFullscreen ? '전체화면 종료' : '전체화면'}
           </MGButton>

@@ -6,6 +6,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
@@ -445,6 +446,8 @@ const PaymentManagement = () => {
               <MGButton
                 type="button"
                 variant="success"
+                className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => exportPayments()}
                 preventDoubleClick={false}
               >
@@ -453,6 +456,8 @@ const PaymentManagement = () => {
               <MGButton
                 type="button"
                 variant="info"
+                className={buildErpMgButtonClassName({ variant: 'info', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => showPaymentAnalytics()}
                 preventDoubleClick={false}
               >
@@ -461,6 +466,8 @@ const PaymentManagement = () => {
               <MGButton
                 type="button"
                 variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => loadPayments()}
                 preventDoubleClick={false}
               >
@@ -581,6 +588,8 @@ const PaymentManagement = () => {
                 type="button"
                 variant="success"
                 size="small"
+                className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleBulkAction('approve', selectedPayments)}
                 preventDoubleClick={false}
               >
@@ -590,6 +599,8 @@ const PaymentManagement = () => {
                 type="button"
                 variant="warning"
                 size="small"
+                className={buildErpMgButtonClassName({ variant: 'warning', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleBulkAction('cancel', selectedPayments)}
                 preventDoubleClick={false}
               >
@@ -599,6 +610,8 @@ const PaymentManagement = () => {
                 type="button"
                 variant="danger"
                 size="small"
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => handleBulkAction('refund', selectedPayments)}
                 preventDoubleClick={false}
               >
@@ -608,6 +621,8 @@ const PaymentManagement = () => {
                 type="button"
                 variant="secondary"
                 size="small"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setSelectedPayments([])}
                 preventDoubleClick={false}
               >
@@ -701,6 +716,8 @@ const PaymentManagement = () => {
                       <MGButton
                         variant="success"
                         size="small"
+                        className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
                         preventDoubleClick={true}
                       >
@@ -711,6 +728,8 @@ const PaymentManagement = () => {
                       <MGButton
                         variant="danger"
                         size="small"
+                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
                         preventDoubleClick={true}
                       >
@@ -721,6 +740,8 @@ const PaymentManagement = () => {
                       <MGButton
                         variant="warning"
                         size="small"
+                        className={buildErpMgButtonClassName({ variant: 'warning', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleRefund(payment.paymentId, payment.amount)}
                         preventDoubleClick={true}
                       >
@@ -740,6 +761,8 @@ const PaymentManagement = () => {
             type="button"
             variant="outline"
             size="small"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={pagination.currentPage === 0}
             onClick={() => handlePageChange(pagination.currentPage - 1)}
             preventDoubleClick={false}
@@ -754,6 +777,8 @@ const PaymentManagement = () => {
             type="button"
             variant="outline"
             size="small"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={pagination.currentPage >= pagination.totalPages - 1}
             onClick={() => handlePageChange(pagination.currentPage + 1)}
             preventDoubleClick={false}

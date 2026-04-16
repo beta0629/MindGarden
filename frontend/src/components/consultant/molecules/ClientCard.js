@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { Mail, Phone, Calendar, Package, Clock, CheckCircle, XCircle, Clock as ClockIcon, CheckCircle2, PauseCircle } from 'lucide-react';
 import Avatar from '../../common/Avatar';
 import StatusBadge from '../../common/StatusBadge';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import ClientSessionInfo from './ClientSessionInfo';
 
@@ -100,7 +101,8 @@ const ClientCard = ({ client, onViewDetails }) => {
           onClick={handleViewClick}
           disabled={!client.id}
           variant="primary"
-          className="mg-v2-client-view-btn"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           상세보기
         </MGButton>

@@ -11,6 +11,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './ConsultantMessages.css';
 
@@ -334,7 +335,8 @@ const ConsultantMessages = () => {
           <MGButton
             onClick={() => setShowSendModal(true)}
             variant="primary"
-            className="mg-v2-button mg-v2-button-primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             새 메시지
           </MGButton>
@@ -371,7 +373,8 @@ const ConsultantMessages = () => {
                   <MGButton
                     onClick={() => setShowSendModal(true)}
                     variant="primary"
-                    className="consultant-messages-empty-btn"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'consultant-messages-empty-btn' })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     첫 메시지 보내기
                   </MGButton>
@@ -441,14 +444,16 @@ const ConsultantMessages = () => {
             <>
               <MGButton
                 variant="secondary"
-                className="mg-v2-button mg-v2-button-secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowSendModal(false)}
               >
                 취소
               </MGButton>
               <MGButton
                 variant="primary"
-                className="mg-v2-button mg-v2-button-primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleSendMessage}
               >
                 전송

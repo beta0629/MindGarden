@@ -96,7 +96,8 @@ const ApprovalHubLayout = ({
             variant="outline"
             role="tab"
             aria-selected={isAdminActive}
-            className={`mg-v2-ad-b0kla__pill ${isAdminActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isAdminActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={goAdmin}
             preventDoubleClick={false}
           >
@@ -107,7 +108,8 @@ const ApprovalHubLayout = ({
             variant="outline"
             role="tab"
             aria-selected={isSuperActive}
-            className={`mg-v2-ad-b0kla__pill ${isSuperActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isSuperActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={goSuper}
             preventDoubleClick={false}
           >

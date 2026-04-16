@@ -1,6 +1,7 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 /**
  * 세션 관리 페이지 헤더 컴포넌트
@@ -39,7 +40,13 @@ const SessionManagementHeader = ({
                     <MGButton
                         type="button"
                         variant="primary"
-                        className="add-session-btn"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'add-session-btn'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onAddSession}
                     >
                         회기 추가 요청
@@ -51,7 +58,13 @@ const SessionManagementHeader = ({
                 <MGButton
                     type="button"
                     variant="outline"
-                    className={`tab-btn ${activeTab === 'mappings' ? 'active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `tab-btn ${activeTab === 'mappings' ? 'active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => onTabChange('mappings')}
                     preventDoubleClick={false}
                 >
@@ -60,7 +73,13 @@ const SessionManagementHeader = ({
                 <MGButton
                     type="button"
                     variant="outline"
-                    className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `tab-btn ${activeTab === 'sessions' ? 'active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => onTabChange('sessions')}
                     preventDoubleClick={false}
                 >

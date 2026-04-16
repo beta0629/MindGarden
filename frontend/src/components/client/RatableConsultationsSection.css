@@ -20,6 +20,10 @@
   flex-wrap: wrap;
 }
 
+.ratable-consultations-header-refresh {
+  margin-left: auto;
+}
+
 .ratable-consultations-title {
   display: flex;
   align-items: center;

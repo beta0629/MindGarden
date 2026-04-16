@@ -1,5 +1,6 @@
 import React from 'react';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './SchedulePendingList.css';
 
@@ -36,6 +37,12 @@ const SchedulePendingList = ({ items = [], onScheduleRegister }) => {
             <MGButton
               variant="primary"
               size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onScheduleRegister && onScheduleRegister(item)}
             >
               등록

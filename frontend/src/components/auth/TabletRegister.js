@@ -13,6 +13,7 @@ import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
@@ -431,10 +432,12 @@ const TabletRegister = () => {
                   variant="secondary"
                   onClick={handleEmailDuplicateCheck}
                   disabled={isCheckingEmail || !formData.email?.trim()}
-                  className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                  className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: isCheckingEmail })} mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn`}
+                  loading={isCheckingEmail}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                  {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                 </MGButton>
               </div>
               {emailCheckStatus === 'duplicate' && (
@@ -465,8 +468,9 @@ const TabletRegister = () => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className="mg-v2-password-toggle"
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
                     onClick={() => togglePassword('password')}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
@@ -494,8 +498,9 @@ const TabletRegister = () => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className="mg-v2-password-toggle"
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
                     onClick={() => togglePassword('confirmPassword')}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                     aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                   >
@@ -534,10 +539,12 @@ const TabletRegister = () => {
                   variant="secondary"
                   onClick={handlePhoneDuplicateCheck}
                   disabled={isCheckingPhone || !formData.phone?.trim()}
-                  className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
+                  className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: isCheckingPhone })} mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn`}
+                  loading={isCheckingPhone}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  {isCheckingPhone ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                  {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                 </MGButton>
               </div>
               {phoneCheckStatus === 'duplicate' && (
@@ -563,8 +570,9 @@ const TabletRegister = () => {
                   type="button"
                   variant="outline"
                   size="small"
-                  className="mg-v2-link-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-link-button`}
                   onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   이용약관
@@ -592,8 +600,9 @@ const TabletRegister = () => {
                   type="button"
                   variant="outline"
                   size="small"
-                  className="mg-v2-link-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-link-button`}
                   onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   개인정보처리방침
@@ -610,10 +619,10 @@ const TabletRegister = () => {
             <MGButton
               type="submit"
               variant="primary"
-              className="mg-v2-button-primary"
+              className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
               disabled={isLoading}
               loading={isLoading}
-              loadingText="회원가입 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               회원가입

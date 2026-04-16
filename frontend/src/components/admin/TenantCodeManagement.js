@@ -24,6 +24,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
     FaBuilding,
@@ -310,6 +311,8 @@ const TenantCodeManagement = () => {
                         <MGButton
                             type="button"
                             variant="primary"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => handleOpenModal()}
                             disabled={!permissions.canEdit}
                             preventDoubleClick={false}
@@ -328,6 +331,8 @@ const TenantCodeManagement = () => {
                                 <MGButton
                                     type="button"
                                     variant="outline"
+                                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => handleOpenModal()}
                                     preventDoubleClick={false}
                                 >
@@ -378,7 +383,13 @@ const TenantCodeManagement = () => {
                                         type="button"
                                         variant="outline"
                                         size="small"
-                                        className="action-btn view"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'outline',
+                                            size: 'sm',
+                                            loading: false,
+                                            className: 'action-btn view'
+                                        })}
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         onClick={() => handleOpenModal(code)}
                                         title={UI_TEXT.TOOLTIP_VIEW}
                                         preventDoubleClick={false}
@@ -390,7 +401,13 @@ const TenantCodeManagement = () => {
                                             type="button"
                                             variant="outline"
                                             size="small"
-                                            className="action-btn edit"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'outline',
+                                                size: 'sm',
+                                                loading: false,
+                                                className: 'action-btn edit'
+                                            })}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => handleOpenModal(code)}
                                             title={UI_TEXT.TOOLTIP_EDIT}
                                             preventDoubleClick={false}
@@ -403,7 +420,13 @@ const TenantCodeManagement = () => {
                                             type="button"
                                             variant="outline"
                                             size="small"
-                                            className="action-btn delete"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'outline',
+                                                size: 'sm',
+                                                loading: false,
+                                                className: 'action-btn delete'
+                                            })}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => handleDeleteCode(code.id)}
                                             title={UI_TEXT.TOOLTIP_DELETE}
                                             preventDoubleClick={false}
@@ -436,7 +459,13 @@ const TenantCodeManagement = () => {
                     <MGButton
                         type="button"
                         variant="outline"
-                        className={`tab-btn ${activeTab === TAB_TYPES.TENANT ? 'active' : ''}`}
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false,
+                            className: `tab-btn ${activeTab === TAB_TYPES.TENANT ? 'active' : ''}`
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {
                             setActiveTab(TAB_TYPES.TENANT);
                             setSelectedGroup(null);
@@ -450,7 +479,13 @@ const TenantCodeManagement = () => {
                     <MGButton
                         type="button"
                         variant="outline"
-                        className={`tab-btn ${activeTab === TAB_TYPES.CORE ? 'active' : ''}`}
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false,
+                            className: `tab-btn ${activeTab === TAB_TYPES.CORE ? 'active' : ''}`
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {
                             setActiveTab(TAB_TYPES.CORE);
                             setSelectedGroup(null);
@@ -501,12 +536,21 @@ const TenantCodeManagement = () => {
                     showCloseButton
                     actions={(
                         <>
-                            <MGButton type="button" variant="outline" onClick={handleCloseModal} preventDoubleClick={false}>
+                            <MGButton
+                                type="button"
+                                variant="outline"
+                                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                onClick={handleCloseModal}
+                                preventDoubleClick={false}
+                            >
                                 {UI_TEXT.BTN_CANCEL}
                             </MGButton>
                             <MGButton
                                 type="button"
                                 variant="primary"
+                                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={handleSaveCode}
                                 disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
                                 preventDoubleClick={false}

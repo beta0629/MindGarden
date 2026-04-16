@@ -9,6 +9,7 @@
 import React from 'react';
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 import './NavLink.css';
 
@@ -37,7 +38,8 @@ const NavLink = ({ to, icon, children, active, className = '', asButton = false,
         type="button"
         variant="outline"
         preventDoubleClick={false}
-        className={`${baseClass} ${stateClass} ${className}`}
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: `${baseClass} ${stateClass} ${className}` })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onClick}
       >
         {content}

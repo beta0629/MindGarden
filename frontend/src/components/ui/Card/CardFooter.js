@@ -1,6 +1,7 @@
 import React from 'react';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './Card.css';
 
 /**
@@ -34,13 +35,21 @@ const CardFooter = ({ children,
                 : variantClass.includes('outline')
                   ? 'outline'
                   : 'secondary';
+            const actionLoading = Boolean(action.loading);
             return (
               <MGButton
                 key={index}
                 onClick={action.onClick}
-                className={`mg-v2-button ${variantClass}`}
+                className={buildErpMgButtonClassName({
+                  variant: mgVariant,
+                  size: 'md',
+                  loading: actionLoading,
+                  className: variantClass
+                })}
                 disabled={action.disabled}
                 variant={mgVariant}
+                loading={actionLoading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 <SafeText>{action.label}</SafeText>

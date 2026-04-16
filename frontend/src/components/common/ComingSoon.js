@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
@@ -43,7 +44,13 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
             </div>
           </div>
           <MGButton
-            className="coming-soon-button"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'coming-soon-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => window.history.back()}
             variant="primary"
           >

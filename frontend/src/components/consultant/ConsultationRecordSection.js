@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 const ConsultationRecordSection = ({ consultantId }) => {
@@ -84,6 +85,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
               type="button"
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAllRecords}
               preventDoubleClick={false}
             >
@@ -93,6 +96,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
               type="button"
               variant="primary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCreateRecord}
               preventDoubleClick={false}
             >
@@ -165,7 +170,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
                         type="button"
                         variant="outline"
                         size="small"
-                        className="record-view-btn"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'record-view-btn' })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                         preventDoubleClick={false}
                       >
@@ -188,6 +194,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
               <MGButton
                 type="button"
                 variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCreateRecord}
                 preventDoubleClick={false}
               >
@@ -201,6 +209,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
             <MGButton
               type="button"
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCreateRecord}
               preventDoubleClick={false}
             >
@@ -209,6 +219,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
             <MGButton
               type="button"
               variant="outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAllRecords}
               preventDoubleClick={false}
             >
@@ -217,6 +229,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
             <MGButton
               type="button"
               variant="outline"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/consultant/consultation-records/statistics')}
               preventDoubleClick={false}
             >

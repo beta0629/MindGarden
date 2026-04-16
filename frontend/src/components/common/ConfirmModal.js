@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 
 /**
@@ -64,6 +65,17 @@ const ConfirmModal = ({
     }
   };
 
+  const confirmVariant = getConfirmVariant();
+  const confirmMgV2ClassName =
+    confirmVariant === 'warning'
+      ? buildErpMgButtonClassName({
+        variant: 'primary',
+        size: 'md',
+        loading: false,
+        className: 'mg-v2-button--warning'
+      })
+      : buildErpMgButtonClassName({ variant: confirmVariant, size: 'md', loading: false });
+
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -74,10 +86,24 @@ const ConfirmModal = ({
       backdropClick={true}
       actions={
         <>
-          <MGButton type="button" variant="secondary" onClick={onClose}>
+          <MGButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+          >
             {cancelText}
           </MGButton>
-          <MGButton type="button" variant={getConfirmVariant()} onClick={handleConfirm}>
+          <MGButton
+            type="button"
+            variant={confirmVariant}
+            size="medium"
+            className={confirmMgV2ClassName}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleConfirm}
+          >
             {confirmText}
           </MGButton>
         </>

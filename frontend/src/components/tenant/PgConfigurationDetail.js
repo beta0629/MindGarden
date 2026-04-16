@@ -21,6 +21,7 @@ import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -216,6 +217,8 @@ const PgConfigurationDetail = () => {
             <MGButton
               type="button"
               variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/tenant/pg-configurations')}
               preventDoubleClick={false}
             >
@@ -249,6 +252,8 @@ const PgConfigurationDetail = () => {
                       type="button"
                       variant="secondary"
                       size="small"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => navigate('/tenant/pg-configurations')}
                       preventDoubleClick={false}
                     >
@@ -260,6 +265,8 @@ const PgConfigurationDetail = () => {
                           type="button"
                           variant="secondary"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
                           preventDoubleClick={false}
                         >
@@ -269,6 +276,8 @@ const PgConfigurationDetail = () => {
                           type="button"
                           variant="danger"
                           size="small"
+                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => setShowDeleteModal(true)}
                           preventDoubleClick={false}
                         >
@@ -281,10 +290,15 @@ const PgConfigurationDetail = () => {
                         type="button"
                         variant="secondary"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: testingConnection
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleTestConnection}
                         disabled={testingConnection}
                         loading={testingConnection}
-                        loadingText="테스트 중..."
                         preventDoubleClick={false}
                       >
                         연결 테스트
@@ -383,10 +397,15 @@ const PgConfigurationDetail = () => {
                 <MGButton
                   type="button"
                   variant="secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'md',
+                    loading: loadingKeys
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleDecryptKeys}
                   disabled={loadingKeys}
                   loading={loadingKeys}
-                  loadingText="처리 중..."
                   preventDoubleClick={false}
                 >
                   키 확인
@@ -400,7 +419,13 @@ const PgConfigurationDetail = () => {
                     <code>{decryptedKeys?.apiKey || '***'}</code>
                     <MGButton
                       type="button"
-                      className="key-copy-button"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'key-copy-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
                         showNotification('API 키가 복사되었습니다.', 'success');
@@ -420,7 +445,13 @@ const PgConfigurationDetail = () => {
                     <code>{decryptedKeys?.secretKey || '***'}</code>
                     <MGButton
                       type="button"
-                      className="key-copy-button"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'key-copy-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
                         showNotification('시크릿 키가 복사되었습니다.', 'success');
@@ -444,6 +475,8 @@ const PgConfigurationDetail = () => {
                   type="button"
                   variant="secondary"
                   size="small"
+                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => {
                     setShowKeys(false);
                     setDecryptedKeys(null);
@@ -613,6 +646,12 @@ const PgConfigurationDetail = () => {
               <MGButton
                 type="button"
                 variant="secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
                 disabled={loading}
                 preventDoubleClick={false}
@@ -622,6 +661,12 @@ const PgConfigurationDetail = () => {
               <MGButton
                 type="button"
                 variant="danger"
+                className={buildErpMgButtonClassName({
+                  variant: 'danger',
+                  size: 'md',
+                  loading: loading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
                 disabled={loading}
                 preventDoubleClick={false}

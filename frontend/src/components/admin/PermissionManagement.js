@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
@@ -410,10 +411,11 @@ const PermissionManagement = () => {
                             
                             <MGButton
                                 variant="primary"
+                                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saveLoading })}
                                 onClick={handleSavePermissions}
                                 disabled={saveLoading}
                                 loading={saveLoading}
-                                loadingText="저장 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                             >
                                 권한 저장

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -53,7 +54,13 @@ const QuickActionBar = ({ onNavigate, className = '' }) => {
               type="button"
               variant={action.variant === 'primary' ? 'primary' : 'outline'}
               size="medium"
-              className={`mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`}
+              className={buildErpMgButtonClassName({
+                variant: action.variant === 'primary' ? 'primary' : 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onNavigate(action.path)}
               preventDoubleClick={false}
               aria-label={toDisplayString(action.label)}

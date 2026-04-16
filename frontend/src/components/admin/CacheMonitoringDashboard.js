@@ -4,6 +4,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { FaDatabase, FaChartLine, FaClock, FaMemory } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
@@ -133,25 +134,31 @@ const CacheMonitoringDashboard = () => {
                   </select>
                   <MGButton
                     type="button"
-                    variant="outline"
-                    size="small"
                     onClick={fetchCacheStats}
                     loading={loading}
-                    loadingText="새로고침 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick
-                    className="refresh-button"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading,
+                      className: 'refresh-button'
+                    })}
                   >
                     새로고침
                   </MGButton>
                   <MGButton
                     type="button"
-                    variant="danger"
-                    size="small"
                     onClick={clearAllCaches}
                     loading={clearLoading}
-                    loadingText="삭제 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick
-                    className="clear-cache-button"
+                    className={buildErpMgButtonClassName({
+                      variant: 'danger',
+                      size: 'sm',
+                      loading: clearLoading,
+                      className: 'clear-cache-button'
+                    })}
                   >
                     캐시 삭제
                   </MGButton>
@@ -231,8 +238,6 @@ const CacheMonitoringDashboard = () => {
                       <p>캐시 데이터가 없습니다.</p>
                       <MGButton
                         type="button"
-                        variant="outline"
-                        size="small"
                         onClick={async() => {
                           setRetryLoading(true);
                           try {
@@ -242,9 +247,14 @@ const CacheMonitoringDashboard = () => {
                           }
                         }}
                         loading={retryLoading}
-                        loadingText="다시 시도 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick
-                        className="retry-button"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: retryLoading,
+                          className: 'retry-button'
+                        })}
                       >
                         다시 시도
                       </MGButton>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Users, Calendar } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -495,7 +496,9 @@ const ClientModal = ({
                         <MGButton
                             type="button"
                             variant="secondary"
-                            className="mg-v2-button mg-v2-button-secondary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             disabled={type === 'view'}
                             onClick={() => {
                                 if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
@@ -575,12 +578,18 @@ const ClientModal = ({
                             <MGButton
                                 type="button"
                                 variant="secondary"
+                                size="medium"
                                 onClick={handleEmailDuplicateCheck}
                                 disabled={isCheckingEmail || !safeFormData.email?.trim()}
-                                className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'secondary',
+                                    size: 'md',
+                                    loading: isCheckingEmail,
+                                    className: 'mg-v2-button--compact'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 data-action="email-duplicate-check"
                                 loading={isCheckingEmail}
-                                loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
                             >
                                 {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                             </MGButton>
@@ -737,6 +746,9 @@ const ClientModal = ({
                 <>
                     <MGButton
                         variant="secondary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
                         preventDoubleClick={true}
                     >
@@ -745,6 +757,13 @@ const ClientModal = ({
                     <MGButton
                         variant={type === 'delete' ? 'danger' : 'primary'}
                         type="button"
+                        size="medium"
+                        className={buildErpMgButtonClassName({
+                            variant: type === 'delete' ? 'danger' : 'primary',
+                            size: 'md',
+                            loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

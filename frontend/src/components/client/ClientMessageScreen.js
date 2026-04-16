@@ -7,6 +7,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ClientMessageScreen.css';
 
 const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
@@ -287,7 +288,7 @@ const ClientMessageScreen = () => {
           <div className="client-message-screen-message-detail-card">
             <MGButton
               variant="outline"
-              className="client-message-screen-close-button"
+              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-message-screen-close-button`}
               onClick={() => setSelectedMessage(null)}
               title="닫기"
               preventDoubleClick={false}
@@ -323,7 +324,7 @@ const ClientMessageScreen = () => {
               <div className="client-message-screen-button-group">
                 <MGButton
                   variant="secondary"
-                  className="client-message-screen-secondary-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'secondary', loading: false })} client-message-screen-secondary-button`}
                   onClick={() => setSelectedMessage(null)}
                   disabled={replying}
                   preventDoubleClick={false}
@@ -332,11 +333,11 @@ const ClientMessageScreen = () => {
                 </MGButton>
                 <MGButton
                   variant="primary"
-                  className="client-message-screen-primary-button"
+                  className={`${buildErpMgButtonClassName({ variant: 'primary', loading: replying })} client-message-screen-primary-button`}
                   onClick={handleReply}
                   disabled={replying || !replyContent.trim()}
                   loading={replying}
-                  loadingText="전송 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   📤 답장 전송
                 </MGButton>

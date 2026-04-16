@@ -27,7 +27,7 @@ import './refund-management/RefundManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useErpSilentRefresh } from './common';
-import { buildErpMgButtonClassName } from './common/erpMgButtonProps';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 
 /** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
@@ -40,6 +40,9 @@ const REFUND_HISTORY_ENDPOINT = '/api/v1/admin/refund-history';
 const ERP_SYNC_STATUS_ENDPOINT = '/api/v1/admin/erp-sync-status';
 const REFLECT_ERP_REFUND_ENDPOINT = (mappingId) =>
   `/api/v1/admin/mappings/${mappingId}/reflect-erp-refund`;
+
+/** 초기·필터 변경 시 목록/KPI 등 공통 로딩 문구 (UnifiedLoading) */
+const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
 
 const RefundManagement = () => {
   const navigate = useNavigate();
@@ -204,6 +207,7 @@ const RefundManagement = () => {
             })}
             onClick={() => navigate('/erp/dashboard')}
             aria-label="운영 현황으로 돌아가기"
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
           >
             <span>운영 현황으로 돌아가기</span>
@@ -220,6 +224,7 @@ const RefundManagement = () => {
             refundStats={refundStats}
             selectedPeriod={selectedPeriod}
             erpSyncStatus={erpSyncStatus}
+            isLoading={loading}
           />
           <RefundFilterBlock
             selectedPeriod={selectedPeriod}
@@ -233,16 +238,6 @@ const RefundManagement = () => {
             isLoadingReflect={isLoadingReflect}
             silentListRefreshing={silentListRefreshing}
           />
-          {loading ? (
-            <div
-              className="refund-management__inline-loading"
-              role="status"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <UnifiedLoading type="inline" text="환불 데이터를 불러오는 중..." />
-            </div>
-          ) : null}
           <ContentSection noCard className="mg-v2-mapping-list-block">
             <ContentCard className="mg-v2-mapping-list-block__card">
               <div className="mg-v2-mapping-list-block__header">
@@ -255,20 +250,34 @@ const RefundManagement = () => {
                   ariaLabel="목록 보기 전환"
                 />
               </div>
-              <RefundHistoryTableBlock
-                refundHistory={refundHistory}
-                pageInfo={pageInfo}
-                onPageChange={setCurrentPage}
-                onReflectErp={handleReflectErp}
-                selectedRowIds={selectedRowIds}
-                onToggleRowSelection={handleToggleRowSelection}
-                isLoadingReflect={isLoadingReflect}
-              />
+              {loading ? (
+                <UnifiedLoading
+                  type="inline"
+                  text={REFUND_MANAGEMENT_LOADING_TEXT}
+                  className="refund-management__inline-loading refund-management__inline-loading--section"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                />
+              ) : (
+                <RefundHistoryTableBlock
+                  refundHistory={refundHistory}
+                  pageInfo={pageInfo}
+                  onPageChange={setCurrentPage}
+                  onReflectErp={handleReflectErp}
+                  selectedRowIds={selectedRowIds}
+                  onToggleRowSelection={handleToggleRowSelection}
+                  isLoadingReflect={isLoadingReflect}
+                />
+              )}
             </ContentCard>
           </ContentSection>
-          <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
-          <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
-          <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />
+          <RefundReasonStatsBlock
+            refundReasonStats={refundStats?.refundReasonStats}
+            isLoading={loading}
+          />
+          <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
+          <RefundAccountingBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
         </ErpPageShell>
       </ContentArea>
     </AdminCommonLayout>

@@ -7,6 +7,7 @@ import { isRestrictedClientProfileTier } from '../../constants/clientProfileCont
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import '../schedule/ScheduleB0KlA.css';
 import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClientProfilePanel';
@@ -715,6 +716,8 @@ const ConsultationLogModal = ({
         type="button"
         variant="outline"
         size="medium"
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onClose}
         disabled={saving}
         preventDoubleClick={false}
@@ -725,10 +728,11 @@ const ConsultationLogModal = ({
         type="button"
         variant="primary"
         size="medium"
+        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleSave}
         disabled={saving}
         loading={saving}
-        loadingText="저장중..."
         preventDoubleClick={false}
       >
         💾 저장
@@ -737,10 +741,11 @@ const ConsultationLogModal = ({
         type="button"
         variant="success"
         size="medium"
+        className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: saving })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleComplete}
         disabled={saving}
         loading={saving}
-        loadingText="완료중..."
         preventDoubleClick={false}
       >
         ✅ 완료

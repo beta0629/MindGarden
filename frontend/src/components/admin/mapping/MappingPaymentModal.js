@@ -3,6 +3,7 @@ import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import BadgeSelect from '../../common/BadgeSelect';
 /**
  * 매칭 입금확인 모달 컴포넌트
@@ -125,24 +126,35 @@ const MappingPaymentModal = ({
                     <MGButton
                         type="button"
                         variant="secondary"
-                        className="mg-v2-button mg-v2-button-secondary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'md',
+                            loading
+                        })}
                         onClick={(e) => {
                             e?.preventDefault();
                             e?.stopPropagation();
                             onClose();
                         }}
                         disabled={loading}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                         취소
                     </MGButton>
                     <MGButton
                         type="button"
                         variant="primary"
-                        className="mg-v2-button mg-v2-button-primary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading
+                        })}
                         onClick={handleConfirmPayment}
                         disabled={loading}
                         loading={loading}
-                        loadingText="처리 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                         입금 확인
                     </MGButton>

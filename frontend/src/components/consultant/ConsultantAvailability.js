@@ -6,6 +6,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
@@ -250,11 +251,23 @@ const ConsultantAvailability = () => {
 
   const headerActions = (
     <>
-      <MGButton variant="primary" onClick={() => setShowAddModal(true)} preventDoubleClick={false}>
+      <MGButton
+        variant="primary"
+        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => setShowAddModal(true)}
+        preventDoubleClick={false}
+      >
         <i className="bi bi-plus-circle" />
         상담 가능 시간 추가
       </MGButton>
-      <MGButton variant="outline" onClick={loadAvailability} preventDoubleClick={false}>
+      <MGButton
+        variant="outline"
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={loadAvailability}
+        preventDoubleClick={false}
+      >
         <i className="bi bi-arrow-clockwise" />
         새로고침
       </MGButton>
@@ -280,6 +293,8 @@ const ConsultantAvailability = () => {
                 <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
                 <MGButton
                   variant="primary"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => { redirectToLoginPageOnce(); }}
                   preventDoubleClick={false}
                 >
@@ -305,7 +320,13 @@ const ConsultantAvailability = () => {
                 <p className="consultant-availability-error-detail">
                   현재 사용자 역할: {userRole || '없음'}
                 </p>
-                <MGButton variant="warning" onClick={() => window.history.back()} preventDoubleClick={false}>
+                <MGButton
+                  variant="warning"
+                  className={buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={() => window.history.back()}
+                  preventDoubleClick={false}
+                >
                   <i className="bi bi-arrow-left" />
                   이전 페이지로
                 </MGButton>
@@ -367,7 +388,13 @@ const ConsultantAvailability = () => {
                                 <MGButton
                                   variant="outline"
                                   size="small"
-                                  className="btn btn-sm btn-outline-primary"
+                                  className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'btn btn-sm btn-outline-primary'
+                                  })}
+                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => setEditingSlot(slot)}
                                   title="수정"
                                 >
@@ -376,7 +403,13 @@ const ConsultantAvailability = () => {
                                 <MGButton
                                   variant="outline"
                                   size="small"
-                                  className="btn btn-sm btn-outline-danger"
+                                  className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'btn btn-sm btn-outline-danger'
+                                  })}
+                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => handleDeleteAvailability(slot.id)}
                                   title="삭제"
                                 >
@@ -504,7 +537,15 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
       showCloseButton
       actions={(
         <>
-          <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+            preventDoubleClick={false}
+          >
             <i className="bi bi-x-circle" />
             취소
           </MGButton>
@@ -513,6 +554,8 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             form={CONSULTANT_AVAILABILITY_FORM_ID}
             variant="primary"
             size="medium"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
           >
             <i className="bi bi-check-circle" />

@@ -12,6 +12,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import './UserManagement.css';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
@@ -276,7 +277,8 @@ const UserManagement = ({ onUpdate }) => {
                                     type="button"
                                     variant="success"
                                     size="small"
-                                    className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+                                    className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => {
                                         setSelectedUser(user);
                                         setForm({ newRole: USER_ROLES.CONSULTANT });
@@ -293,7 +295,8 @@ const UserManagement = ({ onUpdate }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+                                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => {
                                     setSelectedUser(user);
                                     setForm({ newRole: user.role });
@@ -323,7 +326,13 @@ const UserManagement = ({ onUpdate }) => {
                             type="button"
                             variant="primary"
                             size="small"
-                            className="mg-v2-dashboard-icon-btn"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-dashboard-icon-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={loadData}
                             title="새로고침"
                             preventDoubleClick={false}
@@ -373,7 +382,8 @@ const UserManagement = ({ onUpdate }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className="mg-v2-button mg-v2-button-ghost mg-v2-button-sm"
+                                className={buildErpMgButtonClassName({ variant: 'ghost', size: 'sm', loading: false })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => {
                                     setSearchTerm('');
                                     setSelectedRole('');
@@ -443,7 +453,8 @@ const UserManagement = ({ onUpdate }) => {
                             <MGButton
                                 type="button"
                                 variant="secondary"
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={() => setShowRoleModal(false)}
                                 disabled={roleSubmitting}
                                 preventDoubleClick={false}
@@ -453,10 +464,14 @@ const UserManagement = ({ onUpdate }) => {
                             <MGButton
                                 type="submit"
                                 variant="primary"
-                                className="mg-v2-button mg-v2-button-primary"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'md',
+                                    loading: roleSubmitting
+                                })}
                                 disabled={form.newRole === selectedUser.role || roleSubmitting}
                                 loading={roleSubmitting}
-                                loadingText="역할 변경 중..."
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                             >
                                 {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT

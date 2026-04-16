@@ -1,4 +1,5 @@
 import React from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './BadgeSelect.css';
 
@@ -117,7 +118,13 @@ const BadgeSelect = ({
               aria-disabled={disabled}
               tabIndex={disabled ? -1 : 0}
               disabled={disabled}
-              className={`mg-v2-badge-select__item ${selected ? 'mg-v2-badge-select__item--selected' : ''} ${disabled ? 'mg-v2-badge-select__item--disabled' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-badge-select__item ${selected ? 'mg-v2-badge-select__item--selected' : ''} ${disabled ? 'mg-v2-badge-select__item--disabled' : ''}`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => handleClick(optValue)}
               onKeyDown={(e) => handleKeyDown(e, optValue)}
               preventDoubleClick={false}

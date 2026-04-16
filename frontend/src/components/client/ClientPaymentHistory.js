@@ -20,6 +20,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
@@ -39,15 +40,21 @@ const ClientPaymentHistory = () => {
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryLoading, setRetryLoading] = useState(false);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     loadPaymentData();
   }, []);
 
-  const loadPaymentData = async() => {
+  const loadPaymentData = async(opts = {}) => {
+    const fromErrorRetry = opts.fromErrorRetry === true;
     try {
-      setIsLoading(true);
+      if (fromErrorRetry) {
+        setRetryLoading(true);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
 
       const userResponse = await apiGet('/api/v1/auth/current-user');
@@ -79,7 +86,11 @@ const ClientPaymentHistory = () => {
       console.error('결제 데이터 로드 실패:', err);
       setError(err.message || '결제 데이터를 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      if (fromErrorRetry) {
+        setRetryLoading(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -185,7 +196,14 @@ const ClientPaymentHistory = () => {
               </div>
               <h3 className="payment-error__title">오류가 발생했습니다</h3>
               <p className="payment-error__message">{error}</p>
-              <MGButton variant="primary" onClick={loadPaymentData} preventDoubleClick={false}>
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
+                onClick={() => loadPaymentData({ fromErrorRetry: true })}
+                loading={retryLoading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+              >
                 다시 시도
               </MGButton>
             </div>
@@ -208,6 +226,7 @@ const ClientPaymentHistory = () => {
               <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
               <MGButton
                 variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                 onClick={() => {
                   const dashboardPath = getDashboardPath(user?.role);
                   navigate(dashboardPath || '/dashboard');
@@ -277,7 +296,7 @@ const ClientPaymentHistory = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`payment-filter__button ${filter === 'all' ? 'active' : ''}`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
               preventDoubleClick={false}
             >
@@ -286,7 +305,7 @@ const ClientPaymentHistory = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`payment-filter__button ${filter === 'completed' ? 'active' : ''}`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'completed' ? 'active' : ''}`}
               onClick={() => setFilter('completed')}
               preventDoubleClick={false}
             >
@@ -295,7 +314,7 @@ const ClientPaymentHistory = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`payment-filter__button ${filter === 'pending' ? 'active' : ''}`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'pending' ? 'active' : ''}`}
               onClick={() => setFilter('pending')}
               preventDoubleClick={false}
             >
@@ -304,7 +323,7 @@ const ClientPaymentHistory = () => {
             <MGButton
               type="button"
               variant="outline"
-              className={`payment-filter__button ${filter === 'refunded' ? 'active' : ''}`}
+              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'refunded' ? 'active' : ''}`}
               onClick={() => setFilter('refunded')}
               preventDoubleClick={false}
             >

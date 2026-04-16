@@ -23,6 +23,7 @@
 
 import React from 'react';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
@@ -114,6 +115,12 @@ const BaseWidget = ({
               variant="outline"
               size="small"
               type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onRefresh}
             >
               다시 시도
@@ -143,6 +150,12 @@ const BaseWidget = ({
           variant="outline"
           size="small"
           type="button"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onRefresh}
           style={{ marginTop: '1rem' }}
         >
@@ -195,6 +208,13 @@ const BaseWidget = ({
                   variant="outline"
                   size="small"
                   type="button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading
+                  })}
+                  loading={loading}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={onRefresh}
                   title="새로고침"
                   disabled={loading}

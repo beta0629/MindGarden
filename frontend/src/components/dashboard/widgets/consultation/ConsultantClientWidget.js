@@ -23,6 +23,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -125,27 +126,59 @@ const ConsultantClientWidget = ({ widget, user }) => {
               </div>
               <div className="client-actions">
                 <MGButton
+                  type="button"
                   variant="outline"
                   size="small"
-                  className="action-btn message-btn"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'action-btn message-btn'
+                  })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => navigate(`/messages/${client.id}`)}
                   title="메시지"
                   preventDoubleClick={false}
-                 />
+                >
+                  메시지
+                </MGButton>
                 <MGButton
+                  type="button"
                   variant="outline"
                   size="small"
-                  className="action-btn view-btn"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'action-btn view-btn'
+                  })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => navigate(`/clients/${client.id}`)}
                   title="상세보기"
                   preventDoubleClick={false}
-                 />
+                >
+                  보기
+                </MGButton>
               </div>
             </div>
           ))}
         </div>
         <div className="client-actions-footer">
-          <MGButton variant="outline" size="small" onClick={() => navigate('/clients')}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate('/clients')}
+          >
             전체 내담자 보기
           </MGButton>
         </div>

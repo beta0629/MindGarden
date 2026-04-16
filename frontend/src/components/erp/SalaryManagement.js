@@ -445,6 +445,7 @@ const SalaryManagement = () => {
                         size="small"
                         onClick={() => setIsConfigModalOpen(true)}
                         aria-label="급여 기산일 설정"
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'outline',
                           size: 'sm',
@@ -457,6 +458,7 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="small"
                         onClick={() => setActiveTabAndUrl(TAB_CALC)}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'primary',
                           size: 'sm',
@@ -481,7 +483,8 @@ const SalaryManagement = () => {
                       aria-selected={activeTab === TAB_PROFILES}
                       aria-controls="salary-profile-panel"
                       id="tab-profiles"
-                      className={`mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
                       preventDoubleClick={false}
                     >
@@ -494,7 +497,8 @@ const SalaryManagement = () => {
                       aria-selected={activeTab === TAB_CALC}
                       aria-controls="salary-calc-panel"
                       id="tab-calculations"
-                      className={`mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setActiveTabAndUrl(TAB_CALC)}
                       preventDoubleClick={false}
                     >
@@ -507,7 +511,8 @@ const SalaryManagement = () => {
                       aria-selected={activeTab === TAB_TAX}
                       aria-controls="salary-tax-panel"
                       id="tab-tax"
-                      className={`mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => setActiveTabAndUrl(TAB_TAX)}
                       preventDoubleClick={false}
                     >
@@ -531,6 +536,7 @@ const SalaryManagement = () => {
                 <span className="salary-filter-block__accent" aria-hidden />
                 계산 대상 선택
               </h2>
+              <div className="mg-w-full">
               <ErpFilterToolbar
                 ariaLabel="급여 계산 대상 선택"
                 primaryRow={(
@@ -576,7 +582,12 @@ const SalaryManagement = () => {
                           type="button"
                           variant="outline"
                           size="small"
-                          className="salary-filter-block__period-link"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'sm',
+                            className: 'salary-filter-block__period-link'
+                          })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => setIsConfigModalOpen(true)}
                           title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
                           aria-label="기산일 설정"
@@ -668,6 +679,7 @@ const SalaryManagement = () => {
                   </div>
                 )}
               />
+              </div>
             </section>
 
               {activeTab === TAB_PROFILES && (
@@ -693,6 +705,7 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="small"
                         onClick={openConsultantPicker}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'primary',
                           size: 'sm'
@@ -712,6 +725,7 @@ const SalaryManagement = () => {
                         variant="primary"
                         size="medium"
                         onClick={openConsultantPicker}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({ variant: 'primary' })}
                       >
                         지금 프로필 작성하기
@@ -763,6 +777,7 @@ const SalaryManagement = () => {
                                     variant="outline"
                                     size="small"
                                     onClick={(e) => { e.stopPropagation(); handleCreateProfile(c); }}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     className={buildErpMgButtonClassName({
                                       variant: 'outline',
                                       size: 'sm'
@@ -797,6 +812,7 @@ const SalaryManagement = () => {
                                       variant="secondary"
                                       size="small"
                                       onClick={() => openModal(c)}
+                                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       className={buildErpMgButtonClassName({
                                         variant: 'outline',
                                         size: 'sm'
@@ -808,6 +824,7 @@ const SalaryManagement = () => {
                                       variant="outline"
                                       size="small"
                                       onClick={() => handleCreateProfile(c)}
+                                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       className={buildErpMgButtonClassName({
                                         variant: 'outline',
                                         size: 'sm'
@@ -844,6 +861,7 @@ const SalaryManagement = () => {
                         variant="outline"
                         size="small"
                         onClick={() => setActiveTab('profiles')}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'outline',
                           size: 'sm'
@@ -941,6 +959,7 @@ const SalaryManagement = () => {
                             variant="outline"
                             size="medium"
                             onClick={() => setPreviewResult(null)}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             className={buildErpMgButtonClassName({ variant: 'outline' })}
                           >
                             다시 계산
@@ -1000,6 +1019,7 @@ const SalaryManagement = () => {
                               setSelectedCalculation(calculation);
                               setIsTaxDetailsOpen(true);
                             }}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             className={buildErpMgButtonClassName({
                               variant: 'secondary',
                               size: 'sm'
@@ -1014,6 +1034,7 @@ const SalaryManagement = () => {
                               setSelectedCalculation(calculation);
                               setIsExportModalOpen(true);
                             }}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             className={buildErpMgButtonClassName({
                               variant: 'primary',
                               size: 'sm'
@@ -1096,6 +1117,7 @@ const SalaryManagement = () => {
                         <MGButton
                           variant="secondary"
                           size="small"
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           className={buildErpMgButtonClassName({
                             variant: 'secondary',
                             size: 'sm'
@@ -1106,6 +1128,7 @@ const SalaryManagement = () => {
                         <MGButton
                           variant="primary"
                           size="small"
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           className={buildErpMgButtonClassName({
                             variant: 'primary',
                             size: 'sm'
@@ -1154,6 +1177,7 @@ const SalaryManagement = () => {
                   type="button"
                   variant="outline"
                   fullWidth
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   className="mg-v2-list-item mg-v2-list-item--clickable salary-consultant-picker-item"
                   onClick={() => handleConsultantPickForProfile(consultant)}
                   preventDoubleClick={false}

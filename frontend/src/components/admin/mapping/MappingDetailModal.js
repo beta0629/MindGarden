@@ -4,7 +4,8 @@ import { apiGet } from '../../../utils/ajax';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
-import { StatusBadge, ActionButton } from '../../common';
+import { StatusBadge } from '../../common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingDetailModal.css';
 
 /**
@@ -77,9 +78,16 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             showCloseButton
             loading={loading}
             actions={
-                <ActionButton variant="secondary" onClick={onClose}>
+                <MGButton
+                    type="button"
+                    variant="secondary"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                    onClick={onClose}
+                    preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                >
                     닫기
-                </ActionButton>
+                </MGButton>
             }
         >
                 {loading ? (
@@ -96,9 +104,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('basic')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 기본 정보
                             </MGButton>
@@ -106,9 +115,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('payment')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 결제 정보
                             </MGButton>
@@ -116,9 +126,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'sessions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'sessions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('sessions')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 회기 정보
                             </MGButton>
@@ -126,9 +137,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'erp' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'erp' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('erp')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 ERP 연동
                             </MGButton>
@@ -136,9 +148,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 type="button"
                                 variant="outline"
                                 size="small"
-                                className={`mg-v2-ad-b0kla__pill ${activeTab === 'history' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'history' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setActiveTab('history')}
                                 preventDoubleClick={false}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 변경 이력
                             </MGButton>

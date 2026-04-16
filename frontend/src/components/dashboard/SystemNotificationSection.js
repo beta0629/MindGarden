@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 
@@ -73,6 +74,12 @@ const SystemNotificationSection = () => {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
               {totalUnreadCount > 5 ? `전체 보기 (+${totalUnreadCount - 5})` : '전체 보기'}

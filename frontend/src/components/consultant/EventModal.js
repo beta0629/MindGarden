@@ -4,6 +4,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
 import { apiGet } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 // 일정 모달 컴포넌트
@@ -151,21 +152,53 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
       actions={
         <>
           {isReadOnly && event?.extendedProps?.clientId && (
-            <MGButton type="button" variant="outline" size="medium" onClick={handleSendMessage} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleSendMessage}
+              preventDoubleClick={false}
+            >
               메시지 보내기
             </MGButton>
           )}
           {!isReadOnly && mode === 'edit' && (
-            <MGButton type="button" variant="danger" size="medium" onClick={handleDelete} preventDoubleClick={false}>
+            <MGButton
+              type="button"
+              variant="danger"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleDelete}
+              preventDoubleClick={false}
+            >
               삭제
             </MGButton>
           )}
           {!isReadOnly && (
-            <MGButton type="submit" form="event-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
+            <MGButton
+              type="submit"
+              form="event-modal-form"
+              variant="primary"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick={false}
+            >
               {mode === 'add' ? '추가' : '수정'}
             </MGButton>
           )}
-          <MGButton type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onClose}
+            preventDoubleClick={false}
+          >
             취소
           </MGButton>
         </>
@@ -278,6 +311,8 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
                 type="button"
                 variant="outline"
                 size="medium"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleWriteConsultationLog}
                 preventDoubleClick={false}
               >

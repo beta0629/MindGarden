@@ -9,6 +9,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import Badge from '../common/Badge';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationList.css';
 
@@ -115,7 +116,12 @@ const WellnessNotificationList = () => {
             </div>
               <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
               <p className="empty-message"><SafeText>{error}</SafeText></p>
-              <MGButton variant="primary" onClick={loadNotifications}>
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={loadNotifications}
+              >
                 다시 시도
               </MGButton>
             </div>

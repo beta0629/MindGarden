@@ -9,6 +9,7 @@ import {
 } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 
 /**
@@ -133,22 +134,35 @@ const SalaryExportModal = ({
         <>
           <MGButton
             type="button"
-            className="mg-v2-btn mg-v2-btn--outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-btn mg-v2-btn--outline'
+            })}
             onClick={onClose}
             disabled={loading}
             variant="outline"
             preventDoubleClick={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             취소
           </MGButton>
           <MGButton
             type="button"
-            className="mg-v2-btn mg-v2-btn--primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading,
+              className: 'mg-v2-btn mg-v2-btn--primary'
+            })}
             onClick={handleExport}
             disabled={
               loading || (sendEmail && (!emailAddress || !isEmailValid(emailAddress)))
             }
             variant="primary"
+            loading={loading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             출력
           </MGButton>

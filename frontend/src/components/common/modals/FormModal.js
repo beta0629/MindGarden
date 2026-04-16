@@ -1,4 +1,5 @@
 import React from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import UnifiedModal from './UnifiedModal';
 import MGButton from '../MGButton';
 import '../../../styles/main.css';
@@ -45,6 +46,12 @@ const FormModal = ({
             variant="secondary"
             onClick={onClose}
             disabled={loading}
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             {cancelText}
           </MGButton>
@@ -54,7 +61,12 @@ const FormModal = ({
             onClick={handleSubmit}
             disabled={loading}
             loading={loading}
-            loadingText="저장중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            className={buildErpMgButtonClassName({
+              variant: submitVariant,
+              size: 'md',
+              loading
+            })}
           >
             {submitText}
           </MGButton>

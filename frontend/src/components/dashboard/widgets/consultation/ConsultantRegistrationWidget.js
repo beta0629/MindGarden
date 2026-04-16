@@ -23,6 +23,7 @@ import { validateEmail, validatePhone } from '../../../../utils/validationUtils'
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -298,12 +299,19 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               }
             </p>
             <MGButton
+              type="button"
               variant="primary"
               size="large"
-              className="registration-start-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'lg',
+                loading: false,
+                className: 'registration-start-btn'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowForm(true)}
             >
-              
               상담사 등록 시작
             </MGButton>
           </div>
@@ -315,12 +323,21 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               <MGButton
                 variant="outline"
                 size="small"
-                className="form-close-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'form-close-btn'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseForm}
                 type="button"
                 title="닫기"
                 preventDoubleClick={false}
-               />
+              >
+                닫기
+              </MGButton>
             </div>
             <form onSubmit={handleSubmit} className="consultant-registration-form">
               {/* 필수 필드 */}
@@ -545,7 +562,14 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         <MGButton
                           type="button"
                           variant="outline"
-                          className="address-search-btn"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false,
+                            className: 'address-search-btn'
+                          })}
+                          loading={false}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => {
                             if (window.daum && window.daum.Postcode) {
                               new window.daum.Postcode({
@@ -622,27 +646,43 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 <MGButton
                   type="button"
                   variant="secondary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'secondary',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseForm}
                 >
-                  
                   취소
                 </MGButton>
                 <MGButton
                   type="button"
                   variant="outline"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReset}
                 >
-                  
                   초기화
                 </MGButton>
                 <MGButton
                   type="submit"
                   variant="primary"
                   disabled={submitting || Object.keys(validationErrors).length > 0}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: submitting
+                  })}
                   loading={submitting}
-                  loadingText="등록 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  
                   상담사 등록
                 </MGButton>
               </div>

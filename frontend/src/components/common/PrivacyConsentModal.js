@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { XCircle, Check, ChevronDown, ChevronUp, FileText, Megaphone } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import notificationManager from '../../utils/notification';
 import { PrivacyPolicyContent } from './PrivacyPolicy';
@@ -123,7 +124,13 @@ const PrivacyConsentModal = ({
       showCloseButton={true}
       actions={
         <>
-          <MGButton variant="secondary" type="button" onClick={onClose}>
+          <MGButton
+            variant="secondary"
+            type="button"
+            onClick={onClose}
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </MGButton>
@@ -133,6 +140,8 @@ const PrivacyConsentModal = ({
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
             preventDoubleClick={false}
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             <Check size={20} className="mg-v2-icon-inline" />
             동의하고 계속하기
@@ -172,9 +181,15 @@ const PrivacyConsentModal = ({
                   type="button"
                   variant="outline"
                   size="small"
-                  className="privacy-consent-modal__legal-toggle mg-v2-mt-xs"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'privacy-consent-modal__legal-toggle mg-v2-mt-xs'
+                  })}
                   onClick={() => setShowPrivacyDetail(!showPrivacyDetail)}
                   preventDoubleClick={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   {showPrivacyDetail ? (
                     <>
@@ -217,9 +232,15 @@ const PrivacyConsentModal = ({
                   type="button"
                   variant="outline"
                   size="small"
-                  className="privacy-consent-modal__legal-toggle mg-v2-mt-xs"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'privacy-consent-modal__legal-toggle mg-v2-mt-xs'
+                  })}
                   onClick={() => setShowTermsDetail(!showTermsDetail)}
                   preventDoubleClick={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   {showTermsDetail ? (
                     <>

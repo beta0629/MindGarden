@@ -17,6 +17,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';
@@ -252,7 +253,13 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             onClick={loadDashboard}
             variant="primary"
             preventDoubleClick={true}
-            className="mg-dashboard-error__retry-button"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-dashboard-error__retry-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             다시 시도
           </MGButton>

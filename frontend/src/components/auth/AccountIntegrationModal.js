@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 import './AccountIntegrationModal.css';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
@@ -241,8 +242,9 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="secondary"
-                                    className="btn btn-secondary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} btn btn-secondary`}
                                     onClick={handleClose}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     취소
@@ -250,11 +252,11 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="primary"
-                                    className="btn btn-primary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} btn btn-primary`}
                                     onClick={handleSendVerificationCode}
                                     disabled={isLoading || !formData.existingEmail}
                                     loading={isLoading}
-                                    loadingText="발송 중..."
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     인증 코드 발송
@@ -300,8 +302,9 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="secondary"
-                                    className="btn btn-secondary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} btn btn-secondary`}
                                     onClick={() => setStep(1)}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     이전
@@ -309,9 +312,10 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="outline"
-                                    className="btn btn-link"
+                                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} btn btn-link`}
                                     onClick={handleSendVerificationCode}
-                                    disabled={countdown > 0}
+                                    disabled={countdown > 0 || isLoading}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     {countdown > 0 ? `재발송 (${formatTime(countdown)})` : '인증 코드 재발송'}
@@ -319,11 +323,11 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="primary"
-                                    className="btn btn-primary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} btn btn-primary`}
                                     onClick={handleVerifyCode}
                                     disabled={isLoading || !formData.verificationCode}
                                     loading={isLoading}
-                                    loadingText="확인 중..."
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     인증 확인
@@ -400,8 +404,9 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="secondary"
-                                    className="btn btn-secondary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} btn btn-secondary`}
                                     onClick={() => setStep(2)}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     이전
@@ -409,11 +414,11 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="primary"
-                                    className="btn btn-primary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} btn btn-primary`}
                                     onClick={handleIntegrateAccounts}
                                     disabled={isLoading || !formData.existingPassword}
                                     loading={isLoading}
-                                    loadingText="통합 중..."
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     계정 통합
@@ -438,8 +443,9 @@ const AccountIntegrationModal = ({
                                 <MGButton
                                     type="button"
                                     variant="primary"
-                                    className="btn btn-primary"
+                                    className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })} btn btn-primary`}
                                     onClick={handleClose}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
                                     완료

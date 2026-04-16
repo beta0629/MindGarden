@@ -19,6 +19,7 @@ import {
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
@@ -406,7 +407,7 @@ const ClientDashboard = () => {
           <div className="client-dashboard__action-grid">
             <MGButton
               variant="primary"
-              className="client-dashboard__action-btn"
+              className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-dashboard__action-btn`}
               onClick={() => navigate('/client/schedule')}
               preventDoubleClick={false}
             >
@@ -414,7 +415,7 @@ const ClientDashboard = () => {
             </MGButton>
             <MGButton
               variant="success"
-              className="client-dashboard__action-btn"
+              className={`${buildErpMgButtonClassName({ variant: 'success', loading: false })} client-dashboard__action-btn`}
               onClick={() => navigate('/client/messages')}
               preventDoubleClick={false}
             >
@@ -422,7 +423,7 @@ const ClientDashboard = () => {
             </MGButton>
             <MGButton
               variant="info"
-              className="client-dashboard__action-btn"
+              className={`${buildErpMgButtonClassName({ variant: 'info', loading: false })} client-dashboard__action-btn`}
               onClick={() => navigate('/client/payment-history')}
               preventDoubleClick={false}
             >
@@ -430,7 +431,7 @@ const ClientDashboard = () => {
             </MGButton>
             <MGButton
               variant="warning"
-              className="client-dashboard__action-btn"
+              className={`${buildErpMgButtonClassName({ variant: 'warning', loading: false })} client-dashboard__action-btn`}
               onClick={() => navigate('/client/settings')}
               preventDoubleClick={false}
             >

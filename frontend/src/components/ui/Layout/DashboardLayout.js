@@ -25,14 +25,19 @@ import React from 'react';
  * 
  * @example
  * import MGButton from '../../common/MGButton';
+ * import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
  * // ...
  * <DashboardLayout
  *   title="관리자 대시보드"
  *   subtitle="시스템 전체 현황"
  *   icon={<LayoutDashboard />}
  *   actions={<>
- *     <MGButton type="button" variant="outline" className="mg-dashboard-icon-btn" preventDoubleClick={false} aria-label="알림"><Bell /></MGButton>
- *     <MGButton type="button" variant="outline" className="mg-dashboard-icon-btn" preventDoubleClick={false} aria-label="설정"><Settings /></MGButton>
+ *     <MGButton type="button" variant="outline" preventDoubleClick={false} aria-label="알림"
+ *       className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-dashboard-icon-btn' })}
+ *       loadingText={ERP_MG_BUTTON_LOADING_TEXT}><Bell /></MGButton>
+ *     <MGButton type="button" variant="outline" preventDoubleClick={false} aria-label="설정"
+ *       className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-dashboard-icon-btn' })}
+ *       loadingText={ERP_MG_BUTTON_LOADING_TEXT}><Settings /></MGButton>
  *   </>}
  * >
  *   {children}

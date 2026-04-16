@@ -3,41 +3,82 @@
 .mg-v2-erp-filter-toolbar {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
-  gap: 0;
+  min-width: 0;
+  gap: var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem));
 }
 
-.mg-v2-erp-filter-toolbar__primary {
-  width: 100%;
-}
-
+.mg-v2-erp-filter-toolbar__primary,
 .mg-v2-erp-filter-toolbar__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  gap: var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem))
+    var(--mg-spacing-md, var(--cs-spacing-md, 1rem));
 }
 
 .mg-v2-erp-filter-toolbar__expanded {
+  box-sizing: border-box;
   width: 100%;
-  margin-top: var(--mg-spacing-md, var(--spacing-sm));
+  min-width: 0;
 }
 
 /* 기간 셀렉트 — 인라인 min-width 대체 */
 .mg-v2-erp-filter-toolbar__period-select {
-  min-width: calc(var(--spacing-md) * 6);
+  min-width: calc(var(--mg-spacing-md, var(--cs-spacing-md, 1rem)) * 6);
+  max-width: 100%;
 }
 
 /* 사용자 지정 기간 행 */
 .mg-v2-erp-filter-toolbar__custom-range {
-  margin-top: var(--mg-spacing-xs, var(--spacing-xs));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
+  margin-top: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
 }
 
-.mg-v2-erp-filter-toolbar__date-input--start {
-  margin-right: var(--mg-spacing-xs, var(--spacing-xs));
+.mg-v2-erp-filter-toolbar__date-input--start,
+.mg-v2-erp-filter-toolbar__date-input--end {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mg-v2-erp-filter-toolbar__date-separator {
-  color: var(--mg-color-text-secondary);
+  flex-shrink: 0;
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
-.mg-v2-erp-filter-toolbar__date-input--end {
-  margin-left: var(--mg-spacing-xs, var(--spacing-xs));
+@media (max-width: 768px) {
+  .mg-v2-erp-filter-toolbar {
+    gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
+  }
+
+  .mg-v2-erp-filter-toolbar__primary,
+  .mg-v2-erp-filter-toolbar__secondary {
+    gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem))
+      var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem));
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-v2-erp-filter-toolbar__primary,
+  .mg-v2-erp-filter-toolbar__secondary {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .mg-v2-erp-filter-toolbar__period-select {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
 }

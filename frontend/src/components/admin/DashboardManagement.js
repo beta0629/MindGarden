@@ -18,6 +18,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -298,7 +299,14 @@ const DashboardManagement = () => {
                   variant="primary"
                   size="small"
                   onClick={handleCreate}
-                  className="btn-create-dashboard"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'sm',
+                    loading,
+                    className: 'btn-create-dashboard'
+                  })}
+                  loading={loading}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   새 대시보드
                 </MGButton>
@@ -324,9 +332,16 @@ const DashboardManagement = () => {
                 type="button"
                 variant="outline"
                 size="small"
-                className="clear-search"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'clear-search'
+                })}
                 onClick={() => setSearchTerm('')}
                 preventDoubleClick={false}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 aria-label="검색어 지우기"
               >
                 지우기
@@ -340,7 +355,14 @@ const DashboardManagement = () => {
               variant={filterType === 'all' ? 'primary' : 'secondary'}
               size="small"
               onClick={() => setFilterType('all')}
-              className="filter-btn"
+              className={buildErpMgButtonClassName({
+                variant: filterType === 'all' ? 'primary' : 'secondary',
+                size: 'sm',
+                loading: false,
+                className: 'filter-btn'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               전체
             </MGButton>
@@ -349,7 +371,14 @@ const DashboardManagement = () => {
               variant={filterType === 'active' ? 'primary' : 'secondary'}
               size="small"
               onClick={() => setFilterType('active')}
-              className="filter-btn"
+              className={buildErpMgButtonClassName({
+                variant: filterType === 'active' ? 'primary' : 'secondary',
+                size: 'sm',
+                loading: false,
+                className: 'filter-btn'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               활성
             </MGButton>
@@ -358,7 +387,14 @@ const DashboardManagement = () => {
               variant={filterType === 'inactive' ? 'primary' : 'secondary'}
               size="small"
               onClick={() => setFilterType('inactive')}
-              className="filter-btn"
+              className={buildErpMgButtonClassName({
+                variant: filterType === 'inactive' ? 'primary' : 'secondary',
+                size: 'sm',
+                loading: false,
+                className: 'filter-btn'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               비활성
             </MGButton>
@@ -367,7 +403,14 @@ const DashboardManagement = () => {
               variant="secondary"
               size="small"
               onClick={loadDashboards}
-              className="refresh-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading,
+                className: 'refresh-btn'
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               새로고침
             </MGButton>
@@ -462,7 +505,14 @@ const DashboardManagement = () => {
                     variant="primary"
                     size="small"
                     onClick={() => handleViewDashboard(dashboard)}
-                    className="btn-view"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'sm',
+                      loading: false,
+                      className: 'btn-view'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
                   >
                     보기
@@ -477,8 +527,15 @@ const DashboardManagement = () => {
                       console.log('🔘 수정 버튼 클릭 이벤트:', dashboard);
                       handleEdit(dashboard);
                     }}
-                    className="btn-edit"
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'sm',
+                      loading,
+                      className: 'btn-edit'
+                    })}
                     disabled={loading || !dashboard || !dashboard.dashboardId}
+                    loading={loading}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
                     수정
@@ -488,8 +545,15 @@ const DashboardManagement = () => {
                     variant="secondary"
                     size="small"
                     onClick={() => handleToggleActive(dashboard)}
-                    className="btn-toggle"
-                                   >
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'sm',
+                      loading,
+                      className: 'btn-toggle'
+                    })}
+                    loading={loading}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  >
                     {dashboard.isActive ? '비활성화' : '활성화'}
                   </MGButton>
                   {!dashboard.isDefault && (
@@ -498,7 +562,14 @@ const DashboardManagement = () => {
                       variant="danger"
                       size="small"
                       onClick={() => handleDelete(dashboard)}
-                      className="btn-delete"
+                      className={buildErpMgButtonClassName({
+                        variant: 'danger',
+                        size: 'sm',
+                        loading,
+                        className: 'btn-delete'
+                      })}
+                      loading={loading}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       삭제
                     </MGButton>

@@ -12,6 +12,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { FILTER_CHIP_CLEAR_ALL } from '../../../constants/filterSearch';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const FilterChips = ({
   activeFilters = [],
@@ -28,7 +29,13 @@ const FilterChips = ({
             {filter.label}: {filter.value}
           </span>
           <MGButton
-            className="mg-v2-filter-chip__remove"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-filter-chip__remove'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => onRemoveFilter(filter.key)}
             type="button"
             aria-label={`${filter.label} 필터 제거`}
@@ -41,7 +48,13 @@ const FilterChips = ({
       ))}
       
       <MGButton
-        className="mg-v2-filter-chip__clear-all"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: false,
+          className: 'mg-v2-filter-chip__clear-all'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onClearAll}
         type="button"
         variant="outline"

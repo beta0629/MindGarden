@@ -6,6 +6,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -75,6 +76,7 @@ const ClientSchedule = () => {
             <p className="client-schedule-error__message">{error}</p>
             <MGButton
               variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
               onClick={() => window.location.reload()}
               preventDoubleClick={false}
             >

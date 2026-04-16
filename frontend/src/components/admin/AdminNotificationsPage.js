@@ -12,6 +12,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
 import AdminMessageListBlock from './organisms/AdminMessageListBlock';
 import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils';
@@ -68,6 +69,13 @@ const AdminNotificationsPage = () => {
         aria-label="공지 작성"
         onClick={() => globalThis.dispatchEvent(new CustomEvent('admin-notifications-create-notice'))}
         preventDoubleClick={false}
+        className={buildErpMgButtonClassName({
+          variant: 'primary',
+          size: 'md',
+          loading: false
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       >
         공지 작성
       </MGButton>
@@ -101,12 +109,19 @@ const AdminNotificationsPage = () => {
                   id="admin-tab-system"
                   aria-selected={activeTab === TAB_SYSTEM}
                   aria-controls="admin-panel-system"
-                  className={`mg-v2-ad-b0kla__tab ${
-                    activeTab === TAB_SYSTEM ? 'mg-v2-ad-b0kla__tab--active' : ''
-                  }`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__tab ${
+                      activeTab === TAB_SYSTEM ? 'mg-v2-ad-b0kla__tab--active' : ''
+                    }`
+                  })}
                   onClick={() => setTab(TAB_SYSTEM)}
                   onKeyDown={handleTabKeyDown}
                   preventDoubleClick={false}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   시스템 공지
                 </MGButton>
@@ -117,12 +132,19 @@ const AdminNotificationsPage = () => {
                   id="admin-tab-messages"
                   aria-selected={activeTab === TAB_MESSAGES}
                   aria-controls="admin-panel-messages"
-                  className={`mg-v2-ad-b0kla__tab ${
-                    activeTab === TAB_MESSAGES ? 'mg-v2-ad-b0kla__tab--active' : ''
-                  }`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: `mg-v2-ad-b0kla__tab ${
+                      activeTab === TAB_MESSAGES ? 'mg-v2-ad-b0kla__tab--active' : ''
+                    }`
+                  })}
                   onClick={() => setTab(TAB_MESSAGES)}
                   onKeyDown={handleTabKeyDown}
                   preventDoubleClick={false}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   메시지
                 </MGButton>

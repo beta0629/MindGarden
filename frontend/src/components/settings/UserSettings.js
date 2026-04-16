@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Card from '../ui/Card/Card';
 import CardContent from '../ui/Card/CardContent';
 import CardHeader from '../ui/Card/CardHeader';
@@ -87,6 +88,12 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
               <div className="mg-v2-v2-v2-theme-actions">
                 <MGButton
                   variant="primary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setShowThemeSelector(true)}
                 >
                   <Icon name="PALETTE" size="LG" color="PRIMARY" />
@@ -94,6 +101,12 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                 </MGButton>
                 <MGButton
                   variant="outline"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: isLoading
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleThemeReset}
                   loading={isLoading}
                 >
@@ -111,6 +124,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                       <MGButton
                         variant="outline"
                         size="small"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => setShowThemeSelector(false)}
                         title="닫기"
                         aria-label="닫기"
@@ -273,6 +288,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(-1)}
             >
               <Icon name="ARROW_LEFT" size="SM" />
@@ -292,7 +309,13 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                   <MGButton
                     type="button"
                     variant="outline"
-                    className={`mg-v2-nav-item ${activeTab === 'theme' ? 'mg-v2-nav-item--active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-nav-item ${activeTab === 'theme' ? 'mg-v2-nav-item--active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setActiveTab('theme')}
                     preventDoubleClick={false}
                   >
@@ -302,7 +325,13 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                   <MGButton
                     type="button"
                     variant="outline"
-                    className={`mg-v2-nav-item ${activeTab === 'notifications' ? 'mg-v2-nav-item--active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-nav-item ${activeTab === 'notifications' ? 'mg-v2-nav-item--active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setActiveTab('notifications')}
                     preventDoubleClick={false}
                   >
@@ -312,7 +341,13 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                   <MGButton
                     type="button"
                     variant="outline"
-                    className={`mg-v2-nav-item ${activeTab === 'account' ? 'mg-v2-nav-item--active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-nav-item ${activeTab === 'account' ? 'mg-v2-nav-item--active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setActiveTab('account')}
                     preventDoubleClick={false}
                   >

@@ -12,6 +12,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './ViewModeToggle.css';
 
@@ -51,12 +52,18 @@ function ViewModeToggle({
             type="button"
             variant="outline"
             size="small"
-            className={`mg-v2-ad-b0kla__pill ${isActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: `mg-v2-ad-b0kla__pill ${isActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+            })}
             onClick={() => onViewModeChange(opt.value)}
             aria-pressed={isActive}
             aria-label={toDisplayString(opt.label)}
             title={title}
             preventDoubleClick={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             <span className="mg-v2-ad-b0kla__pill-label">{toDisplayString(opt.label)}</span>
           </MGButton>

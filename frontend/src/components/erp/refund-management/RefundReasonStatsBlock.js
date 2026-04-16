@@ -6,9 +6,12 @@
  */
 
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
-const RefundReasonStatsBlock = ({ refundReasonStats }) => {
+const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
+
+const RefundReasonStatsBlock = ({ refundReasonStats, isLoading = false }) => {
   const entries =
     refundReasonStats && typeof refundReasonStats === 'object'
       ? Object.entries(refundReasonStats)
@@ -19,11 +22,20 @@ const RefundReasonStatsBlock = ({ refundReasonStats }) => {
     <section
       className="refund-management__reason-stats-block"
       aria-labelledby="refund-reason-stats-heading"
+      aria-busy={isLoading}
     >
       <h2 id="refund-reason-stats-heading" className="refund-management__section-title">
         환불 사유별 통계
       </h2>
-      {entries.length > 0 ? (
+      {isLoading ? (
+        <UnifiedLoading
+          type="inline"
+          text={REFUND_MANAGEMENT_LOADING_TEXT}
+          className="refund-management__inline-loading refund-management__inline-loading--section"
+          role="status"
+          aria-live="polite"
+        />
+      ) : entries.length > 0 ? (
         <table className="refund-management__reason-stats-table" role="table">
           <thead>
             <tr>

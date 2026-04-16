@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const handleConfirm = async() => {
     if (!duplicateLoginModal.loginData) {
@@ -17,6 +19,7 @@ const DuplicateLoginModal = () => {
       return;
     }
 
+    setConfirmLoading(true);
     try {
       console.log('🔔 중복 로그인 확인 처리 시작:', duplicateLoginModal.loginData);
 
@@ -78,6 +81,8 @@ const DuplicateLoginModal = () => {
     } catch (error) {
       console.error('❌ 중복 로그인 확인 처리 실패:', error);
       notificationManager.show('로그인 처리 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -102,11 +107,35 @@ const DuplicateLoginModal = () => {
       zIndex={10000}
       actions={
         <>
-          <MGButton variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
+          <MGButton
+            variant="outline"
+            size="medium"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleCancel}
+            disabled={confirmLoading}
+            preventDoubleClick={false}
+          >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </MGButton>
-          <MGButton variant="primary" size="medium" onClick={handleConfirm} preventDoubleClick={false}>
+          <MGButton
+            variant="primary"
+            size="medium"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: confirmLoading
+            })}
+            loading={confirmLoading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleConfirm}
+            preventDoubleClick={false}
+          >
             <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인
           </MGButton>

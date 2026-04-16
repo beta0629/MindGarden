@@ -12,6 +12,7 @@ import notificationManager from '../../../utils/notification';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
@@ -305,7 +306,12 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         type="button"
                         variant="outline"
                         size="small"
-                        className="mg-v2-button mg-v2-button--outline"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         aria-label="게시"
                         onClick={() => handlePublish(notification.id)}
                       >
@@ -317,7 +323,12 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         type="button"
                         variant="outline"
                         size="small"
-                        className="mg-v2-button mg-v2-button--outline"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         aria-label="보관"
                         onClick={() => handleArchive(notification.id)}
                       >
@@ -328,7 +339,12 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-button mg-v2-button--outline"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       aria-label="수정"
                       onClick={() => handleEdit(notification)}
                     >
@@ -338,7 +354,12 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-button mg-v2-button--outline"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       aria-label="삭제"
                       onClick={() => handleDelete(notification.id)}
                     >

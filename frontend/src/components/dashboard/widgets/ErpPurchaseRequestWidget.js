@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import './ErpPurchaseRequestWidget.css';
 const ErpPurchaseRequestWidget = ({ widget, user }) => {
@@ -114,9 +115,15 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
             필요한 비품이 있으시면 구매 요청을 해보세요
           </div>
           <MGButton
-            className="erp-purchase-empty-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'erp-purchase-empty-btn'
+            })}
             variant="primary"
             type="button"
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleNewPurchaseRequest}
           >
             
@@ -164,18 +171,30 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
         {/* 액션 버튼 */}
         <div className="erp-purchase-actions">
           <MGButton
-            className="erp-purchase-action-btn primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'erp-purchase-action-btn primary'
+            })}
             variant="primary"
             type="button"
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleNewPurchaseRequest}
           >
             
             새 구매 요청
           </MGButton>
           <MGButton
-            className="erp-purchase-action-btn secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'erp-purchase-action-btn secondary'
+            })}
             variant="outline"
             type="button"
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleViewRequestHistory}
           >
             

@@ -1,6 +1,7 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import SafeText from '../../../components/common/SafeText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 /**
  * AdminDashboard 액션 버튼 컴포넌트
 /**
@@ -126,7 +127,13 @@ const AdminDashboardActions = ({
                                     variant={action.variant}
                                     onClick={action.onClick}
                                     loading={loading}
-                                    className="mg-v2-admin-dashboard-action-button"
+                                    className={buildErpMgButtonClassName({
+                                        variant: action.variant,
+                                        size: 'md',
+                                        loading: loading,
+                                        className: 'mg-v2-admin-dashboard-action-button'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 >
                                                                         <div className="mg-v2-admin-dashboard-action-content">
                                         <span className="mg-v2-admin-dashboard-action-title">

@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Avatar from '../../common/Avatar';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import SafeText from '../../common/SafeText';
@@ -37,19 +38,48 @@ const ClientOverviewTab = ({
                 role="group"
                 aria-label="내담자 작업"
             >
-                <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
-상세보기
+                <MGButton
+                    variant="secondary"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => onClientSelect(client)}
+                    preventDoubleClick={true}
+                >
+                    상세보기
                 </MGButton>
-                <MGButton variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
-수정
+                <MGButton
+                    variant="primary"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => onEditClient(client)}
+                    preventDoubleClick={true}
+                >
+                    수정
                 </MGButton>
                 {onResetPassword && (
-                    <MGButton variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
-비밀번호 초기화
+                    <MGButton
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => onResetPassword(client)}
+                        title="비밀번호 초기화"
+                        preventDoubleClick={true}
+                    >
+                        비밀번호 초기화
                     </MGButton>
                 )}
-                <MGButton variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
-삭제
+                <MGButton
+                    variant="danger"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => onDeleteClient(client)}
+                    preventDoubleClick={true}
+                >
+                    삭제
                 </MGButton>
             </div>
         );

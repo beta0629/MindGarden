@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 import SafeText from '../../../common/SafeText';
@@ -263,7 +264,19 @@ const ErpManagementGridWidget = ({ widget, user }) => {
           <div className="erp-management-empty">
             
             <p>사용 가능한 ERP 관리 메뉴가 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+            >
               권한 새로고침
             </MGButton>
           </div>

@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const SessionManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -195,8 +196,18 @@ const SessionManagementWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '새로운 상담 세션을 예약해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
-            <MGButton variant="primary" onClick={handleCreateSession}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateSession}
+            >
               새 세션 예약
             </MGButton>
           )}
@@ -267,13 +278,23 @@ const SessionManagementWidget = ({ widget, user }) => {
                     </div>
                   </div>
                   <MGButton
+                    type="button"
                     variant="outline"
                     size="small"
-                    className="action-btn review-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn review-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleExtensionRequest(request.id)}
                     title="검토하기"
                     preventDoubleClick={false}
-                   />
+                  >
+                    검토
+                  </MGButton>
                 </div>
               ))}
             </div>
@@ -284,7 +305,19 @@ const SessionManagementWidget = ({ widget, user }) => {
         <div className="session-list">
           <div className="list-header">
             <h4 className="list-title">최근 세션 현황</h4>
-            <MGButton variant="outline" size="small" onClick={handleViewAll}>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleViewAll}
+            >
               전체 보기
             </MGButton>
           </div>
@@ -332,22 +365,42 @@ const SessionManagementWidget = ({ widget, user }) => {
                 </div>
                 <div className="session-actions">
                   <MGButton
+                    type="button"
                     variant="outline"
                     size="small"
-                    className="action-btn view-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn view-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSession(session.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                   />
+                  >
+                    보기
+                  </MGButton>
                   {session.recordUrl && (
                     <MGButton
+                      type="button"
                       variant="outline"
                       size="small"
-                      className="action-btn record-btn"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'action-btn record-btn'
+                      })}
+                      loading={false}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => window.open(session.recordUrl, '_blank')}
                       title="기록 보기"
                       preventDoubleClick={false}
-                     />
+                    >
+                      기록
+                    </MGButton>
                   )}
                 </div>
               </div>
@@ -358,8 +411,19 @@ const SessionManagementWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="session-quick-actions">
-            <MGButton variant="primary" size="small" onClick={handleCreateSession}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateSession}
+            >
               새 세션 예약
             </MGButton>
           </div>

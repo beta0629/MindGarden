@@ -126,6 +126,7 @@ const RefundFilterBlock = ({
                 loading: false
               })}
               onClick={onExportExcel}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               aria-label="엑셀 내보내기"
               preventDoubleClick={false}
             >

@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { StatusBadge, CardContainer } from '../../common';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -83,10 +84,22 @@ const ClientMappingTab = ({
           </div>
         </div>
         <div className="mg-v2-card-footer">
-          <MGButton variant="secondary" size="small" preventDoubleClick={true}>
+          <MGButton
+            variant="secondary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={true}
+          >
             상세보기
           </MGButton>
-          <MGButton variant="secondary" size="small" preventDoubleClick={true}>
+          <MGButton
+            variant="secondary"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={true}
+          >
             수정
           </MGButton>
         </div>
@@ -109,6 +122,8 @@ const ClientMappingTab = ({
             <MGButton
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onClientSelect(client)}
               preventDoubleClick={true}
             >

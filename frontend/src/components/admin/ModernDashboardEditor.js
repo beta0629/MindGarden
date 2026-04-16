@@ -34,6 +34,7 @@ import {
   FaLayerGroup
 } from 'react-icons/fa';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ModernDashboardEditor.css';
 import './CompactWidgetEditor.css';
 
@@ -181,10 +182,16 @@ const ModernDashboardEditor = ({
                   type="button"
                   variant="outline"
                   size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: `category-filter ${selectedCategory === category ? 'active' : ''} ${
+                      category !== 'all' ? (WIDGET_CATEGORIES[category]?.cssClass || 'widget-category-common') : ''
+                    }`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setSelectedCategory(category)}
-                  className={`category-filter ${selectedCategory === category ? 'active' : ''} ${
-                    category !== 'all' ? (WIDGET_CATEGORIES[category]?.cssClass || 'widget-category-common') : ''
-                  }`}
                   preventDoubleClick={false}
                 >
                   {category === 'all' ? '전체' : WIDGET_CATEGORIES[category]?.label || category}
@@ -304,7 +311,13 @@ const ModernDashboardEditor = ({
                         type="button"
                         variant="outline"
                         size="small"
-                        className="widget-action-btn config-btn"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: 'widget-action-btn config-btn'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {/* 설정 모달 */}}
                         title="설정"
                         preventDoubleClick={false}
@@ -315,7 +328,13 @@ const ModernDashboardEditor = ({
                         type="button"
                         variant="outline"
                         size="small"
-                        className="widget-action-btn delete-btn"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: 'widget-action-btn delete-btn'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleDeleteWidget(widget.id)}
                         title="삭제"
                         preventDoubleClick={false}

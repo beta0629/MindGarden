@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 import UnifiedHeader from '../common/UnifiedHeader';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
@@ -111,7 +112,13 @@ const Homepage = () => {
                   <MGButton
                     type="button"
                     variant="outline"
-                    className="mg-v2-btn-text"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: 'mg-v2-btn-text'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={handleLogin}
                     preventDoubleClick={false}
                   >
@@ -120,7 +127,13 @@ const Homepage = () => {
                   <MGButton
                     type="button"
                     variant="primary"
-                    className="mg-v2-btn-primary"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'md',
+                      loading: false,
+                      className: 'mg-v2-btn-primary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={handleRegister}
                     preventDoubleClick={false}
                   >
@@ -130,7 +143,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="mg-v2-homepage-hamburger mobile-only"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'mg-v2-homepage-hamburger mobile-only'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleHamburgerToggle}
                   preventDoubleClick={false}
                   aria-label="메뉴 열기"
@@ -151,7 +170,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-close"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-close'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setIsMenuOpen(false)}
                   preventDoubleClick={false}
                   aria-label="메뉴 닫기"
@@ -163,7 +188,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.HOME)}
                   preventDoubleClick={false}
                 >
@@ -173,7 +204,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.ABOUT)}
                   preventDoubleClick={false}
                 >
@@ -183,7 +220,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.SERVICES)}
                   preventDoubleClick={false}
                 >
@@ -193,7 +236,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.CONTACT)}
                   preventDoubleClick={false}
                 >
@@ -203,7 +252,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
                   preventDoubleClick={false}
                 >
@@ -213,7 +268,13 @@ const Homepage = () => {
                 <MGButton
                   type="button"
                   variant="outline"
-                  className="hamburger-menu-item mg-button--with-icon"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'hamburger-menu-item mg-button--with-icon'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
                   preventDoubleClick={false}
                 >
@@ -235,7 +296,13 @@ const Homepage = () => {
               type="button"
               variant="primary"
               size="large"
-              className="mg-v2-btn-primary-large"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'lg',
+                loading: false,
+                className: 'mg-v2-btn-primary-large'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={async() => {
                 if (user) {
                   if (user?.role) {
@@ -302,7 +369,13 @@ const Homepage = () => {
             <MGButton
               type="button"
               variant="outline"
-              className="mg-v2-btn-text-link"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-btn-text-link'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={scrollToHomepageFeatures}
               preventDoubleClick={false}
             >
@@ -317,7 +390,13 @@ const Homepage = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="mg-v2-btn-white"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-v2-btn-white'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleRegister}
             preventDoubleClick={false}
           >

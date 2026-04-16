@@ -450,6 +450,7 @@ const FinancialTransactionForm = ({
               className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
               onClick={onClose}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               취소
             </MGButton>

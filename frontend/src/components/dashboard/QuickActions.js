@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { RoleUtils } from '../../constants/roles';
 const QuickActions = ({ user }) => {
@@ -63,7 +64,13 @@ const QuickActions = ({ user }) => {
     type: 'button',
     variant: 'outline',
     size: 'medium',
-    className: 'quick-action-btn',
+    className: buildErpMgButtonClassName({
+      variant: 'outline',
+      size: 'md',
+      loading: false,
+      className: 'quick-action-btn'
+    }),
+    loadingText: ERP_MG_BUTTON_LOADING_TEXT,
     preventDoubleClick: false
   };
 

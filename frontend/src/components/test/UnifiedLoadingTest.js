@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * UnifiedLoading 테스트 컴포넌트
@@ -27,31 +28,73 @@ const UnifiedLoadingTest = () => {
       <p>다양한 로딩 설정을 테스트해보세요.</p>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <MGButton variant="primary" size="medium" onClick={() => toggleLoading('inline')}>
+        <MGButton
+          variant="primary"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('inline')}
+        >
           인라인 로딩
         </MGButton>
 
-        <MGButton variant="danger" size="medium" onClick={() => toggleLoading('fullscreen')}>
+        <MGButton
+          variant="danger"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('fullscreen')}
+        >
           전체화면 로딩
         </MGButton>
 
-        <MGButton variant="success" size="medium" onClick={() => toggleLoading('page')}>
+        <MGButton
+          variant="success"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('page')}
+        >
           페이지 로딩
         </MGButton>
 
-        <MGButton variant="warning" size="medium" onClick={() => toggleLoading('button')}>
+        <MGButton
+          variant="warning"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('button')}
+        >
           버튼 로딩
         </MGButton>
 
-        <MGButton variant="info" size="medium" onClick={() => toggleLoading('dots')}>
+        <MGButton
+          variant="info"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'info', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('dots')}
+        >
           도트 로딩
         </MGButton>
 
-        <MGButton variant="outline" size="medium" onClick={() => toggleLoading('pulse')}>
+        <MGButton
+          variant="outline"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('pulse')}
+        >
           펄스 로딩
         </MGButton>
 
-        <MGButton variant="secondary" size="medium" onClick={() => toggleLoading('bars')}>
+        <MGButton
+          variant="secondary"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => toggleLoading('bars')}
+        >
           바 로딩
         </MGButton>
       </div>
@@ -79,7 +122,13 @@ const UnifiedLoadingTest = () => {
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
         <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
           <h3>버튼 로딩</h3>
-          <MGButton variant="primary" size="medium" loading loadingText="저장 중...">
+          <MGButton
+            variant="primary"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: true })}
+            loading
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          >
             저장
           </MGButton>
         </div>

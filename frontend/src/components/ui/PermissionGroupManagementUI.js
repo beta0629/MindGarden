@@ -26,6 +26,7 @@
 import React from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PermissionGroupManagementUI.css';
 
 const PermissionGroupManagementUI = ({
@@ -100,7 +101,14 @@ const PermissionGroupManagementUI = ({
                                             {getAccessLevelName(getPermissionLevel(group.groupCode))}
                                         </span>
                                         <MGButton
-                                            className="mg-btn mg-btn-danger mg-btn-sm"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'danger',
+                                                size: 'sm',
+                                                loading,
+                                                className: 'mg-btn mg-btn-danger mg-btn-sm'
+                                            })}
+                                            loading={loading}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => onRevokePermission(group.groupCode)}
                                             disabled={loading}
                                             variant="danger"
@@ -112,7 +120,14 @@ const PermissionGroupManagementUI = ({
                                 ) : (
                                     <div className="mg-permission-grant-buttons">
                                         <MGButton
-                                            className="mg-btn mg-btn-primary mg-btn-sm"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'primary',
+                                                size: 'sm',
+                                                loading,
+                                                className: 'mg-btn mg-btn-primary mg-btn-sm'
+                                            })}
+                                            loading={loading}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => onGrantPermission(group.groupCode, 'READ')}
                                             disabled={loading}
                                             variant="primary"
@@ -121,7 +136,14 @@ const PermissionGroupManagementUI = ({
                                             읽기
                                         </MGButton>
                                         <MGButton
-                                            className="mg-btn mg-btn-primary mg-btn-sm"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'primary',
+                                                size: 'sm',
+                                                loading,
+                                                className: 'mg-btn mg-btn-primary mg-btn-sm'
+                                            })}
+                                            loading={loading}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => onGrantPermission(group.groupCode, 'WRITE')}
                                             disabled={loading}
                                             variant="primary"
@@ -130,7 +152,14 @@ const PermissionGroupManagementUI = ({
                                             쓰기
                                         </MGButton>
                                         <MGButton
-                                            className="mg-btn mg-btn-primary mg-btn-sm"
+                                            className={buildErpMgButtonClassName({
+                                                variant: 'primary',
+                                                size: 'sm',
+                                                loading,
+                                                className: 'mg-btn mg-btn-primary mg-btn-sm'
+                                            })}
+                                            loading={loading}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={() => onGrantPermission(group.groupCode, 'FULL')}
                                             disabled={loading}
                                             variant="primary"

@@ -1,6 +1,7 @@
 import React from 'react';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeList.css';
 
 /**
@@ -172,7 +173,13 @@ const CommonCodeList = ({
                                     type="button"
                                     variant="outline"
                                     size="small"
-                                    className="btn btn-sm btn-outline-primary"
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                        loading: false,
+                                        className: 'btn btn-sm btn-outline-primary'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => onEdit(code)}
                                     title="편집"
                                 >
@@ -183,7 +190,13 @@ const CommonCodeList = ({
                                     type="button"
                                     variant="outline"
                                     size="small"
-                                    className="btn btn-sm btn-outline-danger"
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                        loading: false,
+                                        className: 'btn btn-sm btn-outline-danger'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => onDelete(code.id)}
                                     title="삭제"
                                 >

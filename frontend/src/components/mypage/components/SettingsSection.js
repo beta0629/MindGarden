@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const LOCALE_OPTIONS = [
   { value: 'ko-KR', label: '한국어' },
@@ -115,7 +116,13 @@ const SettingsSection = () => {
           </li>
         </ul>
         <div className="mg-v2-card-actions">
-          <MGButton type="button" variant="primary" onClick={handleSave}>
+          <MGButton
+            type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleSave}
+          >
             설정 저장
           </MGButton>
         </div>

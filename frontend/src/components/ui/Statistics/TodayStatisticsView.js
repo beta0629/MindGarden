@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaChartLine, FaSync } from 'react-icons/fa';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * 오늘의 통계 뷰 컴포넌트 (Presentational)
@@ -28,7 +29,13 @@ const TodayStatisticsView = ({
                 <div className="statistics-actions">
                     <MGButton
                         type="button"
-                        className="statistics-view-btn"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false,
+                            className: 'statistics-view-btn mg-button--with-icon'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onShowStatistics}
                         title="전체 통계 보기"
                         variant="outline"
@@ -39,7 +46,14 @@ const TodayStatisticsView = ({
                     </MGButton>
                     <MGButton
                         type="button"
-                        className="refresh-btn"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading,
+                            className: 'refresh-btn'
+                        })}
+                        loading={loading}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onRefresh}
                         disabled={loading}
                         title="새로고침"

@@ -9,6 +9,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { ActionButton, StatusBadge } from '../../../common';
@@ -112,7 +113,14 @@ const MappingListRow = ({
               type="button"
               variant="outline"
               size="small"
-              className="mg-v2-mapping-list-row__schedule-link"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-v2-mapping-list-row__schedule-link'
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
               title="스케줄 보기"
               preventDoubleClick={false}

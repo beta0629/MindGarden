@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './HealingCard.css';
 
@@ -91,7 +92,17 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
                     <div className="mg-card__content">
                         <div className="mg-error">
                             <p>{error}</p>
-                            <MGButton onClick={handleRefresh} className="mg-button mg-button--primary mg-button--sm" variant="primary" size="small">
+                            <MGButton
+                                onClick={handleRefresh}
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'sm',
+                                    loading: false
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                variant="primary"
+                                size="small"
+                            >
                                 다시 시도
                             </MGButton>
                         </div>
@@ -111,11 +122,15 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
                     </div>
                     <MGButton
                         onClick={handleRefresh}
-                        className="mg-button mg-button--ghost mg-button--sm"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'sm',
+                            loading
+                        })}
                         title="새로운 메시지 보기"
                         disabled={loading}
                         loading={loading}
-                        loadingText="⏳"
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         variant="outline"
                         size="small"
                         preventDoubleClick={false}

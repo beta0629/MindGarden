@@ -9,6 +9,7 @@ import notificationManager from '../../utils/notification';
 import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
 import FilterBadge from './molecules/FilterBadge';
 import ClientCard from './molecules/ClientCard';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import '../../styles/unified-design-tokens.css';
@@ -307,7 +308,12 @@ const ConsultantClientList = () => {
             <div className="client-list-error-state">
               <AlertTriangle size={48} />
               <div className="client-list-error-state__message">{error}</div>
-              <MGButton variant="primary" className="mg-v2-client-view-btn" onClick={loadClients}>
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={loadClients}
+              >
                 다시 시도
               </MGButton>
             </div>
@@ -336,7 +342,8 @@ const ConsultantClientList = () => {
                 {clients.length > 0 && (
                   <MGButton
                     variant="primary"
-                    className="mg-v2-client-view-btn"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setFilterStatus('ALL')}
                   >
                     전체 상태 보기

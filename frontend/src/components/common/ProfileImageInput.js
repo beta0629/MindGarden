@@ -8,6 +8,7 @@ import React, { useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { User } from 'lucide-react';
 import { processProfileImage } from '../../utils/imageResizeCrop';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
@@ -96,9 +97,15 @@ const ProfileImageInput = ({
             <MGButton
               type="button"
               variant="outline"
-              className="mg-v2-button mg-v2-button-outline"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-button mg-v2-button-outline'
+              })}
               onClick={handleRemove}
               disabled={disabled}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               {removeLabel}
             </MGButton>

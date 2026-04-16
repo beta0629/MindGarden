@@ -21,6 +21,7 @@ import MappingDepositModal from '../mapping/MappingDepositModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
@@ -239,9 +240,13 @@ const IntegratedMatchingSchedule = () => {
     <MGButton
       variant="primary"
       size="medium"
+      className={buildErpMgButtonClassName({
+        variant: 'primary',
+        className: 'integrated-schedule__btn-new-mapping'
+      })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={() => setCreateMappingModalOpen(true)}
       aria-label="신규 매칭 생성"
-      className="integrated-schedule__btn-new-mapping"
       preventDoubleClick={false}
     >
       신규 매칭
@@ -310,7 +315,13 @@ const IntegratedMatchingSchedule = () => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className={`integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: `integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => setStatusFilter(opt.value)}
                     aria-pressed={isSelected}
                     aria-label={`${toDisplayString(opt.label)} (${count}건)`}

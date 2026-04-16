@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 
 /**
@@ -38,7 +39,13 @@ const IncompleteRecordsAlert = ({
           type="button"
           variant="primary"
           size="medium"
-          className="mg-v2-btn mg-v2-btn-primary mg-v2-btn-md"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'mg-v2-btn mg-v2-btn-primary mg-v2-btn-md'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onAction}
           preventDoubleClick={false}
           aria-label={`미작성 상담일지 ${count}건 작성하기`}

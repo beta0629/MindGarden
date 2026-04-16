@@ -7,6 +7,7 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { ErpSafeText } from './common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -256,8 +257,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
       <div className="mg-modal__footer salary-config-modal-footer">
         <MGButton
+          type="button"
           variant="outline"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
           disabled={loading}
           preventDoubleClick={false}
@@ -265,11 +269,13 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           취소
         </MGButton>
         <MGButton
+          type="button"
           variant="primary"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', loading })}
           onClick={handleSave}
           loading={loading}
-          loadingText="저장 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick
         >
           저장

@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { toSafeNumber } from '../../../utils/safeDisplay';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
 
@@ -18,7 +19,14 @@ const PERIOD_LABELS = {
   year: '최근 1년'
 };
 
-const RefundKpiBlock = ({ refundStats = {}, selectedPeriod, erpSyncStatus = {} }) => {
+const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
+
+const RefundKpiBlock = ({
+  refundStats = {},
+  selectedPeriod,
+  erpSyncStatus = {},
+  isLoading = false
+}) => {
   const summary = refundStats?.summary || {};
   const periodLabel = PERIOD_LABELS[selectedPeriod] || '최근 1개월';
   const sessionsLabel = `${new Intl.NumberFormat('ko-KR').format(
@@ -26,11 +34,24 @@ const RefundKpiBlock = ({ refundStats = {}, selectedPeriod, erpSyncStatus = {} }
   )}회`;
 
   return (
-    <section className="refund-management__kpi-block" aria-labelledby="refund-kpi-heading">
+    <section
+      className="refund-management__kpi-block"
+      aria-labelledby="refund-kpi-heading"
+      aria-busy={isLoading}
+    >
       <h2 id="refund-kpi-heading" className="sr-only">
         환불 현황 요약
       </h2>
-      <div className="refund-management__kpi-grid">
+      {isLoading ? (
+        <UnifiedLoading
+          type="inline"
+          text={REFUND_MANAGEMENT_LOADING_TEXT}
+          className="refund-management__inline-loading refund-management__inline-loading--section"
+          role="status"
+          aria-live="polite"
+        />
+      ) : (
+        <div className="refund-management__kpi-grid">
         <div className="refund-management__stat-card refund-management__stat-card--accent-primary">
           <span className="refund-management__stat-label" id="refund-stat-count-label">
             환불 건수
@@ -78,7 +99,8 @@ const RefundKpiBlock = ({ refundStats = {}, selectedPeriod, erpSyncStatus = {} }
             />
           </span>
         </div>
-      </div>
+        </div>
+      )}
     </section>
   );
 };

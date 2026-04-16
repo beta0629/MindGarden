@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 
 const FilterBadge = ({
@@ -41,7 +42,8 @@ const FilterBadge = ({
       variant="outline"
       aria-label={`${label} 상태 필터 (${count}명)`}
       aria-pressed={isActive}
-      className={badgeClasses}
+      className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: badgeClasses })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={handleClick}
       style={badgeStyle}
       preventDoubleClick={false}

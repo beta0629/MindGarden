@@ -7,6 +7,7 @@ import { DASHBOARD_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ConsultationReport.css';
 
 const ConsultationReport = () => {
@@ -340,10 +341,16 @@ const ConsultationReport = () => {
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">
-            <MGButton 
+            <MGButton
               type="button"
               variant="outline"
-              className="back-button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'back-button'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(-1)}
               title="뒤로"
             >
@@ -416,7 +423,17 @@ const ConsultationReport = () => {
             <div className="error-message">
               <i className="bi bi-exclamation-triangle" />
               <p>{error}</p>
-              <MGButton variant="primary" onClick={loadReportData} className="retry-btn">
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'retry-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={loadReportData}
+              >
                 다시 시도
               </MGButton>
             </div>

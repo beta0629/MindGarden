@@ -1,0 +1,27 @@
+# =============================================================================
+# SEC-01: 공개 API 엣지 레이트리밋 — 저장소 예시 스니펫 (참고용)
+#
+# - `limit_req_zone` 은 반드시 상위 `http { }` 블록 안에 한 번만 정의한다.
+#   이 저장소에는 전체 `http` 블록이 없을 수 있으므로, 아래 존 정의는 주석으로만 둔다.
+# - 이 파일을 nginx 에 **그대로** include 하지 말 것. `location` 안에 `proxy_pass` 등이
+#   없으면 해당 경로가 오동작한다. 운영 병합 시 `config/nginx/core-solution-prod.conf` 의
+#   `server_name api.core-solution.co.kr` 블록 안·기존 `location /` **위**에 아래
+#   `location` 을 붙이고, 각 블록에 **동일 server 의 기존 `location /` 와 같은**
+#   `proxy_pass`, `proxy_set_header`, CORS·OPTIONS 처리 등을 복사해 맞출 것.
+# - rate·burst·존 이름·크기는 트래픽에 맞게 **인프라 합의 후** 확정한다.
+# =============================================================================
+
+# --- 아래 한 줄은 `http { }` 안에만 둘 수 있음 (이 파일에 그대로 두면 문법 오류) ---
+# limit_req_zone $binary_remote_addr zone=mg_public_api:10m rate=5r/s;
+
+# --- API 전용 server { } 내부: 접두가 긴 `location` 을 먼저 둔다 (기존 `location /` 보다 위) ---
+
+location /api/v1/accounts/integration/ {
+    limit_req zone=mg_public_api burst=20 nodelay;
+    # proxy_pass 및 proxy_set_header, CORS/OPTIONS 등: 동일 server 블록의 기존 API `location /` 와 동일하게 구성
+}
+
+location /api/v1/onboarding/ {
+    limit_req zone=mg_public_api burst=20 nodelay;
+    # proxy_pass 및 proxy_set_header, CORS/OPTIONS 등: 동일 server 블록의 기존 API `location /` 와 동일하게 구성
+}

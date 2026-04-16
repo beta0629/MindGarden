@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import StatusBadge from '../../common/StatusBadge';
 import SafeText from '../../common/SafeText';
 import './ClientConsultationTab.css';
@@ -64,7 +65,14 @@ const ClientConsultationTab = ({
                         </p>
                     </div>
                     <div className="mg-v2-consultation-client-block__actions">
-                        <MGButton variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
+                        <MGButton
+                            variant="secondary"
+                            size="small"
+                            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => onClientSelect(client)}
+                            preventDoubleClick={true}
+                        >
                             상세보기
                         </MGButton>
                     </div>

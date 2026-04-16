@@ -515,28 +515,30 @@ const ErpDashboard = ({ user: propUser }) => {
       />
       <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
         <ErpPageShell mainAriaLabel="운영 현황 본문">
-          <ErpFilterToolbar
-            ariaLabel="운영 현황 도구"
-            secondaryRow={(
-              <div className="erp-dashboard__toolbar-actions">
-                <MGButton
-                  variant="secondary"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'secondary',
-                    size: 'sm',
-                    loading: silentListRefreshing
-                  })}
-                  onClick={handleSilentRefresh}
-                  loading={silentListRefreshing}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label="데이터 새로고침"
-                >
-                  데이터 새로고침
-                </MGButton>
-              </div>
-            )}
-          />
+          <div className="mg-w-full mg-mb-md">
+            <ErpFilterToolbar
+              ariaLabel="운영 현황 도구"
+              secondaryRow={(
+                <div className="erp-dashboard__toolbar-actions">
+                  <MGButton
+                    variant="secondary"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'sm',
+                      loading: silentListRefreshing
+                    })}
+                    onClick={handleSilentRefresh}
+                    loading={silentListRefreshing}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    aria-label="데이터 새로고침"
+                  >
+                    데이터 새로고침
+                  </MGButton>
+                </div>
+              )}
+            />
+          </div>
           {hasIntegratedFinanceView && (
             <ErpIncomeExpenseSummarySection
               financeError={financeError}

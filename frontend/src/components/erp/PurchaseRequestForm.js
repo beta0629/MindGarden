@@ -193,6 +193,7 @@ const PurchaseRequestForm = () => {
                       variant="secondary"
                       className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                       onClick={() => window.history.back()}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       뒤로가기
                     </MGButton>
@@ -353,6 +354,7 @@ const PurchaseRequestForm = () => {
                               aria-label="수량 감소"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) - 1)}
                               preventDoubleClick={false}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                               -
                             </MGButton>
@@ -371,6 +373,7 @@ const PurchaseRequestForm = () => {
                               aria-label="수량 증가"
                               onClick={() => handleQuantityChange(item.id, (itemQuantities[item.id] || 1) + 1)}
                               preventDoubleClick={false}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                               +
                             </MGButton>
@@ -496,6 +499,7 @@ const PurchaseRequestForm = () => {
             className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
             onClick={() => setShowSuccessModal(false)}
             preventDoubleClick={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             확인
           </MGButton>

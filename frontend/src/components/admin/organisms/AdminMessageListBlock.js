@@ -11,6 +11,7 @@ import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
 import SafeText from '../../common/SafeText';
@@ -132,7 +133,12 @@ const AdminMessageListBlock = () => {
           <MGButton
             type="button"
             variant="outline"
-            className="mg-v2-button mg-v2-button--outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             aria-label="일괄 읽음"
             disabled
           >
@@ -191,7 +197,12 @@ const AdminMessageListBlock = () => {
                     <MGButton
                       type="button"
                       variant="outline"
-                      className="mg-v2-button mg-v2-button--outline"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       aria-label="상세 보기"
                       onClick={() => handleMessageClick(message)}
                     >

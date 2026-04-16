@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { 
@@ -127,7 +128,8 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
           <MGButton
             type="button"
             variant="secondary"
-            className="mg-v2-button mg-v2-button--secondary"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleClose}
             disabled={loading}
           >
@@ -137,10 +139,10 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             type="submit"
             form="vacation-modal-form"
             variant="primary"
-            className="mg-v2-button mg-v2-button--primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={loading}
             loading={loading}
-            loadingText="설정 중..."
           >
             휴무 설정
           </MGButton>
@@ -223,7 +225,13 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
                   type="button"
                   variant="outline"
                   size="small"
-                  className={`mg-v2-chip ${formData.reason === reason ? 'mg-v2-chip--selected' : ''}`}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: `mg-v2-chip ${formData.reason === reason ? 'mg-v2-chip--selected' : ''}`
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setFormData(prev => ({ ...prev, reason }))}
                   preventDoubleClick={false}
                 >

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedHeader from "../common/UnifiedHeader";
 import '../../styles/main.css';
 
@@ -98,10 +99,22 @@ const UnifiedHeaderTest = () => {
         showHamburger={true}
         extraActions={
           <div style={{ display: 'flex', gap: '8px' }}>
-            <MGButton type="button" variant="secondary" size="small">
+            <MGButton
+              type="button"
+              variant="secondary"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
               알림
             </MGButton>
-            <MGButton type="button" variant="primary" size="small">
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
               새로고침
             </MGButton>
           </div>

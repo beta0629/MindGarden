@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './MGPageHeader.css';
 
@@ -34,7 +35,13 @@ const MGPageHeader = ({
         {showBackButton && (
           <MGButton
             type="button"
-            className="mg-page-header__back-button"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'mg-page-header__back-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleBackClick}
             aria-label="뒤로 가기"
             variant="outline"

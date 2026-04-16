@@ -1,5 +1,6 @@
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const SystemTools = ({ 
@@ -52,7 +53,14 @@ const SystemTools = ({
                         variant={tool.variant}
                         size="medium"
                         fullWidth
-                        className="mg-system-tool-button"
+                        className={buildErpMgButtonClassName({
+                            variant: tool.variant,
+                            size: 'md',
+                            loading,
+                            className: 'mg-system-tool-button'
+                        })}
+                        loading={loading}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={tool.onClick}
                         disabled={loading}
                         title={tool.description}

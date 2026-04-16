@@ -3,6 +3,7 @@ import { apiPostFormData } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './AudioRecorder.css';
 
 /**
@@ -323,7 +324,13 @@ export const AudioRecorder = ({
             <div className="audio-recorder-controls">
                 {!isRecording && !audioBlob && (
                     <MGButton
-                        className="btn btn-primary btn-start-recording"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'btn btn-primary btn-start-recording'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={startRecording}
                         variant="primary"
                     >
@@ -334,14 +341,26 @@ export const AudioRecorder = ({
                 {isRecording && (
                     <>
                         <MGButton
-                            className="btn btn-secondary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-secondary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={togglePause}
                             variant="secondary"
                         >
                             {isPaused ? '▶️ 재개' : '⏸️ 일시정지'}
                         </MGButton>
                         <MGButton
-                            className="btn btn-danger"
+                            className={buildErpMgButtonClassName({
+                                variant: 'danger',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-danger'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={stopRecording}
                             variant="danger"
                         >
@@ -353,14 +372,26 @@ export const AudioRecorder = ({
                 {audioBlob && !isUploading && (
                     <>
                         <MGButton
-                            className="btn btn-success btn-upload"
+                            className={buildErpMgButtonClassName({
+                                variant: 'success',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-success btn-upload'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={uploadRecording}
                             variant="success"
                         >
                             ⬆️ 업로드 및 전사 시작
                         </MGButton>
                         <MGButton
-                            className="btn btn-secondary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'secondary',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-secondary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={cancelRecording}
                             variant="secondary"
                         >

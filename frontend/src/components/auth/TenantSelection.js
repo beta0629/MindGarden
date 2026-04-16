@@ -30,6 +30,7 @@ import notificationManager from '../../utils/notification';
 import '../../styles/auth/TenantSelection.css';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const TenantSelection = ({ tenants, onSelect, onCancel }) => {
@@ -162,11 +163,17 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                   fullWidth
                   onClick={() => handleSelect(tenant.tenantId)}
                   disabled={isLoading}
-                  className={`tenant-selection__item ${
+                  className={`${buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: isLoading && selectedTenantId === tenant.tenantId
+                  })} tenant-selection__item ${
                     selectedTenantId === tenant.tenantId
                       ? 'tenant-selection__item--selected'
                       : ''
                   }`}
+                  loading={isLoading && selectedTenantId === tenant.tenantId}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   <div className="tenant-selection__item-content">
@@ -196,7 +203,8 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="tenant-selection__cancel-button"
+                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} tenant-selection__cancel-button`}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 취소
@@ -206,9 +214,9 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                 variant="primary"
                 onClick={() => selectedTenantId && handleSelect(selectedTenantId)}
                 disabled={!selectedTenantId || isLoading}
-                className="tenant-selection__confirm-button"
+                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} tenant-selection__confirm-button`}
                 loading={isLoading}
-                loadingText="로딩중..."
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
                 선택

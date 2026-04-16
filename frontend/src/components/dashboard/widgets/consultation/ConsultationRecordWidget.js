@@ -21,6 +21,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationRecordWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -98,18 +99,40 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                 )}
               </div>
               <MGButton
+                type="button"
                 variant="outline"
                 size="small"
-                className="record-view-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'record-view-btn'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate(`/records/${record.id}`)}
                 title="상세 보기"
                 preventDoubleClick={false}
-               />
+              >
+                보기
+              </MGButton>
             </div>
           ))}
         </div>
         <div className="record-actions">
-          <MGButton variant="outline" size="small" onClick={() => navigate('/records')}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate('/records')}
+          >
             전체 기록 보기
           </MGButton>
         </div>

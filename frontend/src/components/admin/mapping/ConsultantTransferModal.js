@@ -6,6 +6,7 @@ import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 /**
  * 상담사 변경 모달 컴포넌트
 /**
@@ -205,9 +206,11 @@ const ConsultantTransferModal = ({
                 type="button"
                 variant="outline"
                 size="medium"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
                 onClick={handleClose}
                 disabled={loading}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 취소
               </MGButton>
@@ -215,10 +218,11 @@ const ConsultantTransferModal = ({
                 type="button"
                 variant="primary"
                 size="medium"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
                 onClick={handleSubmit}
                 disabled={loading}
                 loading={loading}
-                loadingText="변경 중..."
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick
               >
                 상담사 변경

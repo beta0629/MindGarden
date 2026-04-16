@@ -5,6 +5,7 @@ import notificationManager, { showNotification } from '../../../utils/notificati
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -170,6 +171,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             type="button"
             variant="outline"
             size="medium"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleClose}
             disabled={loading}
             preventDoubleClick={false}
@@ -181,9 +184,14 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             form="partial-refund-form"
             variant={!withdrawalCheck.isValid ? 'danger' : 'primary'}
             size="medium"
+            className={buildErpMgButtonClassName({
+              variant: !withdrawalCheck.isValid ? 'danger' : 'primary',
+              size: 'md',
+              loading
+            })}
             disabled={loading || !reason.trim() || reason.trim().length < 5}
             loading={loading}
-            loadingText="처리 중..."
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
             preventDoubleClick={false}
           >

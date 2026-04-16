@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * Toast 알림 컴포넌트
@@ -90,7 +91,13 @@ const Toast = ({
       </div>
       <MGButton
         type="button"
-        className="mg-notification-close"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'sm',
+          loading: false,
+          className: 'mg-notification-close'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleClose}
         aria-label="닫기"
         variant="outline"

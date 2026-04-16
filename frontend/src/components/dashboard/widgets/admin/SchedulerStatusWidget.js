@@ -22,6 +22,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 
 const MG_STATS_LUCIDE_SIZE = 22;
 
@@ -218,11 +219,18 @@ const SchedulerStatusWidget = ({ widget, user }) => {
             
             <h4 className="mg-h5 mg-mb-0">최근 실행 내역</h4>
             <MGButton
-              onClick={() => handleAction('view-all')}
-              className="mg-ml-auto"
+              type="button"
               variant="outline"
               size="small"
-              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-ml-auto'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleAction('view-all')}
+              preventDoubleClick={false}
             >
               전체보기
             </MGButton>
@@ -293,14 +301,20 @@ const SchedulerStatusWidget = ({ widget, user }) => {
         {failureCount > 0 && (
           <div className="mg-mt-md">
             <MGButton
-              onClick={() => handleAction('view-failures')}
-              className="mg-w-full"
+              type="button"
               variant="danger"
               size="small"
               fullWidth
-              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'danger',
+                size: 'sm',
+                loading: false,
+                className: 'mg-w-full'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleAction('view-failures')}
+              preventDoubleClick={false}
             >
-              
               실패 내역 {failureCount}건 확인
             </MGButton>
           </div>
@@ -319,10 +333,17 @@ const SchedulerStatusWidget = ({ widget, user }) => {
       variant="default"
       headerActions={
         <MGButton
-          onClick={() => handleAction('refresh')}
+          type="button"
           variant="outline"
           size="small"
-          type="button"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: ''
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => handleAction('refresh')}
           aria-label="새로고침"
           title="새로고침"
           preventDoubleClick={false}

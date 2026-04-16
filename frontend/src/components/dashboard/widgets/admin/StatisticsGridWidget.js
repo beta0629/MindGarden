@@ -23,6 +23,7 @@ import { formatCurrency } from '../../../../utils/formatUtils';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const StatisticsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -236,7 +237,19 @@ const StatisticsGridWidget = ({ widget, user }) => {
           <div className="statistics-grid-empty">
             
             <p>통계 데이터가 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+            >
               다시 시도
             </MGButton>
           </div>

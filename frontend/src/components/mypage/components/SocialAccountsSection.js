@@ -1,5 +1,6 @@
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const maskIdentifier = (text) => {
   if (!text) return '—';
@@ -52,7 +53,8 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
               </span>
               <MGButton
                 type="button"
-                className="mg-v2-button mg-v2-button--outline mg-v2-button--danger"
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => onUnlinkAccount(linkedAccount.provider, linkedAccount.id)}
                 variant="danger"
                 preventDoubleClick={false}
@@ -67,7 +69,8 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
               </span>
               <MGButton
                 type="button"
-                className="mg-v2-button mg-v2-button--primary"
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => onLinkAccount(provider)}
                 variant="primary"
               >
@@ -97,7 +100,8 @@ const SocialAccountsSection = ({ socialAccounts, onLinkAccount, onUnlinkAccount,
       <div className="mg-v2-card-actions">
         <MGButton
           type="button"
-          className="mg-v2-button mg-v2-button--outline"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onSupportClick}
           variant="outline"
           preventDoubleClick={false}

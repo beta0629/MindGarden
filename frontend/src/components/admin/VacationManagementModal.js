@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -608,10 +609,16 @@ const VacationManagementModal = ({
                                     <MGButton
                                         type="submit"
                                         variant="primary"
-                                        className="submit-button"
+                                        size="medium"
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'primary',
+                                            size: 'md',
+                                            loading,
+                                            className: 'submit-button'
+                                        })}
                                         disabled={loading}
                                         loading={loading}
-                                        loadingText="등록 중..."
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
                                         휴가 등록
                                     </MGButton>
@@ -645,9 +652,16 @@ const VacationManagementModal = ({
                                                     type="button"
                                                     variant="danger"
                                                     size="small"
-                                                    className="delete-button"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'danger',
+                                                        size: 'sm',
+                                                        loading,
+                                                        className: 'delete-button'
+                                                    })}
+                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     onClick={() => handleDeleteVacation(vacation.id, vacation.date)}
                                                     disabled={loading}
+                                                    loading={loading}
                                                 >
                                                     삭제
                                                 </MGButton>

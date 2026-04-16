@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './MindfulnessGuide.css';
 
@@ -246,7 +247,13 @@ const MindfulnessGuide = () => {
                   <MGButton
                     key={section.id}
                     type="button"
-                    className={`mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleSectionClick(section.id)}
                     variant="outline"
                     preventDoubleClick={false}

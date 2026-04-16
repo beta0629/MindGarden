@@ -4,6 +4,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AccountManagement.css';
@@ -242,7 +243,19 @@ const AccountManagement = () => {
   };
 
   const accountHeaderActions = (
-    <MGButton variant="primary" onClick={() => setShowForm(true)} preventDoubleClick={false}>
+    <MGButton
+      variant="primary"
+      className={buildErpMgButtonClassName({
+        variant: 'primary',
+        size: 'md',
+        loading,
+        className: ''
+      })}
+      loading={loading}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+      onClick={() => setShowForm(true)}
+      preventDoubleClick={false}
+    >
       {ACCOUNT_BUTTON_TEXT.REGISTER}
     </MGButton>
   );

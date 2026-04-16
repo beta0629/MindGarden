@@ -156,6 +156,7 @@ const PurchaseManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'items' ? 'active' : ''}`}
                 onClick={() => setActiveTab('items')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 비품 목록
               </MGButton>
@@ -166,6 +167,7 @@ const PurchaseManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
                 onClick={() => setActiveTab('requests')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 구매 요청
               </MGButton>
@@ -176,6 +178,7 @@ const PurchaseManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
                 onClick={() => setActiveTab('orders')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 구매 주문
               </MGButton>
@@ -273,6 +276,7 @@ const PurchaseManagement = () => {
                             size="small"
                             type="button"
                             className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             구매 요청
                           </MGButton>
@@ -322,6 +326,7 @@ const PurchaseManagement = () => {
                             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                             onClick={() => {}}
                             preventDoubleClick={true}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             상세
                           </MGButton>
@@ -373,6 +378,7 @@ const PurchaseManagement = () => {
                             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                             onClick={() => {}}
                             preventDoubleClick={true}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             상세
                           </MGButton>

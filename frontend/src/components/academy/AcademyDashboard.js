@@ -18,6 +18,7 @@ import EnrollmentForm from './EnrollmentForm';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './Academy.css';
 
 const ACADEMY_TITLE_ID = 'academy-dashboard-title';
@@ -122,7 +123,13 @@ const AcademyDashboard = () => {
                 type="button"
                 role="tab"
                 aria-selected={view === 'courses'}
-                className={`mg-v2-tab-button${view === 'courses' ? ' active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-tab-button${view === 'courses' ? ' active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => resetTabView('courses')}
                 variant="outline"
                 preventDoubleClick={false}
@@ -133,7 +140,13 @@ const AcademyDashboard = () => {
                 type="button"
                 role="tab"
                 aria-selected={view === 'classes'}
-                className={`mg-v2-tab-button${view === 'classes' ? ' active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-tab-button${view === 'classes' ? ' active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => resetTabView('classes')}
                 variant="outline"
                 preventDoubleClick={false}
@@ -144,7 +157,13 @@ const AcademyDashboard = () => {
                 type="button"
                 role="tab"
                 aria-selected={view === 'enrollments'}
-                className={`mg-v2-tab-button${view === 'enrollments' ? ' active' : ''}`}
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: `mg-v2-tab-button${view === 'enrollments' ? ' active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => resetTabView('enrollments')}
                 variant="outline"
                 preventDoubleClick={false}

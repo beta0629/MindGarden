@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { API_BASE_URL } from '../../constants/api';
 import { 
   INTEGRATION_TEST_API,
@@ -229,7 +230,13 @@ const IntegrationTest = () => {
             gap: '12px',
             alignItems: 'center'
           }}>
-            <MGButton variant="secondary" size="medium" onClick={clearResults}>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={clearResults}
+            >
               <span>🗑️</span>
               {BUTTON_TEXT.CLEAR_RESULTS}
             </MGButton>
@@ -267,8 +274,9 @@ const IntegrationTest = () => {
             <MGButton
               variant="primary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
               loading={loading}
-              loadingText={MESSAGES.LOADING.RUNNING_TEST}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={runFullIntegrationTest}
             >
               <span>🚀</span>
@@ -277,8 +285,9 @@ const IntegrationTest = () => {
             <MGButton
               variant="success"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading })}
               loading={loading}
-              loadingText={MESSAGES.LOADING.RUNNING_TEST}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={checkSystemHealth}
             >
               <span>💚</span>
@@ -287,8 +296,9 @@ const IntegrationTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText={MESSAGES.LOADING.RUNNING_TEST}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={runPerformanceTest}
             >
               <span>⚡</span>
@@ -297,8 +307,9 @@ const IntegrationTest = () => {
             <MGButton
               variant="danger"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
               loading={loading}
-              loadingText={MESSAGES.LOADING.RUNNING_TEST}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={runSecurityTest}
             >
               <span>🔒</span>

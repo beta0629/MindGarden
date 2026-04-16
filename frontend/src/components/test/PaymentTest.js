@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { PAYMENT_TEST_CSS } from '../../constants/css';
 import { API_BASE_URL } from '../../constants/api';
 import ENV from '../../constants/environment';
@@ -284,7 +285,13 @@ const PaymentTest = () => {
         <div className={PAYMENT_TEST_CSS.HEADER}>
           <h1 className={PAYMENT_TEST_CSS.TITLE}>{PAGE_TITLES.MAIN}</h1>
           <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
-            <MGButton variant="secondary" size="medium" onClick={clearResults}>
+            <MGButton
+              variant="secondary"
+              size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={clearResults}
+            >
               {BUTTON_TEXT.CLEAR_RESULTS}
             </MGButton>
           </div>
@@ -355,8 +362,9 @@ const PaymentTest = () => {
             <MGButton
               variant="primary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testCreatePayment, PAGE_TITLES.CREATE_PAYMENT)}
             >
               {BUTTON_TEXT.CREATE_PAYMENT}
@@ -364,8 +372,9 @@ const PaymentTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testPaymentScenarios, PAGE_TITLES.SCENARIOS)}
             >
               {BUTTON_TEXT.SCENARIOS}
@@ -373,8 +382,9 @@ const PaymentTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testPaymentStatus, PAGE_TITLES.STATUS_UPDATE)}
             >
               {BUTTON_TEXT.STATUS_UPDATE}
@@ -382,8 +392,9 @@ const PaymentTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testWebhook, PAGE_TITLES.WEBHOOK)}
             >
               {BUTTON_TEXT.WEBHOOK_TEST}
@@ -391,8 +402,9 @@ const PaymentTest = () => {
             <MGButton
               variant="success"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testStatistics, PAGE_TITLES.STATISTICS)}
             >
               {BUTTON_TEXT.STATISTICS}
@@ -400,8 +412,9 @@ const PaymentTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testDepositConfirmation, '입금 확인 테스트')}
             >
               {BUTTON_TEXT.DEPOSIT_CONFIRM}
@@ -409,8 +422,9 @@ const PaymentTest = () => {
             <MGButton
               variant="danger"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testCancelRefund, '취소/환불 테스트')}
             >
               취소/환불
@@ -418,8 +432,9 @@ const PaymentTest = () => {
             <MGButton
               variant="secondary"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testBulkCreate, '대량 데이터 생성')}
             >
               {BUTTON_TEXT.BULK_CREATE}
@@ -427,8 +442,9 @@ const PaymentTest = () => {
             <MGButton
               variant="success"
               size="medium"
+              className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading })}
               loading={loading}
-              loadingText="테스트 실행 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => executeTest(testSystemHealth, PAGE_TITLES.HEALTH)}
             >
               {BUTTON_TEXT.HEALTH_CHECK}

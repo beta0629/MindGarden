@@ -22,6 +22,7 @@ import { apiPost } from '../../../utils/ajax';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const NotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -123,7 +124,19 @@ const NotificationWidget = ({ widget, user }) => {
   
   // 헤더 액션 설정
   const headerActions = unreadCount > 0 ? (
-    <MGButton className="widget-view-all" variant="outline" type="button" onClick={handleViewAll}>
+    <MGButton
+      type="button"
+      variant="outline"
+      className={buildErpMgButtonClassName({
+        variant: 'outline',
+        size: 'md',
+        loading: false,
+        className: 'widget-view-all'
+      })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+      onClick={handleViewAll}
+      preventDoubleClick={false}
+    >
       {unreadCount > maxItems ? `전체 보기 (+${unreadCount - maxItems})` : '전체 보기'}
     </MGButton>
   ) : null;

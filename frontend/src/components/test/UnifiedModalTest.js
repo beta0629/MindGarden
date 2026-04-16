@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 /**
  * UnifiedModal 테스트 컴포넌트
@@ -35,23 +36,53 @@ const UnifiedModalTest = () => {
       <p>다양한 모달 설정을 테스트해보세요.</p>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <MGButton variant="primary" size="medium" onClick={() => openModal('basic')}>
+        <MGButton
+          variant="primary"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => openModal('basic')}
+        >
           기본 모달
         </MGButton>
 
-        <MGButton variant="warning" size="medium" onClick={() => openModal('confirm')}>
+        <MGButton
+          variant="warning"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => openModal('confirm')}
+        >
           확인 모달
         </MGButton>
 
-        <MGButton variant="success" size="medium" onClick={() => openModal('form')}>
+        <MGButton
+          variant="success"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => openModal('form')}
+        >
           폼 모달
         </MGButton>
 
-        <MGButton variant="info" size="medium" onClick={() => openModal('large')}>
+        <MGButton
+          variant="info"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'info', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => openModal('large')}
+        >
           큰 모달
         </MGButton>
 
-        <MGButton variant="warning" size="medium" onClick={() => openModal('loading')}>
+        <MGButton
+          variant="warning"
+          size="medium"
+          className={buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => openModal('loading')}
+        >
           로딩 모달
         </MGButton>
       </div>
@@ -79,10 +110,22 @@ const UnifiedModalTest = () => {
         variant="confirm"
         actions={
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <MGButton variant="secondary" size="small" onClick={() => closeModal('confirm')}>
+            <MGButton
+              variant="secondary"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => closeModal('confirm')}
+            >
               취소
             </MGButton>
-            <MGButton variant="danger" size="small" onClick={() => closeModal('confirm')}>
+            <MGButton
+              variant="danger"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => closeModal('confirm')}
+            >
               확인
             </MGButton>
           </div>
@@ -105,11 +148,20 @@ const UnifiedModalTest = () => {
               type="button"
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('form')}
             >
               취소
             </MGButton>
-            <MGButton type="submit" form="test-form" variant="success" size="small">
+            <MGButton
+              type="submit"
+              form="test-form"
+              variant="success"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
               저장
             </MGButton>
           </div>

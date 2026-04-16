@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
 import '../../styles/unified-design-tokens.css';
@@ -197,6 +198,13 @@ const WeatherCard = () => {
               <MGButton
                 variant="outline"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: weatherData.loading
+                })}
+                loading={weatherData.loading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={fetchWeatherData}
               >
                 다시 시도

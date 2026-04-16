@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 import UrgentClientCard from './UrgentClientCard';
 import { ContentSection } from '../content';
@@ -35,7 +36,13 @@ const UrgentClientsSection = ({
           type="button"
           variant="outline"
           size="small"
-          className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onViewAllClients}
           preventDoubleClick={false}
           aria-label="긴급 내담자 전체보기"

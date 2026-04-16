@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaServer, FaDatabase } from 'react-icons/fa';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
     const getStatusModifier = (status) => {
@@ -26,6 +27,14 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                 <MGButton
                     variant="outline"
                     size="small"
+                    className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading,
+                        className: ''
+                    })}
+                    loading={loading}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onStatusCheck}
                     disabled={loading}
                 >

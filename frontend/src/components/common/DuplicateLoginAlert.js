@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './DuplicateLoginAlert.css';
 
@@ -90,7 +91,13 @@ const DuplicateLoginAlert = ({
                 <div className="alert-actions">
                     <MGButton
                         type="button"
-                        className="btn-cancel"
+                        className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false,
+                            className: 'btn-cancel'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleCancel}
                         disabled={timeLeft <= 0}
                         variant="outline"
@@ -100,7 +107,13 @@ const DuplicateLoginAlert = ({
                     </MGButton>
                     <MGButton
                         type="button"
-                        className="btn-confirm"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'btn-confirm'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleConfirm}
                         variant="primary"
                     >

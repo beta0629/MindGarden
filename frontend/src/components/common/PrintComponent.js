@@ -1,5 +1,6 @@
 import React, { useRef, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './PrintComponent.css';
 
@@ -151,8 +152,14 @@ const PrintComponent = forwardRef(({
         type="button"
         variant="primary"
         onClick={handlePrint}
-        className="print-button"
+        className={buildErpMgButtonClassName({
+          variant: 'primary',
+          size: 'md',
+          loading: false,
+          className: 'print-button'
+        })}
         preventDoubleClick={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       >
         프린트
       </MGButton>

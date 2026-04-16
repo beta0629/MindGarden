@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Avatar from './Avatar';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
@@ -77,7 +78,13 @@ const MGHeader = ({
         {/* 모바일 햄버거 메뉴 버튼 */}
         <MGButton
           type="button"
-          className="mg-header__mobile-menu-button"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'mg-header__mobile-menu-button'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={handleMobileMenuToggle}
           aria-label="메뉴 열기"
           preventDoubleClick={false}
@@ -94,7 +101,13 @@ const MGHeader = ({
           {/* 알림 */}
           <MGButton
             type="button"
-            className="mg-header__notification"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-header__notification'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleNotificationToggle}
             preventDoubleClick={false}
           >
@@ -110,7 +123,13 @@ const MGHeader = ({
           <div className="mg-header__user-menu">
             <MGButton
               type="button"
-              className="mg-header__user-button"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'mg-header__user-button'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleUserMenuToggle}
               preventDoubleClick={false}
             >
@@ -159,7 +178,13 @@ const MGHeader = ({
                   <div className="mg-header__menu-divider" />
                   <MGButton
                     type="button"
-                    className="mg-header__menu-item mg-header__menu-item--logout"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'md',
+                      loading: false,
+                      className: 'mg-header__menu-item mg-header__menu-item--logout'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
                     <span className="mg-header__menu-icon">🚪</span>
@@ -177,7 +202,13 @@ const MGHeader = ({
                 <h3>알림</h3>
                 <MGButton
                   type="button"
-                  className="mg-header__notification-mark-all"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: false,
+                    className: 'mg-header__notification-mark-all'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   모두 읽음

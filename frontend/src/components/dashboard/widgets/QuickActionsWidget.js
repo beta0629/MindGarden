@@ -15,6 +15,7 @@ import { RoleUtils } from '../../../constants/roles';
 import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
 const QuickActionsWidget = ({ widget, user }) => {
@@ -111,11 +112,18 @@ const QuickActionsWidget = ({ widget, user }) => {
               {visibleActions.map((action, index) => (
                 <MGButton
                   key={action.id || index}
-                  className="quick-action-btn"
-                  variant="outline"
                   type="button"
+                  variant="outline"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: 'quick-action-btn'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleActionClick(action)}
                   title={toDisplayString(action.tooltip || action.label)}
+                  preventDoubleClick={false}
                 >
                   <span><SafeText>{action.label}</SafeText></span>
                 </MGButton>

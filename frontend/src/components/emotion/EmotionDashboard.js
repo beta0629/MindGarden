@@ -7,6 +7,7 @@ import FacialEmotionTimeline from './FacialEmotionTimeline';
 import EmotionTrendChart from './EmotionTrendChart';
 import CognitiveDistortionPanel from './CognitiveDistortionPanel';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './EmotionDashboard.css';
 
 /**
@@ -99,7 +100,17 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
         return (
             <div className={EMOTION_CSS.EMOTION_DASHBOARD}>
                 <div className="error-message">{error}</div>
-                <MGButton className="btn btn-primary" onClick={loadEmotionData} variant="primary">
+                <MGButton
+                    className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'md',
+                        loading: false,
+                        className: 'btn btn-primary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={loadEmotionData}
+                    variant="primary"
+                >
                     다시 시도
                 </MGButton>
             </div>
@@ -111,7 +122,17 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
             <div className={EMOTION_CSS.EMOTION_DASHBOARD}>
                 <div className="empty-state">
                     <p>감정 분석 데이터가 없습니다.</p>
-                    <MGButton className="btn btn-primary" onClick={loadEmotionData} variant="primary">
+                    <MGButton
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'btn btn-primary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={loadEmotionData}
+                        variant="primary"
+                    >
                         분석 시작
                     </MGButton>
                 </div>

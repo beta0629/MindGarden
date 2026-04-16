@@ -17,6 +17,7 @@ import React from 'react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { RoleUtils } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
@@ -144,14 +145,22 @@ const HealingCardWidget = ({ widget, user }) => {
             </h3>
           </div>
           <MGButton
-            className="healing-refresh-btn"
-            variant="outline"
             type="button"
+            variant="outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading,
+              className: 'healing-refresh-btn'
+            })}
             onClick={handleRefresh}
             title="새로운 메시지 보기"
             disabled={loading}
+            loading={loading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={false}
           >
-            {loading ? '불러오는 중...' : '새로고침'}
+            새로고침
           </MGButton>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeFilters.css';
 
 /**
@@ -96,7 +97,13 @@ const CommonCodeFilters = ({
                 <MGButton 
                     type="button"
                     variant="primary"
-                    className="btn btn-primary"
+                    className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'md',
+                        loading: false,
+                        className: 'btn btn-primary'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={onNewCode}
                 >
                     <i className="bi bi-plus-circle" />
@@ -156,7 +163,13 @@ const CommonCodeFilters = ({
                                     type="button"
                                     variant="outline"
                                     size="small"
-                                    className="clear-search-btn"
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                        loading: false,
+                                        className: 'clear-search-btn'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => handleFilterChange('searchTerm', '')}
                                     title="검색어 지우기"
                                     preventDoubleClick={false}
@@ -172,7 +185,13 @@ const CommonCodeFilters = ({
                             <MGButton 
                                 type="button"
                                 variant="outline"
-                                className="btn btn-outline-secondary"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'btn btn-outline-secondary'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={clearFilters}
                             >
                                 <i className="bi bi-arrow-clockwise" />

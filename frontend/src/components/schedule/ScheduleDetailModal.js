@@ -10,6 +10,7 @@ import './ScheduleB0KlA.css';
 import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
@@ -225,7 +226,13 @@ const ScheduleDetailModal = ({
                     <MGButton
                         type="button"
                         variant="outline"
-                        className="mg-v2-btn--outline"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'md',
+                          loading: false,
+                          className: 'mg-v2-btn--outline'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => setShowCancelConfirm(false)}
                         disabled={loading}
@@ -235,11 +242,16 @@ const ScheduleDetailModal = ({
                     <MGButton
                         type="button"
                         variant="danger"
-                        className="mg-v2-schedule-detail-btn--danger"
+                        className={buildErpMgButtonClassName({
+                          variant: 'danger',
+                          size: 'md',
+                          loading,
+                          className: 'mg-v2-schedule-detail-btn--danger'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={handleCancelSchedule}
                         loading={loading}
-                        loadingText="처리중..."
                     >
                         예, 취소합니다
                     </MGButton>
@@ -270,7 +282,13 @@ const ScheduleDetailModal = ({
                     <MGButton
                         type="button"
                         variant="outline"
-                        className="mg-v2-btn--outline"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'md',
+                          loading: false,
+                          className: 'mg-v2-btn--outline'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
@@ -280,11 +298,16 @@ const ScheduleDetailModal = ({
                     <MGButton
                         type="button"
                         variant="primary"
-                        className="mg-v2-btn--primary"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'md',
+                          loading,
+                          className: 'mg-v2-btn--primary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={handleConfirmSchedule}
                         loading={loading}
-                        loadingText="처리중..."
                     >
                         확정
                     </MGButton>
@@ -519,7 +542,13 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant="outline"
-                                className="mg-v2-btn--outline"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'md',
+                                  loading: false,
+                                  className: 'mg-v2-btn--outline'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={handleEditSchedule}
                                 disabled={loading}
@@ -530,7 +559,13 @@ const ScheduleDetailModal = ({
                         <MGButton
                             type="button"
                             variant="primary"
-                            className="mg-v2-btn--primary"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'md',
+                              loading: false,
+                              className: 'mg-v2-btn--primary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => setShowConfirmModal(true)}
                             disabled={loading}
@@ -540,7 +575,13 @@ const ScheduleDetailModal = ({
                         <MGButton
                             type="button"
                             variant="danger"
-                            className="mg-v2-schedule-detail-btn--danger"
+                            className={buildErpMgButtonClassName({
+                              variant: 'danger',
+                              size: 'md',
+                              loading: false,
+                              className: 'mg-v2-schedule-detail-btn--danger'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => setShowCancelConfirm(true)}
                             disabled={loading}
@@ -558,7 +599,13 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant="outline"
-                                className="mg-v2-btn--outline"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'outline',
+                                  size: 'md',
+                                  loading: false,
+                                  className: 'mg-v2-btn--outline'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={handleWriteConsultationLog}
                                 disabled={loading}
@@ -568,7 +615,13 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant="primary"
-                                className="mg-v2-btn--primary"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'primary',
+                                  size: 'md',
+                                  loading: false,
+                                  className: 'mg-v2-btn--primary'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => handleStatusChange(completedStatus)}
                                 disabled={loading}
@@ -578,7 +631,13 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant="danger"
-                                className="mg-v2-schedule-detail-btn--danger"
+                                className={buildErpMgButtonClassName({
+                                  variant: 'danger',
+                                  size: 'md',
+                                  loading: false,
+                                  className: 'mg-v2-schedule-detail-btn--danger'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => setShowCancelConfirm(true)}
                                 disabled={loading}
@@ -596,7 +655,13 @@ const ScheduleDetailModal = ({
                         <MGButton
                             type="button"
                             variant="outline"
-                            className="mg-v2-btn--outline"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'md',
+                              loading: false,
+                              className: 'mg-v2-btn--outline'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
@@ -613,7 +678,13 @@ const ScheduleDetailModal = ({
                         <MGButton
                             type="button"
                             variant="outline"
-                            className="mg-v2-btn--outline"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'md',
+                              loading: false,
+                              className: 'mg-v2-btn--outline'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}

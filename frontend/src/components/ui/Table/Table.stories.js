@@ -6,6 +6,7 @@ import React from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Table from './Table';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -90,10 +91,24 @@ const customColumns = [
     header: '액션',
     render: () => (
       <div style={{ display: 'flex', gap: '5px' }}>
-        <MGButton size="small" variant="outline" title="편집" aria-label="편집">
+        <MGButton
+          size="small"
+          variant="outline"
+          title="편집"
+          aria-label="편집"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        >
           <Pencil size={14} aria-hidden />
         </MGButton>
-        <MGButton size="small" variant="danger" title="삭제" aria-label="삭제">
+        <MGButton
+          size="small"
+          variant="danger"
+          title="삭제"
+          aria-label="삭제"
+          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        >
           <Trash2 size={14} aria-hidden />
         </MGButton>
       </div>

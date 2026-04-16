@@ -13,6 +13,7 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { QUICK_FILTER_OPTIONS } from '../../../constants/filterSearch';
 
 const QuickFilters = ({
@@ -27,8 +28,14 @@ const QuickFilters = ({
           key={option.value}
           variant={activeFilter === option.value ? 'primary' : 'outline'}
           size="small"
+          className={buildErpMgButtonClassName({
+            variant: activeFilter === option.value ? 'primary' : 'outline',
+            size: 'sm',
+            loading: false,
+            className: `mg-v2-quick-filter ${activeFilter === option.value ? 'mg-v2-quick-filter--active' : ''}`
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onFilterChange(option.value)}
-          className={`mg-v2-quick-filter ${activeFilter === option.value ? 'mg-v2-quick-filter--active' : ''}`}
         >
           {option.label}
         </MGButton>

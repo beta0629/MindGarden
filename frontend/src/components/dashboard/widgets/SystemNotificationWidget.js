@@ -7,6 +7,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import Badge from '../../common/Badge';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './SystemNotificationWidget.css';
 const SystemNotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -94,10 +95,17 @@ const SystemNotificationWidget = ({ widget, user }) => {
     ),
     actions: totalUnreadCount > 0 && (
       <MGButton
-        className="system-notification-view-all-btn"
-        variant="outline"
         type="button"
+        variant="outline"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: false,
+          className: 'system-notification-view-all-btn'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleViewAll}
+        preventDoubleClick={false}
       >
         {totalUnreadCount > 5 ? `전체 보기 (+${totalUnreadCount - 5})` : '전체 보기'}
       </MGButton>

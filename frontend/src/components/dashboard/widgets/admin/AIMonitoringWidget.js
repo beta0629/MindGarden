@@ -24,6 +24,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 
 const MG_STATS_LUCIDE_SIZE = 22;
 
@@ -194,11 +195,18 @@ const AIMonitoringWidget = ({ widget, user }) => {
             
             <h4 className="mg-h5 mg-mb-0">최근 이상 탐지</h4>
             <MGButton
-              onClick={() => handleAction('view-anomalies')}
-              className="mg-ml-auto"
+              type="button"
               variant="outline"
               size="small"
-              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-ml-auto'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleAction('view-anomalies')}
+              preventDoubleClick={false}
             >
               전체보기
             </MGButton>
@@ -266,11 +274,18 @@ const AIMonitoringWidget = ({ widget, user }) => {
             
             <h4 className="mg-h5 mg-mb-0">최근 보안 위협</h4>
             <MGButton
-              onClick={() => handleAction('view-threats')}
-              className="mg-ml-auto"
+              type="button"
               variant="outline"
               size="small"
-              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-ml-auto'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleAction('view-threats')}
+              preventDoubleClick={false}
             >
               전체보기
             </MGButton>
@@ -381,10 +396,17 @@ const AIMonitoringWidget = ({ widget, user }) => {
       variant="default"
       headerActions={
         <MGButton
-          onClick={() => handleAction('refresh')}
+          type="button"
           variant="outline"
           size="small"
-          type="button"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: ''
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => handleAction('refresh')}
           aria-label="새로고침"
           title="새로고침"
           preventDoubleClick={false}

@@ -1,6 +1,7 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import Avatar from '../../common/Avatar';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 /**
  * AdminDashboard 헤더 컴포넌트
@@ -54,7 +55,13 @@ const AdminDashboardHeader = ({
                         <MGButton
                             variant="outline"
                             size="small"
-                            className="mg-v2-admin-dashboard-action-btn"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-admin-dashboard-action-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/notifications')}
                         >
                             알림 관리
@@ -65,7 +72,13 @@ const AdminDashboardHeader = ({
                         <MGButton
                             variant="outline"
                             size="small"
-                            className="mg-v2-admin-dashboard-action-btn"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-admin-dashboard-action-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/system-config')}
                         >
                             시스템 설정
@@ -76,7 +89,13 @@ const AdminDashboardHeader = ({
                         <MGButton
                             variant="outline"
                             size="small"
-                            className="mg-v2-admin-dashboard-action-btn"
+                            className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-v2-admin-dashboard-action-btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/user-management')}
                         >
                             사용자 관리

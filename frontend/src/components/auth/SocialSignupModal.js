@@ -5,6 +5,7 @@ import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
@@ -491,8 +492,9 @@ const SocialSignupModal = ({
                       type="button"
                       variant="outline"
                       size="small"
-                      className="social-signup-modal__password-toggle"
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} social-signup-modal__password-toggle`}
                       onClick={() => togglePassword('password')}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                       aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
@@ -529,8 +531,9 @@ const SocialSignupModal = ({
                       type="button"
                       variant="outline"
                       size="small"
-                      className="social-signup-modal__password-toggle"
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} social-signup-modal__password-toggle`}
                       onClick={() => togglePassword('confirmPassword')}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                       aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
@@ -628,7 +631,8 @@ const SocialSignupModal = ({
                   fullWidth
                   preventDoubleClick={false}
                   onClick={openPrivacyConsent}
-                  className="social-signup-modal__consent-open"
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} social-signup-modal__consent-open`}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   <i className="bi bi-file-text" aria-hidden="true" />
                   약관 전문 보기 및 동의
@@ -654,7 +658,8 @@ const SocialSignupModal = ({
               <MGButton
                 type="button"
                 variant="secondary"
-                className="social-signup-modal__action-btn"
+                className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} social-signup-modal__action-btn`}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
                 onClick={handleDismiss}
               >
@@ -663,9 +668,9 @@ const SocialSignupModal = ({
               <MGButton
                 type="button"
                 variant="primary"
-                className="social-signup-modal__action-btn"
+                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} social-signup-modal__action-btn`}
                 loading={isLoading}
-                loadingText={socialUser?.needsBranchMapping ? '처리 중...' : '가입 중...'}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
                 onClick={handleSubmit}
               >

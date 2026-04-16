@@ -8,6 +8,7 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import './NavIcon.css';
 
@@ -23,7 +24,8 @@ const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...re
       variant="outline"
       size="small"
       preventDoubleClick={false}
-      className={`mg-v2-nav-icon ${className}`}
+      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: `mg-v2-nav-icon ${className}` })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={onClick}
       disabled={disabled}
       aria-label={label || 'Icon button'}

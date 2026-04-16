@@ -297,6 +297,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                                 onClick={handleClose}
                                 disabled={loading}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                                 취소
                             </MGButton>
@@ -327,8 +328,9 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     variant="success"
                                     size="medium"
                                     type="button"
-                                    className="mg-v2-button mg-v2-button--success"
+                                    className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
                                     onClick={handleDownloadReport}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 >
                                     다운로드
                                 </MGButton>

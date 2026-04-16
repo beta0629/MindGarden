@@ -23,6 +23,7 @@ import { RECENT_ACTIVITIES_CSS } from '../../../constants/css';
 import './RecentActivitiesWidget.css';
 import '../RecentActivities.css';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 const RecentActivitiesWidget = ({ widget, user }) => {
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
@@ -272,11 +273,18 @@ const RecentActivitiesWidget = ({ widget, user }) => {
           </h3>
           {hasMoreActivities && (
             <MGButton
-              className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
+              type="button"
               variant="outline"
               size="small"
-              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-btn mg-btn--outline mg-btn--primary mg-btn--sm'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
+              preventDoubleClick={false}
             >
               전체보기 →
             </MGButton>

@@ -17,6 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './WidgetConfigModal.css';
 
 const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
@@ -177,6 +178,13 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
         <>
           <MGButton
             variant="secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: false,
+              className: ''
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             preventDoubleClick={true}
           >
@@ -184,6 +192,13 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
           </MGButton>
           <MGButton
             variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: ''
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSave}
             preventDoubleClick={true}
           >

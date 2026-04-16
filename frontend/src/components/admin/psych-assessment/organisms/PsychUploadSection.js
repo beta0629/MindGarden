@@ -12,6 +12,7 @@ import { useDropzone } from 'react-dropzone';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../../utils/notification';
 import './PsychUploadSection.css';
 
@@ -168,10 +169,16 @@ const PsychUploadSection = ({
                         type="button"
                         variant="outline"
                         size="small"
-                        className="mg-v2-psych-upload-section__client-selected-tag-remove"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: 'mg-v2-psych-upload-section__client-selected-tag-remove'
+                        })}
                         onClick={() => onClientIdChange(null)}
                         aria-label="내담자 선택 해제"
                         preventDoubleClick={false}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       >
                         ×
                       </MGButton>
@@ -201,11 +208,17 @@ const PsychUploadSection = ({
                     type="button"
                     variant="outline"
                     size="small"
-                    className={`mg-v2-psych-upload-section__client-tag mg-v2-psych-upload-section__client-tag--none ${selectedClient ? '' : 'mg-v2-psych-upload-section__client-tag--selected'}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: `mg-v2-psych-upload-section__client-tag mg-v2-psych-upload-section__client-tag--none ${selectedClient ? '' : 'mg-v2-psych-upload-section__client-tag--selected'}`
+                    })}
                     onClick={() => onClientIdChange(null)}
                     aria-pressed={!selectedClient}
                     disabled={clientsLoading}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <span className="mg-v2-psych-upload-section__tag-hash">#</span>
                     {' '}
@@ -220,11 +233,17 @@ const PsychUploadSection = ({
                         type="button"
                         variant="outline"
                         size="small"
-                        className={`mg-v2-psych-upload-section__client-tag ${isSelected ? 'mg-v2-psych-upload-section__client-tag--selected' : ''}`}
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: `mg-v2-psych-upload-section__client-tag ${isSelected ? 'mg-v2-psych-upload-section__client-tag--selected' : ''}`
+                        })}
                         onClick={() => onClientIdChange(Number(c.id))}
                         aria-pressed={isSelected}
                         disabled={clientsLoading}
                         preventDoubleClick={false}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       >
                         <span className="mg-v2-psych-upload-section__tag-hash">#</span>
                         {getClientLabel(c)}
@@ -251,11 +270,17 @@ const PsychUploadSection = ({
                     type="button"
                     variant="outline"
                     size="small"
-                    className={`mg-v2-psych-upload-section__type-option ${isSelected ? 'mg-v2-psych-upload-section__type-option--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: `mg-v2-psych-upload-section__type-option ${isSelected ? 'mg-v2-psych-upload-section__type-option--selected' : ''}`
+                    })}
                     onClick={() => onUploadTypeChange(type)}
                     aria-pressed={isSelected}
                     aria-label={`검사 유형 ${type}${isSelected ? ' 선택됨' : ''}`}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     {type}
                   </MGButton>
@@ -265,12 +290,16 @@ const PsychUploadSection = ({
             <MGButton
               type="button"
               variant="primary"
-              className="mg-v2-button mg-v2-button-primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: uploading
+              })}
               onClick={onUpload}
               loading={uploading}
               disabled={!uploadFiles?.length}
               preventDoubleClick={true}
-              loadingText="업로드 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               업로드
             </MGButton>

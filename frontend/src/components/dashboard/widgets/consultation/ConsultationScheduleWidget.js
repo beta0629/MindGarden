@@ -21,6 +21,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationScheduleWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultationScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -73,8 +74,18 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
           <div className="empty-icon-wrapper" />
           <h3 className="empty-title">오늘 일정 없음</h3>
           <p className="empty-description">새로운 상담 일정을 추가하세요.</p>
-          <MGButton variant="primary" onClick={() => navigate('/schedules/new')}>
-            
+          <MGButton
+            type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate('/schedules/new')}
+          >
             일정 추가
           </MGButton>
         </div>
@@ -100,18 +111,40 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
                 </div>
               </div>
               <MGButton
+                type="button"
                 variant="outline"
                 size="small"
-                className="schedule-view-btn"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'schedule-view-btn'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate(`/schedules/${schedule.id}`)}
                 title="상세 보기"
                 preventDoubleClick={false}
-               />
+              >
+                보기
+              </MGButton>
             </div>
           ))}
         </div>
         <div className="schedule-actions">
-          <MGButton variant="outline" size="small" onClick={() => navigate('/schedules')}>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate('/schedules')}
+          >
             전체 일정 보기
           </MGButton>
         </div>

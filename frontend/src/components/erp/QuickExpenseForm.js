@@ -197,6 +197,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                 className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                 onClick={closeAmountForm}
                 disabled={loading}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 취소
               </MGButton>
@@ -222,6 +223,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   type="button"
                   variant="secondary"
                   onClick={() => openAmountForm(expense)}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   className={buildErpMgButtonClassName({
                     variant: 'secondary',
                     loading: false,

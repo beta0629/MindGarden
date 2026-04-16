@@ -17,6 +17,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { RoleUtils } from '../../../constants/roles';
 import './ScheduleWidget.css';
 const ScheduleWidget = ({ widget, user }) => {
@@ -72,22 +73,34 @@ const ScheduleWidget = ({ widget, user }) => {
         {/* 빠른 액션 버튼들 */}
         <div className="schedule-quick-actions">
           <MGButton
-            className="schedule-action-btn primary"
-            variant="primary"
             type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'schedule-action-btn primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleScheduleClick}
+            preventDoubleClick={false}
           >
-            
             오늘의 스케줄
           </MGButton>
 
           <MGButton
-            className="schedule-action-btn secondary"
-            variant="outline"
             type="button"
+            variant="outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'schedule-action-btn secondary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleNewScheduleClick}
+            preventDoubleClick={false}
           >
-            
             새 일정 등록
           </MGButton>
         </div>

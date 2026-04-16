@@ -4,6 +4,7 @@ import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './SOAPNoteEditor.css';
 
 /**
@@ -202,22 +203,32 @@ const SOAPNoteEditor = ({ report, onSave }) => {
             {/* 액션 버튼 */}
             <div className="editor-actions">
                 <MGButton
-                    className="btn btn-secondary btn-save"
+                    className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'md',
+                        loading: isSaving,
+                        className: 'btn btn-secondary btn-save'
+                    })}
                     onClick={handleSave}
                     disabled={isSaving || editedReport.humanReviewed}
                     loading={isSaving}
-                    loadingText="저장 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     variant="secondary"
                 >
                     💾 저장
                 </MGButton>
 
                 <MGButton
-                    className="btn btn-success btn-approve"
+                    className={buildErpMgButtonClassName({
+                        variant: 'success',
+                        size: 'md',
+                        loading: isApproving,
+                        className: 'btn btn-success btn-approve'
+                    })}
                     onClick={handleApprove}
                     disabled={isApproving || editedReport.humanReviewed}
                     loading={isApproving}
-                    loadingText="승인 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     variant="success"
                 >
                     ✅ 최종 승인

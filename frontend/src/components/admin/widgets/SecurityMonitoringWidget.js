@@ -3,6 +3,7 @@ import { FaShieldAlt, FaExclamationTriangle, FaBan, FaEye } from 'react-icons/fa
 import { SecurityDataProcessor, SecurityAnalyzer, SecurityDataManager } from '../../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './SecurityMonitoringWidget.css';
 
 /**
@@ -196,7 +197,13 @@ const SecurityMonitoringWidget = ({
             type="button"
             variant="outline"
             size="small"
-            className={`view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW ? 'active' : ''}`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: `view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW ? 'active' : ''}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setSelectedView(WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.OVERVIEW)}
             preventDoubleClick={false}
           >
@@ -206,7 +213,13 @@ const SecurityMonitoringWidget = ({
             type="button"
             variant="outline"
             size="small"
-            className={`view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.EVENTS ? 'active' : ''}`}
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: `view-button ${selectedView === WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.EVENTS ? 'active' : ''}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setSelectedView(WIDGET_CONSTANTS.SECURITY_WIDGET.VIEW_TYPES.EVENTS)}
             preventDoubleClick={false}
           >

@@ -8,6 +8,7 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ConsultantRatingModal.css';
 
 /**
@@ -119,7 +120,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                 <>
                     <MGButton
                         variant="secondary"
-                        className="mg-v2-button mg-v2-button--secondary"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         onClick={onClose}
                         disabled={isSubmitting}
                         preventDoubleClick={false}
@@ -128,11 +129,11 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     </MGButton>
                     <MGButton
                         variant="primary"
-                        className="mg-v2-button mg-v2-button--primary"
+                        className={buildErpMgButtonClassName({ variant: 'primary', loading: isSubmitting })}
                         onClick={handleSubmit}
                         disabled={isSubmitDisabled}
                         loading={isSubmitting}
-                        loadingText="등록 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                         평가 완료
                     </MGButton>
@@ -172,7 +173,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                     key={score}
                                     type="button"
                                     variant="outline"
-                                    className={`mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
+                                    className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
                                     onMouseEnter={() => setHoveredScore(score)}
                                     onMouseLeave={() => setHoveredScore(0)}
                                     onClick={() => setHeartScore(score)}
@@ -198,7 +199,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                     key={tag}
                                     type="button"
                                     variant="outline"
-                                    className={`mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
+                                    className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
                                     onClick={() => handleTagToggle(tag)}
                                     preventDoubleClick={false}
                                 >

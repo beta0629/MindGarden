@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -45,7 +46,13 @@ const RecentActivities = ({ consultationData }) => {
           <MGButton
             variant="outline"
             size="small"
-            className="recent-activities-view-all mg-button--with-icon"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'recent-activities-view-all mg-button--with-icon'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleViewAll}
           >
             전체보기 →

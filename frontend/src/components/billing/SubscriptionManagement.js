@@ -32,6 +32,7 @@ import {
 } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
@@ -247,7 +248,13 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
             <MGButton
               variant="secondary"
               size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: false
+              })}
               onClick={() => setShowPaymentMethodRegistration(true)}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               {BILLING_MESSAGES.SUBSCRIPTION.ADD_PAYMENT_METHOD}
             </MGButton>
@@ -257,7 +264,13 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
               <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHODS}</p>
               <MGButton
                 variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false
+                })}
                 onClick={() => setShowPaymentMethodRegistration(true)}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 {BILLING_MESSAGES.SUBSCRIPTION.REGISTER_PAYMENT_METHOD}
               </MGButton>
@@ -325,9 +338,15 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   {selectedPlan && paymentMethods.length > 0 && (
                     <MGButton
                       variant="primary"
+                      className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'md',
+                        loading: false
+                      })}
                       onClick={() =>
                         handleCreateSubscription(selectedPlan.planId, paymentMethods[0].paymentMethodId)
                       }
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       fullWidth
                     >
                       {BILLING_MESSAGES.SUBSCRIPTION.CREATE_SUBSCRIPTION}
@@ -377,7 +396,13 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                       <MGButton
                         variant="primary"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'sm',
+                          loading: false
+                        })}
                         onClick={() => handleActivateSubscription(subscription.subscriptionId)}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       >
                         {BILLING_MESSAGES.SUBSCRIPTION.ACTIVATE}
                       </MGButton>
@@ -387,7 +412,13 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                       <MGButton
                         variant="danger"
                         size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'danger',
+                          size: 'sm',
+                          loading: false
+                        })}
                         onClick={() => handleCancelSubscription(subscription.subscriptionId)}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       >
                         {BILLING_MESSAGES.SUBSCRIPTION.CANCEL}
                       </MGButton>

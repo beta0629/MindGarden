@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Clock, LogOut } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
@@ -113,11 +114,25 @@ const SessionIdleWarningModal = () => {
       zIndex={9990}
       actions={
         <>
-          <MGButton variant="outline" size="medium" onClick={handleLogout} preventDoubleClick={false}>
+          <MGButton
+            variant="outline"
+            size="medium"
+            onClick={handleLogout}
+            preventDoubleClick={false}
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          >
             <LogOut size={20} className="mg-v2-icon-inline" />
             로그아웃
           </MGButton>
-          <MGButton variant="primary" size="medium" onClick={handleExtend} preventDoubleClick={false}>
+          <MGButton
+            variant="primary"
+            size="medium"
+            onClick={handleExtend}
+            preventDoubleClick={false}
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          >
             <Clock size={20} className="mg-v2-icon-inline" />
             연장
           </MGButton>

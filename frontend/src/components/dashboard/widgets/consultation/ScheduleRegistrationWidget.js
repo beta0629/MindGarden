@@ -21,6 +21,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ScheduleRegistrationWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ScheduleRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -194,8 +195,18 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
             {widget.config?.emptyMessage || '새로운 상담 일정을 등록해보세요.'}
           </p>
           {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
-            <MGButton variant="primary" onClick={handleCreateSchedule}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateSchedule}
+            >
               새 일정 등록
             </MGButton>
           )}
@@ -255,7 +266,19 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
             <h4 className="list-title">
               {widget.config?.showTodayOnly !== false ? '오늘의 일정' : '최근 일정'}
             </h4>
-            <MGButton variant="outline" size="small" onClick={handleViewAll}>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleViewAll}
+            >
               전체 보기
             </MGButton>
           </div>
@@ -313,13 +336,23 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                 </div>
                 <div className="schedule-actions">
                   <MGButton
+                    type="button"
                     variant="outline"
                     size="small"
-                    className="action-btn view-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn view-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSchedule(schedule.id)}
                     title="상세 보기"
                     preventDoubleClick={false}
-                   />
+                  >
+                    보기
+                  </MGButton>
                 </div>
               </div>
             ))}
@@ -329,8 +362,19 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
         {/* 빠른 액션 */}
         {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
           <div className="schedule-quick-actions">
-            <MGButton variant="primary" size="small" onClick={handleCreateSchedule}>
-              
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading: false
+              })}
+              loading={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleCreateSchedule}
+            >
               새 일정 등록
             </MGButton>
           </div>

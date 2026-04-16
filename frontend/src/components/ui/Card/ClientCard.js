@@ -3,6 +3,7 @@ import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, A
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
@@ -213,7 +214,13 @@ const ClientCard = ({
                 {showActions && (
                     <div className="mg-client-card__actions">
                         <MGButton
-                            className="mg-button mg-button-primary mg-button-sm"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-button mg-button-primary mg-button-sm'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
@@ -226,7 +233,13 @@ const ClientCard = ({
                         </MGButton>
                         
                         <MGButton
-                            className="mg-button mg-button-outline mg-button-sm"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-button mg-button-outline mg-button-sm'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
@@ -238,7 +251,13 @@ const ClientCard = ({
                         </MGButton>
                         
                         <MGButton
-                            className="mg-button mg-button-ghost mg-button-sm"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-button mg-button-ghost mg-button-sm'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
@@ -317,7 +336,13 @@ const ClientCard = ({
                 {showActions && (
                     <div className="mg-client-card__actions mg-client-card__actions--mobile">
                         <MGButton
-                            className="mg-button mg-button-primary mg-button-sm mg-v2-flex-1"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-button mg-button-primary mg-button-sm mg-v2-flex-1'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();
@@ -329,7 +354,13 @@ const ClientCard = ({
                             {selected ? '선택됨' : '선택하기'}
                         </MGButton>
                         <MGButton
-                            className="mg-button mg-button-outline mg-button-sm"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-button mg-button-outline mg-button-sm'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}

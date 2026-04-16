@@ -1,4 +1,5 @@
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { StatusBadge } from '../../common';
 
 /**
@@ -34,7 +35,17 @@ const ConsultationCompletionStatsView = ({
         return (
             <div className="mg-v2-error-state">
                 <p>{error}</p>
-                <MGButton className="mg-v2-button mg-button-danger" onClick={onRetry} variant="danger">
+                <MGButton
+                    className={buildErpMgButtonClassName({
+                        variant: 'danger',
+                        size: 'md',
+                        loading: false,
+                        className: 'mg-v2-button mg-button-danger'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={onRetry}
+                    variant="danger"
+                >
                     다시 시도
                 </MGButton>
             </div>

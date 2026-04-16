@@ -23,6 +23,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import './PermissionWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const PermissionWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
@@ -234,7 +235,15 @@ const PermissionWidget = ({ widget, user }) => {
                           type="button"
                           variant="outline"
                           size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'sm',
+                            loading: false,
+                            className: ''
+                          })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={goUserManagement}
+                          preventDoubleClick={false}
                         >
                           {permissions.length - maxItems}개 더 보기
                         </MGButton>
@@ -250,9 +259,16 @@ const PermissionWidget = ({ widget, user }) => {
                 type="button"
                 variant="outline"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: ''
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={goUserManagement}
+                preventDoubleClick={false}
               >
-                
                 사용자 관리로 이동
               </MGButton>
             </div>
@@ -260,7 +276,21 @@ const PermissionWidget = ({ widget, user }) => {
         ) : (
           <div className="permission-empty">
             <p>권한 정보가 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading,
+                className: ''
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+              preventDoubleClick={false}
+            >
               다시 시도
             </MGButton>
           </div>

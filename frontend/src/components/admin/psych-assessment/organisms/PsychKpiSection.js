@@ -11,6 +11,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import './PsychKpiSection.css';
 import SafeText from '../../../common/SafeText';
 
@@ -49,9 +50,15 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
               key={item.id}
               type="button"
               variant="outline"
-              className="mg-v2-psych-kpi-section__card"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-psych-kpi-section__card'
+              })}
               onClick={() => onStatCardClick && onStatCardClick(item)}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <div className={`mg-v2-psych-kpi-section__icon mg-v2-psych-kpi-section__icon--${item.iconVariant}`}>
                 <span className="mg-v2-psych-kpi-section__icon-text" aria-hidden="true">{item.iconText}</span>

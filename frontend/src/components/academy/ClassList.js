@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { DataTable, FilterBar, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -126,6 +127,12 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
           <MGButton
             variant="outline"
             size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => onEditClass(classItem)}
           >
             수정
@@ -135,6 +142,12 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
           <MGButton
             variant="danger"
             size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'danger',
+              size: 'sm',
+              loading: false
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleDelete(classItem.classId)}
           >
             삭제
@@ -152,6 +165,12 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
           {onCreateClass && (
             <MGButton
               variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onCreateClass}
             >
               반 등록

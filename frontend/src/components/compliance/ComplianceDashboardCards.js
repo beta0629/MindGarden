@@ -1,5 +1,6 @@
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 
@@ -345,13 +346,34 @@ export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpen
       className="mg-v2-compliance-dashboard__actions"
       aria-label="컴플라이언스 빠른 작업"
     >
-      <MGButton type="button" variant="primary" size="small" onClick={onOpenImpact}>
+      <MGButton
+        type="button"
+        variant="primary"
+        size="small"
+        className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={onOpenImpact}
+      >
         영향평가 실행
       </MGButton>
-      <MGButton type="button" variant="secondary" size="small" onClick={onOpenDestruction}>
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={onOpenDestruction}
+      >
         전체 파기 실행
       </MGButton>
-      <MGButton type="button" variant="outline" size="small" onClick={onOpenEduPlan}>
+      <MGButton
+        type="button"
+        variant="outline"
+        size="small"
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={onOpenEduPlan}
+      >
         교육 계획 수립
       </MGButton>
     </section>

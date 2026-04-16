@@ -14,6 +14,7 @@ import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './MobileLnbDrawer.css';
 
@@ -89,7 +90,13 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       type="button"
                       variant="outline"
                       size="small"
-                      className="mg-v2-mobile-lnb-drawer__group-chevron"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'mg-v2-mobile-lnb-drawer__group-chevron'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={(e) => handleGroupToggle(e, item.to)}
                       preventDoubleClick={false}
                       aria-expanded={expandedGroupKey === item.to}
@@ -151,7 +158,13 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
               variant="outline"
               size="medium"
               fullWidth
-              className="mg-v2-mobile-lnb-drawer__logout"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-mobile-lnb-drawer__logout'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onLogout}
               preventDoubleClick={false}
               aria-label="로그아웃"

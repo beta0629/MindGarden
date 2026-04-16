@@ -204,7 +204,7 @@ const AdminApprovalDashboard = () => {
                       <MGButton
                         variant={mapErpVariantToMg('success')}
                         size={mapErpSizeToMg('small')}
-                        className={buildErpMgButtonClassName({ variant: 'success', size: 'small', loading: false })}
+                        className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => handleApprove(request)}
@@ -214,7 +214,7 @@ const AdminApprovalDashboard = () => {
                       <MGButton
                         variant={mapErpVariantToMg('danger')}
                         size={mapErpSizeToMg('small')}
-                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'small', loading: false })}
+                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => handleReject(request)}

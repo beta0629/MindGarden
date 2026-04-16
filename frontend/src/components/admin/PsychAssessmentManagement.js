@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -24,6 +25,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
+import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 
@@ -269,8 +271,14 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   if (loading) {
     return (
       <AdminCommonLayout>
-        <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="심리검사 리포트 관리 본문" className="mg-v2-psych-assessment-management">
+              <div aria-busy="true" aria-live="polite">
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+              </div>
+            </ContentArea>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -279,54 +287,63 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   return (
     <AdminCommonLayout>
       <>
-        <ContentArea ariaLabel="심리검사 리포트 관리 본문" className="mg-v2-psych-assessment-management">
-          <ContentHeader
-            title="심리검사 리포트(AI)"
-            subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
-            actions={
-              <MGButton
-                type="button"
-                variant="primary"
-                className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                onClick={() => loadStatsAndRecent()}
-                title="새로고침"
-                loading={loading}
-                preventDoubleClick={true}
-                loadingText="새로고침 중..."
-              >
-                새로고침
-              </MGButton>
-            }
-          />
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="심리검사 리포트 관리 본문" className="mg-v2-psych-assessment-management">
+              <ContentHeader
+                title="심리검사 리포트(AI)"
+                subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
+                actions={
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'md',
+                      loading,
+                      className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                    })}
+                    onClick={() => loadStatsAndRecent()}
+                    title="새로고침"
+                    loading={loading}
+                    preventDoubleClick={true}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  >
+                    새로고침
+                  </MGButton>
+                }
+              />
 
-          <PsychKpiSection stats={stats} />
+              <PsychKpiSection stats={stats} />
 
-          <PsychUploadSection
-            uploadType={uploadType}
-            onUploadTypeChange={setUploadType}
-            uploadFiles={uploadFiles}
-            onFilePick={handlePickFile}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onUpload={handleUpload}
-            uploading={uploading}
-            isDragOver={isDragOver}
-            clientId={clientId}
-            onClientIdChange={setClientId}
-            clients={clients}
-            clientsLoading={clientsLoading}
-          />
+              <PsychUploadSection
+                uploadType={uploadType}
+                onUploadTypeChange={setUploadType}
+                uploadFiles={uploadFiles}
+                onFilePick={handlePickFile}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onUpload={handleUpload}
+                uploading={uploading}
+                isDragOver={isDragOver}
+                clientId={clientId}
+                onClientIdChange={setClientId}
+                clients={clients}
+                clientsLoading={clientsLoading}
+              />
 
-          <PsychDocumentListBlock
-            documents={displayDocuments}
-            onGenerateReport={handleGenerateReport}
-            onViewReport={handleViewReport}
-            viewReportLoading={reportLoading}
-            listLoadError={recentLoadError}
-            generatingReportDocumentId={generatingReportDocumentId}
-          />
-        </ContentArea>
+              <PsychDocumentListBlock
+                documents={displayDocuments}
+                onGenerateReport={handleGenerateReport}
+                onViewReport={handleViewReport}
+                viewReportLoading={reportLoading}
+                listLoadError={recentLoadError}
+                generatingReportDocumentId={generatingReportDocumentId}
+              />
+            </ContentArea>
+          </div>
+        </div>
 
         <UnifiedModal
           isOpen={reportModalOpen}

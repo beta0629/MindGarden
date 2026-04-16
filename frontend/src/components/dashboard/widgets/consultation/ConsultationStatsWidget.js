@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationStatsWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultationStatsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -103,8 +104,19 @@ const ConsultationStatsWidget = ({ widget, user }) => {
           </div>
         </div>
         <div className="stats-actions">
-          <MGButton variant="primary" size="small" onClick={() => navigate('/reports/stats')}>
-            
+          <MGButton
+            type="button"
+            variant="primary"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'sm',
+              loading: false
+            })}
+            loading={false}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate('/reports/stats')}
+          >
             상세 통계 보기
           </MGButton>
         </div>

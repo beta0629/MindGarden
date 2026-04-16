@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './ConsultantTransferHistory.css';
 
 /**
@@ -88,7 +89,12 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
         <MGButton
           type="button"
           variant="secondary"
-          className="mg-v2-button mg-v2-button-secondary"
+          className={buildErpMgButtonClassName({
+            variant: 'secondary',
+            loading: false,
+            className: 'mg-v2-button mg-v2-button-secondary'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
           닫기
@@ -107,7 +113,12 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
               <MGButton
                 type="button"
                 variant="primary"
-                className="mg-v2-button mg-v2-button-primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  loading: false,
+                  className: 'mg-v2-button mg-v2-button-primary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadTransferHistory}
               >
                 다시 시도

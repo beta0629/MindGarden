@@ -9,6 +9,7 @@ import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
 import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { 
   HEADER_CSS_CLASSES, 
   HEADER_TEXTS, 
@@ -140,7 +141,13 @@ const SimpleHeader = () => {
           {shouldShowBackButton() && (
             <MGButton
               type="button"
-              className={HEADER_CSS_CLASSES.BACK_BUTTON}
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: HEADER_CSS_CLASSES.BACK_BUTTON
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleBackClick}
               title={HEADER_TEXTS.BACK_TITLE}
               preventDoubleClick={false}
@@ -192,7 +199,13 @@ const SimpleHeader = () => {
               {/* 로그아웃 버튼 */}
               <MGButton
                 type="button"
-                className="simple-logout-button"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'simple-logout-button'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleLogout}
                 title="로그아웃"
                 preventDoubleClick={false}
@@ -204,7 +217,13 @@ const SimpleHeader = () => {
               {/* 햄버거 메뉴 버튼 */}
               <MGButton
                 type="button"
-                className={HEADER_CSS_CLASSES.HAMBURGER_TOGGLE}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: HEADER_CSS_CLASSES.HAMBURGER_TOGGLE
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={toggleHamburger}
                 title={HEADER_TEXTS.MENU_TITLE}
                 preventDoubleClick={false}

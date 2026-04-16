@@ -31,6 +31,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
 const BRANDING_FORM_ID = 'branding-management-form';
@@ -490,7 +491,13 @@ const BrandingManagement = () => {
                               type="button"
                               variant="outline"
                               size="small"
-                              className="mg-branding-settings__logo-remove mg-v2-button mg-v2-button--outline mg-v2-button--small"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-branding-settings__logo-remove'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={handleLogoRemove}
                               title="로고 제거"
                               preventDoubleClick={false}
@@ -718,7 +725,13 @@ const BrandingManagement = () => {
                             type="button"
                             variant="outline"
                             size="small"
-                            className="mg-branding-settings__favicon-remove mg-v2-button mg-v2-button--outline mg-v2-button--small"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'mg-branding-settings__favicon-remove'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={handleFaviconRemove}
                             title="선택한 파비콘 파일 초기화"
                             preventDoubleClick={false}
@@ -745,7 +758,12 @@ const BrandingManagement = () => {
                         <MGButton
                           type="button"
                           variant="outline"
-                          className="mg-v2-button mg-v2-button--outline mg-v2-button--medium"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'md',
+                            loading: false
+                          })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => setShowPreview(true)}
                           disabled={isSaving || isUploading}
                           preventDoubleClick={false}
@@ -755,7 +773,12 @@ const BrandingManagement = () => {
                         <MGButton
                           type="button"
                           variant="secondary"
-                          className="mg-v2-button mg-v2-button--secondary mg-v2-button--medium"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'md',
+                            loading: false
+                          })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={handleReset}
                           disabled={!hasChanges || isSaving || isUploading}
                           preventDoubleClick={false}
@@ -767,10 +790,14 @@ const BrandingManagement = () => {
                         <MGButton
                           type="submit"
                           variant="primary"
-                          className="mg-v2-button mg-v2-button--primary mg-v2-button--medium"
+                          className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: isSaving || isUploading
+                          })}
                           disabled={!hasChanges || isSaving || isUploading}
                           loading={isSaving || isUploading}
-                          loadingText={isUploading ? '업로드 중...' : '저장 중...'}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           preventDoubleClick={false}
                         >
                           저장
@@ -854,7 +881,12 @@ const BrandingManagement = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="mg-v2-button mg-v2-button--primary mg-v2-button--medium"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowPreview(false)}
               preventDoubleClick={false}
             >

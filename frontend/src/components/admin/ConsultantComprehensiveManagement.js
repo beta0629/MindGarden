@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Users, Link2, Calendar, ClipboardList, Mail, Phone } from 'lucide-react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
@@ -993,9 +994,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
         return (
             <AdminCommonLayout>
-                <ContentArea>
-                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-                </ContentArea>
+                <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
+                    <div className="mg-v2-ad-b0kla__container">
+                        <ContentArea ariaLabel="상담사 종합관리 본문">
+                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                        </ContentArea>
+                    </div>
+                </div>
             </AdminCommonLayout>
         );
     }
@@ -1011,7 +1016,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             type="button"
                             variant="primary"
                             preventDoubleClick={false}
-                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                loading: false,
+                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                            })}
                             onClick={() => handleOpenModal('create')}
                         >
                                                        새 상담사 등록
@@ -1026,7 +1035,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('comprehensive')}
                             >
                                 종합관리
@@ -1035,7 +1044,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="primary"
                                 preventDoubleClick={false}
-                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('basic')}
                             >
                                 기본관리
@@ -1102,7 +1111,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     variant="primary"
                                                     size="small"
                                                     preventDoubleClick={false}
-                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        size: 'sm',
+                                                        loading: false,
+                                                        className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create'
+                                                    })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                     새 상담사 등록
@@ -1115,7 +1129,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     variant="outline"
                                                     size="small"
                                                     preventDoubleClick={false}
-                                                    className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'outline',
+                                                        size: 'sm',
+                                                        loading: false,
+                                                        className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`
+                                                    })}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
                                                     {toDisplayString(opt.label)}
@@ -1147,7 +1166,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     type="button"
                                                     variant="primary"
                                                     preventDoubleClick={false}
-                                                    className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        loading: false,
+                                                        className: 'mg-v2-mapping-list-block__empty-btn'
+                                                    })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                                                                        새 상담사 등록
@@ -1216,6 +1239,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="primary"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleOpenModal('edit', consultant);
@@ -1227,6 +1251,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="secondary"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setPasswordResetConsultant(consultant);
@@ -1240,6 +1265,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="danger"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setSelectedConsultant(consultant);
@@ -1332,7 +1358,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     variant="primary"
                                                     size="small"
                                                     preventDoubleClick={false}
-                                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        size: 'sm',
+                                                        loading: false,
+                                                        className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary mg-v2-mapping-search-section__embedded-create'
+                                                    })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                     새 상담사 등록
@@ -1345,7 +1376,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     variant="outline"
                                                     size="small"
                                                     preventDoubleClick={false}
-                                                    className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'outline',
+                                                        size: 'sm',
+                                                        loading: false,
+                                                        className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`
+                                                    })}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
                                                     {toDisplayString(opt.label)}
@@ -1377,7 +1413,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     type="button"
                                                     variant="primary"
                                                     preventDoubleClick={false}
-                                                    className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        loading: false,
+                                                        className: 'mg-v2-mapping-list-block__empty-btn'
+                                                    })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
                                                                                                        새 상담사 등록
@@ -1446,6 +1486,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="primary"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleOpenModal('edit', consultant);
@@ -1457,6 +1498,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="secondary"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setPasswordResetConsultant(consultant);
@@ -1470,6 +1512,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <MGButton
                                                                     variant="danger"
                                                                     size="small"
+                                                                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setSelectedConsultant(consultant);
@@ -1762,7 +1805,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 type="button"
                                 variant="secondary"
                                 preventDoubleClick={false}
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                                 onClick={() => {
                                     if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
                                         new window.daum.Postcode({
@@ -1841,8 +1884,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     onClick={handleEmailDuplicateCheck}
                                     disabled={isCheckingEmail || !formData.email?.trim()}
                                     loading={isCheckingEmail}
-                                    loadingText={VALIDATION_MESSAGES.BUTTON_CHECKING}
-                                    className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'secondary',
+                                        size: 'sm',
+                                        loading: isCheckingEmail,
+                                        className: 'mg-v2-button--compact'
+                                    })}
                                     data-action="email-duplicate-check"
                                 >
                                     {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
@@ -1891,7 +1939,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         variant="outline"
                                         size="small"
                                         preventDoubleClick={false}
-                                        className={`mg-v2-specialty-tag ${isSelected ? 'mg-v2-specialty-tag--selected' : ''}`}
+                                        className={buildErpMgButtonClassName({
+                                            variant: 'outline',
+                                            size: 'sm',
+                                            loading: false,
+                                            className: `mg-v2-specialty-tag ${isSelected ? 'mg-v2-specialty-tag--selected' : ''}`
+                                        })}
                                         onClick={() => handleSpecialtyTagClick(opt.codeValue)}
                                     >
                                         {toDisplayString(opt.codeName || opt.codeLabel || opt.codeValue)}
@@ -1945,7 +1998,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         type="button"
                         variant="secondary"
                         preventDoubleClick={false}
-                        className="mg-v2-button mg-v2-button-secondary"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         onClick={handleCloseModal}
                     >
                         닫기
@@ -1954,7 +2007,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         type="button"
                         variant="primary"
                         preventDoubleClick={false}
-                        className="mg-v2-button mg-v2-button-primary"
+                        className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                         onClick={() => handleOpenModal('edit', selectedConsultant)}
                     >
                         수정
@@ -1969,7 +2022,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     type="button"
                     variant="secondary"
                     preventDoubleClick={false}
-                    className="mg-v2-button mg-v2-button-secondary"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                     onClick={handleCloseModal}
                 >
                     취소
@@ -1977,11 +2030,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 <MGButton
                     type="button"
                     variant={modalType === 'delete' ? 'danger' : 'primary'}
-                    className={modalType === 'delete' ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-primary'}
+                    className={buildErpMgButtonClassName({
+                        variant: modalType === 'delete' ? 'danger' : 'primary',
+                        loading: modalSubmitLoading
+                    })}
                     onClick={handleModalSubmit}
                     disabled={isCreateSubmitDisabled}
                     loading={modalSubmitLoading}
-                    loadingText="처리 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                     {modalType === 'create' && '등록'}
                     {modalType === 'edit' && '수정'}
@@ -2021,7 +2077,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             type="button"
                             variant="secondary"
                             preventDoubleClick={false}
-                            className="mg-v2-button mg-v2-button-secondary"
+                            className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                             onClick={() => setShowDeleteConfirm(false)}
                             disabled={deleteConfirmLoading}
                         >
@@ -2030,9 +2086,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         <MGButton
                             type="button"
                             variant="danger"
-                            className="mg-v2-button mg-v2-button-danger"
+                            className={buildErpMgButtonClassName({ variant: 'danger', loading: deleteConfirmLoading })}
                             loading={deleteConfirmLoading}
-                            loadingText="삭제 중..."
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={async() => {
                                 if (!selectedConsultant) return;
                                 setDeleteConfirmLoading(true);
@@ -2075,9 +2131,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     return (
         <AdminCommonLayout>
-            <ContentArea>
-                {contentBlock}
-            </ContentArea>
+            <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="상담사 종합관리 본문">
+                        {contentBlock}
+                    </ContentArea>
+                </div>
+            </div>
             {modalsBlock}
         </AdminCommonLayout>
     );

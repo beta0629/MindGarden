@@ -6,6 +6,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 
 const ConsultantRecordFilterBlock = ({
@@ -36,9 +37,15 @@ const ConsultantRecordFilterBlock = ({
             onClick={() => onFilterStatusChange(option.value)}
             preventDoubleClick={false}
             variant={filterStatus === option.value ? 'primary' : 'outline'}
-            className={`mg-v2-badge ${filterStatus === option.value ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`}
-            style={{ 
-              cursor: 'pointer', 
+            className={buildErpMgButtonClassName({
+              variant: filterStatus === option.value ? 'primary' : 'outline',
+              size: 'md',
+              loading: false,
+              className: `mg-v2-badge ${filterStatus === option.value ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            style={{
+              cursor: 'pointer',
               border: filterStatus === option.value ? 'none' : '1px solid var(--mg-gray-300)',
               backgroundColor: filterStatus === option.value ? 'var(--mg-primary-color)' : 'var(--mg-bg-white)',
               color: filterStatus === option.value ? 'var(--mg-color-text-on-primary, var(--mg-layout-header-bg))' : 'var(--mg-text-secondary)',

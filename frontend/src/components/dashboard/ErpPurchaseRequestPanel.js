@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { apiGet } from '../../utils/ajax';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 const ErpPurchaseRequestPanel = ({ user }) => {
   const [purchaseData, setPurchaseData] = useState({
@@ -122,12 +123,24 @@ const ErpPurchaseRequestPanel = ({ user }) => {
             <div className="quick-actions-grid">
               <MGButton
                 variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { window.location.href = '/erp/purchase-requests'; }}
               >
                 새 구매 요청
               </MGButton>
               <MGButton
                 variant="outline"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { window.location.href = '/erp/purchase-management'; }}
               >
                 요청 내역

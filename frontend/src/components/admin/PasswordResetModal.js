@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PasswordResetModal.css';
 
 /**
@@ -69,7 +70,9 @@ const PasswordResetModal = ({
                     <MGButton
                         type="button"
                         variant="secondary"
-                        className="mg-v2-button mg-v2-button-secondary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
                     >
                         취소
@@ -78,8 +81,10 @@ const PasswordResetModal = ({
                         type="submit"
                         form="admin-password-reset-form"
                         variant="primary"
+                        size="medium"
+                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isSubmitting })}
                         loading={isSubmitting}
-                        loadingText="처리 중..."
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                     >
                         비밀번호 초기화
@@ -124,7 +129,8 @@ const PasswordResetModal = ({
                             type="button"
                             variant="outline"
                             size="small"
-                            className="mg-v2-form-input-toggle"
+                            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-form-input-toggle`}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}
@@ -162,7 +168,8 @@ const PasswordResetModal = ({
                             type="button"
                             variant="outline"
                             size="small"
-                            className="mg-v2-form-input-toggle"
+                            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-form-input-toggle`}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}

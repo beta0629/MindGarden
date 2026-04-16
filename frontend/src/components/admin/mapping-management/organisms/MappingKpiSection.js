@@ -10,6 +10,7 @@ import React from 'react';
 import { Clock, CheckCircle, CreditCard, LayoutGrid, XCircle, RotateCcw } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import './MappingKpiSection.css';
 import SafeText from '../../../common/SafeText';
 
@@ -97,8 +98,14 @@ const MappingKpiSection = ({ mappings = [], onStatCardClick }) => {
             <MGButton
               type="button"
               variant="outline"
-              className="mg-v2-mapping-kpi-section__body-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-v2-mapping-kpi-section__body-btn'
+              })}
               onClick={() => onStatCardClick && onStatCardClick(item)}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
               <div className="mg-v2-mapping-kpi-section__info">

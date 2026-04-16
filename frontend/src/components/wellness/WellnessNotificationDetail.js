@@ -7,6 +7,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationDetail.css';
 
@@ -137,7 +138,13 @@ const WellnessNotificationDetail = () => {
             <MGButton
               type="button"
               variant="primary"
-              className="mg-btn mg-btn--primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: false,
+                className: 'mg-btn mg-btn--primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleBack}
               preventDoubleClick={false}
             >
@@ -158,7 +165,13 @@ const WellnessNotificationDetail = () => {
             type="button"
             variant="outline"
             size="small"
-            className="back-button"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'back-button'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleBack}
             preventDoubleClick={false}
           >
@@ -216,7 +229,13 @@ const WellnessNotificationDetail = () => {
           <MGButton
             type="button"
             variant="secondary"
-            className="mg-btn mg-btn--secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: false,
+              className: 'mg-btn mg-btn--secondary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleBack}
             preventDoubleClick={false}
           >

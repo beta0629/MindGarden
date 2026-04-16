@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 const ScheduleHeader = ({
   userRole,
@@ -47,7 +48,13 @@ const ScheduleHeader = ({
         <MGButton
           type="button"
           onClick={onRefresh}
-          className="mg-v2-schedule-header__refresh"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'md',
+            loading: false,
+            className: 'mg-v2-schedule-header__refresh mg-button--with-icon'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           title="데이터 새로고침"
           aria-label="새로고침"
           variant="outline"

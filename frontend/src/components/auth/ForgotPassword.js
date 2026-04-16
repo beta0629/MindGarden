@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './AuthPageCommon.css';
 
 const ForgotPassword = () => {
@@ -98,10 +99,10 @@ const ForgotPassword = () => {
                 <MGButton
                   type="submit"
                   variant="primary"
-                  className="mg-v2-button-primary"
+                  className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
                   disabled={isLoading || !formData.email}
                   loading={isLoading}
-                  loadingText="발송 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   재설정 링크 전송
@@ -139,9 +140,10 @@ const ForgotPassword = () => {
                 <MGButton
                   type="button"
                   variant="secondary"
-                  className="mg-v2-button-secondary"
+                  className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} mg-v2-button-secondary`}
                   onClick={() => setIsEmailSent(false)}
                   disabled={isLoading}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
                   다른 이메일로 다시 발송

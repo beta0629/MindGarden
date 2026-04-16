@@ -12,6 +12,7 @@ import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import { ViewModeToggle } from '../../../common';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import '../../mapping-management/organisms/MappingListBlock.css';
 import './PsychDocumentListBlock.css';
 
@@ -81,12 +82,17 @@ const PsychDocumentListBlock = ({
                     type="button"
                     variant="outline"
                     size="small"
-                    className="mg-v2-psych-document-list-block__action"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: viewReportLoading,
+                      className: 'mg-v2-psych-document-list-block__action'
+                    })}
                     onClick={() => onViewReport(d.documentId)}
                     title="AI 분석 결과 보기"
                     loading={viewReportLoading}
                     preventDoubleClick={true}
-                    loadingText="불러오는 중..."
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     리포트 보기
                   </MGButton>
@@ -94,12 +100,17 @@ const PsychDocumentListBlock = ({
                 <MGButton
                   variant="outline"
                   size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: generatingReportDocumentId === d.documentId,
+                    className: 'mg-v2-psych-document-list-block__action'
+                  })}
                   loading={generatingReportDocumentId === d.documentId}
                   disabled={!!generatingReportDocumentId}
-                  loadingText="생성 중..."
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={true}
                   title="리포트 생성"
-                  className="mg-v2-psych-document-list-block__action"
                   onClick={() => onGenerateReport?.(d.documentId)}
                 >
                   리포트 생성
@@ -130,11 +141,16 @@ const PsychDocumentListBlock = ({
                 type="button"
                 variant="outline"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: viewReportLoading
+                })}
                 onClick={() => onViewReport(d.documentId)}
                 title="AI 분석 결과 보기"
                 loading={viewReportLoading}
                 preventDoubleClick={true}
-                loadingText="불러오는 중..."
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 리포트 보기
               </MGButton>
@@ -142,9 +158,14 @@ const PsychDocumentListBlock = ({
             <MGButton
               variant="outline"
               size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: generatingReportDocumentId === d.documentId
+              })}
               loading={generatingReportDocumentId === d.documentId}
               disabled={!!generatingReportDocumentId}
-              loadingText="생성 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={true}
               title="리포트 생성"
               onClick={() => onGenerateReport?.(d.documentId)}

@@ -9,6 +9,7 @@
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../styles/dropdown-common.css';
 
 const GnbDropdownPortal = ({
@@ -33,7 +34,8 @@ const GnbDropdownPortal = ({
         type="button"
         variant="outline"
         preventDoubleClick={false}
-        className="mg-v2-dropdown-overlay"
+        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-dropdown-overlay' })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onRequestClose}
         aria-label="드롭다운 닫기"
       />

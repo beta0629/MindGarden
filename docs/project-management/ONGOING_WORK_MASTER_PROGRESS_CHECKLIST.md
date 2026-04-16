@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-10 (ERP-P4-01 KPI organisms·P4-03·문서·코드 정합·SSOT)  
+**최종 갱신**: 2026-04-16 — 병렬 블록 **P4-GLOBAL**·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · **다음 병렬 검증 게이트**(P4-04 직후 ERP-P4-01·ERP-P4-03·UI-01) — `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 「다음 단계」(기준 2026-04-15) 연계 · 동 문서 P4-01·P4-03 경로 스모크 보강(환불·대시보드·급여·캘린더·세무) · §9 완료 부록·CI/OPS/Flyway 문서 링크는 2026-04-17 기준 유지  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -11,6 +11,8 @@
 ## 병렬 블록 배치 (현재 스프린트)
 
 **원칙**: 파일 충돌을 막기 위해 **한 블록 = 담당 파일 집합이 겹치지 않게** 나눈다. 배치가 끝나면 아래 표와 구역 1 표를 갱신한다.
+
+**다음 병렬 검증 게이트 (기준 2026-04-15, P4-04·P4-GLOBAL 완료 직후)**: **ERP-P4-01** · **ERP-P4-03** · **UI-01** — 수동 스모크·회귀·`core-tester` 확인은 `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 「다음 단계」·`CORE_PLANNER_DELEGATION_ORDER.md` 검증 게이트(콘솔 #130·네트워크 실패 시 기대 동작)를 따른다.
 
 | 블록 ID | 범위 (파일·주제) | 담당 | 상태 | 비고 |
 |---------|------------------|------|------|------|
@@ -68,6 +70,7 @@
 | **G8-B17a** | **G-01** — `components/test/**` 통합 테스트·데모 화면 → `MGButton` | core-coder | ☑ | `develop` · `102143e98` (2026-04-11) |
 | **G8-B17b** | **G-01** — `BaseButton`·`BaseCard`·`ErpButton`·`LoadingSpinnerDemo`·`IconExamples`·`DashboardLayout` JSDoc → `MGButton` | core-coder | ☑ | `develop` · `12e0b6f61` (2026-04-11) |
 | **G8-B18** | **G-01** — 미참조 `AdminDashboard_backup.js`·`UnifiedScheduleComponent_backup.js` 삭제 + 관련 문서 2건 보정 | core-coder | ☑ | `develop` · `77ac0f292` (2026-04-11) |
+| **P4-GLOBAL** | `frontend/src/components` 전역 `<MGButton` + `erpMgButtonProps`(`buildErpMgButtonClassName`, `ERP_MG_BUTTON_LOADING_TEXT`) 적용 완료 | core-coder | ☑ | 스모크 문서 `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 상단 안내 참고 · 일자 2026-04-15 |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 
@@ -178,10 +181,10 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **배치 A-1** `IntegratedFinanceDashboard`·`FinancialCalendarView` ☑. **배치 A-2** `ErpReportModal`(지점)·`FinancialTransactionForm`·`QuickExpenseForm`(공통코드) 인라인 ☑ (2026-04-11). **2026-04-12** `SalaryProfileFormModal.js`·`ConsultantProfileModal.js` — `UnifiedLoading` 인라인·`MGButton` `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑; `ErpRecentTransactionsTable.js`·`ErpIncomeExpenseBarChartSection.js` — `UnifiedLoading` 인라인·`aria-busy` ☑. **`ErpIncomeExpenseSummarySection.js`** — KPI 세 칸 `UnifiedLoading` 인라인·`<section aria-busy>` ☑ (코드 확인). 잔여: 기타 ERP 화면·모달 점검. |
+| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **배치 A-1** `IntegratedFinanceDashboard`·`FinancialCalendarView` ☑. **배치 A-2** `ErpReportModal`(지점)·`FinancialTransactionForm`·`QuickExpenseForm`(공통코드) 인라인 ☑ (2026-04-11). **2026-04-12** `SalaryProfileFormModal.js`·`ConsultantProfileModal.js` — `UnifiedLoading` 인라인·`MGButton` `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑; `ErpRecentTransactionsTable.js`·`ErpIncomeExpenseBarChartSection.js` — `UnifiedLoading` 인라인·`aria-busy` ☑. **`ErpIncomeExpenseSummarySection.js`** — KPI 세 칸 `UnifiedLoading` 인라인·`<section aria-busy>` ☑ (코드 확인). 잔여: 기타 ERP 화면·모달 점검. **2026-04-16** `ERP_FINANCIAL_HUB_SMOKE` 「다음 단계」·P4-01 항목 5~9 — 환불 허브·`/erp/dashboard`·급여·`/erp/financial` 달력·세무(`?tab=tax`/`/erp/tax`) 경로 스모크 한 줄씩 정합. |
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | ☑ | **`useErpSilentRefresh`**·**`silentListRefreshing`** — `ErpDashboard`·환불·급여·**배치 B3** 승인 대시보드 2종·`ApprovalHubLayout` (2026-04-11). **`PurchaseRequestForm.js`** 본문 `<section>` `aria-busy` ☑ (2026-04-10). **`ErpReportModal.js`** 본문 `mg-v2-modal-body`에 `aria-busy`(보고서 생성·지점 목록 로딩) ☑ (코드 확인). **`FinancialTransactionForm.js`** `<form>` `aria-busy`(제출·공통코드 로딩) ☑ (2026-04-10). **`QuickExpenseForm.js`** 본문 래퍼 `aria-busy`(공통코드·등록 제출) ☑ (2026-04-10). **`SalaryConfigModal.js`** 본문 `.salary-config-modal-body` `aria-busy={loading}` ☑ (2026-04-10). **`BudgetManagement.js`** `.erp-content` `aria-busy`(loading·`silentListRefreshing`) ☑. **`AdminApprovalDashboard.js`** 승인·거부 `UnifiedModal` 본문 래퍼 `aria-busy={processing}` ☑. **`IntegratedFinanceDashboard.js`** 분개 3모달 — `JournalEntryDetailModal` 본문 `aria-busy={loading}`; `JournalEntryCreateModal`·`JournalEntryEditModal` 폼 `aria-busy={loading || accountTypesLoading}` ☑. **`SuperAdminApprovalDashboard.js`** 최종 승인·거부 `UnifiedModal` 본문 `aria-busy={processing}` ☑. **`ConsultantProfileModal.js`** `.consultant-profile-modal-body` `aria-busy={profileLoading || saving}` ☑ (`develop`·`main` · `a7322cc4e`). 잔여: 화면별 `aria-busy` 점검은 P4-01과 병행 가능. |
-| ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | **도입(코드) ☑** — `ErpDashboard`·`FinancialCalendarView`·`ItemManagement`·`SalaryManagement`·`BudgetManagement`·`PurchaseManagement`·`IntegratedFinanceDashboard`·`FinancialManagement`·`ImprovedTaxManagement`·`TaxManagement`·환불(`RefundFilterBlock`/`RefundFilters`) 등에서 사용(`frontend/src/components/erp/**` grep 기준). **`PurchaseRequestForm.js`** — `ErpFilterToolbar`·목록 새로고침 ☑ (2026-04-10). **정렬·잔여 🔄** — 슬롯·반응형·디자인 토큰·소규모 화면 점검은 배치별. 필터 UI는 별도 explore 배치에서 목록화. 다음 배치는 explore가 순위를 매긴 P4-03 후보를 우선 참고한다(고정 아님). |
-| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **A-2**·**B1**·**B2** ☑. **B3** `SalaryManagement`·`ImprovedTaxManagement`·`RefundManagement`·`ApprovalHubLayout`·승인 대시보드 보강 ☑ (2026-04-11). **2026-04-12** `RefundFilterBlock.js`·`RefundFilters.js` — `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑ (급여·컨설턴트 모달 MGButton은 **P4-01** 동일일 배치). **코드 대조**: `frontend`에서 `ErpButton` 식별자 참조 **0건** (레거시 제거 상태 유지). |
+| ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | **도입(코드) ☑** — `ErpDashboard`·`FinancialCalendarView`·`ItemManagement`·`SalaryManagement`·`BudgetManagement`·`PurchaseManagement`·`IntegratedFinanceDashboard`·`FinancialManagement`·`ImprovedTaxManagement`·`TaxManagement`·환불(`RefundFilterBlock`/`RefundFilters`) 등에서 사용(`frontend/src/components/erp/**` grep 기준). **`PurchaseRequestForm.js`** — `ErpFilterToolbar`·목록 새로고침 ☑ (2026-04-10). **정렬·잔여 🔄** — 슬롯·반응형·디자인 토큰·소규모 화면 점검은 배치별. 필터 UI는 별도 explore 배치에서 목록화. 다음 배치는 explore가 순위를 매긴 P4-03 후보를 우선 참고한다(고정 아님). **2026-04-16** 동 스모크 문서 「다음 단계」·P4-03 항목 5~6 — `/erp/dashboard`·급여·세무 툴바 스모크 한 줄 보강(P4-03 페이지·환불 경로와 정합). |
+| ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **A-2**·**B1**·**B2** ☑. **B3** `SalaryManagement`·`ImprovedTaxManagement`·`RefundManagement`·`ApprovalHubLayout`·승인 대시보드 보강 ☑ (2026-04-11). **2026-04-12** `RefundFilterBlock.js`·`RefundFilters.js` — `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑ (급여·컨설턴트 모달 MGButton은 **P4-01** 동일일 배치). **코드 대조**: `frontend`에서 `ErpButton` 식별자 참조 **0건** (레거시 제거 상태 유지). **`components` 전역** `erpMgButtonProps` 일괄 적용은 병렬 블록 **P4-GLOBAL**(2026-04-15)로 분리 기록; 본 행은 무음 조회 트리거 중심 이력·화면별 잔여 점검을 뜻한다. |
 | ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
 
 ---
@@ -211,6 +214,18 @@
 
 **보강**: 실제 ACL 적용은 `ComplianceDashboardShell.js`, `MappingManagement.js`, `ConsultationLogView.js` 등 래퍼를 참고한다.
 
+**레이아웃 주입 위치 (SSOT)** — 위 표 항목과 대조:
+
+| 페이지·컴포넌트 | `AdminCommonLayout` 등 레이아웃 주입 위치 |
+|-----------------|------------------------------------------|
+| `StatisticsDashboard` · `IntegratedMatchingSchedule` | `App.js` 해당 라우트에서 `AdminCommonLayout` 인라인 |
+| `MappingManagementPage` | `MappingManagement.js` 래퍼 |
+| `ConsultationLogViewPage` | `ConsultationLogView.js` 래퍼(관리자·상담사 경로 공용) |
+| `ComplianceDashboard` | `ComplianceDashboardShell.js`가 `AdminCommonLayout` 보유 |
+| `AdminDashboardV2` · `AdminDashboard` | v2 셸·레거시 셸 단독(`App.js` 라우트) |
+
+**혼동 방지**: `ConsultantDashboardV2` ≠ `AdminDashboardV2`(상담사 콘솔 대시보드 vs 관리자 대시보드 v2 셸).
+
 ---
 
 ## 3. 보안·공개 API (온보딩 등)
@@ -225,7 +240,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| QA-01 | 코드 변경 배치 — `core-tester` 스모크·회귀 (프로젝트 표준) | 🔄 | 프론트 Jest·lint 통과. **백엔드 전체 `mvn test` 통과**(2026-04-11, 로컬 `pipefail` 검증). 배치마다 `core-tester` 권장; **ERP 재무 대시보드** 로딩 시 KPI·차트·최근 거래에 대해 `UnifiedLoading`·`aria-busy` 회귀 스모크 권장 |
+| QA-01 | 코드 변경 배치 — `core-tester` 스모크·회귀 (프로젝트 표준) | 🔄 | 프론트 Jest·lint 통과. **백엔드 `mvn test`**: PR/push 시 [code-quality-check.yml](../../../.github/workflows/code-quality-check.yml)에서 **`|| true` 없이 실패 전파**(2026-04-17). 로컬는 [CI_CODE_QUALITY_AND_MVN_GATE.md](../guides/testing/CI_CODE_QUALITY_AND_MVN_GATE.md) 권장. **백엔드 전체 `mvn test` 통과**는 배치마다 확인. **ERP 재무 대시보드** 로딩 시 KPI·차트·최근 거래 `UnifiedLoading`·`aria-busy` 회귀 스모크 권장 |
 | QA-02 | ERP E2E·스모크 (저장소 워크플로·시나리오가 있는 경우) | 🔄 | **ERP**: `e2e-erp-smoke.yml` — `verify:erp`·Playwright 리다이렉트, **Secrets 불필요**. **Trinity**: `e2e-trinity-build-smoke.yml` — `frontend-trinity` 빌드만(paths·PR/push 동일 범위). ERP 스모크는 `frontend-trinity/**`와 무관. `docs/planning/ERP_TEST_SCENARIOS.md` |
 
 ---
@@ -278,7 +293,7 @@
 
 | 구역 | 완료 / 전체 (대략) | 메모 |
 |------|-------------------|------|
-| 1. ERP | 0 / 5 (세부는 표 참고) | B1~B7·MGButton 배치 ☑; **B7** 최근 거래·수입·지출 차트 organisms ☑; KPI 요약 `ErpIncomeExpenseSummarySection` ☑; P4-03 정렬·P4-04 잔여 화면 🔄 |
+| 1. ERP | 0 / 5 (세부는 표 참고) | B1~B7·MGButton 배치 ☑; **P4-GLOBAL** 전역 `erpMgButtonProps` ☑ (2026-04-15); **B7** 최근 거래·수입·지출 차트 organisms ☑; KPI 요약 `ErpIncomeExpenseSummarySection` ☑; P4-03 정렬·P4-04 잔여 화면 🔄 |
 | 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영 |
 | 3. 보안 | (진행형) | SEC-01 🔄 (레이트리밋·쿨다운·CAPTCHA 백엔드·MockMvc 일부 ☑; Trinity·엣지·알람 잔여) |
 | 4. 검증 | (진행형) | QA-01 배치별, QA-02 🔄 (`e2e-erp-smoke` 정의됨) |
@@ -288,6 +303,9 @@
 
 ## 참고 — 문서 중복을 피하는 법
 
+- **미완 항목 통합 스냅샷(여러 문서 훑어보기)**: [2026-04-16/PENDING_ITEMS_FROM_DOCUMENTS_SSOT.md](./2026-04-16/PENDING_ITEMS_FROM_DOCUMENTS_SSOT.md) — 원문 SSOT는 각 전용 문서·본 표가 우선이다. **완료 반영 부록**: 동 문서 §9.
+- **CI `mvn test` 게이트·로컬 검증**: [../guides/testing/CI_CODE_QUALITY_AND_MVN_GATE.md](../guides/testing/CI_CODE_QUALITY_AND_MVN_GATE.md)
+- **Flyway 코어 vs Ops 트랙**: [../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md](../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md)
 - **원칙**: 이 파일은 **진행도·상태만** 담는다. 설계 상세·페이즈 정의는 **ERP 마스터 플랜** 등 원문에 둔다.
 - **이중 관리 방지**: 세부 체크리스트가 이미 있는 주제(예: 공통화 병렬 체크리스트)는 **세부 문서에서 ID를 완료 처리**하고, 이 마스터 표에서는 **트랙 단위 상태**만 맞춘다.
 
@@ -297,6 +315,8 @@
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-04-16 | 병렬 블록 **P4-GLOBAL** ☑·헤더·진행률 스냅샷·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · `ERP_FINANCIAL_HUB_SMOKE` 「다음 단계」·ERP-P4-01·P4-03 비고 경로 정합 |
+| 2026-04-17 | 참고 링크: `PENDING_ITEMS` §9 완료 부록, `CI_CODE_QUALITY_AND_MVN_GATE`, `FLYWAY_CORE_VS_OPS_TRACKS`; QA-01 비고에 `code-quality-check` `mvn test` 엄격 전파 반영 |
 | 2026-04-10 | 최초 작성 — ERP P4 무음 조회·MGButton 일부 반영, 온보딩·레이아웃·검증·운영 구역 추가 |
 | 2026-04-10 | 병렬 블록 ERP-B1·B2 표 추가, ERP-P4-05 진행 중 반영 |
 | 2026-04-11 | ERP-B1·B2 `core-coder` 병렬 위임; 체크리스트는 커밋 전까지 🔄·미커밋 명시 |

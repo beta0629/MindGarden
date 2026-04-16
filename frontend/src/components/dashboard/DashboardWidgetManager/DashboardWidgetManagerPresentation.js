@@ -26,7 +26,7 @@
 
 import React from 'react';
 
-import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import './DashboardWidgetManager.css';
@@ -62,7 +62,13 @@ const DashboardWidgetManagerPresentation = ({
         <MGButton
           variant="primary"
           size="small"
-          className="mg-widget-manager-header-add mg-button--with-icon"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: false,
+            className: 'mg-widget-manager-header-add mg-button--with-icon'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onShowAddModal}
         >
           
@@ -133,7 +139,13 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             type="button"
             variant="outline"
             size="small"
-            className="mg-widget-item-action-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-widget-item-action-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             title="위젯 이동"
             preventDoubleClick={false}
            />
@@ -145,7 +157,13 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             type="button"
             variant="outline"
             size="small"
-            className="mg-widget-item-action-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'mg-widget-item-action-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             title="위젯 설정"
             onClick={() => onConfigure(widget.widgetId)}
            />
@@ -157,7 +175,13 @@ const WidgetItem = ({ widget, onDelete, onConfigure }) => {
             type="button"
             variant="danger"
             size="small"
-            className="mg-widget-item-action-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'danger',
+              size: 'sm',
+              loading: false,
+              className: 'mg-widget-item-action-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             title="위젯 삭제"
             onClick={() => onDelete(widget.widgetId)}
            />
@@ -193,7 +217,13 @@ const AddWidgetModal = ({ isOpen, availableWidgets, onAdd, onClose }) => {
               variant="outline"
               fullWidth
               onClick={() => onAdd(widget.widgetType)}
-              className="mg-available-widget-item"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-available-widget-item'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <div className="mg-available-widget-info">
                 <h5>{widget.widgetNameKo}</h5>

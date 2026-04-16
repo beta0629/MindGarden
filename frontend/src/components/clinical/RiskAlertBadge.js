@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './RiskAlertBadge.css';
 
 /**
@@ -106,7 +107,13 @@ const RiskAlertBadge = ({ tenantId }) => {
             {/* 알림 배지 버튼 */}
             <MGButton
                 type="button"
-                className={`risk-alert-button ${unreadCount > 0 ? 'has-alerts' : ''}`}
+                className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'md',
+                    loading: false,
+                    className: `risk-alert-button ${unreadCount > 0 ? 'has-alerts' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setIsOpen(!isOpen)}
                 title="위험 징후 알림"
                 variant="outline"
@@ -133,7 +140,13 @@ const RiskAlertBadge = ({ tenantId }) => {
                             <h4>🚨 위험 징후 알림</h4>
                             <MGButton
                                 type="button"
-                                className="btn-refresh"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: isLoading,
+                                    className: 'btn-refresh'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={loadAlerts}
                                 disabled={isLoading}
                                 title="새로고침"
@@ -218,7 +231,13 @@ const RiskAlertBadge = ({ tenantId }) => {
                             <div className="alert-dropdown-footer">
                                 <MGButton
                                     type="button"
-                                    className="btn-view-all"
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'primary',
+                                        size: 'md',
+                                        loading: false,
+                                        className: 'btn-view-all'
+                                    })}
+                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => {
                                         window.location.href = '/consultant/alerts';
                                         setIsOpen(false);

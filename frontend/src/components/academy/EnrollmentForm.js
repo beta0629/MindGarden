@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -315,7 +316,12 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
                 type="submit"
                 variant="primary"
                 loading={loading}
-                loadingText="처리 중..."
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 disabled={loading}
               >
                 {enrollment ? '수정' : '등록'}
@@ -325,6 +331,12 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
                 variant="secondary"
                 onClick={onCancel}
                 disabled={loading}
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 취소
               </MGButton>

@@ -17,6 +17,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
@@ -356,9 +357,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           type="button"
           variant="outline"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
           onClick={() => setStep(step - 1)}
           disabled={loading}
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           이전
         </MGButton>
@@ -368,9 +371,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           type="button"
           variant="primary"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
           onClick={() => step <= 3 && setStep(step + 1)}
           disabled={!canProceed()}
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           다음
         </MGButton>
@@ -380,13 +385,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           type="button"
           variant="primary"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
           onClick={handleCreateMapping}
           disabled={loading}
           loading={loading}
-          loadingText="생성 중..."
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
-          {loading ? '생성 중...' : '매칭 생성'}
+          매칭 생성
         </MGButton>
       )}
       {step === 5 && (
@@ -394,8 +400,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           type="button"
           variant="primary"
           size="medium"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
           onClick={handleClose}
           preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           완료
         </MGButton>
@@ -453,9 +461,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={c.id}
                     type="button"
                     variant="outline"
-                    className={`mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`
+                    })}
                     onClick={() => setSelectedConsultant(c)}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}
@@ -493,8 +507,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   type="button"
                   variant="primary"
                   size="medium"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
                   onClick={() => { onClose(); navigate('/admin/common-codes'); }}
                   preventDoubleClick={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
                   공통코드 관리로 이동
                 </MGButton>
@@ -506,7 +522,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={pkg.value}
                     type="button"
                     variant="outline"
-                    className={`mg-v2-mapping-creation-modal__pkg-card ${paymentInfo.packageName === pkg.label ? 'mg-v2-mapping-creation-modal__pkg-card--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-mapping-creation-modal__pkg-card ${paymentInfo.packageName === pkg.label ? 'mg-v2-mapping-creation-modal__pkg-card--selected' : ''}`
+                    })}
                     onClick={() => setPaymentInfo(prev => ({
                       ...prev,
                       packageName: pkg.label,
@@ -514,6 +535,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       packagePrice: pkg.price
                     }))}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
                     <span>{pkg.sessions}회기 · {pkg.price.toLocaleString()}원</span>
@@ -571,9 +593,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={c.id}
                     type="button"
                     variant="outline"
-                    className={`mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`
+                    })}
                     onClick={() => setSelectedClient(c)}
                     preventDoubleClick={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}

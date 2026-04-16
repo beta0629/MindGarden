@@ -5,6 +5,7 @@ import {
 } from '../../../constants/mapping';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingActions.css';
 
 const BOOTSTRAP_CLASS_TO_MG_VARIANT = {
@@ -132,19 +133,28 @@ const MappingActions = ({
     return (
         <div className="mapping-actions">
             <div className="actions-primary">
-                {actions.map((action, index) => (
-                    <MGButton
-                        key={index}
-                        type="button"
-                        variant={getVariantFromBootstrapClass(action.className)}
-                        size="small"
-                        className={`btn ${action.className} btn-sm`}
-                        onClick={action.onClick}
-                        title={toDisplayString(action.label)}
-                    >
-                        <span className="action-label">{toDisplayString(action.label)}</span>
-                    </MGButton>
-                ))}
+                {actions.map((action, index) => {
+                    const mgVariant = getVariantFromBootstrapClass(action.className);
+                    return (
+                        <MGButton
+                            key={index}
+                            type="button"
+                            variant={mgVariant}
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                                variant: mgVariant,
+                                size: 'sm',
+                                loading: false,
+                                className: `btn ${action.className} btn-sm`
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={action.onClick}
+                            title={toDisplayString(action.label)}
+                        >
+                            <span className="action-label">{toDisplayString(action.label)}</span>
+                        </MGButton>
+                    );
+                })}
             </div>
             
             <div className="actions-secondary">
@@ -152,7 +162,13 @@ const MappingActions = ({
                     type="button"
                     variant="info"
                     size="small"
-                    className="btn btn-outline-info btn-sm"
+                    className={buildErpMgButtonClassName({
+                        variant: 'info',
+                        size: 'sm',
+                        loading: false,
+                        className: 'btn btn-outline-info btn-sm'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => onView?.(mapping)}
                     title="상세보기"
                 >
@@ -164,7 +180,13 @@ const MappingActions = ({
                         type="button"
                         variant="danger"
                         size="small"
-                        className="btn btn-outline-danger btn-sm"
+                        className={buildErpMgButtonClassName({
+                            variant: 'danger',
+                            size: 'sm',
+                            loading: false,
+                            className: 'btn btn-outline-danger btn-sm'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => onDelete?.(mapping.id)}
                         title="삭제"
                     >

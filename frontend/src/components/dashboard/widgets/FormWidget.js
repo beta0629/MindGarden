@@ -18,6 +18,7 @@ import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -174,17 +175,28 @@ const FormWidget = ({ widget, user }) => {
           <div className="form-actions">
             <MGButton
               type="submit"
-              className="submit-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: submitting,
+                className: 'submit-btn'
+              })}
               variant="primary"
               loading={submitting}
-              loadingText="제출 중..."
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               제출
             </MGButton>
             <MGButton
               type="button"
-              className="reset-btn"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'reset-btn'
+              })}
               variant="outline"
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setFormData({})}
             >
               초기화

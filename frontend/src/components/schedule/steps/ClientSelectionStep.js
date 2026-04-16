@@ -4,6 +4,7 @@ import { ICONS } from '../../../constants/icons';
 const Link2Icon = ICONS.LINK_2;
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ClientSelector from '../ClientSelector';
@@ -259,7 +260,13 @@ const ClientSelectionStep = ({
                         <MGButton
                             type="button"
                             variant="primary"
-                            className="mg-v2-btn--primary mg-v2-ad-client-step__cta"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'md',
+                              loading: false,
+                              className: 'mg-v2-btn--primary mg-v2-ad-client-step__cta'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowMappingModal(true)}
                         >
                             <Link2Icon size={16} aria-hidden />

@@ -7,6 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -381,10 +382,16 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 <SafeText>{consultant.specialtyDisplay ?? getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}</SafeText>
                                             </div>
                                         </div>
-                                        <MGButton 
+                                        <MGButton
                                             variant="outline"
                                             size="small"
-                                            className="mg-v2-button mg-v2-button--icon"
+                                            className={buildErpMgButtonClassName({
+                                              variant: 'outline',
+                                              size: 'sm',
+                                              loading: false,
+                                              className: 'mg-v2-button--icon'
+                                            })}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleConsultantSelect(consultant);
@@ -434,13 +441,13 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 className="mg-v2-form-badge-select mg-v2-form-select--flex-1"
                                             />
-                                            <MGButton 
+                                            <MGButton
                                                 variant="primary"
-                                                className="mg-v2-button mg-v2-button--primary"
+                                                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
+                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={handleSaveSpecialty}
                                                 disabled={loading || !newSpecialty.trim()}
                                                 loading={loading}
-                                                loadingText="저장 중..."
                                             >
                                                 저장
                                             </MGButton>
@@ -469,13 +476,13 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             disabled={loading}
                                             className="mg-v2-form-input mg-v2-form-input--flex-1"
                                         />
-                                        <MGButton 
+                                        <MGButton
                                             variant="secondary"
-                                            className="mg-v2-button mg-v2-button--secondary"
+                                            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading })}
+                                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             onClick={handleAddSpecialty}
                                             disabled={loading || !newSpecialty.trim()}
                                             loading={loading}
-                                            loadingText="추가 중..."
                                         >
                                             추가
                                         </MGButton>

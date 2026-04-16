@@ -331,6 +331,7 @@ const BudgetManagement = () => {
                       size="medium"
                       type="button"
                       className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       세션 새로고침
                     </MGButton>
@@ -339,6 +340,7 @@ const BudgetManagement = () => {
                       size="medium"
                       type="button"
                       className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       로그인
                     </MGButton>
@@ -378,6 +380,7 @@ const BudgetManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
                 onClick={() => setActiveTab('budgets')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 예산 목록
               </MGButton>
@@ -388,6 +391,7 @@ const BudgetManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
                 onClick={() => setActiveTab('categories')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 카테고리
               </MGButton>
@@ -398,6 +402,7 @@ const BudgetManagement = () => {
                 className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
                 onClick={() => setActiveTab('reports')}
                 preventDoubleClick={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 보고서
               </MGButton>
@@ -526,6 +531,7 @@ const BudgetManagement = () => {
                           type="button"
                           className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} erp-btn-primary`}
                           onClick={() => setShowCreateModal(true)}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
                           새 예산 추가
                         </MGButton>
@@ -561,6 +567,7 @@ const BudgetManagement = () => {
                                         onClick={() => openEditModal(budget)}
                                         title="수정"
                                         aria-label="예산 수정"
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
                                         수정
                                       </MGButton>
@@ -572,6 +579,7 @@ const BudgetManagement = () => {
                                         onClick={() => handleDeleteBudget(budget.id)}
                                         title="삭제"
                                         aria-label="예산 삭제"
+                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
                                         삭제
                                       </MGButton>
@@ -646,6 +654,7 @@ const BudgetManagement = () => {
                               type="button"
                               className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                               onClick={() => setShowCreateModal(true)}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
                               첫 번째 예산 추가
                             </MGButton>
@@ -713,6 +722,7 @@ const BudgetManagement = () => {
                             size="medium"
                             type="button"
                             className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
                             로그인하기
                           </MGButton>

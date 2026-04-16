@@ -21,6 +21,7 @@ import { RoleUtils } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
 import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import SafeText from '../../../common/SafeText';
 const SystemStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -355,7 +356,19 @@ const SystemStatusWidget = ({ widget, user }) => {
           <div className="system-status-empty">
             
             <p>시스템 상태 정보를 가져올 수 없습니다</p>
-            <MGButton variant="primary" size="small" onClick={refresh}>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading
+              })}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={refresh}
+            >
               재시도
             </MGButton>
           </div>

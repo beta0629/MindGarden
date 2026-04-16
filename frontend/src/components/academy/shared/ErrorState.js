@@ -14,6 +14,7 @@
 
 import React from 'react';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './ErrorState.css';
 
 /**
@@ -27,7 +28,13 @@ const ErrorState = ({ message = '오류가 발생했습니다.', onRetry = null 
       {onRetry && (
         <MGButton
           type="button"
-          className="academy-error-retry"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'academy-error-retry'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onRetry}
           variant="primary"
           preventDoubleClick={false}

@@ -625,7 +625,7 @@ const FinancialManagement = () => {
             onClick={() => handleViewTransaction(transaction)}
             className={buildErpMgButtonClassName({
               variant: 'outline',
-              size: 'small',
+              size: 'sm',
               loading: false,
               className: 'mg-financial-transaction-card__id-button'
             })}
@@ -761,6 +761,7 @@ const FinancialManagement = () => {
                       className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       거래 내역
                     </MGButton>
@@ -772,6 +773,7 @@ const FinancialManagement = () => {
                       className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       달력 뷰
                     </MGButton>
@@ -783,6 +785,7 @@ const FinancialManagement = () => {
                       className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                       onClick={() => setActiveTab('dashboard')}
                       preventDoubleClick={false}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       대시보드
                     </MGButton>
@@ -832,7 +835,7 @@ const FinancialManagement = () => {
                                 size="small"
                                 className={buildErpMgButtonClassName({
                                   variant: 'outline',
-                                  size: 'small',
+                                  size: 'sm',
                                   loading: false,
                                   className: 'mg-financial-month-picker__nav'
                                 })}
@@ -878,7 +881,7 @@ const FinancialManagement = () => {
                                 size="small"
                                 className={buildErpMgButtonClassName({
                                   variant: 'outline',
-                                  size: 'small',
+                                  size: 'sm',
                                   loading: false,
                                   className: 'mg-financial-month-picker__nav'
                                 })}
@@ -948,7 +951,7 @@ const FinancialManagement = () => {
                                 size="small"
                                 className={buildErpMgButtonClassName({
                                   variant: 'outline',
-                                  size: 'small',
+                                  size: 'sm',
                                   loading: false,
                                   className: `mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`
                                 })}
@@ -982,7 +985,7 @@ const FinancialManagement = () => {
                                 size="small"
                                 className={buildErpMgButtonClassName({
                                   variant: 'outline',
-                                  size: 'small',
+                                  size: 'sm',
                                   loading: false,
                                   className: `mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`
                                 })}
@@ -1098,7 +1101,7 @@ const FinancialManagement = () => {
                               size="small"
                               className={buildErpMgButtonClassName({
                                 variant: 'outline',
-                                size: 'small',
+                                size: 'sm',
                                 loading: false,
                                 className: `mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`
                               })}
@@ -1217,7 +1220,7 @@ const FinancialManagement = () => {
                                   }}
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline',
-                                    size: 'small',
+                                    size: 'sm',
                                     loading: false,
                                     className: 'mg-financial-transaction-card__id-button'
                                   })}

@@ -22,6 +22,7 @@ import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // �
 import './Widget.css';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const MessageWidget = ({ widget, user }) => {
@@ -148,7 +149,19 @@ const MessageWidget = ({ widget, user }) => {
           )}
         </div>
         {config.viewAllUrl && (
-          <MGButton className="widget-view-all" variant="outline" type="button" onClick={handleViewAll}>
+          <MGButton
+            type="button"
+            variant="outline"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'widget-view-all'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleViewAll}
+            preventDoubleClick={false}
+          >
             전체보기 →
           </MGButton>
         )}

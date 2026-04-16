@@ -8,6 +8,7 @@ import { RoleUtils } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
 import Avatar from '../common/Avatar';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import './WelcomeSection.css';
@@ -220,7 +221,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                     variant="outline"
                     fullWidth
                     onClick={() => handleCardClick('schedule')}
-                    className="mg-v2-w-full"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: 'mg-v2-w-full'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     +{todayConsultations.length - 4}건 더 보기
                   </MGButton>

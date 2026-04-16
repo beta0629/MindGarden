@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
@@ -206,7 +207,6 @@ const SummaryPanels = ({ user, consultationData }) => {
         </div>
       )}
 
-                매핑 관리
       {RoleUtils.isAdmin(user) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} mapping-management`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
@@ -238,6 +238,12 @@ const SummaryPanels = ({ user, consultationData }) => {
               <MGButton
                 variant="primary"
                 size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { window.location.href = '/admin/mapping-management'; }}
               >
                                매핑 관리

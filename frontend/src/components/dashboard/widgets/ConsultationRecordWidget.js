@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import './ConsultationRecordWidget.css';
 const ConsultationRecordWidget = ({ widget, user }) => {
@@ -116,6 +117,12 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           type="button"
           variant="outline"
           size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={handleViewAllRecords}
           preventDoubleClick={false}
         >
@@ -125,6 +132,12 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           type="button"
           variant="primary"
           size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: false
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={handleCreateRecord}
           preventDoubleClick={false}
         >
@@ -161,7 +174,13 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           <MGButton
             type="button"
             variant="primary"
-            className="consultation-record-empty-btn"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'consultation-record-empty-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleCreateRecord}
             preventDoubleClick={false}
           >
@@ -248,7 +267,13 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                     type="button"
                     variant="outline"
                     size="small"
-                    className="consultation-record-view-btn"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'consultation-record-view-btn'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewRecord(record.id)}
                     preventDoubleClick={false}
                   >
@@ -266,7 +291,13 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           <MGButton
             type="button"
             variant="primary"
-            className="consultation-record-action-btn primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'consultation-record-action-btn primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleCreateRecord}
             preventDoubleClick={false}
           >
@@ -276,7 +307,13 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           <MGButton
             type="button"
             variant="outline"
-            className="consultation-record-action-btn secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'consultation-record-action-btn secondary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleViewAllRecords}
             preventDoubleClick={false}
           >
@@ -286,7 +323,13 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           <MGButton
             type="button"
             variant="outline"
-            className="consultation-record-action-btn tertiary"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'md',
+              loading: false,
+              className: 'consultation-record-action-btn tertiary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleViewStatistics}
             preventDoubleClick={false}
           >

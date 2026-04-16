@@ -1,5 +1,6 @@
 name: 🎨 Frontend (CoreSolution) 개발 서버 배포
 # 운영: deploy-frontend-prod.yml (main, /var/www/mindgarden/frontend)
+# Node 20: prod와 동일 메이저로 빌드 재현성
 # 배포 트리거: 2025-12-10 (paths: frontend/**)
 
 on:
@@ -19,11 +20,11 @@ jobs:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: 📦 Node.js 18 설정
+      - name: 📦 Node.js 20 설정
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 프론트엔드 의존성 설치

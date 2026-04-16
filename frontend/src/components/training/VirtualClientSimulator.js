@@ -4,6 +4,7 @@ import { TRAINING_API } from '../../constants/trainingApi';
 import { TRAINING_CSS } from '../../constants/trainingCss';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './VirtualClientSimulator.css';
 
 /**
@@ -189,7 +190,13 @@ const VirtualClientSimulator = ({ consultantId }) => {
                         </div>
 
                         <MGButton
-                            className="btn btn-primary btn-lg"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'lg',
+                                loading: false,
+                                className: 'btn btn-primary btn-lg'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={startSimulation}
                             disabled={!selectedScenario}
                             variant="primary"
@@ -207,7 +214,13 @@ const VirtualClientSimulator = ({ consultantId }) => {
                             <span className="turn-count">턴: {messages.length / 2}</span>
                         </div>
                         <MGButton
-                            className="btn btn-danger"
+                            className={buildErpMgButtonClassName({
+                                variant: 'danger',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-danger'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={endSession}
                             variant="danger"
                         >
@@ -257,7 +270,13 @@ const VirtualClientSimulator = ({ consultantId }) => {
                             disabled={isTyping}
                         />
                         <MGButton
-                            className="btn btn-primary"
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false,
+                                className: 'btn btn-primary'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={sendMessage}
                             disabled={!currentMessage.trim() || isTyping}
                             variant="primary"

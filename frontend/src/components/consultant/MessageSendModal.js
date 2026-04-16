@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
@@ -170,6 +171,8 @@ const MessageSendModal = ({
             type="button"
             variant="outline"
             size="medium"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             disabled={sending}
             preventDoubleClick={false}
@@ -180,10 +183,11 @@ const MessageSendModal = ({
             type="button"
             variant="primary"
             size="medium"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: sending })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSend}
             disabled={sending}
             loading={sending}
-            loadingText="로딩중..."
             preventDoubleClick={false}
           >
             메시지 전송

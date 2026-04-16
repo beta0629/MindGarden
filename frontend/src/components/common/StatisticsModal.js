@@ -18,6 +18,7 @@ import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
 import StatisticsGrid from './StatsGrid';
 import UnifiedModal from './modals/UnifiedModal';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './StatisticsModal.css';
 
@@ -180,11 +181,21 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
             onClick={handleRefresh}
             disabled={loading}
             preventDoubleClick={false}
+            loading={loading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
           >
             <RefreshCw size={16} />
             새로고침
           </MGButton>
-          <MGButton type="button" variant="primary" onClick={onClose} preventDoubleClick={false}>
+          <MGButton
+            type="button"
+            variant="primary"
+            onClick={onClose}
+            preventDoubleClick={false}
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          >
             닫기
           </MGButton>
         </>
@@ -195,9 +206,15 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
             <MGButton
               type="button"
               variant="outline"
-              className={`mg-tab ${activeTab === 'overall' ? 'mg-tab-active' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: `mg-tab ${activeTab === 'overall' ? 'mg-tab-active' : ''}`
+              })}
               onClick={() => setActiveTab('overall')}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <BarChart size={16} />
               전체 통계
@@ -205,9 +222,15 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
             <MGButton
               type="button"
               variant="outline"
-              className={`mg-tab ${activeTab === 'today' ? 'mg-tab-active' : ''}`}
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: `mg-tab ${activeTab === 'today' ? 'mg-tab-active' : ''}`
+              })}
               onClick={() => setActiveTab('today')}
               preventDoubleClick={false}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <Calendar size={16} />
               오늘 통계

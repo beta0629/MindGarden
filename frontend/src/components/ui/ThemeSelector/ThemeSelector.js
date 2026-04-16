@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 
 import { useTheme } from '../../../contexts/ThemeContext';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Card from '../Card/Card';
 import CardContent from '../Card/CardContent';
 import Icon from '../Icon/Icon';
@@ -102,8 +103,15 @@ const ThemeSelector = ({ onThemeChange,
           <div className="mg-v2-v2-v2-theme-actions">
             <MGButton
               variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: isLoading,
+                className: 'mg-button--with-icon'
+              })}
               onClick={handleApplyTheme}
               loading={isLoading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               disabled={selectedTheme === currentTheme.type && Object.keys(customColors).length === 0}
             >
               <Icon name="CHECK" size="SM" />
@@ -112,6 +120,13 @@ const ThemeSelector = ({ onThemeChange,
             
             {previewedTheme && (<MGButton
                 variant="outline"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-button--with-icon'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCancelPreview}
               >
                 <Icon name="X" size="SM" />

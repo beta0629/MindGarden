@@ -621,7 +621,8 @@ const TabletLogin = () => {
           navigate
         );
       } else {
-        // HttpOnly·타이밍 등으로 클라이언트 동기화가 비어 있을 때만 전체 로드로 쿠키·JS 번들·세션 스토어를 일치시킴
+        // HttpOnly·세션 직후 타이밍 한계로 클라 동기화가 비면 풀리드(쿠키·번들·스토어 일치)
+        // eslint-disable-next-line no-restricted-globals
         window.location.reload();
       }
     }

@@ -67,7 +67,8 @@ const MatchQueueRow = ({
           className={buildErpMgButtonClassName({
             variant: 'primary',
             size: 'sm',
-            loading: loading
+            loading: loading,
+            className: 'match-queue-row__assign-btn'
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >

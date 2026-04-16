@@ -1644,7 +1644,18 @@ button.mg-v2-ad-b0kla__admin-card.mg-button:focus-visible {
   outline-offset: 2px;
 }
 
-button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__content,
+/* MGButton 내부: 직접 자식은 __content 하나뿐이라, __content를 column flex로 두고
+ * __text는 display:contents로 아이콘·라벨·설명을 __content의 세로 스택으로 올린다.
+ * 로딩 시 __loading(스피너) + __text(loadingText)도 동일 column + gap으로 정렬된다. */
+button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-md, 1rem);
+  width: 100%;
+}
+
 button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__text {
   display: contents;
   white-space: normal;

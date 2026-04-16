@@ -39,7 +39,7 @@
   cursor: wait;
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)) !important;
   opacity: 0.6;
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg)) !important;
+  color: var(--mg-color-text-on-primary, var(--mg-white)) !important;
   border-color: transparent !important;
   pointer-events: none;
   box-shadow: none !important;
@@ -72,13 +72,13 @@
 /* Variants — B0KlA primary #3D5246, radius 10px */
 .mg-button--primary {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: transparent;
 }
 
 .mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-light, #4A6354);
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
   transform: translateY(-1px);
 }
@@ -90,13 +90,13 @@
 
 .mg-button--secondary {
   background-color: var(--mg-color-secondary-main, var(--cs-secondary-500));
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: transparent;
 }
 
 .mg-button--secondary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-secondary-light, var(--cs-secondary-600));
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
   transform: translateY(-1px);
 }
@@ -162,13 +162,13 @@
 
 .mg-button--info {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: transparent;
 }
 
 .mg-button--info:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-light, #4A6354);
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
   transform: translateY(-1px);
 }
@@ -186,7 +186,7 @@
 
 .mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  color: var(--mg-color-text-on-primary, var(--mg-layout-header-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
   transform: translateY(-1px);
 }

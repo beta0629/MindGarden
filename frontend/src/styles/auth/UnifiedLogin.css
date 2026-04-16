@@ -112,6 +112,12 @@
   gap: 20px;
 }
 
+/* MGButton primary: 헤더 배경색 폴백 제거 후에도 로그인 폼에서 대비 보장 (특이도) */
+.mg-v2-login-form .mg-button.mg-button--primary,
+.mg-v2-login-form .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+}
+
 .mg-v2-field {
   display: flex;
   flex-direction: column;
@@ -238,20 +244,104 @@
   left: 20px;
 }
 
-.mg-v2-button-kakao {
-  background-color: #FEE500;
-  color: rgba(0, 0, 0, 0.85);
+/*
+ * 소셜 OAuth — MGButton variant=outline 이 .mg-button--outline(투명 배경)로
+ * 브랜드 배경을 덮는 문제: 통합 로그인 소셜 영역(.mg-v2-login-social)에서만 특이도 상향.
+ * 플랫폼 브랜드 고정색 — CI 가이드 (저장소 하드코딩 검사 예외: OAuth 공식 색상)
+ */
+.mg-v2-login-social {
+  --oauth-kakao-bg: #fee500;
+  --oauth-kakao-bg-hover: #e6cf00;
+  --oauth-kakao-text: rgba(0, 0, 0, 0.85);
+  --oauth-naver-bg: #03c75a;
+  --oauth-naver-bg-hover: #02a84e;
+  --oauth-naver-text: #ffffff;
+  --oauth-google-bg: #ffffff;
+  --oauth-google-bg-hover: #f5f5f5;
+  --oauth-google-border: var(--mg-border-color, #d4cfc8);
 }
 
-.mg-v2-button-naver {
-  background-color: #03C75A;
-  color: #FFFFFF;
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-kakao {
+  background-color: var(--oauth-kakao-bg);
+  color: var(--oauth-kakao-text);
+  border-color: transparent;
 }
 
-.mg-v2-button-google {
-  background-color: #FFFFFF;
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-kakao:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-kakao-bg-hover);
+  color: var(--oauth-kakao-text);
+  box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.08));
+  transform: translateY(-1px);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-kakao:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-kakao-bg-hover);
+  transform: translateY(0);
+  box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-naver {
+  background-color: var(--oauth-naver-bg);
+  color: var(--oauth-naver-text);
+  border-color: transparent;
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-naver:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-naver-bg-hover);
+  color: var(--oauth-naver-text);
+  box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.12));
+  transform: translateY(-1px);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-naver:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-naver-bg-hover);
+  transform: translateY(0);
+  box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.08));
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-google {
+  background-color: var(--oauth-google-bg);
   color: rgba(0, 0, 0, 0.85);
-  border: 1px solid var(--mg-border-color, #D4CFC8);
+  border-color: var(--oauth-google-border);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-google:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-google-bg-hover);
+  color: rgba(0, 0, 0, 0.85);
+  border-color: var(--oauth-google-border);
+  box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.06));
+  transform: translateY(-1px);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-google:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-google-bg-hover);
+  transform: translateY(0);
+  box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
+}
+
+/* MGButton 전역 disabled/loading(!important) 대비 — 소셜 버튼만 */
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--disabled.mg-v2-button-kakao,
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--loading.mg-v2-button-kakao {
+  background-color: var(--oauth-kakao-bg) !important;
+  color: var(--oauth-kakao-text) !important;
+  border-color: transparent !important;
+  opacity: 0.55;
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--disabled.mg-v2-button-naver,
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--loading.mg-v2-button-naver {
+  background-color: var(--oauth-naver-bg) !important;
+  color: var(--oauth-naver-text) !important;
+  border-color: transparent !important;
+  opacity: 0.55;
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--disabled.mg-v2-button-google,
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--loading.mg-v2-button-google {
+  background-color: var(--oauth-google-bg) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+  border-color: var(--oauth-google-border) !important;
+  opacity: 0.65;
 }
 
 /* 링크 영역 */

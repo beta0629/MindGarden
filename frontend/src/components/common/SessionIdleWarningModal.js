@@ -24,11 +24,21 @@ import { useSession } from '../../contexts/SessionContext';
 import { SESSION_IDLE_WARNING_MS } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 
+/** 서버 만료 시각 기준 남은 초 → MM:SS (표시용, 음수는 0으로) */
+function formatSessionCountdown(totalSeconds) {
+  const s = Math.max(0, Math.floor(toSafeNumber(totalSeconds, 0)));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+}
+
 const SessionIdleWarningModal = () => {
   const { pathname } = useLocation();
   const { user, sessionInfo, checkSession, logout } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [remainingSec, setRemainingSec] = useState(0);
   const timerRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current != null) {
@@ -37,12 +47,56 @@ const SessionIdleWarningModal = () => {
     }
   }, []);
 
+  const clearCountdownInterval = useCallback(() => {
+    if (countdownIntervalRef.current != null) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  }, []);
+
+  /** 모달이 열려 있을 때 만료까지 남은 시간(초)을 1초마다 갱신 */
+  useEffect(() => {
+    clearCountdownInterval();
+    if (!isOpen || !sessionInfo) {
+      setRemainingSec(0);
+      return undefined;
+    }
+
+    const maxSec = toSafeNumber(sessionInfo.maxInactiveInterval, -1);
+    const lastAcc = toSafeNumber(sessionInfo.lastAccessedTime, -1);
+    if (maxSec <= 0 || lastAcc <= 0) {
+      setRemainingSec(0);
+      return undefined;
+    }
+
+    const serverNow =
+      sessionInfo.serverNow != null
+        ? toSafeNumber(sessionInfo.serverNow, Date.now())
+        : Date.now();
+    const offsetMs = serverNow - Date.now();
+    const expiryMs = lastAcc + maxSec * 1000;
+
+    const tick = () => {
+      const rem = Math.max(
+        0,
+        Math.floor((expiryMs - (Date.now() + offsetMs)) / 1000)
+      );
+      setRemainingSec(rem);
+    };
+    tick();
+    countdownIntervalRef.current = setInterval(tick, 1000);
+    return () => {
+      clearCountdownInterval();
+    };
+  }, [isOpen, sessionInfo, clearCountdownInterval]);
+
   useEffect(() => {
     if (!user) {
       setIsOpen(false);
       clearTimer();
+      clearCountdownInterval();
     }
-  }, [user, clearTimer]);
+  }, [user, clearTimer, clearCountdownInterval]);
 
   const isLoginPath =
     pathname === '/login' ||
@@ -142,6 +196,20 @@ const SessionIdleWarningModal = () => {
       <div className="mg-v2-empty-state">
         <Clock size={48} className="mg-v2-color-warning" />
         <SafeText className="mg-v2-text-base mg-v2-mt-md" tag="p">{bodyLine}</SafeText>
+        <p
+          className={`session-idle-warning__countdown${remainingSec <= 10 ? ' session-idle-warning__countdown--urgent' : ''}`}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="session-idle-warning__countdown-label">남은 시간</span>
+          <time
+            className="session-idle-warning__countdown-value"
+            dateTime={`PT${Math.max(0, remainingSec)}S`}
+          >
+            {formatSessionCountdown(remainingSec)}
+          </time>
+        </p>
       </div>
     </UnifiedModal>
   );

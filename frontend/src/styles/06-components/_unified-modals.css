@@ -72,6 +72,8 @@
   min-width: 112px;
   min-height: 40px;
   box-sizing: border-box;
+  overflow: visible; /* 전역 .mg-button/.mg-v2-button ellipsis 방지 */
+  text-overflow: clip;
 }
 
 /* 
@@ -180,4 +182,33 @@
   box-shadow: none;
   border-radius: 0;
   overflow: visible;
+}
+
+/* SessionIdleWarningModal — 만료까지 남은 시간(MM:SS) */
+.session-idle-warning__countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+  margin-top: var(--spacing-lg, 1rem);
+  text-align: center;
+}
+
+.session-idle-warning__countdown-label {
+  font-size: var(--cs-text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--mg-text-secondary, #666666);
+}
+
+.session-idle-warning__countdown-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: var(--mg-text-primary, #1a1a1a);
+}
+
+.session-idle-warning__countdown--urgent .session-idle-warning__countdown-value {
+  color: var(--mg-v2-color-warning-700, var(--mg-warning-600, #d97706));
 }

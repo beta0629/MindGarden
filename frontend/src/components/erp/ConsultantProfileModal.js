@@ -35,7 +35,8 @@ const normalizeSalaryDropdownItem = (item) => {
 const ConsultantProfileModal = ({ 
     isOpen, 
     onClose, 
-    consultant
+    consultant,
+    onSuccess
 }) => {
     const [salaryProfile, setSalaryProfile] = useState(null);
     const [showSalaryForm, setShowSalaryForm] = useState(false);
@@ -338,7 +339,8 @@ const ConsultantProfileModal = ({
             } else {
                 notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');
                 setShowSalaryForm(false);
-                loadSalaryProfile();
+                await loadSalaryProfile();
+                onSuccess?.(response);
             }
         } catch (error) {
             console.error('급여 프로필 저장 실패:', error);

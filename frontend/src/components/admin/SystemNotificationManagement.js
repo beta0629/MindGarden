@@ -10,12 +10,17 @@ import React, { useState, useEffect } from 'react';
 import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
+
+const SYSTEM_NOTIFICATION_PAGE_TITLE_ID = 'system-notification-management-title';
+const SYSTEM_NOTIFICATION_CONTENT_ARIA_LABEL = '시스템 공지 관리 콘텐츠';
 
 const SystemNotificationManagement = () => {
   const [userPermissions, setUserPermissions] = useState([]);
@@ -43,26 +48,40 @@ const SystemNotificationManagement = () => {
     load();
   }, [sessionIsLoggedIn, sessionUser]);
 
+  const shell = (mainContent, headerActions = null) => (
+    <AdminCommonLayout title="시스템 공지 관리">
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel={SYSTEM_NOTIFICATION_CONTENT_ARIA_LABEL}>
+            <ContentHeader
+              title="시스템 공지 관리"
+              subtitle="공지를 작성·수정·게시·보관할 수 있습니다."
+              titleId={SYSTEM_NOTIFICATION_PAGE_TITLE_ID}
+              actions={headerActions}
+            />
+            <main aria-labelledby={SYSTEM_NOTIFICATION_PAGE_TITLE_ID}>
+              {mainContent}
+            </main>
+          </ContentArea>
+        </div>
+      </div>
+    </AdminCommonLayout>
+  );
+
   if (!sessionIsLoggedIn || !sessionUser) {
     const msg = (
       <div className="mg-v2-card mg-v2-text-center mg-p-xl">
         <h3>로그인이 필요합니다.</h3>
       </div>
     );
-    return (
-      <AdminCommonLayout title="시스템 공지 관리">
-        {msg}
-      </AdminCommonLayout>
-    );
+    return shell(msg);
   }
 
   if (permissionsLoading) {
-    return (
-      <AdminCommonLayout title="시스템 공지 관리" loading loadingText="권한을 확인하는 중...">
-        <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="권한을 확인하는 중..." />
-        </div>
-      </AdminCommonLayout>
+    return shell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="권한을 확인하는 중..." />
+      </div>
     );
   }
 
@@ -75,39 +94,29 @@ const SystemNotificationManagement = () => {
         </p>
       </div>
     );
-    return <AdminCommonLayout title="시스템 공지 관리">{noPerm}</AdminCommonLayout>;
+    return shell(noPerm);
   }
 
-  return (
-    <AdminCommonLayout title="시스템 공지 관리">
-      <main className="mg-v2-dashboard-layout">
-        <ContentHeader
-          title="시스템 공지 관리"
-          subtitle="공지를 작성·수정·게시·보관할 수 있습니다."
-          actions={
-            <MGButton
-              type="button"
-              variant="primary"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'md',
-                loading: false
-              })}
-              aria-label="공지 작성"
-              onClick={() => globalThis.dispatchEvent(new CustomEvent('admin-notifications-create-notice'))}
-              loading={false}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            >
-              공지 작성
-            </MGButton>
-          }
-        />
-        <SystemNotificationListBlock
-          hasManagePermission={hasManagePermission}
-          onOpenCreate={hasManagePermission}
-        />
-      </main>
-    </AdminCommonLayout>
+  return shell(
+    <SystemNotificationListBlock
+      hasManagePermission={hasManagePermission}
+      onOpenCreate={hasManagePermission}
+    />,
+    <MGButton
+      type="button"
+      variant="primary"
+      className={buildErpMgButtonClassName({
+        variant: 'primary',
+        size: 'md',
+        loading: false
+      })}
+      aria-label="공지 작성"
+      onClick={() => globalThis.dispatchEvent(new CustomEvent('admin-notifications-create-notice'))}
+      loading={false}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+    >
+      공지 작성
+    </MGButton>
   );
 };
 

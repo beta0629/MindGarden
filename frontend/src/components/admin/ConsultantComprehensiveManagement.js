@@ -43,6 +43,9 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 
+/** ContentHeader / 본문 main aria-labelledby 연동 */
+const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
+
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -993,11 +996,18 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
         }
         return (
-            <AdminCommonLayout>
+            <AdminCommonLayout title="상담사 종합관리">
                 <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
                     <div className="mg-v2-ad-b0kla__container">
                         <ContentArea ariaLabel="상담사 종합관리 본문">
-                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                            <ContentHeader
+                                title="상담사 관리"
+                                subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
+                                titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
+                            />
+                            <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
+                                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                            </main>
                         </ContentArea>
                     </div>
                 </div>
@@ -1005,30 +1015,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         );
     }
 
-    const contentBlock = (
+    const consultantTabAndBelow = (
         <>
-            {!embedded && (
-                <ContentHeader
-                    title="상담사 관리"
-                    subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
-                    actions={
-                        <MGButton
-                            type="button"
-                            variant="primary"
-                            preventDoubleClick={false}
-                            className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                loading: false,
-                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                            })}
-                            onClick={() => handleOpenModal('create')}
-                        >
-                                                       새 상담사 등록
-                        </MGButton>
-                    }
-                />
-            )}
-
             <ContentSection noCard>
                 <div className="mg-v2-ad-b0kla__pill-toggle">
                             <MGButton
@@ -1591,6 +1579,38 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         </>
     );
 
+    const contentBlock = (
+        <>
+            {!embedded && (
+                <ContentHeader
+                    title="상담사 관리"
+                    subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
+                    titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
+                    actions={
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            preventDoubleClick={false}
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                loading: false,
+                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                            })}
+                            onClick={() => handleOpenModal('create')}
+                        >
+                                                       새 상담사 등록
+                        </MGButton>
+                    }
+                />
+            )}
+            {embedded ? consultantTabAndBelow : (
+                <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
+                    {consultantTabAndBelow}
+                </main>
+            )}
+        </>
+    );
+
     const getModalTitle = () => {
         if (modalType === 'create') return '새 상담사 등록';
         if (modalType === 'edit') return '상담사 정보 수정';
@@ -2130,7 +2150,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     }
 
     return (
-        <AdminCommonLayout>
+        <AdminCommonLayout title="상담사 종합관리">
             <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="상담사 종합관리 본문">

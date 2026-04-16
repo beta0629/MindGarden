@@ -27,6 +27,7 @@ import '../ConsultationLogViewPage.css';
 
 const PAGE_TITLE = '상담일지 조회';
 const PAGE_SUBTITLE = '상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다.';
+const CONTENT_AREA_ARIA_LABEL = '상담일지 조회 콘텐츠';
 const VIEW_MODE_LIST = 'list';
 const VIEW_MODE_CALENDAR = 'calendar';
 const VIEW_MODE_TABLE = 'table';
@@ -198,7 +199,8 @@ const ConsultationLogViewPage = () => {
 
   if (loading && records.length === 0) {
     return (
-      <ContentArea>
+      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
+        <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
         <div aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
         </div>
@@ -208,7 +210,7 @@ const ConsultationLogViewPage = () => {
 
   return (
     <>
-      <ContentArea>
+      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
         <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
 
         <ConsultationLogFilterSection

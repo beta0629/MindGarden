@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
@@ -34,6 +35,7 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
  * 아이템 관리 컴포넌트 (테넌트 관리자 ADMIN — 삭제는 관리자만)
  */
 const ItemManagement = () => {
+  const navigate = useNavigate();
   const { isAdmin } = useSession();
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
@@ -276,7 +278,7 @@ const ItemManagement = () => {
                         className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
-                        onClick={() => window.history.back()}
+                        onClick={() => navigate(-1)}
                       >
                         뒤로가기
                       </MGButton>
@@ -317,29 +319,31 @@ const ItemManagement = () => {
                   <SafeErrorDisplay error={error} variant="inline" className="error-message" />
                 )}
 
-                <ErpFilterToolbar
-                  ariaLabel="아이템 목록 도구"
-                  secondaryRow={
-                    <div className="item-management__toolbar-actions">
-                      <MGButton
-                        variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'sm',
-                          loading: silentListRefreshing
-                        })}
-                        onClick={() => loadItems({ silent: true })}
-                        loading={silentListRefreshing}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        disabled={loading}
-                        aria-label="목록 새로고침"
-                      >
-                        목록 새로고침
-                      </MGButton>
-                    </div>
-                  }
-                />
+                <div className="mg-w-full mg-mb-md">
+                  <ErpFilterToolbar
+                    ariaLabel="아이템 목록 도구"
+                    secondaryRow={
+                      <div className="item-management__toolbar-actions">
+                        <MGButton
+                          variant="secondary"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'sm',
+                            loading: silentListRefreshing
+                          })}
+                          onClick={() => loadItems({ silent: true })}
+                          loading={silentListRefreshing}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          disabled={loading}
+                          aria-label="목록 새로고침"
+                        >
+                          목록 새로고침
+                        </MGButton>
+                      </div>
+                    }
+                  />
+                </div>
 
                 <section className="mg-v2-section" aria-labelledby={ITEM_MANAGEMENT_LIST_TITLE_ID}>
                   <CardContainer>

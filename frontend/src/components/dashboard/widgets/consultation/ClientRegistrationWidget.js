@@ -15,16 +15,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import { VALIDATION_MESSAGES } from '../../../../constants/messages';
+import StandardizedApi from '../../../../utils/standardizedApi';
 import './ClientRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+
+const CLIENT_REGISTER_API = '/api/v1/admin/clients';
+
 const ClientRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -49,43 +52,8 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     notes: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
-
-  // 폼 제출용 데이터 소스 설정
-  const getDataSourceConfig = () => {
-    return {
-      type: 'form-submit',
-      url: '/api/v1/admin/clients',
-      method: 'POST',
-      validateOnSubmit: true,
-      successMessage: '내담자가 성공적으로 등록되었습니다.',
-      errorMessage: '내담자 등록 중 오류가 발생했습니다.',
-      onSuccess: (response) => {
-        handleRegistrationSuccess(response);
-      }
-    };
-  };
-
-  // 위젯 설정에 데이터 소스 동적 설정
-  const widgetWithDataSource = {
-    ...widget,
-    config: {
-      ...widget.config,
-      dataSource: getDataSourceConfig()
-    }
-  };
-
-  // 표준화된 위젯 훅 사용 (폼 제출용)
-  const {
-    data: submitResponse,
-    loading: submitting,
-    error: submitError,
-    submitData,
-    resetForm,
-    refresh
-  } = useWidget(widgetWithDataSource, user, {
-    immediate: false, // 폼이므로 즉시 로드 안함
-    cache: false
-  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // 관리자/상담사만 사용 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
@@ -169,12 +137,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       setShowForm(false);
     }
     
-    // 번화기로 이동 옵션
+    // 내담자 목록으로 이동 옵션
     if (widget.config?.redirectAfterSuccess) {
       navigate('/admin/clients');
     }
-    
-    // 커스텀 쬜백
+
+    // 커스텀 콜백
     if (widget.config?.onSuccess) {
       widget.config.onSuccess(response);
     }
@@ -248,14 +216,18 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       ...(formData.notes && { notes: formData.notes.trim() })
     };
     
+    setSubmitting(true);
+    setSubmitError(null);
     try {
-      await submitData(requestData);
+      const response = await StandardizedApi.post(CLIENT_REGISTER_API, requestData);
+      handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 내담자 등록 실패:', error);
-      showNotification(
-        error.message || '내담자 등록 중 오류가 발생했습니다.',
-        'error'
-      );
+      const message = error.message || '내담자 등록 중 오류가 발생했습니다.';
+      setSubmitError(message);
+      showNotification(message, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -280,7 +252,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       notes: ''
     });
     setValidationErrors({});
-    if (resetForm) resetForm();
   };
 
   // 폼 닫기
@@ -294,25 +265,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     return validationErrors[fieldName];
   };
 
-  // 헤더 설정
-  const headerConfig = {
-    actions: [
-      {
-        icon: 'REFRESH_CW',
-        label: '새로고침',
-        onClick: refresh
-      }
-    ]
-  };
-
   return (
     <BaseWidget
       widget={widget}
       user={user}
       loading={submitting}
       error={submitError}
-      onRefresh={refresh}
-      headerConfig={headerConfig}
       className="client-registration-widget"
     >
       <div className="client-registration-content">

@@ -25,8 +25,10 @@ import { useSession } from '../../contexts/SessionContext';
 import { requestBillingAuth, PG_PROVIDER } from '../../utils/paymentGateway';
 import { generateUUID, generateCallbackUrl, getPgProviderCodes, getCodeLabel } from '../../utils/billingService';
 import { BILLING_CSS, ICON_SIZES, BILLING_MESSAGES, CALLBACK_STATUS, COMMON_CODE_GROUPS } from '../../constants/billing';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './PaymentMethodRegistration.css';
 
 /**
@@ -52,6 +54,7 @@ const PaymentMethodRegistration = ({
 }) => {
   const { user, sessionInfo } = useSession();
   const [loading, setLoading] = useState(false);
+  const [pgMetaLoading, setPgMetaLoading] = useState(false);
   const [error, setError] = useState(null);
   const [customerKey, setCustomerKey] = useState(null);
   const [pgProviderName, setPgProviderName] = useState('');
@@ -70,6 +73,7 @@ const PaymentMethodRegistration = ({
   // PG 제공자 이름 로드
   useEffect(() => {
     const loadPgProviderName = async() => {
+      setPgMetaLoading(true);
       try {
         const label = await getCodeLabel(COMMON_CODE_GROUPS.PG_PROVIDER, pgProvider);
         setPgProviderName(label);
@@ -82,6 +86,8 @@ const PaymentMethodRegistration = ({
           [PG_PROVIDER.IAMPORT]: '아임포트'
         };
         setPgProviderName(defaultNames[pgProvider] || pgProvider);
+      } finally {
+        setPgMetaLoading(false);
       }
     };
 
@@ -150,32 +156,45 @@ const PaymentMethodRegistration = ({
         <h3>{BILLING_MESSAGES.REGISTRATION.TITLE}</h3>
       </div>
 
-      <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CONTENT}>
-        <p className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.DESCRIPTION}>
-          {BILLING_MESSAGES.REGISTRATION.DESCRIPTION}
-          <br />
-          <small>{BILLING_MESSAGES.REGISTRATION.DESCRIPTION_SECONDARY}</small>
-        </p>
+      <div
+        className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CONTENT}
+        aria-busy={pgMetaLoading}
+      >
+        {pgMetaLoading ? (
+          <UnifiedLoading
+            type="inline"
+            text={WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
+            variant="pulse"
+          />
+        ) : (
+          <>
+            <p className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.DESCRIPTION}>
+              {BILLING_MESSAGES.REGISTRATION.DESCRIPTION}
+              <br />
+              <small>{BILLING_MESSAGES.REGISTRATION.DESCRIPTION_SECONDARY}</small>
+            </p>
 
-        {error && (
-          <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.ERROR}>
-            <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
-            <span>{error}</span>
-          </div>
+            {error && (
+              <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.ERROR}>
+                <AlertCircleIcon size={ICON_SIZES.MEDIUM} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO}>
+              <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO_ITEM}>
+                <strong>{BILLING_MESSAGES.REGISTRATION.PG_PROVIDER_LABEL}:</strong>
+                <span>{pgProviderName || pgProvider}</span>
+              </div>
+              <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO_ITEM}>
+                <strong>{BILLING_MESSAGES.REGISTRATION.CUSTOMER_ID_LABEL}:</strong>
+                <span className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CUSTOMER_KEY}>
+                  {customerKey || BILLING_MESSAGES.REGISTRATION.GENERATING}
+                </span>
+              </div>
+            </div>
+          </>
         )}
-
-        <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO}>
-          <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO_ITEM}>
-            <strong>{BILLING_MESSAGES.REGISTRATION.PG_PROVIDER_LABEL}:</strong>
-            <span>{pgProviderName || pgProvider}</span>
-          </div>
-          <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.INFO_ITEM}>
-            <strong>{BILLING_MESSAGES.REGISTRATION.CUSTOMER_ID_LABEL}:</strong>
-            <span className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.CUSTOMER_KEY}>
-              {customerKey || BILLING_MESSAGES.REGISTRATION.GENERATING}
-            </span>
-          </div>
-        </div>
       </div>
 
       <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.FOOTER}>
@@ -188,7 +207,7 @@ const PaymentMethodRegistration = ({
               loading: false
             })}
             onClick={onCancel}
-            disabled={loading}
+            disabled={loading || pgMetaLoading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             {BILLING_MESSAGES.REGISTRATION.CANCEL_BUTTON}
@@ -202,7 +221,7 @@ const PaymentMethodRegistration = ({
             loading
           })}
           onClick={handleRegister}
-          disabled={loading || !customerKey}
+          disabled={loading || !customerKey || pgMetaLoading}
           loading={loading}
           loadingText={BILLING_MESSAGES.REGISTRATION.REGISTERING}
         >

@@ -15,15 +15,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+import StandardizedApi from '../../../../utils/standardizedApi';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+const CONSULTANT_REGISTER_API = '/api/v1/admin/consultants';
+
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -46,43 +49,8 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     notes: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
-
-  // 폼 제출용 데이터 소스 설정
-  const getDataSourceConfig = () => {
-    return {
-      type: 'form-submit',
-      url: '/api/v1/admin/consultants',
-      method: 'POST',
-      validateOnSubmit: true,
-      successMessage: '상담사가 성공적으로 등록되었습니다.',
-      errorMessage: '상담사 등록 중 오류가 발생했습니다.',
-      onSuccess: (response) => {
-        handleRegistrationSuccess(response);
-      }
-    };
-  };
-
-  // 위젯 설정에 데이터 소스 동적 설정
-  const widgetWithDataSource = {
-    ...widget,
-    config: {
-      ...widget.config,
-      dataSource: getDataSourceConfig()
-    }
-  };
-
-  // 표준화된 위젯 훅 사용 (폼 제출용)
-  const {
-    data: submitResponse,
-    loading: submitting,
-    error: submitError,
-    submitData,
-    resetForm,
-    refresh
-  } = useWidget(widgetWithDataSource, user, {
-    immediate: false,
-    cache: false
-  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // 관리자/상담사만 사용 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
@@ -220,14 +188,18 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       ...(formData.notes && { notes: formData.notes.trim() })
     };
     
+    setSubmitting(true);
+    setSubmitError(null);
     try {
-      await submitData(requestData);
+      const response = await StandardizedApi.post(CONSULTANT_REGISTER_API, requestData);
+      handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 상담사 등록 실패:', error);
-      showNotification(
-        error.message || '상담사 등록 중 오류가 발생했습니다.',
-        'error'
-      );
+      const message = error.message || '상담사 등록 중 오류가 발생했습니다.';
+      setSubmitError(message);
+      showNotification(message, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -250,7 +222,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       notes: ''
     });
     setValidationErrors({});
-    if (resetForm) resetForm();
   };
 
   // 폼 닫기
@@ -264,26 +235,18 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     return validationErrors[fieldName];
   };
 
-  // 헤더 설정
-  const headerConfig = {
-    subtitle: '전문 상담사 등록 대시보드',
-    actions: [
-      {
-        icon: 'REFRESH_CW',
-        label: '새로고침',
-        onClick: refresh
-      }
-    ]
-  };
-
   return (
     <BaseWidget
-      widget={widget}
+      widget={{
+        ...widget,
+        config: {
+          ...widget.config,
+          subtitle: widget.config?.subtitle || '전문 상담사 등록 대시보드'
+        }
+      }}
       user={user}
       loading={submitting}
       error={submitError}
-      onRefresh={refresh}
-      headerConfig={headerConfig}
       className="consultant-registration-widget"
     >
       <div className="consultant-registration-content">

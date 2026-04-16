@@ -6,8 +6,10 @@ import './SalaryConfigModal.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -24,65 +26,66 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     batchCycles: [],
     calculationMethods: []
   });
-  const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      loadCurrentConfigs();
-      loadConfigOptions();
+    if (!isOpen) {
+      return undefined;
     }
-  }, [isOpen]);
+    let cancelled = false;
+    const str = (v) => (v == null ? '' : String(v).trim());
+    const num = (v, fallback) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
 
-  /**
-   * 백엔드 GET /api/v1/admin/salary/configs 응답: data는 SALARY_CONFIG 그룹의 codeValue를 키로,
-   * codeDescription(없으면 codeLabel)을 값으로 하는 객체.
-   * 키: SALARY_BASE_DATE, SALARY_PAYMENT_DAY, SALARY_CUTOFF_DAY, SALARY_BATCH_CYCLE, SALARY_CALCULATION_METHOD
-   */
-  const loadCurrentConfigs = async() => {
-    try {
-      setLoading(true);
+    (async() => {
+      setDataLoading(true);
       setError('');
-      const raw = await StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIGS);
-      if (raw && typeof raw === 'object') {
-        const str = (v) => (v == null ? '' : String(v).trim());
-        const num = (v, fallback) => {
-          const n = Number(v);
-          return Number.isFinite(n) ? n : fallback;
-        };
-        setConfigs({
-          monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
-          paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
-          cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
-          batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
-          calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
-        });
+      try {
+        const [raw, data] = await Promise.all([
+          StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIGS),
+          StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIG_OPTIONS)
+        ]);
+        if (cancelled) {
+          return;
+        }
+        if (raw && typeof raw === 'object') {
+          setConfigs({
+            monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
+            paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
+            cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
+            batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
+            calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
+          });
+        }
+        if (data && typeof data === 'object') {
+          setOptions({
+            monthlyBaseDays: Array.isArray(data.monthlyBaseDays) ? data.monthlyBaseDays : [],
+            paymentDays: Array.isArray(data.paymentDays) ? data.paymentDays : [],
+            cutoffDays: Array.isArray(data.cutoffDays) ? data.cutoffDays : [],
+            batchCycles: Array.isArray(data.batchCycles) ? data.batchCycles : [],
+            calculationMethods: Array.isArray(data.calculationMethods) ? data.calculationMethods : []
+          });
+        }
+      } catch (loadErr) {
+        console.error('설정/옵션 로드 오류:', loadErr);
+        if (!cancelled) {
+          setError('설정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+      } finally {
+        if (!cancelled) {
+          setDataLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('설정 로드 오류:', error);
-      setError('설정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
 
-  const loadConfigOptions = async() => {
-    try {
-      const data = await StandardizedApi.get(SALARY_API_ENDPOINTS.CONFIG_OPTIONS);
-      if (data && typeof data === 'object') {
-        setOptions({
-          monthlyBaseDays: Array.isArray(data.monthlyBaseDays) ? data.monthlyBaseDays : [],
-          paymentDays: Array.isArray(data.paymentDays) ? data.paymentDays : [],
-          cutoffDays: Array.isArray(data.cutoffDays) ? data.cutoffDays : [],
-          batchCycles: Array.isArray(data.batchCycles) ? data.batchCycles : [],
-          calculationMethods: Array.isArray(data.calculationMethods) ? data.calculationMethods : []
-        });
-      }
-    } catch (error) {
-      console.error('설정 옵션 로드 오류:', error);
-      setError((prev) => prev || '설정 옵션을 불러오지 못했습니다.');
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const handleInputChange = (field, value) => {
     setConfigs(prev => ({
@@ -93,7 +96,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
   const handleSave = async() => {
     try {
-      setLoading(true);
+      setSaving(true);
       setError('');
 
       // 각 설정을 개별적으로 저장
@@ -127,11 +130,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       onSave && onSave();
       onClose();
       
-    } catch (error) {
-      console.error('설정 저장 오류:', error);
+    } catch (saveErr) {
+      console.error('설정 저장 오류:', saveErr);
       setError('설정 저장 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -143,7 +146,15 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       size="medium"
       className="mg-v2-ad-b0kla salary-config-modal"
     >
-      <div className="salary-config-modal-body" aria-busy={loading}>
+      <div className="salary-config-modal-body" aria-busy={dataLoading || saving}>
+        {dataLoading ? (
+          <UnifiedLoading
+            type="inline"
+            text={WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
+            variant="pulse"
+          />
+        ) : (
+          <>
           <ErpSafeText
             tag="p"
             className="salary-config-modal-intro"
@@ -253,6 +264,8 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
               />
             </div>
           </div>
+          </>
+        )}
         </div>
 
       <div className="mg-modal__footer salary-config-modal-footer">
@@ -263,7 +276,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
-          disabled={loading}
+          disabled={dataLoading || saving}
           preventDoubleClick={false}
         >
           취소
@@ -272,9 +285,9 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           type="button"
           variant="primary"
           size="medium"
-          className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+          className={buildErpMgButtonClassName({ variant: 'primary', loading: saving })}
           onClick={handleSave}
-          loading={loading}
+          loading={saving}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick
         >

@@ -28,6 +28,7 @@ const PurchaseManagement = () => {
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [error, setError] = useState(null);
+  const [hasDataError, setHasDataError] = useState(false);
   const [purchaseInitialFetchDone, setPurchaseInitialFetchDone] = useState(false);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ const PurchaseManagement = () => {
         setLoading(true);
       }
       setError(null);
+      setHasDataError(false);
 
       switch (activeTab) {
         case 'items':
@@ -62,6 +64,7 @@ const PurchaseManagement = () => {
     } catch (err) {
       console.error('데이터 로드 실패:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      setHasDataError(true);
     } finally {
       setPurchaseInitialFetchDone(true);
       if (silent) {
@@ -80,6 +83,7 @@ const PurchaseManagement = () => {
     } catch (err) {
       console.error('아이템 로드 실패:', err);
       setError('아이템 목록을 불러오는 중 오류가 발생했습니다.');
+      setHasDataError(true);
     }
   };
 
@@ -91,6 +95,7 @@ const PurchaseManagement = () => {
     } catch (err) {
       console.error('구매 요청 로드 실패:', err);
       setError('구매 요청 목록을 불러오는 중 오류가 발생했습니다.');
+      setHasDataError(true);
     }
   };
 
@@ -102,6 +107,7 @@ const PurchaseManagement = () => {
     } catch (err) {
       console.error('구매 주문 로드 실패:', err);
       setError('구매 주문 목록을 불러오는 중 오류가 발생했습니다.');
+      setHasDataError(true);
     }
   };
 
@@ -132,7 +138,8 @@ const PurchaseManagement = () => {
     );
   }
 
-  const showInitialInlineLoad = loading && !purchaseInitialFetchDone;
+  const showInitialInlineLoad =
+    loading && !purchaseInitialFetchDone && !(error && hasDataError);
 
   return (
     <AdminCommonLayout title="구매 관리">
@@ -184,58 +191,60 @@ const PurchaseManagement = () => {
               </MGButton>
             </div>
 
-            <ErpFilterToolbar
-              ariaLabel="구매 목록 도구"
-              secondaryRow={
-                <div className="purchase-management__toolbar-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
-                    onClick={() => loadData({ silent: true })}
-                    loading={silentListRefreshing}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    disabled={loading}
-                    aria-label="목록 새로고침"
-                  >
-                    목록 새로고침
-                  </MGButton>
-                </div>
-              }
-            />
-
-            <div className="erp-content">
-          {showInitialInlineLoad && (
-            <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
-              <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+            <div className="mg-w-full mg-mb-md">
+              <ErpFilterToolbar
+                ariaLabel="구매 목록 도구"
+                secondaryRow={
+                  <div className="purchase-management__toolbar-actions">
+                    <MGButton
+                      variant="secondary"
+                      size="small"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
+                      onClick={() => loadData({ silent: true })}
+                      loading={silentListRefreshing}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      disabled={loading}
+                      aria-label="목록 새로고침"
+                    >
+                      목록 새로고침
+                    </MGButton>
+                  </div>
+                }
+              />
             </div>
-          )}
 
-          {loading && !showInitialInlineLoad && (
-            <div className="purchase-management-loading-container">
-              <UnifiedLoading type="inline" text="로딩 중..." />
-            </div>
-          )}
+            <div className="erp-content" aria-busy={loading || silentListRefreshing}>
+            {showInitialInlineLoad && (
+              <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+              </div>
+            )}
 
-          {error && (
-            <div className="erp-error">
-              <SafeErrorDisplay error={error} variant="banner" />
-              <MGButton
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: silentListRefreshing })}
-                onClick={() => loadData({ silent: true })}
-                loading={silentListRefreshing}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                disabled={loading}
-                aria-label="다시 시도"
-              >
-                다시 시도
-              </MGButton>
-            </div>
-          )}
+            {loading && !showInitialInlineLoad && (
+              <div className="purchase-management-loading">
+                <UnifiedLoading type="inline" text="로딩 중..." />
+              </div>
+            )}
 
-          {purchaseInitialFetchDone && !loading && !error && (
+            {error && hasDataError && (
+              <div className="erp-error">
+                <SafeErrorDisplay error={error} variant="banner" />
+                <MGButton
+                  variant="outline"
+                  size="small"
+                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: silentListRefreshing })}
+                  onClick={() => loadData({ silent: true })}
+                  loading={silentListRefreshing}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  disabled={loading}
+                  aria-label="다시 시도"
+                >
+                  다시 시도
+                </MGButton>
+              </div>
+            )}
+
+            {purchaseInitialFetchDone && !loading && !(error && hasDataError) && (
             <>
               {activeTab === 'items' && (
                 <div className="erp-section">

@@ -1,5 +1,5 @@
-// import React from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -10,7 +10,11 @@ import { RoleUtils } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SummaryPanels.css';
 
+const isExternalScheduleUrl = (url) =>
+  typeof url === 'string' && /^https?:\/\//i.test(url);
+
 const SummaryPanels = ({ user, consultationData }) => {
+  const navigate = useNavigate();
   // 상담 일정 데이터 처리
   const upcomingCount = consultationData?.upcomingConsultations?.length || 0;
   const weeklyCount = consultationData?.weeklyConsultations || 0;
@@ -85,7 +89,12 @@ const SummaryPanels = ({ user, consultationData }) => {
                           onClick={() => {
                             // 표준화 원칙: 모든 카드/위젯에 상세 페이지 링크 필수
                             const scheduleUrl = schedule.url || `/consultant/schedule/${schedule.id || index}`;
-                            window.location.href = scheduleUrl;
+                            if (isExternalScheduleUrl(scheduleUrl)) {
+                              // 외부 일정 링크만 전체 페이지 이동
+                              window.location.assign(scheduleUrl);
+                            } else {
+                              navigate(scheduleUrl);
+                            }
                           }}
                           title="상담 상세 보기"
                         >
@@ -104,12 +113,12 @@ const SummaryPanels = ({ user, consultationData }) => {
                       {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
                       {upcomingCount > WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS && (
                         <div className="summary-panels-more-indicator">
-                          <a 
-                            href="/consultant/schedule" 
+                          <Link
+                            to="/consultant/schedule"
                             className="mg-v2-link"
                           >
                             +{upcomingCount - WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS}건 더 보기 →
-                          </a>
+                          </Link>
                         </div>
                       )}
                     </div>
@@ -244,7 +253,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                   loading: false
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => { window.location.href = '/admin/mapping-management'; }}
+                onClick={() => { navigate('/admin/mapping-management'); }}
               >
                                매핑 관리
               </MGButton>

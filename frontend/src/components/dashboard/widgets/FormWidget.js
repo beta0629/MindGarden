@@ -13,7 +13,6 @@
  */
 
 import React, { useState } from 'react';
-import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
@@ -23,21 +22,6 @@ import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const FormWidget = ({ widget, user }) => {
-  // 표준화된 위젯 훅 사용
-  const {
-    data,
-    loading,
-    error,
-    hasData,
-    isEmpty,
-    refresh,
-    formatValue
-  } = useWidget(widget, user, {
-    immediate: false, // 폼은 즉시 로드하지 않음
-    cache: false,     // 폼 데이터는 캐시하지 않음
-    retryCount: 3
-  });
-
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
@@ -57,7 +41,7 @@ const FormWidget = ({ widget, user }) => {
   // 폼 제출 핸들러
   const handleSubmit = async(e) => {
     e.preventDefault();
-    
+
     if (!submitUrl) {
       setSubmitResult({ success: false, message: '제출 URL이 설정되지 않았습니다.' });
       return;
@@ -80,6 +64,9 @@ const FormWidget = ({ widget, user }) => {
         const result = await response.json();
         setSubmitResult({ success: true, message: '성공적으로 제출되었습니다.' });
         setFormData({}); // 폼 초기화
+        if (typeof config.onSuccess === 'function') {
+          config.onSuccess(result);
+        }
       } else {
         throw new Error(`제출 실패: ${response.status}`);
       }
@@ -171,7 +158,7 @@ const FormWidget = ({ widget, user }) => {
       <div className="form-container">
         <form onSubmit={handleSubmit} className="widget-form">
           {fields.map((field, index) => renderField(field, index))}
-          
+
           <div className="form-actions">
             <MGButton
               type="submit"
@@ -218,10 +205,9 @@ const FormWidget = ({ widget, user }) => {
     <BaseWidget
       widget={widget}
       user={user}
-      loading={loading}
-      error={error}
+      loading={submitting}
+      error={null}
       isEmpty={fields.length === 0}
-      onRefresh={refresh}
       title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.FORM}
       subtitle={widget.config?.subtitle || ''}
     >

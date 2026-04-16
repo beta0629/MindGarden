@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useSession } from '../../../../contexts/SessionContext';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../../../utils/roleHelper';
 import { redirectToDynamicDashboard } from '../../../../utils/dashboardUtils';
@@ -163,10 +163,10 @@ const HeaderWidget = ({ widget, user }) => {
             
             {showLogo && (
               <div className="widget-header-logo">
-                <a href="/" className="widget-header-logo-link">
+                <Link to="/" className="widget-header-logo-link">
                   <i className={`bi ${logoIcon}`} />
                   <span>{brandName}</span>
-                </a>
+                </Link>
               </div>
             )}
           </div>
@@ -216,10 +216,10 @@ const HeaderWidget = ({ widget, user }) => {
                 )}
               </>
             ) : (
-              <a href="/login" className="widget-header-login-button">
+              <Link to="/login" className="widget-header-login-button">
                 <i className="bi bi-box-arrow-in-right" />
                 로그인
-              </a>
+              </Link>
             )}
           </div>
         </div>

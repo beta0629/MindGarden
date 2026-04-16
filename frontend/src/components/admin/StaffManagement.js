@@ -529,13 +529,19 @@ const StaffManagement = ({ embedded = false }) => {
   if (loading && staffList.length === 0) {
     if (embedded) {
       return (
-        <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
+        <ContentArea ariaLabel="스태프 관리 본문">
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+          </div>
+        </ContentArea>
       );
     }
     return (
-      <ContentArea>
+      <ContentArea ariaLabel="스태프 관리 본문">
+        <ContentHeader
+          title="스태프 관리"
+          subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
+        />
         <div aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
         </div>
@@ -545,14 +551,15 @@ const StaffManagement = ({ embedded = false }) => {
 
   return (
     <>
-      {!embedded && (
-        <ContentHeader
-          title="스태프 관리"
-          subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
-        />
-      )}
+      <ContentArea ariaLabel="스태프 관리 본문">
+        {!embedded && (
+          <ContentHeader
+            title="스태프 관리"
+            subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
+          />
+        )}
 
-      <ContentSection noCard className="mg-v2-mapping-kpi-section">
+        <ContentSection noCard className="mg-v2-mapping-kpi-section">
         <div className="mg-v2-mapping-kpi-section__grid">
           <div className="mg-v2-mapping-kpi-section__card">
             <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
@@ -746,6 +753,7 @@ const StaffManagement = ({ embedded = false }) => {
           </ContentCard>
         </ContentSection>
       </div>
+      </ContentArea>
 
       <UnifiedModal
         isOpen={staffDetailModal.open}

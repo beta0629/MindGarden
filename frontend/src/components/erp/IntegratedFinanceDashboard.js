@@ -531,32 +531,34 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           >
             {loading ? (
               <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-                <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+                <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
               </div>
             ) : (
               <>
-                <ErpFilterToolbar
-                  ariaLabel="수입·지출 도구"
-                  secondaryRow={(
-                    <div className="integrated-finance__toolbar-actions">
-                      <MGButton
-                        variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'sm',
-                          loading: silentListRefreshing
-                        })}
-                        onClick={handleSilentDashboardRefresh}
-                        loading={silentListRefreshing}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        aria-label="데이터 새로고침"
-                      >
-                        데이터 새로고침
-                      </MGButton>
-                    </div>
-                  )}
-                />
+                <div className="mg-w-full mg-mb-md">
+                  <ErpFilterToolbar
+                    ariaLabel="수입·지출 도구"
+                    secondaryRow={(
+                      <div className="integrated-finance__toolbar-actions">
+                        <MGButton
+                          variant="secondary"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'sm',
+                            loading: silentListRefreshing
+                          })}
+                          onClick={handleSilentDashboardRefresh}
+                          loading={silentListRefreshing}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          aria-label="데이터 새로고침"
+                        >
+                          데이터 새로고침
+                        </MGButton>
+                      </div>
+                    )}
+                  />
+                </div>
                 {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
                 {activeTab === 'journal-entries' && <JournalEntriesTab />}
                 {activeTab === 'ledgers' && <LedgersTab />}
@@ -802,8 +804,8 @@ const BalanceSheetTab = () => {
             <label className="mg-v2-label">기준일자</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
-          <div className="finance-statement-panel">
-            <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+          <div className="finance-statement-panel" role="status" aria-live="polite">
+            <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
           </div>
         </DashboardSection>
       </div>
@@ -1035,8 +1037,8 @@ const IncomeStatementTab = () => {
               </div>
             </div>
           </div>
-          <div className="finance-statement-panel">
-            <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+          <div className="finance-statement-panel" role="status" aria-live="polite">
+            <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
           </div>
         </DashboardSection>
       </div>
@@ -1276,7 +1278,11 @@ const CashFlowStatementTab = () => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="현금흐름표를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="현금흐름표를 불러오는 중..." />
+      </div>
+    );
   }
 
   return (
@@ -1427,7 +1433,11 @@ const DailyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="일간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="일간 리포트 데이터를 불러오는 중..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -1589,7 +1599,11 @@ const MonthlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="월간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="월간 리포트 데이터를 불러오는 중..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -1755,7 +1769,11 @@ const YearlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="년간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="년간 리포트 데이터를 불러오는 중..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -1909,7 +1927,11 @@ const JournalEntriesTab = () => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="거래 목록을 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="거래 목록을 불러오는 중..." />
+      </div>
+    );
   }
 
   return (
@@ -2293,7 +2315,11 @@ const SettlementTab = () => {
   const [settlementPeriod, setSettlementPeriod] = useState('');
 
   if (loading) {
-    return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+      </div>
+    );
   }
 
   return (
@@ -2537,7 +2563,9 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       >
         <div aria-busy={loading}>
         {loading ? (
-          <UnifiedLoading text="거래 정보를 불러오는 중..." size="medium" type="inline" />
+          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+            <UnifiedLoading type="inline" text="거래 정보를 불러오는 중..." />
+          </div>
         ) : entryDetail ? (
           <div className="mg-v2-form-group">
             <div className="mg-v2-mb-md">
@@ -3260,7 +3288,9 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">관련 거래 내역</label>
           {loadingEntries ? (
-            <UnifiedLoading text="거래 내역을 불러오는 중..." size="small" type="inline" />
+            <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+              <UnifiedLoading type="inline" text="거래 내역을 불러오는 중..." />
+            </div>
           ) : journalEntries.length > 0 ? (
             <div className="mg-v2-table-container">
               <table className="mg-table" data-label="거래 내역 목록">

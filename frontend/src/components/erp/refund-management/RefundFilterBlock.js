@@ -43,7 +43,7 @@ const RefundFilterBlock = ({
 
   return (
     <section
-      className="refund-management__filter-block"
+      className="refund-management__filter-block mg-w-full mg-mb-md"
       aria-labelledby="refund-filter-block-heading"
     >
       <h2 id="refund-filter-block-heading" className="sr-only">

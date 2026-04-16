@@ -305,59 +305,61 @@ const ImprovedTaxManagement = () => {
                 title="세무 관리"
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
               />
-              <ErpFilterToolbar
-                ariaLabel="세무 조회 필터"
-                primaryRow={(
-                  <div className="im-tax-mgmt__filter-toolbar-row">
-                    <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
-                      <span className="im-tax-mgmt__header-period-label">기간</span>
-                      <input
-                        type="month"
-                        value={selectedPeriod}
-                        onChange={(e) => setSelectedPeriod(e.target.value)}
-                        className="mg-v2-ad-b0kla__input im-tax-mgmt__month-input"
-                      />
-                    </label>
-                    {activeTab === 'calculations' && (
+              <div className="mg-w-full mg-mb-md">
+                <ErpFilterToolbar
+                  ariaLabel="세무 조회 필터"
+                  primaryRow={(
+                    <div className="im-tax-mgmt__filter-toolbar-row">
+                      <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
+                        <span className="im-tax-mgmt__header-period-label">기간</span>
+                        <input
+                          type="month"
+                          value={selectedPeriod}
+                          onChange={(e) => setSelectedPeriod(e.target.value)}
+                          className="mg-v2-ad-b0kla__input im-tax-mgmt__month-input"
+                        />
+                      </label>
+                      {activeTab === 'calculations' && (
+                        <MGButton
+                          variant="primary"
+                          size="medium"
+                          type="button"
+                          className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
+                          })}
+                          onClick={() => setShowCreateModal(true)}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        >
+                          추가 세금 계산
+                        </MGButton>
+                      )}
+                    </div>
+                  )}
+                  secondaryRow={(
+                    <div className="im-tax-mgmt__filter-toolbar-row">
                       <MGButton
-                        variant="primary"
-                        size="medium"
-                        type="button"
+                        variant="secondary"
+                        size="small"
                         className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'md',
-                          loading: false,
-                          className: 'mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary'
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: silentListRefreshing
                         })}
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={() => loadData({ silent: true })}
+                        loading={silentListRefreshing}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        disabled={loading || silentListRefreshing}
+                        aria-label="데이터 새로고침"
                       >
-                        추가 세금 계산
+                        데이터 새로고침
                       </MGButton>
-                    )}
-                  </div>
-                )}
-                secondaryRow={(
-                  <div className="im-tax-mgmt__filter-toolbar-row">
-                    <MGButton
-                      variant="secondary"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'secondary',
-                        size: 'sm',
-                        loading: silentListRefreshing
-                      })}
-                      onClick={() => loadData({ silent: true })}
-                      loading={silentListRefreshing}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      disabled={loading || silentListRefreshing}
-                      aria-label="데이터 새로고침"
-                    >
-                      데이터 새로고침
-                    </MGButton>
-                  </div>
-                )}
-              />
+                    </div>
+                  )}
+                />
+              </div>
             </>
           }
           tabsSlot={

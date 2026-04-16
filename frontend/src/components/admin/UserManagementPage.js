@@ -57,71 +57,77 @@ const UserManagementPage = () => {
 
   return (
     <AdminCommonLayout>
-      <ContentHeader
-        title="통합 사용자 관리"
-        subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
-        titleId="user-management-page-title"
-      />
-      <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
-        <ContentSection noCard>
-          <div className="mg-v2-ad-b0kla__pill-toggle">
-            <MGButton
-              type="button"
-              variant="outline"
-              size="medium"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false,
-                className: `mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => handleTypeChange(TYPE_CONSULTANT)}
-              preventDoubleClick={false}
-            >
-              상담사
-            </MGButton>
-            {canManageClients && (
-              <MGButton
-                type="button"
-                variant="outline"
-                size="medium"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleTypeChange(TYPE_CLIENT)}
-                preventDoubleClick={false}
-              >
-                내담자
-              </MGButton>
-            )}
-            <MGButton
-              type="button"
-              variant="outline"
-              size="medium"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false,
-                className: `mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => handleTypeChange(TYPE_STAFF)}
-              preventDoubleClick={false}
-            >
-              스태프
-            </MGButton>
-          </div>
-        </ContentSection>
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
+            <ContentHeader
+              title="통합 사용자 관리"
+              subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
+              titleId="user-management-page-title"
+            />
+            <main aria-labelledby="user-management-page-title">
+              <ContentSection noCard>
+                <div className="mg-v2-ad-b0kla__pill-toggle">
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="medium"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => handleTypeChange(TYPE_CONSULTANT)}
+                    preventDoubleClick={false}
+                  >
+                    상담사
+                  </MGButton>
+                  {canManageClients && (
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="medium"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      onClick={() => handleTypeChange(TYPE_CLIENT)}
+                      preventDoubleClick={false}
+                    >
+                      내담자
+                    </MGButton>
+                  )}
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="medium"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      loading: false,
+                      className: `mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => handleTypeChange(TYPE_STAFF)}
+                    preventDoubleClick={false}
+                  >
+                    스태프
+                  </MGButton>
+                </div>
+              </ContentSection>
 
-        {type === TYPE_CONSULTANT && <ConsultantComprehensiveManagement embedded />}
-        {type === TYPE_CLIENT && canManageClients && <ClientComprehensiveManagement embedded />}
-        {type === TYPE_STAFF && <StaffManagement embedded />}
-      </ContentArea>
+              {type === TYPE_CONSULTANT && <ConsultantComprehensiveManagement embedded />}
+              {type === TYPE_CLIENT && canManageClients && <ClientComprehensiveManagement embedded />}
+              {type === TYPE_STAFF && <StaffManagement embedded />}
+            </main>
+          </ContentArea>
+        </div>
+      </div>
     </AdminCommonLayout>
   );
 };

@@ -588,6 +588,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: propBusinessType = null }) => {
   const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
   const [businessType, setBusinessType] = useState(propBusinessType);
+  const [widgetLayoutRemountKey, setWidgetLayoutRemountKey] = useState(0);
   
   // 업종 정보 동적 로드 (tenantId 기반)
   useEffect(() => {
@@ -908,11 +909,10 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
   useEffect(() => {
     if (refresh?.enabled && refresh?.interval) {
       const interval = setInterval(() => {
-        // 위젯별 새로고침은 각 위젯 컴포넌트에서 처리
-        // 여기서는 전체 새로고침만 처리
-        window.location.reload();
+        // 전체 document reload 대신 위젯 트리 재마운트로 각 위젯 데이터 재조회 유도
+        setWidgetLayoutRemountKey((k) => k + 1);
       }, refresh.interval);
-      
+
       return () => clearInterval(interval);
     }
   }, [refresh]);
@@ -926,7 +926,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
             <p className="dashboard-description">{dashboard.description}</p>
           )}
         </div>
-        <div className="dashboard-content">
+        <div className="dashboard-content" key={widgetLayoutRemountKey}>
           {renderLayout()}
         </div>
       </div>

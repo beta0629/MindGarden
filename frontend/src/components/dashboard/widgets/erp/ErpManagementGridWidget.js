@@ -22,6 +22,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 import SafeText from '../../../common/SafeText';
+import UnifiedLoading from '../../../common/UnifiedLoading';
+import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
+
 const ErpManagementGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -223,6 +226,21 @@ const ErpManagementGridWidget = ({ widget, user }) => {
   const visibleActions = displayData.availableActions;
   const groupedActions = groupActionsByCategory(visibleActions);
 
+  function getCategoryTitle(category) {
+    const titles = {
+      finance: '재무 관리',
+      purchase: '구매 관리',
+      budget: '예산 관리',
+      expense: '비용 관리',
+      report: '리포트',
+      tax: '세무 관리',
+      analytics: '데이터 분석',
+      settings: '시스템 설정',
+      other: '기타'
+    };
+    return titles[category] || category;
+  }
+
   return (
     <BaseWidget
       widget={widget}
@@ -234,7 +252,13 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       className="erp-management-grid-widget"
     >
       <div className="erp-management-content">
-        {hasData && visibleActions.length > 0 ? (
+        {loading ? (
+          <UnifiedLoading
+            type="inline"
+            text={WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
+            variant="pulse"
+          />
+        ) : hasData && visibleActions.length > 0 ? (
           <div className="erp-action-categories">
             {Object.entries(groupedActions).map(([category, actions]) => (
               <div key={category} className="erp-action-category">
@@ -262,7 +286,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
           </div>
         ) : (
           <div className="erp-management-empty">
-            
+
             <p>사용 가능한 ERP 관리 메뉴가 없습니다</p>
             <MGButton
               type="button"
@@ -271,9 +295,9 @@ const ErpManagementGridWidget = ({ widget, user }) => {
               className={buildErpMgButtonClassName({
                 variant: 'primary',
                 size: 'sm',
-                loading
+                loading: false
               })}
-              loading={loading}
+              loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={refresh}
             >
@@ -284,22 +308,6 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       </div>
     </BaseWidget>
   );
-
-  // 카테고리 제목 가져오기
-  function getCategoryTitle(category) {
-    const titles = {
-      finance: '재무 관리',
-      purchase: '구매 관리', 
-      budget: '예산 관리',
-      expense: '비용 관리',
-      report: '리포트',
-      tax: '세무 관리',
-      analytics: '데이터 분석',
-      settings: '시스템 설정',
-      other: '기타'
-    };
-    return titles[category] || category;
-  }
 };
 
 export default ErpManagementGridWidget;

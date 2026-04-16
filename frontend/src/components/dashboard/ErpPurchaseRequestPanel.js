@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 const ErpPurchaseRequestPanel = ({ user }) => {
+  const navigate = useNavigate();
   const [purchaseData, setPurchaseData] = useState({
     pendingRequests: 0,
     approvedRequests: 0,
@@ -129,7 +131,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
                   loading: false
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => { window.location.href = '/erp/purchase-requests'; }}
+                onClick={() => { navigate('/erp/purchase-requests'); }}
               >
                 새 구매 요청
               </MGButton>
@@ -141,7 +143,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
                   loading: false
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => { window.location.href = '/erp/purchase-management'; }}
+                onClick={() => { navigate('/erp/purchase-management'); }}
               >
                 요청 내역
               </MGButton>

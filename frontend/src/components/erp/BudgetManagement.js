@@ -304,9 +304,7 @@ const BudgetManagement = () => {
               title="예산 관리"
               subtitle="세션 정보를 확인하는 중입니다."
             />
-            <div className="erp-session-inline-load__body">
-              <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
-            </div>
+            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -358,7 +356,7 @@ const BudgetManagement = () => {
     );
   }
 
-  const showInitialInlineLoad =
+  const isInitialDataLoad =
     loading && !budgetInitialFetchDone && !(error && hasDataError);
 
   return (
@@ -411,35 +409,38 @@ const BudgetManagement = () => {
           mainAriaLabel="예산 관리 목록 및 본문"
         >
           <div className="erp-container">
-            <ErpFilterToolbar
-              ariaLabel="예산 목록 도구"
-              secondaryRow={
-                <div className="budget-management__toolbar-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
-                    onClick={() => loadData({ silent: true })}
-                    loading={silentListRefreshing}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    disabled={loading}
-                    aria-label="목록 새로고침"
-                  >
-                    목록 새로고침
-                  </MGButton>
-                </div>
-              }
-            />
+            <div className="mg-w-full mg-mb-md">
+              <ErpFilterToolbar
+                ariaLabel="예산 목록 도구"
+                secondaryRow={
+                  <div className="budget-management__toolbar-actions">
+                    <MGButton
+                      variant="secondary"
+                      size="small"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
+                      onClick={() => loadData({ silent: true })}
+                      loading={silentListRefreshing}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      disabled={loading}
+                      aria-label="목록 새로고침"
+                    >
+                      목록 새로고침
+                    </MGButton>
+                  </div>
+                }
+              />
+            </div>
             <div className="erp-content" aria-busy={loading || silentListRefreshing}>
-            {showInitialInlineLoad && (
-              <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
-                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
-              </div>
-            )}
-
-            {loading && !showInitialInlineLoad && (
-              <div className="budget-management-loading">
-                <UnifiedLoading type="inline" text="로딩 중..." />
+            {loading && (
+              <div
+                className={isInitialDataLoad ? 'erp-initial-fetch-inline' : 'budget-management-loading'}
+                role={isInitialDataLoad ? 'status' : undefined}
+                aria-live={isInitialDataLoad ? 'polite' : undefined}
+              >
+                <UnifiedLoading
+                  type="inline"
+                  text={isInitialDataLoad ? '데이터를 불러오는 중...' : '로딩 중...'}
+                />
               </div>
             )}
 

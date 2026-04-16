@@ -37,6 +37,9 @@ import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 /** KPI 카드 장식 아이콘 — 액션 버튼(MGButton)의 라벨 전용 아이콘 제거와 별개로 유지 */
 const CLIENT_KPI_ICON_SIZE = 24;
 
+/** ContentHeader / 본문 main aria-labelledby 연동 */
+const CLIENT_COMP_MGMT_TITLE_ID = 'client-comprehensive-management-title';
+
 /**
  * 내담자 종합관리 메인 컴포넌트
 /**
@@ -478,7 +481,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                 <div className="mg-v2-ad-b0kla mg-v2-client-management">
                     <div className="mg-v2-ad-b0kla__container">
                         <ContentArea ariaLabel="내담자 종합관리 본문">
-                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                            <ContentHeader
+                                title="내담자 관리"
+                                subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                                titleId={CLIENT_COMP_MGMT_TITLE_ID}
+                            />
+                            <main aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}>
+                                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                            </main>
                         </ContentArea>
                     </div>
                 </div>
@@ -486,32 +496,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         );
     }
 
-    const contentBlock = (
+    const tabAndBelow = (
         <>
-            {!embedded && (
-                <ContentHeader
-                    title="내담자 관리"
-                    subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
-                    actions={
-                        <MGButton
-                            type="button"
-                            variant="primary"
-                            preventDoubleClick={false}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                size: 'md',
-                                loading: false,
-                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                            })}
-                            onClick={handleCreateClient}
-                        >
-                            새 내담자 등록
-                        </MGButton>
-                    }
-                />
-            )}
-
             <ContentSection noCard>
                 <div className="mg-v2-ad-b0kla__pill-toggle">
                             <MGButton
@@ -722,6 +708,40 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 />
                             )}
                         </div>
+        </>
+    );
+
+    const contentBlock = (
+        <>
+            {!embedded && (
+                <ContentHeader
+                    title="내담자 관리"
+                    subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                    titleId={CLIENT_COMP_MGMT_TITLE_ID}
+                    actions={
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            preventDoubleClick={false}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'md',
+                                loading: false,
+                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+                            })}
+                            onClick={handleCreateClient}
+                        >
+                            새 내담자 등록
+                        </MGButton>
+                    }
+                />
+            )}
+            {embedded ? tabAndBelow : (
+                <main aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}>
+                    {tabAndBelow}
+                </main>
+            )}
         </>
     );
 

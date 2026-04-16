@@ -213,18 +213,14 @@ const FinancialTransactionForm = ({
         );
         setSuccessMessage('수정되었습니다.');
         notificationManager.show('거래가 수정되었습니다.', 'success', 3000);
-        setTimeout(() => {
-          onSuccess?.(data);
-          onClose?.();
-        }, 800);
+        onSuccess?.(data);
+        onClose?.();
       } else {
         const data = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTIONS, payload);
         setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
         notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
-        setTimeout(() => {
-          onSuccess?.(data);
-          onClose?.();
-        }, 1200);
+        onSuccess?.(data);
+        onClose?.();
       }
     } catch (err) {
       const msg = err?.message || (mode === 'edit' ? '거래 수정 중 오류가 발생했습니다.' : '거래 등록 중 오류가 발생했습니다.');

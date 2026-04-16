@@ -90,7 +90,8 @@ const SystemToolsWidget = ({ widget, user }) => {
         }
         break;
       case 'refresh':
-        window.location.reload();
+        // P4-05: 전역 location.reload() 대신 대시보드 KPI/오늘 통계 재조회(AdminDashboardV2 등 수신)
+        window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
         break;
       default:
         console.warn('알 수 없는 액션 타입:', type);

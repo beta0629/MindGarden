@@ -8,6 +8,7 @@
 
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import AdminMessageListBlock from './organisms/AdminMessageListBlock';
 import '../../styles/unified-design-tokens.css';
@@ -19,13 +20,13 @@ const AdminMessages = ({ contentOnly = false }) => {
 
   return (
     <AdminCommonLayout title="메시지 관리">
-      <main className="mg-v2-dashboard-layout">
+      <ContentArea ariaLabel="메시지 관리 본문">
         <ContentHeader
           title="메시지 관리"
           subtitle="전체 메시지를 조회하고 관리합니다."
         />
         <AdminMessageListBlock />
-      </main>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

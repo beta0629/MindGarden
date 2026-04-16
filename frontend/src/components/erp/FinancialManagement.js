@@ -694,7 +694,9 @@ const FinancialManagement = () => {
         />
         <ContentArea className="erp-system" ariaLabel="재무 관리">
           <div className="erp-session-inline-load">
-            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            <div className="erp-session-inline-load__body">
+              <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            </div>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -794,6 +796,7 @@ const FinancialManagement = () => {
               }
               filterSlot={
                 activeTab === 'transactions' && !error ? (
+                  <div className="mg-w-full mg-mb-md">
                   <ErpFilterToolbar
                     ariaLabel="재무 거래 필터"
                     primaryRow={(
@@ -1118,12 +1121,13 @@ const FinancialManagement = () => {
                       </div>
                     ) : null}
                   />
+                  </div>
                 ) : null
               }
             >
               <div className="erp-content">
             {loading && (
-              <div className="financial-management-loading">
+              <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
                 <UnifiedLoading type="inline" text="로딩 중..." />
               </div>
             )}

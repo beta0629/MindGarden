@@ -15,10 +15,14 @@
  */
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import './Widget.css';
 import '../SummaryPanels.css';
+
+const isExternalViewMoreUrl = (url) =>
+  typeof url === 'string' && /^https?:\/\//i.test(url);
 
 const SummaryStatisticsWidget = ({ widget, user }) => {
   const config = widget.config || {};
@@ -94,9 +98,21 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
       
       {config.viewMoreUrl && (
         <div className="summary-panels-more">
-          <a href={config.viewMoreUrl} className="mg-v2-link">
-            자세히 보기 →
-          </a>
+          {isExternalViewMoreUrl(config.viewMoreUrl) ? (
+            <a
+              href={config.viewMoreUrl}
+              className="mg-v2-link"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {/* 외부 링크만 앵커 유지 */}
+              자세히 보기 →
+            </a>
+          ) : (
+            <Link to={config.viewMoreUrl} className="mg-v2-link">
+              자세히 보기 →
+            </Link>
+          )}
         </div>
       )}
     </BaseWidget>

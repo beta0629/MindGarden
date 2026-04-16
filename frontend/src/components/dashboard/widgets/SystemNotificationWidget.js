@@ -1,8 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { RoleUtils } from '../../../constants/roles';
-import { useWidget } from '../../../hooks/useWidget';
 import { useNotification } from '../../../contexts/NotificationContext';
 import Badge from '../../common/Badge';
 import BaseWidget from './BaseWidget';
@@ -12,13 +10,14 @@ import './SystemNotificationWidget.css';
 const SystemNotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const {
-    notifications, 
-    systemNotifications, 
-    loading, 
-    unreadCount, 
-    unreadSystemCount, 
+    notifications,
+    systemNotifications,
+    loading,
+    unreadCount,
+    unreadSystemCount,
     markMessageAsRead,
-    markSystemNotificationAsRead 
+    markSystemNotificationAsRead,
+    refreshNotifications
   } = useNotification();
 
   // 메시지 + 시스템 공지를 합친 읽지 않은 총 개수
@@ -181,7 +180,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
       loading={loading}
       error={null}
       hasData={displayItems.length > 0 || totalUnreadCount === 0}
-      onRefresh={() => window.location.reload()} // NotificationContext 새로고침
+      onRefresh={refreshNotifications}
       headerConfig={headerConfig}
       className="system-notification-widget"
     >

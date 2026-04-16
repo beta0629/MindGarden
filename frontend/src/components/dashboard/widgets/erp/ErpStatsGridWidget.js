@@ -22,6 +22,8 @@ import { formatCurrency, formatNumber, formatPercent } from '../../../../utils/f
 import './ErpStatsGridWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
+import UnifiedLoading from '../../../common/UnifiedLoading';
+import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ErpStatsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -230,58 +232,67 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       className="erp-stats-grid-widget"
     >
       <div className="erp-stats-content">
-        <div className="erp-stats-grid">
-          {statCards.map((card) => (
-            <div 
-              key={card.id}
-              className={`erp-stat-card erp-stat-${card.category} ${card.status ? `stat-${card.status}` : ''} clickable`}
-              onClick={card.onClick}
-            >
-              <div className="erp-stat-header">
-                <div className="erp-stat-icon-wrapper">
-                  {card.icon}
+        {loading ? (
+          <UnifiedLoading
+            type="inline"
+            text={WIDGET_CONSTANTS.LOADING_MESSAGES.STATS}
+            variant="pulse"
+          />
+        ) : (
+          <>
+            <div className="erp-stats-grid">
+              {statCards.map((card) => (
+                <div
+                  key={card.id}
+                  className={`erp-stat-card erp-stat-${card.category} ${card.status ? `stat-${card.status}` : ''} clickable`}
+                  onClick={card.onClick}
+                >
+                  <div className="erp-stat-header">
+                    <div className="erp-stat-icon-wrapper">
+                      {card.icon}
+                    </div>
+                    <SafeText tag="div" className="erp-stat-title">{card.title}</SafeText>
+                    {card.badge && (
+                      <div className={`erp-stat-badge badge-${card.badge.variant}`}>
+                        <SafeText>{card.badge.text}</SafeText>
+                      </div>
+                    )}
+                  </div>
+                  <div className="erp-stat-body">
+                    <div className="erp-stat-value"><SafeText>{card.value}</SafeText></div>
+                    {card.change && (
+                      <div className={`erp-stat-change ${card.change.isPositive ? 'positive' : 'negative'}`}>
+
+                        <span><SafeText>{card.change.value}</SafeText></span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <SafeText tag="div" className="erp-stat-title">{card.title}</SafeText>
-                {card.badge && (
-                  <div className={`erp-stat-badge badge-${card.badge.variant}`}>
-                    <SafeText>{card.badge.text}</SafeText>
-                  </div>
-                )}
-              </div>
-              <div className="erp-stat-body">
-                <div className="erp-stat-value"><SafeText>{card.value}</SafeText></div>
-                {card.change && (
-                  <div className={`erp-stat-change ${card.change.isPositive ? 'positive' : 'negative'}`}>
-                    
-                    <span><SafeText>{card.change.value}</SafeText></span>
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-        
-        {/* 빈 상태 처리 */}
-        {isEmpty && (
-          <div className="erp-stats-empty">
-            
-            <p>ERP 통계 데이터가 없습니다</p>
-            <MGButton
-              type="button"
-              variant="primary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'sm',
-                loading
-              })}
-              loading={loading}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={refresh}
-            >
-              다시 시도
-            </MGButton>
-          </div>
+
+            {isEmpty && (
+              <div className="erp-stats-empty">
+
+                <p>ERP 통계 데이터가 없습니다</p>
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  loading={false}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={refresh}
+                >
+                  다시 시도
+                </MGButton>
+              </div>
+            )}
+          </>
         )}
       </div>
     </BaseWidget>

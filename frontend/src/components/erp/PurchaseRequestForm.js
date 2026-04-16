@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
@@ -34,6 +35,7 @@ const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
  * 구매 요청 폼 컴포넌트
  */
 const PurchaseRequestForm = () => {
+  const navigate = useNavigate();
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
@@ -162,6 +164,7 @@ const PurchaseRequestForm = () => {
         setSelectedItems([]);
         setItemQuantities({});
         setReason('');
+        void loadItems({ silent: true });
       } else {
         const failedItems = results
           .map((result, index) => (result.success ? null : toDisplayString(selectedItems[index]?.name)))
@@ -192,7 +195,7 @@ const PurchaseRequestForm = () => {
                       type="button"
                       variant="secondary"
                       className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
-                      onClick={() => window.history.back()}
+                      onClick={() => navigate(-1)}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                       뒤로가기
@@ -255,26 +258,28 @@ const PurchaseRequestForm = () => {
             </>
           ) : (
             <>
-              <ErpFilterToolbar
-                ariaLabel="구매 요청 도구"
-                secondaryRow={
-                  <div className="purchase-request-form__toolbar-actions">
-                    <MGButton
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => loadItems({ silent: true })}
-                      loading={silentListRefreshing}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      disabled={loading}
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
-                      aria-label="아이템 목록 새로고침"
-                    >
-                      목록 새로고침
-                    </MGButton>
-                  </div>
-                }
-              />
+              <div className="mg-w-full mg-mb-md">
+                <ErpFilterToolbar
+                  ariaLabel="구매 요청 도구"
+                  secondaryRow={
+                    <div className="purchase-request-form__toolbar-actions">
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        onClick={() => loadItems({ silent: true })}
+                        loading={silentListRefreshing}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        disabled={loading}
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: silentListRefreshing })}
+                        aria-label="아이템 목록 새로고침"
+                      >
+                        목록 새로고침
+                      </MGButton>
+                    </div>
+                  }
+                />
+              </div>
               <section className="mg-v2-purchase-request-form__panel" aria-label="구매 요청서 작성">
               <h2 className="mg-v2-purchase-request-form__panel-title">구매 요청서 작성</h2>
               <form onSubmit={handleSubmit}>

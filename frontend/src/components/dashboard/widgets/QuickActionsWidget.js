@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { RoleUtils } from '../../../constants/roles';
+import { useSession } from '../../../contexts/SessionContext';
 import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
@@ -20,6 +21,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
 const QuickActionsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
+  const { checkSession } = useSession();
   const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
   
   const config = widget.config || {};
@@ -66,11 +68,14 @@ const QuickActionsWidget = ({ widget, user }) => {
   };
 
   // 상담사 신청 성공 핸들러
-  const handleConsultantApplicationSuccess = (result) => {
+  const handleConsultantApplicationSuccess = async(result) => {
     console.log('상담사 신청 성공:', result);
     setShowConsultantApplicationModal(false);
-    // 페이지 새로고침 또는 사용자 정보 업데이트
-    window.location.reload();
+    try {
+      await checkSession(true);
+    } catch (err) {
+      console.warn('상담사 신청 후 세션 갱신 실패:', err);
+    }
   };
   
   const shouldShowAction = (action) => {

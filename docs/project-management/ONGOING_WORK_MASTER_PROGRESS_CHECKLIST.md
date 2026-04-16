@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-16 — 병렬 블록 **P4-GLOBAL**·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · **다음 병렬 검증 게이트**(P4-04 직후 ERP-P4-01·ERP-P4-03·UI-01) — `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 「다음 단계」(기준 2026-04-15) 연계 · 동 문서 P4-01·P4-03 경로 스모크 보강(환불·대시보드·급여·캘린더·세무) · §9 완료 부록·CI/OPS/Flyway 문서 링크는 2026-04-17 기준 유지  
+**최종 갱신**: 2026-04-16 — 병렬 블록 **P4-GLOBAL**·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · **다음 병렬 검증 게이트**(P4-04 직후 ERP-P4-01·ERP-P4-03·UI-01) — `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 「다음 단계」·「위임 직후 보강 스모크」(ERP-P4-03-PAGES-B·ERP-P4-01-MEDIUM)·**번호 25~31**(ERP-HUB 4·어드민 경로·QuickActions·UI-01-B1/B2/B3·**UI-01-C**·ERP-P4-05-DASH·**ERP-P4-05 잔여(DASH-B/C·ERP-A/B)·종합관리 2화면**) 연계 · 구역 1 **ERP-P4-01·P4-03·P4-05**·구역 2 **UI-01** 비고 갱신 · §9 완료 부록·CI/OPS/Flyway 문서 링크는 2026-04-17 기준 유지  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 ---
@@ -181,11 +181,11 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **배치 A-1** `IntegratedFinanceDashboard`·`FinancialCalendarView` ☑. **배치 A-2** `ErpReportModal`(지점)·`FinancialTransactionForm`·`QuickExpenseForm`(공통코드) 인라인 ☑ (2026-04-11). **2026-04-12** `SalaryProfileFormModal.js`·`ConsultantProfileModal.js` — `UnifiedLoading` 인라인·`MGButton` `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑; `ErpRecentTransactionsTable.js`·`ErpIncomeExpenseBarChartSection.js` — `UnifiedLoading` 인라인·`aria-busy` ☑. **`ErpIncomeExpenseSummarySection.js`** — KPI 세 칸 `UnifiedLoading` 인라인·`<section aria-busy>` ☑ (코드 확인). 잔여: 기타 ERP 화면·모달 점검. **2026-04-16** `ERP_FINANCIAL_HUB_SMOKE` 「다음 단계」·P4-01 항목 5~9 — 환불 허브·`/erp/dashboard`·급여·`/erp/financial` 달력·세무(`?tab=tax`/`/erp/tax`) 경로 스모크 한 줄씩 정합. |
+| ERP-P4-01 | `UnifiedLoading` — 페이지 전체 대신 인라인·섹션 로딩으로 통일 (ERP 화면별) | 🔄 | **2026-04-16** 병렬 위임 **ERP-P4-01-MEDIUM**(결제수단·급여모달·ERP 위젯) 및 **ERP-HUB 4파일** 배치 직후 — `ERP_FINANCIAL_HUB_SMOKE` 「위임 직후 보강 스모크」·§ERP-P4-01·**번호 25**와 정합(중복 생략). 잔여: 기타 ERP 화면·모달 점검. |
 | ERP-P4-02 | 무음 재조회: `silentRefreshing` + `aria-busy` + 툴바 패턴 정리 | ☑ | **`useErpSilentRefresh`**·**`silentListRefreshing`** — `ErpDashboard`·환불·급여·**배치 B3** 승인 대시보드 2종·`ApprovalHubLayout` (2026-04-11). **`PurchaseRequestForm.js`** 본문 `<section>` `aria-busy` ☑ (2026-04-10). **`ErpReportModal.js`** 본문 `mg-v2-modal-body`에 `aria-busy`(보고서 생성·지점 목록 로딩) ☑ (코드 확인). **`FinancialTransactionForm.js`** `<form>` `aria-busy`(제출·공통코드 로딩) ☑ (2026-04-10). **`QuickExpenseForm.js`** 본문 래퍼 `aria-busy`(공통코드·등록 제출) ☑ (2026-04-10). **`SalaryConfigModal.js`** 본문 `.salary-config-modal-body` `aria-busy={loading}` ☑ (2026-04-10). **`BudgetManagement.js`** `.erp-content` `aria-busy`(loading·`silentListRefreshing`) ☑. **`AdminApprovalDashboard.js`** 승인·거부 `UnifiedModal` 본문 래퍼 `aria-busy={processing}` ☑. **`IntegratedFinanceDashboard.js`** 분개 3모달 — `JournalEntryDetailModal` 본문 `aria-busy={loading}`; `JournalEntryCreateModal`·`JournalEntryEditModal` 폼 `aria-busy={loading || accountTypesLoading}` ☑. **`SuperAdminApprovalDashboard.js`** 최종 승인·거부 `UnifiedModal` 본문 `aria-busy={processing}` ☑. **`ConsultantProfileModal.js`** `.consultant-profile-modal-body` `aria-busy={profileLoading || saving}` ☑ (`develop`·`main` · `a7322cc4e`). 잔여: 화면별 `aria-busy` 점검은 P4-01과 병행 가능. |
-| ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | **도입(코드) ☑** — `ErpDashboard`·`FinancialCalendarView`·`ItemManagement`·`SalaryManagement`·`BudgetManagement`·`PurchaseManagement`·`IntegratedFinanceDashboard`·`FinancialManagement`·`ImprovedTaxManagement`·`TaxManagement`·환불(`RefundFilterBlock`/`RefundFilters`) 등에서 사용(`frontend/src/components/erp/**` grep 기준). **`PurchaseRequestForm.js`** — `ErpFilterToolbar`·목록 새로고침 ☑ (2026-04-10). **정렬·잔여 🔄** — 슬롯·반응형·디자인 토큰·소규모 화면 점검은 배치별. 필터 UI는 별도 explore 배치에서 목록화. 다음 배치는 explore가 순위를 매긴 P4-03 후보를 우선 참고한다(고정 아님). **2026-04-16** 동 스모크 문서 「다음 단계」·P4-03 항목 5~6 — `/erp/dashboard`·급여·세무 툴바 스모크 한 줄 보강(P4-03 페이지·환불 경로와 정합). |
+| ERP-P4-03 | `ErpFilterToolbar` 도입·정렬 (화면별) | 🔄 | **2026-04-16** 병렬 위임 **ERP-P4-03-PAGES-B**(세무·품목·구매요청·환불필터) 및 **ERP-HUB 4**·**어드민 경로** 스모크 직후 — `ERP_FINANCIAL_HUB_SMOKE` 「위임 직후 보강 스모크」·§ERP-P4-03·**번호 25~26**와 정합(중복 생략). 정렬·반응형·토큰 잔여 🔄. |
 | ERP-P4-04 | 무음 조회 트리거 버튼 — `MGButton` `loading` / `loadingText` 패턴 통일 | 🔄 | 급여·재무 거래 탭 일부 ☑ (2026-04-10). **A-2**·**B1**·**B2** ☑. **B3** `SalaryManagement`·`ImprovedTaxManagement`·`RefundManagement`·`ApprovalHubLayout`·승인 대시보드 보강 ☑ (2026-04-11). **2026-04-12** `RefundFilterBlock.js`·`RefundFilters.js` — `buildErpMgButtonClassName`·`ERP_MG_BUTTON_LOADING_TEXT` ☑ (급여·컨설턴트 모달 MGButton은 **P4-01** 동일일 배치). **코드 대조**: `frontend`에서 `ErpButton` 식별자 참조 **0건** (레거시 제거 상태 유지). **`components` 전역** `erpMgButtonProps` 일괄 적용은 병렬 블록 **P4-GLOBAL**(2026-04-15)로 분리 기록; 본 행은 무음 조회 트리거 중심 이력·화면별 잔여 점검을 뜻한다. |
-| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
+| ERP-P4-05 | 나머지 ERP 화면 네이티브 새로고침·검색 버튼 인벤토리 → 동일 패턴 적용 | 🔄 | P4-05a~f ☑. **2026-04-16** 병렬 **ERP-P4-05-DASH 4파일**·**ERP-P4-05-DASH-B/C**·**ERP-P4-05-ERP-A/B** 가정 완료 — `ERP_FINANCIAL_HUB_SMOKE` **번호 29~30**·상단 23·G8-B13a·G8-B14 스모크와 정합(중복 생략). **종합관리 2화면**은 **번호 31**·G8-B8a와 정합. **ErpButton 제거**·**무음 상태명 통일(P4-02)** ☑. 인벤토리·추가 화면은 배치별. |
 
 ---
 
@@ -195,7 +195,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | **인벤토리(2026-04-11)**: `AdminCommonLayout` import **88파일**. **의도적 비적용**은 아래 표와 동일(파일 경로 SSOT). **`PgApprovalManagement`**: `/admin/ops/pg-approval` + LNB 폴백 ☑. **`ComingSoon` 이중 래핑 제거** ☑ — `/admin/branches`, `PsychAssessmentManagement` 권한 없음 분기 (2026-04-11). **`StaffManagement.js`** — `roleOf`·역할 변경 모달 비교 정합 ☑; 이메일 중복 확인 `StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email })` ☑ (2026-04-10). |
+| UI-01 | 관리자 공통 레이아웃(`AdminCommonLayout` 등) 미적용 페이지 정리 | 🔄 | **인벤토리(2026-04-11)**: `AdminCommonLayout` import **88파일**. **2026-04-16** 병렬 **UI-01-B1/B2/B3**·**UI-01-C** 및 **`ERP_FINANCIAL_HUB_SMOKE` 번호 26·28·31**·§UI-01 스모크와 정합(중복 생략). **의도적 비적용**은 아래 표와 동일(파일 경로 SSOT). **`PgApprovalManagement`**: `/admin/ops/pg-approval` + LNB 폴백 ☑. **`ComingSoon` 이중 래핑 제거** ☑ — `/admin/branches`, `PsychAssessmentManagement` 권한 없음 분기 (2026-04-11). **`StaffManagement.js`** — `roleOf`·역할 변경 모달 비교 정합 ☑; 이메일 중복 확인 `StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email })` ☑ (2026-04-10). |
 | UI-02 | 미비 모달·서브 컴포넌트 `UnifiedModal` 등 공통화 (2차) | 🔄 | B5·B6·계좌/내담자 메시지 `UnifiedModal` ☑. **추가**: GNB `Profile`/`QuickActions`/`Notification` 드롭다운 → `GnbDropdownPortal` + `aria-controls`/고유 `panelId`, `NavIcon` props 전달. 잔여: UI-01·UI-03·전역 린트 등 |
 | UI-03 | [COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md](./COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md) 잔여·후속 | 🔄 | 표 내 개별 항목은 해당 문서에서 관리. `COMPONENT_COMMONIZATION_PARALLEL_CHECKLIST.md`는 표상 잔여 ☐/🔄 없음(2026-04-11 explore) — 마스터 후속은 UI-01·ERP 등 별도 트랙. |
 | UI-04 | 상담사 콘솔 **상담일지** — 레이아웃·메모·맥락 API (`UnifiedModal`·토큰) | ☑ | 병렬 블록 **CL-B1** · 커밋 `89e03b2b9` |
@@ -315,7 +315,7 @@
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-04-16 | 병렬 블록 **P4-GLOBAL** ☑·헤더·진행률 스냅샷·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · `ERP_FINANCIAL_HUB_SMOKE` 「다음 단계」·ERP-P4-01·P4-03 비고 경로 정합 |
+| 2026-04-16 | 병렬 블록 **P4-GLOBAL** ☑·헤더·진행률 스냅샷·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · `ERP_FINANCIAL_HUB_SMOKE` 「다음 단계」·「위임 직후 보강 스모크」(P4-03-PAGES-B·P4-01-MEDIUM) · **번호 25~31** 보강(**UI-01-C**·**ERP-P4-05 잔여 DASH-B/C·ERP-A/B**·**종합관리 2화면** 30~31)·**중복 생략** 안내 · ERP-P4-01·P4-03·**P4-05**·**UI-01** 비고 갱신 |
 | 2026-04-17 | 참고 링크: `PENDING_ITEMS` §9 완료 부록, `CI_CODE_QUALITY_AND_MVN_GATE`, `FLYWAY_CORE_VS_OPS_TRACKS`; QA-01 비고에 `code-quality-check` `mvn test` 엄격 전파 반영 |
 | 2026-04-10 | 최초 작성 — ERP P4 무음 조회·MGButton 일부 반영, 온보딩·레이아웃·검증·운영 구역 추가 |
 | 2026-04-10 | 병렬 블록 ERP-B1·B2 표 추가, ERP-P4-05 진행 중 반영 |

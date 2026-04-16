@@ -6,8 +6,10 @@ import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { RoleUtils } from '../../constants/roles';
+import { useSession } from '../../contexts/SessionContext';
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
+  const { checkSession } = useSession();
   const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
 
   const goToProfile = () => {
@@ -54,10 +56,13 @@ const QuickActions = ({ user }) => {
     }
   };
 
-  const handleConsultantApplicationSuccess = (result) => {
+  const handleConsultantApplicationSuccess = async(result) => {
     console.log('상담사 신청 성공:', result);
-    // 페이지 새로고침 또는 사용자 정보 업데이트
-    window.location.reload();
+    try {
+      await checkSession(true);
+    } catch (err) {
+      console.warn('상담사 신청 후 세션 갱신 실패:', err);
+    }
   };
 
   const actionBtnProps = {

@@ -786,7 +786,7 @@ const UnifiedLogin = () => {
                 disabled={isLoading}
                 loading={isLoading}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
+                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
                 preventDoubleClick={false}
               >
                 로그인

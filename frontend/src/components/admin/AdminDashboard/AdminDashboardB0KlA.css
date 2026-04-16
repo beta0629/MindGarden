@@ -916,6 +916,84 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   outline-offset: 2px;
 }
 
+/* 관리 기능 그리드: 네비게이션 카드(Link) — 링크 기본 스타일 제거 */
+a.mg-v2-ad-b0kla__admin-card,
+a.mg-v2-ad-b0kla__admin-card:link,
+a.mg-v2-ad-b0kla__admin-card:visited {
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+a.mg-v2-ad-b0kla__admin-card:hover {
+  color: inherit;
+}
+
+/* 관리 기능 그리드: 비동기 액션 카드(plain button, MGButton 미사용) */
+button.mg-v2-ad-b0kla__admin-card:not(.mg-button) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: unset;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  font-size: inherit;
+  background: var(--ad-b0kla-card-bg);
+  color: inherit;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 1.5rem;
+  text-align: center;
+  overflow: visible;
+  cursor: pointer;
+}
+
+button.mg-v2-ad-b0kla__admin-card:not(.mg-button):hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--ad-b0kla-shadow);
+  background: var(--ad-b0kla-card-bg);
+  color: inherit;
+}
+
+button.mg-v2-ad-b0kla__admin-card:not(.mg-button):focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
+button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
+  cursor: not-allowed;
+  opacity: 0.88;
+}
+
+.mg-v2-ad-b0kla__admin-action-icon-slot {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-b0kla__admin-action-spinner {
+  color: var(--ad-b0kla-green);
+  animation: mg-v2-ad-b0kla-admin-card-spin 0.75s linear infinite;
+}
+
+@keyframes mg-v2-ad-b0kla-admin-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .mg-v2-ad-b0kla__admin-icon {
   width: 56px;
   height: 56px;

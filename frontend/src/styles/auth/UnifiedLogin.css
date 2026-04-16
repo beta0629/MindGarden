@@ -112,10 +112,34 @@
   gap: 20px;
 }
 
-/* MGButton primary: 헤더 배경색 폴백 제거 후에도 로그인 폼에서 대비 보장 (특이도) */
-.mg-v2-login-form .mg-button.mg-button--primary,
-.mg-v2-login-form .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  color: var(--mg-color-text-on-primary, var(--mg-white));
+/*
+ * 로그인 제출 버튼: 전역 unified-design-tokens 의 .mg-button--primary 와 mg-v2-button-primary 가
+ * --color-primary 등으로 배경을 밝게 덮어쓸 때 흰 글자 대비가 깨지는 문제 방지 (특이도 상향).
+ */
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary.mg-v2-button,
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary.mg-v2-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-color, #3d5246);
+  background: var(--mg-primary-color, #3d5246);
+  color: var(--mg-color-white, #ffffff);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-light, #4f6b5a);
+  background: var(--mg-primary-light, #4f6b5a);
+  color: var(--mg-color-white, #ffffff);
+}
+
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary .mg-button__text {
+  color: inherit;
+}
+
+/* 로딩 중: MGButton.css 의 .mg-button--loading 가 !important 로 배경을 덮으므로 동일 톤 유지 */
+.mg-v2-login-container .mg-v2-login-form .mg-button.mg-button--primary.mg-button--loading.mg-v2-button {
+  background-color: var(--mg-primary-color, #3d5246) !important;
+  color: var(--mg-color-white, #ffffff) !important;
 }
 
 .mg-v2-field {

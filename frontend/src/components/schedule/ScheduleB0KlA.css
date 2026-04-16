@@ -999,6 +999,24 @@
   text-align: center;
 }
 
+/*
+ * 상담일지 모달 BadgeSelect: B0KlA(.mg-v2-ad-b0kla .mg-v2-button-outline)보다
+ * 선택 칩(--selected) 배경·글자색이 우선하도록 스코프 보강 (토큰만 사용).
+ */
+.mg-v2-ad-b0kla .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline.mg-v2-badge-select__item--selected {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-light, #4a6354);
+  border-color: var(--mg-color-primary-light, #4a6354);
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+  box-shadow: var(--cs-shadow-soft);
+}
+
 .mg-v2-consultation-log-modal__textarea {
   min-height: 5rem;
 }

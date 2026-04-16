@@ -36,10 +36,12 @@ const BadgeSelect = ({
   // 5 === "5" 가 false가 되어 선택 표시·aria-checked가 항상 틀어지므로 문자열로 맞춤.
   // multiple: value 배열에 number·string이 섞여도 includes/!== 만으로는 불일치 → 동일 정책 적용.
   const isSelected = (optionValue) => {
-    const optStr = String(optionValue);
+    const optStr = String(optionValue ?? '').trim();
+    const norm = (x) => String(x ?? '').trim().toLowerCase();
+    const optNorm = norm(optionValue);
     return multiple
-      ? currentValue.some((v) => String(v) === optStr)
-      : String(currentValue) === optStr;
+      ? currentValue.some((v) => norm(v) === optNorm)
+      : norm(currentValue) === optNorm;
   };
 
   const handleClick = (optionValue) => {

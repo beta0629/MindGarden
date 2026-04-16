@@ -32,6 +32,25 @@ const PRIORITY_DISPLAY_BY_VALUE = DEFAULT_RISK_LEVEL_OPTIONS.reduce((acc, row) =
   return acc;
 }, {});
 
+const GOAL_ACHIEVEMENT_UI = new Set(['LOW', 'MEDIUM', 'HIGH']);
+
+/**
+ * 목표 달성도: 백엔드 EXCELLENT 등은 UI 3단계(LOW/MEDIUM/HIGH)에 없음 → HIGH로 매핑(최상 달성으로 표시).
+ */
+const normalizeGoalAchievementForForm = (raw) => {
+  const u = String(raw ?? '').trim().toUpperCase();
+  if (GOAL_ACHIEVEMENT_UI.has(u)) return u;
+  if (u === 'EXCELLENT' || u === 'VERY_HIGH' || u === 'VERYHIGH') return 'HIGH';
+  if (u === 'POOR' || u === 'VERY_LOW' || u === 'VERYLOW') return 'LOW';
+  return 'MEDIUM';
+};
+
+/** 위험도: PRIORITY 코드값과 칩 option.value 정합(대문자·트림). 알 수 없으면 LOW. */
+const normalizeRiskAssessmentForForm = (raw) => {
+  if (raw == null || String(raw).trim() === '') return 'LOW';
+  return String(raw).trim().toUpperCase();
+};
+
 /**
  * 상담일지 작성 모달 컴포넌트
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 큰 모달(fullscreen).
@@ -343,12 +362,12 @@ const ConsultationLogModal = ({
         nextSessionPlan: record.nextSessionPlan || '',
         homeworkAssigned: record.homeworkAssigned || '',
         homeworkDueDate: record.homeworkDueDate || '',
-        riskAssessment: record.riskAssessment || 'LOW',
+        riskAssessment: normalizeRiskAssessmentForForm(record.riskAssessment),
         riskFactors: record.riskFactors || '',
         emergencyResponsePlan: record.emergencyResponsePlan || '',
         progressEvaluation: record.progressEvaluation || '',
         progressScore: record.progressScore ?? 50,
-        goalAchievement: record.goalAchievement || 'MEDIUM',
+        goalAchievement: normalizeGoalAchievementForForm(record.goalAchievement),
         goalAchievementDetails: record.goalAchievementDetails || '',
         consultantObservations: record.consultantObservations || '',
         consultantAssessment: record.consultantAssessment || '',
@@ -445,12 +464,12 @@ const ConsultationLogModal = ({
             nextSessionPlan: record.nextSessionPlan || '',
             homeworkAssigned: record.homeworkAssigned || '',
             homeworkDueDate: record.homeworkDueDate || '',
-            riskAssessment: record.riskAssessment || 'LOW',
+            riskAssessment: normalizeRiskAssessmentForForm(record.riskAssessment),
             riskFactors: record.riskFactors || '',
             emergencyResponsePlan: record.emergencyResponsePlan || '',
             progressEvaluation: record.progressEvaluation || '',
             progressScore: record.progressScore ?? 50,
-            goalAchievement: record.goalAchievement || 'MEDIUM',
+            goalAchievement: normalizeGoalAchievementForForm(record.goalAchievement),
             goalAchievementDetails: record.goalAchievementDetails || '',
             consultantObservations: record.consultantObservations || '',
             consultantAssessment: record.consultantAssessment || '',

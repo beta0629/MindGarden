@@ -32,8 +32,9 @@ import './RatableConsultationsSection.css';
 /**
  * @since 2025-01-21
  */
-const RatableConsultationsSection = () => {
+const RatableConsultationsSection = ({ sessionUserOverride }) => {
   const { user } = useSession();
+  const effectiveUser = sessionUserOverride ?? user;
   const [ratableSchedules, setRatableSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [silentRefreshing, setSilentRefreshing] = useState(false);
@@ -42,7 +43,7 @@ const RatableConsultationsSection = () => {
   const [showTestData, setShowTestData] = useState(false);
 
   const loadRatableSchedules = useCallback(async(silent = false) => {
-    if (!user?.id) return;
+    if (!effectiveUser?.id) return;
 
     if (silent) {
       setSilentRefreshing(true);
@@ -50,9 +51,9 @@ const RatableConsultationsSection = () => {
       setLoading(true);
     }
     try {
-      console.log('💖 API 호출 시작:', `${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`);
+      console.log('💖 API 호출 시작:', `${API_BASE_URL}${RATING_API.CLIENT_RATABLE(effectiveUser.id)}`);
       
-      const response = await fetch(`${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`, {
+      const response = await fetch(`${API_BASE_URL}${RATING_API.CLIENT_RATABLE(effectiveUser.id)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -88,17 +89,17 @@ const RatableConsultationsSection = () => {
         setLoading(false);
       }
     }
-  }, [user?.id]);
+  }, [effectiveUser?.id]);
 
   useEffect(() => {
-    console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', user);
-    if (user?.id) {
-      console.log('💖 평가 가능한 상담 로드 시작, 사용자 ID:', user.id);
+    console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', effectiveUser);
+    if (effectiveUser?.id) {
+      console.log('💖 평가 가능한 상담 로드 시작, 사용자 ID:', effectiveUser.id);
       loadRatableSchedules(false);
     } else {
       console.log('💖 사용자 정보 없음, 평가 섹션 대기 중');
     }
-  }, [user, loadRatableSchedules]);
+  }, [effectiveUser, loadRatableSchedules]);
 
   const handleRateConsultant = (schedule) => {
     console.log('💖 평가하기 버튼 클릭:', schedule);

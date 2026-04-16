@@ -7,6 +7,7 @@ import notificationManager from '../../../utils/notification';
 import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { isLikelyNumericPrimaryKey } from '../../../utils/mypageProfilePayload';
 
 const maskEmail = (email) => {
   if (!email || !email.includes('@')) return email || '—';
@@ -183,7 +184,8 @@ const ProfileSection = ({
     applyEditingState(false);
   };
 
-  const displayName = formData.nickname || formData.userId || displayUser?.name || '—';
+  const nameFieldForDisplay = isLikelyNumericPrimaryKey(formData.userId) ? '' : formData.userId;
+  const displayName = formData.nickname || nameFieldForDisplay || displayUser?.name || '—';
 
   return (
     <>
@@ -274,7 +276,7 @@ const ProfileSection = ({
                 id="mg-mypage-user-id"
                 name="userId"
                 type="text"
-                value={formData.userId}
+                value={nameFieldForDisplay}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 autoComplete="name"

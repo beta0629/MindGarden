@@ -4,7 +4,12 @@ import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import { isConsultantUserProfileRole } from '../../constants/mypageProfileRoles';
-import { buildProfileUpdatePayload, mapProfileLoadResponseToForm } from '../../utils/mypageProfilePayload';
+import {
+  buildProfileUpdatePayload,
+  mapProfileLoadResponseToForm,
+  normalizeProfileFormNameField,
+  pickSessionProfileNameForForm
+} from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -126,7 +131,7 @@ const MyPage = () => {
         setUser(response);
         const mapped = mapProfileLoadResponseToForm(currentUser.role, response);
         if (mapped) {
-          setFormData(mapped);
+          setFormData(normalizeProfileFormNameField(mapped));
         }
       }
     } catch (error) {
@@ -134,7 +139,7 @@ const MyPage = () => {
       const currentUser = sessionManager.getUser() || sessionUser;
       if (currentUser) {
         const formDataToSet = {
-          userId: currentUser.userId || currentUser.name || '',
+          userId: pickSessionProfileNameForForm(currentUser),
           nickname: currentUser.nickname || '',
           email: currentUser.email || '',
           phone: currentUser.phone || currentUser.phoneNumber || '',
@@ -159,7 +164,7 @@ const MyPage = () => {
           hourlyRate: null
         };
         setUser(currentUser);
-        setFormData(formDataToSet);
+        setFormData(normalizeProfileFormNameField(formDataToSet));
       }
     }
   }, [sessionUser]);
@@ -242,7 +247,7 @@ const MyPage = () => {
       e.preventDefault();
     }
 
-    const dataToUpdate = formDataToUpdate || formData;
+    const dataToUpdate = normalizeProfileFormNameField({ ...(formDataToUpdate || formData) });
     const currentUser = sessionManager.getUser() || sessionUser;
     if (!currentUser) {
       throw new Error('세션에 사용자 정보가 없습니다');
@@ -326,7 +331,7 @@ const MyPage = () => {
       ...prev,
       ...dataAfterSave
     }));
-    setFormData(dataAfterSave);
+    setFormData(normalizeProfileFormNameField(dataAfterSave));
 
     notificationManager.show('프로필이 저장되었습니다.', 'success');
   });

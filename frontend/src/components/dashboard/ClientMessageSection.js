@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { apiGet } from '../../utils/ajax';
+import { normalizeApiListPayload, normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -100,10 +101,11 @@ const ClientMessageSection = ({ userId }) => {
         sort: 'createdAt,desc'
       });
 
+      const messagesList = normalizeApiListPayload(messagesResponse);
       let consultantMessages = [];
-      if (messagesResponse.success) {
+      if (Array.isArray(messagesList)) {
         // 미완료 상담 관련 메시지 제외
-        consultantMessages = (messagesResponse.data || []).filter(msg => {
+        consultantMessages = messagesList.filter(msg => {
           const title = (msg.title || '').toLowerCase();
           const content = (msg.content || '').toLowerCase();
           const isIncompleteNotification = 
@@ -124,9 +126,10 @@ const ClientMessageSection = ({ userId }) => {
       const notificationsResponse = await apiGet('/api/v1/system-notifications/active');
       
       let systemNotifications = [];
-      if (notificationsResponse.success) {
+      const noticeList = normalizeApiListPayload(notificationsResponse);
+      if (Array.isArray(noticeList)) {
         // 전체 공지만 필터링하여 중복 제거
-        systemNotifications = (notificationsResponse.data || [])
+        systemNotifications = noticeList
           .filter(notice => {
             const targetRoles = notice.targetRoles || [];
             // 전체 공지만 표시 (내담자 전용 공지는 제외)
@@ -179,9 +182,12 @@ const ClientMessageSection = ({ userId }) => {
       if (message.messageSource === 'SYSTEM') {
         // 시스템 공지 상세 조회
         const response = await apiGet(`/api/v1/system-notifications/${message.systemNotificationId}`);
-        if (response.success) {
+        const detail = normalizeApiObjectPayload(response) ?? (
+          response && typeof response === 'object' && !Array.isArray(response) ? response : null
+        );
+        if (detail) {
           setSelectedMessage({
-            ...response.data,
+            ...detail,
             messageType: 'SYSTEM_NOTICE',
             messageSource: 'SYSTEM'
           });
@@ -191,9 +197,12 @@ const ClientMessageSection = ({ userId }) => {
       } else {
         // 일반 메시지 상세 조회
         const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
-        if (response.success) {
+        const detail = normalizeApiObjectPayload(response) ?? (
+          response && typeof response === 'object' && !Array.isArray(response) ? response : null
+        );
+        if (detail) {
           setSelectedMessage({
-            ...response.data,
+            ...detail,
             messageSource: 'CONSULTANT'
           });
         } else {

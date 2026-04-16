@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import { normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './HealingCard.css';
@@ -32,11 +33,17 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             if (targetRole) params.append('userRole', targetRole);
 
             const response = await apiGet(`/api/healing/content?${params}`);
+            const payload = normalizeApiObjectPayload(response) ?? (
+                response && typeof response === 'object' && !Array.isArray(response) ? response : null
+            );
 
-            if (response.success) {
-                setHealingData(response.data);
+            if (payload) {
+                setHealingData(payload);
             } else {
-                setError(response.message || '힐링 컨텐츠를 불러오는데 실패했습니다.');
+                setError(
+                    (response && typeof response === 'object' && response.message) ||
+                    '힐링 컨텐츠를 불러오는데 실패했습니다.'
+                );
             }
         } catch (err) {
             console.error('힐링 컨텐츠 로딩 오류:', err);
@@ -56,11 +63,17 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             if (targetRole) params.append('userRole', targetRole);
 
             const response = await apiGet(`/api/healing/refresh?${params}`);
+            const payload = normalizeApiObjectPayload(response) ?? (
+                response && typeof response === 'object' && !Array.isArray(response) ? response : null
+            );
 
-            if (response.success) {
-                setHealingData(response.data);
+            if (payload) {
+                setHealingData(payload);
             } else {
-                setError(response.message || '새로운 힐링 컨텐츠를 불러오는데 실패했습니다.');
+                setError(
+                    (response && typeof response === 'object' && response.message) ||
+                    '새로운 힐링 컨텐츠를 불러오는데 실패했습니다.'
+                );
             }
         } catch (err) {
             console.error('힐링 컨텐츠 새로고침 오류:', err);

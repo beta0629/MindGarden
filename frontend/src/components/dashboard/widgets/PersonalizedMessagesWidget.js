@@ -281,11 +281,11 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     setIsLoading(true);
     switch (action) {
       case 'mapping':
-        navigate('/client/consultant-mapping');
+        navigate('/client/session-management');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'payment':
-        navigate('/client/payment');
+        navigate('/client/payment-history');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'consultants':

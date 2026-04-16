@@ -5,6 +5,7 @@ import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
+import { normalizeApiListPayload, normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
 import { 
   Heart, 
   Calendar, 
@@ -37,8 +38,9 @@ const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
 
 /**
  * 내담자 대시보드 — 화사하고 산뜻한 느낌의 디자인
+ * 세션(sessionManager / SessionContext) 우선, App 라우트의 user prop은 보조 소스.
  */
-const ClientDashboard = () => {
+const ClientDashboard = ({ user: userFromRoute }) => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   
@@ -132,12 +134,16 @@ const ClientDashboard = () => {
     todaySchedules: [],
     weeklySchedules: [],
     upcomingSchedules: [],
+    upcomingConsultations: [],
+    completedConsultations: [],
     completedCount: 0,
     totalSessions: 0,
     usedSessions: 0,
     remainingSessions: 0
   });
   const [clientStatus, setClientStatus] = useState(null);
+  /** 결제·회기 섹션과 KPI 공유 — apiGet 래핑 해제 후 배열만 전달 */
+  const [sharedClientMappings, setSharedClientMappings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -156,99 +162,116 @@ const ClientDashboard = () => {
   }, []);
 
   const loadClientData = useCallback(async() => {
-    const currentUser = sessionUser || user;
+    const currentUser = sessionUser || user || userFromRoute;
     if (!currentUser?.id) {
+      setIsLoading(false);
       return;
     }
 
     try {
       setIsLoading(true);
 
-      const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
+      const scheduleRaw = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
         userId: currentUser.id,
         userRole: 'CLIENT'
       });
+      const schedules = normalizeScheduleListPayload(scheduleRaw);
 
-      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
-      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${currentUser.id}`);
+      const mappingRaw = await apiGet(`/api/v1/admin/mappings/client?clientId=${currentUser.id}`);
+      const mappings = normalizeApiListPayload(mappingRaw);
+      setSharedClientMappings(mappings);
 
       let totalSessions = 0;
       let usedSessions = 0;
       let remainingSessions = 0;
 
-      if (mappingResponse?.success && mappingResponse?.data) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+      const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
+      totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+      usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
+      remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
+
+      const hasActive = mappings.some(m => m.status === 'ACTIVE');
+      const hasPending = mappings.some(m => m.status === 'PENDING');
+      const mappingStatus = mappings.length === 0
+        ? 'NONE'
+        : (hasActive ? 'ACTIVE' : (hasPending ? 'PENDING' : (mappings[0].status || 'NONE')));
+      setClientStatus({
+        mappingStatus,
+        paymentStatus: mappings.some(m => m.paymentStatus === 'PENDING') ? 'PENDING' : null
+      });
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      const todaySchedules = schedules.filter(s => s.date === todayStr);
+
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      const endOfWeek = new Date(today);
+      endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+
+      const weeklySchedules = schedules.filter(schedule => {
+        const scheduleDate = new Date(schedule.date);
+        return scheduleDate >= startOfWeek && scheduleDate <= endOfWeek;
+      });
+
+      const upcomingSchedules = schedules.filter(schedule => {
+        const scheduleDate = new Date(schedule.date);
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        const activeMappings = mappingResponse.data.filter(mapping => mapping.status === 'ACTIVE');
-        totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-        usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
-        remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
-      }
+        return scheduleDate > today && schedule.status === 'CONFIRMED';
+      }).slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
 
-      if (scheduleResponse?.success && scheduleResponse?.data) {
-        const schedules = scheduleResponse.data;
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+      const completedList = schedules.filter(s => s.status === 'COMPLETED');
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+      const completedCount = completedList.length;
 
-        const todaySchedules = schedules.filter(s => s.date === todayStr);
-
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        const endOfWeek = new Date(today);
-        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
-        
-        const weeklySchedules = schedules.filter(schedule => {
-          const scheduleDate = new Date(schedule.date);
-          return scheduleDate >= startOfWeek && scheduleDate <= endOfWeek;
-        });
-
-        const upcomingSchedules = schedules.filter(schedule => {
-          const scheduleDate = new Date(schedule.date);
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          return scheduleDate > today && schedule.status === 'CONFIRMED';
-        }).slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
-
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        const completedCount = schedules.filter(s => s.status === 'COMPLETED').length;
-
-        setConsultationData({
-          todaySchedules,
-          weeklySchedules,
-          upcomingSchedules,
-          completedCount,
-          totalSessions, // 매핑 정보에서 가져온 값
-          usedSessions, // 매핑 정보에서 가져온 값
-          remainingSessions // 매핑 정보에서 가져온 값 (실제 구매한 회기 수)
-        });
-      } else {
-        setConsultationData(prev => ({
-          ...prev,
-          totalSessions,
-          usedSessions,
-          remainingSessions
-        }));
-      }
+      setConsultationData({
+        todaySchedules,
+        weeklySchedules,
+        upcomingSchedules,
+        upcomingConsultations: upcomingSchedules,
+        completedConsultations: completedList,
+        completedCount,
+        totalSessions,
+        usedSessions,
+        remainingSessions
+      });
 
     } catch (error) {
       console.error('❌ 내담자 데이터 로드 실패:', error);
+      setSharedClientMappings([]);
+      setClientStatus({ mappingStatus: 'NONE', paymentStatus: null });
+      setConsultationData({
+        todaySchedules: [],
+        weeklySchedules: [],
+        upcomingSchedules: [],
+        upcomingConsultations: [],
+        completedConsultations: [],
+        completedCount: 0,
+        totalSessions: 0,
+        usedSessions: 0,
+        remainingSessions: 0
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, sessionUser?.id]);
+  }, [user?.id, sessionUser?.id, userFromRoute?.id]);
 
   useEffect(() => {
     if (sessionLoading) {
       return;
     }
     
-    const currentUser = sessionUser || user;
+    const currentUser = sessionUser || user || userFromRoute;
     const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
     
     if (currentIsLoggedIn && currentUser?.id) {
       loadClientData();
     }
-  }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]);
+  }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, userFromRoute?.id, loadClientData]);
 
-  const currentUser = sessionUser || user;
+  const currentUser = sessionUser || user || userFromRoute;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
 
   const pageShell = (body) => (
@@ -319,7 +342,7 @@ const ClientDashboard = () => {
             label: '오늘의 상담',
             value: consultationData.todaySchedules.length,
             iconVariant: 'blue',
-            onClick: () => navigate('/client/consultations?filter=today')
+            onClick: () => navigate('/client/schedule')
           },
           {
             id: 'completedCount',
@@ -327,7 +350,7 @@ const ClientDashboard = () => {
             label: '완료한 상담',
             value: consultationData.completedCount,
             iconVariant: 'green',
-            onClick: () => navigate('/client/consultations?filter=completed')
+            onClick: () => navigate('/client/session-management')
           },
           {
             id: 'weeklySchedules',
@@ -335,7 +358,7 @@ const ClientDashboard = () => {
             label: '이번 주 상담',
             value: consultationData.weeklySchedules.length,
             iconVariant: 'orange',
-            onClick: () => navigate('/client/consultations?filter=weekly')
+            onClick: () => navigate('/client/schedule')
           },
           {
             id: 'remainingSessions',
@@ -343,7 +366,7 @@ const ClientDashboard = () => {
             label: '남은 회기',
             value: consultationData.remainingSessions,
             iconVariant: 'gray',
-            onClick: () => navigate('/client/mappings')
+            onClick: () => navigate('/client/session-management')
           }
         ]} />
 
@@ -358,7 +381,7 @@ const ClientDashboard = () => {
                 <div 
                   key={index} 
                   className="client-dashboard__schedule-item clickable"
-                  onClick={() => navigate(`/client/consultations/${schedule.id || index}`)}
+                  onClick={() => navigate('/client/schedule')}
                   title="상담 상세 보기"
                 >
                   <div className="client-dashboard__schedule-date">
@@ -387,16 +410,20 @@ const ClientDashboard = () => {
 
         {/* 맞춤형 메시지 */}
         <ClientPersonalizedMessages 
-          user={user}
+          user={currentUser}
           consultationData={consultationData}
           clientStatus={clientStatus}
         />
 
-        {/* 결제 및 회기 현황 */}
-        <ClientPaymentSessionsSection userId={currentUser?.id} />
+        {/* 결제 및 회기 현황 — 상위에서 로드한 매핑 배열 재사용(이중 호출 방지) */}
+        <ClientPaymentSessionsSection
+          userId={currentUser?.id}
+          supplyMappingsFromParent
+          parentMappings={sharedClientMappings}
+        />
 
         {/* 상담사 평가 */}
-        <RatableConsultationsSection />
+        <RatableConsultationsSection sessionUserOverride={currentUser} />
 
         {/* 오늘의 힐링 카드 */}
         <HealingCard userRole="CLIENT" />

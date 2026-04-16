@@ -673,20 +673,20 @@ const TabletLogin = () => {
       const userRole = user.role;
       let profileUrl = '/profile';
       
-      // 역할에 따른 프로필 페이지 설정
+      // 역할에 따른 프로필(MyPage) — App.js 등록 경로와 일치
       switch (userRole) {
         case 'ADMIN':
         case 'SUPER_ADMIN':
-          profileUrl = '/admin/profile';
+          profileUrl = '/admin/mypage';
           break;
         case 'CONSULTANT':
-          profileUrl = '/consultant/profile';
+          profileUrl = '/consultant/mypage';
           break;
         case 'CLIENT':
-          profileUrl = '/client/profile';
+          profileUrl = '/client/mypage';
           break;
         default:
-          profileUrl = '/profile';
+          profileUrl = '/mypage';
       }
       
       console.log(`👤 프로필 페이지로 이동: ${profileUrl}`);

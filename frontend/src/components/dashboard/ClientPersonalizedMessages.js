@@ -7,9 +7,9 @@ import ConsultationGuideModal from '../common/ConsultationGuideModal';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
+
 /**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
-/**
  * 매핑 상태, 상담 진행 상황, 결제 상태 등을 기반으로 동적 메시지 생성
  */
 const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) => {
@@ -42,11 +42,11 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         setIsLoading(false);
         break;
       case 'mapping':
-        navigate('/client/consultant-mapping');
+        navigate('/client/session-management');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'payment':
-        navigate('/client/payment');
+        navigate('/client/payment-history');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'consultants':
@@ -58,7 +58,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'welcome':
-        navigate('/client/profile');
+        navigate('/client/settings');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'pending':
@@ -69,7 +69,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         setIsLoading(false);
         break;
       case 'general':
-        navigate('/client/profile');
+        navigate('/client/settings');
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'tip':
@@ -116,18 +116,22 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       mappingStatus: 'NONE'
     };
 
-    if (clientStatus?.mappingStatus) {
+    if (clientStatus?.mappingStatus && clientStatus.mappingStatus !== 'NONE') {
       status.hasMapping = true;
       status.mappingStatus = clientStatus.mappingStatus;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       status.hasActiveMapping = clientStatus.mappingStatus === 'ACTIVE';
     }
 
-    if (consultationData?.upcomingConsultations?.length > 0) {
+    const upcomingList = consultationData?.upcomingConsultations || consultationData?.upcomingSchedules;
+    if (Array.isArray(upcomingList) && upcomingList.length > 0) {
       status.hasUpcomingConsultations = true;
     }
 
-    if (consultationData?.completedConsultations?.length > 0) {
+    if (
+      (Array.isArray(consultationData?.completedConsultations) && consultationData.completedConsultations.length > 0) ||
+      (consultationData?.completedCount ?? 0) > 0
+    ) {
       status.hasCompletedConsultations = true;
     }
 
@@ -182,12 +186,22 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         action: 'pending'
       });
     } else if (status.hasUpcomingConsultations) {
-      const nextConsultation = consultationData.upcomingConsultations[0];
+      const upcomingList = consultationData.upcomingConsultations || consultationData.upcomingSchedules || [];
+      const nextConsultation = upcomingList[0];
+      const consultantLabel = nextConsultation
+        ? (nextConsultation.consultantName || nextConsultation.title || '상담')
+        : '';
+      const datePart = nextConsultation?.date
+        ? new Date(nextConsultation.date).toLocaleDateString('ko-KR')
+        : '';
+      const timePart = nextConsultation?.startTime || '';
       messages.push({
         id: 'upcoming-consultation',
         icon: 'calendar-check',
         title: '다가오는 상담',
-        subtitle: `${nextConsultation.consultantName} 상담사와 ${new Date(nextConsultation.date).toLocaleDateString('ko-KR')} ${nextConsultation.startTime} 예정`,
+        subtitle: nextConsultation
+          ? `${consultantLabel} 상담사와 ${datePart} ${timePart} 예정`.trim()
+          : '예정된 상담 일정을 확인하세요',
         colorClass: 'success',
         action: 'session-status'
       });

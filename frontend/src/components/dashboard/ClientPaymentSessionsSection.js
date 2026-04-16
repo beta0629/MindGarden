@@ -9,6 +9,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
+import { normalizeApiListPayload } from '../../utils/apiResponseNormalize';
 
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -22,7 +23,49 @@ const PAYMENT_KPI_ICON_SIZE = 22;
 const PAYMENT_ITEM_ICON_SIZE = 20;
 const PAYMENT_STATE_ICON_SIZE = 40;
 
-const ClientPaymentSessionsSection = ({ userId }) => {
+const applyMappingsToPaymentState = (mappings, setPaymentData) => {
+  if (!Array.isArray(mappings)) {
+    setPaymentData({
+      totalSessions: 0,
+      usedSessions: 0,
+      remainingSessions: 0,
+      totalAmount: 0,
+      recentPayments: []
+    });
+    return;
+  }
+
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
+  const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+  const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
+  const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
+  const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
+
+  const recentPayments = mappings
+    .filter(mapping => mapping.paymentDate)
+    .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
+    .slice(0, 5)
+    .map(mapping => ({
+      id: mapping.id,
+      packageName: mapping.packageName,
+      amount: mapping.packagePrice,
+      sessions: mapping.totalSessions,
+      paymentDate: mapping.paymentDate,
+      paymentMethod: mapping.paymentMethod,
+      status: mapping.paymentStatus
+    }));
+
+  setPaymentData({
+    totalSessions,
+    usedSessions,
+    remainingSessions,
+    totalAmount,
+    recentPayments
+  });
+};
+
+const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parentMappings }) => {
   const [paymentData, setPaymentData] = useState({
     totalSessions: 0,
     usedSessions: 0,
@@ -34,11 +77,28 @@ const ClientPaymentSessionsSection = ({ userId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (supplyMappingsFromParent) {
+      if (parentMappings === null || parentMappings === undefined) {
+        setIsLoading(true);
+        return;
+      }
+      try {
+        setError(null);
+        applyMappingsToPaymentState(parentMappings, setPaymentData);
+      } catch (e) {
+        console.error('결제 및 회기 데이터 적용 실패:', e);
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     if (!userId) {
       return;
     }
     loadPaymentSessionsData();
-  }, [userId]);
+  }, [userId, supplyMappingsFromParent, parentMappings]);
 
   const loadPaymentSessionsData = async() => {
     try {
@@ -52,47 +112,9 @@ const ClientPaymentSessionsSection = ({ userId }) => {
 
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
-      
-      if (mappingResponse.success && mappingResponse.data) {
-        const mappings = mappingResponse.data;
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
-        const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-        const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
-        const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
-        const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
+      const mappings = normalizeApiListPayload(mappingResponse);
 
-        const recentPayments = mappings
-          .filter(mapping => mapping.paymentDate)
-          .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
-          .slice(0, 5)
-          .map(mapping => ({
-            id: mapping.id,
-            packageName: mapping.packageName,
-            amount: mapping.packagePrice,
-            sessions: mapping.totalSessions,
-            paymentDate: mapping.paymentDate,
-            paymentMethod: mapping.paymentMethod,
-            status: mapping.paymentStatus
-          }));
-
-        setPaymentData({
-          totalSessions,
-          usedSessions,
-          remainingSessions,
-          totalAmount,
-          recentPayments
-        });
-      } else {
-        setPaymentData({
-          totalSessions: 0,
-          usedSessions: 0,
-          remainingSessions: 0,
-          totalAmount: 0,
-          recentPayments: []
-        });
-      }
+      applyMappingsToPaymentState(mappings, setPaymentData);
     } catch (error) {
       console.error('결제 및 회기 데이터 로드 실패:', error);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');

@@ -95,18 +95,18 @@
 .mg-v2-ad-b0kla .mg-v2-mapping-table__actions-inner .mg-v2-button--danger,
 .mg-v2-ad-b0kla .mg-v2-mapping-table__actions-inner .mg-v2-button-danger,
 .mg-v2-ad-b0kla .mg-v2-mapping-card .mg-v2-card-footer .mg-v2-button--danger {
-  background: var(--mg-error-600, #dc2626);
-  color: var(--mg-white, #ffffff);
-  border: 1px solid var(--mg-error-700, #b91c1c);
+  background: var(--mg-error-600);
+  color: var(--mg-white);
+  border: 1px solid var(--mg-error-700);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--cs-shadow-xs);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row__actions .mg-v2-button--danger:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-mapping-table__actions-inner .mg-v2-button--danger:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-mapping-table__actions-inner .mg-v2-button-danger:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-mapping-card .mg-v2-card-footer .mg-v2-button--danger:hover:not(:disabled) {
-  background: var(--mg-error-700, #b91c1c);
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25);
+  background: var(--mg-error-700);
+  box-shadow: var(--cs-shadow-error);
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-secondary,

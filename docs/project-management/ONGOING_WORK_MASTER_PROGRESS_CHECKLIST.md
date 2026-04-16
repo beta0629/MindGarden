@@ -6,6 +6,8 @@
 **최종 갱신**: 2026-04-16 — 병렬 블록 **P4-GLOBAL**·ERP-P4-04 비고 보정 (전역 `erpMgButtonProps` 기준일 2026-04-15) · **다음 병렬 검증 게이트**(P4-04 직후 ERP-P4-01·ERP-P4-03·UI-01) — `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 「다음 단계」·「위임 직후 보강 스모크」(ERP-P4-03-PAGES-B·ERP-P4-01-MEDIUM)·**번호 25~37**(25~31에 더해 **ERP-P4-05-REM-ADMIN / REM-CLIENT / REM-MISC** 직후 **32~37** 웰니스·권한·위젯 대시보드·클라이언트·헤더·태블릿 로그인) 연계 · **TABLET-P4-05**는 스모크 **37번**·「TABLET-P4-05 병합」과 SSOT · 구역 1 **ERP-P4-01·P4-03·P4-05**·구역 2 **UI-01** 비고 갱신 · §9 완료 부록·CI/OPS/Flyway 문서 링크는 2026-04-17 기준 유지  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
+**UI/QA 비고**: LEGACY-ADMIN-MGMT-GRID·AUTH-UNIFIED·B0KLA 에러 토큰은 각각 `core-coder`/위임 산출물 전제로 두고, 본 체크리스트는 진행도·`ERP_FINANCIAL_HUB_SMOKE`(번호 38~39 등) 스모크 연계만 기록한다.
+
 ---
 
 ## 병렬 블록 배치 (현재 스프린트)

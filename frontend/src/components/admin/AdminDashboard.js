@@ -3,8 +3,43 @@ import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
-import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
+import { FaUsers, FaDollarSign, FaChartLine, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
+import {
+    Activity,
+    AlertTriangle,
+    BarChart,
+    BellRing,
+    Brain,
+    Calendar,
+    CalendarDays,
+    Check,
+    CheckCircle,
+    ClipboardList,
+    Clock,
+    Database,
+    DollarSign,
+    Heart,
+    LayoutDashboard,
+    Link2,
+    Megaphone,
+    Merge,
+    MessageCircle,
+    MessageSquare,
+    PieChart,
+    Receipt,
+    RotateCcw,
+    Search,
+    Settings,
+    Shield,
+    Tags,
+    Target,
+    TrendingUp,
+    Trophy,
+    User,
+    UserCog,
+    UserRound,
+    Users
+} from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SafeText from '../common/SafeText';
@@ -51,6 +86,18 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+
+/** 관리 기능 카드 상단 아이콘 (B0KlA 톤 배지 + Lucide, AdminDashboardV2와 동일 계열) */
+function AdminMgmtCardIcon({ icon: LucideIcon, tone = 'blue' }) {
+    return (
+        <span
+            className={`mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--${tone}`}
+            aria-hidden
+        >
+            <LucideIcon size={28} strokeWidth={2} />
+        </span>
+    );
+}
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
@@ -1262,12 +1309,12 @@ const AdminDashboard = ({ user: propUser }) => {
                 subtitle="시스템 관리 및 설정 기능"
                 icon={<Settings />}
             >
-                <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
+                <div className="mg-v2-ad-b0kla__admin-grid">
                     <MGButton
                         type="button"
-                        variant="outline"
                         className={buildErpMgButtonClassName({
-                            variant: 'outline',
+                            variant: 'primary',
+                            size: 'md',
                             loading: false,
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
@@ -1275,14 +1322,15 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
                         preventDoubleClick={false}
                     >
+                        <AdminMgmtCardIcon icon={Users} tone="blue" />
                         <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
                     </MGButton>
                     <MGButton
                         type="button"
-                        variant="outline"
                         className={buildErpMgButtonClassName({
-                            variant: 'outline',
+                            variant: 'primary',
+                            size: 'md',
                             loading: false,
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
@@ -1290,14 +1338,15 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
                         preventDoubleClick={false}
                     >
+                        <AdminMgmtCardIcon icon={CalendarDays} tone="green" />
                         <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
                     </MGButton>
                     <MGButton
                         type="button"
-                        variant="outline"
                         className={buildErpMgButtonClassName({
-                            variant: 'outline',
+                            variant: 'primary',
+                            size: 'md',
                             loading: false,
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
@@ -1305,186 +1354,284 @@ const AdminDashboard = ({ user: propUser }) => {
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
                         preventDoubleClick={false}
                     >
+                        <AdminMgmtCardIcon icon={ClipboardList} tone="orange" />
                         <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
                     </MGButton>
-                </div>
-                <div className="mg-management-grid">
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}>
-                        <div className="mg-management-icon">
-                            <FaCalendarAlt />
-                        </div>
-                        <h3>스케줄 관리</h3>
-                        <p className="mg-management-description">상담 일정을 관리하고 조정합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}>
-                        <div className="mg-management-icon">
-                            <FaCalendarCheck />
-                        </div>
-                        <h3>회기 관리</h3>
-                        <p className="mg-management-description">상담 회기를 등록하고 관리합니다</p>
-                    </div>
-                    
                     <MGButton
                         type="button"
                         className={buildErpMgButtonClassName({
                             variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Calendar} tone="green" />
+                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Target} tone="gray" />
+                        <span className="mg-v2-ad-b0kla__admin-label">회기 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">상담 회기를 등록하고 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
                             loading: autoCompleteLoading,
-                            className: 'mg-management-card'
+                            className: 'mg-v2-ad-b0kla__admin-card'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleAutoCompleteSchedules}
                         loading={autoCompleteLoading}
                         preventDoubleClick={false}
                     >
-                        <h3>스케줄 자동 완료</h3>
-                        <p className="mg-management-description">지난 스케줄을 자동으로 완료 처리합니다</p>
+                        <AdminMgmtCardIcon icon={CheckCircle} tone="green" />
+                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄을 자동으로 완료 처리합니다</span>
                     </MGButton>
-                    
                     <MGButton
                         type="button"
                         className={buildErpMgButtonClassName({
                             variant: 'primary',
+                            size: 'md',
                             loading: autoCompleteWithReminderLoading,
-                            className: 'mg-management-card'
+                            className: 'mg-v2-ad-b0kla__admin-card'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleAutoCompleteWithReminder}
                         loading={autoCompleteWithReminderLoading}
                         preventDoubleClick={false}
                     >
-                        <h3>스케줄 완료 + 알림</h3>
-                        <p className="mg-management-description">지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
+                        <AdminMgmtCardIcon icon={BellRing} tone="orange" />
+                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄 완료 처리 및 상담일지 미작성 알림</span>
                     </MGButton>
-                    
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}>
-                        <div className="mg-management-icon">
-                            <FaUserTie />
-                        </div>
-                        <h3>상담사 관리</h3>
-                        <p className="mg-management-description">상담사 정보를 관리합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}>
-                        <div className="mg-management-icon">
-                            <FaUsers />
-                        </div>
-                        <h3>내담자 관리</h3>
-                        <p className="mg-management-description">내담자 정보를 관리합니다</p>
-                    </div>
-                    
-                    {/* 매칭 시스템 - 관리자 대시보드에서 항상 표시 */}
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}>
-                        <div className="mg-management-icon">
-                            <FaLink />
-                        </div>
-                        <h3>매칭 시스템</h3>
-                        <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
-                    </div>
-                    
-                    {/* 사용자 관리 기능 임시 숨김
-                    {PermissionChecks.canManageUsers(userPermissions) && (
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}>
-                            <div className="mg-management-icon">
-                                <FaUserCog />
-                            </div>
-                            <h3>사용자 관리</h3>
-                            <p className="mg-management-description">사용자 역할 변경 및 권한 관리</p>
-                        </div>
-                    )}
-                    */}
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}>
-                        <div className="mg-management-icon">
-                            <FaCog />
-                        </div>
-                        <h3>공통코드</h3>
-                        <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}>
-                        <div className="mg-management-icon">
-                            <FaBell />
-                        </div>
-                        <h3>시스템 공지 관리</h3>
-                        <p className="mg-management-description">전체/상담사/내담자 공지를 관리합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}>
-                        <div className="mg-management-icon">
-                            <LayoutDashboard />
-                        </div>
-                        <h3>대시보드 관리</h3>
-                        <p className="mg-management-description">역할별 대시보드를 관리합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}>
-                        <div className="mg-management-icon">
-                            <Settings />
-                        </div>
-                        <h3>시스템 설정</h3>
-                        <p className="mg-management-description">OpenAI API 키 및 시스템 설정을 관리합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CACHE_MONITORING)}>
-                        <div className="mg-management-icon">
-                            <FaDatabase />
-                        </div>
-                        <h3>캐시 모니터링</h3>
-                        <p className="mg-management-description">시스템 캐시 성능을 실시간으로 모니터링합니다</p>
-                    </div>
-
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SECURITY_MONITORING)}>
-                        <div className="mg-management-icon">
-                            <FaShieldAlt />
-                        </div>
-                        <h3>보안 모니터링</h3>
-                        <p className="mg-management-description">실시간 보안 위협 탐지 및 시스템 보안 관리</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}>
-                        <div className="mg-management-icon">
-                            <FaRocket />
-                        </div>
-                        <h3>API 성능 모니터링</h3>
-                        <p className="mg-management-description">API 응답 시간과 성능 지표를 실시간으로 추적합니다</p>
-                    </div>
-                    
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>
-                        <div className="mg-management-icon">
-                            <MessageSquare />
-                        </div>
-                        <h3>메시지 관리</h3>
-                        <p className="mg-management-description">상담사-내담자 메시지를 관리합니다</p>
-                    </div>
-
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}>
-                        <div className="mg-management-icon">
-                            <FaFileAlt />
-                        </div>
-                        <h3>심리검사 리포트(AI)</h3>
-                        <p className="mg-management-description">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</p>
-                    </div>
-                    
-                    {/* 웰니스 알림 관리 기능 임시 숨김
-                    <div className="mg-management-card" onClick={() => navigate('/admin/wellness')}>
-                        <div className="mg-management-icon">
-                            <Sparkles />
-                        </div>
-                        <h3>웰니스 알림 관리</h3>
-                        <p className="mg-management-description">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</p>
-                    </div>
-                    */}
-                    
-                    <div className="mg-management-card" onClick={handleMergeDuplicateMappings}>
-                        <div className="mg-management-icon">
-                            <FaCompressAlt />
-                        </div>
-                        <h3>중복 매칭 통합</h3>
-                        <p className="mg-management-description">중복된 상담사-내담자 매칭을 통합합니다</p>
-                    </div>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={UserCog} tone="blue" />
+                        <span className="mg-v2-ad-b0kla__admin-label">상담사 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={UserRound} tone="green" />
+                        <span className="mg-v2-ad-b0kla__admin-label">내담자 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Link2} tone="orange" />
+                        <span className="mg-v2-ad-b0kla__admin-label">매칭 시스템</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">상담사와 내담자 매칭을 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Tags} tone="gray" />
+                        <span className="mg-v2-ad-b0kla__admin-label">공통코드</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">시스템 공통코드를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Megaphone} tone="blue" />
+                        <span className="mg-v2-ad-b0kla__admin-label">시스템 공지 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">전체/상담사/내담자 공지를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={LayoutDashboard} tone="gray" />
+                        <span className="mg-v2-ad-b0kla__admin-label">대시보드 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">역할별 대시보드를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Settings} tone="gray" />
+                        <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.CACHE_MONITORING)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Database} tone="gray" />
+                        <span className="mg-v2-ad-b0kla__admin-label">캐시 모니터링</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">시스템 캐시 성능을 실시간으로 모니터링합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.SECURITY_MONITORING)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Shield} tone="orange" />
+                        <span className="mg-v2-ad-b0kla__admin-label">보안 모니터링</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">실시간 보안 위협 탐지 및 시스템 보안 관리</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Activity} tone="green" />
+                        <span className="mg-v2-ad-b0kla__admin-label">API 성능 모니터링</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">API 응답 시간과 성능 지표를 실시간으로 추적합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={MessageCircle} tone="blue" />
+                        <span className="mg-v2-ad-b0kla__admin-label">메시지 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">상담사-내담자 메시지를 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Brain} tone="orange" />
+                        <span className="mg-v2-ad-b0kla__admin-label">심리검사 리포트(AI)</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</span>
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: false,
+                            className: 'mg-v2-ad-b0kla__admin-card'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={handleMergeDuplicateMappings}
+                        preventDoubleClick={false}
+                    >
+                        <AdminMgmtCardIcon icon={Merge} tone="orange" />
+                        <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
+                    </MGButton>
                 </div>
             </DashboardSection>
 

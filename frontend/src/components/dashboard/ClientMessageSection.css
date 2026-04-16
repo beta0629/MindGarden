@@ -50,8 +50,12 @@
 
 /* 메시지 아이템 */
 .client-message-item {
-  background: linear-gradient(135deg, rgba(255, 245, 235, 0.6), rgba(255, 250, 240, 0.6));
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 60%, transparent),
+    color-mix(in srgb, var(--mg-warning-50) 60%, transparent)
+  );
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
   display: flex;
@@ -59,33 +63,41 @@
   gap: var(--spacing-md);
   cursor: pointer;
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--mg-pink-300) 10%, transparent);
 }
 
 .client-message-item:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-  border-color: rgba(255, 182, 193, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
+  border-color: color-mix(in srgb, var(--mg-pink-300) 40%, transparent);
 }
 
 .client-message-item--unread {
-  background: linear-gradient(135deg, rgba(255, 240, 245, 0.8), rgba(255, 245, 250, 0.8));
-  border-color: rgba(255, 182, 193, 0.4);
-  box-shadow: 0 2px 12px rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 80%, transparent),
+    color-mix(in srgb, var(--mg-pink-100) 80%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--mg-pink-300) 40%, transparent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
 }
 
 .client-message-item--unread:hover {
-  box-shadow: 0 4px 16px rgba(255, 182, 193, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .client-message-item--system {
-  background: linear-gradient(135deg, rgba(230, 245, 255, 0.6), rgba(240, 250, 255, 0.6));
-  border-color: rgba(135, 206, 235, 0.3);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-info-50) 60%, transparent),
+    color-mix(in srgb, var(--mg-primary-50) 60%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--mg-info-300) 30%, transparent);
 }
 
 .client-message-item--system:hover {
-  border-color: rgba(135, 206, 235, 0.5);
-  box-shadow: 0 4px 12px rgba(135, 206, 235, 0.2);
+  border-color: color-mix(in srgb, var(--mg-info-300) 50%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-info-300) 20%, transparent);
 }
 
 .client-message-item__icon {
@@ -105,27 +117,27 @@
 
 /* 메시지 타입별 아이콘 배경색 */
 .message-type-general {
-  background: linear-gradient(135deg, #B8B8D0, #D0D0E8);
+  background: linear-gradient(135deg, var(--mg-purple-200), var(--mg-purple-100));
 }
 
 .message-type-followup {
-  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-300), var(--mg-info-200));
 }
 
 .message-type-homework {
-  background: linear-gradient(135deg, #98D8C8, #B4E7CE);
+  background: linear-gradient(135deg, var(--mg-success-300), var(--mg-success-200));
 }
 
 .message-type-reminder {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
+  background: linear-gradient(135deg, var(--mg-warning-400), var(--mg-warning-500));
 }
 
 .message-type-urgent {
-  background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
+  background: linear-gradient(135deg, var(--mg-pink-500), var(--mg-pink-300));
 }
 
 .message-type-system {
-  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-300), var(--mg-info-200));
 }
 
 .client-message-item__content {
@@ -177,7 +189,7 @@
   border-radius: var(--border-radius-full);
   background: var(--color-danger);
   flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(255, 107, 157, 0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mg-pink-500) 50%, transparent);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -225,8 +237,12 @@
 
 /* 빈 상태 */
 .client-message-empty {
-  background: linear-gradient(135deg, rgba(255, 245, 235, 0.4), rgba(255, 250, 240, 0.4));
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 40%, transparent),
+    color-mix(in srgb, var(--mg-warning-50) 40%, transparent)
+  );
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xxxl);
   display: flex;
@@ -241,11 +257,11 @@
   width: 80px;
   height: 80px;
   border-radius: var(--border-radius-full);
-  background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+  background: linear-gradient(135deg, var(--mg-pink-300), var(--mg-pink-200));
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(255, 182, 193, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .client-message-empty__icon svg {
@@ -320,10 +336,14 @@
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
-  background: linear-gradient(135deg, rgba(255, 250, 240, 0.5), rgba(255, 255, 250, 0.5));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-warning-50) 50%, transparent),
+    color-mix(in srgb, var(--mg-white) 50%, transparent)
+  );
   padding: var(--spacing-xl);
   border-radius: var(--border-radius-md);
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.1);
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 10%, transparent);
 }
 
 /* HTML 렌더링 스타일 */

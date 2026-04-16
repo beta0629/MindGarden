@@ -61,8 +61,8 @@
 }
 
 .payment-stat-card--primary .payment-stat-icon {
-  background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-  box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
+  background: linear-gradient(135deg, var(--mg-pink-300), var(--mg-pink-200));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .payment-stat-card--primary .payment-stat-icon svg {
@@ -70,8 +70,8 @@
 }
 
 .payment-stat-card--success .payment-stat-icon {
-  background: linear-gradient(135deg, #98D8C8, #B4E7CE);
-  box-shadow: 0 4px 12px rgba(152, 216, 200, 0.3);
+  background: linear-gradient(135deg, var(--mg-success-300), var(--mg-success-200));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-success-300) 30%, transparent);
 }
 
 .payment-stat-card--success .payment-stat-icon svg {
@@ -79,8 +79,8 @@
 }
 
 .payment-stat-card--warning .payment-stat-icon {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  background: linear-gradient(135deg, var(--mg-warning-400), var(--mg-warning-500));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-warning-400) 30%, transparent);
 }
 
 .payment-stat-card--warning .payment-stat-icon svg {
@@ -88,8 +88,8 @@
 }
 
 .payment-stat-card--info .payment-stat-icon {
-  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
-  box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
+  background: linear-gradient(135deg, var(--mg-info-300), var(--mg-info-200));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-info-300) 30%, transparent);
 }
 
 .payment-stat-card--info .payment-stat-icon svg {
@@ -145,33 +145,37 @@
 }
 
 .payment-item {
-  background: linear-gradient(135deg, rgba(255, 245, 235, 0.6), rgba(255, 250, 240, 0.6));
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 60%, transparent),
+    color-mix(in srgb, var(--mg-warning-50) 60%, transparent)
+  );
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-lg);
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-md);
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--mg-pink-300) 10%, transparent);
 }
 
 .payment-item:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-  border-color: rgba(255, 182, 193, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
+  border-color: color-mix(in srgb, var(--mg-pink-300) 40%, transparent);
 }
 
 .payment-item__icon {
   width: 40px;
   height: 40px;
   border-radius: var(--border-radius-md);
-  background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+  background: linear-gradient(135deg, var(--mg-pink-300), var(--mg-pink-200));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .payment-item__icon svg {
@@ -228,8 +232,12 @@
 
 /* 빈 상태 */
 .payment-sessions-empty {
-  background: linear-gradient(135deg, rgba(255, 245, 235, 0.4), rgba(255, 250, 240, 0.4));
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 40%, transparent),
+    color-mix(in srgb, var(--mg-warning-50) 40%, transparent)
+  );
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xxxl);
   display: flex;
@@ -244,11 +252,11 @@
   width: 80px;
   height: 80px;
   border-radius: var(--border-radius-full);
-  background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+  background: linear-gradient(135deg, var(--mg-pink-300), var(--mg-pink-200));
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(255, 182, 193, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .payment-sessions-empty__icon svg {
@@ -264,8 +272,12 @@
 
 /* 에러 상태 */
 .payment-sessions-error {
-  background: linear-gradient(135deg, rgba(255, 240, 245, 0.4), rgba(255, 245, 250, 0.4));
-  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mg-pink-50) 40%, transparent),
+    color-mix(in srgb, var(--mg-pink-100) 40%, transparent)
+  );
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--mg-pink-300) 20%, transparent);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xxxl);
   display: flex;
@@ -280,11 +292,11 @@
   width: 80px;
   height: 80px;
   border-radius: var(--border-radius-full);
-  background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+  background: linear-gradient(135deg, var(--mg-pink-300), var(--mg-pink-200));
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(255, 182, 193, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--mg-pink-300) 30%, transparent);
 }
 
 .payment-sessions-error__icon svg {

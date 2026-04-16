@@ -11,6 +11,7 @@ import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
 import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
@@ -117,7 +118,7 @@ const RatableConsultationsSection = ({ sessionUserOverride }) => {
   if (loading) {
     return (
       <div className="ratable-consultations-section">
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="inline" text="평가 가능한 상담을 불러오는 중..." />
       </div>
     );
   }

@@ -104,6 +104,28 @@ public class BillingController extends BaseApiController {
     }
     
     /**
+     * 테넌트의 구독 목록 조회
+     * GET /api/v1/billing/subscriptions?tenantId={tenantId}
+     *
+     * <p>수동 검증: {@code GET /api/v1/billing/subscriptions?tenantId={tenantId}} → 200, {@code data} 배열.
+     * 구독 없음 시 빈 배열. {@code tenantId} 누락 시 400.</p>
+     */
+    @GetMapping("/subscriptions")
+    public ResponseEntity<ApiResponse<List<SubscriptionResponse>>> getSubscriptions(
+            @RequestParam(required = false) String tenantId) {
+        log.debug("구독 목록 조회 요청: tenantId={}", tenantId);
+        
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException("tenantId는 필수입니다.");
+        }
+        
+        List<SubscriptionResponse> subscriptions = subscriptionService.listSubscriptionsByTenant(tenantId);
+        
+        log.debug("✅ 구독 목록 조회 완료: tenantId={}, count={}", tenantId, subscriptions.size());
+        return success(subscriptions);
+    }
+    
+    /**
      * 구독 활성화 (첫 결제 수행)
      * POST /api/v1/billing/subscriptions/{subscriptionId}/activate
      */

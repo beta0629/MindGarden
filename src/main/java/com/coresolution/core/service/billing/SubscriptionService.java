@@ -35,6 +35,14 @@ public interface SubscriptionService {
     SubscriptionResponse getSubscriptionByTenant(String tenantId);
     
     /**
+     * 테넌트별 구독 목록 조회 (삭제되지 않은 항목). 없으면 빈 리스트.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 구독 응답 목록
+     */
+    List<SubscriptionResponse> listSubscriptionsByTenant(String tenantId);
+    
+    /**
      * 구독 취소
      */
     SubscriptionResponse cancelSubscription(String subscriptionId);

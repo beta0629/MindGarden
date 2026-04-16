@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -128,6 +129,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .orElseThrow(() -> new IllegalArgumentException("테넌트의 구독을 찾을 수 없습니다: " + tenantId));
         
         return toResponse(subscription);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SubscriptionResponse> listSubscriptionsByTenant(String tenantId) {
+        return subscriptionRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
+                .map(this::toResponse)
+                .toList();
     }
     
     @Override

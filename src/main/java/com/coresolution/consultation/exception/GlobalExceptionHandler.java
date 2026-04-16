@@ -15,6 +15,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.core.NestedExceptionUtils;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -334,6 +335,27 @@ public class GlobalExceptionHandler {
         // 기타 정적 리소스는 경고 로그만 남기고 조용히 처리
         log.debug("Static resource not found: {}", resourcePath);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+    
+    /**
+     * HttpRequestMethodNotSupportedException 처리
+     * HTTP 405 Method Not Allowed (잘못된 HTTP 메서드는 500이 아닌 405)
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
+        log.warn("HTTP method not supported: path={}, method={}", request.getRequestURI(), request.getMethod());
+        
+        String message = e.getMessage() != null ? e.getMessage() : "요청 메서드가 지원되지 않습니다.";
+        ErrorResponse error = ErrorResponse.of(
+            message,
+            "METHOD_NOT_ALLOWED",
+            HttpStatus.METHOD_NOT_ALLOWED.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
     }
     
     /**

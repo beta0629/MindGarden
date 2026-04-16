@@ -10,6 +10,7 @@ import MGButton from './MGButton';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
+import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 // import UnifiedHeader from '../common/UnifiedHeader'; // 자기 자신을 import하지 않음
 
@@ -69,6 +70,7 @@ const UnifiedHeader = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { checkSession } = useSession();
   const user = sessionManager.getUser();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isMultiTenant, setIsMultiTenant] = useState(false);
@@ -265,10 +267,12 @@ const UnifiedHeader = ({
           setShowTenantSwitchModal(false);
           notificationManager.show('테넌트가 전환되었습니다.', 'success');
           
-          // 페이지 새로고침하여 새로운 테넌트 컨텍스트 적용
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
+          try {
+            await checkSession(true);
+          } catch (syncErr) {
+            console.error('테넌트 전환 후 세션 동기화 실패:', syncErr);
+          }
+          navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true });
         } else {
           throw new Error(data.message || '테넌트 전환 실패');
         }

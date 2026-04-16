@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
@@ -139,6 +140,7 @@ const ROLE_DISPLAY_NAMES = {
 };
 
 const PermissionManagement = () => {
+    const { checkSession } = useSession();
     const [userPermissions, setUserPermissions] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
     const [selectedRole, setSelectedRole] = useState('ADMIN');
@@ -296,21 +298,16 @@ const PermissionManagement = () => {
             });
 
             if (response.ok) {
-                const result = await response.json();
+                await response.json();
                 setMessage('권한이 성공적으로 저장되었습니다.');
-                
-                // 권한 다시 로드
-                loadRolePermissions();
-                
-                // 현재 사용자의 역할에 권한을 부여한 경우 페이지 새로고침
+
+                await loadRolePermissions();
+                // 본인 역할 권한 변경 시 메뉴·세션 반영: current-user 재조회 (로그인 직후 토큰 동기화 등은 로그인 플로우에서만 풀리로드)
                 if (selectedRole === currentUserRole) {
-                    console.log('✅ 현재 사용자 권한 변경됨 - 페이지 새로고침');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    loadUserPermissions(); // 다른 역할 권한은 새로고침
+                    await checkSession(true);
                 }
+                await loadUserPermissions();
+                window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
             } else {
                 const error = await response.json();
                 setMessage(`저장 실패: ${error.message || '알 수 없는 오류'}`);

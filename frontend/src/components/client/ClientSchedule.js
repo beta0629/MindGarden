@@ -20,9 +20,23 @@ const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
  */
 const ClientSchedule = () => {
   const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [calendarKey, setCalendarKey] = useState(0);
+
+  const handleRetry = async() => {
+    setError(null);
+    setLoading(true);
+    try {
+      await checkSession(true);
+      setCalendarKey((k) => k + 1);
+    } catch (retryErr) {
+      setError(retryErr?.message || '세션을 다시 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!sessionLoading && !isLoggedIn) {
@@ -77,7 +91,7 @@ const ClientSchedule = () => {
             <MGButton
               variant="primary"
               className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               preventDoubleClick={false}
             >
               다시 시도
@@ -93,6 +107,7 @@ const ClientSchedule = () => {
       {pageShell(
         <div className="client-schedule-calendar-wrapper">
           <ScheduleCalendar
+            key={calendarKey}
             userRole={user?.role || 'CLIENT'}
             userId={user?.id || null}
             readOnly={false}

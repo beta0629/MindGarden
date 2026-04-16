@@ -29,6 +29,7 @@ const WidgetBasedAdminDashboard = () => {
     const [selectedDashboard, setSelectedDashboard] = useState(null);
     const [error, setError] = useState(null);
     const [fetchAttempts, setFetchAttempts] = useState(0);
+    const [retryKey, setRetryKey] = useState(0);
     const [isManageMode, setIsManageMode] = useState(false); // 관리 모드
     const [availableWidgets, setAvailableWidgets] = useState([]); // 추가 가능한 위젯
     const [showAddWidgetModal, setShowAddWidgetModal] = useState(false); // 위젯 추가 모달
@@ -85,7 +86,13 @@ const WidgetBasedAdminDashboard = () => {
         };
         
         fetchDashboards();
-    }, [isLoggedIn, sessionLoading]); // user 제거하여 무한루프 방지
+    }, [isLoggedIn, sessionLoading, retryKey]); // user 제거하여 무한루프 방지; retryKey로 오류 후 재시도
+
+    const handleDashboardLoadRetry = () => {
+        setError(null);
+        setFetchAttempts(0);
+        setRetryKey((k) => k + 1);
+    };
 
     // 위젯 그룹 로드
     const loadWidgetGroups = async(dashboard) => {
@@ -399,7 +406,7 @@ const WidgetBasedAdminDashboard = () => {
                                 loading: false
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => window.location.reload()}
+                            onClick={handleDashboardLoadRetry}
                         >
                             다시 시도
                         </MGButton>

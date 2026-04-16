@@ -204,8 +204,8 @@ const WellnessManagement = () => {
                     
                     if (response.success) {
                         notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
-                        // 페이지 새로고침으로 데이터 다시 로드
-                        window.location.reload();
+                        await loadData();
+                        window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                     } else {
                         notificationManager.show(response.message || '발송에 실패했습니다.', 'error');
                     }
@@ -222,8 +222,9 @@ const WellnessManagement = () => {
 /**
      * 데이터 새로고침
      */
-    const handleRefresh = () => {
-        window.location.reload();
+    const handleRefresh = async() => {
+        await loadData();
+        window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
     };
 
 /**

@@ -612,7 +612,7 @@ const TabletLogin = () => {
         notificationManager.show('세션 설정에 실패했습니다.', 'error');
       }
     } else {
-      // 사용자 정보가 없으면 새로고침
+      // 간편 회원가입 성공 응답에 userInfo가 없을 때 쿠키·세션 동기화 확정을 위해 전체 새로고침이 필요함.
       window.location.reload();
     }
   };

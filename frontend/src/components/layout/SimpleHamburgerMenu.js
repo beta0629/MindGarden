@@ -31,6 +31,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   const [filteredMenus, setFilteredMenus] = useState({ mainMenus: [], subMenus: {} });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   // 메뉴 구조 로드 (성능 최적화: 권한 체크 병렬 처리)
   useEffect(() => {
@@ -128,7 +129,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     if (isOpen && user) {
       loadMenus();
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, retryToken]);
 
   // 중복 로그 제거 - 렌더링마다 출력되는 로그 제거
   if (!isOpen) {
@@ -261,7 +262,11 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                   className: 'retry-btn'
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  setError(null);
+                  setIsLoading(true);
+                  setRetryToken((t) => t + 1);
+                }}
                 preventDoubleClick={false}
               >
                 다시 시도

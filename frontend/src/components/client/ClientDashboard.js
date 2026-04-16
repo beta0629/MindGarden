@@ -40,7 +40,7 @@ const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
  */
 const ClientDashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
@@ -72,14 +72,13 @@ const ClientDashboard = () => {
           refreshToken: 'oauth2_refresh_token'
         });
         
-        // URL 파라미터 완전히 제거 후 새로고침 (무한 루프 방지)
+        // URL 파라미터 제거 (무한 루프 방지) — 전체 새로고침 없이 세션 컨텍스트 동기화
         const cleanUrl = window.location.origin + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
         
         if (isMounted) {
-          console.log('🔄 세션 복원 완료, 페이지 새로고침...');
-          // URL 파라미터가 제거된 상태로 새로고침
-          window.location.href = cleanUrl;
+          console.log('🔄 세션 복원 완료, 중앙 세션 동기화...');
+          await checkSession(true);
         }
         return;
       }
@@ -98,8 +97,8 @@ const ClientDashboard = () => {
           });
           
           if (isMounted) {
-            console.log('🔄 세션 복원 완료, 페이지 새로고침...');
-            window.location.reload();
+            console.log('🔄 세션 복원 완료, 중앙 세션 동기화...');
+            await checkSession(true);
           }
           return;
         } catch (error) {
@@ -126,7 +125,7 @@ const ClientDashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [sessionIsLoggedIn, sessionUser]);
+  }, [sessionIsLoggedIn, sessionUser, checkSession]);
   
   const [currentTime, setCurrentTime] = useState('');
   const [consultationData, setConsultationData] = useState({

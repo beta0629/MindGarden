@@ -594,7 +594,56 @@
 }
 
 .mg-financial-transaction-card__people-panel--compact .mg-financial-transaction-card__people-panel-inner {
-  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card__people-compact-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card__people-compact-summary-icon {
+  flex-shrink: 0;
+  color: var(--ad-b0kla-green);
+  margin-top: 2px;
+}
+
+.mg-financial-transaction-card__people-compact-names {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--mg-font-xs);
+  font-weight: var(--mg-font-semibold);
+  color: var(--ad-b0kla-title-color);
+  line-height: 1.3;
+}
+
+.mg-financial-transaction-card__people-compact-name-part {
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-financial-transaction-card__people-compact-name-part > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-financial-transaction-card__people-compact-sep {
+  flex-shrink: 0;
+  color: var(--mg-text-tertiary);
+  user-select: none;
 }
 
 .mg-financial-transaction-card__people-row {
@@ -707,6 +756,23 @@
   color: var(--ad-b0kla-text-secondary);
   line-height: 1.4;
   word-break: break-word;
+}
+
+.mg-financial-transaction-card__people-panel--compact .mg-financial-transaction-card__people-compact-meta {
+  margin-top: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-financial-transaction-card__people-compact-meta-sep {
+  color: var(--mg-text-tertiary);
+  user-select: none;
+}
+
+.mg-financial-transaction-card__people-panel--compact {
+  margin-bottom: var(--mg-spacing-sm);
 }
 
 .mg-financial-transaction-card--compact .mg-financial-transaction-card__people-chips {
@@ -953,9 +1019,9 @@
   color: var(--mg-error-700);
 }
 
-/* 작은 카드: 더 많은 카드가 한 화면에 보이도록 그리드·카드 밀도 상향 */
+/* 작은 카드: 더 많은 카드가 한 화면에 보이도록 그리드·카드 밀도 상향 (매핑 요약은 md 최소폭에서 안정) */
 .mg-financial-transaction-cards-grid--compact {
-  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width-sm), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width-md), 1fr));
   gap: var(--mg-spacing-sm);
 }
 

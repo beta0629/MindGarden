@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     
     private final ConsultantClientMappingRepository mappingRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     
     @Override
     @Transactional(readOnly = true)
@@ -128,11 +130,17 @@ public class AmountManagementServiceImpl implements AmountManagementService {
 
         if (mapping.getClient() != null) {
             amountInfo.put("clientId", mapping.getClient().getId());
-            amountInfo.put("clientName", mapping.getClient().getName());
+            String rawClientName = mapping.getClient().getName();
+            amountInfo.put("clientName",
+                rawClientName != null && !rawClientName.isEmpty()
+                    ? encryptionUtil.safeDecrypt(rawClientName) : rawClientName);
         }
         if (mapping.getConsultant() != null) {
             amountInfo.put("consultantId", mapping.getConsultant().getId());
-            amountInfo.put("consultantName", mapping.getConsultant().getName());
+            String rawConsultantName = mapping.getConsultant().getName();
+            amountInfo.put("consultantName",
+                rawConsultantName != null && !rawConsultantName.isEmpty()
+                    ? encryptionUtil.safeDecrypt(rawConsultantName) : rawConsultantName);
         }
         
         // 기본 금액 정보

@@ -30,6 +30,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.data.domain.Page;
@@ -66,7 +67,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
-    
+    private final PersonalDataEncryptionUtil encryptionUtil;
+
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
         log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}, taxAmount={}, taxIncluded={}",
@@ -759,14 +761,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                                 Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
                                 consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : null;
                                 if (consultantName == null) {
-                                    // 캐시에 없으면 직접 복호화 (fallback)
+                                    // 캐시에 없으면 safeDecrypt로 폴백 (평문은 그대로 통과)
                                     log.warn("⚠️ 상담사 개인정보 캐시 없음, 직접 복호화: consultantId={}", mapping.getConsultant().getId());
-                                    consultantName = mapping.getConsultant().getName(); // 암호화된 이름이면 그대로 표시 (복호화는 PersonalDataEncryptionUtil 필요)
+                                    consultantName = encryptionUtil.safeDecrypt(mapping.getConsultant().getName());
                                 }
                             } catch (Exception e) {
                                 log.warn("⚠️ 상담사 이름 복호화 실패: consultantId={}, error={}", 
                                         mapping.getConsultant().getId(), e.getMessage());
-                                consultantName = mapping.getConsultant().getName();
+                                consultantName = encryptionUtil.safeDecrypt(mapping.getConsultant().getName());
                             }
                         }
                         
@@ -775,14 +777,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                                 Map<String, String> decryptedClient = userPersonalDataCacheService.getDecryptedUserData(mapping.getClient());
                                 clientName = decryptedClient != null ? decryptedClient.get("name") : null;
                                 if (clientName == null) {
-                                    // 캐시에 없으면 직접 복호화 (fallback)
+                                    // 캐시에 없으면 safeDecrypt로 폴백 (평문은 그대로 통과)
                                     log.warn("⚠️ 내담자 개인정보 캐시 없음, 직접 복호화: clientId={}", mapping.getClient().getId());
-                                    clientName = mapping.getClient().getName(); // 암호화된 이름이면 그대로 표시
+                                    clientName = encryptionUtil.safeDecrypt(mapping.getClient().getName());
                                 }
                             } catch (Exception e) {
                                 log.warn("⚠️ 내담자 이름 복호화 실패: clientId={}, error={}", 
                                         mapping.getClient().getId(), e.getMessage());
-                                clientName = mapping.getClient().getName();
+                                clientName = encryptionUtil.safeDecrypt(mapping.getClient().getName());
                             }
                         }
                         

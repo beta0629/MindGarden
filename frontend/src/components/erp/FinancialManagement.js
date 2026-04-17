@@ -1659,6 +1659,7 @@ const FinancialManagement = () => {
 
 const TransactionDetailModal = ({ transaction, onClose }) => {
   const [mappingDetail, setMappingDetail] = useState(null);
+  const [mappingLoadError, setMappingLoadError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const formatCurrency = (amount) => {
@@ -1675,14 +1676,36 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
   const loadMappingDetail = async() => {
     try {
       setLoading(true);
-      const response = await StandardizedApi.get(
+      setMappingLoadError(null);
+      const payload = await StandardizedApi.get(
         `/api/v1/admin/amount-management/mappings/${transaction.relatedEntityId}/amount-info`
       );
-      if (response.success) {
-        setMappingDetail(response.data);
+      if (payload == null) {
+        setMappingDetail(null);
+        return;
       }
+      if (
+        typeof payload === 'object' &&
+        payload.error != null &&
+        payload.error !== ''
+      ) {
+        setMappingDetail(null);
+        const rawErr =
+          typeof payload.error === 'string'
+            ? payload.error
+            : toDisplayString(payload.error, '');
+        setMappingLoadError(
+          rawErr
+            ? toDisplayString(rawErr, '매핑 정보를 불러올 수 없습니다.')
+            : null
+        );
+        return;
+      }
+      setMappingDetail(payload);
     } catch (err) {
       console.error('매핑 상세 정보 로드 실패:', err);
+      setMappingDetail(null);
+      setMappingLoadError(null);
     } finally {
       setLoading(false);
     }
@@ -1859,7 +1882,11 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               )}
             </div>
           ) : (
-            <div className="mg-v2-transaction-detail-message-empty">매핑 정보를 불러올 수 없습니다.</div>
+            <div className="mg-v2-transaction-detail-message-empty">
+              {mappingLoadError != null && mappingLoadError !== ''
+                ? toDisplayString(mappingLoadError)
+                : '매핑 정보를 불러올 수 없습니다.'}
+            </div>
           )}
         </div>
       )}

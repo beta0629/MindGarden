@@ -147,6 +147,25 @@
   }
 }
 
+.financial-transaction-form-system-amounts .financial-transaction-form-readonly-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid var(--mg-color-border-main, var(--ios-border-light));
+  font-size: var(--font-size-sm);
+}
+
+.financial-transaction-form-readonly-label {
+  color: var(--ios-text-secondary);
+}
+
+.financial-transaction-form-readonly-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--ios-text-primary);
+}
+
 /* 다크 모드 지원 */
 @media (prefers-color-scheme: dark) {
   .financial-transaction-form-error {

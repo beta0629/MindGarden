@@ -75,6 +75,62 @@ const FINANCIAL_TX_ICON_SIZE = 20;
 const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수(3.3%)';
 
 /**
+ * 원천징수 금액 표시 SSOT.
+ * {@code withholdingTaxAmount}가 응답에 있으면(0 포함) 그대로 사용한다.
+ * 레거시: 필드가 없을 때만 {@code taxAmount}를 쓴다(과거 응답에서 사업소득 원천이 taxAmount에 실리던 경우).
+ * @param {Object|null|undefined} transaction
+ * @returns {number}
+ */
+function getDisplayWithholdingTaxAmount(transaction) {
+  if (!transaction) {
+    return 0;
+  }
+  if (transaction.withholdingTaxAmount != null && transaction.withholdingTaxAmount !== '') {
+    return toSafeNumber(transaction.withholdingTaxAmount);
+  }
+  return toSafeNumber(transaction.taxAmount);
+}
+
+/**
+ * 카드 수수료·실입금 중 하나라도 내려온 경우에만 블록 표시.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean}
+ */
+function shouldShowCardSettlementSection(transaction) {
+  if (!transaction) {
+    return false;
+  }
+  return (
+    transaction.cardMerchantFeeAmount != null ||
+    transaction.cardNetDepositAmount != null
+  );
+}
+
+/**
+ * @param {unknown} amount
+ * @returns {string}
+ */
+function formatKrw(amount) {
+  if (!amount && amount !== 0) {
+    return '0원';
+  }
+  const n = typeof amount === 'number' ? amount : toSafeNumber(amount);
+  return `${new Intl.NumberFormat('ko-KR').format(n)}원`;
+}
+
+/**
+ * 카드 정산 등 선택 필드: 없으면 대시(—).
+ * @param {unknown} amount
+ * @returns {string}
+ */
+function formatOptionalKrw(amount) {
+  if (amount == null || amount === '') {
+    return '—';
+  }
+  return `${new Intl.NumberFormat('ko-KR').format(toSafeNumber(amount))}원`;
+}
+
+/**
  * 사업소득 원천징수 예정액 표시(부가세와 구분: taxIncluded가 아닌 경우).
  * @param {Object} transaction
  * @returns {boolean}
@@ -83,7 +139,7 @@ function shouldShowIncomeWithholdingTax(transaction) {
   if (!transaction || transaction.transactionType !== 'INCOME') {
     return false;
   }
-  if (toSafeNumber(transaction.taxAmount) <= 0) {
+  if (getDisplayWithholdingTaxAmount(transaction) <= 0) {
     return false;
   }
   return transaction.taxIncluded !== true;
@@ -530,11 +586,6 @@ const FinancialManagement = () => {
     }));
   };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('ko-KR');
@@ -797,7 +848,7 @@ const FinancialManagement = () => {
             }
           >
             {amountNum >= 0 ? '+' : ''}
-            {formatCurrency(transaction.amount)}
+            {formatKrw(transaction.amount)}
           </span>
         );
       case 'status':
@@ -1430,7 +1481,7 @@ const FinancialManagement = () => {
                                   }
                                 >
                                   {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
-                                  {formatCurrency(transaction.amount)}
+                                  {formatKrw(transaction.amount)}
                                 </span>
                               </div>
                               {shouldShowIncomeWithholdingTax(transaction) && (
@@ -1439,9 +1490,29 @@ const FinancialManagement = () => {
                                     {FINANCIAL_WITHHOLDING_TAX_LABEL}
                                   </span>
                                   <span className="mg-financial-transaction-card__withholding-amount">
-                                    {formatCurrency(transaction.taxAmount)}
+                                    {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
                                   </span>
                                 </div>
+                              )}
+                              {shouldShowCardSettlementSection(transaction) && (
+                                <>
+                                  <div className="mg-financial-transaction-card__compact-line">
+                                    <span className="mg-financial-transaction-card__withholding-label">
+                                      카드 수수료
+                                    </span>
+                                    <span className="mg-financial-transaction-card__withholding-amount">
+                                      {formatOptionalKrw(transaction.cardMerchantFeeAmount)}
+                                    </span>
+                                  </div>
+                                  <div className="mg-financial-transaction-card__compact-line">
+                                    <span className="mg-financial-transaction-card__withholding-label">
+                                      실입금(카드)
+                                    </span>
+                                    <span className="mg-financial-transaction-card__withholding-amount">
+                                      {formatOptionalKrw(transaction.cardNetDepositAmount)}
+                                    </span>
+                                  </div>
+                                </>
                               )}
                               <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--secondary">
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
@@ -1478,7 +1549,7 @@ const FinancialManagement = () => {
                                   }
                                 >
                                   {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
-                                  {formatCurrency(transaction.amount)}
+                                  {formatKrw(transaction.amount)}
                                 </span>
                               </div>
                               {shouldShowIncomeWithholdingTax(transaction) && (
@@ -1487,9 +1558,21 @@ const FinancialManagement = () => {
                                     {FINANCIAL_WITHHOLDING_TAX_LABEL}
                                   </span>
                                   <span className="mg-financial-transaction-card__withholding-amount">
-                                    {formatCurrency(transaction.taxAmount)}
+                                    {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
                                   </span>
                                 </div>
+                              )}
+                              {shouldShowCardSettlementSection(transaction) && (
+                                <>
+                                  <div className="mg-financial-transaction-card__field">
+                                    <span className="mg-financial-transaction-card__label">카드 수수료</span>
+                                    <span>{formatOptionalKrw(transaction.cardMerchantFeeAmount)}</span>
+                                  </div>
+                                  <div className="mg-financial-transaction-card__field">
+                                    <span className="mg-financial-transaction-card__label">실입금(카드)</span>
+                                    <span>{formatOptionalKrw(transaction.cardNetDepositAmount)}</span>
+                                  </div>
+                                </>
                               )}
                               <div className="mg-financial-transaction-card__field">
                                 <span className="mg-financial-transaction-card__label">상태</span>
@@ -1592,7 +1675,7 @@ const FinancialManagement = () => {
                           <TrendingUp size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalIncome)}</div>
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(dashboardStats.totalIncome)}</div>
                           <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
                         </div>
                       </div>
@@ -1602,7 +1685,7 @@ const FinancialManagement = () => {
                           <TrendingDown size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--error" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalExpense)}</div>
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(dashboardStats.totalExpense)}</div>
                           <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
                         </div>
                       </div>
@@ -1612,7 +1695,7 @@ const FinancialManagement = () => {
                           <BarChart3 size={24} aria-hidden className={`mg-v2-erp-dashboard-kpi-icon ${dashboardStats.netProfit >= 0 ? 'mg-v2-erp-dashboard-kpi-icon--primary' : 'mg-v2-erp-dashboard-kpi-icon--error'}`} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(Math.abs(dashboardStats.netProfit))}</div>
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(Math.abs(dashboardStats.netProfit))}</div>
                           <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
                         </div>
                       </div>
@@ -1639,7 +1722,7 @@ const FinancialManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-erp-dashboard-kpi-value">
-                            {formatCurrency(
+                            {formatKrw(
                               transactions
                                 .filter(t => t.transactionType === 'INCOME' &&
                                   (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
@@ -1657,7 +1740,7 @@ const FinancialManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-erp-dashboard-kpi-value">
-                            {formatCurrency(
+                            {formatKrw(
                               transactions
                                 .filter(t => t.transactionType === 'EXPENSE' &&
                                   (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
@@ -1819,11 +1902,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
   const [mappingLoadError, setMappingLoadError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
-  };
-
   useEffect(() => {
     if (transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && transaction.relatedEntityId) {
       loadMappingDetail();
@@ -1954,20 +2032,30 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           <div>
             <strong>금액:</strong>
             <span className={`mg-v2-transaction-detail-amount ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-amount--income' : 'mg-v2-transaction-detail-amount--expense'}`}>
-              {formatCurrency(transaction.amount)}
+              {formatKrw(transaction.amount)}
             </span>
           </div>
           {shouldShowIncomeWithholdingTax(transaction) && (
             <div className="mg-v2-transaction-detail-form-grid__item--span2 mg-v2-transaction-detail-withholding">
               <strong>{FINANCIAL_WITHHOLDING_TAX_LABEL}:</strong>{' '}
               <span className="mg-v2-transaction-detail-withholding__amount">
-                {formatCurrency(transaction.taxAmount)}
+                {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
               </span>
               <span className="mg-v2-transaction-detail-withholding__hint">
                 {' '}
                 (입금 총액 대비 사업소득 원천징수 예정, 부가세와 별개)
               </span>
             </div>
+          )}
+          {shouldShowCardSettlementSection(transaction) && (
+            <>
+              <div>
+                <strong>카드 수수료:</strong> {formatOptionalKrw(transaction.cardMerchantFeeAmount)}
+              </div>
+              <div>
+                <strong>실입금(카드):</strong> {formatOptionalKrw(transaction.cardNetDepositAmount)}
+              </div>
+            </>
           )}
           <div>
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
@@ -2021,16 +2109,16 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 </div>
               )}
               <div>
-                <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
+                <strong>회기당 단가:</strong> {formatKrw(mappingDetail.pricePerSession)}
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
                 <strong>패키지 가격:</strong>
-                <span className="mg-v2-transaction-detail-package-price">{formatCurrency(mappingDetail.packagePrice)}</span>
+                <span className="mg-v2-transaction-detail-package-price">{formatKrw(mappingDetail.packagePrice)}</span>
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
                 <strong>결제 금액:</strong>
                 <span className={`mg-v2-transaction-detail-payment-amount ${mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'mg-v2-transaction-detail-payment-amount--match' : 'mg-v2-transaction-detail-payment-amount--mismatch'}`}>
-                  {formatCurrency(mappingDetail.paymentAmount)}
+                  {formatKrw(mappingDetail.paymentAmount)}
                   {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
                     <span className="mg-v2-transaction-detail-message-mismatch">(패키지 가격과 다름)</span>
                   )}
@@ -2053,7 +2141,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <div className="mg-v2-transaction-detail-related-list">
                     {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                       <div key={index} className="mg-v2-transaction-detail-related-item">
-                        #{toDisplayString(relatedTx.id)} - <ErpSafeText>{relatedTx.type}</ErpSafeText> - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
+                        #{toDisplayString(relatedTx.id)} - <ErpSafeText>{relatedTx.type}</ErpSafeText> - {formatKrw(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
                       </div>
                     ))}
                   </div>

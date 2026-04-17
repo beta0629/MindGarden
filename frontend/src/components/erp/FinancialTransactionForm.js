@@ -12,6 +12,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
+import { toSafeNumber } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 
 /**
@@ -193,6 +194,12 @@ const FinancialTransactionForm = ({
         }
         if (initialTransaction.taxAmount != null) {
           payload.taxAmount = initialTransaction.taxAmount;
+        }
+        if (initialTransaction.withholdingTaxAmount != null) {
+          payload.withholdingTaxAmount = initialTransaction.withholdingTaxAmount;
+        }
+        if (initialTransaction.cardMerchantFeeAmount != null) {
+          payload.cardMerchantFeeAmount = initialTransaction.cardMerchantFeeAmount;
         }
         if (initialTransaction.amountBeforeTax != null) {
           payload.amountBeforeTax = initialTransaction.amountBeforeTax;
@@ -437,6 +444,47 @@ const FinancialTransactionForm = ({
               <span>세금 포함</span>
             </label>
           </div>
+
+          {mode === 'edit' && initialTransaction && (
+            (initialTransaction.withholdingTaxAmount != null ||
+              initialTransaction.cardMerchantFeeAmount != null ||
+              initialTransaction.cardNetDepositAmount != null) && (
+              <div
+                className="mg-v2-form-group financial-transaction-form-system-amounts"
+                role="region"
+                aria-label="시스템 산출 금액"
+              >
+                <span className="mg-v2-form-label">시스템 산출 금액</span>
+                <p className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
+                  결제·연동으로 채워진 값입니다. 수정 시에도 서버 값을 유지하기 위해 함께 전송됩니다.
+                </p>
+                {initialTransaction.withholdingTaxAmount != null && (
+                  <div className="financial-transaction-form-readonly-row">
+                    <span className="financial-transaction-form-readonly-label">원천징수 예정액</span>
+                    <span className="financial-transaction-form-readonly-value">
+                      {toSafeNumber(initialTransaction.withholdingTaxAmount).toLocaleString('ko-KR')}원
+                    </span>
+                  </div>
+                )}
+                {initialTransaction.cardMerchantFeeAmount != null && (
+                  <div className="financial-transaction-form-readonly-row">
+                    <span className="financial-transaction-form-readonly-label">카드 수수료</span>
+                    <span className="financial-transaction-form-readonly-value">
+                      {toSafeNumber(initialTransaction.cardMerchantFeeAmount).toLocaleString('ko-KR')}원
+                    </span>
+                  </div>
+                )}
+                {initialTransaction.cardNetDepositAmount != null && (
+                  <div className="financial-transaction-form-readonly-row">
+                    <span className="financial-transaction-form-readonly-label">실입금(카드)</span>
+                    <span className="financial-transaction-form-readonly-value">
+                      {toSafeNumber(initialTransaction.cardNetDepositAmount).toLocaleString('ko-KR')}원
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          )}
 
           {/* 버튼들 */}
           <div className="financial-transaction-form-actions financial-transaction-form-actions--footer">

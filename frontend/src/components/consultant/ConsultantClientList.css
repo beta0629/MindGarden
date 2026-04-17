@@ -18,9 +18,9 @@
 }
 
 .mg-v2-alert--info {
-  background: var(--mg-v2-color-info-50, #f0f9ff);
-  border: 1px solid var(--mg-v2-color-info-200, #bae6fd);
-  color: var(--mg-v2-color-info-700, #0369a1);
+  background: var(--mg-info-50);
+  border: 1px solid var(--mg-info-200);
+  color: var(--mg-info-700);
 }
 
 .mg-v2-alert svg {
@@ -50,7 +50,7 @@
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   pointer-events: none;
 }
 
@@ -58,23 +58,23 @@
   width: 100%;
   height: 44px;
   padding: 10px 16px 10px 48px;
-  background: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-surface-main, var(--mg-gray-50));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   border-radius: 10px;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
   transition: all 0.2s ease;
 }
 
 .client-search-input::placeholder {
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
 .client-search-input:focus {
   outline: none;
-  border-color: var(--mg-color-primary-main, #3D5246);
-  box-shadow: 0 0 0 3px rgba(61, 82, 70, 0.1);
+  border-color: var(--mg-color-primary-main, var(--mg-success-800));
+  box-shadow: 0 0 0 3px var(--color-success-light);
 }
 
 /* 필터 배지 영역 */
@@ -89,7 +89,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   margin-right: 8px;
 }
 
@@ -106,20 +106,20 @@
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
-  background: var(--mg-color-surface-main, #F5F3EF);
-  color: var(--mg-color-text-main, #2C2C2C);
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  background: var(--mg-color-surface-main, var(--mg-gray-50));
+  color: var(--mg-color-text-main, var(--dark-gray));
 }
 
 .mg-v2-filter-badge--active {
-  background: var(--mg-badge-status-success-bg);
-  color: var(--mg-badge-status-success-text);
-  border-color: var(--mg-badge-status-success-bg);
+  background: var(--mg-success-300);
+  color: var(--mg-success-900);
+  border-color: var(--mg-success-300);
 }
 
 .mg-v2-filter-badge:hover:not(.mg-v2-filter-badge--active) {
-  background: var(--mg-color-background-main, #FAF9F7);
-  border-color: var(--mg-color-primary-main, #3D5246);
+  background: var(--mg-color-background-main, var(--mg-gray-50));
+  border-color: var(--mg-color-primary-main, var(--mg-success-800));
 }
 
 .mg-v2-filter-badge.mg-button {
@@ -168,13 +168,13 @@
 
 /* 내담자 카드 */
 .mg-v2-client-card {
-  background: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-surface-main, var(--mg-gray-50));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   border-radius: 16px;
   padding: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--cs-shadow-xs);
   transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
@@ -187,13 +187,13 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--mg-color-primary-main, #3D5246);
+  background: var(--mg-color-primary-main, var(--mg-success-800));
   border-radius: 2px 0 0 2px;
 }
 
 .mg-v2-client-card:hover {
-  border-color: var(--mg-color-primary-main, #3D5246);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--mg-color-primary-main, var(--mg-success-800));
+  box-shadow: 0 4px 8px var(--mg-shadow-light);
   transform: translateY(-2px);
 }
 
@@ -204,7 +204,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
 }
 
 .mg-v2-client-card__profile {
@@ -218,8 +218,8 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-background-main, #FAF9F7);
+  background: var(--mg-color-primary-main, var(--mg-success-800));
+  color: var(--mg-color-background-main, var(--mg-gray-50));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +232,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
   margin: 0;
 }
 
@@ -262,20 +262,20 @@
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
 }
 
 .mg-v2-client-info-item svg {
   width: 16px;
   height: 16px;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   flex-shrink: 0;
 }
 
 /* 회기 현황 */
 .mg-v2-client-session-info {
-  background: var(--mg-color-background-main, #FAF9F7);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-background-main, var(--mg-gray-50));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   border-radius: 12px;
   padding: 16px;
   margin-top: 8px;
@@ -284,7 +284,7 @@
 .mg-v2-client-session-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -294,7 +294,7 @@
 .mg-v2-client-session-title svg {
   width: 16px;
   height: 16px;
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-success-800));
 }
 
 .mg-v2-client-session-grid {
@@ -310,43 +310,43 @@
 .mg-v2-client-session-value {
   font-size: 20px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
   margin-bottom: 4px;
 }
 
 .mg-v2-client-session-label {
   font-size: 12px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
 .mg-v2-client-session-value--total {
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-success-800));
 }
 
 .mg-v2-client-session-value--used {
-  color: var(--mg-v2-color-success-600, #16a34a);
+  color: var(--mg-success-600);
 }
 
 .mg-v2-client-session-value--remaining {
-  color: var(--mg-v2-color-warning-600, #d97706);
+  color: var(--mg-warning-600);
 }
 
 /* 카드 푸터 */
 .mg-v2-client-card__footer {
   padding: 16px 24px;
-  border-top: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-top: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: var(--mg-color-background-main, #FAF9F7);
+  background: var(--mg-color-background-main, var(--mg-gray-50));
 }
 
 .mg-v2-client-view-btn {
   height: 36px;
   padding: 8px 16px;
-  background: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-background-main, #FAF9F7);
+  background: var(--mg-color-primary-main, var(--mg-success-800));
+  color: var(--mg-color-background-main, var(--mg-gray-50));
   border: none;
   border-radius: 10px;
   font-family: 'Noto Sans KR', sans-serif;
@@ -360,12 +360,12 @@
 }
 
 .mg-v2-client-view-btn:hover {
-  background: var(--mg-color-primary-light, #4A6354);
+  background: var(--mg-color-primary-light, var(--mg-success-600));
 }
 
 .mg-v2-client-view-btn:disabled {
-  background: var(--mg-v2-color-secondary-300, #d1d5db);
-  color: var(--mg-v2-color-secondary-500, #6b7280);
+  background: var(--mg-secondary-300);
+  color: var(--mg-secondary-500);
   cursor: not-allowed;
 }
 
@@ -375,8 +375,8 @@
 }
 
 .mg-v2-client-view-btn.mg-button.mg-button--primary {
-  background: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-background-main, #FAF9F7);
+  background: var(--mg-color-primary-main, var(--mg-success-800));
+  color: var(--mg-color-background-main, var(--mg-gray-50));
   border: none;
   border-radius: 10px;
   min-height: 36px;
@@ -387,12 +387,12 @@
 }
 
 .mg-v2-client-view-btn.mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-color-primary-light, #4A6354);
+  background: var(--mg-color-primary-light, var(--mg-success-600));
 }
 
 .mg-v2-client-view-btn.mg-button.mg-button--primary:disabled {
-  background: var(--mg-v2-color-secondary-300, #d1d5db);
-  color: var(--mg-v2-color-secondary-500, #6b7280);
+  background: var(--mg-secondary-300);
+  color: var(--mg-secondary-500);
 }
 
 .mg-v2-client-view-btn.mg-button .mg-button__text {
@@ -414,7 +414,7 @@
 .client-list-empty-state svg {
   width: 64px;
   height: 64px;
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-gray-400);
   margin-bottom: 16px;
 }
 
@@ -422,7 +422,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--dark-gray));
   margin-bottom: 8px;
 }
 
@@ -430,14 +430,14 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   margin-bottom: 24px;
 }
 
 /* 에러 상태 */
 .client-list-error-state {
-  background: var(--mg-v2-color-error-50, #fef2f2);
-  border: 1px solid var(--mg-v2-color-error-200, #fecaca);
+  background: var(--mg-error-50);
+  border: 1px solid var(--mg-error-200);
   border-radius: 12px;
   padding: 24px;
   text-align: center;
@@ -446,14 +446,14 @@
 .client-list-error-state svg {
   width: 48px;
   height: 48px;
-  color: var(--mg-v2-color-error-600, #dc2626);
+  color: var(--mg-error-600);
   margin-bottom: 16px;
 }
 
 .client-list-error-state__message {
   font-size: 16px;
   font-weight: 500;
-  color: var(--mg-v2-color-error-700, #b91c1c);
+  color: var(--mg-error-700);
   margin-bottom: 16px;
 }
 

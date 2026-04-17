@@ -33,6 +33,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/themes/client-theme.css';
 import SafeText from '../common/SafeText';
+import CardContainer from '../common/CardContainer';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './ClientDashboard.css';
 
@@ -424,7 +425,8 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
         <main className="client-dash__main" id="client-dash-main" aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>
           <section className="client-dash__section client-dash__welcome" aria-labelledby="client-dash-welcome-heading">
-              <div className="mg-v2-card-container client-dash__welcome-card">
+            <CardContainer className="client-dash__welcome-card">
+              <div className="client-dash__welcome-layout">
                 <div className="client-dash__welcome-inner">
                   <p className="client-dash__eyebrow">{CLIENT_EYEBROW_TEXT}</p>
                   <h2 id="client-dash-welcome-heading" className="client-dash__title">
@@ -448,8 +450,10 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                     </span>
                   </div>
                 </div>
+                <div className="client-dash__welcome-aside" aria-hidden="true" />
               </div>
-            </section>
+            </CardContainer>
+          </section>
 
           <section
             className="client-dash__section client-dash__next"

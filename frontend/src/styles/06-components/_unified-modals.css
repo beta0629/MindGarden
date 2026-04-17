@@ -26,7 +26,7 @@
   flex-direction: column;
   background: var(--color-white, var(--mg-white));
   border-radius: var(--border-radius-lg, 0.75rem);
-  box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px var(--cs-glass-dark-subtle);
   max-height: 90vh;
   overflow: hidden;
   width: 100%;
@@ -226,7 +226,7 @@
 .session-idle-warning__countdown-label {
   font-size: var(--cs-text-sm, 0.875rem);
   font-weight: 600;
-  color: var(--mg-text-secondary, #666666);
+  color: var(--mg-text-secondary, var(--mg-gray-600));
 }
 
 .session-idle-warning__countdown-value {
@@ -235,11 +235,11 @@
   font-size: 1.75rem;
   line-height: 1.2;
   letter-spacing: 0.04em;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-gray-900));
 }
 
 .session-idle-warning__countdown--urgent .session-idle-warning__countdown-value {
-  color: var(--mg-v2-color-warning-700, var(--mg-warning-600, #d97706));
+  color: var(--mg-v2-color-warning-700, var(--mg-warning-600));
 }
 
 /*

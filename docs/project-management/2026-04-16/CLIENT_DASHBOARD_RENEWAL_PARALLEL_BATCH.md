@@ -42,7 +42,16 @@
 2. **디자인 슬롯**: `core-designer`가 슬롯·비율·접근성(`aria-hidden`·빈 `alt` 정책)을 정의 → `core-coder`가 토큰 CSS로 배치.
 3. **병렬 위임**: explore + core-designer + core-component-manager(P0~P1) → (선택) 퍼블 → **core-coder** 구현 → **core-tester** 게이트.
 
-**구현 예시(현행)**: `public/images/client-dashboard/hero-wellness-polish.png`, `quick-menu-accent.png` — `ClientDashboard.js` 장식 블록.
+**구현 참고**: 생성형 장식 PNG(히어로·퀵메뉴 악센트)는 제거됨. 감성 참고만 `docs/design-system/client-dashboard-renewal-mood-concept.png` 유지.
+
+## 완료·검증 로그 (와이어 반영 후)
+
+- **일자**: 2026-04-17
+- **와이어 반영**: `CLIENT_DASHBOARD_RENEWAL_WIREFRAME_MARKUP.html` 기준으로 `ClientDashboard.js` 섹션 순서 재구성(환영 → 다음 액션·일정 → KPI 3 → 핵심 블록 → 결제 요약 → 빠른 메뉴). 무드·장식 PNG 미사용. 스펙 `CLIENT_DASHBOARD_RENEWAL_SCREEN_SPEC_v1.md` §7과 병행 정리.
+- **프론트 빌드**: `frontend`에서 `npm run build` 성공(로컬 검증).
+- **테스트 게이트 (`core-tester`)**: `npm run test:client -- --project=chromium` 실행 시 **`TEST_CLIENT_USERNAME` / `TEST_CLIENT_PASSWORD` 미설정이면 스펙 전체 스킵** — **Pass 판정은 자격 증명 설정 후 재실행** 필요.
+- **freeze 예정**: 스펙 v1.1 회의 확정 후 문서 고정·PR 트레이서빌리티 연결.
+- **비고**: `CORE_PLANNER_DELEGATION_ORDER.md`, `COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md` 준수. 제거된 대시보드 위젯(`ClientMessageSection` 등)은 `CommonDashboard` 등 다른 경로에서 계속 사용 가능.
 
 ## 병렬 배치 로그 (추가)
 

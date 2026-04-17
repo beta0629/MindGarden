@@ -71,8 +71,6 @@
 
 > **상태**: v1.1 초안 — freeze 전 회의 대기
 
-- 본문 순서: 히어로 일러스트 → **다가오는 상담 일정**(`ContentSection`, 일정 없을 때 빈 상태 + 「일정 보기」) → **KPI** → 맞춤 메시지 → 결제·회기 → 평가 → 힐링 → 빠른 메뉴(Lucide `CalendarDays`·`Receipt` 등) → 메시지 섹션
-- `ContentSection`: 선택 prop **`dataTestId`**(루트 `section`에 `data-testid`)
-- 내담자 일정 섹션: `data-testid="client-dashboard-upcoming-schedule"`
-- E2E: `tests/e2e/tests/client/client-dashboard-smoke.spec.ts` 에 해당 testid 단언
-- 시안 PNG 픽셀 복제 아님 — 장식 일러스트·토큰만
+- 본문 순서: `ContentHeader`(내 대시보드) → **환영 카드** → **다음 액션·일정**(최대 2카드 / 빈 상태 CTA) → **KPI 3종** → **핵심 블록**(2카드 + `ClientPersonalizedMessages`) → **결제 요약** → **빠른 메뉴 5항목** — 평가·힐링·단독 메시지 섹션은 대시보드에서 제외 *(장식 PNG 없음)*.
+- 일정 섹션 루트: `data-testid="client-dashboard-upcoming-schedule"` · 빠른 메뉴: `client-dashboard-quick-menu` / `client-dashboard-quick-menu-section`
+- E2E: `tests/e2e/tests/client/client-dashboard-smoke.spec.ts` 동일 testid·「일정」버튼 단언

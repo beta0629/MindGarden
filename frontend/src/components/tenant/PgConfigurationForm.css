@@ -284,6 +284,23 @@
 }
 
 /* 포트원 결제모듈 V2 전용 (디자인 토큰만 사용) */
+.pg-config-kicc-doc-list {
+  margin: var(--mg-spacing-sm, 0.75rem) 0 0 0;
+  padding-left: var(--mg-spacing-lg, 1.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-text-secondary, var(--mg-gray-600));
+}
+
+.pg-config-kicc-doc-list a {
+  color: var(--mg-primary, var(--mg-blue-600));
+  text-decoration: underline;
+}
+
+.pg-config-kicc-doc-list a:hover,
+.pg-config-kicc-doc-list a:focus {
+  color: var(--mg-primary-dark, var(--mg-blue-700));
+}
+
 .pg-config-portone-v2-banner {
   margin-bottom: var(--mg-spacing-md, 1rem);
 }

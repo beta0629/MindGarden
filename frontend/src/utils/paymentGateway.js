@@ -38,6 +38,8 @@ export const PG_PROVIDER = {
   KAKAO: 'KAKAO',
   NAVER: 'NAVER',
   PAYPAL: 'PAYPAL',
+  /** KICC 이지페이 — 클라이언트 SDK 없음, Phase 2에서 서버·결제창 연동 */
+  KICC: 'KICC',
   OTHER: 'OTHER'
 };
 
@@ -411,6 +413,10 @@ class PaymentGatewaySdkFactory {
           break;
         case PG_PROVIDER.IAMPORT:
           console.warn('[PaymentGateway] 아임포트 SDK는 아직 구현되지 않았습니다. 테스트 모드를 사용합니다.');
+          this.instance = new TestPaymentGatewaySdk();
+          break;
+        case PG_PROVIDER.KICC:
+          console.warn('[PaymentGateway] KICC 이지페이 클라이언트 SDK 없음 — Phase 2 서버 연동. 테스트 모드 사용.');
           this.instance = new TestPaymentGatewaySdk();
           break;
         default:

@@ -248,6 +248,32 @@ export const PG_PROVIDER_NAMES = {
   KAKAO: '카카오페이',
   NAVER: '네이버페이',
   PAYPAL: '페이팔',
+  KICC: 'KICC 이지페이',
   OTHER: '기타'
+};
+
+/**
+ * 매칭 입금확인(confirm-payment) 등 관리자 UI 결제 수단 코드 → 표시 라벨
+ * (백엔드 paymentMethod String과 동일 키)
+ */
+export const MAPPING_PAYMENT_METHOD_LABELS = {
+  BANK_TRANSFER: '계좌이체',
+  CARD: '신용카드(온라인)',
+  CARD_TERMINAL: '신용카드(단말)',
+  CASH: '현금'
+};
+
+/**
+ * @param {string|null|undefined} code
+ * @returns {string}
+ */
+export const getMappingPaymentMethodDisplayLabel = (code) => {
+  if (code === null || code === undefined || String(code).trim() === '') {
+    return '-';
+  }
+  const key = String(code).trim();
+  return Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, key)
+    ? MAPPING_PAYMENT_METHOD_LABELS[key]
+    : key;
 };
 

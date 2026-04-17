@@ -9,6 +9,9 @@
 /** PG 제공자 코드 (백엔드 PgProvider.IAMPORT) */
 export const PG_PROVIDER_IAMPORT = 'IAMPORT';
 
+/** 필터·폼 셀렉트 표시 라벨 (PgConfigurationForm, PgApprovalManagement 공통) */
+export const PG_PROVIDER_IAMPORT_DISPLAY_LABEL = '아임포트 (포트원 결제모듈 V2)';
+
 /**
  * 포트원 V2 웹훅 경로 (오리진 제외, `/api/v1/...` 로 시작)
  */

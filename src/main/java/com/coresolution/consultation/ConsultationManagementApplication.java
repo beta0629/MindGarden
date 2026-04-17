@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
+import com.coresolution.core.config.KiccEasypayProperties;
 
 /**
  * 코어솔루션 통합 상담관리 시스템 메인 애플리케이션
@@ -47,7 +48,7 @@ import com.coresolution.consultation.config.MindgardenSecurityProperties;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties(MindgardenSecurityProperties.class)
+@EnableConfigurationProperties({ MindgardenSecurityProperties.class, KiccEasypayProperties.class })
 public class ConsultationManagementApplication {
 
     public static void main(String[] args) {

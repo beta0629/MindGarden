@@ -28,6 +28,12 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { PG_PROVIDER_NAMES } from '../../constants/billing';
+import { PG_PROVIDER_KICC } from '../../constants/kiccPgConfiguration';
+import {
+  PG_PROVIDER_IAMPORT,
+  PG_PROVIDER_IAMPORT_DISPLAY_LABEL
+} from '../../constants/portonePgConfiguration';
 import './PgApprovalManagement.css';
 
 /**
@@ -313,15 +319,16 @@ const PgApprovalManagement = () => {
     setDecryptedKeys(null);
   }, []);
 
-  // PG 제공자 옵션
+  // PG 제공자 옵션 (tenant/PgConfigurationForm.js 와 동일 구성)
   const pgProviders = [
     { value: '', label: '전체' },
-    { value: 'TOSS', label: '토스페이먼츠' },
-    { value: 'IAMPORT', label: '아임포트' },
-    { value: 'KAKAO', label: '카카오페이' },
-    { value: 'NAVER', label: '네이버페이' },
-    { value: 'PAYPAL', label: '페이팔' },
-    { value: 'STRIPE', label: '스트라이프' }
+    { value: 'TOSS', label: PG_PROVIDER_NAMES.TOSS },
+    { value: PG_PROVIDER_IAMPORT, label: PG_PROVIDER_IAMPORT_DISPLAY_LABEL },
+    { value: 'KAKAO', label: PG_PROVIDER_NAMES.KAKAO },
+    { value: 'NAVER', label: PG_PROVIDER_NAMES.NAVER },
+    { value: 'PAYPAL', label: PG_PROVIDER_NAMES.PAYPAL },
+    { value: 'STRIPE', label: PG_PROVIDER_NAMES.STRIPE },
+    { value: PG_PROVIDER_KICC, label: PG_PROVIDER_NAMES.KICC }
   ];
   
   if (sessionLoading || loading && pendingConfigs.length === 0) {

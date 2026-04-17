@@ -8,12 +8,21 @@ import { testPgConnection } from '../../utils/pgApi';
 import { toDisplayString } from '../../utils/safeDisplay';
 import {
   PG_PROVIDER_IAMPORT,
+  PG_PROVIDER_IAMPORT_DISPLAY_LABEL,
   PORTONE_SETTINGS_KEY_WEBHOOK_SECRET,
   PORTONE_V2_NOTICE_LINE,
   PORTONE_V2_WEBHOOK_CONTENT_TYPE,
   PORTONE_V2_WEBHOOK_VERSION,
   getPortOneV2WebhookDisplayUrl
 } from '../../constants/portonePgConfiguration';
+import {
+  KICC_DOCS_AI_GUIDE_URL,
+  KICC_DOCS_LLM_INDEX_URL,
+  KICC_DOCS_ONLINE_PAYMENT_BASE,
+  KICC_SETTINGS_KEY_EASYPAY_HOST_PROD,
+  KICC_SETTINGS_KEY_EASYPAY_HOST_TEST,
+  PG_PROVIDER_KICC
+} from '../../constants/kiccPgConfiguration';
 import './PgConfigurationForm.css';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
@@ -66,6 +75,60 @@ const buildSettingsJsonFromPortoneFields = (webhookSecretInput, rest) => {
 };
 
 /**
+ * settings_json 에서 KICC 이지페이 호스트 오버라이드 분리
+ *
+ * @param {string|null|undefined} settingsJson
+ * @returns {{ hostTest: string, hostProd: string, rest: Object }}
+ */
+const parseKiccSettingsJson = (settingsJson) => {
+  if (!settingsJson || !String(settingsJson).trim()) {
+    return { hostTest: '', hostProd: '', rest: {} };
+  }
+  try {
+    const obj = JSON.parse(String(settingsJson));
+    if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+      return { hostTest: '', hostProd: '', rest: {} };
+    }
+    const hostTest = Object.prototype.hasOwnProperty.call(obj, KICC_SETTINGS_KEY_EASYPAY_HOST_TEST)
+      ? String(obj[KICC_SETTINGS_KEY_EASYPAY_HOST_TEST] ?? '')
+      : '';
+    const hostProd = Object.prototype.hasOwnProperty.call(obj, KICC_SETTINGS_KEY_EASYPAY_HOST_PROD)
+      ? String(obj[KICC_SETTINGS_KEY_EASYPAY_HOST_PROD] ?? '')
+      : '';
+    const rest = { ...obj };
+    delete rest[KICC_SETTINGS_KEY_EASYPAY_HOST_TEST];
+    delete rest[KICC_SETTINGS_KEY_EASYPAY_HOST_PROD];
+    return { hostTest, hostProd, rest };
+  } catch {
+    return { hostTest: '', hostProd: '', rest: {} };
+  }
+};
+
+/**
+ * KICC 호스트 필드 + 나머지 키 병합 후 JSON 문자열
+ *
+ * @param {string} hostTestInput
+ * @param {string} hostProdInput
+ * @param {Object} rest
+ * @returns {string|null}
+ */
+const buildSettingsJsonFromKiccFields = (hostTestInput, hostProdInput, rest) => {
+  const ht = hostTestInput != null ? String(hostTestInput).trim() : '';
+  const hp = hostProdInput != null ? String(hostProdInput).trim() : '';
+  const obj = { ...rest };
+  if (ht !== '') {
+    obj[KICC_SETTINGS_KEY_EASYPAY_HOST_TEST] = ht;
+  }
+  if (hp !== '') {
+    obj[KICC_SETTINGS_KEY_EASYPAY_HOST_PROD] = hp;
+  }
+  if (Object.keys(obj).length === 0) {
+    return null;
+  }
+  return JSON.stringify(obj);
+};
+
+/**
  * PG 설정 입력/수정 폼 컴포넌트
  *
  * @author CoreSolution
@@ -98,6 +161,9 @@ const PgConfigurationForm = ({
 
   const [portoneWebhookSecret, setPortoneWebhookSecret] = useState('');
   const [settingsRest, setSettingsRest] = useState({});
+  const [kiccEasypayHostTest, setKiccEasypayHostTest] = useState('');
+  const [kiccEasypayHostProd, setKiccEasypayHostProd] = useState('');
+  const [kiccSettingsRest, setKiccSettingsRest] = useState({});
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
@@ -110,21 +176,43 @@ const PgConfigurationForm = ({
 
   const pgProviders = [
     { value: 'TOSS', label: '토스페이먼츠' },
-    { value: PG_PROVIDER_IAMPORT, label: '아임포트 (포트원 결제모듈 V2)' },
+    { value: PG_PROVIDER_IAMPORT, label: PG_PROVIDER_IAMPORT_DISPLAY_LABEL },
     { value: 'KAKAO', label: '카카오페이' },
     { value: 'NAVER', label: '네이버페이' },
     { value: 'PAYPAL', label: '페이팔' },
-    { value: 'STRIPE', label: '스트라이프' }
+    { value: 'STRIPE', label: '스트라이프' },
+    { value: PG_PROVIDER_KICC, label: 'KICC 이지페이' }
   ];
 
   const isIamportPortoneV2 = formData.pgProvider === PG_PROVIDER_IAMPORT;
-  const canRunConnectionTest = Boolean(tenantId && configId && isIamportPortoneV2);
+  const isKicc = formData.pgProvider === PG_PROVIDER_KICC;
+  const canRunConnectionTest = Boolean(
+    tenantId && configId && (isIamportPortoneV2 || isKicc)
+  );
 
   useEffect(() => {
     if (initialData && mode === 'edit') {
-      const parsed = parsePortoneSettingsJson(initialData.settingsJson);
-      setPortoneWebhookSecret(parsed.webhookSecret);
-      setSettingsRest(parsed.rest);
+      const parsedPortone = parsePortoneSettingsJson(initialData.settingsJson);
+      const parsedKicc = parseKiccSettingsJson(initialData.settingsJson);
+      if (initialData.pgProvider === PG_PROVIDER_IAMPORT) {
+        setPortoneWebhookSecret(parsedPortone.webhookSecret);
+        setSettingsRest(parsedPortone.rest);
+        setKiccEasypayHostTest('');
+        setKiccEasypayHostProd('');
+        setKiccSettingsRest({});
+      } else if (initialData.pgProvider === PG_PROVIDER_KICC) {
+        setPortoneWebhookSecret('');
+        setSettingsRest({});
+        setKiccEasypayHostTest(parsedKicc.hostTest);
+        setKiccEasypayHostProd(parsedKicc.hostProd);
+        setKiccSettingsRest(parsedKicc.rest);
+      } else {
+        setPortoneWebhookSecret('');
+        setSettingsRest({});
+        setKiccEasypayHostTest('');
+        setKiccEasypayHostProd('');
+        setKiccSettingsRest({});
+      }
       setFormData({
         pgProvider: initialData.pgProvider || '',
         pgName: initialData.pgName || '',
@@ -143,13 +231,22 @@ const PgConfigurationForm = ({
   }, [initialData, mode]);
 
   useEffect(() => {
-    if (
-      mode === 'create' &&
-      prevPgProviderRef.current !== PG_PROVIDER_IAMPORT &&
-      formData.pgProvider === PG_PROVIDER_IAMPORT
-    ) {
-      setPortoneWebhookSecret('');
-      setSettingsRest({});
+    if (mode === 'create') {
+      if (
+        prevPgProviderRef.current !== PG_PROVIDER_IAMPORT &&
+        formData.pgProvider === PG_PROVIDER_IAMPORT
+      ) {
+        setPortoneWebhookSecret('');
+        setSettingsRest({});
+      }
+      if (
+        prevPgProviderRef.current !== PG_PROVIDER_KICC &&
+        formData.pgProvider === PG_PROVIDER_KICC
+      ) {
+        setKiccEasypayHostTest('');
+        setKiccEasypayHostProd('');
+        setKiccSettingsRest({});
+      }
     }
     prevPgProviderRef.current = formData.pgProvider;
   }, [formData.pgProvider, mode]);
@@ -185,7 +282,17 @@ const PgConfigurationForm = ({
       newErrors.pgProvider = 'PG사를 선택해주세요.';
     }
 
-    if (isIamportPortoneV2) {
+    if (isKicc) {
+      if (!formData.merchantId || !String(formData.merchantId).trim()) {
+        newErrors.merchantId = 'Mall ID(상점 ID)를 입력해주세요.';
+      }
+      if (!formData.apiKey || !String(formData.apiKey).trim()) {
+        newErrors.apiKey = 'API 키를 입력해주세요.';
+      }
+      if (!formData.secretKey || !String(formData.secretKey).trim()) {
+        newErrors.secretKey = '상점 검증키(Secret Key)를 입력해주세요.';
+      }
+    } else if (isIamportPortoneV2) {
       if (!formData.storeId || !String(formData.storeId).trim()) {
         newErrors.storeId = '스토어 ID를 입력해주세요.';
       }
@@ -234,6 +341,12 @@ const PgConfigurationForm = ({
 
     if (isIamportPortoneV2) {
       settingsPayload = buildSettingsJsonFromPortoneFields(portoneWebhookSecret, settingsRest);
+    } else if (isKicc) {
+      settingsPayload = buildSettingsJsonFromKiccFields(
+        kiccEasypayHostTest,
+        kiccEasypayHostProd,
+        kiccSettingsRest
+      );
     }
 
     const base = {
@@ -252,7 +365,16 @@ const PgConfigurationForm = ({
     }
 
     return base;
-  }, [formData, isIamportPortoneV2, portoneWebhookSecret, settingsRest]);
+  }, [
+    formData,
+    isIamportPortoneV2,
+    isKicc,
+    portoneWebhookSecret,
+    settingsRest,
+    kiccEasypayHostTest,
+    kiccEasypayHostProd,
+    kiccSettingsRest
+  ]);
 
   const handleSubmit = async(e) => {
     e.preventDefault();
@@ -401,6 +523,270 @@ const PgConfigurationForm = ({
             </span>
           )}
         </div>
+
+        {isKicc && (
+          <>
+            <div className="mg-v2-ad-b0kla-info-box pg-config-portone-v2-banner" role="status">
+              <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
+                KICC 이지페이 온라인 결제 API 연동입니다. Mall ID는 가맹점 ID 필드에 입력합니다. API 키·상점 검증키는 KICC에서 발급받은 값을 사용합니다.
+              </p>
+              <ul className="pg-config-kicc-doc-list">
+                <li>
+                  <a href={KICC_DOCS_LLM_INDEX_URL} target="_blank" rel="noopener noreferrer">
+                    API 목록 (llms.txt)
+                  </a>
+                </li>
+                <li>
+                  <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
+                    온라인 결제 개요·연동
+                  </a>
+                </li>
+                <li>
+                  <a href={KICC_DOCS_AI_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                    AI 연동 주의(민감정보·타임아웃 등)
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="merchantIdKicc" className="required">
+                Mall ID (상점 ID) <span className="required-mark">*</span>
+              </label>
+              <input
+                id="merchantIdKicc"
+                type="text"
+                value={formData.merchantId}
+                onChange={(e) => handleChange('merchantId', e.target.value)}
+                placeholder="KICC에서 부여한 Mall ID"
+                className={`form-input ${getFieldError('merchantId') ? 'error' : ''}`}
+                maxLength={255}
+                autoComplete="off"
+                aria-required="true"
+                aria-invalid={getFieldError('merchantId') ? 'true' : 'false'}
+                aria-describedby={getFieldError('merchantId') ? 'merchantIdKicc-error' : 'merchantIdKicc-help'}
+              />
+              {getFieldError('merchantId') && (
+                <span id="merchantIdKicc-error" className="error-message" role="alert">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('merchantId')}
+                </span>
+              )}
+              <small id="merchantIdKicc-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                문서상 8바이트 상점 ID입니다. 연동 세부 사항은{' '}
+                <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
+                  KICC 온라인 결제 문서
+                </a>
+                를 참고하세요.
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="apiKeyKicc" className="required">
+                API 키 <span className="required-mark">*</span>
+              </label>
+              <div className="input-with-icon">
+                <input
+                  id="apiKeyKicc"
+                  type={showApiKey ? 'text' : 'password'}
+                  value={formData.apiKey}
+                  onChange={(e) => handleChange('apiKey', e.target.value)}
+                  placeholder="KICC에서 안내한 상점 연동용 키"
+                  className={`form-input ${getFieldError('apiKey') ? 'error' : ''}`}
+                  autoComplete="new-password"
+                  aria-required="true"
+                  aria-invalid={getFieldError('apiKey') ? 'true' : 'false'}
+                  aria-describedby={getFieldError('apiKey') ? 'apiKeyKicc-error' : 'apiKeyKicc-help'}
+                />
+                <MGButton
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
+                  variant="outline"
+                  size="small"
+                  preventDoubleClick={false}
+                >
+                  {showApiKey ? '숨기기' : '보기'}
+                </MGButton>
+              </div>
+              {getFieldError('apiKey') && (
+                <span id="apiKeyKicc-error" className="error-message" role="alert">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('apiKey')}
+                </span>
+              )}
+              <small id="apiKeyKicc-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                저장 시 암호화됩니다. Phase 2에서 API 유형별로 사용합니다.
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="secretKeyKicc" className="required">
+                상점 검증키 (Secret Key) <span className="required-mark">*</span>
+              </label>
+              <div className="input-with-icon">
+                <input
+                  id="secretKeyKicc"
+                  type={showSecretKey ? 'text' : 'password'}
+                  value={formData.secretKey}
+                  onChange={(e) => handleChange('secretKey', e.target.value)}
+                  placeholder={mode === 'edit' ? '변경 시에만 새 값 입력' : 'HMAC 메시지 인증용 상점 검증키'}
+                  className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
+                  autoComplete="new-password"
+                  aria-required="true"
+                  aria-invalid={getFieldError('secretKey') ? 'true' : 'false'}
+                  aria-describedby={getFieldError('secretKey') ? 'secretKeyKicc-error' : 'secretKeyKicc-help'}
+                />
+                <MGButton
+                  type="button"
+                  onClick={() => setShowSecretKey(!showSecretKey)}
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'icon-button'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  aria-label={showSecretKey ? '상점 검증키 숨기기' : '상점 검증키 보기'}
+                  variant="outline"
+                  size="small"
+                  preventDoubleClick={false}
+                >
+                  {showSecretKey ? '숨기기' : '보기'}
+                </MGButton>
+              </div>
+              {getFieldError('secretKey') && (
+                <span id="secretKeyKicc-error" className="error-message" role="alert">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('secretKey')}
+                </span>
+              )}
+              <small id="secretKeyKicc-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                승인·취소 등 msgAuthValue(HMAC-SHA256)에 사용됩니다. 연결 테스트는 거래상태 조회 API로 도메인·Mall ID를 확인합니다.
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.testMode}
+                  onChange={(e) => handleChange('testMode', e.target.checked)}
+                  className="form-checkbox"
+                />
+                <span>테스트 모드</span>
+              </label>
+              <small className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                테스트·운영 API 엔드포인트는 KICC 문서를 따릅니다.{' '}
+                <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
+                  온라인 결제 개요·연동
+                </a>
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="kiccEasypayHostTest">이지페이 API 호스트 (테스트, 선택)</label>
+              <input
+                id="kiccEasypayHostTest"
+                type="text"
+                value={kiccEasypayHostTest}
+                onChange={(e) => setKiccEasypayHostTest(e.target.value)}
+                placeholder="비우면 서버 기본값·배포 설정 사용"
+                className="form-input"
+                maxLength={255}
+                autoComplete="off"
+                aria-describedby="kiccEasypayHostTest-help"
+              />
+              <small id="kiccEasypayHostTest-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                문서의 테스트 호스트와 배포 기본값이 다를 때만 입력합니다. 저장 키:{' '}
+                <span className="pg-config-portone-v2-code">{KICC_SETTINGS_KEY_EASYPAY_HOST_TEST}</span>
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="kiccEasypayHostProd">이지페이 API 호스트 (운영, 선택)</label>
+              <input
+                id="kiccEasypayHostProd"
+                type="text"
+                value={kiccEasypayHostProd}
+                onChange={(e) => setKiccEasypayHostProd(e.target.value)}
+                placeholder="비우면 서버 기본값·배포 설정 사용"
+                className="form-input"
+                maxLength={255}
+                autoComplete="off"
+                aria-describedby="kiccEasypayHostProd-help"
+              />
+              <small id="kiccEasypayHostProd-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                문서의 운영 호스트와 배포 기본값이 다를 때만 입력합니다. 저장 키:{' '}
+                <span className="pg-config-portone-v2-code">{KICC_SETTINGS_KEY_EASYPAY_HOST_PROD}</span>
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="notesKicc">비고 (선택)</label>
+              <textarea
+                id="notesKicc"
+                value={formData.notes}
+                onChange={(e) => handleChange('notes', e.target.value)}
+                placeholder="추가 정보나 메모를 입력하세요"
+                className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
+                rows={4}
+                maxLength={1000}
+              />
+              <small className="char-count">
+                {formData.notes.length} / 1000
+              </small>
+              {getFieldError('notes') && (
+                <span className="error-message">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('notes')}
+                </span>
+              )}
+            </div>
+
+            <div className="pg-config-portone-v2-test">
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: testConnectionLoading
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleTestConnection}
+                disabled={!canRunConnectionTest || testConnectionLoading}
+                loading={testConnectionLoading}
+                preventDoubleClick={false}
+                aria-label="PG 연결 테스트"
+              >
+                연결 테스트
+              </MGButton>
+              {!canRunConnectionTest && (
+                <p className="pg-config-portone-v2-test-hint">
+                  <SafeText>
+                    {mode === 'create'
+                      ? '연결 테스트는 저장 후 상세 화면에서 진행할 수 있습니다.'
+                      : '연결 테스트를 실행할 수 없습니다. 테넌트·설정 정보를 확인해 주세요.'}
+                  </SafeText>
+                </p>
+              )}
+            </div>
+          </>
+        )}
 
         {isIamportPortoneV2 && (
           <>
@@ -638,7 +1024,7 @@ const PgConfigurationForm = ({
           </>
         )}
 
-        {!isIamportPortoneV2 && (
+        {!isIamportPortoneV2 && !isKicc && (
           <>
             <div className="form-group">
               <label htmlFor="pgName">PG사 명칭 (선택)</label>
@@ -893,7 +1279,7 @@ const PgConfigurationForm = ({
           </>
         )}
 
-        {/* F: 연결 테스트 (포트원 V2 한 곳) */}
+        {/* F: 연결 테스트 (포트원 V2 — KICC는 전용 섹션에서 처리) */}
         {isIamportPortoneV2 && (
           <div className="pg-config-portone-v2-test">
             <MGButton

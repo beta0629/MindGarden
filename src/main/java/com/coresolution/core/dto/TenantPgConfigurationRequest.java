@@ -35,19 +35,22 @@ public class TenantPgConfigurationRequest {
     private String pgName;
     
     /**
-     * API Key (평문 - 서비스에서 암호화하여 저장)
+     * API Key (평문 - 서비스에서 암호화하여 저장).
+     * KICC 이지페이: 상점 연동용 키(KICC 콘솔·가이드에 따름, Phase 2 API별 사용).
      */
     @NotBlank(message = "API Key는 필수입니다")
     private String apiKey;
     
     /**
-     * Secret Key (평문 - 서비스에서 암호화하여 저장)
+     * Secret Key (평문 - 서비스에서 암호화하여 저장).
+     * KICC 이지페이: 상점 검증키(HMAC-SHA256 메시지 인증값, 승인·취소 등).
      */
     @NotBlank(message = "Secret Key는 필수입니다")
     private String secretKey;
     
     /**
-     * Merchant ID
+     * Merchant ID.
+     * KICC 이지페이: Mall ID(상점 ID, 8바이트).
      */
     @Size(max = 255, message = "Merchant ID는 255자 이하여야 합니다")
     private String merchantId;

@@ -40,7 +40,12 @@ public enum PgProvider {
     /**
      * 스트라이프
      */
-    STRIPE("스트라이프", "Stripe");
+    STRIPE("스트라이프", "Stripe"),
+    
+    /**
+     * KICC 이지페이 (온라인 결제 API)
+     */
+    KICC("KICC 이지페이", "KICC EasyPay");
     
     private final String nameKo;
     private final String nameEn;

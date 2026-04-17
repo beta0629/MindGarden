@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiPost } from '../../../utils/ajax';
+import { MAPPING_PAYMENT_METHOD_LABELS } from '../../../constants/billing';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -42,13 +43,17 @@ const MappingPaymentModal = ({
         
         if (method === 'CASH') {
             return `CASH_${timestamp}`;
-        } else if (method === 'CARD') {
-            return `CARD_${timestamp}`;
-        } else if (method === 'BANK_TRANSFER') {
-            return `BANK_${timestamp}`;
-        } else {
-            return `${method}_${timestamp}`;
         }
+        if (method === 'CARD') {
+            return `CARD_${timestamp}`;
+        }
+        if (method === 'CARD_TERMINAL') {
+            return `TERM_${timestamp}`;
+        }
+        if (method === 'BANK_TRANSFER') {
+            return `BANK_${timestamp}`;
+        }
+        return `${method}_${timestamp}`;
     };
 
     // 모달이 열릴 때 초기화
@@ -110,6 +115,23 @@ const MappingPaymentModal = ({
 
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
+
+    const paymentMethodOptions = [
+        { value: 'BANK_TRANSFER', label: MAPPING_PAYMENT_METHOD_LABELS.BANK_TRANSFER },
+        { value: 'CARD', label: MAPPING_PAYMENT_METHOD_LABELS.CARD },
+        { value: 'CARD_TERMINAL', label: MAPPING_PAYMENT_METHOD_LABELS.CARD_TERMINAL },
+        { value: 'CASH', label: MAPPING_PAYMENT_METHOD_LABELS.CASH }
+    ];
+
+    const referencePlaceholder = paymentData.paymentMethod === 'CARD_TERMINAL'
+        ? '단말 승인번호 등으로 수정 (예: TERM_… 대신 실제 승인번호)'
+        : '자동 생성됩니다 (필요 시 수정)';
+
+    const referenceHelpText = paymentData.paymentMethod === 'CARD_TERMINAL'
+        ? '단말기 영수증의 승인번호·거래일시를 참조번호에 입력하세요. 카드번호는 입력하지 마세요.'
+        : paymentData.paymentMethod === 'CARD'
+            ? '온라인 PG 승인 시 PG 거래번호 등을 입력할 수 있습니다. 자동 생성값을 덮어써도 됩니다.'
+            : '자동으로 참조번호가 생성됩니다. 필요 시 수정할 수 있습니다.';
 
     return (
         <UnifiedModal
@@ -183,11 +205,7 @@ const MappingPaymentModal = ({
                     <BadgeSelect
                         value={paymentData.paymentMethod}
                         onChange={(val) => handlePaymentMethodChange(val)}
-                        options={[
-                            { value: 'BANK_TRANSFER', label: '계좌이체' },
-                            { value: 'CARD', label: '신용카드' },
-                            { value: 'CASH', label: '현금' }
-                        ]}
+                        options={paymentMethodOptions}
                         className="mg-v2-form-badge-select"
                         aria-label="결제 방법"
                     />
@@ -207,11 +225,11 @@ const MappingPaymentModal = ({
                                     paymentReference: e.target.value
                                 }));
                             }}
-                            placeholder="자동 생성됩니다 (수정 가능)"
+                            placeholder={referencePlaceholder}
                             className="mg-v2-form-input"
                         />
                         <small className="mg-v2-form-help">
-                            자동으로 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
+                            {referenceHelpText}
                         </small>
                     </div>
                 )}

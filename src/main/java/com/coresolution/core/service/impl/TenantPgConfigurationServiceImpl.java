@@ -545,9 +545,17 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 break;
             case PAYPAL:
             case STRIPE:
+            case KICC:
                 break;
             default:
                 throw new IllegalArgumentException("지원하지 않는 PG Provider: " + request.getPgProvider());
+        }
+        
+        if (request.getPgProvider() == PgProvider.KICC) {
+            if (request.getMerchantId() == null || request.getMerchantId().trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "KICC 이지페이는 가맹점 ID(Mall ID, 최대 8자)가 필수입니다");
+            }
         }
         
         if (request.getWebhookUrl() != null && !request.getWebhookUrl().trim().isEmpty()) {

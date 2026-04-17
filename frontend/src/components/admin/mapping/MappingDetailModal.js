@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Info, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
+import { getMappingPaymentMethodDisplayLabel } from '../../../constants/billing';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -256,7 +257,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             </div>
                                             <div className="info-item">
                                                 <label>결제 방법</label>
-                                                <span>{mapping?.paymentMethod || '-'}</span>
+                                                <span>{getMappingPaymentMethodDisplayLabel(mapping?.paymentMethod)}</span>
                                             </div>
                                             <div className="info-item">
                                                 <label>결제 참조번호</label>

@@ -133,6 +133,12 @@ spring:
 # MindGarden 공개 API·계정 연동 보안(이메일 발송 쿨다운·일일 상한, IP 레이트리밋 등)
 # 프로파일별로 mindgarden.security.* 를 오버라이드할 수 있습니다.
 mindgarden:
+  # KICC 이지페이 온라인 API 호스트 기본값(테넌트 settings_json 으로 오버라이드 가능). 비밀 아님.
+  pg:
+    kicc:
+      easypay:
+        host-test: ${KICC_EASYPAY_HOST_TEST:testpgapi.easypay.co.kr}
+        host-prod: ${KICC_EASYPAY_HOST_PROD:pgapi.easypay.co.kr}
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
     captcha:

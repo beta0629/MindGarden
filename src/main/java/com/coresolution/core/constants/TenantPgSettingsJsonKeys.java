@@ -13,6 +13,16 @@ public final class TenantPgSettingsJsonKeys {
      */
     public static final String PORTONE_WEBHOOK_SECRET = "portoneWebhookSecret";
 
+    /**
+     * KICC 이지페이 온라인 API 호스트(테스트). 값이 있으면 해당 호스트만 사용(HTTPS).
+     */
+    public static final String KICC_EASYPAY_API_HOST_TEST = "kiccEasypayApiHostTest";
+
+    /**
+     * KICC 이지페이 온라인 API 호스트(운영). 값이 있으면 해당 호스트만 사용(HTTPS).
+     */
+    public static final String KICC_EASYPAY_API_HOST_PROD = "kiccEasypayApiHostProd";
+
     private TenantPgSettingsJsonKeys() {
     }
 }

@@ -330,7 +330,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />
-            <Route path="/test/modal" element={<div className="mg-modal"Test />} />
+            <Route path="/test/modal" element={<div className="mg-modal" />} />
             <Route path="/test/loading" element={<div className="mg-loading">로딩중...</div>} />
             <Route path="/test/header" element={<UnifiedHeader />} />
             {/* Phase 3: 통합 로그인 시스템 */}
@@ -352,6 +352,7 @@ function AppContent() {
                 <ClientDashboard user={user} />
               </ProtectedRoute>
             } />
+            <Route path="/client" element={<Navigate to="/client/dashboard" replace />} />
             <Route path="/consultant/dashboard" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
                 <ConsultantDashboardV2 user={user} />

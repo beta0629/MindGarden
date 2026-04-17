@@ -29,13 +29,14 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/themes/client-theme.css';
 import SafeText from '../common/SafeText';
-import { toDisplayString } from '../../utils/safeDisplay';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './ClientDashboard.css';
 
 const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
 
 const CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID = 'client-dashboard-quick-menu-section';
 const CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID = 'client-dashboard-upcoming-schedule';
+const CLIENT_DASHBOARD_KPI_SECTION_TEST_ID = 'client-dashboard-kpi-section';
 
 const CLIENT_EYEBROW_TEXT = '내담자 홈';
 const CLIENT_WELCOME_LEDE =
@@ -366,7 +367,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
         <ContentArea ariaLabel="내담자 대시보드">
           <ContentHeader
             title="내 대시보드"
-            subtitle="오늘의 상담·회기·메시지를 한곳에서 확인하세요."
+            subtitle={null}
             titleId={CLIENT_DASHBOARD_TITLE_ID}
           />
           <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>{body}</main>
@@ -408,8 +409,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
         />
 
         <main className="client-dash__main" id="client-dash-main" aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>
-          <header className="client-dash__header" aria-label="내담자 대시보드 상단">
-            <section className="client-dash__section client-dash__welcome" aria-labelledby="client-dash-welcome-heading">
+          <section className="client-dash__section client-dash__welcome" aria-labelledby="client-dash-welcome-heading">
               <div className="mg-v2-card-container client-dash__welcome-card">
                 <div className="client-dash__welcome-inner">
                   <p className="client-dash__eyebrow">{CLIENT_EYEBROW_TEXT}</p>
@@ -436,7 +436,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                 </div>
               </div>
             </section>
-          </header>
 
           <section
             className="client-dash__section client-dash__next"
@@ -519,43 +518,49 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             )}
           </section>
 
-          <section className="client-dash__section client-dash__kpi" aria-labelledby="client-dash-kpi-heading">
+          <section
+            className="client-dash__section client-dash__kpi"
+            aria-labelledby="client-dash-kpi-heading"
+            data-testid={CLIENT_DASHBOARD_KPI_SECTION_TEST_ID}
+          >
             <div className="client-dash__section-head">
               <h2 id="client-dash-kpi-heading" className="client-dash__section-title">
                 {CLIENT_KPI_SECTION_TITLE}
               </h2>
               <p className="client-dash__section-desc">{CLIENT_KPI_SECTION_DESC}</p>
             </div>
-            <ContentKpiRow
-              items={[
-                {
-                  id: 'remainingSessions',
-                  icon: <Heart size={28} aria-hidden />,
-                  label: '남은 회기',
-                  value: consultationData.remainingSessions,
-                  iconVariant: 'gray',
-                  onClick: () => navigate('/client/session-management')
-                },
-                {
-                  id: 'thisMonthConsultations',
-                  icon: <Calendar size={28} aria-hidden />,
-                  label: '이번 달 상담',
-                  value: consultationData.thisMonthScheduleCount,
-                  iconVariant: 'blue',
-                  onClick: () => navigate('/client/schedule')
-                },
-                {
-                  id: 'unreadMessages',
-                  icon: <Bell size={28} aria-hidden />,
-                  label: '읽지 않은 메시지',
-                  value: unreadMessageCount,
-                  iconVariant: 'orange',
-                  subtitleBadge: unreadMessageCount > 0 ? '새 소식' : null,
-                  badgeVariant: 'green',
-                  onClick: () => navigate('/client/messages')
-                }
-              ]}
-            />
+            <div className="client-dash__kpi-row-wrap">
+              <ContentKpiRow
+                items={[
+                  {
+                    id: 'remainingSessions',
+                    icon: <Heart size={28} aria-hidden />,
+                    label: '남은 회기',
+                    value: toSafeNumber(consultationData.remainingSessions),
+                    iconVariant: 'gray',
+                    onClick: () => navigate('/client/session-management')
+                  },
+                  {
+                    id: 'thisMonthConsultations',
+                    icon: <Calendar size={28} aria-hidden />,
+                    label: '이번 달 상담',
+                    value: toSafeNumber(consultationData.thisMonthScheduleCount),
+                    iconVariant: 'blue',
+                    onClick: () => navigate('/client/schedule')
+                  },
+                  {
+                    id: 'unreadMessages',
+                    icon: <Bell size={28} aria-hidden />,
+                    label: '읽지 않은 메시지',
+                    value: toSafeNumber(unreadMessageCount),
+                    iconVariant: 'orange',
+                    subtitleBadge: toSafeNumber(unreadMessageCount) > 0 ? '새 소식' : null,
+                    badgeVariant: 'green',
+                    onClick: () => navigate('/client/messages')
+                  }
+                ]}
+              />
+            </div>
           </section>
 
           <section className="client-dash__section client-dash__core" aria-labelledby="client-dash-core-heading">
@@ -565,7 +570,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
               </h2>
               <p className="client-dash__section-desc">{CLIENT_CORE_SECTION_DESC}</p>
             </div>
-            <ul className="client-dash__stack">
+            <ul className="client-dash__core-cards">
               <li>
                 <article className="mg-v2-card-container client-dash__core-card" aria-labelledby="client-dash-core-1">
                   <header className="client-dash__core-card-head">

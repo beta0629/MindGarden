@@ -162,8 +162,34 @@
   gap: var(--mg-spacing-md);
 }
 
+.client-dash__core-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-md);
+}
+
+@media (min-width: 769px) {
+  .client-dash__core-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .client-dash__personalized {
-  margin-top: var(--mg-spacing-lg);
+  margin-top: var(--mg-spacing-xl);
+}
+
+/* KPI: 데스크톱 3열, 모바일 1열 (핸드오프) */
+.client-dash__kpi-row-wrap .mg-v2-content-kpi-row {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 769px) {
+  .client-dash__kpi-row-wrap .mg-v2-content-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* 결제 요약: 페이지 섹션 제목만 노출 — 자식 컴포넌트 내부 h2 숨김 */

@@ -9,6 +9,7 @@
  *
  * 리뉴얼 UI testid (`ClientDashboard.js`):
  * - `client-dashboard-quick-menu`, `client-dashboard-quick-menu-section` (빠른 메뉴).
+ * - `client-dashboard-kpi-section`: 핵심 지표(KPI) 섹션.
  * - `client-dashboard-upcoming-schedule`: 다음 액션·일정 섹션(항상 마운트). "일정 보기" 버튼은 다가오는 일정이 0건일 때만 노출.
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
@@ -97,6 +98,10 @@ test.describe('내담자 대시보드 스모크', () => {
       await expect(page.getByRole('button', { name: /^일정$/ })).toBeVisible();
     });
 
+    await test.step('KPI 섹션(testid)', async () => {
+      await expect(page.getByTestId('client-dashboard-kpi-section')).toBeVisible({ timeout: 10_000 });
+    });
+
     await test.step('다가오는 일정 섹션(testid)', async () => {
       const upcomingSection = page.getByTestId('client-dashboard-upcoming-schedule');
       await expect(upcomingSection).toBeVisible({ timeout: 10_000 });
@@ -112,5 +117,15 @@ test.describe('내담자 대시보드 스모크', () => {
 
     const severe = collectedErrors.filter((line) => !REACT_130_OR_INVALID_CHILD.test(line));
     expect(severe, `pageerror / console.error:\n${severe.join('\n---\n')}`).toEqual([]);
+  });
+
+  test('/client 접속 시 /client/dashboard 로 replace 리다이렉트된다', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    await page.goto('/client', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/client\/dashboard$/, { timeout: 15_000 });
+    await expect(page.locator('#client-dashboard-page-title')).toBeVisible({ timeout: 20_000 });
   });
 });

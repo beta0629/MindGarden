@@ -102,6 +102,11 @@
   transition: all var(--transition-normal);
 }
 
+.message-card-icon__svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .message-card-icon--primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
 }

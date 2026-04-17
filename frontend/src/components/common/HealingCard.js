@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet } from '../../utils/ajax';
+import { apiGet, apiPost } from '../../utils/ajax';
 import { normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
@@ -32,7 +32,7 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             if (category) params.append('category', category);
             if (targetRole) params.append('userRole', targetRole);
 
-            const response = await apiGet(`/api/healing/content?${params}`);
+            const response = await apiGet(`/api/v1/healing/content?${params}`);
             const payload = normalizeApiObjectPayload(response) ?? (
                 response && typeof response === 'object' && !Array.isArray(response) ? response : null
             );
@@ -62,7 +62,7 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             if (category) params.append('category', category);
             if (targetRole) params.append('userRole', targetRole);
 
-            const response = await apiGet(`/api/healing/refresh?${params}`);
+            const response = await apiPost(`/api/v1/healing/refresh?${params}`, {});
             const payload = normalizeApiObjectPayload(response) ?? (
                 response && typeof response === 'object' && !Array.isArray(response) ? response : null
             );

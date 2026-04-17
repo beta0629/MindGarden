@@ -50,7 +50,7 @@ const ClientSchedule = () => {
   }, [user, isLoggedIn, sessionLoading, navigate]);
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla">
+    <div className="mg-v2-ad-b0kla" data-testid="client-schedule-page">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="내담자 일정">
           <ContentHeader
@@ -68,7 +68,7 @@ const ClientSchedule = () => {
 
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title="스케줄">
+      <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="로딩중..." />
@@ -80,7 +80,7 @@ const ClientSchedule = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="스케줄">
+      <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-schedule-error">
             <div className="client-schedule-error__icon">
@@ -103,7 +103,7 @@ const ClientSchedule = () => {
   }
 
   return (
-    <AdminCommonLayout title="스케줄">
+    <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-schedule-calendar-wrapper">
           <ScheduleCalendar

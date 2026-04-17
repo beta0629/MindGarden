@@ -13,7 +13,7 @@ import {
   FileText,
   Phone
 } from 'lucide-react';
-import { apiGet } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -57,14 +57,16 @@ const ClientPaymentHistory = () => {
       }
       setError(null);
 
-      const userResponse = await apiGet('/api/v1/auth/current-user');
+      const userResponse = await StandardizedApi.get('/api/v1/auth/current-user');
       if (!userResponse || !userResponse.id) {
         throw new Error('로그인이 필요합니다.');
       }
 
       const userId = userResponse.id;
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
-      const mappingsResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
+      const mappingsResponse = await StandardizedApi.get('/api/v1/admin/mappings/client', {
+        clientId: userId
+      });
       const mappings = mappingsResponse.data || [];
 
       const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
@@ -147,7 +149,7 @@ const ClientPaymentHistory = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla">
+    <div className="mg-v2-ad-b0kla" data-testid="client-payment-history-page">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="결제 내역">
           <ContentHeader
@@ -175,7 +177,7 @@ const ClientPaymentHistory = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="결제 내역">
+      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="결제 이력을 불러오는 중..." />
@@ -187,7 +189,7 @@ const ClientPaymentHistory = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="결제 내역">
+      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-payment-history">
             <div className="payment-error">
@@ -215,7 +217,7 @@ const ClientPaymentHistory = () => {
 
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
-      <AdminCommonLayout title="결제 내역">
+      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-payment-history">
             <div className="payment-empty">
@@ -243,7 +245,7 @@ const ClientPaymentHistory = () => {
   }
 
   return (
-    <AdminCommonLayout title="결제 내역">
+    <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-payment-history">
         {/* 통계 카드 */}

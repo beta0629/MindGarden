@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/themes/client-theme.css';
 import './MindfulnessGuide.css';
+
+const MINDFULNESS_GUIDE_TITLE_ID = 'mindfulness-guide-page-title';
 
 const MindfulnessGuide = () => {
   const navigate = useNavigate();
@@ -16,12 +21,10 @@ const MindfulnessGuide = () => {
   const [activeSection, setActiveSection] = useState('breathing');
 
   useEffect(() => {
-    // 로딩 중에는 권한 체크 안 함
     if (isLoading) {
       return;
     }
 
-    // 권한 체크
     if (!isLoggedIn || !user) {
       notificationManager.show('로그인이 필요합니다.', 'error');
       navigate('/login');
@@ -215,95 +218,107 @@ const MindfulnessGuide = () => {
     setActiveSection(sectionId);
   };
 
-  const currentSection = sections.find(section => section.id === activeSection);
+  const currentSection = sections.find((section) => section.id === activeSection);
 
-  // 로딩 중일 때는 아무것도 렌더링하지 않음
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla" data-testid="client-mindfulness-guide-page">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="마음챙김 가이드">
+          <ContentHeader
+            title="마음건강 가이드"
+            subtitle="마음챙김과 명상으로 일상을 더 건강하게 만들어보세요"
+            titleId={MINDFULNESS_GUIDE_TITLE_ID}
+          />
+          <main aria-labelledby={MINDFULNESS_GUIDE_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
-    return null;
+    return (
+      <AdminCommonLayout title="마음챙김 가이드" className="mg-v2-dashboard-layout">
+        {pageShell(
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="로딩중..." />
+          </div>
+        )}
+      </AdminCommonLayout>
+    );
   }
 
   return (
-    <AdminCommonLayout title="마음챙김 가이드">
-      <div className="mindfulness-guide">
-        <div className="mindfulness-guide-header mg-card">
-          <div className="mindfulness-guide-header-content">
-            <div className="mindfulness-guide-icon-wrapper">
-              <span className="mindfulness-guide-icon">🧘‍♀️</span>
-            </div>
-            <div className="mindfulness-guide-header-text">
-              <h1 className="mindfulness-guide-title">마음건강 가이드</h1>
-              <p className="mindfulness-guide-subtitle">
-                마음챙김과 명상으로 일상을 더 건강하게 만들어보세요
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mindfulness-guide-content">
-          <div className="mindfulness-guide-sidebar">
-            <div className="mg-card">
-              <nav className="mindfulness-guide-nav">
-                {sections.map((section) => (
-                  <MGButton
-                    key={section.id}
-                    type="button"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => handleSectionClick(section.id)}
-                    variant="outline"
-                    preventDoubleClick={false}
-                  >
-                    <span className="nav-icon"><SafeText>{section.icon}</SafeText></span>
-                    <span className="nav-title"><SafeText>{section.title}</SafeText></span>
-                  </MGButton>
-                ))}
-              </nav>
-            </div>
-          </div>
-
-          <div className="mindfulness-guide-main">
-            {currentSection && (
-              <div className="mindfulness-section">
-                <div className="mg-card mindfulness-section-header">
-                  <h2 className="mindfulness-section-title">
-                    <span className="section-icon"><SafeText>{currentSection.icon}</SafeText></span>
-                    <SafeText tag="span">{currentSection.content.title}</SafeText>
-                  </h2>
-                  <p className="mindfulness-section-description">
-                    <SafeText>{currentSection.content.description}</SafeText>
-                  </p>
-                </div>
-
-                <div className="mindfulness-techniques">
-                  {currentSection.content.techniques.map((technique, index) => (
-                    <div key={index} className="mg-card mindfulness-technique">
-                      <div className="technique-header">
-                        <SafeText tag="h3" className="technique-name">{technique.name}</SafeText>
-                        <p className="technique-description"><SafeText>{technique.description}</SafeText></p>
-                      </div>
-                      <div className="technique-steps">
-                        <h4 className="steps-title">실행 방법</h4>
-                        <ol className="steps-list">
-                          {technique.steps.map((step, stepIndex) => (
-                            <li key={stepIndex} className="step-item">
-                              <SafeText>{step}</SafeText>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    </div>
+    <AdminCommonLayout title="마음챙김 가이드" className="mg-v2-dashboard-layout">
+      {pageShell(
+        <div className="mindfulness-guide">
+          <div className="mindfulness-guide-content">
+            <div className="mindfulness-guide-sidebar">
+              <div className="mg-card">
+                <nav className="mindfulness-guide-nav">
+                  {sections.map((section) => (
+                    <MGButton
+                      key={section.id}
+                      type="button"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading: false,
+                        className: `mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      onClick={() => handleSectionClick(section.id)}
+                      variant="outline"
+                      preventDoubleClick={false}
+                    >
+                      <span className="nav-icon"><SafeText>{section.icon}</SafeText></span>
+                      <span className="nav-title"><SafeText>{section.title}</SafeText></span>
+                    </MGButton>
                   ))}
-                </div>
+                </nav>
               </div>
-            )}
+            </div>
+
+            <div className="mindfulness-guide-main">
+              {currentSection && (
+                <div className="mindfulness-section">
+                  <div className="mg-card mindfulness-section-header">
+                    <h2 className="mindfulness-section-title">
+                      <span className="section-icon"><SafeText>{currentSection.icon}</SafeText></span>
+                      <SafeText tag="span">{currentSection.content.title}</SafeText>
+                    </h2>
+                    <p className="mindfulness-section-description">
+                      <SafeText>{currentSection.content.description}</SafeText>
+                    </p>
+                  </div>
+
+                  <div className="mindfulness-techniques">
+                    {currentSection.content.techniques.map((technique, index) => (
+                      <div key={index} className="mg-card mindfulness-technique">
+                        <div className="technique-header">
+                          <SafeText tag="h3" className="technique-name">{technique.name}</SafeText>
+                          <p className="technique-description"><SafeText>{technique.description}</SafeText></p>
+                        </div>
+                        <div className="technique-steps">
+                          <h4 className="steps-title">실행 방법</h4>
+                          <ol className="steps-list">
+                            {technique.steps.map((step, stepIndex) => (
+                              <li key={stepIndex} className="step-item">
+                                <SafeText>{step}</SafeText>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </AdminCommonLayout>
   );
 };

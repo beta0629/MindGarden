@@ -133,6 +133,7 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
 
 .mg-v2-content-kpi-card__label {
   font-size: 14px;
+  line-height: 1.45;
   color: var(--ad-b0kla-text-secondary, #64748b);
 }
 
@@ -240,6 +241,34 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__content,
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__text {
   display: contents;
+}
+
+/*
+ * KPI 카드는 MGButton 안에 다줄·블록 레이아웃(info)을 넣는다.
+ * MGButton 기본: .mg-button__text { white-space: nowrap } + .mg-button { overflow: hidden }
+ * → 라벨 상단 글리프가 잘림. KPI 전용으로 줄바꿈·오버플로 허용.
+ */
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button {
+  overflow: visible;
+  align-items: flex-start;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__content {
+  /* display:contents(상단 규칙) 덮음: 세로 스택에서 info 블록이 잘리지 않도록 */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__text {
+  display: block;
+  white-space: normal;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

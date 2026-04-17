@@ -1,24 +1,7 @@
-/**
- * Message Widget
-/**
- * 메시지 목록을 표시하는 범용 위젯
-/**
- * ClientMessageSection을 기반으로 범용화
-/**
- * 
-/**
- * @author CoreSolution
-/**
- * @version 1.0.0
-/**
- * @since 2025-11-22
- */
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
-// // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
@@ -31,16 +14,16 @@ const MessageWidget = ({ widget, user }) => {
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   const config = widget.config || {};
   const dataSource = config.dataSource || {};
   const maxItems = config.maxItems || 10;
   const messageTypes = config.messageTypes || {};
-  
+
   useEffect(() => {
     if (dataSource.type === 'api' && dataSource.url) {
       loadMessages();
-      
+
       if (dataSource.refreshInterval) {
         const interval = setInterval(loadMessages, dataSource.refreshInterval);
         return () => clearInterval(interval);
@@ -53,29 +36,26 @@ const MessageWidget = ({ widget, user }) => {
       setLoading(false);
     }
   }, []);
-  
+
   const loadMessages = async() => {
     try {
       setLoading(true);
-      
-      // 실제 API 엔드포인트: /api/v1/consultation-messages/client/{userId}
+
       const url = dataSource.url || `/api/v1/consultation-messages/client/${user?.id}`;
-      const params = { 
-        ...dataSource.params, 
+      const params = {
+        ...dataSource.params,
         page: 0,
         size: maxItems,
         sort: 'createdAt,desc'
       };
-      
+
       const response = await apiGet(url, params);
-      
+
       if (response && response.success) {
-        // ConsultationMessageController 응답 형식: { messages: [...], totalElements: ... }
         const messageList = response.data?.messages || response.messages || [];
         setMessages(Array.isArray(messageList) ? messageList.slice(0, maxItems) : []);
         setUnreadCount(messageList.filter(m => !m.isRead).length);
       } else if (response) {
-        // 다른 응답 형식 지원
         const messageList = response.data || response || [];
         setMessages(Array.isArray(messageList) ? messageList.slice(0, maxItems) : []);
         setUnreadCount(messageList.filter(m => !m.isRead).length);
@@ -91,7 +71,7 @@ const MessageWidget = ({ widget, user }) => {
       setLoading(false);
     }
   };
-  
+
   const getMessageTypeInfo = (type) => {
     return messageTypes[type] || messageTypes.DEFAULT || {
       icon: 'bi-envelope',
@@ -99,11 +79,11 @@ const MessageWidget = ({ widget, user }) => {
       colorClass: 'secondary'
     };
   };
-  
+
   const handleMessageClick = (message) => {
     setSelectedMessage(message);
   };
-  
+
   const handleViewAll = () => {
     if (config.viewAllUrl) {
       navigate(config.viewAllUrl);
@@ -111,7 +91,11 @@ const MessageWidget = ({ widget, user }) => {
       navigate('/messages');
     }
   };
-  
+
+  const closeMessageModal = () => {
+    setSelectedMessage(null);
+  };
+
   const formatTime = (time) => {
     if (!time) return '';
     const date = new Date(time);
@@ -120,14 +104,14 @@ const MessageWidget = ({ widget, user }) => {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (minutes < 1) return '방금 전';
     if (minutes < 60) return `${minutes}분 전`;
     if (hours < 24) return `${hours}시간 전`;
     if (days < 7) return `${days}일 전`;
     return date.toLocaleDateString('ko-KR');
   };
-  
+
   if (loading && messages.length === 0) {
     return (
       <div className="widget widget-message">
@@ -135,9 +119,13 @@ const MessageWidget = ({ widget, user }) => {
       </div>
     );
   }
-  
+
   const displayMessages = messages.slice(0, maxItems);
-  
+
+  const modalTitle = selectedMessage
+    ? toDisplayString(selectedMessage.title ?? selectedMessage.subject, '메시지')
+    : '';
+
   return (
     <div className="widget widget-message">
       <div className="widget-header">
@@ -201,12 +189,15 @@ const MessageWidget = ({ widget, user }) => {
           </div>
         )}
       </div>
-      
+
       {selectedMessage && (
-        <div className="mg-modal"
-          isOpen={!!selectedMessage}
-          onClose={() => setSelectedMessage(null)}
-          title={toDisplayString(selectedMessage.title ?? selectedMessage.subject, '메시지')}
+        <UnifiedModal
+          isOpen
+          onClose={closeMessageModal}
+          title={modalTitle}
+          size="medium"
+          variant="detail"
+          className="mg-v2-ad-b0kla"
         >
           <div className="message-detail">
             <div className="message-detail-content">
@@ -216,16 +207,18 @@ const MessageWidget = ({ widget, user }) => {
               {selectedMessage.sender && (
                 <div>보낸 사람: <SafeText>{selectedMessage.sender}</SafeText></div>
               )}
-              {selectedMessage.createdAt && (
-                <div>받은 시간: {new Date(selectedMessage.createdAt).toLocaleString('ko-KR')}</div>
+              {(selectedMessage.createdAt || selectedMessage.sentAt) && (
+                <div>
+                  받은 시간:{' '}
+                  {new Date(selectedMessage.createdAt || selectedMessage.sentAt).toLocaleString('ko-KR')}
+                </div>
               )}
             </div>
           </div>
-        </div>
+        </UnifiedModal>
       )}
     </div>
   );
 };
 
 export default MessageWidget;
-

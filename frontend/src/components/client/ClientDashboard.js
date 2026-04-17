@@ -6,11 +6,13 @@ import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import { normalizeApiListPayload, normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
-import { 
-  Heart, 
-  Calendar, 
-  MessageCircle, 
-  CreditCard, 
+import {
+  Heart,
+  Calendar,
+  CalendarDays,
+  MessageCircle,
+  Receipt,
+  User,
   TrendingUp,
   Clock,
   CheckCircle,
@@ -35,6 +37,20 @@ import SafeText from '../common/SafeText';
 import './ClientDashboard.css';
 
 const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
+
+/** E2E·스모크: 장식 이미지 안정 선택자 */
+const CLIENT_DASHBOARD_HERO_ILLUSTRATION_TEST_ID = 'client-dashboard-hero-illustration';
+const CLIENT_DASHBOARD_QUICK_MENU_ACCENT_TEST_ID = 'client-dashboard-quickmenu-accent';
+const CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID = 'client-dashboard-quick-menu-section';
+const CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID = 'client-dashboard-upcoming-schedule';
+
+const CLIENT_DASHBOARD_IMAGE_BASE = `${process.env.PUBLIC_URL}/images/client-dashboard`;
+
+const CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TITLE = '다가오는 상담 일정';
+const CLIENT_DASHBOARD_SCHEDULE_EMPTY_TITLE = '다가오는 일정이 없어요';
+const CLIENT_DASHBOARD_SCHEDULE_EMPTY_BODY =
+  '예정된 상담·일정이 없을 때는 여기에 표시됩니다. 일정을 확인하려면 아래 버튼을 눌러 주세요.';
+const CLIENT_DASHBOARD_SCHEDULE_VIEW_LABEL = '일정 보기';
 
 /**
  * 내담자 대시보드 — 화사하고 산뜻한 느낌의 디자인
@@ -334,6 +350,69 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           )}
         />
 
+        <div className="client-dashboard__illustration-hero" aria-hidden="true">
+          <img
+            data-testid={CLIENT_DASHBOARD_HERO_ILLUSTRATION_TEST_ID}
+            src={`${CLIENT_DASHBOARD_IMAGE_BASE}/hero-wellness-polish.png`}
+            alt=""
+          />
+        </div>
+
+        {/* 다가오는 상담 일정 — 일정 없어도 섹션 유지 */}
+        <ContentSection
+          dataTestId={CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID}
+          title={
+            consultationData.upcomingSchedules.length > 0
+              ? CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TITLE
+              : CLIENT_DASHBOARD_SCHEDULE_EMPTY_TITLE
+          }
+          titleIcon={<Calendar size={24} aria-hidden />}
+        >
+          {consultationData.upcomingSchedules.length > 0 ? (
+            <div className="client-dashboard__schedule-list">
+              {consultationData.upcomingSchedules.map((schedule, index) => (
+                <div
+                  key={index}
+                  className="client-dashboard__schedule-item clickable"
+                  onClick={() => navigate('/client/schedule')}
+                  title="상담 상세 보기"
+                >
+                  <div className="client-dashboard__schedule-date">
+                    <div className="client-dashboard__schedule-day">
+                      {new Date(schedule.date).getDate()}
+                    </div>
+                    <div className="client-dashboard__schedule-month">
+                      {new Date(schedule.date).toLocaleDateString('ko-KR', { month: 'short' })}
+                    </div>
+                  </div>
+                  <div className="client-dashboard__schedule-info">
+                    <SafeText tag="h3" className="client-dashboard__schedule-title">{schedule.title}</SafeText>
+                    <p className="client-dashboard__schedule-time">
+                      <Clock size={14} aria-hidden />
+                      <SafeText>{schedule.startTime}</SafeText> - <SafeText>{schedule.endTime}</SafeText>
+                    </p>
+                  </div>
+                  <div className="client-dashboard__schedule-status">
+                    <span className="mg-badge mg-badge-success">예정</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="client-dashboard__schedule-empty">
+              <p>{CLIENT_DASHBOARD_SCHEDULE_EMPTY_BODY}</p>
+              <MGButton
+                variant="primary"
+                className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-dashboard__schedule-empty-cta`}
+                onClick={() => navigate('/client/schedule')}
+                preventDoubleClick={false}
+              >
+                {CLIENT_DASHBOARD_SCHEDULE_VIEW_LABEL}
+              </MGButton>
+            </div>
+          )}
+        </ContentSection>
+
         {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
         <ContentKpiRow items={[
           {
@@ -370,44 +449,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           }
         ]} />
 
-        {/* 다가오는 상담 일정 */}
-        {consultationData.upcomingSchedules.length > 0 && (
-          <ContentSection
-            title="다가오는 상담 일정"
-            titleIcon={<Calendar size={24} />}
-          >
-            <div className="client-dashboard__schedule-list">
-              {consultationData.upcomingSchedules.map((schedule, index) => (
-                <div 
-                  key={index} 
-                  className="client-dashboard__schedule-item clickable"
-                  onClick={() => navigate('/client/schedule')}
-                  title="상담 상세 보기"
-                >
-                  <div className="client-dashboard__schedule-date">
-                    <div className="client-dashboard__schedule-day">
-                      {new Date(schedule.date).getDate()}
-                    </div>
-                    <div className="client-dashboard__schedule-month">
-                      {new Date(schedule.date).toLocaleDateString('ko-KR', { month: 'short' })}
-                    </div>
-                  </div>
-                  <div className="client-dashboard__schedule-info">
-                    <SafeText tag="h3" className="client-dashboard__schedule-title">{schedule.title}</SafeText>
-                    <p className="client-dashboard__schedule-time">
-                      <Clock size={14} />
-                      <SafeText>{schedule.startTime}</SafeText> - <SafeText>{schedule.endTime}</SafeText>
-                    </p>
-                  </div>
-                  <div className="client-dashboard__schedule-status">
-                    <span className="mg-badge mg-badge-success">예정</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ContentSection>
-        )}
-
         {/* 맞춤형 메시지 */}
         <ClientPersonalizedMessages 
           user={currentUser}
@@ -429,42 +470,61 @@ const ClientDashboard = ({ user: userFromRoute }) => {
         <HealingCard userRole="CLIENT" />
 
         {/* 빠른 액션 버튼 */}
-        <ContentSection title="빠른 메뉴">
-          <div className="client-dashboard__action-grid">
-            <MGButton
-              variant="primary"
-              className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-dashboard__action-btn`}
-              onClick={() => navigate('/client/schedule')}
-              preventDoubleClick={false}
-            >
-              <span>상담 일정</span>
-            </MGButton>
-            <MGButton
-              variant="success"
-              className={`${buildErpMgButtonClassName({ variant: 'success', loading: false })} client-dashboard__action-btn`}
-              onClick={() => navigate('/client/messages')}
-              preventDoubleClick={false}
-            >
-              <span>메시지</span>
-            </MGButton>
-            <MGButton
-              variant="info"
-              className={`${buildErpMgButtonClassName({ variant: 'info', loading: false })} client-dashboard__action-btn`}
-              onClick={() => navigate('/client/payment-history')}
-              preventDoubleClick={false}
-            >
-              <span>결제 내역</span>
-            </MGButton>
-            <MGButton
-              variant="warning"
-              className={`${buildErpMgButtonClassName({ variant: 'warning', loading: false })} client-dashboard__action-btn`}
-              onClick={() => navigate('/client/settings')}
-              preventDoubleClick={false}
-            >
-              <span>내 정보</span>
-            </MGButton>
+        <div
+          className="client-dashboard__quick-menu-with-accent"
+          data-testid="client-dashboard-quick-menu"
+        >
+          <ContentSection
+            title="빠른 메뉴"
+            dataTestId={CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID}
+          >
+            <div className="client-dashboard__action-grid">
+              <MGButton
+                variant="primary"
+                className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-dashboard__action-btn`}
+                onClick={() => navigate('/client/schedule')}
+                preventDoubleClick={false}
+              >
+                <CalendarDays size={22} aria-hidden />
+                <span>상담 일정</span>
+              </MGButton>
+              <MGButton
+                variant="success"
+                className={`${buildErpMgButtonClassName({ variant: 'success', loading: false })} client-dashboard__action-btn`}
+                onClick={() => navigate('/client/messages')}
+                preventDoubleClick={false}
+              >
+                <MessageCircle size={22} aria-hidden />
+                <span>메시지</span>
+              </MGButton>
+              <MGButton
+                variant="info"
+                className={`${buildErpMgButtonClassName({ variant: 'info', loading: false })} client-dashboard__action-btn`}
+                onClick={() => navigate('/client/payment-history')}
+                preventDoubleClick={false}
+              >
+                <Receipt size={22} aria-hidden />
+                <span>결제 내역</span>
+              </MGButton>
+              <MGButton
+                variant="warning"
+                className={`${buildErpMgButtonClassName({ variant: 'warning', loading: false })} client-dashboard__action-btn`}
+                onClick={() => navigate('/client/settings')}
+                preventDoubleClick={false}
+              >
+                <User size={22} aria-hidden />
+                <span>내 정보</span>
+              </MGButton>
+            </div>
+          </ContentSection>
+          <div className="client-dashboard__quick-menu-accent" aria-hidden="true">
+            <img
+              data-testid={CLIENT_DASHBOARD_QUICK_MENU_ACCENT_TEST_ID}
+              src={`${CLIENT_DASHBOARD_IMAGE_BASE}/quick-menu-accent.png`}
+              alt=""
+            />
           </div>
-        </ContentSection>
+        </div>
 
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />

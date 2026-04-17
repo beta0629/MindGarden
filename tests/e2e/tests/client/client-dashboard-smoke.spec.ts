@@ -6,6 +6,12 @@
  *
  * 로컬 실행 예:
  *   cd tests/e2e && BASE_URL=http://localhost:3000 TEST_CLIENT_USERNAME=... TEST_CLIENT_PASSWORD=... npm run test:client
+ *
+ * 리뉴얼 UI testid (`ClientDashboard.js`):
+ * - `client-dashboard-hero-illustration`, `client-dashboard-quickmenu-accent`, `client-dashboard-quick-menu` 가
+ *   DOM에 없으면 동일 이름으로 `data-testid` 를 부착해 주세요 (스모크가 해당 노드를 전제로 합니다).
+ * - `client-dashboard-quick-menu-section`: 빠른 메뉴 영역 섹션 래퍼(스모크에서 `client-dashboard-quick-menu` 직후 가시성 검증).
+ * - `client-dashboard-upcoming-schedule`: 다가오는 일정 섹션(항상 마운트). "일정 보기" 버튼은 다가오는 일정이 0건일 때만 노출.
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
@@ -86,6 +92,23 @@ test.describe('내담자 대시보드 스모크', () => {
         }
       )
       .toBe(true);
+
+    await test.step('히어로·빠른 메뉴 영역(testid) 및 상담 일정 버튼', async () => {
+      await expect(page.getByTestId('client-dashboard-hero-illustration')).toBeVisible({
+        timeout: 5_000,
+      });
+      await expect(page.getByTestId('client-dashboard-quickmenu-accent')).toBeVisible();
+      await expect(page.getByTestId('client-dashboard-quick-menu')).toBeVisible();
+      await expect(page.getByTestId('client-dashboard-quick-menu-section')).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('button', { name: /상담 일정/ })).toBeVisible();
+    });
+
+    await test.step('다가오는 일정 섹션(testid)', async () => {
+      const upcomingSection = page.getByTestId('client-dashboard-upcoming-schedule');
+      await expect(upcomingSection).toBeVisible({ timeout: 10_000 });
+      // "일정 보기"는 다가오는 일정이 0건인 빈 상태에서만 노출됨(`ClientDashboard.js` empty CTA). 일정이 있으면 목록만 표시.
+      // 빈 일정 계정에서만 검증하려면: await expect.soft(upcomingSection.getByRole('button', { name: /일정 보기/ })).toBeVisible();
+    });
 
     const reactHits = collectedErrors.filter((line) => REACT_130_OR_INVALID_CHILD.test(line));
     expect(

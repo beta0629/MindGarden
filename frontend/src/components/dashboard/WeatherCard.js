@@ -223,7 +223,13 @@ const WeatherCard = () => {
           <div 
             className="mg-v2-weather-icon"
             style={{ background: getTemperatureColor(weatherData.temperature) }}
-           />
+          >
+            <i
+              className={`bi ${weatherData.icon}`}
+              style={{ fontSize: '1.5rem', color: 'var(--mg-white, #fff)' }}
+              aria-hidden="true"
+            />
+          </div>
           
           <div className="mg-v2-weather-content">
             <h3 className="mg-v2-h3 mg-mb-sm">오늘의 날씨</h3>

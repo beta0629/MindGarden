@@ -5,7 +5,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet, apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -35,7 +35,7 @@ const ClientSettings = () => {
 
   const loadSettings = async() => {
     try {
-      const response = await apiGet(`/api/clients/${user.id}/settings`);
+      const response = await StandardizedApi.get(`/api/clients/${user.id}/settings`);
       if (response.success && response.data) {
         setSettings(prev => ({ ...prev, ...response.data }));
       }
@@ -47,7 +47,7 @@ const ClientSettings = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla">
+    <div className="mg-v2-ad-b0kla" data-testid="client-settings-page">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="내담자 설정">
           <ContentHeader
@@ -66,7 +66,7 @@ const ClientSettings = () => {
   const handleSettingChange = async(key, value) => {
     try {
       const newSettings = { ...settings, [key]: value };
-      const response = await apiPost(`/api/clients/${user.id}/settings`, newSettings);
+      const response = await StandardizedApi.post(`/api/clients/${user.id}/settings`, newSettings);
       
       if (response.success) {
         setSettings(newSettings);
@@ -83,7 +83,7 @@ const ClientSettings = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="설정">
+      <AdminCommonLayout title="설정" className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="로딩중..." />
@@ -94,7 +94,7 @@ const ClientSettings = () => {
   }
 
   return (
-    <AdminCommonLayout title="설정">
+    <AdminCommonLayout title="설정" className="mg-v2-dashboard-layout">
       {pageShell(
       <div className="client-settings-container">
         <div className="client-settings-card">

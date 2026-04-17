@@ -15,7 +15,8 @@ const ContentSection = ({
   actions,
   children,
   className = '',
-  noCard = false
+  noCard = false,
+  dataTestId
 }) => {
   const content = (
     <>
@@ -34,16 +35,24 @@ const ContentSection = ({
     </>
   );
 
+  const sectionTestProps = dataTestId ? { 'data-testid': dataTestId } : {};
+
   if (noCard) {
     return (
-      <section className={`mg-v2-content-section mg-v2-content-section--plain ${className}`.trim()}>
+      <section
+        className={`mg-v2-content-section mg-v2-content-section--plain ${className}`.trim()}
+        {...sectionTestProps}
+      >
         {content}
       </section>
     );
   }
 
   return (
-    <section className={`mg-v2-content-section mg-v2-content-section--card ${className}`.trim()}>
+    <section
+      className={`mg-v2-content-section mg-v2-content-section--card ${className}`.trim()}
+      {...sectionTestProps}
+    >
       {content}
     </section>
   );

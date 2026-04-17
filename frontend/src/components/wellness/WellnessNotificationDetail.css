@@ -18,6 +18,10 @@
   gap: var(--spacing-md);
 }
 
+.wellness-notification-header--badges-only {
+  justify-content: flex-end;
+}
+
 .wellness-notification-detail .back-button {
   display: flex;
   align-items: center;

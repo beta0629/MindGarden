@@ -586,76 +586,6 @@
   color: var(--color-white);
 }
 
-.client-message-screen-message-detail-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--mg-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--spacing-lg);
-}
-
-.client-message-screen-message-detail-card {
-  background: var(--color-bg-primary);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-lg);
-  max-width: calc(var(--container-max-width) * 0.6);
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-}
-
-.client-message-screen-close-button {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  background: none;
-  border: none;
-  font-size: var(--font-size-xxl);
-  cursor: pointer;
-  color: var(--color-text-secondary);
-}
-
-.client-message-screen-close-button.mg-button {
-  min-height: auto;
-  padding: 0;
-  box-shadow: none;
-}
-
-.client-message-screen-close-button.mg-button.mg-button--outline {
-  border: none;
-  background: none;
-}
-
-.client-message-screen-message-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: var(--border-width) solid var(--color-border-light);
-}
-
-.client-message-screen-message-detail-title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
-}
-
-.client-message-screen-message-detail-meta {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-md);
-}
-
 .client-message-screen-message-detail-content {
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
@@ -741,8 +671,7 @@
     grid-template-columns: 1fr;
   }
   
-  .client-message-modal-card,
-  .client-message-screen-message-detail-card {
+  .client-message-modal-card {
     max-width: 95%;
   }
 }

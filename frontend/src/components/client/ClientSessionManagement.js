@@ -125,7 +125,7 @@ const ClientSessionManagement = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla">
+    <div className="mg-v2-ad-b0kla" data-testid="client-session-management-page">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="회기 관리">
           <ContentHeader
@@ -143,7 +143,7 @@ const ClientSessionManagement = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="회기 관리">
+      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="회기 데이터를 불러오는 중..." />
@@ -155,7 +155,7 @@ const ClientSessionManagement = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="회기 관리">
+      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-session-management">
             <div className="error-container">
@@ -183,7 +183,7 @@ const ClientSessionManagement = () => {
 
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
-      <AdminCommonLayout title="회기 관리">
+      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-session-management">
             <div className="no-data-container">
@@ -208,7 +208,7 @@ const ClientSessionManagement = () => {
   }
 
   return (
-    <AdminCommonLayout title="회기 관리">
+    <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-session-management">
         {/* 햄버거 메뉴 드롭다운 */}

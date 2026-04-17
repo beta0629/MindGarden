@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>MindGarden — 내담자 대시보드 리뉴얼 (와이어프레임 마크업)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <!-- Page: 내담자 대시보드 리뉴얼 — 단일 컬럼, 와이어 수준 플레이스홀더 -->
+  <div class="client-dash">
+    <header class="client-dash__header" aria-label="내담자 대시보드 상단">
+      <!-- Organism: 환영 / 컨텍스트 -->
+      <section class="client-dash__section client-dash__welcome" aria-labelledby="client-dash-welcome-heading">
+        <div class="mg-v2-card-container client-dash__welcome-card">
+          <div class="client-dash__welcome-inner">
+            <p class="client-dash__eyebrow">내담자 홈</p>
+            <h1 id="client-dash-welcome-heading" class="client-dash__title">안녕하세요, 홍길동 님</h1>
+            <p class="client-dash__lede">
+              오늘의 상담과 일정을 한눈에 확인하고, 다음 할 일로 바로 이동하세요.
+            </p>
+            <div class="client-dash__welcome-meta" role="status" aria-live="polite">
+              <span class="mg-v2-status-badge mg-v2-badge--info">진행 중인 매칭</span>
+              <span class="client-dash__meta-text">담당 상담사 · 플레이스홀더</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <main class="client-dash__main" id="client-dash-main">
+      <!-- Organism: 다음 액션 · 일정 요약 -->
+      <section class="client-dash__section client-dash__next" aria-labelledby="client-dash-next-heading">
+        <div class="client-dash__section-head">
+          <h2 id="client-dash-next-heading" class="client-dash__section-title">다음 액션 · 일정</h2>
+          <p class="client-dash__section-desc">우선 처리할 일과 가까운 일정만 요약합니다.</p>
+        </div>
+
+        <ul class="client-dash__stack" role="list">
+          <li>
+            <article class="mg-v2-card-container client-dash__action-card" aria-labelledby="client-dash-action-1">
+              <div class="client-dash__action-body">
+                <div class="client-dash__action-top">
+                  <span class="mg-v2-status-badge mg-v2-badge--warning">액션 필요</span>
+                  <time class="client-dash__time" datetime="2026-04-17T14:00:00">4월 17일 (목) 14:00</time>
+                </div>
+                <h3 id="client-dash-action-1" class="client-dash__card-title">상담 일정 확인 및 참석 여부 회신</h3>
+                <p class="client-dash__card-text">플레이스홀더 설명 문구입니다.</p>
+              </div>
+              <div class="mg-v2-card-actions client-dash__card-actions">
+                <button type="button" class="mg-v2-button mg-v2-button--primary">바로 처리</button>
+                <button type="button" class="mg-v2-button mg-v2-button--outline">자세히</button>
+              </div>
+            </article>
+          </li>
+          <li>
+            <article class="mg-v2-card-container client-dash__action-card" aria-labelledby="client-dash-action-2">
+              <div class="client-dash__action-body">
+                <div class="client-dash__action-top">
+                  <span class="mg-v2-status-badge mg-v2-badge--neutral">예정</span>
+                  <time class="client-dash__time" datetime="2026-04-18T10:30:00">4월 18일 (금) 10:30</time>
+                </div>
+                <h3 id="client-dash-action-2" class="client-dash__card-title">다음 회기 상담</h3>
+                <p class="client-dash__card-text">장소·링크 정보는 앱 내 일정에서 확인합니다.</p>
+              </div>
+              <div class="mg-v2-card-actions client-dash__card-actions">
+                <button type="button" class="mg-v2-button mg-v2-button--secondary">일정 보기</button>
+              </div>
+            </article>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Molecule → Organism: KPI 행 (ContentKpiRow 자리) -->
+      <section class="client-dash__section client-dash__kpi" aria-labelledby="client-dash-kpi-heading">
+        <div class="client-dash__section-head">
+          <h2 id="client-dash-kpi-heading" class="client-dash__section-title">핵심 지표</h2>
+          <p class="client-dash__section-desc">ContentKpiRow 컴포넌트 자리 — 수치는 API 연동 시 치환</p>
+        </div>
+        <div class="client-dash__kpi-row" role="group" aria-label="핵심 지표 요약">
+          <article class="mg-v2-card-container client-dash__kpi-cell">
+            <h3 class="client-dash__kpi-label">남은 회기</h3>
+            <p class="client-dash__kpi-value" aria-label="남은 회기 수">00</p>
+            <span class="mg-v2-count-badge">0회 남음</span>
+          </article>
+          <article class="mg-v2-card-container client-dash__kpi-cell">
+            <h3 class="client-dash__kpi-label">이번 달 상담</h3>
+            <p class="client-dash__kpi-value" aria-label="이번 달 상담 횟수">00</p>
+            <p class="client-dash__kpi-hint">지난 달 대비 플레이스홀더</p>
+          </article>
+          <article class="mg-v2-card-container client-dash__kpi-cell">
+            <h3 class="client-dash__kpi-label">읽지 않은 알림</h3>
+            <p class="client-dash__kpi-value" aria-label="읽지 않은 알림 개수">0</p>
+            <span class="mg-v2-status-badge mg-v2-badge--info">새 소식</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- Organism: 핵심 블록 -->
+      <section class="client-dash__section client-dash__core" aria-labelledby="client-dash-core-heading">
+        <div class="client-dash__section-head">
+          <h2 id="client-dash-core-heading" class="client-dash__section-title">핵심 블록</h2>
+          <p class="client-dash__section-desc">상담 진행·기록·메시지 등 주요 영역 요약</p>
+        </div>
+        <ul class="client-dash__stack" role="list">
+          <li>
+            <article class="mg-v2-card-container client-dash__core-card" aria-labelledby="client-dash-core-1">
+              <header class="client-dash__core-card-head">
+                <h3 id="client-dash-core-1" class="client-dash__card-title">진행 중인 상담</h3>
+                <span class="mg-v2-status-badge mg-v2-badge--success">활성</span>
+              </header>
+              <p class="client-dash__card-text">
+                매칭명·회기·다음 일정 등 핵심 한 줄 요약이 들어갑니다.
+              </p>
+              <div class="mg-v2-card-actions client-dash__card-actions">
+                <button type="button" class="mg-v2-button mg-v2-button--outline">상세</button>
+              </div>
+            </article>
+          </li>
+          <li>
+            <article class="mg-v2-card-container client-dash__core-card" aria-labelledby="client-dash-core-2">
+              <header class="client-dash__core-card-head">
+                <h3 id="client-dash-core-2" class="client-dash__card-title">최근 기록 · 과제</h3>
+              </header>
+              <p class="client-dash__card-text">최근 노트 또는 과제 요약 플레이스홀더</p>
+              <div class="mg-v2-card-actions client-dash__card-actions">
+                <button type="button" class="mg-v2-button mg-v2-button--outline">목록</button>
+              </div>
+            </article>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Organism: 결제 요약 -->
+      <section class="client-dash__section client-dash__payment" aria-labelledby="client-dash-payment-heading">
+        <div class="client-dash__section-head">
+          <h2 id="client-dash-payment-heading" class="client-dash__section-title">결제 요약</h2>
+          <p class="client-dash__section-desc">최근 청구·납부 상태를 한눈에</p>
+        </div>
+        <article class="mg-v2-card-container client-dash__payment-card">
+          <dl class="client-dash__payment-dl">
+            <div class="client-dash__payment-row">
+              <dt class="client-dash__payment-term">다음 결제 예정</dt>
+              <dd class="client-dash__payment-def">플레이스홀더 금액 · 일자</dd>
+            </div>
+            <div class="client-dash__payment-row">
+              <dt class="client-dash__payment-term">최근 결제</dt>
+              <dd class="client-dash__payment-def">플레이스홀더 금액 · 수단</dd>
+            </div>
+            <div class="client-dash__payment-row">
+              <dt class="client-dash__payment-term">상태</dt>
+              <dd class="client-dash__payment-def">
+                <span class="mg-v2-status-badge mg-v2-badge--success">정상</span>
+              </dd>
+            </div>
+          </dl>
+          <div class="mg-v2-card-actions client-dash__card-actions">
+            <button type="button" class="mg-v2-button mg-v2-button--secondary">결제 내역</button>
+            <button type="button" class="mg-v2-button mg-v2-button--outline">결제 수단</button>
+          </div>
+        </article>
+      </section>
+
+      <!-- Organism: 빠른 메뉴 (아이콘: Lucide 자리 → span.mg-icon-placeholder) -->
+      <nav class="client-dash__section client-dash__quick" aria-labelledby="client-dash-quick-heading">
+        <div class="client-dash__section-head">
+          <h2 id="client-dash-quick-heading" class="client-dash__section-title">빠른 메뉴</h2>
+          <p class="client-dash__section-desc">자주 찾는 기능으로 이동</p>
+        </div>
+        <ul class="client-dash__quick-list" role="list">
+          <li>
+            <a class="client-dash__quick-link" href="#">
+              <span class="mg-icon-placeholder" aria-hidden="true"></span>
+              <span class="client-dash__quick-label">일정</span>
+            </a>
+          </li>
+          <li>
+            <a class="client-dash__quick-link" href="#">
+              <span class="mg-icon-placeholder" aria-hidden="true"></span>
+              <span class="client-dash__quick-label">메시지</span>
+            </a>
+          </li>
+          <li>
+            <a class="client-dash__quick-link" href="#">
+              <span class="mg-icon-placeholder" aria-hidden="true"></span>
+              <span class="client-dash__quick-label">설정</span>
+            </a>
+          </li>
+          <li>
+            <a class="client-dash__quick-link" href="#">
+              <span class="mg-icon-placeholder" aria-hidden="true"></span>
+              <span class="client-dash__quick-label">고객센터</span>
+            </a>
+          </li>
+          <li>
+            <a class="client-dash__quick-link" href="#">
+              <span class="mg-icon-placeholder" aria-hidden="true"></span>
+              <span class="client-dash__quick-label">자료실</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </main>
+  </div>
+</body>
+</html>

@@ -391,6 +391,81 @@
   flex-shrink: 0;
 }
 
+.client-dashboard__schedule-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-md);
+  margin: var(--mg-spacing-sm) 0;
+  padding: var(--mg-spacing-md) 0;
+}
+
+.client-dashboard__schedule-empty p {
+  margin: 0;
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-normal);
+  line-height: var(--mg-line-height-normal);
+  color: var(--mg-text-secondary);
+}
+
+/* ===== ContentArea 장식 일러스트 (히어로 / 빠른 메뉴 악센트) ===== */
+.client-dashboard__illustration-hero {
+  width: 100%;
+  border-radius: var(--mg-radius-lg);
+  overflow: hidden;
+}
+
+.client-dashboard__illustration-hero img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: var(--mg-radius-lg);
+}
+
+.client-dashboard__quick-menu-with-accent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--mg-spacing-md);
+}
+
+.client-dashboard__quick-menu-with-accent .mg-v2-content-section {
+  flex: 1 1 min(0, 100%);
+  min-width: 0;
+}
+
+.client-dashboard__quick-menu-accent {
+  flex-shrink: 0;
+  align-self: center;
+  max-width: min(100%, calc(var(--mg-spacing-xl) * 6));
+  margin: 0;
+  border-radius: var(--mg-radius-md);
+  overflow: hidden;
+}
+
+.client-dashboard__quick-menu-accent img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--mg-radius-md);
+}
+
+@media (max-width: 768px) {
+  .client-dashboard__quick-menu-with-accent {
+    flex-direction: column;
+  }
+
+  .client-dashboard__quick-menu-accent {
+    order: -1;
+    align-self: stretch;
+    max-width: none;
+  }
+}
+
 /* ===== 빠른 액션 ===== */
 .client-dashboard__quick-actions {
   background: var(--client-gradient-3);
@@ -404,6 +479,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
   gap: var(--mg-spacing-md);
+}
+
+/* 빠른 메뉴 그리드 내 MGButton: 아이콘+라벨 가로 정렬 */
+.client-dashboard__action-grid .client-dashboard__action-btn {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
 }
 
 .client-dashboard__action-btn {

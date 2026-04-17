@@ -79,16 +79,10 @@ const HealingCardWidget = ({ widget, user }) => {
 
     // 새로고침 API 호출 (기존 로직 유지)
     try {
-      const { apiGet } = await import('../../../utils/ajax');
+      const { apiPost } = await import('../../../utils/ajax');
       const paramString = new URLSearchParams(params).toString();
-      const response = await apiGet(`/api/healing/refresh?${paramString}`);
-      
-      if (response.success) {
-        // 성공 시 위젯 데이터 새로고침
-        refresh();
-      } else {
-        console.error('힐링 컨텐츠 새로고침 실패:', response.message);
-      }
+      await apiPost(`/api/v1/healing/refresh?${paramString}`, {});
+      refresh();
     } catch (err) {
       console.error('힐링 컨텐츠 새로고침 오류:', err);
     }

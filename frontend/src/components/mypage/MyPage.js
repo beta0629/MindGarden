@@ -401,14 +401,19 @@ const MyPage = () => {
 
   if (!displayUser) {
     return (
-      <AdminCommonLayout title="마이페이지" loading loadingText="사용자 정보를 불러오는 중..." />
+      <AdminCommonLayout
+        title="마이페이지"
+        className="mg-v2-dashboard-layout"
+        loading
+        loadingText="사용자 정보를 불러오는 중..."
+      />
     );
   }
 
   return (
-    <AdminCommonLayout title="마이페이지">
+    <AdminCommonLayout title="마이페이지" className="mg-v2-dashboard-layout">
       <ContentArea ariaLabel="마이페이지">
-        <div className="mg-mypage">
+        <div className="mg-mypage" data-testid="client-mypage-page">
           <div className="mg-v2-ad-b0kla__container">
             <ContentHeader
               title="마이페이지"

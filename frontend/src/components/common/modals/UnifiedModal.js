@@ -30,6 +30,8 @@ import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal s
 /**
  * @param {boolean} props.loading - 로딩 상태
 /**
+ * @param {string} [props.closeButtonDataTestId] - 헤더 닫기 버튼에 부착할 data-testid (E2E 등)
+/**
  * 
 /**
  * @author Core Solution
@@ -52,6 +54,7 @@ const UnifiedModal = ({
   className = '',
   actions = null,
   loading = false,
+  closeButtonDataTestId,
   ...props 
 }) => {
   const titleId = useId();
@@ -157,6 +160,7 @@ const UnifiedModal = ({
                 variant="outline"
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                {...(closeButtonDataTestId ? { 'data-testid': closeButtonDataTestId } : {})}
               >
                 ×
               </MGButton>

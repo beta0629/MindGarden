@@ -5,8 +5,24 @@ import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
 import notificationManager from '../../utils/notification';
+import { getLucideIcon } from '../../utils/iconUtils';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
+
+/** message.icon 키 → Lucide 컴포넌트 이름 (iconUtils.getLucideIcon) */
+const MESSAGE_ICON_LUCIDE = {
+  heart: 'Heart',
+  'user-plus': 'UserPlus',
+  clock: 'Clock',
+  'calendar-check': 'CalendarCheck',
+  'arrow-right-circle': 'ArrowRightCircle',
+  'credit-card': 'CreditCard',
+  lightbulb: 'Lightbulb',
+  users: 'Users',
+  activity: 'Activity',
+  'heart-pulse': 'HeartPulse',
+  book: 'Book'
+};
 
 /**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
@@ -18,20 +34,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const iconMap = {
-    heart: 'HEART',
-    'user-plus': 'USER_PLUS',
-    clock: 'CLOCK',
-    'calendar-check': 'CALENDAR_CHECK',
-    'arrow-right-circle': 'ARROW_RIGHT_CIRCLE',
-    'credit-card': 'CREDIT_CARD',
-    lightbulb: 'LIGHTBULB',
-    users: 'USERS',
-    activity: 'ACTIVITY',
-    'heart-pulse': 'HEART_PULSE',
-    book: 'BOOK'
-  };
-
   const handleCardClick = (action) => {
     if (isLoading) return;
     
@@ -374,7 +376,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
           );
         }
 
-        const iconName = iconMap[message.icon] || 'HEART';
+        const lucideName = MESSAGE_ICON_LUCIDE[message.icon] || 'Heart';
         const isClickable = message.action && message.action !== 'tip' && message.action !== 'pending';
 
         return (
@@ -393,7 +395,14 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
             }}
           >
             <div className="message-card-content">
-              <div className={`message-card-icon message-card-icon--${message.colorClass}`} />
+              <div className={`message-card-icon message-card-icon--${message.colorClass}`}>
+                {getLucideIcon(lucideName, {
+                  size: 24,
+                  strokeWidth: 2,
+                  className: 'message-card-icon__svg',
+                  'aria-hidden': true
+                })}
+              </div>
               
               <div className="message-card-text">
                 <h3 className="message-card-title">

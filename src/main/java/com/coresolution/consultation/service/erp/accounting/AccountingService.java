@@ -63,7 +63,7 @@ public interface AccountingService {
     Map<String, Long> backfillJournalEntriesFromIncomeTransactions(String tenantId);
 
     /**
-     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 매핑이 없으면 기본 계정 및 공통코드 시딩.
+     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH, LIABILITY, VAT_PAYABLE, WITHHOLDING_PAYABLE) 계정 매핑이 없으면 기본 계정 및 공통코드 시딩.
      * 온보딩 시 호출되며, 이미 있으면 스킵.
      *
      * @param tenantId 테넌트 ID (필수)

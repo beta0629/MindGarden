@@ -9,8 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 회계 거래 응답 DTO
- * 
+ * 회계 거래 응답 DTO.
+ * <p>
+ * 금액 관련 필드({@code amount}, {@code taxIncluded}, {@code taxAmount}, {@code withholdingTaxAmount},
+ * {@code amountBeforeTax})의 의미는
+ * 엔티티 {@link com.coresolution.consultation.entity.erp.financial.FinancialTransaction}와 동일하게 해석합니다.
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-01-11
@@ -26,6 +30,9 @@ public class FinancialTransactionResponse {
     private String transactionTypeDisplayName;
     private String category;
     private String subcategory;
+    /**
+     * 거래 금액(총액). {@code taxIncluded}·세액 필드와 함께 해석합니다.
+     */
     private BigDecimal amount;
     private String description;
     private LocalDate transactionDate;
@@ -39,12 +46,36 @@ public class FinancialTransactionResponse {
     private String department;
     private String projectCode;
     /**
-     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     * @deprecated 표준화 2025-12-07: 브랜치 개념 제거됨
      */
-    @Deprecated    private String branchCode;
+    @Deprecated
+    private String branchCode;
+    /**
+     * 세금(부가세) 포함 여부.
+     */
     private Boolean taxIncluded;
+    /**
+     * 부가세(VAT) 등 세액. 일반적으로 부가세 금액을 뜻합니다.
+     * 원천징수 예정액은 별도 필드·맥락에서 관리하며, 동일 필드에 혼용하지 않도록 주의합니다.
+     */
     private BigDecimal taxAmount;
+    /**
+     * 원천징수 예정액. 부가세({@link #taxAmount})와 별도.
+     */
+    private BigDecimal withholdingTaxAmount;
+    /**
+     * 세전 금액(과세 표준에 해당하는 금액 등).
+     * {@code taxIncluded}, {@code amount}, {@code taxAmount}와의 관계는 업무 규칙에 따릅니다.
+     */
     private BigDecimal amountBeforeTax;
+    /**
+     * 카드 가맹점 수수료(D5).
+     */
+    private BigDecimal cardMerchantFeeAmount;
+    /**
+     * 카드 실입금액(D5): 승인액({@link #amount}) − 수수료.
+     */
+    private BigDecimal cardNetDepositAmount;
     private String remarks;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

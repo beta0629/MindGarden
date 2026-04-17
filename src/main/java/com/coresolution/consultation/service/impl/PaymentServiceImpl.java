@@ -212,7 +212,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 try {
                     String category = getPaymentCategory(payment);
                     String subcategory = getPaymentSubcategory(payment);
-                    
+                    // ERP D5/D6: 승인 시 재무 거래 생성(실입금·수수료는 FinancialTransaction·분개에서 처리). PG/VAN 자동 수수료는 연동 예정.
                     financialTransactionService.createPaymentTransaction(payment.getId(), 
                         "결제 완료 - " + payment.getDescription(), category, subcategory);
                     log.info("💚 결제 승인으로 인한 수입 거래 자동 생성: PaymentID={}, 카테고리={}, 금액={}", 

@@ -6,8 +6,8 @@ import java.math.RoundingMode;
 /**
  * 프리랜서(사업소득) 원천징수 3.3% 계산.
  * <p>
- * 부가세(VAT) 계산과 별도이며, {@code FinancialTransaction.taxAmount}에
- * 원천징수 예정액을 기록할 때만 사용합니다.
+ * 부가세(VAT) 계산과 별도이며, 저장 시 {@link com.coresolution.consultation.entity.erp.financial.FinancialTransaction#getWithholdingTaxAmount()}에
+ * 원천징수 예정액을 기록합니다({@code taxAmount}는 VAT 전용).
  * </p>
  *
  * @author CoreSolution

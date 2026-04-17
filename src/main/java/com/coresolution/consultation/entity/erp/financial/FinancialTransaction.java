@@ -32,17 +32,13 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.BaseEntity;
 
- /**
- * 회계 거래 엔티티
- /**
- * 수입/지출 거래를 통합 관리하는 회계 시스템의 핵심 엔티티
- /**
- * 
- /**
+/**
+ * 회계 거래 엔티티.
+ * <p>
+ * 수입·지출 거래를 통합 관리하는 회계 시스템의 핵심 엔티티입니다.
+ *
  * @author MindGarden
- /**
  * @version 1.0.0
- /**
  * @since 2025-01-11
  */
 @Entity
@@ -94,8 +90,10 @@ public class FinancialTransaction extends BaseEntity {
     @Column(name = "subcategory", length = 50)
     private String subcategory;
     
-     /**
-     * 거래 금액
+    /**
+     * 거래 금액(총액).
+     * 업무 규칙에 따라 세전·세포함·순액 등 의미가 달라질 수 있으므로
+     * {@link #taxIncluded}, {@link #taxAmount}, {@link #amountBeforeTax}와 함께 해석합니다.
      */
     @NotNull(message = "거래 금액은 필수입니다.")
     @DecimalMin(value = "0.0", message = "거래 금액은 0 이상이어야 합니다.")
@@ -172,60 +170,66 @@ public class FinancialTransaction extends BaseEntity {
     @Column(name = "project_code", length = 50)
     private String projectCode;
     
-     /**
-     * 세금 포함 여부
+    /**
+     * 세금(부가세) 포함 여부.
+     * {@code true}인 경우 {@link #amount}가 세포함 금액으로 해석되는 경우가 많습니다.
      */
     @Column(name = "tax_included", nullable = false)
     @Builder.Default
     private Boolean taxIncluded = false;
-    
-     /**
-     * 세금 금액
+
+    /**
+     * 부가세(VAT) 등 세액.
+     * 일반적으로 이 필드는 부가세 금액을 뜻합니다.
+     * 원천징수 예정액(예: 사업소득 3.3%)은 별도 필드·맥락에서 관리하며, 동일 필드에 혼용하지 않도록 주의합니다.
      */
     @DecimalMin(value = "0.0", message = "세금 금액은 0 이상이어야 합니다.")
     @Column(name = "tax_amount", precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
-    
-     /**
-     * 세전 금액
+
+    /**
+     * 원천징수 예정액(예: 사업소득 3.3%). 부가세({@link #taxAmount})와 별도 필드.
+     */
+    @DecimalMin(value = "0.0", message = "원천징수 금액은 0 이상이어야 합니다.")
+    @Column(name = "withholding_tax_amount", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal withholdingTaxAmount = BigDecimal.ZERO;
+
+    /**
+     * 세전 금액(과세 표준에 해당하는 금액 등).
+     * {@link #taxIncluded}, {@link #amount}, {@link #taxAmount}와의 관계는 업무 규칙에 따릅니다.
      */
     @DecimalMin(value = "0.0", message = "세전 금액은 0 이상이어야 합니다.")
     @Column(name = "amount_before_tax", precision = 15, scale = 2)
     private BigDecimal amountBeforeTax;
-    
-     /**
-     * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
-     /**
-     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
-     /**
-     * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
-     */
-    @Size(max = 20, message = "지점 코드는 20자 이하여야 합니다.")
+
     /**
-     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     * 카드 가맹점 수수료(D5: 승인액 − 수수료 = 실입금).
+     * {@link #amount}는 고객 청구·승인 총액(부가세 포함 등)으로 해석하고, 실입금은 {@code amount - cardMerchantFeeAmount}입니다.
+     * D6: PG·단말 자동 연동 시 {@code Payment#externalResponse} 등에서 채움 예정(현재 기본 0·수동 보정).
+     */
+    @DecimalMin(value = "0.0", message = "카드 수수료는 0 이상이어야 합니다.")
+    @Column(name = "card_merchant_fee_amount", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal cardMerchantFeeAmount = BigDecimal.ZERO;
+    
+    /**
+     * 레거시 지점 코드. 브랜치 코드 기반 필터링은 사용하지 않습니다.
+     * 레거시 데이터 호환을 위해 필드만 유지(NULL 허용)하며, 신규 코드에서는 테넌트 ID만 사용하세요.
+     *
+     * @deprecated 표준화 2025-12-07: 브랜치 개념 제거됨
      */
     @Deprecated
+    @Size(max = 20, message = "지점 코드는 20자 이하여야 합니다.")
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     
-     /**
+    /**
      * 비고
      */
     private String remarks;
-    
-     /**
-     * 삭제 여부
-     */
-    
-     /**
-     * 생성 시간
-     */
-    
-     /**
-     * 수정 시간
-     */
-    
+
     @PrePersist
     protected void onCreate() {
         if (status == null) {
@@ -238,11 +242,20 @@ public class FinancialTransaction extends BaseEntity {
         if (taxAmount == null) {
             taxAmount = BigDecimal.ZERO;
         }
+        if (withholdingTaxAmount == null) {
+            withholdingTaxAmount = BigDecimal.ZERO;
+        }
         if (isDeleted == null) {
             isDeleted = false;
         }
         if (amountBeforeTax == null) {
             amountBeforeTax = amount;
+        }
+        if (cardMerchantFeeAmount == null) {
+            cardMerchantFeeAmount = BigDecimal.ZERO;
+        }
+        if (amount != null && cardMerchantFeeAmount.compareTo(amount) > 0) {
+            cardMerchantFeeAmount = amount;
         }
     }
     
@@ -251,6 +264,26 @@ public class FinancialTransaction extends BaseEntity {
         if (amountBeforeTax == null) {
             amountBeforeTax = amount;
         }
+        if (withholdingTaxAmount == null) {
+            withholdingTaxAmount = BigDecimal.ZERO;
+        }
+        if (cardMerchantFeeAmount == null) {
+            cardMerchantFeeAmount = BigDecimal.ZERO;
+        }
+        if (amount != null && cardMerchantFeeAmount.compareTo(amount) > 0) {
+            cardMerchantFeeAmount = amount;
+        }
+    }
+
+    /**
+     * 카드 실입금액(D5). {@link #amount}에서 가맹점 수수료를 뺀 값.
+     */
+    public BigDecimal resolveCardNetDepositAmount() {
+        BigDecimal fee = cardMerchantFeeAmount != null ? cardMerchantFeeAmount : BigDecimal.ZERO;
+        if (amount == null) {
+            return BigDecimal.ZERO;
+        }
+        return amount.subtract(fee);
     }
     
      /**

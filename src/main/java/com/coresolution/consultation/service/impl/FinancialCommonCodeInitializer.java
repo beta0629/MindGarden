@@ -78,9 +78,8 @@ public class FinancialCommonCodeInitializer {
         String codeGroup = "ERP_ACCOUNT_TYPE";
         java.util.List<CommonCode> existing = commonCodeRepository.findCoreCodesByGroup(codeGroup);
         if (!existing.isEmpty()) {
-            boolean hasLiability = existing.stream()
-                    .anyMatch(cc -> "LIABILITY".equals(cc.getCodeValue()));
-            if (!hasLiability) {
+            boolean augmented = false;
+            if (existing.stream().noneMatch(cc -> "LIABILITY".equals(cc.getCodeValue()))) {
                 commonCodeRepository.save(CommonCode.builder()
                         .codeGroup(codeGroup)
                         .codeValue("LIABILITY")
@@ -91,7 +90,35 @@ public class FinancialCommonCodeInitializer {
                         .isActive(true)
                         .build());
                 log.info("ERP_ACCOUNT_TYPE LIABILITY 코어 코드 추가 완료");
-            } else {
+                augmented = true;
+            }
+            if (existing.stream().noneMatch(cc -> "VAT_PAYABLE".equals(cc.getCodeValue()))) {
+                commonCodeRepository.save(CommonCode.builder()
+                        .codeGroup(codeGroup)
+                        .codeValue("VAT_PAYABLE")
+                        .codeLabel("부가세 예수금")
+                        .koreanName("부가세 예수금")
+                        .codeDescription("부가세 예수·부채 계정 (대차대조표)")
+                        .sortOrder(5)
+                        .isActive(true)
+                        .build());
+                log.info("ERP_ACCOUNT_TYPE VAT_PAYABLE 코어 코드 추가 완료");
+                augmented = true;
+            }
+            if (existing.stream().noneMatch(cc -> "WITHHOLDING_PAYABLE".equals(cc.getCodeValue()))) {
+                commonCodeRepository.save(CommonCode.builder()
+                        .codeGroup(codeGroup)
+                        .codeValue("WITHHOLDING_PAYABLE")
+                        .codeLabel("원천징수 예수금")
+                        .koreanName("원천징수 예수금")
+                        .codeDescription("원천징수 예수금·부채 계정 (대차대조표)")
+                        .sortOrder(6)
+                        .isActive(true)
+                        .build());
+                log.info("ERP_ACCOUNT_TYPE WITHHOLDING_PAYABLE 코어 코드 추가 완료");
+                augmented = true;
+            }
+            if (!augmented) {
                 log.info("ERP_ACCOUNT_TYPE 코어 코드가 이미 존재합니다.");
             }
             return;
@@ -137,7 +164,28 @@ public class FinancialCommonCodeInitializer {
                 .isActive(true)
                 .build());
 
-        log.info("ERP_ACCOUNT_TYPE 코어 코드 초기화 완료 (REVENUE, EXPENSE, CASH, LIABILITY)");
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("VAT_PAYABLE")
+                .codeLabel("부가세 예수금")
+                .koreanName("부가세 예수금")
+                .codeDescription("부가세 예수·부채 계정 (대차대조표)")
+                .sortOrder(5)
+                .isActive(true)
+                .build());
+
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("WITHHOLDING_PAYABLE")
+                .codeLabel("원천징수 예수금")
+                .koreanName("원천징수 예수금")
+                .codeDescription("원천징수 예수금·부채 계정 (대차대조표)")
+                .sortOrder(6)
+                .isActive(true)
+                .build());
+
+        log.info("ERP_ACCOUNT_TYPE 코어 코드 초기화 완료 (REVENUE, EXPENSE, CASH, LIABILITY, VAT_PAYABLE, "
+                + "WITHHOLDING_PAYABLE)");
     }
 
     /**

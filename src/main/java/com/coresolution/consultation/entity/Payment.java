@@ -55,7 +55,8 @@ public class Payment extends BaseEntity {
     private PaymentStatus status;
     
     /**
-     * 결제 방법
+     * 결제 방법.
+     * D6: 카드·단말·PG 경로는 외부 연동 예정이며, 재무 D5(승인액·수수료·실입금)는 {@code FinancialTransaction}에 반영합니다.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false)
@@ -135,7 +136,8 @@ public class Payment extends BaseEntity {
     private LocalDateTime refundedAt;
     
     /**
-     * 외부 결제 시스템 응답 데이터 (JSON)
+     * 외부 결제 시스템 응답 데이터 (JSON).
+     * D6: 단말·PG(VAN) 연동 시 승인·입금·가맹점 수수료 등 정산 필드 파싱 예정(연동 전에는 수동·테넌트 보정).
      */
     @Column(name = "external_response", columnDefinition = "TEXT")
     private String externalResponse;

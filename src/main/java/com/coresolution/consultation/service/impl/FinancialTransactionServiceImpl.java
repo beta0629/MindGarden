@@ -30,6 +30,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -71,9 +72,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
-        log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}, taxAmount={}, taxIncluded={}",
+        log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}, taxAmount={}, withholdingTaxAmount={}, taxIncluded={}",
                 request.getTransactionType(), request.getAmount(), request.getCategory(),
-                request.getTaxAmount(), request.getTaxIncluded());
+                request.getTaxAmount(), request.getWithholdingTaxAmount(), request.getTaxIncluded());
         
         if (currentUser != null) {
             if (!currentUser.getRole().isAdmin()) {
@@ -102,7 +103,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .taxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false)
                 .taxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO)
+                .withholdingTaxAmount(request.getWithholdingTaxAmount() != null
+                        ? request.getWithholdingTaxAmount() : BigDecimal.ZERO)
                 .amountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount())
+                .cardMerchantFeeAmount(request.getCardMerchantFeeAmount() != null
+                        ? request.getCardMerchantFeeAmount() : BigDecimal.ZERO)
                 .remarks(request.getRemarks())
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(FinancialTransaction.TransactionStatus.PENDING)
@@ -192,7 +197,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         transaction.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         transaction.setTaxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false);
         transaction.setTaxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO);
+        transaction.setWithholdingTaxAmount(request.getWithholdingTaxAmount() != null
+                ? request.getWithholdingTaxAmount() : BigDecimal.ZERO);
         transaction.setAmountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount());
+        transaction.setCardMerchantFeeAmount(request.getCardMerchantFeeAmount() != null
+                ? request.getCardMerchantFeeAmount() : BigDecimal.ZERO);
         transaction.setRemarks(request.getRemarks());
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
@@ -631,6 +640,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
             com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
+
+        BigDecimal cardMerchantFee = resolveCardMerchantFeeFromPayment(payment);
         
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
         String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
@@ -641,9 +652,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .transactionType(incomeType)
                 .category(category != null ? category : paymentCategory)
                 .subcategory(subcategory != null ? subcategory : consultationFeeSubcategory)
-                .amount(payment.getAmount()) // 부가세 포함 금액
+                .amount(payment.getAmount()) // 부가세 포함 금액(승인·청구 총액, D5)
                 .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
                 .taxAmount(taxResult.getVatAmount()) // 부가세 금액
+                .cardMerchantFeeAmount(cardMerchantFee)
                 .description(description != null ? description : payment.getDescription())
                 .transactionDate(payment.getCreatedAt().toLocalDate())
                 .relatedEntityId(paymentId)
@@ -652,6 +664,19 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .build();
         
         return createTransaction(request, null); // 시스템 자동 생성
+    }
+
+    /**
+     * 카드 결제의 가맹점 수수료 금액(D5).
+     * {@link Payment#getExternalResponse()} 또는 {@link Payment#getWebhookData()} JSON 에서
+     * {@link com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil} 로 파싱합니다.
+     * 필드가 없거나 파싱 실패 시 0.
+     *
+     * @param payment 결제 엔티티
+     * @return 수수료(음수 불가), 카드가 아니면 0
+     */
+    private BigDecimal resolveCardMerchantFeeFromPayment(Payment payment) {
+        return CardMerchantFeeFromPaymentJsonUtil.resolveCardMerchantFee(payment, log);
     }
     
     @Override
@@ -734,7 +759,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .taxIncluded(transaction.getTaxIncluded())
                 .taxAmount(transaction.getTaxAmount())
+                .withholdingTaxAmount(transaction.getWithholdingTaxAmount())
                 .amountBeforeTax(transaction.getAmountBeforeTax())
+                .cardMerchantFeeAmount(transaction.getCardMerchantFeeAmount())
+                .cardNetDepositAmount(transaction.resolveCardNetDepositAmount())
                 .remarks(transaction.getRemarks())
                 .createdAt(transaction.getCreatedAt())
                 .updatedAt(transaction.getUpdatedAt());

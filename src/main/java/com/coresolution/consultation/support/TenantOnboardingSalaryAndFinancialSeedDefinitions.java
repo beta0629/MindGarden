@@ -297,6 +297,10 @@ public final class TenantOnboardingSalaryAndFinancialSeedDefinitions {
                 null, 3, null, null));
         rows.add(new SeedRow("ERP_ACCOUNT_TYPE", "LIABILITY", "환불부채", "환불부채",
                 "환불부채 계정 (대차대조표 부채)", null, 4, null, null));
+        rows.add(new SeedRow("ERP_ACCOUNT_TYPE", "VAT_PAYABLE", "부가세 예수금", "부가세 예수금",
+                "부가세 예수·부채 계정 (대차대조표)", null, 5, null, null));
+        rows.add(new SeedRow("ERP_ACCOUNT_TYPE", "WITHHOLDING_PAYABLE", "원천징수 예수금", "원천징수 예수금",
+                "원천징수 예수금·부채 계정 (대차대조표)", null, 6, null, null));
 
         ROWS = Collections.unmodifiableList(rows);
     }

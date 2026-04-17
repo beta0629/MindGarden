@@ -415,4 +415,56 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     @Deprecated
     List<FinancialTransaction> findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
         FinancialTransaction.TransactionType transactionType, String subcategory, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * D8 dry-run: 레거시 원천이 {@code tax_amount}에만 있는 후보 건수(읽기 전용).
+     * <p>
+     * 조건: INCOME·비삭제·{@code withholding_tax_amount = 0}·{@code tax_amount &gt; 0}·
+     * 서브카테고리/설명/비고 중 하나라도 프리랜스·원천·사업소득 문자열 패턴과 일치(보수적 LIKE).
+     * VAT만 있는 거래·다른 세목은 제외되지 않을 수 있으므로 운영 샘플로 규칙 확정 필요.
+     * </p>
+     *
+     * @param tenantId              테넌트 ID
+     * @param likeFreelanceSub      서브카테고리용 LIKE 패턴 (예: {@code %freelance%})
+     * @param likeWithholdingKr     원천 키워드 LIKE (예: {@code %원천%})
+     * @param likeBusinessIncomeKr  사업소득 키워드 LIKE (예: {@code %사업소득%})
+     * @return 후보 건수
+     */
+    @Query("SELECT COUNT(f) FROM FinancialTransaction f WHERE f.tenantId = :tenantId AND f.isDeleted = false "
+            + "AND f.transactionType = 'INCOME' "
+            + "AND f.withholdingTaxAmount = 0 AND f.taxAmount IS NOT NULL AND f.taxAmount > 0 AND ("
+            + "LOWER(COALESCE(f.subcategory, '')) LIKE LOWER(:likeFreelanceSub) OR "
+            + "LOWER(COALESCE(f.description, '')) LIKE LOWER(:likeWithholdingKr) OR "
+            + "LOWER(COALESCE(f.description, '')) LIKE LOWER(:likeBusinessIncomeKr) OR "
+            + "LOWER(COALESCE(f.remarks, '')) LIKE LOWER(:likeWithholdingKr))")
+    long countD8WithholdingLegacyCandidates(
+            @Param("tenantId") String tenantId,
+            @Param("likeFreelanceSub") String likeFreelanceSub,
+            @Param("likeWithholdingKr") String likeWithholdingKr,
+            @Param("likeBusinessIncomeKr") String likeBusinessIncomeKr);
+
+    /**
+     * D8 dry-run: 위 {@link #countD8WithholdingLegacyCandidates}와 동일 조건의 거래 ID 목록(표본용, 오름차순).
+     *
+     * @param tenantId              테넌트 ID
+     * @param likeFreelanceSub      서브카테고리용 LIKE 패턴
+     * @param likeWithholdingKr     원천 키워드 LIKE
+     * @param likeBusinessIncomeKr  사업소득 키워드 LIKE
+     * @param pageable              표본 상한(정렬은 id ASC 권장)
+     * @return 거래 ID 목록
+     */
+    @Query("SELECT f.id FROM FinancialTransaction f WHERE f.tenantId = :tenantId AND f.isDeleted = false "
+            + "AND f.transactionType = 'INCOME' "
+            + "AND f.withholdingTaxAmount = 0 AND f.taxAmount IS NOT NULL AND f.taxAmount > 0 AND ("
+            + "LOWER(COALESCE(f.subcategory, '')) LIKE LOWER(:likeFreelanceSub) OR "
+            + "LOWER(COALESCE(f.description, '')) LIKE LOWER(:likeWithholdingKr) OR "
+            + "LOWER(COALESCE(f.description, '')) LIKE LOWER(:likeBusinessIncomeKr) OR "
+            + "LOWER(COALESCE(f.remarks, '')) LIKE LOWER(:likeWithholdingKr)) "
+            + "ORDER BY f.id ASC")
+    List<Long> findD8WithholdingLegacyCandidateIds(
+            @Param("tenantId") String tenantId,
+            @Param("likeFreelanceSub") String likeFreelanceSub,
+            @Param("likeWithholdingKr") String likeWithholdingKr,
+            @Param("likeBusinessIncomeKr") String likeBusinessIncomeKr,
+            Pageable pageable);
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.dto.AccountTypeForJournalDto;
+import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
@@ -183,6 +184,9 @@ public class AccountingServiceImpl implements AccountingService {
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
     }
 
+    /**
+     * 재무 거래로부터 분개를 생성합니다. INCOME 시 D2(부가세)·D5(카드 승인액−수수료=실입금)를 반영합니다.
+     */
     @Override
     @Transactional
     public AccountingEntry createJournalEntryFromTransaction(FinancialTransaction transaction) {
@@ -300,14 +304,131 @@ public class AccountingServiceImpl implements AccountingService {
             java.util.List<JournalEntryLine> lines = new java.util.ArrayList<>();
 
             if (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME) {
-                // 수익 거래: 현금(차변) / 수익(대변)
-                lines.add(JournalEntryLine.builder().accountId(cashAccountId)
-                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
-                        .description("수익 입금").build());
+                // 수익 거래: 현금(차변)=실입금(D5) / 가맹점 수수료(차변)=비용 / 수익(대변); D2 시 VAT_PAYABLE 추가
+                BigDecimal grossApproved = amount;
+                BigDecimal cardFee = transaction.getCardMerchantFeeAmount() != null
+                        ? transaction.getCardMerchantFeeAmount()
+                        : BigDecimal.ZERO;
+                if (cardFee.compareTo(BigDecimal.ZERO) < 0) {
+                    cardFee = BigDecimal.ZERO;
+                }
+                if (cardFee.compareTo(grossApproved) > 0) {
+                    log.warn(
+                            "INCOME D5: cardMerchantFee가 승인액을 초과하여 승인액으로 제한: tenantId={}, "
+                                    + "transactionId={}, gross={}, fee={}",
+                            tenantId, transaction.getId(), grossApproved, cardFee);
+                    cardFee = grossApproved;
+                }
+                BigDecimal cashDebitAmount = grossApproved.subtract(cardFee);
 
-                lines.add(JournalEntryLine.builder().accountId(revenueAccountId)
-                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
-                        .description(transaction.getDescription()).build());
+                BigDecimal withholdingAmt = transaction.getWithholdingTaxAmount() != null
+                        ? transaction.getWithholdingTaxAmount()
+                        : BigDecimal.ZERO;
+                if (withholdingAmt.compareTo(BigDecimal.ZERO) < 0) {
+                    withholdingAmt = BigDecimal.ZERO;
+                }
+                Long withholdingPayableLineAccountId = null;
+                if (withholdingAmt.compareTo(BigDecimal.ZERO) > 0) {
+                    withholdingPayableLineAccountId = getDefaultAccountId(tenantId, "WITHHOLDING_PAYABLE");
+                    if (withholdingPayableLineAccountId == null) {
+                        ensureErpAccountMappingForTenant(tenantId);
+                        withholdingPayableLineAccountId = getDefaultAccountId(tenantId, "WITHHOLDING_PAYABLE");
+                    }
+                    if (withholdingPayableLineAccountId == null
+                            || findAccountForTenant(tenantId, withholdingPayableLineAccountId).isEmpty()) {
+                        log.warn(
+                                "INCOME 원천: WITHHOLDING_PAYABLE 계정을 찾을 수 없어 원천 라인 생략(매출 전액 인식): "
+                                        + "tenantId={}, transactionId={}",
+                                tenantId, transaction.getId());
+                        withholdingAmt = BigDecimal.ZERO;
+                    }
+                }
+
+                BigDecimal taxAmt = transaction.getTaxAmount();
+                boolean tryD2Split = (taxAmt != null && taxAmt.compareTo(BigDecimal.ZERO) > 0)
+                        || Boolean.TRUE.equals(transaction.getTaxIncluded());
+                BigDecimal netCredit = grossApproved;
+                BigDecimal vatCredit = BigDecimal.ZERO;
+                boolean useThreeLineIncome = false;
+                Long vatPayableLineAccountId = null;
+
+                if (tryD2Split) {
+                    BigDecimal[] netAndVat = resolveIncomeNetAndVatForD2(grossApproved, transaction);
+                    if (netAndVat != null && netAndVat[1].compareTo(BigDecimal.ZERO) > 0) {
+                        netCredit = netAndVat[0];
+                        vatCredit = netAndVat[1];
+                        if (netCredit.add(vatCredit).compareTo(grossApproved) != 0) {
+                            log.warn(
+                                    "INCOME D2 분개: 순액+부가세가 총 수취액과 불일치하여 2줄 분개로 폴백: tenantId={}, "
+                                            + "amount={}, net={}, vat={}",
+                                    tenantId, grossApproved, netCredit, vatCredit);
+                        } else {
+                            Long vatPayableId = getDefaultAccountId(tenantId, "VAT_PAYABLE");
+                            if (vatPayableId == null) {
+                                ensureErpAccountMappingForTenant(tenantId);
+                                vatPayableId = getDefaultAccountId(tenantId, "VAT_PAYABLE");
+                            }
+                            if (vatPayableId == null) {
+                                log.warn(
+                                        "INCOME D2 분개: VAT_PAYABLE 계정을 찾을 수 없어 2줄 분개로 폴백: tenantId={}",
+                                        tenantId);
+                            } else if (findAccountForTenant(tenantId, vatPayableId).isEmpty()) {
+                                log.warn(
+                                        "INCOME D2 분개: VAT_PAYABLE Account 엔티티 없음, 2줄 폴백: tenantId={}, accountId={}",
+                                        tenantId, vatPayableId);
+                            } else {
+                                useThreeLineIncome = true;
+                                vatPayableLineAccountId = vatPayableId;
+                            }
+                        }
+                    }
+                }
+
+                lines.add(JournalEntryLine.builder().accountId(cashAccountId)
+                        .debitAmount(cashDebitAmount).creditAmount(BigDecimal.ZERO)
+                        .description("수익 입금(실입금)").build());
+                if (cardFee.compareTo(BigDecimal.ZERO) > 0) {
+                    lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
+                            .debitAmount(cardFee).creditAmount(BigDecimal.ZERO)
+                            .description("카드 가맹점 수수료").build());
+                }
+
+                BigDecimal whForLine = withholdingAmt;
+                if (useThreeLineIncome) {
+                    BigDecimal revenueCredit = netCredit.subtract(withholdingAmt);
+                    if (revenueCredit.compareTo(BigDecimal.ZERO) < 0) {
+                        log.warn(
+                                "INCOME D2+원천: 매출에서 원천 차감 시 음수 — 원천 라인 생략 후 매출·부가세만 인식: "
+                                        + "tenantId={}, transactionId={}, net={}, wh={}",
+                                tenantId, transaction.getId(), netCredit, withholdingAmt);
+                        whForLine = BigDecimal.ZERO;
+                        revenueCredit = netCredit;
+                    }
+                    lines.add(JournalEntryLine.builder().accountId(revenueAccountId)
+                            .debitAmount(BigDecimal.ZERO).creditAmount(revenueCredit)
+                            .description(transaction.getDescription()).build());
+                    lines.add(JournalEntryLine.builder().accountId(vatPayableLineAccountId)
+                            .debitAmount(BigDecimal.ZERO).creditAmount(vatCredit)
+                            .description("부가세 예수금").build());
+                } else {
+                    BigDecimal revenueCredit = grossApproved.subtract(withholdingAmt);
+                    if (revenueCredit.compareTo(BigDecimal.ZERO) < 0) {
+                        log.warn(
+                                "INCOME+원천: 매출에서 원천 차감 시 음수 — 원천 라인 생략: tenantId={}, transactionId={}, "
+                                        + "gross={}, wh={}",
+                                tenantId, transaction.getId(), grossApproved, withholdingAmt);
+                        whForLine = BigDecimal.ZERO;
+                        revenueCredit = grossApproved;
+                    }
+                    lines.add(JournalEntryLine.builder().accountId(revenueAccountId)
+                            .debitAmount(BigDecimal.ZERO).creditAmount(revenueCredit)
+                            .description(transaction.getDescription()).build());
+                }
+                if (whForLine.compareTo(BigDecimal.ZERO) > 0) {
+                    lines.add(JournalEntryLine.builder().accountId(withholdingPayableLineAccountId)
+                            .debitAmount(BigDecimal.ZERO).creditAmount(whForLine)
+                            .description("원천징수 예수금").build());
+                }
             } else if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE
                     && FinancialTransactionConstants.isRefundSubcategory(transaction.getSubcategory())) {
                 // 환불 거래: (차) 비용/매출환입 (대) 환불부채 → (차) 환불부채 (대) 현금 (2단계 분개, 단일 엔트리 4라인)
@@ -390,6 +511,28 @@ public class AccountingServiceImpl implements AccountingService {
     }
 
     /**
+     * D2 수입: 순액·부가세(VAT) 금액 도출. 분리 불가 시 null.
+     *
+     * @param grossAmount 총 수취액({@link FinancialTransaction#getAmount()})
+     * @param tx            거래
+     * @return [0]=순매출액, [1]=부가세액; 없으면 null
+     */
+    private BigDecimal[] resolveIncomeNetAndVatForD2(BigDecimal grossAmount, FinancialTransaction tx) {
+        BigDecimal ta = tx.getTaxAmount();
+        if (ta != null && ta.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal abt = tx.getAmountBeforeTax();
+            BigDecimal net = abt != null ? abt : grossAmount.subtract(ta);
+            return new BigDecimal[] {net, ta};
+        }
+        if (Boolean.TRUE.equals(tx.getTaxIncluded())) {
+            TaxCalculationUtil.TaxCalculationResult r =
+                    TaxCalculationUtil.calculateTaxFromPayment(grossAmount);
+            return new BigDecimal[] {r.getAmountExcludingTax(), r.getVatAmount()};
+        }
+        return null;
+    }
+
+    /**
      * 기본 계정 ID 조회 (공통코드에서 동적 조회) 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md 하드코딩 금지 원칙 준수
      */
     private Long getDefaultAccountId(String tenantId, String accountType) {
@@ -458,7 +601,9 @@ public class AccountingServiceImpl implements AccountingService {
         if (getDefaultAccountId(tenantId, "REVENUE") != null
                 && getDefaultAccountId(tenantId, "EXPENSE") != null
                 && getDefaultAccountId(tenantId, "CASH") != null
-                && getDefaultAccountId(tenantId, "LIABILITY") != null) {
+                && getDefaultAccountId(tenantId, "LIABILITY") != null
+                && getDefaultAccountId(tenantId, "VAT_PAYABLE") != null
+                && getDefaultAccountId(tenantId, "WITHHOLDING_PAYABLE") != null) {
             return;
         }
         DefaultTransactionDefinition def = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -544,11 +689,45 @@ public class AccountingServiceImpl implements AccountingService {
                                 .build();
                         return accountRepository.save(a);
                     });
+            Account vatPayableAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-VAT-PAYABLE")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-VAT-PAYABLE")
+                                .accountHolder("ERP")
+                                .description("부가세 예수금")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .isPrimary(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
+            Account withholdingPayableAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-WITHHOLDING-PAYABLE")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-WITHHOLDING-PAYABLE")
+                                .accountHolder("ERP")
+                                .description("원천징수 예수금")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .isPrimary(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
 
             // 2. 테넌트 공통코드 ERP_ACCOUNT_TYPE 생성 또는 extraData 갱신
-            String[] types = {"REVENUE", "EXPENSE", "CASH", "LIABILITY"};
-            Account[] accounts = {revenueAccount, expenseAccount, cashAccount, liabilityAccount};
-            String[] labels = {"수익", "비용", "현금", "환불부채"};
+            String[] types = {"REVENUE", "EXPENSE", "CASH", "LIABILITY", "VAT_PAYABLE",
+                    "WITHHOLDING_PAYABLE"};
+            Account[] accounts = {revenueAccount, expenseAccount, cashAccount, liabilityAccount,
+                    vatPayableAccount, withholdingPayableAccount};
+            String[] labels = {"수익", "비용", "현금", "환불부채", "부가세 예수금", "원천징수 예수금"};
             for (int i = 0; i < types.length; i++) {
                 String extraData = "{\"accountId\":" + accounts[i].getId() + "}";
                 Optional<CommonCode> existing = commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
@@ -572,8 +751,10 @@ public class AccountingServiceImpl implements AccountingService {
                     commonCodeRepository.save(code);
                 }
             }
-            log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}, liabilityId={}",
-                tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId(), liabilityAccount.getId());
+            log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}, liabilityId={}, "
+                            + "vatPayableId={}, withholdingPayableId={}",
+                    tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId(),
+                    liabilityAccount.getId(), vatPayableAccount.getId(), withholdingPayableAccount.getId());
     }
 
     /**

@@ -854,7 +854,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
                 .amount(grossAmountBd) // 매출(입금) 총액 — 기존과 동일
-                .taxAmount(withholdingTax) // 원천징수 예정액(VAT 아님)
+                .taxAmount(BigDecimal.ZERO) // 부가세(VAT) 전용; 상담료 면세 시 0
+                .withholdingTaxAmount(withholdingTax)
                 .amountBeforeTax(grossAmountBd) // 세무상 별도 과세표준이 아닌, 총 입금액과 동일(부가세 제외 금액 필드 재사용)
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
@@ -948,7 +949,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
                 .amount(grossAdditionalBd) // 매출(입금) 총액
-                .taxAmount(withholdingAdditional) // 원천징수 예정액(VAT 아님)
+                .taxAmount(BigDecimal.ZERO) // 부가세(VAT) 전용
+                .withholdingTaxAmount(withholdingAdditional)
                 .amountBeforeTax(grossAdditionalBd) // 총 입금액과 동일(부가세 제외 금액 필드 재사용)
                 .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())

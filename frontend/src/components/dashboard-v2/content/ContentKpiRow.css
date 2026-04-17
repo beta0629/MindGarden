@@ -133,8 +133,10 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
 
 .mg-v2-content-kpi-card__label {
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--ad-b0kla-text-secondary, #64748b);
+  overflow: visible;
+  word-break: keep-all;
 }
 
 .mg-v2-content-kpi-card__badge {
@@ -213,6 +215,11 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   cursor: default;
 }
 
+/*
+ * KPI 카드는 MGButton 안에 다줄·블록 레이아웃(info)을 넣는다.
+ * MGButton 기본: overflow:hidden, min-height, .mg-button__content height:100% 등 → 라벨 상단 글리프 클리핑.
+ * 아래 규칙은 .mg-v2-content-kpi-card--clickable-split 안에서만 적용(전역 MGButton 회귀 방지).
+ */
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button {
   flex: 1;
   min-width: 0;
@@ -227,9 +234,13 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   margin: 0;
   color: inherit;
   width: auto;
-  min-height: unset;
+  min-height: min-content;
+  height: auto;
   font-weight: inherit;
   line-height: inherit;
+  overflow: visible;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -238,23 +249,7 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   opacity: 0.92;
 }
 
-.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__content,
-.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__text {
-  display: contents;
-}
-
-/*
- * KPI 카드는 MGButton 안에 다줄·블록 레이아웃(info)을 넣는다.
- * MGButton 기본: .mg-button__text { white-space: nowrap } + .mg-button { overflow: hidden }
- * → 라벨 상단 글리프가 잘림. KPI 전용으로 줄바꿈·오버플로 허용.
- */
-.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button {
-  overflow: visible;
-  align-items: flex-start;
-}
-
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__content {
-  /* display:contents(상단 규칙) 덮음: 세로 스택에서 info 블록이 잘리지 않도록 */
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -262,13 +257,20 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
   width: 100%;
   height: auto;
   min-height: 0;
+  overflow: visible;
 }
 
 .mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__click-target.mg-button .mg-button__text {
   display: block;
   white-space: normal;
+  overflow: visible;
   width: 100%;
   min-width: 0;
+  min-height: min-content;
+}
+
+.mg-v2-content-kpi-card--clickable-split .mg-v2-content-kpi-card__label {
+  padding-top: var(--mg-spacing-xxs, 0.125rem);
 }
 
 @media (max-width: 768px) {

@@ -348,6 +348,73 @@
   color: var(--ad-b0kla-title-color);
 }
 
+/*
+ * B0KlA .mg-v2-ad-b0kla .mg-v2-button-outline(0,2,0)이 해시태그·검사유형 선택 배경보다 우선하던 문제 —
+ * MappingCreationModal·BadgeSelect와 동일: mg-button--outline.mg-v2-button-outline 한 선택자로 명시.
+ */
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-psych-upload-section__client-tag--selected) {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-300));
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-psych-upload-section__client-tag--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--mg-shadow-sm);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__client-tag--selected {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__client-tag--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__client-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__client-tag--selected:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green, var(--mg-success-500));
+  outline-offset: 2px;
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-psych-upload-section__type-option--selected) {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-300));
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-psych-upload-section__type-option--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  color: var(--ad-b0kla-title-color);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__type-option--selected {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__type-option--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-psych-upload-section .mg-v2-psych-upload-section__type-option.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-psych-upload-section__type-option--selected:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green, var(--mg-success-500));
+  outline-offset: 2px;
+}
+
 .mg-v2-psych-upload-section__form-row .mg-input[type="file"] {
   max-width: 100%;
 }

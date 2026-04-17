@@ -112,27 +112,27 @@
  * MGButton variant=outline — .mg-button.mg-button--outline(특이도 0,2,0)이
  * .mg-v2-badge-select__item--selected(0,1,0)보다 우선해 선택 배경·글자색이 적용되지 않던 문제 수정.
  */
-.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline:not(.mg-v2-badge-select__item--selected) {
+.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-badge-select__item--selected) {
   background-color: var(--mg-color-surface-main, var(--mg-layout-section-bg));
   color: var(--mg-color-text-main, #2c2c2c);
   border: 1px solid var(--mg-color-border-main, var(--mg-layout-section-border));
 }
 
-.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-badge-select__item--selected {
+.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   font-weight: 600;
 }
 
-.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-light, #4a6354);
   border-color: var(--mg-color-primary-light, #4a6354);
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
 }
 
-.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-badge-select__item--selected:active:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }

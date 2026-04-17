@@ -114,6 +114,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
             title="상담사 평가"
             subtitle={`${schedule.consultantName}님과의 상담은 어떠셨나요?`}
             size="large"
+            className="mg-v2-consultant-rating-modal"
             backdropClick={true}
             showCloseButton={true}
             actions={

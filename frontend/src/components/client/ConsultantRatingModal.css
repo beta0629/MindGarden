@@ -11,3 +11,40 @@
   height: auto;
   min-height: auto;
 }
+
+/*
+ * Portal 모달 + mg-v2-button-outline(ERP) — 선택 태그(.mg-v2-tag--selected)가 outline보다 약할 때 보정.
+ * MappingCreationModal·BadgeSelect 패턴: button.mg-button.mg-button--outline.mg-v2-button-outline 스코프.
+ */
+.mg-modal.mg-v2-consultant-rating-modal .mg-v2-tag-group .mg-v2-tag.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-tag--selected) {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-light);
+}
+
+.mg-modal.mg-v2-consultant-rating-modal .mg-v2-tag-group .mg-v2-tag.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-tag--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-text-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+.mg-modal.mg-v2-consultant-rating-modal .mg-v2-tag-group .mg-v2-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-tag--selected {
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--mg-white);
+  font-weight: 600;
+}
+
+.mg-modal.mg-v2-consultant-rating-modal .mg-v2-tag-group .mg-v2-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-tag--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: var(--mg-white);
+  transform: none;
+}
+
+.mg-modal.mg-v2-consultant-rating-modal .mg-v2-tag-group .mg-v2-tag.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-tag--selected:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

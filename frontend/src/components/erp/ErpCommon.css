@@ -1003,6 +1003,42 @@
   color: var(--mg-color-surface-main);
 }
 
+/*
+ * 재무 필터 칩: B0KlA .mg-v2-ad-b0kla .mg-v2-button-outline(0,2,0) vs 배지 선택 —
+ * button.mg-button.mg-button--outline.mg-v2-button-outline 스코프 (MappingCreationModal·BadgeSelect 정합).
+ */
+.mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-erp-filter-badge--selected) {
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-secondary);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+.mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-erp-filter-badge--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-gray-100);
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-border-strong, var(--mg-gray-300));
+  transform: none;
+  box-shadow: none;
+}
+
+.mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline.mg-erp-filter-badge--selected {
+  background: var(--mg-primary-500);
+  color: var(--mg-color-surface-main);
+  border-color: var(--mg-primary-500);
+}
+
+.mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline.mg-erp-filter-badge--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-primary-600);
+  border-color: var(--mg-primary-600);
+  color: var(--mg-color-surface-main);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline.mg-erp-filter-badge--selected:focus-visible {
+  outline: 2px solid var(--mg-primary-500);
+  outline-offset: 2px;
+}
+
 /* 재무 달력: mg-calendar 확장 (공통 달력 구조 + 일별 수입/지출 요약) */
 .financial-calendar-view-container .mg-calendar {
   background: var(--mg-color-surface-main);

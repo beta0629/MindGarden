@@ -157,29 +157,35 @@ const SessionIdleWarningModal = () => {
       backdropClick={false}
       showCloseButton={false}
       zIndex={9990}
+      className="session-idle-warning-modal"
       actions={
         <>
+          {/* 연장을 먼저 두고 세로 스택에서도 상단에 주요 액션이 오도록 함 (가로 배치 시에도 flex-end로 오른쪽 정렬) */}
           <MGButton
-            variant="outline"
-            size="medium"
-            onClick={handleLogout}
-            preventDoubleClick={false}
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          >
-            <LogOut size={20} className="mg-v2-icon-inline" />
-            로그아웃
-          </MGButton>
-          <MGButton
+            type="button"
             variant="primary"
             size="medium"
             onClick={handleExtend}
             preventDoubleClick={false}
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            data-testid="session-idle-extend"
           >
-            <Clock size={20} className="mg-v2-icon-inline" />
+            <Clock size={20} className="mg-v2-icon-inline" aria-hidden />
             연장
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={handleLogout}
+            preventDoubleClick={false}
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            data-testid="session-idle-logout"
+          >
+            <LogOut size={20} className="mg-v2-icon-inline" aria-hidden />
+            로그아웃
           </MGButton>
         </>
       }

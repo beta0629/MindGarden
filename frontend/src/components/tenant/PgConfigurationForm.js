@@ -459,7 +459,10 @@ const PgConfigurationForm = ({
   const webhookDisplayUrl = getPortOneV2WebhookDisplayUrl();
 
   return (
-    <form className="pg-config-form" onSubmit={handleSubmit}>
+    <form
+      className={`pg-config-form${isKicc ? ' pg-config-form--kicc-wide' : ''}`}
+      onSubmit={handleSubmit}
+    >
       <div className="pg-config-form-header">
         {!hidePageTitle && (
           <>
@@ -525,7 +528,13 @@ const PgConfigurationForm = ({
         </div>
 
         {isKicc && (
-          <>
+          <section
+            className="pg-config-form__kicc"
+            aria-labelledby="pg-config-kicc-section-title"
+          >
+            <h3 id="pg-config-kicc-section-title" className="pg-config-form__kicc-title">
+              KICC 이지페이 연동
+            </h3>
             <div className="mg-v2-ad-b0kla-info-box pg-config-portone-v2-banner" role="status">
               <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
                 KICC 이지페이 온라인 결제 API 연동입니다. Mall ID는 가맹점 ID 필드에 입력합니다. API 키·상점 검증키는 KICC에서 발급받은 값을 사용합니다.
@@ -785,7 +794,7 @@ const PgConfigurationForm = ({
                 </p>
               )}
             </div>
-          </>
+          </section>
         )}
 
         {isIamportPortoneV2 && (

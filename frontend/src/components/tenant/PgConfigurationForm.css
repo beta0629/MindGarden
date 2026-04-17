@@ -8,6 +8,11 @@
   box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
+/* KICC: 긴 키·호스트 입력 — 콘텐츠 영역 대비 폭 완화(토큰만 사용) */
+.pg-config-form--kicc-wide {
+  max-width: min(100%, var(--container-lg));
+}
+
 .pg-config-form-header {
   margin-bottom: 32px;
   padding-bottom: 24px;
@@ -89,6 +94,36 @@
   gap: 24px;
 }
 
+/* 부모가 그리드/플렉스일 때 필드가 잘리지 않도록 */
+.pg-config-form-body > .form-group {
+  min-width: 0;
+  width: 100%;
+}
+
+/* KICC 전용 블록: 2열 그리드 등에서 한 열 전체를 쓰도록 */
+.pg-config-form__kicc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg, 1.5rem);
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.pg-config-form__kicc .form-group,
+.pg-config-form__kicc .input-with-icon {
+  min-width: 0;
+  width: 100%;
+}
+
+.pg-config-form__kicc-title {
+  margin: 0;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--mg-text-primary, var(--mg-gray-900));
+}
+
 .mg-form__group {
   display: flex;
   flex-direction: column;
@@ -113,10 +148,14 @@
   margin-left: 2px;
 }
 
+/* 텍스트 입력: .form-input 은 JSX 별칭 — .mg-form__input 과 동일 계약 */
 .mg-form__input,
+.form-input,
 .form-select,
 .form-textarea {
+  box-sizing: border-box;
   width: 100%;
+  min-height: var(--input-height-default, var(--input-height-md, 2.5rem));
   padding: 12px 16px;
   border: 1px solid var(--mg-border-color, var(--mg-gray-300));
   border-radius: 8px;
@@ -127,6 +166,7 @@
 }
 
 .mg-form__input:focus,
+.form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
@@ -135,18 +175,21 @@
 }
 
 .mg-form__input.error,
+.form-input.error,
 .form-select.error,
 .form-textarea.error {
   border-color: var(--mg-error, var(--mg-error-500));
 }
 
 .mg-form__input.error:focus,
+.form-input.error:focus,
 .form-select.error:focus,
 .form-textarea.error:focus {
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 .mg-form__input:disabled,
+.form-input:disabled,
 .form-select:disabled {
   background-color: var(--mg-bg-secondary, var(--mg-gray-100));
   cursor: not-allowed;
@@ -157,9 +200,15 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
-.input-with-icon .mg-form__input {
+.input-with-icon .mg-form__input,
+.input-with-icon .form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   padding-right: 48px;
 }
 
@@ -250,6 +299,7 @@
 
 /* 포커스 스타일 개선 (접근성) */
 .mg-form__input:focus,
+.form-input:focus,
 .form-select:focus,
 .form-textarea:focus,
 .form-checkbox:focus,
@@ -408,7 +458,8 @@
     gap: 6px;
   }
   
-  .input-with-icon .mg-form__input {
+  .input-with-icon .mg-form__input,
+  .input-with-icon .form-input {
     padding-right: 40px;
   }
   

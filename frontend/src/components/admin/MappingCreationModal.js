@@ -461,6 +461,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={c.id}
                     type="button"
                     variant="outline"
+                    aria-pressed={selectedConsultant?.id === c.id}
                     className={buildErpMgButtonClassName({
                       variant: 'outline',
                       size: 'md',
@@ -478,7 +479,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     />
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong><SafeText tag="span">{c.name}</SafeText></strong>
-                      <span>{toDisplayString(c.email)}</span>
+                      <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
                     </div>
                   </MGButton>
                 ))
@@ -522,6 +523,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={pkg.value}
                     type="button"
                     variant="outline"
+                    aria-pressed={paymentInfo.packageName === pkg.label}
                     className={buildErpMgButtonClassName({
                       variant: 'outline',
                       size: 'md',
@@ -593,6 +595,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     key={c.id}
                     type="button"
                     variant="outline"
+                    aria-pressed={selectedClient?.id === c.id}
                     className={buildErpMgButtonClassName({
                       variant: 'outline',
                       size: 'md',
@@ -610,7 +613,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     />
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong><SafeText tag="span">{c.name}</SafeText></strong>
-                      <span>{toDisplayString(c.email)}</span>
+                      <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
                     </div>
                   </MGButton>
                 ))

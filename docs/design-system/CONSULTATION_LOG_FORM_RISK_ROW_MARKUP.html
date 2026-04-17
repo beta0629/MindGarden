@@ -1,0 +1,110 @@
+<!--
+  core-coder 전달 요약 (3줄):
+  1) 위험도 BadgeSelect(5칩)는 `mg-v2-consultation-log-modal__form-group-full`로 한 행 전체(`grid-column: 1 / -1`)를 쓰게 하여,
+     부모 `repeat(auto-fit, minmax(300px, 1fr))` 칼럼과 같은 행에 두지 않는다.
+  2) `.mg-v2-consultation-log-modal__form-grid` 직계 자식 `.mg-v2-form-group`에 `min-width: 0`(및 필요 시 `min-height: 0`)을 두어
+     그리드 최소 콘텐츠 크기로 인한 가로 팽창·옆 textarea와의 겹침을 막는다.
+  3) 행 간 간격은 기존 `gap: var(--spacing-lg, 1.25rem)` 유지; 5칩은 기존 `__badge-select-grid--5` 규칙과 함께
+     좁은 뷰포트에서 줄바꿈·스크롤 여부만 점검하면 된다.
+-->
+
+<!--
+  [1] 권장 레이아웃(1안): 과제 2필드 한 행(auto-fit이 2칼럼이면 같은 행) → 위험도 전체 폭 한 행 → 위험요인+응급 2칼럼 한 행.
+
+  [2] 클래스 재사용: 예 — 기존 클래스 그대로 쓴다.
+      - 그리드 컨테이너: `mg-v2-form-grid` + `mg-v2-consultation-log-modal__form-grid` (이미 display:grid, gap 토큰 적용됨).
+      - 전체 폭 행: `mg-v2-form-group` + `mg-v2-consultation-log-modal__form-group-full` (grid-column: 1 / -1).
+      신규 블록 클래스를 만들 필요 없음. (다만 코더가 JSX에서 위험도 그룹에만 `form-group-full`을 추가하면 됨.)
+
+  [3] CSS 권장(hex 금지, 토큰 var(--*)):
+      - 그리드 자식: `min-width: 0` (필요 시 textarea 래퍼 동일).
+      - 긴 콘텐츠: `overflow-wrap: anywhere` 또는 라벨에 한해 `word-break`는 디자인 토큰과 맞출 것.
+      - 가로 넘침이 남으면 해당 행만 `overflow-x: auto` (스크롤) 또는 내부 칩 그리드에서 이미 정의한 `minmax(0,1fr)` 패턴 유지.
+      - 행 간격: 부모 `gap: var(--spacing-lg, 1.25rem)`; 별도 row-gap 중복보다는 하나의 gap으로 통일 권장.
+      - (선택) 모달 폭이 매우 좁을 때 부모 컬럼을 `minmax(0, 1fr)`로 바꾸는 것은 별도 합의 후 — 토큰/브레이크포인트와 함께.
+-->
+
+<!-- Organism 조각: 상담일지 폼 중 위험도 구간만 시맨틱 스켈레톤 (JSX·로직 없음) -->
+<form class="mg-v2-consultation-log-modal__form" action="#" method="post">
+  <fieldset class="mg-v2-consultation-log-modal__fieldset">
+    <legend class="sr-only">과제 및 위험도 관련 입력</legend>
+
+    <div class="mg-v2-form-grid mg-v2-consultation-log-modal__form-grid">
+      <!-- 행: 과제 부여 + 과제 제출 기한 (auto-fit 그리드에서 보통 동일 행 2칼럼) -->
+      <div class="mg-v2-form-group">
+        <label class="mg-v2-label" for="consultation-log-homework">과제 부여</label>
+        <textarea
+          id="consultation-log-homework"
+          name="homeworkAssigned"
+          class="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
+          placeholder="부여한 과제를 기록해주세요."
+        ></textarea>
+      </div>
+      <div class="mg-v2-form-group">
+        <label class="mg-v2-label" for="consultation-log-homework-due">과제 제출 기한</label>
+        <input
+          id="consultation-log-homework-due"
+          type="date"
+          name="homeworkDueDate"
+          class="mg-v2-input mg-v2-w-full"
+        />
+      </div>
+
+      <!-- 행: 위험도 평가 — 반드시 전체 폭 (5칩 BadgeSelect가 이웃 칼럼과 겹치지 않도록) -->
+      <div
+        class="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full"
+        role="group"
+        aria-labelledby="consultation-log-risk-assessment-label"
+      >
+        <span class="mg-v2-label" id="consultation-log-risk-assessment-label">위험도 평가 *</span>
+        <!-- 실제 구현: BadgeSelect 루트에 동일 클래스 부여 (radiogroup 등은 컴포넌트가 부여) -->
+        <div
+          class="mg-v2-badge-select mg-v2-form-badge-select mg-v2-w-full mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--5"
+          role="radiogroup"
+          aria-label="위험도 평가 필수 선택"
+        >
+          <button type="button" class="mg-v2-badge-select__item" aria-pressed="false">
+            <span class="mg-v2-badge-select__item-icon" aria-hidden="true"></span>
+            <span class="mg-v2-badge-select__item-label">(수준 1)</span>
+          </button>
+          <button type="button" class="mg-v2-badge-select__item" aria-pressed="false">
+            <span class="mg-v2-badge-select__item-icon" aria-hidden="true"></span>
+            <span class="mg-v2-badge-select__item-label">(수준 2)</span>
+          </button>
+          <button type="button" class="mg-v2-badge-select__item" aria-pressed="false">
+            <span class="mg-v2-badge-select__item-icon" aria-hidden="true"></span>
+            <span class="mg-v2-badge-select__item-label">(수준 3)</span>
+          </button>
+          <button type="button" class="mg-v2-badge-select__item" aria-pressed="false">
+            <span class="mg-v2-badge-select__item-icon" aria-hidden="true"></span>
+            <span class="mg-v2-badge-select__item-label">(수준 4)</span>
+          </button>
+          <button type="button" class="mg-v2-badge-select__item" aria-pressed="false">
+            <span class="mg-v2-badge-select__item-icon" aria-hidden="true"></span>
+            <span class="mg-v2-badge-select__item-label">(수준 5)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 행: 위험 요인 + 응급 대응 계획 (2칼럼) -->
+      <div class="mg-v2-form-group">
+        <label class="mg-v2-label" for="consultation-log-risk-factors">위험 요인</label>
+        <textarea
+          id="consultation-log-risk-factors"
+          name="riskFactors"
+          class="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
+          placeholder="발견된 위험 요인을 기록해주세요."
+        ></textarea>
+      </div>
+      <div class="mg-v2-form-group">
+        <label class="mg-v2-label" for="consultation-log-emergency">응급 대응 계획</label>
+        <textarea
+          id="consultation-log-emergency"
+          name="emergencyResponsePlan"
+          class="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
+          placeholder="응급 상황 시 대응 계획을 기록해주세요."
+        ></textarea>
+      </div>
+    </div>
+  </fieldset>
+</form>

@@ -19,6 +19,13 @@
   flex-direction: column;
   gap: var(--mg-spacing-xl);
   max-width: 100%;
+  /*
+   * ContentArea(세로 flex) 자식으로서 기본 flex-shrink: 1 이면
+   * 뷰포트보다 긴 페이지에서 본문 높이가 압축되어 KPI 카드 하단이 잘릴 수 있음.
+   * 스크롤은 DesktopLayout의 main(.mg-v2-desktop-layout__main)에서 처리.
+   */
+  flex-shrink: 0;
+  min-height: min-content;
 }
 
 .client-dash__section {
@@ -190,6 +197,17 @@
   .client-dash__kpi-row-wrap .mg-v2-content-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* KPI 행: 그리드/버튼 오버플로로 카드가 잘리지 않도록 */
+.client-dash__section.client-dash__kpi {
+  overflow: visible;
+  min-height: min-content;
+}
+
+.client-dash__kpi-row-wrap {
+  overflow: visible;
+  min-width: 0;
 }
 
 /* 결제 요약: 페이지 섹션 제목만 노출 — 자식 컴포넌트 내부 h2 숨김 */

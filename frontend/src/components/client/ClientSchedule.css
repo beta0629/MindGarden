@@ -1,5 +1,14 @@
 /* ClientSchedule.css - 내담자 일정 페이지 스타일 */
 
+/* DesktopLayout main > ContentArea 흐름과 정렬 (ClientDashboard client-dash__main 과 동일 역할) */
+.client-schedule__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+}
+
 .client-schedule-container {
   max-width: calc(var(--container-max-width) * 1.2);
   margin: 0 auto;

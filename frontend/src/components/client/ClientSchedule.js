@@ -49,21 +49,26 @@ const ClientSchedule = () => {
     }
   }, [user, isLoggedIn, sessionLoading, navigate]);
 
+  /**
+   * AdminCommonLayout → DesktopLayout main 직계 자식은 ContentArea만 둔다.
+   * (ClientDashboard와 동일) 중첩 mg-v2-ad-b0kla 래퍼는 main > * flex·min-height 규칙과 충돌해
+   * 일정 영역이 높이 0에 가깝게 접히는 현상(빈 화면)을 유발할 수 있음.
+   */
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-schedule-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="내담자 일정">
-          <ContentHeader
-            title="내 일정"
-            subtitle="예약된 상담 일정을 확인하고 관리할 수 있습니다."
-            titleId={CLIENT_SCHEDULE_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_SCHEDULE_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ContentArea ariaLabel="내담자 일정">
+      <ContentHeader
+        title="내 일정"
+        subtitle="예약된 상담 일정을 확인하고 관리할 수 있습니다."
+        titleId={CLIENT_SCHEDULE_TITLE_ID}
+      />
+      <main
+        className="client-schedule__main"
+        data-testid="client-schedule-page"
+        aria-labelledby={CLIENT_SCHEDULE_TITLE_ID}
+      >
+        {body}
+      </main>
+    </ContentArea>
   );
 
   if (sessionLoading || loading) {

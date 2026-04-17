@@ -159,7 +159,9 @@
 .mg-v2-mapping-creation-modal__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
+  /* 가로: 상담사 카드 사이 여유 (세로보다 넓게) */
+  column-gap: var(--mg-spacing-lg, 1.25rem);
+  row-gap: var(--mg-spacing-md, 1rem);
   max-height: min(280px, 40vh);
   overflow-y: auto;
 }
@@ -245,6 +247,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .mg-v2-mapping-creation-modal__empty {
@@ -493,6 +496,9 @@
 /* G8-B15b: 선택 카드 MGButton 정합 */
 .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline {
   width: 100%;
+  /* 기본 .mg-button { min-width: fit-content } 가 긴 이메일 시 그리드 셀을 깨뜨림 */
+  min-width: 0;
+  max-width: 100%;
   justify-content: flex-start;
   min-height: auto;
   font-weight: inherit;
@@ -508,11 +514,87 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
   text-align: left;
 }
 
 .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
+}
+
+/*
+ * B0KlA .mg-v2-ad-b0kla .mg-v2-button-outline(0,2,0)이 카드 선택 배경·테두리보다 우선하던 문제 —
+ * BadgeSelect의 mg-button+outline+selected 패턴과 동일하게 한 선택자로 명시.
+ * 상담사·내담자 그리드 및 패키지 카드 공통.
+ */
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-mapping-creation-modal__card--selected) {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-mapping-creation-modal__card--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--mg-shadow-sm);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__card--selected {
+  background: var(--ad-b0kla-green-bg);
+  border: 2px solid var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__card--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--cs-shadow-soft);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__card--selected:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-mapping-creation-modal__pkg-card--selected) {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-v2-mapping-creation-modal__pkg-card--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--mg-shadow-sm);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__pkg-card--selected {
+  background: var(--ad-b0kla-green-bg);
+  border: 2px solid var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__pkg-card--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-title-color);
+  box-shadow: var(--cs-shadow-soft);
+  transform: none;
+}
+
+.mg-v2-ad-b0kla.mg-v2-mapping-creation-modal .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-mapping-creation-modal__pkg-card--selected:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
 }
 
 .mg-v2-mapping-creation-modal__pkg-card.mg-button.mg-button--outline {

@@ -426,7 +426,11 @@ function AppContent() {
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />
             <Route path="/client/booking" element={<Navigate to="/client/schedule" replace />} />
-            <Route path="/client/schedule" element={<ClientSchedule />} />
+            <Route path="/client/schedule" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                <ClientSchedule />
+              </ProtectedRoute>
+            } />
             <Route path="/client/records" element={<Navigate to="/client/session-management" replace />} />
             <Route path="/client/session-management" element={<ClientSessionManagement />} />
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />

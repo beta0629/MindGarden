@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -167,6 +167,9 @@ const ERP_FINANCIAL_ALLOWED_DATE_RANGES = ['MONTH', 'WEEK', 'TODAY', 'ALL', 'CUS
 /** YYYY-MM (01–12) */
 const FINANCIAL_MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/** 월별 세금 요약 연도 선택 하한(표시용) */
+const FINANCIAL_TAX_SUMMARY_MIN_YEAR = 2018;
+
 /**
  * @returns {string} YYYY-MM (로컬 현재 달)
  */
@@ -309,6 +312,58 @@ const FinancialManagement = () => {
     branchCode: '',
     branchName: ''
   });
+
+  const [taxSummaryYear, setTaxSummaryYear] = useState(() => new Date().getFullYear());
+  const [taxSummaryLoading, setTaxSummaryLoading] = useState(false);
+  const [taxSummaryMonths, setTaxSummaryMonths] = useState([]);
+  const [taxSummaryError, setTaxSummaryError] = useState(null);
+
+  const taxSummaryTotals = useMemo(() => {
+    if (!Array.isArray(taxSummaryMonths)) {
+      return { vat: 0, withholding: 0, expenseVat: 0 };
+    }
+    return taxSummaryMonths.reduce(
+      (acc, row) => ({
+        vat: acc.vat + toSafeNumber(row?.vatTotal),
+        withholding: acc.withholding + toSafeNumber(row?.withholdingTotal),
+        expenseVat: acc.expenseVat + toSafeNumber(row?.expenseVatTotal)
+      }),
+      { vat: 0, withholding: 0, expenseVat: 0 }
+    );
+  }, [taxSummaryMonths]);
+
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || !user?.id || activeTab !== 'transactions') {
+      return undefined;
+    }
+    let cancelled = false;
+    const loadTaxSummary = async() => {
+      setTaxSummaryLoading(true);
+      setTaxSummaryError(null);
+      try {
+        const raw = await StandardizedApi.get(ERP_API.FINANCE_TAX_MONTHLY_SERIES, {
+          year: String(taxSummaryYear)
+        });
+        const months = raw?.months;
+        if (!cancelled) {
+          setTaxSummaryMonths(Array.isArray(months) ? months : []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTaxSummaryError(toErrorMessage(err));
+          setTaxSummaryMonths([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setTaxSummaryLoading(false);
+        }
+      }
+    };
+    loadTaxSummary();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionLoading, isLoggedIn, user?.id, activeTab, taxSummaryYear]);
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
@@ -1371,6 +1426,86 @@ const FinancialManagement = () => {
               )}
 
               {activeTab === 'transactions' && (
+                <>
+                <ContentSection noCard className="mg-v2-mapping-list-block mg-mb-md">
+                  <section
+                    className="mg-v2-ad-b0kla__card mg-financial-tax-summary"
+                    aria-labelledby="financial-tax-summary-heading"
+                  >
+                    <h2 id="financial-tax-summary-heading" className="mg-v2-ad-b0kla__section-title">
+                      월별 세금 요약
+                    </h2>
+                    <p className="mg-v2-text-secondary mg-mb-md">
+                      수입 거래의 부가세·원천징수와 지출 거래의 세액 필드 합계입니다. (저장된 금액 기준)
+                    </p>
+                    <div className="mg-v2-form-group mg-mb-md">
+                      <label className="mg-v2-form-label" htmlFor="financial-tax-summary-year">
+                        연도
+                      </label>
+                      <select
+                        id="financial-tax-summary-year"
+                        className="mg-v2-form-select"
+                        value={String(taxSummaryYear)}
+                        onChange={(e) => setTaxSummaryYear(Number(e.target.value))}
+                      >
+                        {Array.from(
+                          {
+                            length:
+                              new Date().getFullYear() + 1 - FINANCIAL_TAX_SUMMARY_MIN_YEAR + 1
+                          },
+                          (_, i) => FINANCIAL_TAX_SUMMARY_MIN_YEAR + i
+                        ).map((y) => (
+                          <option key={y} value={String(y)}>
+                            {`${y}년`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {taxSummaryLoading && (
+                      <div className="mg-mb-md">
+                        <UnifiedLoading type="inline" text="세금 집계를 불러오는 중..." />
+                      </div>
+                    )}
+                    {taxSummaryError && !taxSummaryLoading && (
+                      <SafeErrorDisplay error={taxSummaryError} variant="inline" />
+                    )}
+                    {!taxSummaryLoading && !taxSummaryError && (
+                      <div className="erp-table-container">
+                        <table className="erp-table" role="table">
+                          <thead>
+                            <tr>
+                              <th scope="col">월</th>
+                              <th scope="col">부가세(VAT)</th>
+                              <th scope="col">원천징수</th>
+                              <th scope="col">지출(세액)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {taxSummaryMonths.map((row) => (
+                              <tr key={String(row.month)}>
+                                <td>
+                                  <ErpSafeText>{toDisplayString(row.month)}</ErpSafeText>
+                                  월
+                                </td>
+                                <td>{formatKrw(toSafeNumber(row.vatTotal))}</td>
+                                <td>{formatKrw(toSafeNumber(row.withholdingTotal))}</td>
+                                <td>{formatKrw(toSafeNumber(row.expenseVatTotal))}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <th scope="row">합계</th>
+                              <td>{formatKrw(taxSummaryTotals.vat)}</td>
+                              <td>{formatKrw(taxSummaryTotals.withholding)}</td>
+                              <td>{formatKrw(taxSummaryTotals.expenseVat)}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+                </ContentSection>
                 <ContentSection noCard className="mg-v2-mapping-list-block">
                   <ContentCard
                     className="mg-v2-mapping-list-block__card mg-financial-management-mapping-card"
@@ -1661,6 +1796,7 @@ const FinancialManagement = () => {
                   )}
                   </ContentCard>
                 </ContentSection>
+                </>
               )}
 
               {activeTab === 'dashboard' && (

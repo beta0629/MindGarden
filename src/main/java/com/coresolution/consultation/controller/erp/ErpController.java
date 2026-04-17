@@ -1677,6 +1677,55 @@ public class ErpController extends BaseApiController {
     }
 
     /**
+     * 연도별 월 단위 세금 필드 집계(1~12월, 부가세·원천·지출 tax_amount 합산)
+     */
+    @GetMapping("/finance/tax-monthly-series")
+    public ResponseEntity<Map<String, Object>> getTaxMonthlySeries(
+            @RequestParam(required = false) String year, HttpSession session) {
+        try {
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
+
+            if (year == null || year.isEmpty()) {
+                year = String.valueOf(LocalDate.now().getYear());
+            }
+            try {
+                Integer.parseInt(year);
+            } catch (NumberFormatException ex) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "유효한 연도(year)를 입력해주세요."));
+            }
+
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("연도별 월 세금 집계 요청: year={}, 테넌트={}", year, tenantId);
+                Map<String, Object> series = erpService.getTaxMonthlySeries(year);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "연도별 월 세금 집계를 조회했습니다.");
+                response.put("data", series);
+                response.put("tenantId", tenantId);
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
+            }
+
+        } catch (Exception e) {
+            log.error("연도별 월 세금 집계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "월별 세금 집계 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
      * 년간 재무 리포트 조회
      */
     @GetMapping("/finance/yearly-report")

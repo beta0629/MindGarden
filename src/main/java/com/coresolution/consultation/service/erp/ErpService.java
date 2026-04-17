@@ -315,6 +315,15 @@ public interface ErpService {
      * 월단위 재무 리포트
      */
     Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode);
+
+    /**
+     * 연도별 1~12월 세금 필드 집계(부가세·원천·지출 측 {@code tax_amount}).
+     * 저장된 거래 필드 합산만 사용한다.
+     *
+     * @param year 연도 (YYYY)
+     * @return year, tenantId, months(각 월 vatTotal, withholdingTotal, expenseVatTotal)
+     */
+    Map<String, Object> getTaxMonthlySeries(String year);
     
     /**
      * 년단위 재무 리포트

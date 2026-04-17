@@ -317,6 +317,8 @@ export const ERP_API = {
   FINANCE_INCOME_STATEMENT: '/api/v1/erp/finance/income-statement',
   FINANCE_DAILY_REPORT: '/api/v1/erp/finance/daily-report',
   FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
+  /** 연도별 1~12월 부가세·원천·지출 세액 필드 집계 */
+  FINANCE_TAX_MONTHLY_SERIES: '/api/v1/erp/finance/tax-monthly-series',
   FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report',
 
   /** 재무 거래 (수입/지출 직접 등록·조회·수정·삭제 — ErpController) */

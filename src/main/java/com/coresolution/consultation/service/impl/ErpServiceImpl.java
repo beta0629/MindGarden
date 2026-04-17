@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
@@ -1868,8 +1869,28 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         transactionCount.put("purchases", (int) totalPurchases);
         transactionCount.put("payments", (int) totalPayments);
         monthlyReport.put("transactionCount", transactionCount);
+
+        monthlyReport.put("monthlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(monthlyTransactions));
         
         return monthlyReport;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getTaxMonthlySeries(String year) {
+        String tenantId = getTenantId();
+        int yearInt = Integer.parseInt(year);
+        log.info("연도별 월 세금 집계: year={}, tenantId={}", year, tenantId);
+        LocalDate startDate = LocalDate.of(yearInt, 1, 1);
+        LocalDate endDate = LocalDate.of(yearInt, 12, 31);
+        List<FinancialTransaction> allInYear = financialTransactionRepository
+            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
+        List<Map<String, Object>> months = ErpMonthlyTaxBreakdownHelper.buildMonthlySeriesForYear(yearInt, allInYear);
+        Map<String, Object> out = new HashMap<>();
+        out.put("year", year);
+        out.put("tenantId", tenantId);
+        out.put("months", months);
+        return out;
     }
     
     @Override

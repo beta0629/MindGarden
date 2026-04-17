@@ -571,7 +571,7 @@
   box-shadow: var(--mg-shadow-lg);
 }
 
-/* 매핑 거래: 내담자 대시보드 톤 인물 패널 (.dashboard-client → client-theme 변수) */
+/* 매핑 거래: 인물 패널 — AdminDashboard B0KlA 토큰(dashboard-tokens-extension)과 동일 팔레트 */
 .mg-financial-transaction-card--with-people .mg-financial-transaction-card__header {
   border-bottom-color: transparent;
   margin-bottom: 0;
@@ -582,14 +582,11 @@
   margin: 0 0 var(--mg-spacing-md);
   padding: 0;
   border-radius: var(--mg-radius-md, 10px);
-  background: linear-gradient(
-    135deg,
-    var(--card-primary-light, var(--mg-success-100)) 0%,
-    var(--ad-b0kla-card-bg, var(--mg-color-surface-main)) 72%
-  );
-  border: 1px solid var(--mg-success-200);
-  border-left: 4px solid var(--card-primary, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-left: 4px solid var(--ad-b0kla-green);
   box-sizing: border-box;
+  color: var(--ad-b0kla-title-color);
 }
 
 .mg-financial-transaction-card__people-panel-inner {
@@ -613,12 +610,12 @@
 
 .mg-financial-transaction-card__people-icon {
   flex-shrink: 0;
-  color: var(--card-primary, var(--mg-success-600));
+  color: var(--ad-b0kla-green);
   margin-top: 2px;
 }
 
 .mg-financial-transaction-card__people-icon--muted {
-  color: var(--mg-text-secondary);
+  color: var(--ad-b0kla-icon-color);
   opacity: 0.9;
 }
 
@@ -632,14 +629,14 @@
   font-weight: var(--mg-font-semibold);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--mg-text-secondary);
+  color: var(--ad-b0kla-text-secondary);
   margin-bottom: 2px;
 }
 
 .mg-financial-transaction-card__people-name {
   font-size: var(--mg-font-base);
   font-weight: var(--mg-font-semibold);
-  color: var(--mg-color-text-main);
+  color: var(--ad-b0kla-title-color);
   line-height: 1.35;
   word-break: break-word;
 }
@@ -647,7 +644,7 @@
 .mg-financial-transaction-card__people-name-secondary {
   font-size: var(--mg-font-sm);
   font-weight: var(--mg-font-medium);
-  color: var(--mg-primary-600);
+  color: var(--ad-b0kla-green);
   line-height: 1.35;
   word-break: break-word;
 }
@@ -660,6 +657,46 @@
   align-items: center;
 }
 
+/* 패널 내 상태 칩: AdminDashboardB0KlA 매핑 리스트 행 배지와 동일(B0KlA 토큰, 이 스코프만) */
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge.mg-v2-badge--success,
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge--success {
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
+  font-weight: 700;
+}
+
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge.mg-v2-badge--warning,
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge--warning {
+  background: var(--ad-b0kla-orange);
+  color: var(--mg-white);
+  font-weight: 700;
+}
+
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge.mg-v2-badge--neutral,
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge--neutral {
+  background: var(--ad-b0kla-text-secondary);
+  color: var(--mg-white);
+  font-weight: 600;
+}
+
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge.mg-v2-badge--danger,
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge--danger {
+  background: var(--ad-b0kla-danger);
+  color: var(--mg-white);
+  font-weight: 600;
+}
+
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge.mg-v2-badge--info,
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge--info {
+  background: var(--ad-b0kla-blue);
+  color: var(--mg-white);
+  font-weight: 600;
+}
+
+.mg-financial-transaction-card__people-panel .mg-financial-transaction-card__people-chips .mg-v2-status-badge * {
+  color: inherit;
+}
+
 .mg-financial-transaction-card__chip {
   max-width: 100%;
 }
@@ -667,7 +704,7 @@
 .mg-financial-transaction-card__people-compact-meta {
   margin-top: var(--mg-spacing-sm);
   font-size: var(--mg-font-xs);
-  color: var(--mg-text-secondary);
+  color: var(--ad-b0kla-text-secondary);
   line-height: 1.4;
   word-break: break-word;
 }

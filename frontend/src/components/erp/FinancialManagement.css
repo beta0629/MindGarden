@@ -40,20 +40,28 @@
   margin-top: var(--spacing-md);
 }
 
-/* 월간 조회: type="month" + 이전·다음 */
-.mg-financial-month-picker {
+/* 월간 조회: type="month" + 이전·다음 — 한 줄 (mg-v2-form-select의 width:100%가 flex에서 행마다 꽉 채워 세로 쌓임 유발) */
+.mg-financial-month-picker.mg-v2-erp-filter-toolbar__custom-range {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-spacing-xs, var(--spacing-xs));
+  width: 100%;
+  min-width: 0;
 }
 
-.mg-financial-month-picker__nav {
+.mg-financial-month-picker .mg-financial-month-picker__nav {
   flex-shrink: 0;
+  width: auto;
 }
 
-.mg-financial-month-picker__input {
-  min-width: calc(var(--spacing-md) * 7);
+/* 전역 .mg-v2-form-select { width:100% } 보다 구체적으로 덮어씀 */
+.mg-financial-month-picker .mg-financial-month-picker__input.mg-v2-form-select {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 9rem;
+  max-width: 100%;
 }
 
 .mg-financial-filter-all-hint {

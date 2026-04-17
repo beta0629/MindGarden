@@ -9,7 +9,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
-import { normalizeApiListPayload } from '../../utils/apiResponseNormalize';
+import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
 
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -65,7 +65,14 @@ const applyMappingsToPaymentState = (mappings, setPaymentData) => {
   });
 };
 
-const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parentMappings }) => {
+const MAPPINGS_FETCH_ERROR_TEXT = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+
+const ClientPaymentSessionsSection = ({
+  userId,
+  supplyMappingsFromParent,
+  parentMappings,
+  parentMappingsFetchFailed = false
+}) => {
   const [paymentData, setPaymentData] = useState({
     totalSessions: 0,
     usedSessions: 0,
@@ -78,6 +85,11 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
 
   useEffect(() => {
     if (supplyMappingsFromParent) {
+      if (parentMappingsFetchFailed) {
+        setError(MAPPINGS_FETCH_ERROR_TEXT);
+        setIsLoading(false);
+        return;
+      }
       if (parentMappings === null || parentMappings === undefined) {
         setIsLoading(true);
         return;
@@ -98,7 +110,7 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
       return;
     }
     loadPaymentSessionsData();
-  }, [userId, supplyMappingsFromParent, parentMappings]);
+  }, [userId, supplyMappingsFromParent, parentMappings, parentMappingsFetchFailed]);
 
   const loadPaymentSessionsData = async() => {
     try {
@@ -112,7 +124,11 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
 
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
-      const mappings = normalizeApiListPayload(mappingResponse);
+      if (isApiGetNullFailure(mappingResponse)) {
+        setError(MAPPINGS_FETCH_ERROR_TEXT);
+        return;
+      }
+      const mappings = normalizeMappingsListPayload(mappingResponse);
 
       applyMappingsToPaymentState(mappings, setPaymentData);
     } catch (error) {
@@ -131,7 +147,10 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -143,7 +162,9 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
     
     const statusMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': 'warning',
+      'CONFIRMED': 'success',
+      'PAY': 'success',
+      'DEP': 'success',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': 'success',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -166,7 +187,9 @@ const ClientPaymentSessionsSection = ({ userId, supplyMappingsFromParent, parent
     
     const statusTextMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': '입금확인',
+      'CONFIRMED': '확인됨',
+      'PAY': '결제확인',
+      'DEP': '입금확인',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': '승인완료',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

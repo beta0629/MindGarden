@@ -9,6 +9,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
+import { normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
 
 import ScheduleCalendarHeader from './ScheduleCalendar/ScheduleCalendarHeader';
 import ScheduleCalendarLegend from './ScheduleCalendar/ScheduleCalendarLegend';
@@ -174,6 +175,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadSchedules = useCallback(async() => {
         setLoading(true);
         try {
+            if (currentUserId == null || currentUserId === '') {
+                console.warn('📅 스케줄 로드 생략: userId 없음');
+                setEvents([]);
+                return;
+            }
+
             console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
             
             let url = `/api/v1/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
@@ -193,13 +200,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
 
             let scheduleEvents = [];
-            if (response && response.success) {
+            const schedules = normalizeScheduleListPayload(response);
+
+            if (schedules.length > 0) {
                 console.log('📅 API 응답 데이터:', response);
-                
-                const schedules = response.data || response;
-                
-                if (Array.isArray(schedules)) {
-                    scheduleEvents = schedules.map(schedule => {
+
+                scheduleEvents = schedules
+                    .filter((schedule) => schedule && schedule.date && schedule.startTime && schedule.endTime)
+                    .map((schedule) => {
                         console.log('📅 스케줄 데이터 처리:', schedule);
                         console.log('👤 상담사 정보:', {
                             consultantId: schedule.consultantId,
@@ -232,11 +240,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             }
                         };
                     });
-                    console.log('📅 변환된 이벤트:', scheduleEvents);
-                } else {
-                    console.warn('📅 스케줄 데이터가 배열이 아닙니다:', schedules);
-                }
-            } else {
+                console.log('📅 변환된 이벤트:', scheduleEvents);
+            } else if (response && typeof response === 'object' && response.success === false) {
                 console.warn('📅 API 응답 실패:', response);
             }
 

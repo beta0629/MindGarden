@@ -89,6 +89,16 @@ const BrandingManagement = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState({});
+  const [logoPreviewLoadFailed, setLogoPreviewLoadFailed] = useState(false);
+  const [previewModalLogoLoadFailed, setPreviewModalLogoLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoPreviewLoadFailed(false);
+  }, [logoPreview]);
+
+  useEffect(() => {
+    setPreviewModalLogoLoadFailed(false);
+  }, [showPreview, logoPreview, formData.companyName]);
 
   useEffect(() => {
     const loadInitialData = async() => {
@@ -480,13 +490,41 @@ const BrandingManagement = () => {
                         onDragLeave={handleLogoDragLeave}
                         onDrop={handleLogoDrop}
                       >
-                        {logoPreview ? (
+                        {logoPreview && !logoPreviewLoadFailed ? (
                           <span className="mg-branding-settings__logo-preview-inner">
                             <img
                               src={logoPreview}
                               alt="로고 미리보기"
                               className="mg-branding-settings__logo-image"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                setLogoPreviewLoadFailed(true);
+                              }}
                             />
+                            <MGButton
+                              type="button"
+                              variant="outline"
+                              size="small"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: false,
+                                className: 'mg-branding-settings__logo-remove'
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              onClick={handleLogoRemove}
+                              title="로고 제거"
+                              preventDoubleClick={false}
+                            >
+                              제거
+                            </MGButton>
+                          </span>
+                        ) : logoPreview && logoPreviewLoadFailed ? (
+                          <span className="mg-branding-settings__logo-preview-inner">
+                            <span className="mg-branding-settings__upload-text">
+                              <span className="mg-branding-settings__upload-primary">로고를 표시할 수 없습니다</span>
+                              <span className="mg-branding-settings__upload-secondary">다른 파일을 선택하거나 제거 후 다시 업로드해 주세요.</span>
+                            </span>
                             <MGButton
                               type="button"
                               variant="outline"
@@ -826,12 +864,25 @@ const BrandingManagement = () => {
           <div className="mg-branding-settings__preview-demo">
             <div className="mg-branding-settings__preview-header-demo">
               <div className="mg-branding-settings__preview-logo">
-                {previewLogoSrc ? (
+                {previewLogoSrc && !previewModalLogoLoadFailed ? (
                   <img
                     src={previewLogoSrc}
                     alt={toDisplayString(previewData.companyName || 'Logo')}
                     className="mg-branding-settings__preview-logo-image"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      setPreviewModalLogoLoadFailed(true);
+                    }}
                   />
+                ) : previewLogoSrc && previewModalLogoLoadFailed ? (
+                  <div className="mg-branding-settings__preview-logo-text">
+                    <span className="mg-branding-settings__preview-company-name">
+                      {toDisplayString(previewData.companyName || 'CoreSolution')}
+                    </span>
+                    <span className="mg-branding-settings__preview-subtitle">
+                      로고 미리보기를 불러올 수 없습니다
+                    </span>
+                  </div>
                 ) : (
                   <div className="mg-branding-settings__preview-logo-text">
                     <span className="mg-branding-settings__preview-company-name">

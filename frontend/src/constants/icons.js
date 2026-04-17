@@ -35,6 +35,7 @@ import {
   Monitor,
   Laptop,
   Tablet,
+  Smartphone,
   Watch,
   Mouse,
   Keyboard,
@@ -272,6 +273,8 @@ export const ICONS = {
   ALERT_TRIANGLE: AlertTriangle,
   INFO: Info,
   CHECK_CIRCLE: CheckCircle,
+  /** Lucide/레거시 명명 호환 (CHECK_CIRCLE 동일) */
+  CHECK_CIRCLE_2: CheckCircle,
   X_CIRCLE: XCircle,
   HELP_CIRCLE: HelpCircle,
 
@@ -287,6 +290,7 @@ export const ICONS = {
   MONITOR: Monitor,
   LAPTOP: Laptop,
   TABLET: Tablet,
+  SMARTPHONE: Smartphone,
   WATCH: Watch,
   MOUSE: Mouse,
   KEYBOARD: Keyboard,
@@ -368,6 +372,8 @@ export const ICONS = {
   PACKAGE: Package,
   LINK: LucideLink,
   LINK2: Link2,
+  /** Lucide 원명 Link2 호환 */
+  LINK_2: Link2,
   ZAP: Zap,
   MESSAGE_SQUARE: MessageSquare,
   ALERT_CIRCLE: AlertCircle,

@@ -69,6 +69,10 @@ export const PAYMENT_STATUS = {
     PENDING: 'PENDING',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CONFIRMED: 'CONFIRMED',
+    /** 백엔드 ConsultantClientMapping.PaymentStatus.PAY */
+    PAY: 'PAY',
+    /** 백엔드 ConsultantClientMapping.PaymentStatus.DEP */
+    DEP: 'DEP',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     APPROVED: 'APPROVED',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -81,11 +85,30 @@ export const PAYMENT_STATUS_LABELS = {
     [PAYMENT_STATUS.PENDING]: '대기',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.CONFIRMED]: '확인됨',
+    [PAYMENT_STATUS.PAY]: '결제확인',
+    [PAYMENT_STATUS.DEP]: '입금확인',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.APPROVED]: '승인됨',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.REJECTED]: '거부됨',
     [PAYMENT_STATUS.REFUNDED]: '환불됨'
+};
+
+/**
+ * 내담자 화면에서 결제·입금이 완료된 것으로 집계할 백엔드 paymentStatus 값
+ * (ConsultantClientMapping.PaymentStatus — CONFIRMED만 세던 경우 보완)
+ *
+ * @param {string} [status]
+ * @returns {boolean}
+ */
+export const isClientMappingPaymentSettled = (status) => {
+  if (!status) {
+    return false;
+  }
+  return status === PAYMENT_STATUS.CONFIRMED
+    || status === PAYMENT_STATUS.PAY
+    || status === PAYMENT_STATUS.DEP
+    || status === PAYMENT_STATUS.APPROVED;
 };
 
 export const MAPPING_ACTIONS = {

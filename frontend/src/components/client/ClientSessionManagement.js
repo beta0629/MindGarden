@@ -15,6 +15,13 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSessionManagement.css';
 import notificationManager from '../../utils/notification';
+import {
+  isApiGetNullFailure,
+  normalizeMappingsListPayload,
+  normalizeScheduleListPayload
+} from '../../utils/apiResponseNormalize';
+
+const MAPPINGS_FETCH_ERROR_TEXT = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 
@@ -49,10 +56,13 @@ const ClientSessionManagement = () => {
       const userId = userResponse.id;
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       const mappingsResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
-      const mappings = mappingsResponse.data || [];
+      if (isApiGetNullFailure(mappingsResponse)) {
+        throw new Error(MAPPINGS_FETCH_ERROR_TEXT);
+      }
+      const mappings = normalizeMappingsListPayload(mappingsResponse);
 
       const schedulesResponse = await apiGet(`/api/v1/schedules?userId=${userId}&userRole=CLIENT`);
-      const schedules = schedulesResponse.data || [];
+      const schedules = normalizeScheduleListPayload(schedulesResponse);
 
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
       const usedSessions = schedules.filter(s => s.status === '완료').length;

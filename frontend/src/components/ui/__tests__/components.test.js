@@ -159,7 +159,7 @@ describe('UI Components Test Suite', () => {
 
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();
-      expect(button).toHaveTextContent('처리 중...');
+      expect(button).toHaveTextContent('처리중...');
     });
 
     test('prevents double click', async() => {

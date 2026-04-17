@@ -4384,7 +4384,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
             if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
+                log.warn("tenantId 미설정으로 내담자 매핑 조회를 건너뜁니다: clientId={}", clientId);
                 return new ArrayList<>();
             }
             

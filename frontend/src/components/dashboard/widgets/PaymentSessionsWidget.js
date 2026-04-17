@@ -21,11 +21,15 @@ import {
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
+import { apiGet } from '../../../utils/ajax';
+import { normalizeMappingsListPayload } from '../../../utils/apiResponseNormalize';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
 const PAYMENT_KPI_ICON_SIZE = 22;
 const PAYMENT_ITEM_ICON_SIZE = 20;
 const PAYMENT_STATE_ICON_SIZE = 40;
+
+const MAPPINGS_WIDGET_FETCH_ERROR = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const PaymentSessionsWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => ({
@@ -35,6 +39,15 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     url: '/api/v1/admin/mappings/client',
     params: {
       clientId: user.id
+    },
+    fetcher: async(url, params) => {
+      const raw = await apiGet(url, params);
+      if (raw === null || raw === undefined) {
+        const err = new Error(MAPPINGS_WIDGET_FETCH_ERROR);
+        err.status = 400;
+        throw err;
+      }
+      return raw;
     },
     transform: (data) => transformPaymentData(data)
   });
@@ -65,7 +78,8 @@ const PaymentSessionsWidget = ({ widget, user }) => {
   }
 
   const transformPaymentData = (mappingsData) => {
-    if (!mappingsData || !Array.isArray(mappingsData)) {
+    const mappings = normalizeMappingsListPayload(mappingsData);
+    if (mappings.length === 0) {
       return {
         totalSessions: 0,
         usedSessions: 0,
@@ -74,8 +88,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
         recentPayments: []
       };
     }
-
-    const mappings = mappingsData;
     
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
@@ -115,7 +127,10 @@ const PaymentSessionsWidget = ({ widget, user }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -127,7 +142,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     
     const statusMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': 'warning',
+      'CONFIRMED': 'success',
+      'PAY': 'success',
+      'DEP': 'success',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': 'success',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -150,7 +167,9 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     
     const statusTextMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': '입금확인',
+      'CONFIRMED': '확인됨',
+      'PAY': '결제확인',
+      'DEP': '입금확인',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': '승인완료',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

@@ -32,6 +32,7 @@ import ErpPurchaseRequestWidget from './widgets/ErpPurchaseRequestWidget';
 import SystemNotificationSection from './SystemNotificationSection';
 import SystemNotificationWidget from './widgets/SystemNotificationWidget';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import PersonalizedMessagesWidget from './widgets/PersonalizedMessagesWidget';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
@@ -455,8 +456,8 @@ const CommonDashboard = ({ user: propUser }) => {
       
       try {
         const mappingResponse = await apiGet('/api/v1/admin/mappings');
-        if (mappingResponse?.success && mappingResponse?.data) {
-          const mappings = mappingResponse.data;
+        if (!isApiGetNullFailure(mappingResponse)) {
+          const mappings = normalizeMappingsListPayload(mappingResponse);
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           pendingMappings = mappings.filter(m => m.paymentStatus === 'PENDING').length;
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -680,18 +681,31 @@ const CommonDashboard = ({ user: propUser }) => {
       console.log('📊 내담자 상태 데이터 로드 시작 - 사용자 ID:', userId);
       
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      // apiGet은 ApiResponse면 data만 반환 → { mappings, count } 형태 (success 래핑 없음)
       const mappingResponse = await apiGet(`/api/v1/admin/mappings/client`, { clientId: userId });
-      
+
       let mappingStatus = 'NONE';
-      let paymentStatus = 'NONE';
-      
-      if (mappingResponse?.success && mappingResponse?.data) {
-        const mapping = mappingResponse.data;
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        mappingStatus = mapping.mappingStatus || 'ACTIVE';
-        paymentStatus = mapping.paymentStatus || 'NONE';
+      let paymentStatus = null;
+
+      if (isApiGetNullFailure(mappingResponse)) {
+        setClientStatus({
+          mappingStatus: 'NONE',
+          paymentStatus: null,
+          hasMapping: false
+        });
+        return;
       }
-      
+
+      const mappings = normalizeMappingsListPayload(mappingResponse);
+      if (mappings.length > 0) {
+        const hasActive = mappings.some(m => m.status === 'ACTIVE');
+        const hasPending = mappings.some(m => m.status === 'PENDING');
+        mappingStatus = hasActive
+          ? 'ACTIVE'
+          : (hasPending ? 'PENDING' : (mappings[0].status || 'NONE'));
+        paymentStatus = mappings.some(m => m.paymentStatus === 'PENDING') ? 'PENDING' : null;
+      }
+
       setClientStatus({
         mappingStatus,
         paymentStatus,
@@ -707,7 +721,7 @@ const CommonDashboard = ({ user: propUser }) => {
       console.error('❌ 내담자 상태 데이터 로드 오류:', error);
       setClientStatus({
         mappingStatus: 'NONE',
-        paymentStatus: 'NONE',
+        paymentStatus: null,
         hasMapping: false
       });
     }

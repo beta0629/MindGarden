@@ -342,6 +342,7 @@ const UnifiedHeader = ({
               alt={actualLogoAlt}
               className="mg-header__logo mg-header__logo--image"
               onError={(e) => {
+                e.currentTarget.onerror = null;
                 console.warn('로고 이미지 로드 실패, 텍스트 로고로 변경:', actualLogoImage);
                 e.target.style.display = 'none';
                 const textLogo = e.target.parentNode.querySelector('.mg-header__logo--text-fallback');

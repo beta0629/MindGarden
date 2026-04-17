@@ -44,7 +44,10 @@ const MobileGnb = ({
               src={logoUrl}
               alt={trimmedLogoLabel || logoLabel}
               className="mg-v2-mobile-gnb__logo-img"
-              onError={() => setLogoLoadFailed(true)}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                setLogoLoadFailed(true);
+              }}
             />
             {showBrandNameBesideGraphic ? (
               <span className="mg-v2-mobile-gnb__brand-name">{trimmedLogoLabel}</span>

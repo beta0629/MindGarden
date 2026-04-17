@@ -5,7 +5,11 @@ import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
-import { normalizeApiListPayload, normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
+import {
+  isApiGetNullFailure,
+  normalizeMappingsListPayload,
+  normalizeScheduleListPayload
+} from '../../utils/apiResponseNormalize';
 import notificationManager from '../../utils/notification';
 import {
   Calendar,
@@ -181,6 +185,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
   });
   const [clientStatus, setClientStatus] = useState(null);
   const [sharedClientMappings, setSharedClientMappings] = useState(null);
+  const [mappingsLoadFailed, setMappingsLoadFailed] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -193,6 +198,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
     try {
       setIsLoading(true);
+      setMappingsLoadFailed(false);
 
       const scheduleRaw = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
         userId: currentUser.id,
@@ -201,8 +207,15 @@ const ClientDashboard = ({ user: userFromRoute }) => {
       const schedules = normalizeScheduleListPayload(scheduleRaw);
 
       const mappingRaw = await apiGet(`/api/v1/admin/mappings/client?clientId=${currentUser.id}`);
-      const mappings = normalizeApiListPayload(mappingRaw);
-      setSharedClientMappings(mappings);
+      let mappings;
+      if (isApiGetNullFailure(mappingRaw)) {
+        setMappingsLoadFailed(true);
+        mappings = [];
+        setSharedClientMappings([]);
+      } else {
+        mappings = normalizeMappingsListPayload(mappingRaw);
+        setSharedClientMappings(mappings);
+      }
 
       let totalSessions = 0;
       let usedSessions = 0;
@@ -285,6 +298,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
       });
     } catch (error) {
       console.error('❌ 내담자 데이터 로드 실패:', error);
+      setMappingsLoadFailed(true);
       setSharedClientMappings([]);
       setClientStatus({ mappingStatus: 'NONE', paymentStatus: null });
       setUnreadMessageCount(0);
@@ -637,6 +651,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                 userId={currentUser?.id}
                 supplyMappingsFromParent
                 parentMappings={sharedClientMappings}
+                parentMappingsFetchFailed={mappingsLoadFailed}
               />
             </div>
           </section>

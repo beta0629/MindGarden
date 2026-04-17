@@ -5,7 +5,7 @@
  * @since 2026-03-09
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileAvatar.css';
 
@@ -17,14 +17,23 @@ const ProfileAvatar = ({
 }) => {
   const sizeClass = `mg-v2-profile-avatar--${size}`;
   const initial = name ? name.charAt(0).toUpperCase() : '?';
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [imageUrl]);
 
   return (
     <div className={`mg-v2-profile-avatar ${sizeClass} ${className}`}>
-      {imageUrl ? (
+      {imageUrl && !imageLoadFailed ? (
         <img 
           src={imageUrl} 
           alt={name} 
           className="mg-v2-profile-avatar__img"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            setImageLoadFailed(true);
+          }}
         />
       ) : (
         <span className="mg-v2-profile-avatar__initial">{initial}</span>

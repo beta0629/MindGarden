@@ -19,7 +19,9 @@ import {
   Heart,
   Bell,
   Headphones,
-  BookOpen
+  BookOpen,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentKpiRow } from '../dashboard-v2/content';
@@ -423,22 +425,46 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           titleId={CLIENT_DASHBOARD_TITLE_ID}
         />
 
-        <main className="client-dash__main" id="client-dash-main" aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>
-          <section className="client-dash__section client-dash__welcome" aria-labelledby="client-dash-welcome-heading">
+        <main
+          className="client-dash__main dashboard-client"
+          id="client-dash-main"
+          aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}
+        >
+          <section
+            className="client-dash__section client-dash__welcome"
+            aria-labelledby="client-dash-welcome-heading"
+            aria-describedby="client-dash-welcome-lede"
+          >
             <CardContainer className="client-dash__welcome-card">
               <div className="client-dash__welcome-layout">
                 <div className="client-dash__welcome-inner">
-                  <p className="client-dash__eyebrow">{CLIENT_EYEBROW_TEXT}</p>
-                  <h2 id="client-dash-welcome-heading" className="client-dash__title">
-                    {getGreetingPrefix()},{' '}
-                    <SafeText>{currentUser?.name}</SafeText>
-                    {' '}님
-                  </h2>
-                  <p className="client-dash__lede">{CLIENT_WELCOME_LEDE}</p>
+                  <header className="client-dash__welcome-hero">
+                    <p className="client-dash__eyebrow">{CLIENT_EYEBROW_TEXT}</p>
+                    <h2 id="client-dash-welcome-heading" className="client-dash__title">
+                      {getGreetingPrefix()},{' '}
+                      <SafeText>{currentUser?.name}</SafeText>
+                      {' '}님
+                    </h2>
+                  </header>
+                  <p id="client-dash-welcome-lede" className="client-dash__lede">
+                    {CLIENT_WELCOME_LEDE}
+                  </p>
                   <div className="client-dash__welcome-meta" role="status" aria-live="polite">
-                    {welcomeMetaBadges.map((b) => (
-                      <span key={b.key} className={b.className}>{b.label}</span>
-                    ))}
+                    {welcomeMetaBadges.length > 0 ? (
+                      <div
+                        className="client-dash__welcome-meta-group"
+                        role="group"
+                        aria-label="상담 상태 및 담당 정보"
+                      >
+                        <ul className="client-dash__meta-chip-list">
+                          {welcomeMetaBadges.map((b) => (
+                            <li key={b.key} className="client-dash__meta-chip-item">
+                              <span className={b.className}>{b.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                     <span className="client-dash__meta-text">
                       {primaryActiveMapping?.consultantName ? (
                         <>
@@ -450,7 +476,20 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                     </span>
                   </div>
                 </div>
-                <div className="client-dash__welcome-aside" aria-hidden="true" />
+                <aside className="client-dash__welcome-aside" aria-hidden="true">
+                  <div className="client-dash__welcome-deco" role="presentation">
+                    <Sparkles
+                      className="client-dash__welcome-deco-icon client-dash__welcome-deco-icon--a"
+                      aria-hidden
+                      strokeWidth={1.5}
+                    />
+                    <ShieldCheck
+                      className="client-dash__welcome-deco-icon client-dash__welcome-deco-icon--b"
+                      aria-hidden
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </aside>
               </div>
             </CardContainer>
           </section>

@@ -125,6 +125,15 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         
         ConsultantClientMapping mapping = mappingOpt.get();
         Map<String, Object> amountInfo = new HashMap<>();
+
+        if (mapping.getClient() != null) {
+            amountInfo.put("clientId", mapping.getClient().getId());
+            amountInfo.put("clientName", mapping.getClient().getName());
+        }
+        if (mapping.getConsultant() != null) {
+            amountInfo.put("consultantId", mapping.getConsultant().getId());
+            amountInfo.put("consultantName", mapping.getConsultant().getName());
+        }
         
         // 기본 금액 정보
         amountInfo.put("mappingId", mappingId);
@@ -132,6 +141,9 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountInfo.put("paymentAmount", mapping.getPaymentAmount());
         amountInfo.put("packageName", mapping.getPackageName());
         amountInfo.put("totalSessions", mapping.getTotalSessions());
+        amountInfo.put("remainingSessions", mapping.getRemainingSessions());
+        amountInfo.put("mappingStatusDisplay", toMappingStatusDisplay(mapping.getStatus()));
+        amountInfo.put("mappingPaymentStatusDisplay", toMappingPaymentStatusDisplay(mapping.getPaymentStatus()));
         
         // 정확한 거래 금액 결정
         Long accurateAmount = getAccurateTransactionAmount(mapping);
@@ -255,5 +267,37 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         
         return new AmountConsistencyResult(true, "모든 금액이 일관성 있게 관리되고 있습니다.", 
             amountBreakdown, "정상적으로 관리되고 있습니다.");
+    }
+
+    private static String toMappingStatusDisplay(ConsultantClientMapping.MappingStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return switch (status) {
+            case PENDING_PAYMENT -> "결제 대기";
+            case PAYMENT_CONFIRMED -> "결제 확인";
+            case DEPOSIT_PENDING -> "입금 대기";
+            case DEPOSIT_CONFIRMED -> "입금 확인";
+            case ACTIVE -> "진행 중";
+            case INACTIVE -> "비활성";
+            case SUSPENDED -> "중단";
+            case TERMINATED -> "종료";
+            case SESSIONS_EXHAUSTED -> "회기 소진";
+        };
+    }
+
+    private static String toMappingPaymentStatusDisplay(ConsultantClientMapping.PaymentStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return switch (status) {
+            case PENDING -> "결제 대기";
+            case CONFIRMED -> "확인됨";
+            case PAY -> "결제 확인";
+            case DEP -> "입금 확인";
+            case APPROVED -> "승인됨";
+            case REJECTED -> "거부";
+            case REFUNDED -> "환불";
+        };
     }
 }

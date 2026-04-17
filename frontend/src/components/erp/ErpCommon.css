@@ -571,6 +571,140 @@
   box-shadow: var(--mg-shadow-lg);
 }
 
+/* 매핑 거래: 내담자 대시보드 톤 인물 패널 (.dashboard-client → client-theme 변수) */
+.mg-financial-transaction-card--with-people .mg-financial-transaction-card__header {
+  border-bottom-color: transparent;
+  margin-bottom: 0;
+  padding-bottom: var(--mg-spacing-sm);
+}
+
+.mg-financial-transaction-card__people-panel {
+  margin: 0 0 var(--mg-spacing-md);
+  padding: 0;
+  border-radius: var(--mg-radius-md, 10px);
+  background: linear-gradient(
+    135deg,
+    var(--card-primary-light, var(--mg-success-100)) 0%,
+    var(--ad-b0kla-card-bg, var(--mg-color-surface-main)) 72%
+  );
+  border: 1px solid var(--mg-success-200);
+  border-left: 4px solid var(--card-primary, var(--mg-success-500));
+  box-sizing: border-box;
+}
+
+.mg-financial-transaction-card__people-panel-inner {
+  padding: var(--mg-spacing-md);
+}
+
+.mg-financial-transaction-card__people-panel--compact .mg-financial-transaction-card__people-panel-inner {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+}
+
+.mg-financial-transaction-card__people-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm);
+  min-width: 0;
+}
+
+.mg-financial-transaction-card__people-row--consultant {
+  margin-top: var(--mg-spacing-sm);
+}
+
+.mg-financial-transaction-card__people-icon {
+  flex-shrink: 0;
+  color: var(--card-primary, var(--mg-success-600));
+  margin-top: 2px;
+}
+
+.mg-financial-transaction-card__people-icon--muted {
+  color: var(--mg-text-secondary);
+  opacity: 0.9;
+}
+
+.mg-financial-transaction-card__people-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mg-financial-transaction-card__people-eyebrow {
+  font-size: var(--mg-font-xs);
+  font-weight: var(--mg-font-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mg-text-secondary);
+  margin-bottom: 2px;
+}
+
+.mg-financial-transaction-card__people-name {
+  font-size: var(--mg-font-base);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-color-text-main);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.mg-financial-transaction-card__people-name-secondary {
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-primary-600);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.mg-financial-transaction-card__people-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs);
+  margin-top: var(--mg-spacing-md);
+  align-items: center;
+}
+
+.mg-financial-transaction-card__chip {
+  max-width: 100%;
+}
+
+.mg-financial-transaction-card__people-compact-meta {
+  margin-top: var(--mg-spacing-sm);
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.mg-financial-transaction-card--compact .mg-financial-transaction-card__people-chips {
+  margin-top: var(--mg-spacing-sm);
+}
+
+/* 테이블: 매핑 열 — 카드형 정보 밀도 */
+.mg-financial-transaction-table__mapping-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  max-width: 18rem;
+}
+
+.mg-financial-transaction-table__mapping-names {
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-color-text-main);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.mg-financial-transaction-table__mapping-sep {
+  color: var(--mg-text-tertiary);
+}
+
+.mg-financial-transaction-table__mapping-package {
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-secondary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
 .mg-financial-transaction-card__header {
   display: flex;
   flex-direction: column;

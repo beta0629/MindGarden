@@ -788,6 +788,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         
                         builder.consultantName(consultantName);
                         builder.clientName(clientName);
+                        builder.mappingPackageName(mapping.getPackageName());
+                        builder.mappingStatusDisplay(toMappingStatusDisplay(mapping.getStatus()));
+                        builder.mappingPaymentStatusDisplay(toMappingPaymentStatusDisplay(mapping.getPaymentStatus()));
+                        builder.mappingRemainingSessions(mapping.getRemainingSessions());
                         log.debug("✅ 매핑 정보 포함 (복호화): mappingId={}, 상담사={}, 내담자={}", 
                                 transaction.getRelatedEntityId(), consultantName, clientName);
                     }
@@ -800,6 +804,38 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         return builder.build();
+    }
+
+    private static String toMappingStatusDisplay(ConsultantClientMapping.MappingStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return switch (status) {
+            case PENDING_PAYMENT -> "결제 대기";
+            case PAYMENT_CONFIRMED -> "결제 확인";
+            case DEPOSIT_PENDING -> "입금 대기";
+            case DEPOSIT_CONFIRMED -> "입금 확인";
+            case ACTIVE -> "진행 중";
+            case INACTIVE -> "비활성";
+            case SUSPENDED -> "중단";
+            case TERMINATED -> "종료";
+            case SESSIONS_EXHAUSTED -> "회기 소진";
+        };
+    }
+
+    private static String toMappingPaymentStatusDisplay(ConsultantClientMapping.PaymentStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return switch (status) {
+            case PENDING -> "결제 대기";
+            case CONFIRMED -> "확인됨";
+            case PAY -> "결제 확인";
+            case DEP -> "입금 확인";
+            case APPROVED -> "승인됨";
+            case REJECTED -> "거부";
+            case REFUNDED -> "환불";
+        };
     }
     
     private List<FinancialDashboardResponse.CategoryFinancialData> convertToCategoryFinancialData(List<Object[]> results) {

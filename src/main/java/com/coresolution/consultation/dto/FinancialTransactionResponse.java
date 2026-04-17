@@ -52,4 +52,12 @@ public class FinancialTransactionResponse {
     // 매칭 정보 (CONSULTANT_CLIENT_MAPPING 관련 거래인 경우)
     private String consultantName;
     private String clientName;
+    /** 매핑 패키지명 */
+    private String mappingPackageName;
+    /** 매핑 상태 표시용 (한글 요약) */
+    private String mappingStatusDisplay;
+    /** 결제 상태 표시용 (한글 요약) */
+    private String mappingPaymentStatusDisplay;
+    /** 남은 회기 (매핑 연동 시) */
+    private Integer mappingRemainingSessions;
 }

@@ -30,7 +30,9 @@ import {
   Edit,
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  Headphones
 } from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -40,6 +42,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/
 import { ErpFilterToolbar, ErpSafeText, useErpSilentRefresh } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/themes/client-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
@@ -543,6 +546,89 @@ const FinancialManagement = () => {
     (typeof transaction.description === 'string' && transaction.description.includes('상담료 입금 확인')) ||
     (typeof transaction.description === 'string' && transaction.description.includes('상담료 환불'));
 
+  /**
+   * 매핑 연동 거래 — 내담자 대시보드형 인물·메타 블록 (목록 카드)
+   * @param {Object} transaction
+   * @param {boolean} compact
+   */
+  const renderTransactionCardPeoplePanel = (transaction, compact) => {
+    if (!isMappingTransaction(transaction)) {
+      return null;
+    }
+    const compactCls = compact ? 'mg-financial-transaction-card__people-panel--compact' : '';
+    return (
+      <div
+        className={['mg-financial-transaction-card__people-panel', 'dashboard-client', compactCls]
+          .filter(Boolean)
+          .join(' ')}
+        aria-label="매핑 연결 회원"
+      >
+        <div className="mg-financial-transaction-card__people-panel-inner">
+          <div className="mg-financial-transaction-card__people-row mg-financial-transaction-card__people-row--client">
+            <User
+              size={compact ? 16 : 20}
+              aria-hidden
+              className="mg-financial-transaction-card__people-icon"
+            />
+            <div className="mg-financial-transaction-card__people-text">
+              <div className="mg-financial-transaction-card__people-eyebrow">내담자 (결제 회원)</div>
+              <div className="mg-financial-transaction-card__people-name">
+                <ErpSafeText fallback="—">{transaction.clientName}</ErpSafeText>
+              </div>
+            </div>
+          </div>
+          <div className="mg-financial-transaction-card__people-row mg-financial-transaction-card__people-row--consultant">
+            <Headphones
+              size={compact ? 14 : 16}
+              aria-hidden
+              className="mg-financial-transaction-card__people-icon mg-financial-transaction-card__people-icon--muted"
+            />
+            <div className="mg-financial-transaction-card__people-text">
+              <div className="mg-financial-transaction-card__people-eyebrow">상담사</div>
+              <div className="mg-financial-transaction-card__people-name-secondary">
+                <ErpSafeText fallback="—">{transaction.consultantName}</ErpSafeText>
+              </div>
+            </div>
+          </div>
+          {!compact && (
+            <div className="mg-financial-transaction-card__people-chips">
+              {transaction.mappingPackageName ? (
+                <span className="mg-v2-status-badge mg-v2-badge--neutral mg-financial-transaction-card__chip">
+                  <ErpSafeText>{transaction.mappingPackageName}</ErpSafeText>
+                </span>
+              ) : null}
+              {transaction.mappingStatusDisplay ? (
+                <span className="mg-v2-status-badge mg-v2-badge--info mg-financial-transaction-card__chip">
+                  <ErpSafeText>{transaction.mappingStatusDisplay}</ErpSafeText>
+                </span>
+              ) : null}
+              {transaction.mappingPaymentStatusDisplay ? (
+                <span className="mg-v2-status-badge mg-v2-badge--neutral mg-financial-transaction-card__chip">
+                  <ErpSafeText>{transaction.mappingPaymentStatusDisplay}</ErpSafeText>
+                </span>
+              ) : null}
+              {transaction.mappingRemainingSessions != null && transaction.mappingRemainingSessions !== '' ? (
+                <span className="mg-v2-status-badge mg-v2-badge--neutral mg-financial-transaction-card__chip">
+                  남은 회기 {toDisplayString(transaction.mappingRemainingSessions)}회
+                </span>
+              ) : null}
+            </div>
+          )}
+          {compact && (
+            <div className="mg-financial-transaction-card__people-compact-meta">
+              <ErpSafeText fallback="">
+                {[transaction.mappingPackageName, transaction.mappingStatusDisplay]
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join(' · ')}
+              </ErpSafeText>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const getBranchName = async(branchCode) => {
     if (!branchCode) return '';
     try {
@@ -672,10 +758,30 @@ const FinancialManagement = () => {
           </span>
         );
       case 'mapping':
-        return isMappingTransaction(transaction) ? (
-          <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
-        ) : (
-          <span className="mg-financial-transaction-table__cell-muted">—</span>
+        if (!isMappingTransaction(transaction)) {
+          return <span className="mg-financial-transaction-table__cell-muted">—</span>;
+        }
+        return (
+          <div className="mg-financial-transaction-table__mapping-cell">
+            <Badge variant="status" statusVariant="info" size="sm" label="매핑" />
+            {(transaction.clientName || transaction.consultantName) && (
+              <div className="mg-financial-transaction-table__mapping-names">
+                <ErpSafeText fallback="">{transaction.clientName}</ErpSafeText>
+                {transaction.clientName && transaction.consultantName ? (
+                  <span aria-hidden className="mg-financial-transaction-table__mapping-sep">
+                    {' '}
+                    ·{' '}
+                  </span>
+                ) : null}
+                <ErpSafeText fallback="">{transaction.consultantName}</ErpSafeText>
+              </div>
+            )}
+            {transaction.mappingPackageName && (
+              <div className="mg-financial-transaction-table__mapping-package">
+                <ErpSafeText>{transaction.mappingPackageName}</ErpSafeText>
+              </div>
+            )}
+          </div>
         );
       case 'actions':
         return renderTransactionIconActions(transaction, { forTable: true });
@@ -1208,6 +1314,7 @@ const FinancialManagement = () => {
                           className={[
                             'mg-v2-ad-b0kla__card',
                             'mg-financial-transaction-card',
+                            isMappingTransaction(transaction) ? 'mg-financial-transaction-card--with-people' : '',
                             transactionViewMode === 'compact' ? 'mg-financial-transaction-card--compact' : ''
                           ].filter(Boolean).join(' ')}
                         >
@@ -1245,6 +1352,7 @@ const FinancialManagement = () => {
                               </span>
                             </div>
                           </div>
+                          {renderTransactionCardPeoplePanel(transaction, transactionViewMode === 'compact')}
                           {transactionViewMode === 'compact' ? (
                             <div className="mg-financial-transaction-card__body mg-financial-transaction-card__body--compact">
                               <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--primary">
@@ -1835,12 +1943,34 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               <div>
                 <strong>매핑 ID:</strong> #{toDisplayString(mappingDetail.mappingId)}
               </div>
+              <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                <strong>내담자 (결제 회원):</strong>{' '}
+                <ErpSafeText fallback="-">{mappingDetail.clientName}</ErpSafeText>
+              </div>
+              <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                <strong>상담사:</strong> <ErpSafeText fallback="-">{mappingDetail.consultantName}</ErpSafeText>
+              </div>
               <div>
                 <strong>패키지명:</strong> <ErpSafeText fallback="-">{mappingDetail.packageName}</ErpSafeText>
               </div>
               <div>
                 <strong>총 회기수:</strong> {toDisplayString(mappingDetail.totalSessions)}회
               </div>
+              {mappingDetail.remainingSessions != null && mappingDetail.remainingSessions !== '' && (
+                <div>
+                  <strong>남은 회기:</strong> {toDisplayString(mappingDetail.remainingSessions)}회
+                </div>
+              )}
+              {mappingDetail.mappingStatusDisplay && (
+                <div>
+                  <strong>매핑 상태:</strong> <ErpSafeText>{mappingDetail.mappingStatusDisplay}</ErpSafeText>
+                </div>
+              )}
+              {mappingDetail.mappingPaymentStatusDisplay && (
+                <div>
+                  <strong>결제 상태:</strong> <ErpSafeText>{mappingDetail.mappingPaymentStatusDisplay}</ErpSafeText>
+                </div>
+              )}
               <div>
                 <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
               </div>
